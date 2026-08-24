@@ -1,0 +1,1697 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Drives onboarding resumability (foundation/03-user-journeys.md §2):
+// only ever advances forward on a successful step submission, server-side.
+enum OnboardingStep {
+  SIGN_UP
+  VERIFY
+  BASIC_PROFILE
+  TENNIS_EXPERIENCE
+  ASSESSMENT
+  LEVEL_REVIEW
+  GOALS
+  PLAYING_PREFERENCES
+  LOCATION
+  CLUB_COURTS
+  AVAILABILITY
+  PADEL_INTEREST
+  COMPLETE
+}
+
+enum VerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  RESTRICTED
+}
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum DominantHand {
+  LEFT
+  RIGHT
+  AMBIDEXTROUS
+}
+
+// Raw "Tennis Experience" answer (foundation/03-user-journeys.md §3.1) —
+// the entry condition for the assessment branch.
+enum ExperienceSignal {
+  NEW
+  UNDER_6M
+  SIX_TO_12M
+  ONE_TO_2Y
+  TWO_TO_5Y
+  FIVE_PLUS
+  COMPETITIVE
+}
+
+enum FormatPreference {
+  SINGLES
+  DOUBLES
+  EITHER
+}
+
+enum StylePreference {
+  SOCIAL
+  COMPETITIVE
+  EITHER
+}
+
+enum TimeBlock {
+  MORNING
+  AFTERNOON
+  EVENING
+}
+
+enum PadelInterestValue {
+  YES
+  NO
+  WANT_TO_LEARN
+}
+
+enum LocationSource {
+  GPS
+  MANUAL
+}
+
+enum AssessmentBranch {
+  BEGINNER
+  FOUNDATIONAL
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum AssessmentSessionStatus {
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+}
+
+enum AssessmentPillar {
+  FOREHAND
+  BACKHAND
+  SERVE
+  RETURN
+  NET_PLAY
+  MOVEMENT
+  MATCH_PLAY
+  COMPETITION_EXPERIENCE
+}
+
+enum AnswerOption {
+  A
+  B
+  C
+  D
+  E
+  F
+}
+
+// Phase M13 — 15 dimensions per foundation/03-user-journeys.md §9, wider
+// than Tennis's 8-pillar `AssessmentPillar` (a separate enum, not a shared
+// one, since the two question banks don't overlap and Padel Profile is
+// meant to be fully independent of Tennis Profile per Doc 6 §1).
+enum PadelAssessmentPillar {
+  RALLY_CONSISTENCY
+  FOREHAND
+  BACKHAND
+  SERVE
+  RETURN
+  VOLLEY
+  OVERHEAD
+  BANDEJA
+  VIBORA
+  SMASH
+  WALL_USAGE
+  POSITIONING
+  NET_CONTROL
+  TRANSITION
+  PARTNER_COMMUNICATION
+  TACTICAL_AWARENESS
+}
+
+// Binary, unlike Tennis's 4-tier `AssessmentBranch` — Doc 3 §9's only
+// branch decision is "Beginner-branch player?" yes/no, with no downshift
+// logic specified. A deliberate simplification, not a corner cut.
+enum PadelAssessmentBranch {
+  BEGINNER
+  EXPERIENCED
+}
+
+enum PadelSide {
+  LEFT
+  RIGHT
+  EITHER
+}
+
+// A connection is directional in storage (who asked whom) but symmetric in
+// meaning once ACCEPTED — foundation/03-user-journeys.md §4.1.
+enum ConnectionStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+enum ReportReason {
+  HARASSMENT
+  SPAM
+  FAKE_PROFILE
+  INAPPROPRIATE_CONTENT
+  CHEATING
+  OTHER
+}
+
+enum ReportStatus {
+  OPEN
+  REVIEWING
+  RESOLVED
+  DISMISSED
+}
+
+enum MatchSport {
+  TENNIS
+  PADEL
+}
+
+enum MatchFormat {
+  SINGLES
+  DOUBLES
+}
+
+// foundation/03-user-journeys.md §4.2/§4.3. The post-play states
+// (COMPLETED, WALKOVER, RETIRED, DISPUTED) were declared in M6 because
+// Doc 6 §1 defines them as one model; M7 (result flow, §4.3) is what
+// actually transitions into them.
+enum MatchState {
+  PROPOSED
+  SCHEDULING
+  SCHEDULED
+  RESCHEDULED
+  CANCELLED
+  EXPIRED
+  COMPLETED
+  WALKOVER
+  RETIRED
+  DISPUTED
+}
+
+enum MatchSide {
+  A
+  B
+}
+
+enum ParticipantRole {
+  CHALLENGER
+  OPPONENT
+  PARTNER
+}
+
+enum ParticipantStatus {
+  INVITED
+  ACCEPTED
+  DECLINED
+}
+
+enum TimeProposalStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  SUPERSEDED
+}
+
+enum MatchResultStatus {
+  PENDING_CONFIRMATION
+  CONFIRMED
+  DISPUTED
+}
+
+// "Score" covers a normal set-by-set result; the other two are the
+// "Report walkover/retirement instead" alternative to Enter Score
+// (foundation/04-screen-inventory.md §A.4).
+enum MatchResultOutcome {
+  SCORE
+  WALKOVER
+  RETIREMENT
+}
+
+// A league itself is just published or not — the real registration/round
+// lifecycle lives on Season, since one league runs many seasons over time.
+enum LeagueState {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+}
+
+enum SeasonRegistrationStatus {
+  ENROLLED
+  WAITLISTED
+  WITHDRAWN
+}
+
+enum ConversationType {
+  DIRECT
+  MATCH
+}
+
+enum MessageKind {
+  TEXT
+  SYSTEM
+}
+
+enum VerificationChannel {
+  EMAIL
+  PHONE
+}
+
+enum VerificationPurpose {
+  SIGNUP
+  PASSWORD_RESET
+}
+
+// foundation/06-domain-technical-architecture.md §1 (NEWS SOURCE).
+enum NewsSourceStatus {
+  ACTIVE
+  PAUSED
+  BLOCKED
+}
+
+// No Platform Admin moderation queue exists yet (same gap as PlayerReport/
+// CourtReport) — seeded stories are APPROVED by default so the feed has
+// real content; PENDING/REJECTED exist so the column means something once
+// that queue is built.
+enum NewsModerationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// The starter-doc prompts' fixed category list (Tennis_Platform_Master...
+// Phase 12 AI prompt) — a story can belong to several, hence
+// `NewsStory.categories` being an array rather than a single enum field.
+enum NewsCategory {
+  LATEST
+  PROFESSIONAL_TENNIS
+  PLAYERS
+  TOURNAMENTS
+  LOCAL
+  AFRICA
+  CLUBS
+  COMMUNITY
+}
+
+// foundation/06-domain-technical-architecture.md §5's notification
+// categories, trimmed to the ones this phase actually creates rows for —
+// see notifications/notifications.service.ts.
+enum NotificationCategory {
+  CONNECTIONS
+  MATCHES
+  MESSAGES
+  COMPETITIONS
+  LEARNING
+  NEWS
+  // Club announcements and membership decisions. PREFERENCE_FIELD in
+  // notifications.service.ts is a Record over this enum, so adding a value
+  // here won't compile until the matching column below exists.
+  CLUBS
+}
+
+// Doc 4 §A.10's Privacy Settings — replaces the hardcoded connections-only
+// gate M5's player.mapper.ts shipped with, per that phase's documented
+// "until Privacy Settings makes it configurable in M12" plan.
+enum FieldVisibility {
+  CONNECTIONS_ONLY
+  EVERYONE
+}
+
+// foundation/06-domain-technical-architecture.md §1: "LEARNING CONTENT ...
+// type (Lesson|Drill|TrainingPlan)" — one polymorphic model, not three,
+// since a TrainingPlan is just an ordered sequence of Lesson/Drill rows
+// (see TrainingPlanStep) and inventing three near-identical tables would
+// duplicate every field below.
+enum LearningContentType {
+  LESSON
+  DRILL
+  TRAINING_PLAN
+}
+
+// No Club/Platform Admin content-authoring UI exists yet (same gap as M9's
+// courts) — content is seed-authored and PUBLISHED by default. DRAFT exists
+// so the schema/status column is real ahead of that admin UI, not because
+// anything seeds a draft row this phase.
+enum LearningContentStatus {
+  DRAFT
+  PUBLISHED
+}
+
+// foundation/06-domain-technical-architecture.md §1 (GOAL). Derived on read
+// from the goal's current computed skill score vs. its baseline/target/
+// deadline pacing (see learning/skill-score.ts) — ACHIEVED is the one state
+// that's ever actually stored (via achievedAt), matching the "explicit
+// timestamp as state" idiom used throughout this schema.
+enum GoalStatus {
+  ON_TRACK
+  BEHIND
+  ACHIEVED
+}
+
+// Shared by Court and Club — a physical-place verification tri-state,
+// deliberately not the user-identity VerificationStatus enum above (which
+// also has RESTRICTED, meaningless for a place record).
+// foundation/06-domain-technical-architecture.md §1.
+enum ListingVerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+}
+
+// foundation/06-domain-technical-architecture.md §1 court sketch: "surface,
+// indoor/outdoor, lighting". Kept to the surfaces this seed's UK courts
+// actually use — extend if a future data source reports something else.
+enum CourtSurface {
+  HARD
+  CLAY
+  GRASS
+  ARTIFICIAL_GRASS
+}
+
+// foundation/06-domain-technical-architecture.md §1: "bookingInfo (external
+// link | none | native-partner)". UNKNOWN is the default and the only value
+// a court starts at absent a verified source — never fabricate the others.
+// NATIVE_PARTNER exists so the placeholder path (Doc 3 §6 / Doc 7) is real
+// in the schema/UI, but nothing seeds it this phase — no partner exists.
+enum CourtBookingType {
+  UNKNOWN
+  CONTACT_ONLY
+  EXTERNAL_LINK
+  NATIVE_PARTNER
+}
+
+// Report/Update Court Info — foundation/03-user-journeys.md §6, same
+// write-only shape as PlayerReport/ReportReason above.
+enum CourtReportReason {
+  INCORRECT_INFO
+  PERMANENTLY_CLOSED
+  DUPLICATE_LISTING
+  INAPPROPRIATE_CONTENT
+  OTHER
+}
+
+// Identity, credentials, account state. Sport-specific data never lives
+// here — see foundation/06-domain-technical-architecture.md §1.
+model User {
+  id           String  @id @default(uuid())
+  email        String? @unique
+  phone        String? @unique
+  passwordHash String
+
+  firstName String?
+  lastName  String?
+  photoUrl  String?
+  // Edit Profile (Doc 4 §A.10) — no upload flow exists for photoUrl either,
+  // but bio is free text a player can type directly, so it's real this
+  // phase while photo stays out of scope.
+  bio       String?
+
+  verificationStatus VerificationStatus @default(UNVERIFIED)
+  accountStatus      AccountStatus      @default(ACTIVE)
+  emailVerifiedAt    DateTime?
+  phoneVerifiedAt    DateTime?
+
+  onboardingStep        OnboardingStep @default(SIGN_UP)
+  onboardingCompletedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tennisProfile     TennisProfile?
+  padelProfile      PadelProfile?
+  verificationCodes VerificationCode[]
+  refreshTokens     RefreshToken[]
+
+  connectionsRequested Connection[]    @relation("ConnectionRequester")
+  connectionsReceived  Connection[]    @relation("ConnectionAddressee")
+  blocksMade           Block[]         @relation("Blocker")
+  blocksReceived       Block[]         @relation("Blocked")
+  reportsMade          PlayerReport[]  @relation("Reporter")
+  reportsReceived      PlayerReport[]  @relation("Reported")
+  courtReportsMade     CourtReport[]   @relation("CourtReporter")
+  savedStories         SavedStory[]
+  messageReportsMade   MessageReport[] @relation("MessageReporter")
+
+  notifications          Notification[]
+  notificationPreference NotificationPreference?
+
+  clubPosts         ClubPost[]         @relation("ClubPostAuthor")
+  clubPostsDeleted  ClubPost[]         @relation("ClubPostModerator")
+  clubPostReactions ClubPostReaction[]
+
+  clubMemberships       ClubMembership[]
+  announcementsAuthored Announcement[]
+
+  matchesCreated          Match[]                   @relation("MatchCreator")
+  matchesCancelled        Match[]                   @relation("MatchCanceller")
+  matchParticipations     MatchParticipant[]
+  timeProposalsMade       TimeProposal[]            @relation("ProposalProposer")
+  timeProposalsResponded  TimeProposal[]            @relation("ProposalResponder")
+  conversationMemberships ConversationParticipant[]
+  messagesSent            Message[]
+
+  resultsSubmitted MatchResult[]     @relation("ResultSubmitter")
+  resultsConfirmed MatchResult[]     @relation("ResultConfirmer")
+  resultsDisputed  MatchResult[]     @relation("ResultDisputer")
+  matchReflections MatchReflection[] @relation("ReflectionAuthor")
+
+  seasonRegistrations SeasonRegistration[]
+  fixturesAsSideA     Fixture[]            @relation("FixtureSideA")
+  fixturesAsSideB     Fixture[]            @relation("FixtureSideB")
+  standings           Standing[]
+
+  @@map("users")
+}
+
+// 1:1, created at signup and always present from that point on
+// (foundation/06-domain-technical-architecture.md §1). Progressively
+// filled in through the onboarding steps.
+model TennisProfile {
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  singlesRating Float?
+  doublesRating Float?
+  overallRating Float?
+
+  // Stored as two genuinely separate fields, never merged — the
+  // non-negotiable rule from foundation/06-domain-technical-architecture.md §2.
+  systemSuggestedLevel      Float?
+  systemSuggestedLevelSetAt DateTime?
+  userSelectedLevel         Float?
+
+  dominantHand            DominantHand?
+  experienceSignal        ExperienceSignal?
+  selfReportedRatingScale String?
+  selfReportedRatingValue Float?
+
+  onboardingGoals    String[]
+  formatPreference   FormatPreference?
+  stylePreference    StylePreference?
+  preferredTimeSlots String[]
+
+  generalLocation String?
+  latitude        Float?
+  longitude       Float?
+  locationSource  LocationSource?
+
+  preferredClubName   String?
+  preferredCourtNames String[]
+
+  padelInterest PadelInterestValue?
+
+  // Privacy Settings (Doc 4 §A.10) — the actual per-field gate
+  // players/player.mapper.ts reads, replacing the hardcoded
+  // connections-only default M5 shipped with.
+  skillBreakdownVisibility FieldVisibility @default(CONNECTIONS_ONLY)
+  availabilityVisibility   FieldVisibility @default(CONNECTIONS_ONLY)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  availabilitySlots  AvailabilitySlot[]
+  assessmentSessions AssessmentSession[]
+
+  practiceSessions    PracticeSession[]
+  goals               Goal[]
+  learningCompletions LearningContentCompletion[]
+
+  @@map("tennis_profiles")
+}
+
+// Rows, not a JSON blob — M6 matchmaking needs to query these.
+model AvailabilitySlot {
+  id              String        @id @default(uuid())
+  tennisProfileId String
+  tennisProfile   TennisProfile @relation(fields: [tennisProfileId], references: [id], onDelete: Cascade)
+
+  dayOfWeek Int // 0 (Sunday) - 6 (Saturday)
+  timeBlock TimeBlock
+
+  createdAt DateTime @default(now())
+
+  @@unique([tennisProfileId, dayOfWeek, timeBlock])
+  @@map("availability_slots")
+}
+
+// Phase M13 — fully independent of TennisProfile per Doc 6 §1 (no
+// location/format/club fields; Padel player discovery is out of scope
+// this phase, so nothing here is used for search).
+model PadelProfile {
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  dominantHand DominantHand?
+
+  singlesRating             Float?
+  doublesRating             Float?
+  // Stored separately, same non-negotiable rule as TennisProfile's
+  // systemSuggestedLevel/userSelectedLevel split — except Padel has no
+  // adjust-level step in scope, so there's no user-override counterpart.
+  systemSuggestedLevel      Float?
+  systemSuggestedLevelSetAt DateTime?
+
+  preferredSide     PadelSide?
+  partnerPreference String?
+  goals             String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assessmentSessions PadelAssessmentSession[]
+
+  @@map("padel_profiles")
+}
+
+model AssessmentSession {
+  id              String        @id @default(uuid())
+  tennisProfileId String
+  tennisProfile   TennisProfile @relation(fields: [tennisProfileId], references: [id], onDelete: Cascade)
+
+  branch         AssessmentBranch
+  currentTier    AssessmentBranch // mutable copy of branch, for downshifting (§3.3.3)
+  questionBudget Int
+  status         AssessmentSessionStatus @default(IN_PROGRESS)
+
+  resultSystemSuggestedLevel Float?
+  resultSkillBreakdown       Json? // 7-dimension score map
+
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  answers AssessmentAnswer[]
+
+  @@map("assessment_sessions")
+}
+
+model AssessmentAnswer {
+  id        String            @id @default(uuid())
+  sessionId String
+  session   AssessmentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  questionId     String // stable key into the static question bank, not a Prisma relation
+  pillar         AssessmentPillar
+  selectedOption AnswerOption
+  pointValue     Int
+  sequenceIndex  Int
+
+  answeredAt DateTime @default(now())
+
+  @@unique([sessionId, sequenceIndex])
+  @@map("assessment_answers")
+}
+
+// Structurally parallel to AssessmentSession/AssessmentAnswer above, kept
+// as genuinely separate models (not a widened shared table) — avoids any
+// risk to the tested Tennis engine and matches Padel Profile's
+// "fully independent" framing in Doc 6 §1. No `currentTier` — the binary
+// PadelAssessmentBranch has nothing to downshift to.
+model PadelAssessmentSession {
+  id             String       @id @default(uuid())
+  padelProfileId String
+  padelProfile   PadelProfile @relation(fields: [padelProfileId], references: [id], onDelete: Cascade)
+
+  branch         PadelAssessmentBranch
+  questionBudget Int
+  status         AssessmentSessionStatus @default(IN_PROGRESS)
+
+  resultSystemSuggestedLevel Float?
+  resultSkillBreakdown       Json? // 15-dimension score map
+
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  answers PadelAssessmentAnswer[]
+
+  @@map("padel_assessment_sessions")
+}
+
+model PadelAssessmentAnswer {
+  id        String                 @id @default(uuid())
+  sessionId String
+  session   PadelAssessmentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  questionId     String // stable key into the static question bank, not a Prisma relation
+  pillar         PadelAssessmentPillar
+  selectedOption AnswerOption
+  pointValue     Int
+  sequenceIndex  Int
+
+  answeredAt DateTime @default(now())
+
+  @@unique([sessionId, sequenceIndex])
+  @@map("padel_assessment_answers")
+}
+
+// The @@unique only guards one direction — A->B and B->A are two distinct
+// rows as far as Postgres is concerned, so ConnectionsService checks both
+// directions before creating. See foundation/03-user-journeys.md §4.1.
+model Connection {
+  id          String @id @default(uuid())
+  requesterId String
+  addresseeId String
+  requester   User   @relation("ConnectionRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  addressee   User   @relation("ConnectionAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+
+  status      ConnectionStatus @default(PENDING)
+  respondedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([requesterId, addresseeId])
+  @@index([addresseeId, status])
+  @@index([requesterId, status])
+  @@map("connections")
+}
+
+// Blocking is one-directional as stored, but enforced symmetrically —
+// a block in either direction hides both users from each other
+// (foundation/06-domain-technical-architecture.md §4).
+model Block {
+  id        String @id @default(uuid())
+  blockerId String
+  blockedId String
+  blocker   User   @relation("Blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked   User   @relation("Blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([blockerId, blockedId])
+  @@index([blockedId])
+  @@map("blocks")
+}
+
+// Write-only this phase — the moderation queue that consumes these is
+// Platform Admin (foundation/04-screen-inventory.md Part C), not built yet.
+model PlayerReport {
+  id             String @id @default(uuid())
+  reporterId     String
+  reportedUserId String
+  reporter       User   @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  reported       User   @relation("Reported", fields: [reportedUserId], references: [id], onDelete: Cascade)
+
+  reason ReportReason
+  notes  String?
+  status ReportStatus @default(OPEN)
+
+  createdAt DateTime @default(now())
+
+  @@index([reportedUserId, status])
+  @@map("player_reports")
+}
+
+// foundation/06-domain-technical-architecture.md §1 (MATCH) and
+// foundation/03-user-journeys.md §4.2. Participants are rows rather than a
+// JSON blob so M7 results and M8 fixtures can join against them.
+model Match {
+  id     String      @id @default(uuid())
+  sport  MatchSport  @default(TENNIS)
+  format MatchFormat @default(SINGLES)
+  state  MatchState  @default(PROPOSED)
+
+  createdById String
+  createdBy   User   @relation("MatchCreator", fields: [createdById], references: [id], onDelete: Cascade)
+
+  confirmedTime DateTime?
+
+  // Free text — stays even after the M9 Courts module lands (below), for
+  // the common case of no matching real Court row existing yet (seed
+  // coverage is thin, not real ingestion). Doc 6 §2 forbids fabricating
+  // venue data, so a real court is only ever linked when genuinely chosen.
+  courtName String?
+  courtNote String?
+
+  // Added in M9, alongside (not replacing) courtName/courtNote above.
+  courtId String?
+  court   Court?  @relation(fields: [courtId], references: [id], onDelete: SetNull)
+
+  // Counter-proposal rounds, bounded to MAX_PROPOSAL_ROUNDS (§4.2) so the
+  // negotiation can't loop forever.
+  proposalRound Int @default(0)
+
+  // Evaluated lazily on read this phase — see matches/match-state.ts.
+  expiresAt DateTime?
+
+  cancelledById String?
+  cancelledAt   DateTime?
+  cancelReason  String?
+  canceller     User?     @relation("MatchCanceller", fields: [cancelledById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  participants  MatchParticipant[]
+  timeProposals TimeProposal[]
+  conversation  Conversation?
+  result        MatchResult?
+  reflections   MatchReflection[]
+  // Doc 6 §1's "competitionContext" hook, realized once something needs it
+  // (Phase M8) — set only for fixture-generated matches.
+  fixture       Fixture?
+
+  @@index([state])
+  @@map("matches")
+}
+
+model MatchParticipant {
+  id      String @id @default(uuid())
+  matchId String
+  userId  String
+  match   Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  side   MatchSide
+  role   ParticipantRole
+  status ParticipantStatus @default(INVITED)
+
+  respondedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@unique([matchId, userId])
+  @@index([userId, status])
+  @@map("match_participants")
+}
+
+// One round of negotiation, carrying several candidate times. The recipient
+// either accepts one option or counters with a new proposal.
+model TimeProposal {
+  id      String @id @default(uuid())
+  matchId String
+  match   Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  proposedById String
+  proposedBy   User   @relation("ProposalProposer", fields: [proposedById], references: [id], onDelete: Cascade)
+
+  round  Int
+  status TimeProposalStatus @default(PENDING)
+
+  respondedById    String?
+  respondedBy      User?     @relation("ProposalResponder", fields: [respondedById], references: [id], onDelete: SetNull)
+  respondedAt      DateTime?
+  acceptedOptionId String?
+
+  createdAt DateTime @default(now())
+
+  options TimeProposalOption[]
+
+  @@index([matchId, status])
+  @@map("time_proposals")
+}
+
+model TimeProposalOption {
+  id         String       @id @default(uuid())
+  proposalId String
+  proposal   TimeProposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+
+  startsAt DateTime
+
+  @@map("time_proposal_options")
+}
+
+// One row per match — foundation/06-domain-technical-architecture.md §1
+// models a match's result as "submittedBy, confirmedBy, disputeRecord (both
+// submitted versions, resolution)", which is a single record holding two
+// versions, not a submission history. `sets` is a JSON array of
+// `{ sideAGames, sideBGames, sideATiebreak?, sideBTiebreak? }` — no
+// ITF-style set-legality validation, scores are trusted as entered.
+//
+// Resolution is mutual-reconfirmation only this phase (see
+// results.service.ts) — a Club/Platform Admin ruling needs an admin app
+// that doesn't exist until M14+, so a dispute that never converges just
+// stays DISPUTED. A documented gap, not an oversight.
+model MatchResult {
+  id      String @id @default(uuid())
+  matchId String @unique
+  match   Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  status      MatchResultStatus  @default(PENDING_CONFIRMATION)
+  outcome     MatchResultOutcome
+  sets        Json?
+  // Which side the submitted version says won — null only for a WALKOVER
+  // "in favour of neither player" per Doc 6 §2's business rule.
+  winningSide MatchSide?
+
+  submittedById String
+  submittedBy   User     @relation("ResultSubmitter", fields: [submittedById], references: [id], onDelete: Cascade)
+  submittedAt   DateTime @default(now())
+
+  confirmedById String?
+  confirmedBy   User?     @relation("ResultConfirmer", fields: [confirmedById], references: [id], onDelete: SetNull)
+  confirmedAt   DateTime?
+
+  // The disputer's own version — shown side-by-side with the submitted
+  // version on Dispute Detail.
+  disputedById         String?
+  disputedBy           User?               @relation("ResultDisputer", fields: [disputedById], references: [id], onDelete: SetNull)
+  disputedAt           DateTime?
+  disputantOutcome     MatchResultOutcome?
+  disputantSets        Json?
+  disputantWinningSide MatchSide?
+
+  resolvedAt DateTime?
+
+  // Stamped at confirmation so Ratings & Stats Detail has trend data
+  // without a separate rating-history ledger table.
+  ratingDeltaA Float?
+  ratingDeltaB Float?
+
+  @@index([status])
+  @@map("match_results")
+}
+
+// foundation/04-screen-inventory.md §A.2's "Match Reflection" — optional,
+// per participant. Stored but not consumed by anything yet; feeding the
+// Skill Development Profile needs the Learning module (Phase M10).
+model MatchReflection {
+  id      String @id @default(uuid())
+  matchId String
+  userId  String
+  match   Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  user    User   @relation("ReflectionAuthor", fields: [userId], references: [id], onDelete: Cascade)
+
+  confidence Int
+  notes      String?
+
+  createdAt DateTime @default(now())
+
+  @@unique([matchId, userId])
+  @@map("match_reflections")
+}
+
+// foundation/03-user-journeys.md §5 / foundation/06-domain-technical-architecture.md
+// §1. Deliberately its own model rather than Doc 6's polymorphic
+// LEAGUE/LADDER/TOURNAMENT shape — only League is built this phase
+// (Phase M8), so a generic `type` enum with dead fields for entities that
+// don't exist yet would be inventing scope. No create/manage API — leagues
+// are seeded directly (backend/prisma/seed.ts); no Club Admin app exists
+// until M14+.
+model League {
+  id          String      @id @default(uuid())
+  // Phase M14 — every league now has an owning club (Club Admin is the
+  // only way to create one going forward). Nullable rather than required:
+  // the M8 seed league predates Club Admin and was never club-linked, and
+  // backfilling a fabricated owner for it would violate the "never
+  // fabricate" rule this project has held since M9.
+  clubId      String?
+  club        Club?       @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  sport       MatchSport  @default(TENNIS)
+  name        String
+  description String?
+  rulesText   String?
+  // SINGLES enforced by competitions.service.ts this phase — a doubles
+  // league needs pair-registration, which Doc 6 doesn't specify.
+  format      MatchFormat @default(SINGLES)
+  state       LeagueState @default(PUBLISHED)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  seasons Season[]
+
+  @@map("leagues")
+}
+
+// No stored state for the live states (RegistrationOpen/Closed/Scheduled/
+// Active) — they're pure functions of now() vs. these dates, same
+// "derive on read" pattern as effectiveState() in matches/match-state.ts.
+// See competitions/season-state.ts. Draft/Cancelled stay explicit since
+// they aren't time-derivable.
+model Season {
+  id       String @id @default(uuid())
+  leagueId String
+  league   League @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+
+  label String
+
+  registrationOpensAt  DateTime
+  registrationClosesAt DateTime
+  startsAt             DateTime
+  roundCount           Int
+  // Minutes, not days — an integer field needs fine-enough granularity so
+  // dev/demo seeding can compress a season into minutes for manual testing
+  // (see prisma/seed.ts) without resorting to a fractional-day float. A
+  // real season just uses a larger number (e.g. 10080 for one week).
+  roundIntervalMinutes Int      @default(1440)
+  capacity             Int?
+
+  cancelledAt  DateTime?
+  cancelReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  registrations SeasonRegistration[]
+  rounds        Round[]
+  standings     Standing[]
+
+  @@map("seasons")
+}
+
+model SeasonRegistration {
+  id       String @id @default(uuid())
+  seasonId String
+  userId   String
+  season   Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  status       SeasonRegistrationStatus @default(ENROLLED)
+  registeredAt DateTime                 @default(now())
+
+  @@unique([seasonId, userId])
+  @@index([seasonId, status])
+  @@map("season_registrations")
+}
+
+// openedAt is set (and that round's Fixture→Match rows created) when the
+// round becomes current; closedAt is set once the unplayed-fixture
+// walkover sweep + standings recompute for that round has run — the
+// idempotency guard for competitions.service.ts's ensureSeasonProgressed.
+model Round {
+  id       String @id @default(uuid())
+  seasonId String
+  season   Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+
+  index    Int
+  deadline DateTime
+
+  openedAt DateTime?
+  closedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  fixtures Fixture[]
+
+  @@unique([seasonId, index])
+  @@map("rounds")
+}
+
+// No stored fixture status — it's derived: a bye if sideBUserId is null,
+// otherwise it mirrors the linked Match's effectiveState(). A separate
+// Fixture-level status enum would be a second source of truth that could
+// drift from the Match's own state, which is exactly the kind of bug the
+// existing state machines avoid elsewhere. "No-show" (screen inventory's
+// fixture-only state) isn't a distinct value either — it's a WALKOVER
+// match with no MatchResult row (system-applied) vs. one with a
+// MatchResult (a player voluntarily declared it).
+model Fixture {
+  id      String @id @default(uuid())
+  roundId String
+  round   Round  @relation(fields: [roundId], references: [id], onDelete: Cascade)
+
+  sideAUserId String
+  sideBUserId String?
+  sideA       User    @relation("FixtureSideA", fields: [sideAUserId], references: [id], onDelete: Cascade)
+  sideB       User?   @relation("FixtureSideB", fields: [sideBUserId], references: [id], onDelete: Cascade)
+
+  matchId String? @unique
+  match   Match?  @relation(fields: [matchId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([roundId])
+  @@map("fixtures")
+}
+
+// Fully recomputed (not incrementally patched) whenever a round closes —
+// season-scale data, so wholesale recompute is simpler and can't drift.
+// points: win = 3, loss = 0, a neutral (unplayed) walkover = 0 for both
+// sides (documented decision, same class as rating.ts's Elo formula).
+model Standing {
+  id       String @id @default(uuid())
+  seasonId String
+  userId   String
+  season   Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  rank         Int
+  points       Int
+  wins         Int
+  losses       Int
+  previousRank Int?
+
+  updatedAt DateTime @updatedAt
+
+  @@unique([seasonId, userId])
+  @@map("standings")
+}
+
+// foundation/04-screen-inventory.md §A.9. A match gets its thread on
+// creation, so every state transition has somewhere to write a SYSTEM
+// message.
+model Conversation {
+  id   String           @id @default(uuid())
+  type ConversationType @default(DIRECT)
+
+  matchId String? @unique
+  match   Match?  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  lastMessageAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  @@map("conversations")
+}
+
+model ConversationParticipant {
+  id             String       @id @default(uuid())
+  conversationId String
+  userId         String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Drives unread counts without storing per-message read receipts.
+  lastReadAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@unique([conversationId, userId])
+  @@index([userId])
+  @@map("conversation_participants")
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  // Null for SYSTEM messages — they have no author.
+  senderId String?
+  sender   User?   @relation(fields: [senderId], references: [id], onDelete: SetNull)
+
+  kind MessageKind @default(TEXT)
+  body String
+
+  // Set on SYSTEM messages so the client can deep-link to the match.
+  systemEvent    String?
+  relatedMatchId String?
+
+  createdAt DateTime @default(now())
+
+  reports MessageReport[]
+
+  @@index([conversationId, createdAt])
+  @@map("messages")
+}
+
+model VerificationCode {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  channel VerificationChannel
+  purpose VerificationPurpose @default(SIGNUP)
+
+  codeHash     String
+  expiresAt    DateTime
+  consumedAt   DateTime?
+  attemptCount Int       @default(0)
+  resendCount  Int       @default(0)
+  lastSentAt   DateTime  @default(now())
+
+  createdAt DateTime @default(now())
+
+  @@map("verification_codes")
+}
+
+model RefreshToken {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@map("refresh_tokens")
+}
+
+// foundation/06-domain-technical-architecture.md §1 ("COURT / VENUE" — one
+// merged concept there; every user-facing surface in Doc 3 §6 and Doc 4
+// §A.6 says "Court", never "Venue", so that's the model name here too).
+// A parent identity/location/contact/hours/verification row, plus a child
+// CourtGroup table (below) rather than flat surface/indoor/lighting
+// scalars — a real venue can have e.g. 6 hard + 2 clay courts, which a
+// single row can't represent (documented decision, PROGRESS.md M9 entry).
+// clubId is optional both ways: "a court may be independent or club-owned"
+// (Doc 6 §1) — a court is never required to belong to a club to be
+// discoverable, and a club is never required to own a court to exist.
+model Court {
+  id      String  @id @default(uuid())
+  name    String
+  address String?
+
+  latitude  Float?
+  longitude Float?
+
+  clubId String?
+  club   Club?   @relation(fields: [clubId], references: [id], onDelete: SetNull)
+
+  phone   String?
+  website String?
+
+  // Doc 6 §1: "bookingInfo (external link | none | native-partner)".
+  // bookingUrl is only meaningful when bookingType is EXTERNAL_LINK.
+  bookingType CourtBookingType @default(UNKNOWN)
+  bookingUrl  String?
+
+  amenities String[]
+
+  // Free text, not a structured per-weekday schedule — no data source this
+  // phase reports granular hours, and "is it open right now" filtering
+  // isn't in scope. Structuring this is future work once real ingestion
+  // (OSM/Club Admin/Google Places) exists.
+  openingHoursNote String?
+
+  // Nullable, not defaulted to false — an unknown access policy renders as
+  // Unknown, never guessed public or private (Doc 6 §2 business rule).
+  isPublic Boolean?
+
+  // External URLs only — no image upload flow exists anywhere in this app
+  // yet. Empty array is the honest default, not a fabricated placeholder.
+  photoUrls String[]
+
+  // Optional enrichment hook per Doc 6 §1 — never populated this phase (no
+  // Google Places API integration exists; that needs a billing decision,
+  // tracked as an open dependency in PROGRESS.md). Always null until real
+  // ingestion exists.
+  googlePlacesRef String?
+
+  verificationStatus ListingVerificationStatus @default(UNVERIFIED)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  courtGroups CourtGroup[]
+  reports     CourtReport[]
+  matches     Match[]
+
+  @@index([latitude, longitude])
+  @@index([clubId])
+  @@map("courts")
+}
+
+// One row per {sport, surface, indoor, lighting} combination at a Court —
+// the shape that makes "6 hard + 2 clay" representable and the surface
+// filter correct. Court search filters (surface/indoor/lighting) query
+// through this table, never through flat scalars on Court.
+model CourtGroup {
+  id      String @id @default(uuid())
+  courtId String
+  court   Court  @relation(fields: [courtId], references: [id], onDelete: Cascade)
+
+  sport    MatchSport   @default(TENNIS)
+  surface  CourtSurface
+  indoor   Boolean      @default(false)
+  lighting Boolean      @default(false)
+  count    Int          @default(1)
+
+  @@index([courtId])
+  @@index([sport, surface, indoor])
+  @@map("court_groups")
+}
+
+// Write-only this phase, same shape as PlayerReport — the consuming queue
+// is Club Admin (if the court is claimed) or Platform Admin moderation,
+// neither of which exists until their own later phases.
+model CourtReport {
+  id      String @id @default(uuid())
+  courtId String
+  court   Court  @relation(fields: [courtId], references: [id], onDelete: Cascade)
+
+  reporterId String
+  reporter   User   @relation("CourtReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+
+  reason CourtReportReason
+  notes  String?
+  status ReportStatus      @default(OPEN)
+
+  createdAt DateTime @default(now())
+
+  @@index([courtId, status])
+  @@map("court_reports")
+}
+
+// foundation/06-domain-technical-architecture.md §1 (CLUB / COMMUNITY),
+// trimmed to what M9 actually reads/writes: read-only Club List + Club
+// Profile. members[]/coaches[]/competitions[]/subscriptionStatus from the
+// full domain sketch are deliberately not modelled here — Join/Follow,
+// Coach discovery, and club-linked competitions are all out of scope this
+// phase and would be dead columns with nothing to populate or read them,
+// same discipline League used trimming Doc 6's polymorphic Competition
+// shape down in M8.
+model Club {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+  address     String?
+
+  latitude  Float?
+  longitude Float?
+
+  phone   String?
+  website String?
+
+  amenities        String[]
+  openingHoursNote String?
+  photoUrls        String[]
+
+  verificationStatus ListingVerificationStatus @default(UNVERIFIED)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  courts        Court[]
+  leagues       League[]
+  memberships   ClubMembership[]
+  announcements Announcement[]
+  posts         ClubPost[]
+
+  @@index([latitude, longitude])
+  @@map("clubs")
+}
+
+// Phase M14 (Club Admin). A player account becomes a club admin by holding
+// one of these — not a separate identity system. Doc 6 §3: "Player is the
+// default role for every registered user"; club-admin-ness layers on top
+// via membership, same pattern as "Coach (club context)" being a role, not
+// an account type.
+model ClubMembership {
+  id     String @id @default(uuid())
+  clubId String
+  club   Club   @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  role   ClubRole
+  // INVITED members can't act until ACTIVE — no email-delivery invite
+  // system exists (same dev-only gap as M3's OTP), so this phase's
+  // "invite" is really "add an existing Drift user directly," created
+  // straight into ACTIVE. INVITED/SUSPENDED exist so the column means
+  // something once a real invite flow lands.
+  status ClubMembershipStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now())
+
+  @@unique([clubId, userId])
+  @@map("club_memberships")
+}
+
+enum ClubRole {
+  OWNER
+  ADMIN
+  COMPETITION_MANAGER
+  COACH
+  CONTENT_MANAGER
+  READ_ONLY
+}
+
+enum ClubMembershipStatus {
+  // Club invited them (admin-initiated). No delivery mechanism yet — see
+  // PROGRESS.md's email-provider gap.
+  INVITED
+  // Player asked to join (player-initiated, Doc 2 §67 "Join / Follow").
+  // Awaits an admin approving via the existing PATCH members endpoint.
+  PENDING
+  ACTIVE
+  SUSPENDED
+}
+
+// Doc 4 §A "Announcements" (Club Admin) — no mobile Club Feed screen exists
+// to read these yet (documented gap, see PROGRESS.md); the model and admin
+// authoring path are real so that screen is a pure read-side addition
+// later, same shape as M13's PadelProfile sitting ready before the
+// assessment engine used it.
+model Announcement {
+  id       String @id @default(uuid())
+  clubId   String
+  club     Club   @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  title       String
+  body        String
+  pinned      Boolean            @default(false)
+  status      AnnouncementStatus @default(DRAFT)
+  publishedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clubId, status])
+  @@map("announcements")
+}
+
+/// Club Feed (Doc 4 §A.9) — the conversational counterpart to the official
+/// Announcement above. Shaped after Message: the author is nullable with
+/// SetNull so deleting an account leaves the thread readable rather than
+/// punching holes in it.
+model ClubPost {
+  id     String @id @default(uuid())
+  clubId String
+  club   Club   @relation(fields: [clubId], references: [id], onDelete: Cascade)
+
+  authorId String?
+  author   User?   @relation("ClubPostAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  body String
+
+  // Soft delete so moderation is auditable and reactions survive for review.
+  deletedAt   DateTime?
+  deletedById String?
+  deletedBy   User?     @relation("ClubPostModerator", fields: [deletedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  reactions ClubPostReaction[]
+
+  @@index([clubId, createdAt])
+  @@map("club_posts")
+}
+
+model ClubPostReaction {
+  id     String   @id @default(uuid())
+  postId String
+  post   ClubPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId String
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  emoji String
+
+  createdAt DateTime @default(now())
+
+  // One of each emoji per person per post — tapping again removes it.
+  @@unique([postId, userId, emoji])
+  @@map("club_post_reactions")
+}
+
+enum AnnouncementStatus {
+  DRAFT
+  PUBLISHED
+}
+
+// foundation/06-domain-technical-architecture.md §1 (LEARNING CONTENT).
+// `branch` is nullable — a null branch means "suitable at any level"; a set
+// branch reuses the *same* AssessmentBranch tiering the onboarding
+// assessment already established, rather than inventing a second level
+// scale for content. `bodyText` covers both a lesson's steps and a drill's
+// instructions (Doc 4 §A.7 gives them near-identical shape: "Text/steps" /
+// "Drill instructions"), so one field serves both without a second column
+// that's always empty for the other type.
+model LearningContent {
+  id    String              @id @default(uuid())
+  type  LearningContentType
+  sport MatchSport          @default(TENNIS)
+
+  targetSkill AssessmentPillar
+  branch      AssessmentBranch?
+
+  title           String
+  summary         String?
+  bodyText        String?
+  videoUrl        String?
+  durationMinutes Int?
+
+  status LearningContentStatus @default(PUBLISHED)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Present only when type = TRAINING_PLAN.
+  steps  TrainingPlanStep[] @relation("PlanSteps")
+  // Present when this row is referenced as a step by some plan.
+  stepOf TrainingPlanStep[] @relation("StepContent")
+
+  practiceSessions PracticeSession[]
+  completions      LearningContentCompletion[]
+
+  @@index([targetSkill, branch, type, status])
+  @@map("learning_content")
+}
+
+// An ordered sequence of Lesson/Drill rows making up a Training Plan.
+// Progress/enrollment tracking is deliberately not modelled this phase —
+// Doc 3 §8's narrative journey never walks through Training Plans (only
+// the Doc 4 screen-inventory row does), so this ships as a read-only
+// ordered list of real steps rather than inventing an enrollment/
+// completion-percentage model nothing in the journey text requires.
+model TrainingPlanStep {
+  id     String          @id @default(uuid())
+  planId String
+  plan   LearningContent @relation("PlanSteps", fields: [planId], references: [id], onDelete: Cascade)
+
+  contentId String
+  content   LearningContent @relation("StepContent", fields: [contentId], references: [id], onDelete: Cascade)
+
+  order Int
+
+  @@unique([planId, order])
+  @@map("training_plan_steps")
+}
+
+// "Mark Complete" on Lesson/Drill Detail (Doc 4 §A.7). Deliberately NOT fed
+// into the skill-score blend in learning/skill-score.ts — only
+// PracticeSession is, per Doc 3 §8's blend inputs ("initial assessment +
+// practice logs + match reflections"), so a completion is a read/checklist
+// signal only. "Save for later" (the other primary/secondary action on
+// these screens) is not modelled — same shape of deferred gap as M9's
+// "Save Court", documented rather than silently dropped.
+model LearningContentCompletion {
+  id String @id @default(uuid())
+
+  tennisProfileId String
+  tennisProfile   TennisProfile   @relation(fields: [tennisProfileId], references: [id], onDelete: Cascade)
+  contentId       String
+  content         LearningContent @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  completedAt DateTime @default(now())
+
+  @@unique([tennisProfileId, contentId])
+  @@map("learning_content_completions")
+}
+
+// foundation/06-domain-technical-architecture.md §1 (PRACTICE SESSION).
+// "Kept lightweight, not a long form" (Doc 3 §8) — date, duration, skill
+// focus, an optional drill reference, notes, and a self-rating are the
+// entire form.
+model PracticeSession {
+  id String @id @default(uuid())
+
+  tennisProfileId String
+  tennisProfile   TennisProfile @relation(fields: [tennisProfileId], references: [id], onDelete: Cascade)
+
+  occurredAt      DateTime
+  durationMinutes Int
+  skillFocus      AssessmentPillar
+
+  drillId String?
+  drill   LearningContent? @relation(fields: [drillId], references: [id], onDelete: SetNull)
+
+  notes                String?
+  // Lightweight self-rating, 1 (rough) – 5 (great) — the "perceived
+  // performance" Doc 6 §1 names, not a graded score.
+  perceivedPerformance Int
+
+  createdAt DateTime @default(now())
+
+  @@index([tennisProfileId, skillFocus, occurredAt])
+  @@map("practice_sessions")
+}
+
+// foundation/06-domain-technical-architecture.md §1 (GOAL). `baseline` is
+// snapshotted at creation (the skill's computed score that day) so pacing
+// can be judged against where the player actually started, not a moving
+// target. No stored "current progress" field — it's the same derive-on-read
+// discipline as match-state.ts/season-state.ts, recomputed from
+// learning/skill-score.ts every time the goal is read.
+model Goal {
+  id String @id @default(uuid())
+
+  tennisProfileId String
+  tennisProfile   TennisProfile @relation(fields: [tennisProfileId], references: [id], onDelete: Cascade)
+
+  skill    AssessmentPillar
+  baseline Float
+  target   Float
+  deadline DateTime?
+
+  achievedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  milestones GoalMilestone[]
+
+  @@index([tennisProfileId])
+  @@map("goals")
+}
+
+model GoalMilestone {
+  id     String @id @default(uuid())
+  goalId String
+  goal   Goal   @relation(fields: [goalId], references: [id], onDelete: Cascade)
+
+  label      String
+  achievedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@map("goal_milestones")
+}
+
+// foundation/06-domain-technical-architecture.md §1 (NEWS SOURCE / NEWS
+// STORY). No RSS/API ingestion pipeline exists yet — same "no admin
+// surface, seed directly" gap as M9's courts and M10's learning content.
+// `feedUrl` is a schema hook for that future ingestion job, never read by
+// anything this phase.
+model NewsSource {
+  id      String           @id @default(uuid())
+  name    String
+  feedUrl String?
+  status  NewsSourceStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now())
+
+  stories NewsStory[]
+
+  @@map("news_sources")
+}
+
+// The republication rule (Doc 6 §2, line 116) is enforced by what fields
+// exist here, not by application code: there is no field for full article
+// body text, only `highlight` (a short platform-generated summary) and
+// `originalUrl` (the attribution link) — the schema makes republishing the
+// full article impossible, not just discouraged.
+model NewsStory {
+  id       String     @id @default(uuid())
+  sourceId String
+  source   NewsSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  headline        String
+  imageUrl        String?
+  highlight       String
+  publicationDate DateTime
+  categories      NewsCategory[]
+  // Free-form topic tags (Doc 6 has no controlled vocabulary for these,
+  // same as Court's `amenities[]`). "Follow Topic" itself is deferred —
+  // see PROGRESS.md — so these are stored and shown but not yet
+  // subscribable.
+  topics          String[]
+  originalUrl     String
+
+  moderationStatus NewsModerationStatus @default(APPROVED)
+
+  createdAt DateTime @default(now())
+
+  savedBy SavedStory[]
+
+  @@index([moderationStatus, publicationDate])
+  @@map("news_stories")
+}
+
+model SavedStory {
+  id String @id @default(uuid())
+
+  userId  String
+  user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  storyId String
+  story   NewsStory @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  savedAt DateTime @default(now())
+
+  @@unique([userId, storyId])
+  @@map("saved_stories")
+}
+
+// foundation/06-domain-technical-architecture.md §5 (Notifications).
+// Delivery is in-app fetch only this phase (GET /notifications) — real
+// push (FCM/APNs) needs Firebase credentials that don't exist in this dev
+// environment, tracked as an open dependency in PROGRESS.md.
+// `relatedEntityType`/`relatedEntityId` are a loose typed reference (e.g.
+// "MATCH"/matchId) purely for client-side deep-linking, same "no second
+// source of truth" discipline as Fixture's derived status.
+model Notification {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  category NotificationCategory
+  title    String
+  body     String
+
+  relatedEntityType String?
+  relatedEntityId   String?
+
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, readAt, createdAt])
+  @@map("notifications")
+}
+
+// One row per user, created lazily on first write/read. Every category
+// defaults on except NEWS — "News only when opted in"
+// (foundation/06-domain-technical-architecture.md §5).
+model NotificationPreference {
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  connections  Boolean @default(true)
+  matches      Boolean @default(true)
+  messages     Boolean @default(true)
+  competitions Boolean @default(true)
+  learning     Boolean @default(true)
+  news         Boolean @default(false)
+  clubs        Boolean @default(true)
+
+  @@map("notification_preferences")
+}
+
+// Message-level reporting — Chat Thread's "Report/Block" secondary action
+// (foundation/04-screen-inventory.md §A.9), same shape as PlayerReport/
+// CourtReport, reusing the existing ReportReason/ReportStatus enums.
+model MessageReport {
+  id String @id @default(uuid())
+
+  reporterId String
+  reporter   User    @relation("MessageReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  messageId  String
+  message    Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  reason ReportReason
+  notes  String?
+  status ReportStatus @default(OPEN)
+
+  createdAt DateTime @default(now())
+
+  @@index([messageId, status])
+  @@map("message_reports")
+}

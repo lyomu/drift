@@ -1,0 +1,36 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: drift_tennis_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: drift
+      POSTGRES_PASSWORD: drift
+      POSTGRES_DB: drift_tennis
+    ports:
+      - '5434:5432'
+    volumes:
+      - drift_tennis_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U drift -d drift_tennis']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: drift_tennis_redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - drift_tennis_redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  drift_tennis_postgres_data:
+  drift_tennis_redis_data:
