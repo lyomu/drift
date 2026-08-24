@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android blocks cleartext HTTP by default from API 28 up. The dev backend
+  runs as plain http on a laptop, so those specific hosts are allowlisted
+  here — deliberately per-host rather than a blanket
+  android:usesCleartextTraffic="true", so a real deployment can't
+  accidentally inherit permission to talk to arbitrary http origins.
+
+  Add your machine's LAN IP below when running a preview APK on a physical
+  phone (find it with `ipconfig` / `ip addr`). Production talks https and
+  needs none of this.
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <!-- Android emulator's alias for the host machine's localhost -->
+        <domain includeSubdomains="false">10.0.2.2</domain>
+        <!-- Desktop / iOS simulator -->
+        <domain includeSubdomains="false">localhost</domain>
+        <domain includeSubdomains="false">127.0.0.1</domain>
+        <!-- Dev machine on the LAN, for preview APKs on a real device -->
+        <domain includeSubdomains="false">192.168.100.21</domain>
+    </domain-config>
+</network-security-config>
