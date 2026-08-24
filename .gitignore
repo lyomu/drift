@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Builds
+dist/
+.next/
+out/
+build/
+.dart_tool/
+
+# Local env files / secrets
+.env
+.env.local
+.env.*.local
+
+# Machine-local Android config & signing keys (mobile/android/.gitignore
+# also covers these; repeated here so the whole tree stays safe)
+local.properties
+key.properties
+*.keystore
+*.jks
+
+# Preview build artifacts (large binaries; rebuild with the commands in PROGRESS.md)
+*.apk
+
+# OS junk
+.DS_Store
+Thumbs.db
