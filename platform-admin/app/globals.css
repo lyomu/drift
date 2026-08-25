@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens — mirrors foundation/05-design-system.md and
+ * mobile/lib/core/theme/drift_colors.dart's DriftColors values exactly,
+ * so the same vocabulary (color.primary, radius.lg, ...) holds across
+ * Flutter and this Next.js admin app. Sharp Sans Display isn't licensed
+ * for production yet (see design system doc §3), so --font-display uses
+ * the same Space Grotesk fallback the Flutter app uses — swap the
+ * @font-face source, not the variable name, once licensed.
+ */
+
+:root {
+  --color-primary: #1c91d0;
+  --color-primary-dark: #126a9b;
+  --color-primary-light: #e8f5fc;
+  --color-background: #f7fafc;
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-text-primary: #111827;
+  --color-text-secondary: #6b7280;
+  --color-border: #e5e7eb;
+  --color-success: #16a34a;
+  --color-success-surface: #eafbf1;
+  --color-warning: #f59e0b;
+  --color-warning-surface: #fef6e7;
+  --color-error: #dc2626;
+  --color-error-surface: #fdecec;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-primary: #4fb3e8;
+    --color-primary-dark: #7cc9ef;
+    --color-primary-light: #16324a;
+    --color-background: #0a121f;
+    --color-surface: #111b2c;
+    --color-surface-raised: #162236;
+    --color-text-primary: #eef2f7;
+    --color-text-secondary: #93a2b7;
+    --color-border: #24324a;
+    --color-success: #34d399;
+    --color-success-surface: #10291f;
+    --color-warning: #fbbf24;
+    --color-warning-surface: #2e2408;
+    --color-error: #f87171;
+    --color-error-surface: #341415;
+  }
+}
+
+@theme inline {
+  --color-drift-primary: var(--color-primary);
+  --color-drift-primary-dark: var(--color-primary-dark);
+  --color-drift-primary-light: var(--color-primary-light);
+  --color-drift-background: var(--color-background);
+  --color-drift-surface: var(--color-surface);
+  --color-drift-surface-raised: var(--color-surface-raised);
+  --color-drift-text-primary: var(--color-text-primary);
+  --color-drift-text-secondary: var(--color-text-secondary);
+  --color-drift-border: var(--color-border);
+  --color-drift-success: var(--color-success);
+  --color-drift-success-surface: var(--color-success-surface);
+  --color-drift-warning: var(--color-warning);
+  --color-drift-warning-surface: var(--color-warning-surface);
+  --color-drift-error: var(--color-error);
+  --color-drift-error-surface: var(--color-error-surface);
+
+  --font-body: var(--font-outfit);
+  --font-display: var(--font-display-face);
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-text-primary);
+  font-family: var(--font-body), sans-serif;
+}
+
+* {
+  border-color: var(--color-border);
+}

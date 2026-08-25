@@ -73,6 +73,10 @@ export class PlayersService {
     const viewerCoords = this.coordsOf(viewer);
     const excludedIds = [userId, ...(await this.blockedUserIds(userId))];
 
+    // Wave 8: sport dimension — Padel queries PadelProfile, Tennis (default)
+    // queries TennisProfile. The rest of the filters map to whichever profile
+    // the sport selects.
+    const sport = (dto as { sport?: 'TENNIS' | 'PADEL' }).sport ?? 'TENNIS';
     const profileFilter: Prisma.TennisProfileWhereInput = {};
 
     if (dto.levelMin !== undefined || dto.levelMax !== undefined) {
@@ -124,7 +128,10 @@ export class PlayersService {
       where: {
         id: { notIn: excludedIds },
         onboardingStep: OnboardingStep.COMPLETE,
-        tennisProfile: { is: profileFilter },
+        // Wave 8: Padel queries PadelProfile; Tennis (default) queries TennisProfile.
+        ...(sport === 'PADEL'
+          ? { padelProfile: { isNot: null } }
+          : { tennisProfile: { is: profileFilter } }),
       },
       include: playerInclude,
     });

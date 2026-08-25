@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
@@ -17,6 +19,9 @@ import { CompetitionsModule } from './competitions/competitions.module';
 import { CourtsModule } from './courts/courts.module';
 import { ClubsModule } from './clubs/clubs.module';
 import { ClubAdminModule } from './club-admin/club-admin.module';
+import { PlatformAdminModule } from './platform-admin/platform-admin.module';
+import { CompetitionHooksModule } from './competition-hooks.module';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ClubFeedModule } from './club-feed/club-feed.module';
 import { CoachesModule } from './coaches/coaches.module';
 import { LearningModule } from './learning/learning.module';
@@ -27,7 +32,28 @@ import { AnalyticsModule } from './analytics/analytics.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    // Rate limiting (starter docs Phase 18 / PRD security NFR). Defaults are
+    // production values; NODE_ENV=test relaxes them so the e2e suites' many
+    // rapid auth round trips are never throttled by design.
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        throttlers: [
+          {
+            ttl: Number(config.get('THROTTLE_TTL_MS') ?? 60_000),
+            // Under Jest (NODE_ENV=test) effectively unlimited, so the e2e
+            // suites' rapid auth round trips never flake on the limiter.
+            limit:
+              process.env.NODE_ENV === 'test'
+                ? 10_000
+                : Number(config.get('THROTTLE_LIMIT') ?? 300),
+          },
+        ],
+      }),
+    }),
     PrismaModule,
+    CompetitionHooksModule,
+    ScheduleModule.forRoot(),
     AuthModule,
     UsersModule,
     AssessmentModule,
@@ -42,6 +68,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
     CourtsModule,
     ClubsModule,
     ClubAdminModule,
+    PlatformAdminModule,
     ClubFeedModule,
     CoachesModule,
     LearningModule,
@@ -50,6 +77,6 @@ import { AnalyticsModule } from './analytics/analytics.module';
     AnalyticsModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}

@@ -150,6 +150,10 @@ describe('CompetitionsService', () => {
       );
       prisma.seasonRegistration.findUnique.mockResolvedValue(null);
       prisma.seasonRegistration.count.mockResolvedValue(2);
+      prisma.seasonRegistration.upsert.mockResolvedValue({
+        id: 'reg-1',
+        status: 'ENROLLED',
+      });
 
       await service.register('u1', 's1');
 
@@ -157,6 +161,14 @@ describe('CompetitionsService', () => {
         expect.objectContaining({
           create: expect.objectContaining({ status: 'ENROLLED' }),
         }),
+      );
+      expect(notifications.create).toHaveBeenCalledWith(
+        'u1',
+        'COMPETITIONS',
+        "You're registered",
+        expect.any(String),
+        'SEASON',
+        's1',
       );
     });
 
@@ -171,6 +183,10 @@ describe('CompetitionsService', () => {
       );
       prisma.seasonRegistration.findUnique.mockResolvedValue(null);
       prisma.seasonRegistration.count.mockResolvedValue(2);
+      prisma.seasonRegistration.upsert.mockResolvedValue({
+        id: 'reg-1',
+        status: 'WAITLISTED',
+      });
 
       await service.register('u1', 's1');
 
@@ -178,6 +194,14 @@ describe('CompetitionsService', () => {
         expect.objectContaining({
           create: expect.objectContaining({ status: 'WAITLISTED' }),
         }),
+      );
+      expect(notifications.create).toHaveBeenCalledWith(
+        'u1',
+        'COMPETITIONS',
+        "You're on the waitlist",
+        expect.any(String),
+        'SEASON',
+        's1',
       );
     });
   });
@@ -199,6 +223,7 @@ describe('CompetitionsService', () => {
       );
       prisma.seasonRegistration.findFirst.mockResolvedValue({
         id: 'reg-waiting',
+        userId: 'u-waiting',
       });
 
       await service.withdraw('u1', 's1');
@@ -211,6 +236,27 @@ describe('CompetitionsService', () => {
         where: { id: 'reg-waiting' },
         data: { status: 'ENROLLED' },
       });
+      // The promotion is never silent again (Wave 4 fix).
+      expect(notifications.create).toHaveBeenCalledWith(
+        'u-waiting',
+        'COMPETITIONS',
+        "You're in",
+        expect.stringContaining('enrolled'),
+        'SEASON',
+        's1',
+      );
+    });
+
+    it('does not notify a promotion when there is no waitlist', async () => {
+      prisma.season.findUnique.mockResolvedValue(
+        baseSeason({ startsAt: new Date(Date.now() + HOUR), capacity: 4 }),
+      );
+      prisma.seasonRegistration.findFirst.mockResolvedValue(null);
+
+      await service.withdraw('u1', 's1');
+
+      expect(prisma.seasonRegistration.update).not.toHaveBeenCalled();
+      expect(notifications.create).not.toHaveBeenCalled();
     });
   });
 

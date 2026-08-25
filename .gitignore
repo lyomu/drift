@@ -1,4 +1,4 @@
-# Dependencies
+﻿# Dependencies
 node_modules/
 
 # Builds
@@ -26,3 +26,16 @@ key.properties
 # OS junk
 .DS_Store
 Thumbs.db
+
+# Prisma CLI output captured during agent-driven migrations
+prisma-*.txt
+gen-check*.txt
+gen-check*.txt
+full-e2e-out.txt
+w6-e2e.txt
+pa-e2e-out.txt
+pa-handles.txt
+
+
+# QA evidence screenshots
+qa-evidence/

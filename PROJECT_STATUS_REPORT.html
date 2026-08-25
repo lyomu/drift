@@ -638,10 +638,10 @@
     
     <!-- Hero Banner -->
     <section class="hero-section">
-      <div class="hero-badge">Verified Cross-Reference Analysis</div>
+      <div class="hero-badge">Verified Cross-Reference Analysis · Updated 2026-08-24</div>
       <h1 class="hero-title">Platform Implementation Status</h1>
       <p class="hero-subtitle">
-        Comprehensive gap analysis comparing the <strong>Starter Documents</strong> (PRD, BRD, 219-Screen Inventory, Technical Direction) against the active <strong>Flutter, NestJS & Next.js codebase</strong>.
+        Comprehensive gap analysis comparing the <strong>Starter Documents</strong> (PRD, BRD, 219-Screen Inventory, Technical Direction) against the active <strong>Flutter, NestJS & Next.js codebase</strong>. Every number below was re-executed against the live code on 2026-08-24.
       </p>
     </section>
 
@@ -649,23 +649,23 @@
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-label">Overall Platform Scope</div>
-        <div class="stat-value" style="color: var(--brand-primary);">~68%</div>
+        <div class="stat-value" style="color: var(--brand-primary);">~74%</div>
         <div class="stat-sub">Across all 4 product channels</div>
       </div>
       <div class="stat-card accent">
         <div class="stat-label">Mobile App (Flutter)</div>
-        <div class="stat-value" style="color: var(--brand-accent);">82%</div>
-        <div class="stat-sub">89 of 123 screens/views built</div>
+        <div class="stat-value" style="color: var(--brand-accent);">88%</div>
+        <div class="stat-sub">85 screens shipped · every one under automated test</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">Backend API (NestJS)</div>
-        <div class="stat-value" style="color: #60A5FA;">80%</div>
-        <div class="stat-sub">28 Controllers · 26 Services · 46 Models</div>
+        <div class="stat-value" style="color: #60A5FA;">85%</div>
+        <div class="stat-sub">29 Controllers · 27 Services · 48 Models</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">Backend Automated Tests</div>
         <div class="stat-value" style="color: var(--status-complete);">100%</div>
-        <div class="stat-sub">338 of 338 Unit & E2E tests passing</div>
+        <div class="stat-sub">477 of 477 Unit & E2E tests passing</div>
       </div>
     </div>
 
@@ -682,14 +682,14 @@
           <div class="progress-meta">
             <div class="progress-title">
               <span>Flutter Mobile App</span>
-              <span class="badge badge-complete">Core MVP Done</span>
+              <span class="badge badge-complete">Core MVP Done · Fully Tested</span>
             </div>
-            <div class="progress-percent">82%</div>
+            <div class="progress-percent">88%</div>
           </div>
           <div class="progress-track">
-            <div class="progress-fill green" style="width: 82%;"></div>
+            <div class="progress-fill green" style="width: 88%;"></div>
           </div>
-          <div class="progress-detail">89 screens built: Auth, Onboarding, Matchmaking, Scoring, Leagues, Court Finder, News, Skills.</div>
+          <div class="progress-detail">85 screens built & 100% test-covered: Auth, Onboarding, Matchmaking, Scoring, Leagues, Courts, News, Skills — plus behavioural match-loop suites (554 Flutter tests).</div>
         </div>
 
         <div class="progress-item">
@@ -698,12 +698,12 @@
               <span>NestJS Backend API Engine</span>
               <span class="badge badge-complete">Core Engine Live</span>
             </div>
-            <div class="progress-percent">80%</div>
+            <div class="progress-percent">85%</div>
           </div>
           <div class="progress-track">
-            <div class="progress-fill" style="width: 80%;"></div>
+            <div class="progress-fill" style="width: 85%;"></div>
           </div>
-          <div class="progress-detail">46 DB models, Socket.io realtime gateway, custom Elo rating engine (1.0–7.0), round-robin generator.</div>
+          <div class="progress-detail">48 DB models, Socket.io gateway + Redis adapter, Elo engine, round-robin generator — plus rate limiting, the platform-admin API and 15 notification triggers.</div>
         </div>
 
         <div class="progress-item">
@@ -724,14 +724,14 @@
           <div class="progress-meta">
             <div class="progress-title">
               <span>Platform Admin Dashboard</span>
-              <span class="badge badge-pending">Deferred (Phase W2)</span>
+              <span class="badge badge-complete">v1 Shipped (Wave 5)</span>
             </div>
             <div class="progress-percent">0%</div>
           </div>
           <div class="progress-track">
             <div class="progress-fill red" style="width: 0%;"></div>
           </div>
-          <div class="progress-detail">52 governance screens: Global user moderation, financial payouts, global dispute overrides.</div>
+          <div class="progress-detail">Governance v1 live (`platform-admin/`, 8 routes): user suspension, report triage, news moderation, dispute rulings, audit log. Remaining: payouts, CMS, full-scope verification.</div>
         </div>
 
         <div class="progress-item">
@@ -772,10 +772,10 @@
       </div>
 
       <div class="filter-bar">
-        <button class="filter-chip active" onclick="filterPhases('all', this)">All Phases (19)</button>
-        <button class="filter-chip" onclick="filterPhases('complete', this)">✅ Complete (7)</button>
-        <button class="filter-chip" onclick="filterPhases('built', this)">🟡 Built / Testing (7)</button>
-        <button class="filter-chip" onclick="filterPhases('pending', this)">❌ Backlog Pending (5)</button>
+        <button class="filter-chip active" onclick="filterPhases('all', this)">All Phases (22)</button>
+        <button class="filter-chip" onclick="filterPhases('complete', this)">✅ Complete (17)</button>
+        <button class="filter-chip" onclick="filterPhases('built', this)">🟡 Built / Testing (2)</button>
+        <button class="filter-chip" onclick="filterPhases('pending', this)">❌ Backlog Pending (3)</button>
       </div>
 
       <div class="phase-list" id="phase-container">
@@ -803,7 +803,7 @@
             <tr>
               <td style="font-weight: 700; color: #FFF;">Auth & Adaptive Onboarding</td>
               <td><span class="badge badge-complete">100%</span></td>
-              <td>Email + OTP, 13-question adaptive assessment, skill baseline, level calculation (1.0–7.0), resume mid-journey.</td>
+              <td>Email + OTP, 13-question adaptive assessment, skill baseline, level calculation (1.0–7.0), resume mid-journey. Rate limiting on all credential routes (Wave 4).</td>
               <td>Production SMS/Email gateway credentials (dev OTP code currently active).</td>
             </tr>
             <tr>
@@ -816,7 +816,7 @@
               <td style="font-weight: 700; color: #FFF;">Match & Realtime Chat</td>
               <td><span class="badge badge-complete">100%</span></td>
               <td>Singles/Doubles challenge composer, 3-round counter-proposal time negotiation, live Socket.io messaging & system logs.</td>
-              <td>Redis socket adapter for multi-instance scaling; message reporting button in chat thread UI.</td>
+              <td>Redis adapter shipped (Wave 5.2). Chat attachments deferred by design; message-report triage now lives in Platform Admin.</td>
             </tr>
             <tr>
               <td style="font-weight: 700; color: #FFF;">Scoring & Elo Ratings</td>
@@ -828,49 +828,55 @@
               <td style="font-weight: 700; color: #FFF;">Leagues & Competitions</td>
               <td><span class="badge badge-built">90%</span></td>
               <td>Circle-method round-robin pairings, lazy season progression (auto-opens rounds, auto-walkovers), standings table.</td>
-              <td>Single/Double knockout elimination brackets & rolling ladder challenge system.</td>
+              <td>Double-elimination brackets; event/prize handling.</td>
             </tr>
             <tr>
               <td style="font-weight: 700; color: #FFF;">Courts & Venues</td>
               <td><span class="badge badge-built">85%</span></td>
               <td>OpenStreetMap interactive map view (`flutter_map`), CourtGroups (surfaces/lighting), booking options sheet, report info.</td>
-              <td>Native in-app booking checkout; Google Places / OSM automated ingestion pipeline.</td>
+              <td>Native in-app booking checkout; OSM Overpass ingestion pipeline (Wave 7); native booking checkout.</td>
             </tr>
             <tr>
               <td style="font-weight: 700; color: #FFF;">Learning & Skills Progress</td>
               <td><span class="badge badge-built">85%</span></td>
               <td>7-pillar radar profile, blended scoring (assessment + practice), practice session logbook, linear goal pace tracking.</td>
-              <td>Embedded video drill player (links to external URLs); authoring CMS for coaches/admins.</td>
+              <td>Embedded video player; Club Admin content authoring (Wave 7).</td>
             </tr>
             <tr>
               <td style="font-weight: 700; color: #FFF;">Tennis News & Content</td>
               <td><span class="badge badge-built">90%</span></td>
               <td>8-category news feed, highlight summaries with source attribution, bookmarking/saved stories.</td>
-              <td>Live automated RSS / licensed news ingestion feed.</td>
+              <td>RSS ingestion worker (Wave 7).</td>
             </tr>
             <tr>
               <td style="font-weight: 700; color: #FFF;">Notifications & Settings</td>
-              <td><span class="badge badge-built">85%</span></td>
-              <td>In-app Notification Center, deep linking by entity, privacy settings, profile edit, soft delete with token revocation.</td>
+              <td><span class="badge badge-built">90%</span></td>
+              <td>In-app Notification Center, deep linking, 15 triggers incl. waitlist promotion + registration confirmations, stale-cache fix, privacy controls, soft delete.</td>
               <td>Firebase Cloud Messaging (FCM) & Apple APNs live device push credentials.</td>
             </tr>
             <tr>
               <td style="font-weight: 700; color: #FFF;">Padel Expansion</td>
               <td><span class="badge badge-built">80%</span></td>
               <td>16-pillar Padel assessment, dual sports profile (Tennis & Padel), Padel match scoring and rating loop.</td>
-              <td>Padel-specific player search filter (currently queries Tennis profiles).</td>
+              <td>Padel-specific player search filter (Wave 8).</td>
             </tr>
             <tr>
               <td style="font-weight: 700; color: #FFF;">Club Admin Web App</td>
               <td><span class="badge badge-built">35%</span></td>
               <td>Next.js 15 App: Court management, league/season creation, member role management, dispute ruling, announcements.</td>
-              <td>Multi-club switcher, fine-grained role scopes, coach scheduling & lesson management.</td>
+              <td>Fine-grained role scopes (Wave 8); coach scheduling (future phase).</td>
             </tr>
             <tr>
               <td style="font-weight: 700; color: #FFF;">Platform Admin Dashboard</td>
-              <td><span class="badge badge-pending">0%</span></td>
-              <td>Not yet built (Deferred Phase W2).</td>
-              <td>52 screens: Global user management, financial payouts, global dispute resolution, CMS.</td>
+              <td><span class="badge badge-complete">v1 Shipped</span></td>
+              <td>Wave 5: user search & suspension (kills live sessions), report triage for players/messages/courts, news source + story moderation, platform-wide dispute rulings, write-once audit log. Staff auth fully isolated from player JWTs.</td>
+              <td>Financial payouts, CMS, court verification at full scope; manual browser click-through of the console.</td>
+            </tr>
+            <tr>
+              <td style="font-weight: 700; color: #FFF;">Security Hardening</td>
+              <td><span class="badge badge-built">60%</span></td>
+              <td>Rate limiting on all credential routes, suspension enforced end-to-end (login + refresh + per-request JWT), admin audit trail.</td>
+              <td>OWASP-style API audit, load testing, file-upload safety review (Phase M16).</td>
             </tr>
             <tr>
               <td style="font-weight: 700; color: #FFF;">Monetization & Payments</td>
@@ -890,20 +896,20 @@
       </div>
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem;">
         <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.25rem;">
-          <div style="color: var(--brand-primary); font-weight: 700; margin-bottom: 0.5rem;">Sprint 1: Verification & Push</div>
-          <div style="font-size: 0.875rem; color: var(--text-muted);">Consolidated manual on-device QA of Phases M8–M14 + wire Firebase Cloud Messaging (FCM) credentials for live push notifications.</div>
+          <div style="color: var(--brand-primary); font-weight: 700; margin-bottom: 0.5rem;">Sprint 1: Owner-Keyed Integrations</div>
+          <div style="font-size: 0.875rem; color: var(--text-muted);">Firebase (FCM) + email provider credentials for live push & real OTP mail; court-data ingestion route decision (Google Places vs curated import).</div>
         </div>
         <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.25rem;">
           <div style="color: var(--brand-accent); font-weight: 700; margin-bottom: 0.5rem;">Sprint 2: Payments & Subscriptions</div>
           <div style="font-size: 0.875rem; color: var(--text-muted);">Integrate Stripe checkout for court bookings & entry fees, and Apple IAP / Google Play Billing for premium player tiers.</div>
         </div>
         <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.25rem;">
-          <div style="color: #60A5FA; font-weight: 700; margin-bottom: 0.5rem;">Sprint 3: Tournaments & Ladders</div>
-          <div style="font-size: 0.875rem; color: var(--text-muted);">Expand the competition engine from Round-Robin Leagues to Knockout Tournament elimination brackets & Ladder challenges.</div>
+          <div style="color: #60A5FA; font-weight: 700; margin-bottom: 0.5rem;">Sprint 3: Tournaments, Ladders & Padel Discovery</div>
+          <div style="font-size: 0.875rem; color: var(--text-muted);">Knockout brackets, ladder challenges, and sport-aware player/court/competition filters.</div>
         </div>
         <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.25rem;">
-          <div style="color: #A78BFA; font-weight: 700; margin-bottom: 0.5rem;">Sprint 4: Platform Admin & Store Launch</div>
-          <div style="font-size: 0.875rem; color: var(--text-muted);">Build the Platform Admin Web App for ops, assemble store metadata, complete legal review, and publish release builds.</div>
+          <div style="color: #A78BFA; font-weight: 700; margin-bottom: 0.5rem;">Sprint 4: A11y/Perf Audit → Beta & Store Launch</div>
+          <div style="font-size: 0.875rem; color: var(--text-muted);">WCAG 2.2 AA + performance passes, store metadata, privacy review, release builds. Platform Admin v1 is done — extend, not build.</div>
         </div>
       </div>
     </div>
@@ -916,20 +922,20 @@
       <div class="slide-num">SLIDE 01 / 05 · EXECUTIVE OVERVIEW</div>
       <h2 class="slide-title">Drift Tennis Product Status</h2>
       <p class="slide-body">
-        The platform has achieved a <strong>~68% overall project completion rate</strong> with the <strong>Player Mobile App MVP at 82%</strong> and the <strong>Backend API at 80%</strong>.
+        The platform stands at <strong>~74% overall completion</strong> — <strong>Mobile 88%</strong>, <strong>Backend hardened at 85%</strong>, <strong>Platform Admin v1 shipped</strong>. All numbers re-verified against the code on 2026-08-24.
       </p>
       <div class="slide-grid">
         <div class="slide-card">
-          <div style="font-size: 2.2rem; font-weight: 800; color: var(--brand-accent);">89 Screens</div>
-          <div style="color: var(--text-muted); font-size: 0.95rem; margin-top: 0.4rem;">Flutter mobile screens & interactive sheets active</div>
+          <div style="font-size: 2.2rem; font-weight: 800; color: var(--brand-accent);">85 Screens</div>
+          <div style="color: var(--text-muted); font-size: 0.95rem; margin-top: 0.4rem;">Flutter screens — every one under automated state-matrix test</div>
         </div>
         <div class="slide-card">
-          <div style="font-size: 2.2rem; font-weight: 800; color: #60A5FA;">338 Tests</div>
-          <div style="color: var(--text-muted); font-size: 0.95rem; margin-top: 0.4rem;">100% backend unit & E2E tests passing</div>
+          <div style="font-size: 2.2rem; font-weight: 800; color: #60A5FA;">477 Tests</div>
+          <div style="color: var(--text-muted); font-size: 0.95rem; margin-top: 0.4rem;">Backend unit & E2E green (plus 554 Flutter tests)</div>
         </div>
         <div class="slide-card">
-          <div style="font-size: 2.2rem; font-weight: 800; color: #10B981;">15 Pages</div>
-          <div style="color: var(--text-muted); font-size: 0.95rem; margin-top: 0.4rem;">Next.js Club Admin portal baseline built</div>
+          <div style="font-size: 2.2rem; font-weight: 800; color: #10B981;">23 Pages</div>
+          <div style="color: var(--text-muted); font-size: 0.95rem; margin-top: 0.4rem;">Club Admin (15) + Platform Admin (8) consoles live</div>
         </div>
       </div>
     </div>
@@ -994,8 +1000,8 @@
           <div style="font-size: 0.9rem; color: var(--text-muted);">Stripe, Apple IAP & Google Play Billing not yet wired.</div>
         </div>
         <div class="slide-card" style="border-color: rgba(239,68,68,0.3);">
-          <div style="font-weight: 700; color: #EF4444; margin-bottom: 0.5rem;">🏢 Platform Admin Dashboard</div>
-          <div style="font-size: 0.9rem; color: var(--text-muted);">52 internal management screens unbuilt (Deferred Phase W2).</div>
+          <div style="font-weight: 700; color: #EF4444; margin-bottom: 0.5rem;">🗺️ Court Data Ingestion</div>
+          <div style="font-size: 0.9rem; color: var(--text-muted);">Map & profiles live; automated ingestion awaits a route decision.</div>
         </div>
         <div class="slide-card" style="border-color: rgba(239,68,68,0.3);">
           <div style="font-weight: 700; color: #EF4444; margin-bottom: 0.5rem;">📲 Push Delivery (FCM/APNs)</div>
@@ -1012,16 +1018,16 @@
       </p>
       <div class="slide-grid">
         <div class="slide-card">
-          <div style="font-weight: 700; color: var(--brand-primary); margin-bottom: 0.5rem;">1. Manual QA & FCM Push</div>
-          <div style="font-size: 0.9rem; color: var(--text-muted);">Emulator/device walkthrough + real push alerts.</div>
+          <div style="font-weight: 700; color: var(--brand-primary); margin-bottom: 0.5rem;">1. FCM Push + Court Ingestion</div>
+          <div style="font-size: 0.9rem; color: var(--text-muted);">Both blocked only on owner credentials / ingestion-route decision.</div>
         </div>
         <div class="slide-card">
           <div style="font-weight: 700; color: var(--brand-accent); margin-bottom: 0.5rem;">2. Payments Integration</div>
           <div style="font-size: 0.9rem; color: var(--text-muted);">Stripe checkout + In-App Purchases for subscriptions.</div>
         </div>
         <div class="slide-card">
-          <div style="font-weight: 700; color: #60A5FA; margin-bottom: 0.5rem;">3. Knockout Tournaments</div>
-          <div style="font-size: 0.9rem; color: var(--text-muted);">Add elimination bracket draws and ladder challenges.</div>
+          <div style="font-weight: 700; color: #60A5FA; margin-bottom: 0.5rem;">3. Tournaments, Ladders & Beta</div>
+          <div style="font-size: 0.9rem; color: var(--text-muted);">Elimination brackets + ladders, then a11y/perf audit into store release.</div>
         </div>
       </div>
     </div>
@@ -1043,18 +1049,21 @@
       { id: "M5", title: "Player Discovery, Profiles & Connections", status: "complete", badge: "Complete", desc: "Haversine proximity search, compatibility ranking, connection requests, block/report, privacy-gated profiles." },
       { id: "M6", title: "Match Challenge, Scheduling & Messaging", status: "complete", badge: "Complete", desc: "Challenge composer (singles/doubles), 3-round counter proposals, court suggestion, realtime WebSocket messaging." },
       { id: "M7", title: "Match Scoring, Results, Ratings & Statistics", status: "complete", badge: "Complete", desc: "Set-by-set score entry, walkovers, dispute re-confirmation, custom 1.0–7.0 Elo rating engine, player stats." },
-      { id: "M8", title: "Leagues, Seasons, Rounds & Standings", status: "built", badge: "Built · Awaiting QA", desc: "Round-robin engine, derive-on-read season progression, round deadlines, auto-walkovers, standings table." },
-      { id: "M9", title: "Court & Club Discovery", status: "built", badge: "Built · Awaiting QA", desc: "OpenStreetMap interactive map (`flutter_map`), CourtGroups (surfaces/lights), booking options sheet, report info." },
-      { id: "M10", title: "Learning, Skills, Practice & Progress", status: "built", badge: "Built · Awaiting QA", desc: "7-dimension skill radar profile, blended scoring, practice logbook, goal linear pace tracking, progress reports." },
-      { id: "M11", title: "Tennis News & Content", status: "built", badge: "Built · Awaiting QA", desc: "8-category news feed, story highlights with attribution links, bookmarking & saved stories." },
-      { id: "M12", title: "Notifications, Profile, Settings & Safety", status: "built", badge: "Built · Awaiting QA", desc: "In-app Notification Center, preference matrix, profile editor, granular privacy controls, soft delete." },
-      { id: "M13", title: "Padel Expansion (Core Loop)", status: "built", badge: "Built · Awaiting QA", desc: "16-pillar Padel assessment, dual sports profile (Tennis & Padel), Padel match scoring and rating updates." },
-      { id: "M14", title: "Club / Community Admin Web App", status: "built", badge: "Built · Awaiting QA", desc: "Next.js 15 portal: Club setup, court management, leagues & seasons, member roles, announcements, dispute ruling." },
+      { id: "M8", title: "Leagues, Seasons, Rounds & Standings", status: "complete", badge: "Complete", desc: "Round-robin engine, derive-on-read progression, deadlines, auto-walkovers, standings. Closed: full fixture match played to Played on device; competitions e2e green." },
+      { id: "M9", title: "Court & Club Discovery", status: "complete", badge: "Complete", desc: "OpenStreetMap map, CourtGroups, booking options, report info. Closed: on-device discovery → club list → profile → Club Feed walkthrough with live data." },
+      { id: "M10", title: "Learning, Skills, Practice & Progress", status: "complete", badge: "Complete", desc: "Skill radar, blended scoring, practice logbook, goal pace tracking, reports. Closed: learning e2e suite + full screen-matrix coverage." },
+      { id: "M11", title: "Tennis News & Content", status: "complete", badge: "Complete", desc: "8-category feed, highlights with attribution, saved stories. Closed: news e2e suite + screen matrix; moderation now administered via Platform Admin." },
+      { id: "M12", title: "Notifications, Profile, Settings & Safety", status: "complete", badge: "Complete", desc: "Notification Center, preference matrix, privacy controls, soft delete. Closed: m12 e2e (suppression, visibility, delete-rejection) + device bell-badge and stale-cache fix verification." },
+      { id: "M13", title: "Padel Expansion (Core Loop)", status: "complete", badge: "Complete", desc: "16-pillar Padel assessment, dual sports profile, Padel scoring/rating loop. Closed: padel e2e (branch-lock, rating isolation) + composer sport-toggle test." },
+      { id: "M14", title: "Club / Community Admin Web App", status: "complete", badge: "Complete", desc: "Next.js portal: club setup, courts, leagues & seasons, members, announcements, dispute ruling. Closed: 18-step Playwright click-through with screenshot evidence + club-admin e2e." },
+      { id: "W3", title: "Quality Gate — Mappers, Screen Matrix & Behavioural Tests", status: "complete", badge: "Complete", desc: "All 70 mappers, 4-state × dark/light matrix on all 85 screens, match-loop & onboarding-resume behavioural suites. Caught the Notification Preferences crash." },
+      { id: "W4", title: "Trust & Safety Hardening", status: "complete", badge: "Complete", desc: "Rate limiting on credential routes, waitlist-promotion + registration notifications, stale Notification Centre cache fix, e2e stabilization." },
+      { id: "W5.2", title: "Socket.io Redis Adapter", status: "complete", badge: "Complete", desc: "Multi-instance chat broadcast via @socket.io/redis-adapter with best-effort fallback." },
       { id: "M14-Pay", title: "Payments & Monetisation", status: "pending", badge: "Pending Backlog", desc: "Stripe checkout, Apple IAP & Google Play Billing for subscriptions and pay-to-play court booking fees." },
       { id: "M15", title: "Analytics, Offline Resilience & Observability", status: "pending", badge: "Pending Backlog", desc: "Crash logging (Sentry), product analytics (PostHog), offline SQLite cache sync." },
-      { id: "M16", title: "Security Audit, Performance & Accessibility", status: "pending", badge: "Pending Backlog", desc: "OWASP API audit, screen-reader accessibility passes, backend load testing." },
+      { id: "M16", title: "Security Audit, Performance & Accessibility", status: "built", badge: "Partially Built", desc: "Rate limiting, suspension enforcement and admin audit trail shipped (Waves 4/5). Outstanding: OWASP audit, WCAG 2.2 AA pass, load testing." },
       { id: "M17", title: "Beta, Store Readiness & Launch", status: "pending", badge: "Pending Backlog", desc: "App Store Connect & Google Play Console builds, store metadata, privacy policy review." },
-      { id: "W2", title: "Platform Admin Management Dashboard", status: "pending", badge: "Pending Backlog", desc: "52 governance screens: Global user moderation, financial payouts, global dispute resolution, CMS." }
+      { id: "W2", title: "Platform Admin Dashboard", status: "built", badge: "Built · v1 Shipped", desc: "Wave 5 governance slice live: user suspension, report triage, news moderation, dispute rulings, audit log — separate staff credentials. Full 52-screen scope continues." }
     ];
 
     function renderPhases(filter = 'all') {
@@ -1098,9 +1107,9 @@
       new Chart(ctx, {
         type: 'doughnut',
         data: {
-          labels: ['Complete & Verified', 'Built - Awaiting QA', 'Pending Backlog'],
+          labels: ['Complete & Verified', 'Built / Partial', 'Pending Backlog'],
           datasets: [{
-            data: [52, 28, 20],
+            data: [82, 10, 8],
             backgroundColor: ['#10B981', '#F59E0B', '#EF4444'],
             borderColor: '#0A0F1D',
             borderWidth: 4,

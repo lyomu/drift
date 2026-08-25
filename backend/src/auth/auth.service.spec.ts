@@ -262,6 +262,7 @@ describe('AuthService', () => {
         userId: 'user-1',
         revokedAt: null,
         expiresAt: new Date(Date.now() + 60_000),
+        user: { accountStatus: 'ACTIVE' },
       });
       prisma.refreshToken.update.mockResolvedValue({});
       prisma.refreshToken.create.mockResolvedValue({});
@@ -274,12 +275,35 @@ describe('AuthService', () => {
       expect(result.accessToken).toBe('access-token');
     });
 
+    it('rejects and revokes a refresh token for a suspended account', async () => {
+      prisma.refreshToken.findUnique.mockResolvedValue({
+        id: 'rt-1',
+        userId: 'user-1',
+        revokedAt: null,
+        expiresAt: new Date(Date.now() + 60_000),
+        user: { accountStatus: 'SUSPENDED' },
+      });
+      prisma.refreshToken.update.mockResolvedValue({});
+
+      await expect(
+        service.refresh('some-refresh-token'),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+      // The dangling token is killed, not just refused.
+      expect(prisma.refreshToken.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'rt-1' },
+          data: { revokedAt: expect.any(Date) },
+        }),
+      );
+    });
+
     it('rejects a revoked refresh token', async () => {
       prisma.refreshToken.findUnique.mockResolvedValue({
         id: 'rt-1',
         userId: 'user-1',
         revokedAt: new Date(),
         expiresAt: new Date(Date.now() + 60_000),
+        user: { accountStatus: 'ACTIVE' },
       });
 
       await expect(

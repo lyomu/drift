@@ -224,6 +224,30 @@ export class CompetitionsService {
       create: { seasonId, userId, status },
       update: { status, registeredAt: new Date() },
     });
+
+    // Registration outcome notifications (the batch Wave 1.4 deferred —
+    // a player who registers should never have to discover their status
+    // by reopening the screen).
+    if (registration.status === SeasonRegistrationStatus.ENROLLED) {
+      await this.notifications.create(
+        userId,
+        'COMPETITIONS',
+        "You're registered",
+        `${season.league.name} — ${season.label}. We'll let you know when your round opens.`,
+        'SEASON',
+        seasonId,
+      );
+    } else {
+      await this.notifications.create(
+        userId,
+        'COMPETITIONS',
+        "You're on the waitlist",
+        `${season.league.name} — ${season.label} is full. You move in automatically if a spot opens.`,
+        'SEASON',
+        seasonId,
+      );
+    }
+
     return { status: registration.status };
   }
 
@@ -250,6 +274,16 @@ export class CompetitionsService {
           where: { id: nextWaiting.id },
           data: { status: SeasonRegistrationStatus.ENROLLED },
         });
+        // The promotion must never be silent again (PROGRESS.md carried
+        // forward since Wave 1.4): the player believes they're still queued.
+        await this.notifications.create(
+          nextWaiting.userId,
+          'COMPETITIONS',
+          "You're in",
+          `A spot opened up in ${season.league.name} — ${season.label}. You've been enrolled.`,
+          'SEASON',
+          seasonId,
+        );
       }
     }
     return { withdrawn: true };

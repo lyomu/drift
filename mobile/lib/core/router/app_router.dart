@@ -22,6 +22,8 @@ import '../../features/onboarding/presentation/suggested_level_review_screen.dar
 import '../../features/onboarding/presentation/tennis_experience_screen.dart';
 import '../../features/onboarding/presentation/welcome_screen.dart';
 import '../../features/competitions/presentation/league_detail_screen.dart';
+import '../../features/competitions/presentation/ladder_detail_screen.dart';
+import '../../features/competitions/presentation/tournament_detail_screen.dart';
 import '../../features/competitions/presentation/league_rules_screen.dart';
 import '../../features/competitions/presentation/my_seasons_screen.dart';
 import '../../features/competitions/presentation/registered_players_screen.dart';
@@ -257,6 +259,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/compete/my-seasons',
         builder: (context, state) => const MySeasonsScreen(),
+      ),
+      GoRoute(
+        path: '/compete/tournaments/:id',
+        builder: (context, state) => TournamentDetailScreen(
+          tournamentId: state.pathParameters['id']!,
+        ),
+      ),
+      GoRoute(
+        path: '/compete/ladders/:id',
+        builder: (context, state) =>
+            LadderDetailScreen(ladderId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: '/discover/courts/:id',

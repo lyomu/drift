@@ -1,8 +1,11 @@
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
+  Logger,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import {
   MatchFormat,
@@ -47,6 +50,13 @@ export class ResultsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly matches: MatchesService,
+    // Wave 6: optional competition settlement hook (provided globally by the
+    // competitions module). Optional so matches stays dependency-free.
+    @Optional()
+    @Inject('COMPETITIONS_SETTLEMENT')
+    private readonly settlement?: {
+      onMatchSettled(matchId: string, winnerUserId: string | null): Promise<void>;
+    },
   ) {}
 
   // ---------------------------------------------------------------- helpers
@@ -115,7 +125,8 @@ export class ResultsService {
   private async settle(
     match: MatchRecord,
     version: Version,
-    confirmedById: string,
+    confirmedById: string | null,
+    confirmedByPlatformAdminId?: string,
   ): Promise<{ ratingDeltaA: number | null; ratingDeltaB: number | null }> {
     const state = this.matches.assertLive(match);
     const target = SETTLED_STATE[version.outcome];
@@ -191,7 +202,10 @@ export class ResultsService {
         where: { matchId: match.id },
         data: {
           status: MatchResultStatus.CONFIRMED,
-          confirmedById,
+          // Player/club-admin confirmation carries a User id; platform
+          // rulings (Wave 5) carry the staff id in its own column instead.
+          confirmedById: confirmedByPlatformAdminId ? null : confirmedById,
+          confirmedByPlatformAdminId: confirmedByPlatformAdminId ?? undefined,
           confirmedAt: new Date(),
           resolvedAt: new Date(),
           outcome: version.outcome,
@@ -207,8 +221,28 @@ export class ResultsService {
       }),
     ]);
 
+    // Wave 6 competition hooks: a settled result advances a tournament
+    // bracket and/or resolves a ladder challenge. Must not fail the result
+    // itself — competition bookkeeping is downstream.
+    const winnerUserId = await this.winnerOf(match, version.winningSide);
+    await this.settlement
+      ?.onMatchSettled(match.id, winnerUserId)
+      .catch((e) => this.logger.error(`competition settlement hook failed: ${e}`));
+
     return { ratingDeltaA, ratingDeltaB };
   }
+
+  private readonly logger = new Logger(ResultsService.name);
+
+  private async winnerOf(
+    match: MatchRecord,
+    winningSide: MatchSide | null,
+  ): Promise<string | null> {
+    if (!winningSide) return null;
+    const participant = match.participants.find((p) => p.side === winningSide);
+    return participant?.userId ?? null;
+  }
+
 
   // -------------------------------------------------------------- endpoints
 
@@ -439,6 +473,10 @@ export class ResultsService {
     matchId: string,
     adminUserId: string,
     ruling: 'SUBMITTED' | 'DISPUTANT',
+    // Wave 5: platform staff are separate credentials, so the ruling's
+    // attribution lands in confirmedByPlatformAdminId instead of the User
+    // FK. Club-admin callers pass nothing and behave exactly as before.
+    opts?: { platformAdminId?: string },
   ) {
     const match = await this.matches.loadMatch(matchId);
     if (this.matches.assertLive(match) !== MatchState.DISPUTED) {
@@ -463,7 +501,12 @@ export class ResultsService {
             winningSide: result.disputantWinningSide,
           };
 
-    await this.settle(match, version, adminUserId);
+    await this.settle(
+      match,
+      version,
+      opts?.platformAdminId ? null : adminUserId,
+      opts?.platformAdminId,
+    );
 
     const final = await this.matches.loadMatch(matchId);
     await this.matches.announce(

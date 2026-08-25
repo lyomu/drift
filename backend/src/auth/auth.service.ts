@@ -208,6 +208,14 @@ export class AuthService {
     if (user.accountStatus === AccountStatus.DELETED) {
       throw new UnauthorizedException('Invalid credentials.');
     }
+    // Suspended is stated plainly: unlike deletion, suspension is meant to
+    // be understood and appealed, and the holder of valid credentials
+    // already knows the account exists.
+    if (user.accountStatus === AccountStatus.SUSPENDED) {
+      throw new UnauthorizedException(
+        'This account has been suspended. Contact support.',
+      );
+    }
 
     return this.issueTokens(user.id);
   }
@@ -381,9 +389,22 @@ export class AuthService {
     const tokenHash = this.hashRefreshToken(refreshToken);
     const record = await this.prisma.refreshToken.findUnique({
       where: { tokenHash },
+      include: { user: { select: { accountStatus: true } } },
     });
 
     if (!record || record.revokedAt || record.expiresAt < new Date()) {
+      throw new UnauthorizedException('Invalid refresh token.');
+    }
+    // A suspension must cut off the refresh path too, or a suspended user
+    // simply rides out the access-token TTL.
+    if (
+      record.user.accountStatus === AccountStatus.SUSPENDED ||
+      record.user.accountStatus === AccountStatus.DELETED
+    ) {
+      await this.prisma.refreshToken.update({
+        where: { id: record.id },
+        data: { revokedAt: new Date() },
+      });
       throw new UnauthorizedException('Invalid refresh token.');
     }
 

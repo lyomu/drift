@@ -1,0 +1,10 @@
+import { readFileSync } from "fs";
+const h = readFileSync("C:/Users/gmnyo/Desktop/Engineering projects/Drift Tennis/PROJECT_STATUS_REPORT.html", "utf8");
+const c = { complete: 0, built: 0, pending: 0 };
+for (const m of h.matchAll(/\{ id: "[^"]+", title: "[^"]+", status: "(complete|built|pending)"/g)) c[m[1]]++;
+console.log("phases:", JSON.stringify(c));
+console.log("stale 338:", h.includes("338"), "| stale ~68%:", h.includes("~68%"), "| stale '89 of 123':", h.includes("89 of 123"), "| stale '52 screens':", h.includes("52 screens"));
+console.log("Awaiting QA badges:", (h.match(/Awaiting QA/g) || []).length);
+console.log("mojibake 'Â' present:", h.includes("Â"));
+console.log("chips:", ["All Phases (22)", "Complete (17)", "Built / Testing (2)", "Backlog Pending (3)"].map((s) => `${s}=${h.includes(s)}`).join(" "));
+console.log("closes:", h.includes("</html>"));

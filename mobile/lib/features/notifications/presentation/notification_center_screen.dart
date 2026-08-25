@@ -13,11 +13,36 @@ import '../data/notifications_repository.dart';
 /// Notification Center — `foundation/04-screen-inventory.md` §A.11. Delivery
 /// is in-app-fetch only this phase (no FCM/APNs credentials); see
 /// PROGRESS.md. Entry points: the Home app bar bell and Profile.
-class NotificationCenterScreen extends ConsumerWidget {
+///
+/// Stateful only to force one refetch on open: Home's notification bell
+/// watches the same `.autoDispose` provider permanently, so its cache would
+/// otherwise survive every pop/push and re-entry could show stale rows (a
+/// real device-found bug — see PROGRESS.md).
+class NotificationCenterScreen extends ConsumerStatefulWidget {
   const NotificationCenterScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<NotificationCenterScreen> createState() =>
+      _NotificationCenterScreenState();
+}
+
+class _NotificationCenterScreenState
+    extends ConsumerState<NotificationCenterScreen> {
+  // Riverpod forbids provider access in initState (InheritedWidgets aren't
+  // mounted yet), so the one-shot refetch happens on first dependencies.
+  bool _invalidated = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_invalidated) {
+      _invalidated = true;
+      ref.invalidate(notificationsListProvider);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final page = ref.watch(notificationsListProvider);
     final type = Theme.of(context).extension<DriftTypography>()!;
     final colors = Theme.of(context).extension<DriftColors>()!;

@@ -3,14 +3,13 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
+import 'ladder_list_screen.dart';
 import 'league_list_screen.dart';
+import 'tournament_list_screen.dart';
 
-/// Compete Hub — `foundation/04-screen-inventory.md` §A.5, segmented
-/// Leagues / Ladders / Tournaments / Events. Only Leagues is real this
-/// phase (Phase M8) — the P0 roadmap scope is "leagues, seasons, rounds,
-/// standings"; Ladders/Tournaments/Events are P1 and would mean inventing
-/// a bracket/ladder-challenge algorithm nothing in the foundation docs
-/// specifies. Same shape of cut as M7 deferring Achievements.
+/// Compete Hub — `foundation/04-screen-inventory.md` A5, segmented
+/// Leagues / Ladders / Tournaments / Events. Leagues shipped in M8;
+/// Ladders and Tournaments shipped in Wave 6. Events remain P1.
 class CompeteHubScreen extends StatefulWidget {
   const CompeteHubScreen({super.key});
 
@@ -74,6 +73,8 @@ class _CompeteHubScreenState extends State<CompeteHubScreen> {
   Widget _body() {
     return switch (_segment) {
       0 => const LeagueListScreen(embedded: true),
+      1 => const LadderListScreen(embedded: true),
+      2 => const TournamentListScreen(embedded: true),
       _ => _ComingLater(label: _labels[_segment]),
     };
   }

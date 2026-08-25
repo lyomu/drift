@@ -10,6 +10,7 @@ import { ReportsAdminController } from './reports-admin.controller';
 import { ClubMembershipGuard } from './guards/club-membership.guard';
 import { ClubAuthService } from './club-auth.service';
 import { CompetitionsModule } from '../competitions/competitions.module';
+import { CompetitionsAdminExpansionController } from './competitions-admin-expansion.controller';
 import { MatchesModule } from '../matches/matches.module';
 import { CourtsModule } from '../courts/courts.module';
 import { SafetyModule } from '../safety/safety.module';
@@ -23,7 +24,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     SafetyModule,
     NotificationsModule,
   ],
-  controllers: [
+  controllers: [ CompetitionsAdminExpansionController,
     ClubsAdminController,
     ClubCompetitionsAdminController,
     CompetitionsAdminController,

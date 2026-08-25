@@ -438,6 +438,12 @@ model User {
   verificationCodes VerificationCode[]
   refreshTokens     RefreshToken[]
 
+  tournamentEntries TournamentEntry[] @relation("TournamentEntries")
+  ladderEntries     LadderEntry[]    @relation("LadderEntries")
+  ladderChallengesAsChallenger LadderChallenge[] @relation("LadderChallenger")
+  ladderChallengesAsDefender   LadderChallenge[] @relation("LadderDefender")
+  tournamentFixturesAsA TournamentFixture[] @relation("TFixA")
+  tournamentFixturesAsB TournamentFixture[] @relation("TFixB")
   connectionsRequested Connection[]    @relation("ConnectionRequester")
   connectionsReceived  Connection[]    @relation("ConnectionAddressee")
   blocksMade           Block[]         @relation("Blocker")
@@ -768,6 +774,8 @@ model Match {
   reflections   MatchReflection[]
   // Doc 6 §1's "competitionContext" hook, realized once something needs it
   // (Phase M8) — set only for fixture-generated matches.
+  tournamentFixtures TournamentFixture[]
+  ladderChallenges    LadderChallenge[]
   fixture       Fixture?
 
   @@index([state])
@@ -860,6 +868,12 @@ model MatchResult {
   confirmedById String?
   confirmedBy   User?     @relation("ResultConfirmer", fields: [confirmedById], references: [id], onDelete: SetNull)
   confirmedAt   DateTime?
+
+  // Set when a PLATFORM admin rules on a dispute — staff are separate
+  // credentials (Wave 5), so their id can't live in confirmedById's User FK.
+  // Exactly one of the two columns is populated.
+  confirmedByPlatformAdminId String?        @unique
+  confirmedByPlatformAdmin   PlatformAdmin? @relation(fields: [confirmedByPlatformAdminId], references: [id], onDelete: SetNull)
 
   // The disputer's own version — shown side-by-side with the submitted
   // version on Dispute Detail.
@@ -1293,6 +1307,8 @@ model Club {
   memberships   ClubMembership[]
   announcements Announcement[]
   posts         ClubPost[]
+  tournaments   Tournament[]
+  ladders       Ladder[]
 
   @@index([latitude, longitude])
   @@map("clubs")
@@ -1695,3 +1711,188 @@ model MessageReport {
   @@index([messageId, status])
   @@map("message_reports")
 }
+
+// ---------------------------------------------------------------------------
+// Platform Admin (starter docs Phase 14 / W2) � Wave 5.
+//
+// Deliberately NOT a role on User: platform staff are separate credentials
+// (owner decision, 2026-08-24), so a compromised player account can never
+// hold governance power and there is no second "staff mode" to reason about.
+model PlatformAdmin {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+
+  createdAt  DateTime   @default(now())
+  lastLoginAt DateTime?
+  deactivatedAt DateTime?
+
+  auditLogs AdminAuditLog[]
+  ruledResults MatchResult[]
+
+  @@map("platform_admins")
+}
+
+/// Consequential administrative writes land here. Club-admin actions are
+/// already scoped by club membership; this log covers the platform surface,
+/// where the operator's power is broadest and history matters most.
+model AdminAuditLog {
+  id      String        @id @default(uuid())
+  actorId String
+  actor   PlatformAdmin @relation(fields: [actorId], references: [id], onDelete: Cascade)
+
+  action     String // e.g. "user.suspend", "report.resolve", "story.reject"
+  entityType String
+  entityId   String
+  metadata   Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([actorId, createdAt])
+  @@map("admin_audit_logs")
+}
+
+// ---------------------------------------------------------------------------
+// Competitions expansion (Wave 6): knockout Tournaments and rolling Ladders,
+// alongside the M8 Leagues. Both reuse the Match/Elo machinery ? no parallel
+// result engine.
+enum TournamentState {
+  DRAFT
+  REGISTRATION_OPEN
+  RUNNING
+  COMPLETED
+  CANCELLED
+}
+
+model Tournament {
+  id          String          @id @default(uuid())
+  clubId      String
+  club        Club            @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  sport       MatchSport      @default(TENNIS)
+  name        String
+  description String?
+  // Power of two: 4/8/16/32. Enforced in the service, not the schema.
+  drawSize    Int
+  state       TournamentState @default(REGISTRATION_OPEN)
+  registrationClosesAt DateTime
+  createdAt   DateTime        @default(now())
+
+  entries TournamentEntry[]
+  rounds  TournamentRound[]
+
+  @@index([clubId, state])
+  @@map("tournaments")
+}
+
+model TournamentEntry {
+  id           String     @id @default(uuid())
+  tournamentId String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User       @relation("TournamentEntries", fields: [userId], references: [id], onDelete: Cascade)
+  seed         Int?
+  createdAt    DateTime   @default(now())
+
+  @@unique([tournamentId, userId])
+  @@map("tournament_entries")
+}
+
+model TournamentRound {
+  id           String  @id @default(uuid())
+  tournamentId String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  // 1 = first round. Round name (R16/QF/SF/F) is derived from index + drawSize.
+  index        Int
+
+  fixtures TournamentFixture[]
+
+  @@unique([tournamentId, index])
+  @@map("tournament_rounds")
+}
+
+// Mirrors the league Fixture shape: no stored status ? derived from the
+// linked Match, or a bye when sideB is null.
+model TournamentFixture {
+  id            String  @id @default(uuid())
+  roundId       String
+  round         TournamentRound @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  slotIndex     Int
+  sideAUserId   String?
+  sideA         User?   @relation("TFixA", fields: [sideAUserId], references: [id], onDelete: SetNull)
+  sideBUserId   String?
+  sideB         User?   @relation("TFixB", fields: [sideBUserId], references: [id], onDelete: SetNull)
+  isBye         Boolean @default(false)
+  winnerUserId  String?
+  matchId       String? @unique
+  match         Match?  @relation(fields: [matchId], references: [id], onDelete: SetNull)
+
+  @@unique([roundId, slotIndex])
+  @@map("tournament_fixtures")
+}
+
+enum LadderState {
+  ACTIVE
+  ARCHIVED
+}
+
+enum LadderChallengeState {
+  PENDING
+  ACCEPTED
+  DECLINED
+  PLAYED
+}
+
+model Ladder {
+  id             String     @id @default(uuid())
+  clubId         String
+  club           Club       @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  sport          MatchSport @default(TENNIS)
+  name           String
+  // A challenger may only challenge opponents within N rungs above them.
+  challengeRange Int        @default(2)
+  state          LadderState @default(ACTIVE)
+  createdAt      DateTime   @default(now())
+
+  entries    LadderEntry[]
+  challenges LadderChallenge[]
+
+  @@index([clubId, state])
+  @@map("ladders")
+}
+
+model LadderEntry {
+  id        String  @id @default(uuid())
+  ladderId  String
+  ladder    Ladder  @relation(fields: [ladderId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User    @relation("LadderEntries", fields: [userId], references: [id], onDelete: Cascade)
+  // Rung 1 = top. Uniqueness enforced in the swap transaction, not here ?
+  // a position swap updates two rows and would transiently collide.
+  position  Int
+  wins      Int     @default(0)
+  losses    Int     @default(0)
+  createdAt DateTime @default(now())
+
+  @@unique([ladderId, userId])
+  @@map("ladder_entries")
+}
+
+model LadderChallenge {
+  id           String              @id @default(uuid())
+  ladderId     String
+  ladder       Ladder              @relation(fields: [ladderId], references: [id], onDelete: Cascade)
+  challengerId String
+  challenger   User                @relation("LadderChallenger", fields: [challengerId], references: [id], onDelete: Cascade)
+  defenderId   String
+  defender     User                @relation("LadderDefender", fields: [defenderId], references: [id], onDelete: Cascade)
+  state        LadderChallengeState @default(PENDING)
+  matchId      String?             @unique
+  match        Match?              @relation(fields: [matchId], references: [id], onDelete: SetNull)
+  createdAt    DateTime            @default(now())
+
+  @@index([ladderId, state])
+  @@map("ladder_challenges")
+}
+
