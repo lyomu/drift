@@ -6,6 +6,8 @@ import {
 import {
   ClubMembershipStatus,
   ClubRole,
+  ClubPlatformStatus,
+  Prisma,
   ListingVerificationStatus,
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -32,6 +34,7 @@ export class ClubsAdminService {
           address: dto.address,
           latitude: dto.latitude,
           longitude: dto.longitude,
+          platformStatus: ClubPlatformStatus.PENDING_REVIEW,
         },
       });
       await tx.clubMembership.create({
@@ -92,10 +95,9 @@ export class ClubsAdminService {
     return toClubProfile(club, null);
   }
 
-  /** UNVERIFIED -> PENDING. Nothing consumes PENDING yet — Platform Admin
-   * approval doesn't exist (documented open dependency, same shape as
-   * every other unconsumed moderation queue this project has carried). */
-  async submitVerificationRequest(clubId: string) {
+  /** Creates the immutable submission consumed by Platform Admin's venue
+   * verification queue; the Club flag remains the public summary state. */
+  async submitVerificationRequest(clubId: string, submittedById?: string) {
     const club = await this.prisma.club.findUnique({ where: { id: clubId } });
     if (!club) {
       throw new NotFoundException('Club not found.');
@@ -105,11 +107,45 @@ export class ClubsAdminService {
         'A verification request has already been submitted.',
       );
     }
-    await this.prisma.club.update({
-      where: { id: clubId },
-      data: { verificationStatus: ListingVerificationStatus.PENDING },
+    const submitterId =
+      submittedById ??
+      (
+        await this.prisma.clubMembership.findFirst({
+          where: {
+            clubId,
+            status: ClubMembershipStatus.ACTIVE,
+            role: { in: [ClubRole.OWNER, ClubRole.ADMIN] },
+          },
+          select: { userId: true },
+          orderBy: { createdAt: 'asc' },
+        })
+      )?.userId;
+    if (!submitterId) {
+      throw new BadRequestException('A club Owner or Admin must submit verification.');
+    }
+    const request = await this.prisma.$transaction(async (tx) => {
+      await tx.club.update({
+        where: { id: clubId },
+        data: { verificationStatus: ListingVerificationStatus.PENDING },
+      });
+      const created = await tx.venueVerificationRequest.create({
+        data: { clubId, submittedById: submitterId },
+      });
+      await tx.clubAuditLog.create({
+        data: {
+          clubId,
+          actorId: submitterId,
+          action: 'venue.verification.submit',
+          entityType: 'VenueVerificationRequest',
+          entityId: created.id,
+        },
+      });
+      return created;
     });
-    return { verificationStatus: ListingVerificationStatus.PENDING };
+    return {
+      requestId: request.id,
+      verificationStatus: ListingVerificationStatus.PENDING,
+    };
   }
 
   // ------------------------------------------------------------- members
@@ -141,7 +177,7 @@ export class ClubsAdminService {
   /** No email-delivery invite system exists (same dev-only gap as M3's
    * OTP) — this adds an already-registered Drift user straight into
    * ACTIVE membership rather than a pending invite a stranger accepts. */
-  async inviteMember(clubId: string, dto: InviteMemberDto) {
+  async inviteMember(clubId: string, dto: InviteMemberDto, actorId?: string) {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
@@ -166,6 +202,7 @@ export class ClubsAdminService {
         status: ClubMembershipStatus.ACTIVE,
       },
     });
+    if (actorId) await this.audit(clubId, actorId, 'team.invite', membership.id, { role: membership.role });
     return { membershipId: membership.id, role: membership.role };
   }
 
@@ -173,6 +210,7 @@ export class ClubsAdminService {
     clubId: string,
     membershipId: string,
     dto: UpdateMembershipDto,
+    actorId?: string,
   ) {
     const membership = await this.requireMembership(clubId, membershipId);
     if (
@@ -216,6 +254,7 @@ export class ClubsAdminService {
       );
     }
 
+    if (actorId) await this.audit(clubId, actorId, 'team.role.update', membershipId, { role: updated.role, status: updated.status });
     return {
       membershipId: updated.id,
       role: updated.role,
@@ -322,7 +361,7 @@ export class ClubsAdminService {
     );
   }
 
-  async removeMember(clubId: string, membershipId: string) {
+  async removeMember(clubId: string, membershipId: string, actorId?: string) {
     const membership = await this.requireMembership(clubId, membershipId);
     if (membership.role === ClubRole.OWNER) {
       const otherOwners = await this.prisma.clubMembership.count({
@@ -335,7 +374,12 @@ export class ClubsAdminService {
       }
     }
     await this.prisma.clubMembership.delete({ where: { id: membershipId } });
+    if (actorId) await this.audit(clubId, actorId, 'team.remove', membershipId);
     return { removed: true };
+  }
+
+  private async audit(clubId: string, actorId: string, action: string, entityId: string, metadata?: object) {
+    await this.prisma.clubAuditLog.create({ data: { clubId, actorId, action, entityType: 'ClubMembership', entityId, metadata: metadata as Prisma.InputJsonValue | undefined } });
   }
 
   private async requireMembership(clubId: string, membershipId: string) {

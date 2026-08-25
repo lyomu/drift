@@ -19,6 +19,7 @@ import {
   UpdateLeagueDto,
   CreateSeasonDto,
   UpdateSeasonDto,
+  IssueSeasonAwardDto,
 } from './dto/league.dto';
 import {
   ResolveDisputeDto,
@@ -114,6 +115,18 @@ export class CompetitionsAdminController {
   async generateFixtures(@Req() req: Request, @Param('id') id: string) {
     await this.assertSeasonAccess(req, id);
     return this.competitions.adminGenerateFixtures(id);
+  }
+
+  @Post('seasons/:id/complete')
+  async completeSeason(@Req() req: Request, @Param('id') id: string) {
+    await this.assertSeasonAccess(req, id);
+    return this.competitions.completeSeason(id);
+  }
+
+  @Post('seasons/:id/awards')
+  async issueAward(@Req() req: Request, @Param('id') id: string, @Body() dto: IssueSeasonAwardDto) {
+    await this.assertSeasonAccess(req, id);
+    return this.competitions.issueSeasonAward(id, this.userId(req), dto);
   }
 
   @Patch('fixtures/:id')

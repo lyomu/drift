@@ -33,6 +33,8 @@ import '../../features/competitions/presentation/standings_screen.dart';
 import '../../features/clubs/presentation/club_announcements_screen.dart';
 import '../../features/clubs/presentation/club_feed_screen.dart';
 import '../../features/clubs/presentation/club_profile_screen.dart';
+import '../../features/coaches/presentation/coach_list_screen.dart';
+import '../../features/coaches/presentation/coach_profile_screen.dart';
 import '../../features/connections/presentation/connections_list_screen.dart';
 import '../../features/connections/presentation/pending_requests_screen.dart';
 import '../../features/courts/presentation/court_photos_gallery_screen.dart';
@@ -72,6 +74,10 @@ import '../../features/padel/presentation/padel_assessment_question_screen.dart'
 import '../../features/padel/presentation/padel_match_history_screen.dart';
 import '../../features/padel/presentation/padel_preferences_goals_screen.dart';
 import '../../features/padel/presentation/padel_profile_screen.dart';
+import '../../features/payments/presentation/billing_history_screen.dart';
+import '../../features/payments/presentation/payment_methods_screen.dart';
+import '../../features/payments/presentation/plan_selection_screen.dart';
+import '../../features/payments/presentation/subscription_plan_screen.dart';
 import '../../features/profile/presentation/edit_profile_screen.dart';
 import '../../features/profile/presentation/my_sports_hub_screen.dart';
 import '../../features/profile/presentation/own_profile_screen.dart';
@@ -272,6 +278,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             LadderDetailScreen(ladderId: state.pathParameters['id']!),
       ),
       GoRoute(
+        path: '/discover/coaches',
+        builder: (context, state) => CoachListScreen(
+          initialClubId: state.uri.queryParameters['clubId'],
+          initialClubName: state.uri.queryParameters['clubName'],
+        ),
+      ),
+      GoRoute(
+        path: '/discover/coaches/:id',
+        builder: (context, state) =>
+            CoachProfileScreen(coachId: state.pathParameters['id']!),
+      ),
+      GoRoute(
         path: '/discover/courts/:id',
         builder: (context, state) =>
             CourtProfileScreen(courtId: state.pathParameters['id']!),
@@ -434,6 +452,24 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/settings/blocked-users',
         builder: (context, state) => const BlockedUsersScreen(),
+      ),
+      GoRoute(
+        path: '/settings/subscription',
+        builder: (context, state) => const SubscriptionPlanScreen(),
+      ),
+      GoRoute(
+        path: '/settings/subscription/plans',
+        builder: (context, state) => const PlanSelectionScreen(),
+      ),
+      GoRoute(
+        path: '/settings/payment-methods',
+        builder: (context, state) => PaymentMethodsScreen(
+          pendingPlanId: state.uri.queryParameters['planId'],
+        ),
+      ),
+      GoRoute(
+        path: '/settings/billing-history',
+        builder: (context, state) => const BillingHistoryScreen(),
       ),
       GoRoute(
         path: '/settings/account-security',

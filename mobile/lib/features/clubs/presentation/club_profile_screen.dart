@@ -127,6 +127,21 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
         ],
         const SizedBox(height: DriftSpacing.s4),
 
+        DriftButton(
+          label: 'View coaches',
+          variant: DriftButtonVariant.text,
+          onPressed: () => context.push(
+            Uri(
+              path: '/discover/coaches',
+              queryParameters: {
+                'clubId': summary.id,
+                'clubName': summary.name,
+              },
+            ).toString(),
+          ),
+        ),
+        const SizedBox(height: DriftSpacing.s4),
+
         if (profile.phone != null || profile.website != null)
           DriftCard(
             child: Column(

@@ -7,6 +7,23 @@ import { PlatformAdminController } from './platform-admin.controller';
 import { PlatformAdminService } from './platform-admin.service';
 import { AuditService } from './audit.service';
 import { PlatformJwtStrategy } from './strategies/platform-jwt.strategy';
+import { AccessControlController } from './access-control.controller';
+import { AccessControlService } from './access-control.service';
+import { PlatformPermissionGuard } from './guards/platform-permission.guard';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { PlatformAnalyticsController } from './platform-analytics.controller';
+import { PlatformAnalyticsService } from './platform-analytics.service';
+import { PlatformTelemetryService } from './platform-telemetry.service';
+import { VenueAdminController } from './venue-admin.controller';
+import { VenueAdminService } from './venue-admin.service';
+import { OrganizationAdminController } from './organization-admin.controller';
+import { OrganizationAdminService } from './organization-admin.service';
+import { CompetitionAdminController } from './competition-admin.controller';
+import { CompetitionAdminService } from './competition-admin.service';
+import { LearningContentAdminController } from './learning-content-admin.controller';
+import { LearningContentAdminService } from './learning-content-admin.service';
+import { CommercialAdminController } from './commercial-admin.controller';
+import { CommercialAdminService } from './commercial-admin.service';
 
 @Module({
   imports: [
@@ -26,7 +43,30 @@ import { PlatformJwtStrategy } from './strategies/platform-jwt.strategy';
     }),
     MatchesModule,
   ],
-  controllers: [PlatformAdminController],
-  providers: [PlatformAdminService, AuditService, PlatformJwtStrategy],
+  controllers: [
+    PlatformAdminController,
+    AccessControlController,
+    PlatformAnalyticsController,
+    VenueAdminController,
+    OrganizationAdminController,
+    CompetitionAdminController,
+    LearningContentAdminController,
+    CommercialAdminController,
+  ],
+  providers: [
+    PlatformAdminService,
+    AccessControlService,
+    PlatformAnalyticsService,
+    PlatformTelemetryService,
+    VenueAdminService,
+    OrganizationAdminService,
+    CompetitionAdminService,
+    LearningContentAdminService,
+    CommercialAdminService,
+    AuditService,
+    PlatformJwtStrategy,
+    PlatformPermissionGuard,
+    { provide: APP_INTERCEPTOR, useExisting: PlatformTelemetryService },
+  ],
 })
 export class PlatformAdminModule {}

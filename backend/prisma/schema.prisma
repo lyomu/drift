@@ -374,6 +374,81 @@ enum ListingVerificationStatus {
   VERIFIED
 }
 
+enum ClubPlatformStatus {
+  PENDING_REVIEW
+  ACTIVE
+  SUSPENDED
+}
+
+enum VenuePlacesSyncStatus {
+  SYNCED
+  STALE
+  FAILED
+}
+
+enum VenueVerificationRequestStatus {
+  PENDING
+  MORE_INFO
+  APPROVED
+  REJECTED
+}
+
+enum VenueDuplicateDecisionType {
+  DISTINCT
+  MERGED
+}
+
+// Coach Discovery / Profile — foundation/04-screen-inventory.md §A.6.
+// A small controlled vocabulary makes the Mobile level filter dependable;
+// specialisations remain free text because the foundation defines no
+// canonical coaching-specialisation catalogue.
+enum CoachLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  COMPETITIVE
+}
+
+enum BillingAudience {
+  PLAYER
+  CLUB
+}
+
+enum BillingInterval {
+  MONTHLY
+  YEARLY
+}
+
+enum BillingSubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+}
+
+enum PaymentMethodType {
+  CARD
+  MOBILE_MONEY
+}
+
+enum BillingInvoiceStatus {
+  OPEN
+  PAID
+  FAILED
+  VOID
+}
+
+enum PaymentTransactionStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+enum PromotionDiscountType {
+  PERCENT
+  AMOUNT
+}
+
 // foundation/06-domain-technical-architecture.md §1 court sketch: "surface,
 // indoor/outdoor, lighting". Kept to the surfaces this seed's UK courts
 // actually use — extend if a future data source reports something else.
@@ -435,6 +510,8 @@ model User {
 
   tennisProfile     TennisProfile?
   padelProfile      PadelProfile?
+  coachProfile      CoachProfile?
+  billingAccount    BillingAccount?
   verificationCodes VerificationCode[]
   refreshTokens     RefreshToken[]
 
@@ -481,6 +558,16 @@ model User {
   fixturesAsSideA     Fixture[]            @relation("FixtureSideA")
   fixturesAsSideB     Fixture[]            @relation("FixtureSideB")
   standings           Standing[]
+  seasonAwardsReceived    SeasonAward[]              @relation("SeasonAwardRecipient")
+  seasonAwardsIssued      SeasonAward[]              @relation("SeasonAwardIssuer")
+  eventRegistrations      ClubEventRegistration[]
+  clubEventsCreated       ClubEvent[]                @relation("ClubEventCreator")
+  clubPostReportsMade     ClubPostModerationReport[] @relation("ClubPostReporter")
+  clubPostReportsResolved ClubPostModerationReport[] @relation("ClubPostReportResolver")
+  clubAuditActions        ClubAuditLog[]             @relation("ClubAuditActor")
+  mediaAssetsUploaded     ClubMediaAsset[]           @relation("ClubMediaUploader")
+  courtInquiries          CourtInquiry[]
+  venueVerificationRequests VenueVerificationRequest[]
 
   @@map("users")
 }
@@ -934,6 +1021,9 @@ model League {
   name        String
   description String?
   rulesText   String?
+  scoringFormat         String?
+  walkoverRule          String?
+  unfinishedMatchPolicy String?
   // SINGLES enforced by competitions.service.ts this phase — a doubles
   // league needs pair-registration, which Doc 6 doesn't specify.
   format      MatchFormat @default(SINGLES)
@@ -972,6 +1062,7 @@ model Season {
 
   cancelledAt  DateTime?
   cancelReason String?
+  completedAt  DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -979,8 +1070,26 @@ model Season {
   registrations SeasonRegistration[]
   rounds        Round[]
   standings     Standing[]
+  awards        SeasonAward[]
 
   @@map("seasons")
+}
+
+model SeasonAward {
+  id          String @id @default(uuid())
+  seasonId    String
+  season      Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  recipientId String
+  recipient   User   @relation("SeasonAwardRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  issuedById  String
+  issuedBy    User   @relation("SeasonAwardIssuer", fields: [issuedById], references: [id], onDelete: Restrict)
+  title       String
+  notes       String?
+  issuedAt    DateTime @default(now())
+
+  @@unique([seasonId, recipientId, title])
+  @@index([seasonId, issuedAt])
+  @@map("season_awards")
 }
 
 model SeasonRegistration {
@@ -1212,11 +1321,13 @@ model Court {
   // yet. Empty array is the honest default, not a fabricated placeholder.
   photoUrls String[]
 
-  // Optional enrichment hook per Doc 6 §1 — never populated this phase (no
-  // Google Places API integration exists; that needs a billing decision,
-  // tracked as an open dependency in PROGRESS.md). Always null until real
-  // ingestion exists.
+  // Optional enrichment hook per Doc 6 §1. Platform Admin can link a real
+  // Place ID and refresh provider-owned fields when credentials are present;
+  // null remains the honest state for curated or non-Google venues.
   googlePlacesRef String?
+  googlePlacesSyncStatus VenuePlacesSyncStatus @default(STALE)
+  googlePlacesSyncedAt   DateTime?
+  googlePlacesSyncError  String?
 
   verificationStatus ListingVerificationStatus @default(UNVERIFIED)
 
@@ -1226,9 +1337,11 @@ model Court {
   courtGroups CourtGroup[]
   reports     CourtReport[]
   matches     Match[]
+  inquiries   CourtInquiry[]
 
   @@index([latitude, longitude])
   @@index([clubId])
+  @@index([googlePlacesSyncStatus, googlePlacesSyncedAt])
   @@map("courts")
 }
 
@@ -1298,6 +1411,9 @@ model Club {
   photoUrls        String[]
 
   verificationStatus ListingVerificationStatus @default(UNVERIFIED)
+  platformStatus     ClubPlatformStatus        @default(ACTIVE)
+  platformStatusReason String?
+  platformSuspendedAt  DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1309,8 +1425,18 @@ model Club {
   posts         ClubPost[]
   tournaments   Tournament[]
   ladders       Ladder[]
+  coachAffiliations CoachClubAffiliation[]
+  billingAccount BillingAccount?
+  events         ClubEvent[]
+  mediaAssets    ClubMediaAsset[]
+  moderationReports ClubPostModerationReport[]
+  notificationSettings ClubNotificationSettings?
+  auditLogs      ClubAuditLog[]
+  courtInquiries CourtInquiry[]
+  venueVerificationRequests VenueVerificationRequest[]
 
   @@index([latitude, longitude])
+  @@index([platformStatus, updatedAt])
   @@map("clubs")
 }
 
@@ -1407,9 +1533,155 @@ model ClubPost {
   createdAt DateTime @default(now())
 
   reactions ClubPostReaction[]
+  moderationReports ClubPostModerationReport[]
 
   @@index([clubId, createdAt])
   @@map("club_posts")
+}
+
+enum CourtInquiryKind {
+  PROFILE_VIEW
+  CONTACT
+  BOOKING
+}
+
+model CourtInquiry {
+  id        String @id @default(uuid())
+  clubId    String
+  club      Club @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  courtId   String
+  court     Court @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  viewerId  String?
+  viewer    User? @relation(fields: [viewerId], references: [id], onDelete: SetNull)
+  kind      CourtInquiryKind
+  createdAt DateTime @default(now())
+
+  @@index([clubId, createdAt])
+  @@index([courtId, kind, createdAt])
+  @@map("court_inquiries")
+}
+
+enum ClubPostModerationStatus {
+  PENDING
+  APPROVED
+  REMOVED
+  ESCALATED
+}
+
+model ClubPostModerationReport {
+  id           String @id @default(uuid())
+  clubId       String
+  club         Club @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  postId       String
+  post         ClubPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  reporterId   String
+  reporter     User @relation("ClubPostReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  reason       String
+  status       ClubPostModerationStatus @default(PENDING)
+  resolvedById String?
+  resolvedBy   User? @relation("ClubPostReportResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+  resolvedAt   DateTime?
+  createdAt    DateTime @default(now())
+
+  @@index([clubId, status, createdAt])
+  @@map("club_post_moderation_reports")
+}
+
+model ClubMediaAsset {
+  id           String @id @default(uuid())
+  clubId       String
+  club         Club @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  uploadedById String
+  uploadedBy   User @relation("ClubMediaUploader", fields: [uploadedById], references: [id], onDelete: Restrict)
+  filename     String
+  mimeType     String
+  bytes        Bytes
+  caption      String?
+  createdAt    DateTime @default(now())
+
+  @@index([clubId, createdAt])
+  @@map("club_media_assets")
+}
+
+model ClubNotificationSettings {
+  id                 String @id @default(uuid())
+  clubId             String @unique
+  club               Club @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  membershipChanges  Boolean @default(true)
+  competitionUpdates Boolean @default(true)
+  eventRegistrations Boolean @default(true)
+  moderationAlerts   Boolean @default(true)
+  weeklyDigest       Boolean @default(true)
+  updatedAt          DateTime @updatedAt
+
+  @@map("club_notification_settings")
+}
+
+model ClubAuditLog {
+  id         String @id @default(uuid())
+  clubId     String
+  club       Club @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  actorId    String
+  actor      User @relation("ClubAuditActor", fields: [actorId], references: [id], onDelete: Restrict)
+  action     String
+  entityType String
+  entityId   String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([clubId, createdAt])
+  @@index([clubId, action])
+  @@map("club_audit_logs")
+}
+
+enum ClubEventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+  COMPLETED
+}
+
+enum ClubEventRegistrationStatus {
+  REGISTERED
+  CANCELLED
+  ATTENDED
+  NO_SHOW
+}
+
+model ClubEvent {
+  id          String @id @default(uuid())
+  clubId      String
+  club        Club @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  createdById String
+  createdBy   User @relation("ClubEventCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  name        String
+  description String?
+  startsAt    DateTime
+  endsAt      DateTime?
+  capacity    Int?
+  status      ClubEventStatus @default(DRAFT)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  registrations ClubEventRegistration[]
+
+  @@index([clubId, startsAt])
+  @@map("club_events")
+}
+
+model ClubEventRegistration {
+  id           String @id @default(uuid())
+  eventId      String
+  event        ClubEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status       ClubEventRegistrationStatus @default(REGISTERED)
+  registeredAt DateTime @default(now())
+  attendedAt   DateTime?
+
+  @@unique([eventId, userId])
+  @@index([eventId, status])
+  @@map("club_event_registrations")
 }
 
 model ClubPostReaction {
@@ -1454,6 +1726,7 @@ model LearningContent {
   bodyText        String?
   videoUrl        String?
   durationMinutes Int?
+  pathGoal        String?
 
   status LearningContentStatus @default(PUBLISHED)
 
@@ -1723,6 +1996,9 @@ model PlatformAdmin {
   email        String   @unique
   passwordHash String
   name         String?
+  roleId       String
+  role         PlatformRole @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  twoFactorEnabled Boolean @default(true)
 
   createdAt  DateTime   @default(now())
   lastLoginAt DateTime?
@@ -1730,8 +2006,293 @@ model PlatformAdmin {
 
   auditLogs AdminAuditLog[]
   ruledResults MatchResult[]
+  twoFactorChallenges PlatformAdminTwoFactorChallenge[]
+  invitationsSent PlatformAdminInvitation[] @relation("PlatformInvitationSender")
+  venueVerificationReviews VenueVerificationRequest[] @relation("VenueVerificationReviewer")
+  venueDuplicateDecisions VenueDuplicateDecision[]
 
+  @@index([roleId, deactivatedAt])
   @@map("platform_admins")
+}
+
+enum PlatformPermission {
+  ACCESS_MANAGE
+  USERS_MANAGE
+  ANALYTICS_READ
+  VENUES_MANAGE
+  ORGANIZATIONS_MANAGE
+  COMPETITIONS_MANAGE
+  CONTENT_MANAGE
+  COMMERCIAL_MANAGE
+  TRUST_SAFETY_MANAGE
+  PLATFORM_CONFIG_MANAGE
+  SUPPORT_MANAGE
+  AUDIT_READ
+}
+
+model PlatformRole {
+  id          String @id @default(uuid())
+  name        String @unique
+  description String?
+  isSystem    Boolean @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  permissions PlatformRolePermission[]
+  admins      PlatformAdmin[]
+  invitations PlatformAdminInvitation[]
+
+  @@map("platform_roles")
+}
+
+model PlatformRolePermission {
+  roleId     String
+  role       PlatformRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission PlatformPermission
+
+  @@id([roleId, permission])
+  @@index([permission])
+  @@map("platform_role_permissions")
+}
+
+model PlatformAdminTwoFactorChallenge {
+  id         String @id @default(uuid())
+  adminId    String
+  admin      PlatformAdmin @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  codeHash   String
+  expiresAt  DateTime
+  attempts   Int @default(0)
+  consumedAt DateTime?
+  createdAt  DateTime @default(now())
+
+  @@index([adminId, expiresAt])
+  @@map("platform_admin_two_factor_challenges")
+}
+
+model PlatformAdminInvitation {
+  id          String @id @default(uuid())
+  email       String
+  roleId      String
+  role        PlatformRole @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  invitedById String
+  invitedBy   PlatformAdmin @relation("PlatformInvitationSender", fields: [invitedById], references: [id], onDelete: Restrict)
+  tokenHash   String @unique
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([email, acceptedAt])
+  @@map("platform_admin_invitations")
+}
+
+// A Coach is an existing Drift User with a public professional extension.
+// Public contact fields are deliberately separate from User.email/phone:
+// player account contact data remains private unless the coach explicitly
+// publishes a channel here.
+model CoachProfile {
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  bio                String?
+  qualifications     String[] @default([])
+  yearsExperience    Int?
+  specialisations    String[] @default([])
+  levels             CoachLevel[] @default([])
+  availabilityNote   String?
+  publicEmail         String?
+  publicPhone         String?
+  bookingUrl          String?
+  verificationStatus ListingVerificationStatus @default(UNVERIFIED)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  affiliations CoachClubAffiliation[]
+
+  @@index([verificationStatus])
+  @@map("coach_profiles")
+}
+
+model CoachClubAffiliation {
+  id             String       @id @default(uuid())
+  coachProfileId String
+  coachProfile   CoachProfile @relation(fields: [coachProfileId], references: [id], onDelete: Cascade)
+  clubId         String
+  club           Club         @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+
+  @@unique([coachProfileId, clubId])
+  @@index([clubId])
+  @@map("coach_club_affiliations")
+}
+
+// Provider-neutral billing foundation. BillingAccount deliberately owns
+// either a User or a Club; the migration adds the exactly-one-owner CHECK
+// constraint Prisma cannot express. No raw card/mobile-money credentials are
+// stored: PaymentMethod keeps only an opaque provider token and masked display
+// metadata returned by the provider adapter.
+model PaymentPlan {
+  id           String          @id @default(uuid())
+  code         String          @unique
+  name         String
+  description  String?
+  audience     BillingAudience
+  priceMinor   Int
+  currency     String
+  interval     BillingInterval
+  entitlements String[]        @default([])
+  isActive     Boolean         @default(true)
+  isTest       Boolean         @default(false)
+  sortOrder    Int             @default(0)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  subscriptions BillingSubscription[]
+  invoices      BillingInvoice[]
+
+  @@index([audience, isActive, sortOrder])
+  @@map("payment_plans")
+}
+
+model BillingAccount {
+  id     String @id @default(uuid())
+  userId String? @unique
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clubId String? @unique
+  club   Club?   @relation(fields: [clubId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subscription  BillingSubscription?
+  paymentMethods PaymentMethod[]
+  invoices       BillingInvoice[]
+  transactions   PaymentTransaction[]
+
+  @@map("billing_accounts")
+}
+
+model BillingSubscription {
+  id               String                    @id @default(uuid())
+  billingAccountId String                    @unique
+  billingAccount   BillingAccount            @relation(fields: [billingAccountId], references: [id], onDelete: Cascade)
+  planId           String
+  plan             PaymentPlan               @relation(fields: [planId], references: [id])
+  status           BillingSubscriptionStatus @default(ACTIVE)
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  providerReference  String?
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
+
+  @@index([planId, status])
+  @@map("billing_subscriptions")
+}
+
+model PaymentMethod {
+  id               String            @id @default(uuid())
+  billingAccountId String
+  billingAccount   BillingAccount    @relation(fields: [billingAccountId], references: [id], onDelete: Cascade)
+  type             PaymentMethodType
+  provider         String
+  providerToken    String            @unique
+  brand            String?
+  last4            String
+  label            String
+  isDefault        Boolean           @default(false)
+  removedAt        DateTime?
+  createdAt        DateTime          @default(now())
+
+  transactions PaymentTransaction[]
+
+  @@index([billingAccountId, removedAt])
+  @@map("payment_methods")
+}
+
+model BillingInvoice {
+  id               String               @id @default(uuid())
+  number           String               @unique
+  billingAccountId String
+  billingAccount   BillingAccount       @relation(fields: [billingAccountId], references: [id], onDelete: Cascade)
+  planId           String
+  plan             PaymentPlan          @relation(fields: [planId], references: [id])
+  amountMinor      Int
+  currency         String
+  status           BillingInvoiceStatus @default(OPEN)
+  description      String
+  periodStart      DateTime
+  periodEnd        DateTime
+  paidAt           DateTime?
+  createdAt        DateTime             @default(now())
+
+  transaction PaymentTransaction?
+
+  @@index([billingAccountId, createdAt])
+  @@index([status])
+  @@map("billing_invoices")
+}
+
+model PaymentTransaction {
+  id               String                   @id @default(uuid())
+  billingAccountId String
+  billingAccount   BillingAccount           @relation(fields: [billingAccountId], references: [id], onDelete: Cascade)
+  invoiceId        String                   @unique
+  invoice          BillingInvoice           @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  paymentMethodId  String?
+  paymentMethod    PaymentMethod?           @relation(fields: [paymentMethodId], references: [id], onDelete: SetNull)
+  provider         String
+  providerReference String                  @unique
+  amountMinor      Int
+  currency         String
+  status           PaymentTransactionStatus
+  failureReason    String?
+  createdAt        DateTime                 @default(now())
+
+  @@index([billingAccountId, createdAt])
+  @@index([status])
+  @@map("payment_transactions")
+}
+
+model Promotion {
+  id             String                @id @default(uuid())
+  code           String                @unique
+  name           String
+  description    String?
+  audience       BillingAudience?
+  discountType   PromotionDiscountType
+  percentOff     Int?
+  amountOffMinor Int?
+  currency       String?
+  startsAt       DateTime
+  endsAt         DateTime?
+  maxRedemptions Int?
+  isActive       Boolean               @default(true)
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  @@index([isActive, startsAt, endsAt])
+  @@index([audience, isActive])
+  @@map("promotions")
+}
+
+model SponsorPlacement {
+  id             String   @id @default(uuid())
+  name           String
+  sponsorName    String
+  placementKey   String
+  destinationUrl String?
+  imageUrl       String?
+  startsAt       DateTime
+  endsAt         DateTime?
+  isActive       Boolean  @default(true)
+  deactivatedAt  DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([placementKey, isActive])
+  @@index([startsAt, endsAt])
+  @@map("sponsor_placements")
 }
 
 /// Consequential administrative writes land here. Club-admin actions are
@@ -1752,6 +2313,65 @@ model AdminAuditLog {
   @@index([entityType, entityId])
   @@index([actorId, createdAt])
   @@map("admin_audit_logs")
+}
+
+model CompetitionRuleset {
+  id          String      @id @default(uuid())
+  name        String
+  description String?
+  sport       MatchSport  @default(TENNIS)
+  format      MatchFormat @default(SINGLES)
+
+  competitionTypes       String[] @default([])
+  scoringFormat          String
+  walkoverRule           String
+  unfinishedMatchPolicy  String
+  rulesText              String?
+  isDefault              Boolean  @default(false)
+  isActive               Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sport, format, isActive])
+  @@index([isDefault])
+  @@map("competition_rulesets")
+}
+
+model VenueVerificationRequest {
+  id            String                         @id @default(uuid())
+  clubId        String
+  club          Club                           @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  submittedById String
+  submittedBy   User                           @relation(fields: [submittedById], references: [id], onDelete: Restrict)
+  status        VenueVerificationRequestStatus @default(PENDING)
+  submissionNote String?
+  decisionNote   String?
+  reviewedById   String?
+  reviewedBy     PlatformAdmin?                @relation("VenueVerificationReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewedAt     DateTime?
+  createdAt      DateTime                       @default(now())
+  updatedAt      DateTime                       @updatedAt
+
+  @@index([status, createdAt])
+  @@index([clubId, createdAt])
+  @@map("venue_verification_requests")
+}
+
+model VenueDuplicateDecision {
+  id               String                     @id @default(uuid())
+  pairKey          String                     @unique
+  firstCourtId     String
+  secondCourtId    String
+  decision         VenueDuplicateDecisionType
+  survivorCourtId  String?
+  decidedById      String
+  decidedBy        PlatformAdmin              @relation(fields: [decidedById], references: [id], onDelete: Restrict)
+  metadata         Json?
+  createdAt        DateTime                   @default(now())
+
+  @@index([decision, createdAt])
+  @@map("venue_duplicate_decisions")
 }
 
 // ---------------------------------------------------------------------------

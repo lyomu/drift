@@ -1,6 +1,6 @@
 "use client";
 
-import { ButtonHTMLAttributes, InputHTMLAttributes, SelectHTMLAttributes } from "react";
+import { ButtonHTMLAttributes, InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
 
 const focusRing =
   "focus:outline-none focus-visible:ring-2 focus-visible:ring-drift-primary focus-visible:ring-offset-1";
@@ -43,6 +43,15 @@ export function Select(props: SelectHTMLAttributes<HTMLSelectElement>) {
     <select
       {...props}
       className={`w-full rounded-md border border-drift-border bg-drift-surface px-3 py-2 text-sm text-drift-text-primary ${focusRing} ${props.className ?? ""}`}
+    />
+  );
+}
+
+export function Textarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  return (
+    <textarea
+      {...props}
+      className={`w-full rounded-md border border-drift-border bg-drift-surface px-3 py-2 text-sm text-drift-text-primary placeholder:text-drift-text-secondary ${focusRing} ${props.className ?? ""}`}
     />
   );
 }
@@ -151,17 +160,43 @@ export function statusTone(status: string): "neutral" | "success" | "warning" | 
     case "RESOLVED":
     case "APPROVED":
     case "CONFIRMED":
+    case "HEALTHY":
+    case "SUCCEEDED":
+    case "VERIFIED":
+    case "SYNCED":
+    case "PUBLISHED":
+    case "REGISTRATION_OPEN":
+    case "RUNNING":
+    case "COMPLETED":
       return "success";
     case "SUSPENDED":
     case "DISPUTED":
     case "REJECTED":
     case "BLOCKED":
+    case "DOWN":
+    case "FAILED":
+    case "CANCELLED":
+    case "REMOVED":
       return "error";
     case "OPEN":
     case "PENDING":
+    case "PENDING_REVIEW":
     case "REVIEWING":
     case "PAUSED":
+    case "DEGRADED":
+    case "PAST_DUE":
+    case "STALE":
+    case "MORE_INFO":
+    case "ESCALATED":
+    case "DRAFT":
+    case "SCHEDULED":
       return "warning";
+    case "ARCHIVED":
+    case "INACTIVE":
+    case "EXPIRED":
+    case "ENDED":
+    case "REFUNDED":
+      return "info";
     default:
       return "neutral";
   }

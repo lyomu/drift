@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { api, ApiError } from "@/lib/api-client";
+import { api, ApiError, downloadBlob } from "@/lib/api-client";
 import { useClub } from "@/lib/club-context";
 import {
   Button,
@@ -70,6 +70,16 @@ export default function MembersPage() {
     }
   }
 
+  async function handleExport() {
+    if (!clubId) return;
+    setError(null);
+    try {
+      downloadBlob(await api.blob(`/clubs/${clubId}/members.csv`), "members.csv");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Member export failed. Try again.");
+    }
+  }
+
   async function handleRoleChange(membershipId: string, role: ClubRole) {
     if (!clubId) return;
     setError(null);
@@ -119,6 +129,7 @@ export default function MembersPage() {
       <PageHeader
         title="Members"
         description="Everyone with admin access to this club."
+        action={<Button variant="secondary" onClick={() => void handleExport()}>Export CSV</Button>}
       />
       <ErrorBanner message={error} />
 

@@ -10,7 +10,7 @@
  * deactivation. Further admins are then creatable in-app later if needed.
  */
 import 'dotenv/config';
-import { PrismaClient } from '@prisma/client';
+import { PlatformPermission, PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import * as bcrypt from 'bcrypt';
 
@@ -36,9 +36,32 @@ async function main() {
   try {
     // Non-null: the guard above exits when either value is missing.
     const passwordHash = await bcrypt.hash(password!, 10);
+    const role = await prisma.platformRole.upsert({
+      where: { name: 'Super Admin' },
+      create: {
+        name: 'Super Admin',
+        description: 'Protected bootstrap role with full platform access.',
+        isSystem: true,
+        permissions: {
+          create: Object.values(PlatformPermission).map((permission) => ({
+            permission,
+          })),
+        },
+      },
+      update: {
+        permissions: {
+          createMany: {
+            data: Object.values(PlatformPermission).map((permission) => ({
+              permission,
+            })),
+            skipDuplicates: true,
+          },
+        },
+      },
+    });
     const admin = await prisma.platformAdmin.upsert({
       where: { email: email! },
-      create: { email: email!, passwordHash },
+      create: { email: email!, passwordHash, roleId: role.id },
       update: { passwordHash, deactivatedAt: null },
     });
     console.log(`Platform admin ready: ${admin.email} (${admin.id})`);

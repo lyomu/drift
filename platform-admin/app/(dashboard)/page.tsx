@@ -1,121 +1,141 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { api } from "@/lib/api-client";
+import { api, ApiError } from "@/lib/api-client";
+import type { OverviewReport } from "@/lib/analytics-types";
 import {
-  Badge,
-  Card,
-  EmptyState,
-  ErrorBanner,
-  PageHeader,
-  statusTone,
-} from "@/components/ui";
+  DateRangeToolbar,
+  MetricStrip,
+  SectionHeading,
+  defaultDateRange,
+  formatMoney,
+  formatNumber,
+  queryForRange,
+} from "@/components/analytics";
+import { Card, EmptyState, ErrorBanner, PageHeader } from "@/components/ui";
 
-interface Counts {
-  users: number;
-  openReports: { player: number; message: number; court: number };
-  disputes: number;
-}
+const initialRange = defaultDateRange();
 
 export default function OverviewPage() {
-  const [counts, setCounts] = useState<Counts | null>(null);
+  const [from, setFrom] = useState(initialRange.from);
+  const [to, setTo] = useState(initialRange.to);
+  const [report, setReport] = useState<OverviewReport | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      setReport(
+        await api.get<OverviewReport>(`/analytics/overview?${queryForRange(from, to)}`),
+      );
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Platform KPIs could not be loaded.");
+    } finally {
+      setLoading(false);
+    }
+  }, [from, to]);
 
   useEffect(() => {
-    (async () => {
-      try {
-        const [users, player, message, court, disputes] = await Promise.all([
-          api.get<{ total: number }>("/users?take=1"),
-          api.get<{ reports: unknown[] }>("/reports/player?status=OPEN"),
-          api.get<{ reports: unknown[] }>("/reports/message?status=OPEN"),
-          api.get<{ reports: unknown[] }>("/reports/court?status=OPEN"),
-          api.get<{ disputes: unknown[] }>("/disputes"),
-        ]);
-        setCounts({
-          users: users.total,
-          openReports: {
-            player: player.reports.length,
-            message: message.reports.length,
-            court: court.reports.length,
-          },
-          disputes: disputes.disputes.length,
-        });
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load.");
-      }
-    })();
-  }, []);
+    void load();
+  }, [load]);
+
+  const revenue = report?.metrics.revenue ?? [];
 
   return (
     <div>
       <PageHeader
         title="Platform overview"
-        description="Governance state across the whole Drift ecosystem."
+        description="Activation, play, and commercial health across the selected operating window."
+      />
+      <DateRangeToolbar
+        from={from}
+        to={to}
+        loading={loading}
+        onFromChange={setFrom}
+        onToChange={setTo}
+        onApply={() => void load()}
       />
       <ErrorBanner message={error} />
-      {!counts && !error && (
-        <EmptyState message="Loading platform state…" />
-      )}
-      {counts && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {loading && !report && <EmptyState message="Loading platform KPIs…" />}
+
+      {report && (
+        <>
+          <MetricStrip
+            metrics={[
+              {
+                label: "Player accounts",
+                value: formatNumber(report.metrics.players),
+                note: `${formatNumber(report.metrics.activePlayers)} currently active`,
+              },
+              {
+                label: "New players",
+                value: formatNumber(report.metrics.newPlayers),
+                note: "Registered in this period",
+              },
+              {
+                label: "Onboarding completed",
+                value: formatNumber(report.metrics.onboardingCompletions),
+                note: "Completion timestamp in this period",
+              },
+              {
+                label: "Matches finished",
+                value: formatNumber(report.metrics.finishedMatches),
+                note: "Completed, retired, or walkover",
+              },
+            ]}
+          />
+
+          <SectionHeading
+            title="Commercial pulse"
+            description={`${formatNumber(report.metrics.activeSubscriptions)} active subscriptions. Revenue is kept separate by currency.`}
+          />
           <Card>
-            <div className="text-sm font-semibold text-drift-text-secondary">
-              Player accounts
-            </div>
-            <div className="mt-1 font-display text-3xl font-bold text-drift-text-primary">
-              {counts.users}
-            </div>
-            <Link
-              href="/users"
-              className="mt-2 inline-block text-sm font-semibold text-drift-primary hover:underline"
-            >
-              Manage users →
-            </Link>
+            {revenue.length === 0 ? (
+              <p className="text-sm text-drift-text-secondary">No revenue recorded in this period.</p>
+            ) : (
+              <div className="flex flex-wrap gap-x-10 gap-y-4">
+                {revenue.map((item) => (
+                  <div key={item.currency}>
+                    <div className="font-display text-2xl font-bold tabular-nums text-drift-text-primary">
+                      {formatMoney(item.amountMinor, item.currency)}
+                    </div>
+                    <div className="mt-1 text-sm text-drift-text-secondary">
+                      {formatNumber(item.transactions)} successful payments
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </Card>
 
-          <Card>
-            <div className="text-sm font-semibold text-drift-text-secondary">
-              Open reports
-            </div>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <Badge tone={counts.openReports.player > 0 ? "warning" : "success"}>
-                Players · {counts.openReports.player}
-              </Badge>
-              <Badge tone={counts.openReports.message > 0 ? "warning" : "success"}>
-                Messages · {counts.openReports.message}
-              </Badge>
-              <Badge tone={counts.openReports.court > 0 ? "warning" : "success"}>
-                Courts · {counts.openReports.court}
-              </Badge>
-            </div>
-            <Link
-              href="/reports"
-              className="mt-3 inline-block text-sm font-semibold text-drift-primary hover:underline"
-            >
-              Triage reports →
-            </Link>
-          </Card>
-
-          <Card>
-            <div className="text-sm font-semibold text-drift-text-secondary">
-              Disputes awaiting a ruling
-            </div>
-            <div className="mt-2">
-              <Badge tone={counts.disputes > 0 ? "error" : "success"}>
-                {counts.disputes === 0
-                  ? "None — every dispute is settled"
-                  : `${counts.disputes} disputed match${counts.disputes === 1 ? "" : "es"}`}
-              </Badge>
-            </div>
-            <Link
-              href="/disputes"
-              className="mt-3 inline-block text-sm font-semibold text-drift-primary hover:underline"
-            >
-              Review disputes →
-            </Link>
-          </Card>
-        </div>
+          <SectionHeading
+            title="Investigate"
+            description="Move from the headline into the operating view that explains it."
+          />
+          <div className="overflow-hidden rounded-lg border border-drift-border bg-drift-surface shadow-sm">
+            {[
+              ["Markets", "Compare player density, activation, and match activity by saved city.", "/analytics/markets"],
+              ["Growth", "Inspect lifecycle funnels, time series, and registration cohorts.", "/analytics/growth"],
+              ["Revenue", "Break collected and refunded subscription revenue down by source.", "/analytics/revenue"],
+              ["System health", "Check live API, database, and realtime infrastructure status.", "/analytics/system-health"],
+            ].map(([label, description, href], index) => (
+              <Link
+                key={href}
+                href={href}
+                className={`flex items-center justify-between gap-6 px-5 py-4 transition-colors hover:bg-drift-primary-light focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-drift-primary ${index > 0 ? "border-t border-drift-border" : ""}`}
+              >
+                <span>
+                  <span className="block font-semibold text-drift-text-primary">{label}</span>
+                  <span className="mt-0.5 block text-sm text-drift-text-secondary">{description}</span>
+                </span>
+                <span aria-hidden="true" className="text-drift-primary">→</span>
+              </Link>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

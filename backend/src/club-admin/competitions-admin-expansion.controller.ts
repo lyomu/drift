@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Get,
   Param,
   Patch,
   Post,
@@ -61,6 +62,17 @@ export class CompetitionsAdminExpansionController {
     return this.tournaments.generateDraw(id);
   }
 
+  @Get('tournaments/:id')
+  tournament(@Param('id') id: string) {
+    return this.tournaments.detail(id);
+  }
+
+  @RequireClubRole(...OWNER_OR_ADMIN)
+  @Patch('tournaments/:id/seeds')
+  updateSeeds(@Param('id') id: string, @Body() body: { entries: { entryId: string; seed: number }[] }) {
+    return this.tournaments.updateSeeds(id, body.entries);
+  }
+
   @RequireClubRole(...OWNER_OR_ADMIN)
   @Patch('tournaments/:id/cancel')
   cancelTournament(@Param('id') id: string) {
@@ -74,6 +86,22 @@ export class CompetitionsAdminExpansionController {
     @Body() body: { name: string; challengeRange?: number },
   ) {
     return this.ladders.create(clubId, body);
+  }
+
+  @Get('ladders')
+  listLadders(@Param('clubId') clubId: string) {
+    return this.ladders.list(clubId);
+  }
+
+  @Get('ladders/:id')
+  ladder(@Param('id') id: string) {
+    return this.ladders.detail(id);
+  }
+
+  @RequireClubRole(...OWNER_OR_ADMIN)
+  @Patch('ladders/:id/positions')
+  updatePositions(@Param('id') id: string, @Body() body: { entries: { entryId: string; position: number }[] }) {
+    return this.ladders.updatePositions(id, body.entries);
   }
 
   @RequireClubRole(...OWNER_OR_ADMIN)

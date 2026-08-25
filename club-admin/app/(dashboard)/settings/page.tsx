@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { api, ApiError } from "@/lib/api-client";
 import { useClub } from "@/lib/club-context";
@@ -88,7 +89,17 @@ export default function SettingsPage() {
 
   return (
     <div>
-      <PageHeader title="Club Settings" description="Your club's public profile." />
+      <PageHeader
+        title="Club Settings"
+        description="Your club's public profile."
+        action={
+          myRole === "OWNER" ? (
+            <Link href="/billing">
+              <Button variant="secondary">Manage billing</Button>
+            </Link>
+          ) : undefined
+        }
+      />
       <ErrorBanner message={error} />
 
       <Card className="mb-6 flex flex-wrap items-center justify-between gap-4">

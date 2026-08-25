@@ -14,6 +14,12 @@ export type ClubMembershipStatus =
 
 export type VerificationStatus = "UNVERIFIED" | "PENDING" | "VERIFIED";
 
+export type CoachLevel =
+  | "BEGINNER"
+  | "INTERMEDIATE"
+  | "ADVANCED"
+  | "COMPETITIVE";
+
 export type LeagueState = "DRAFT" | "PUBLISHED" | "CANCELLED";
 
 export type MatchSport = "TENNIS" | "PADEL";
@@ -70,6 +76,9 @@ export type LeagueSummary = {
   name: string;
   description: string | null;
   rulesText: string | null;
+  scoringFormat: string | null;
+  walkoverRule: string | null;
+  unfinishedMatchPolicy: string | null;
   format: MatchFormat;
   seasons: { id: string; label: string }[];
 };
@@ -204,4 +213,131 @@ export type CourtReport = {
   notes: string | null;
   status: ReportStatus;
   createdAt: string;
+};
+
+export type ClubEvent = {
+  id: string;
+  name: string;
+  description: string | null;
+  startsAt: string;
+  endsAt: string | null;
+  capacity: number | null;
+  status: "DRAFT" | "PUBLISHED" | "CANCELLED" | "COMPLETED";
+  _count?: { registrations: number };
+  registrations?: EventRegistration[];
+};
+
+export type EventRegistration = {
+  id: string;
+  status: "REGISTERED" | "CANCELLED" | "ATTENDED" | "NO_SHOW";
+  registeredAt: string;
+  user: { id: string; firstName: string | null; lastName: string | null; email: string | null };
+};
+
+export type LadderAdmin = {
+  id: string;
+  name: string;
+  challengeRange: number;
+  state: "ACTIVE" | "ARCHIVED";
+  _count?: { entries: number };
+  entries?: { id: string; position: number; wins: number; losses: number; user: { id: string; firstName: string | null; lastName: string | null } }[];
+};
+
+export type MediaAsset = { id: string; filename: string; mimeType: string; caption: string | null; createdAt: string };
+
+export type ModerationReport = {
+  id: string;
+  reason: string;
+  status: "PENDING" | "APPROVED" | "REMOVED" | "ESCALATED";
+  createdAt: string;
+  post: { id: string; body: string; createdAt: string; author: { firstName: string | null; lastName: string | null } | null };
+  reporter: { firstName: string | null; lastName: string | null };
+};
+
+export type CoachClub = {
+  id: string;
+  name: string;
+};
+
+export type CoachAdmin = {
+  id: string;
+  userId: string;
+  accountEmail: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  photoUrl: string | null;
+  bio: string | null;
+  qualifications: string[];
+  yearsExperience: number | null;
+  specialisations: string[];
+  levels: CoachLevel[];
+  availabilityNote: string | null;
+  verificationStatus: VerificationStatus;
+  clubs: CoachClub[];
+  publicContact: {
+    email: string | null;
+    phone: string | null;
+    bookingUrl: string | null;
+  };
+};
+
+export type BillingPlan = {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  audience: "PLAYER" | "CLUB";
+  priceMinor: number;
+  currency: string;
+  interval: "MONTHLY" | "YEARLY";
+  entitlements: string[];
+  isTest: boolean;
+};
+
+export type BillingPaymentMethod = {
+  id: string;
+  type: "CARD" | "MOBILE_MONEY";
+  provider: string;
+  brand: string | null;
+  last4: string;
+  label: string;
+  isDefault: boolean;
+  createdAt: string;
+};
+
+export type BillingSubscription = {
+  id: string;
+  status: "ACTIVE" | "PAST_DUE" | "CANCELLED";
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  plan: BillingPlan;
+};
+
+export type BillingInvoice = {
+  id: string;
+  number: string;
+  amountMinor: number;
+  currency: string;
+  status: "OPEN" | "PAID" | "FAILED" | "VOID";
+  description: string;
+  periodStart: string;
+  periodEnd: string;
+  paidAt: string | null;
+  createdAt: string;
+  plan: { id: string; name: string };
+  transaction: {
+    status: "PENDING" | "SUCCEEDED" | "FAILED" | "REFUNDED";
+    provider: string;
+    providerReference: string;
+    failureReason: string | null;
+    paymentMethodLabel: string;
+  } | null;
+};
+
+export type ClubBilling = {
+  subscription: BillingSubscription;
+  paymentMethods: BillingPaymentMethod[];
+  plans: BillingPlan[];
+  invoices: BillingInvoice[];
+  sandbox: boolean;
 };

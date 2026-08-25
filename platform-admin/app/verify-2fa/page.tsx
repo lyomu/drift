@@ -1,0 +1,127 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  api,
+  ApiError,
+  getTwoFactorChallenge,
+  setToken,
+  setTwoFactorChallenge,
+  type TwoFactorChallenge,
+} from "@/lib/api-client";
+import { Button, Card, ErrorBanner, Field, Input } from "@/components/ui";
+import type { CurrentPlatformAdmin, PlatformPermission } from "@/lib/access-types";
+
+const LANDINGS: { permission: PlatformPermission; href: string }[] = [
+  { permission: "ANALYTICS_READ", href: "/" },
+  { permission: "VENUES_MANAGE", href: "/venues" },
+  { permission: "ORGANIZATIONS_MANAGE", href: "/organizations" },
+  { permission: "ACCESS_MANAGE", href: "/access/team" },
+  { permission: "CONTENT_MANAGE", href: "/content" },
+  { permission: "COMMERCIAL_MANAGE", href: "/commercial/plans" },
+  { permission: "TRUST_SAFETY_MANAGE", href: "/reports" },
+  { permission: "USERS_MANAGE", href: "/users" },
+  { permission: "COMPETITIONS_MANAGE", href: "/competitions" },
+  { permission: "AUDIT_READ", href: "/audit-logs" },
+];
+
+export default function VerifyTwoFactorPage() {
+  const router = useRouter();
+  const [challenge, setChallenge] = useState<TwoFactorChallenge | null>(null);
+  const [code, setCode] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    const stored = getTwoFactorChallenge();
+    if (!stored) router.replace("/login");
+    else setChallenge(stored);
+  }, [router]);
+
+  async function verify(e: React.FormEvent) {
+    e.preventDefault();
+    if (!challenge) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await api.post<{ accessToken: string }>("/auth/verify-2fa", {
+        challengeToken: challenge.challengeToken,
+        code,
+      });
+      setToken(result.accessToken);
+      setTwoFactorChallenge(null);
+      const admin = await api.get<CurrentPlatformAdmin>("/auth/me");
+      const canUseOverview = admin.role.permissions.includes("ANALYTICS_READ");
+      const landing = canUseOverview
+        ? "/"
+        : (LANDINGS.find((item) => admin.role.permissions.includes(item.permission))?.href ?? "/");
+      router.replace(landing);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "The code could not be verified.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function resend() {
+    if (!challenge) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const next = await api.post<TwoFactorChallenge>("/auth/resend-2fa", {
+        challengeToken: challenge.challengeToken,
+      });
+      setChallenge(next);
+      setTwoFactorChallenge(next);
+      setCode("");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "A new code could not be sent. Sign in again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!challenge) return null;
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-drift-background px-4">
+      <Card className="w-full max-w-sm">
+        <div className="mb-6">
+          <h1 className="font-display text-2xl font-bold text-drift-text-primary">
+            Verify it’s you
+          </h1>
+          <p className="mt-2 text-sm leading-6 text-drift-text-secondary">
+            Enter the six-digit code sent to {challenge.maskedDestination}.
+          </p>
+        </div>
+        <ErrorBanner message={error} />
+        {challenge.devVerificationCode && (
+          <div className="mb-4 rounded-md bg-drift-primary-light px-4 py-3 text-sm text-drift-primary-dark">
+            Development code: <strong>{challenge.devVerificationCode}</strong>
+          </div>
+        )}
+        <form onSubmit={verify} className="flex flex-col gap-4">
+          <Field label="Verification code">
+            <Input
+              autoFocus
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              pattern="[0-9]{6}"
+              maxLength={6}
+              required
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+              className="text-center text-xl font-semibold tracking-[0.25em]"
+            />
+          </Field>
+          <Button type="submit" disabled={busy || code.length !== 6}>
+            {busy ? "Verifying…" : "Verify code"}
+          </Button>
+          <Button type="button" variant="ghost" disabled={busy} onClick={() => void resend()}>
+            Resend code
+          </Button>
+        </form>
+      </Card>
+    </div>
+  );
+}

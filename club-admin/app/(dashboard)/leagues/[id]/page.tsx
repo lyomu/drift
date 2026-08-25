@@ -108,6 +108,8 @@ export default function LeagueDetailPage() {
         description={`${league.sport} · ${league.format}`}
         action={
           canManage && (
+            <div className="flex gap-2">
+            <Link href={`/leagues/${id}/rules`}><Button variant="secondary">Rules & scoring</Button></Link>
             <Select
               value={league.state ?? "DRAFT"}
               disabled={saving}
@@ -118,6 +120,7 @@ export default function LeagueDetailPage() {
               <option value="PUBLISHED">Published</option>
               <option value="CANCELLED">Cancelled</option>
             </Select>
+            </div>
           )
         }
       />

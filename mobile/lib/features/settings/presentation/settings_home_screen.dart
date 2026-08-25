@@ -46,6 +46,13 @@ class SettingsHomeScreen extends StatelessWidget {
               onTap: () => context.push('/notifications/preferences'),
             ),
             const SizedBox(height: DriftSpacing.s5),
+            _SectionLabel('Plan & Billing'),
+            _NavRow(
+              icon: Icons.workspace_premium_outlined,
+              label: 'Subscription & Plan',
+              onTap: () => context.push('/settings/subscription'),
+            ),
+            const SizedBox(height: DriftSpacing.s5),
             _SectionLabel('Account'),
             _NavRow(
               icon: Icons.security_outlined,

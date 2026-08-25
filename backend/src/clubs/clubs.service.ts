@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { ClubPlatformStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { boundingBox, Coordinates, haversineKm } from '../common/distance.util';
 import { clubInclude, toClubProfile, toClubSummary } from './club.mapper';
@@ -26,7 +26,9 @@ export class ClubsService {
         ? { latitude: dto.latitude, longitude: dto.longitude }
         : null;
 
-    const where: Prisma.ClubWhereInput = {};
+    const where: Prisma.ClubWhereInput = {
+      platformStatus: ClubPlatformStatus.ACTIVE,
+    };
 
     if (origin && dto.maxDistanceKm !== undefined) {
       const box = boundingBox(origin, dto.maxDistanceKm);
@@ -80,7 +82,11 @@ export class ClubsService {
         select: { status: true },
       }),
     ]);
-    if (!club) {
+    if (
+      !club ||
+      (club.platformStatus !== ClubPlatformStatus.ACTIVE &&
+        membership?.status !== 'ACTIVE')
+    ) {
       throw new NotFoundException('Club not found.');
     }
     const coords = this.coordsOf(club);

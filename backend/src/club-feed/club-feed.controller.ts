@@ -68,6 +68,16 @@ export class ClubFeedController {
     return this.feed.react(clubId, postId, this.userId(req), dto);
   }
 
+  @Post(':postId/report')
+  report(
+    @Req() req: Request,
+    @Param('clubId') clubId: string,
+    @Param('postId') postId: string,
+    @Body('reason') reason: string,
+  ) {
+    return this.feed.report(clubId, postId, this.userId(req), reason);
+  }
+
   @Delete(':postId/reactions')
   unreact(
     @Req() req: Request,

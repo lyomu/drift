@@ -74,6 +74,9 @@ export function toCourtProfile(court: CourtRecord, distanceKm: number | null) {
     isPublic: court.isPublic,
     photoUrls: court.photoUrls,
     googlePlacesRef: court.googlePlacesRef,
+    googlePlacesSyncStatus: court.googlePlacesSyncStatus,
+    googlePlacesSyncedAt: court.googlePlacesSyncedAt,
+    googlePlacesSyncError: court.googlePlacesSyncError,
     courtGroups: court.courtGroups.map((g) => ({
       id: g.id,
       sport: g.sport,

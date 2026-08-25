@@ -14,6 +14,10 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import { PlatformGuard } from './guards/platform.guard';
 import { PlatformAdminService } from './platform-admin.service';
+import { AccessControlService } from './access-control.service';
+import { PlatformPermission } from '@prisma/client';
+import { PlatformPermissionGuard } from './guards/platform-permission.guard';
+import { RequirePlatformPermission } from './decorators/require-platform-permission.decorator';
 import {
   LoginPlatformAdminDto,
   ModerateStoryDto,
@@ -22,10 +26,18 @@ import {
   UpdateUserStatusDto,
   UpsertNewsSourceDto,
 } from './dto/platform-admin.dto';
+import {
+  AcceptPlatformAdminInviteDto,
+  ResendPlatformTwoFactorDto,
+  VerifyPlatformTwoFactorDto,
+} from './dto/access-control.dto';
 
 @Controller('platform-admin')
 export class PlatformAdminController {
-  constructor(private readonly platform: PlatformAdminService) {}
+  constructor(
+    private readonly platform: PlatformAdminService,
+    private readonly access: AccessControlService,
+  ) {}
 
   @Throttle({ default: { ttl: 60_000, limit: 10 } })
   @Post('auth/login')
@@ -34,7 +46,33 @@ export class PlatformAdminController {
     return this.platform.login(dto.email, dto.password);
   }
 
+  @Throttle({ default: { ttl: 60_000, limit: 10 } })
+  @Post('auth/verify-2fa')
+  @HttpCode(HttpStatus.OK)
+  verifyTwoFactor(@Body() dto: VerifyPlatformTwoFactorDto) {
+    return this.platform.verifyTwoFactor(dto.challengeToken, dto.code);
+  }
+
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
+  @Post('auth/resend-2fa')
+  @HttpCode(HttpStatus.OK)
+  resendTwoFactor(@Body() dto: ResendPlatformTwoFactorDto) {
+    return this.platform.resendTwoFactor(dto.challengeToken);
+  }
+
+  @Post('auth/accept-invite')
+  acceptInvite(@Body() dto: AcceptPlatformAdminInviteDto) {
+    return this.access.acceptInvite(dto.token, dto.name, dto.password);
+  }
+
   @UseGuards(PlatformGuard)
+  @Get('auth/me')
+  me(@Req() req: { user: { adminId: string } }) {
+    return this.access.currentAdmin(req.user.adminId);
+  }
+
+  @UseGuards(PlatformGuard, PlatformPermissionGuard)
+  @RequirePlatformPermission(PlatformPermission.USERS_MANAGE)
   @Get('users')
   listUsers(
     @Query('query') query?: string,
@@ -50,7 +88,8 @@ export class PlatformAdminController {
     });
   }
 
-  @UseGuards(PlatformGuard)
+  @UseGuards(PlatformGuard, PlatformPermissionGuard)
+  @RequirePlatformPermission(PlatformPermission.USERS_MANAGE)
   @Patch('users/:id/status')
   setUserStatus(
     @Req() req: { user: { adminId: string } },
@@ -60,7 +99,8 @@ export class PlatformAdminController {
     return this.platform.setUserStatus(req.user.adminId, id, dto.status);
   }
 
-  @UseGuards(PlatformGuard)
+  @UseGuards(PlatformGuard, PlatformPermissionGuard)
+  @RequirePlatformPermission(PlatformPermission.TRUST_SAFETY_MANAGE)
   @Get('reports/:type')
   listReports(
     @Param('type') type: 'player' | 'message' | 'court',
@@ -69,7 +109,8 @@ export class PlatformAdminController {
     return this.platform.listReports(type, status);
   }
 
-  @UseGuards(PlatformGuard)
+  @UseGuards(PlatformGuard, PlatformPermissionGuard)
+  @RequirePlatformPermission(PlatformPermission.TRUST_SAFETY_MANAGE)
   @Patch('reports/:type/:id')
   updateReport(
     @Req() req: { user: { adminId: string } },
@@ -80,13 +121,15 @@ export class PlatformAdminController {
     return this.platform.updateReport(req.user.adminId, type, id, dto.status);
   }
 
-  @UseGuards(PlatformGuard)
+  @UseGuards(PlatformGuard, PlatformPermissionGuard)
+  @RequirePlatformPermission(PlatformPermission.CONTENT_MANAGE)
   @Get('news/sources')
   listNewsSources() {
     return this.platform.listNewsSources();
   }
 
-  @UseGuards(PlatformGuard)
+  @UseGuards(PlatformGuard, PlatformPermissionGuard)
+  @RequirePlatformPermission(PlatformPermission.CONTENT_MANAGE)
   @Post('news/sources')
   createNewsSource(
     @Req() req: { user: { adminId: string } },
@@ -95,7 +138,8 @@ export class PlatformAdminController {
     return this.platform.createNewsSource(req.user.adminId, dto);
   }
 
-  @UseGuards(PlatformGuard)
+  @UseGuards(PlatformGuard, PlatformPermissionGuard)
+  @RequirePlatformPermission(PlatformPermission.CONTENT_MANAGE)
   @Patch('news/sources/:id')
   updateNewsSource(
     @Req() req: { user: { adminId: string } },
@@ -105,7 +149,8 @@ export class PlatformAdminController {
     return this.platform.updateNewsSource(req.user.adminId, id, dto);
   }
 
-  @UseGuards(PlatformGuard)
+  @UseGuards(PlatformGuard, PlatformPermissionGuard)
+  @RequirePlatformPermission(PlatformPermission.CONTENT_MANAGE)
   @Get('news/stories')
   listStories(
     @Query('moderation') moderation?: string,
@@ -114,7 +159,8 @@ export class PlatformAdminController {
     return this.platform.listStories(moderation, sourceId);
   }
 
-  @UseGuards(PlatformGuard)
+  @UseGuards(PlatformGuard, PlatformPermissionGuard)
+  @RequirePlatformPermission(PlatformPermission.CONTENT_MANAGE)
   @Patch('news/stories/:id/moderation')
   moderateStory(
     @Req() req: { user: { adminId: string } },
@@ -124,13 +170,15 @@ export class PlatformAdminController {
     return this.platform.moderateStory(req.user.adminId, id, dto.moderationStatus);
   }
 
-  @UseGuards(PlatformGuard)
+  @UseGuards(PlatformGuard, PlatformPermissionGuard)
+  @RequirePlatformPermission(PlatformPermission.COMPETITIONS_MANAGE)
   @Get('disputes')
   listDisputes() {
     return this.platform.listDisputes();
   }
 
-  @UseGuards(PlatformGuard)
+  @UseGuards(PlatformGuard, PlatformPermissionGuard)
+  @RequirePlatformPermission(PlatformPermission.COMPETITIONS_MANAGE)
   @Post('disputes/:matchId/rule')
   ruleOnDispute(
     @Req() req: { user: { adminId: string } },
@@ -140,7 +188,8 @@ export class PlatformAdminController {
     return this.platform.ruleOnDispute(req.user.adminId, matchId, dto.ruling);
   }
 
-  @UseGuards(PlatformGuard)
+  @UseGuards(PlatformGuard, PlatformPermissionGuard)
+  @RequirePlatformPermission(PlatformPermission.AUDIT_READ)
   @Get('audit-logs')
   listAuditLogs(
     @Query('actorId') actorId?: string,

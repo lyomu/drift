@@ -104,6 +104,16 @@ export default function SeasonDetailPage() {
     }
   }
 
+  async function handleCompleteSeason() {
+    setError(null);
+    try {
+      await api.post(`/seasons/${seasonId}/complete`);
+      await loadAll();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "The season could not be archived.");
+    }
+  }
+
   if (loading || !season) {
     return <p className="text-sm text-drift-text-secondary">Loading…</p>;
   }
@@ -113,7 +123,7 @@ export default function SeasonDetailPage() {
       <PageHeader
         title={season.label}
         description={`${season.leagueName} · ${season.enrolledCount} enrolled${season.capacity ? ` / ${season.capacity} capacity` : ""}`}
-        action={<StatusBadge status={season.state} />}
+        action={<div className="flex items-center gap-2"><StatusBadge status={season.state} />{canManage && season.state !== "COMPLETED" && season.state !== "CANCELLED" && <Button variant="secondary" onClick={() => void handleCompleteSeason()}>Complete & archive</Button>}</div>}
       />
       <ErrorBanner message={error} />
 

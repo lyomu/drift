@@ -4,15 +4,26 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useClub } from "@/lib/club-context";
 
-const NAV = [
+const NAV: { href: string; label: string; ownerOnly?: boolean; roles?: string[] }[] = [
   { href: "/", label: "Overview" },
   { href: "/members", label: "Members" },
+  { href: "/coaches", label: "Coaches" },
   { href: "/leagues", label: "Leagues" },
+  { href: "/tournaments", label: "Tournaments" },
+  { href: "/ladders", label: "Ladders" },
+  { href: "/seasons/archive", label: "Season Archive" },
+  { href: "/events", label: "Events" },
   { href: "/disputes", label: "Disputes" },
   { href: "/courts", label: "Courts" },
   { href: "/announcements", label: "Announcements" },
+  { href: "/media", label: "Media Library", roles: ["OWNER", "ADMIN", "CONTENT_MANAGER"] },
+  { href: "/moderation", label: "Moderation", roles: ["OWNER", "ADMIN", "CONTENT_MANAGER"] },
   { href: "/reports", label: "Reports" },
+  { href: "/team", label: "Team Roles", roles: ["OWNER", "ADMIN"] },
+  { href: "/notifications", label: "Notifications", roles: ["OWNER", "ADMIN"] },
+  { href: "/audit", label: "Audit Log", roles: ["OWNER", "ADMIN"] },
   { href: "/settings", label: "Club Settings" },
+  { href: "/billing", label: "Billing", ownerOnly: true },
 ];
 
 export function Sidebar({
@@ -42,7 +53,7 @@ export function Sidebar({
       </div>
 
       <nav className="flex flex-1 flex-col gap-1">
-        {NAV.map((item) => {
+        {NAV.filter((item) => (!item.ownerOnly || role === "OWNER") && (!item.roles || (role ? item.roles.includes(role) : false))).map((item) => {
           const active =
             item.href === "/"
               ? pathname === "/"

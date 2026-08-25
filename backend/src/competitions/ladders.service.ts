@@ -207,6 +207,28 @@ export class LaddersService {
     return { archived: true };
   }
 
+  async updatePositions(ladderId: string, entries: { entryId: string; position: number }[]) {
+    const ladder = await this.load(ladderId);
+    if (ladder.state !== LadderState.ACTIVE) {
+      throw new BadRequestException('Archived ladders cannot be reordered.');
+    }
+    const existing = await this.prisma.ladderEntry.findMany({ where: { ladderId } });
+    const ids = new Set(existing.map((entry) => entry.id));
+    const positions = new Set(entries.map((entry) => entry.position));
+    if (
+      entries.length !== existing.length ||
+      positions.size !== entries.length ||
+      entries.some((entry) => !ids.has(entry.entryId) || entry.position < 1 || entry.position > entries.length)
+    ) {
+      throw new BadRequestException('Positions must uniquely cover every ladder entry.');
+    }
+    await this.prisma.$transaction(entries.map((entry) => this.prisma.ladderEntry.update({
+      where: { id: entry.entryId },
+      data: { position: entry.position },
+    })));
+    return { reordered: true };
+  }
+
   // -------------------------------------------------------- result hook
 
   /**

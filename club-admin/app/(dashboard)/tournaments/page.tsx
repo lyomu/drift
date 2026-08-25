@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { api, ApiError } from "@/lib/api-client";
+import { StatusBadge } from "@/components/StatusBadge";
 import {
-  Badge,
   Button,
   Card,
   EmptyState,
@@ -12,7 +13,6 @@ import {
   Input,
   PageHeader,
   Select,
-  statusTone,
 } from "@/components/ui";
 
 interface Tournament {
@@ -143,7 +143,7 @@ export default function TournamentsPage() {
               <div>
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-drift-text-primary">{t.name}</span>
-                  <Badge tone={statusTone(t.state)}>{t.state}</Badge>
+                  <StatusBadge status={t.state} />
                 </div>
                 <div className="mt-0.5 text-xs text-drift-text-secondary">
                   {t._count?.entries ?? 0}/{t.drawSize} entries · closes{" "}
@@ -151,6 +151,7 @@ export default function TournamentsPage() {
                 </div>
               </div>
               <div className="flex gap-2">
+                <Link href={`/tournaments/${t.id}`}><Button variant="secondary">Manage draw</Button></Link>
                 {(t.state === "REGISTRATION_OPEN" || t.state === "DRAFT") && (
                   <Button
                     variant="secondary"

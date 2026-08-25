@@ -344,6 +344,9 @@ export class CompetitionsService {
       name: string;
       description?: string;
       rulesText?: string;
+      scoringFormat?: string;
+      walkoverRule?: string;
+      unfinishedMatchPolicy?: string;
       sport?: MatchSport;
       format?: MatchFormat;
     },
@@ -360,6 +363,33 @@ export class CompetitionsService {
       },
     });
     return this.toLeagueSummary({ ...league, seasons: [] });
+  }
+
+  async listSeasonArchive(clubId: string) {
+    const seasons = await this.prisma.season.findMany({
+      where: { league: { clubId }, OR: [{ completedAt: { not: null } }, { cancelledAt: { not: null } }] },
+      include: {
+        league: { select: { id: true, name: true } },
+        standings: { orderBy: { rank: 'asc' }, include: { user: { select: { id: true, firstName: true, lastName: true } } } },
+        awards: { orderBy: { issuedAt: 'desc' }, include: { recipient: { select: { id: true, firstName: true, lastName: true } } } },
+      },
+      orderBy: { startsAt: 'desc' },
+    });
+    return { seasons };
+  }
+
+  async completeSeason(seasonId: string) {
+    const season = await this.prisma.season.update({ where: { id: seasonId }, data: { completedAt: new Date() } });
+    return { id: season.id, completedAt: season.completedAt };
+  }
+
+  async issueSeasonAward(seasonId: string, issuedById: string, input: { recipientId: string; title: string; notes?: string }) {
+    const registration = await this.prisma.seasonRegistration.findUnique({
+      where: { seasonId_userId: { seasonId, userId: input.recipientId } },
+    });
+    if (!registration) throw new BadRequestException('Awards can only be issued to season participants.');
+    const award = await this.prisma.seasonAward.create({ data: { seasonId, issuedById, ...input } });
+    return { award };
   }
 
   async listLeaguesForClub(clubId: string) {
@@ -552,6 +582,9 @@ export class CompetitionsService {
     name: string;
     description: string | null;
     rulesText: string | null;
+    scoringFormat: string | null;
+    walkoverRule: string | null;
+    unfinishedMatchPolicy: string | null;
     format: string;
     seasons: { id: string; label: string }[];
   }) {
@@ -561,6 +594,9 @@ export class CompetitionsService {
       name: league.name,
       description: league.description,
       rulesText: league.rulesText,
+      scoringFormat: league.scoringFormat,
+      walkoverRule: league.walkoverRule,
+      unfinishedMatchPolicy: league.unfinishedMatchPolicy,
       format: league.format,
       seasons: league.seasons.map((s) => ({
         id: s.id,
@@ -724,7 +760,7 @@ export class CompetitionsService {
     const season = await this.prisma.season.findUnique({
       where: { id: seasonId },
     });
-    if (!season || season.cancelledAt) return;
+    if (!season || season.cancelledAt || season.completedAt) return;
 
     const now = Date.now();
 
@@ -878,6 +914,8 @@ export class CompetitionsService {
 
     if (round.index < season.roundCount) {
       await this.openRound(season.id, round.index + 1);
+    } else {
+      await this.prisma.season.update({ where: { id: season.id }, data: { completedAt: new Date() } });
     }
   }
 }

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { api, ApiError, setToken } from "@/lib/api-client";
+import { api, ApiError, setTwoFactorChallenge, type TwoFactorChallenge } from "@/lib/api-client";
 import { Button, Card, ErrorBanner, Field, Input } from "@/components/ui";
 
 export default function LoginPage() {
@@ -17,12 +17,12 @@ export default function LoginPage() {
     setError(null);
     setSubmitting(true);
     try {
-      const res = await api.post<{ accessToken: string }>("/auth/login", {
+      const res = await api.post<TwoFactorChallenge & { requiresTwoFactor: true }>("/auth/login", {
         email,
         password,
       });
-      setToken(res.accessToken);
-      router.push("/");
+      setTwoFactorChallenge(res);
+      router.push("/verify-2fa");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong.");
     } finally {

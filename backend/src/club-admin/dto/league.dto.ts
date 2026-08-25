@@ -52,8 +52,37 @@ export class UpdateLeagueDto {
   rulesText?: string;
 
   @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  scoringFormat?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  walkoverRule?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  unfinishedMatchPolicy?: string;
+
+  @IsOptional()
   @IsEnum(LeagueState)
   state?: LeagueState;
+}
+
+export class IssueSeasonAwardDto {
+  @IsString()
+  recipientId: string;
+
+  @IsString()
+  @MaxLength(200)
+  title: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  notes?: string;
 }
 
 export class CreateSeasonDto {

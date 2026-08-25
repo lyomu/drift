@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CourtInquiryKind } from '@prisma/client';
 import { CourtsService } from './courts.service';
 import { SearchCourtsDto } from './dto/search-courts.dto';
 import { ReportCourtDto } from './dto/report-court.dto';
@@ -30,6 +31,7 @@ export class CourtsController {
 
   @Get(':id')
   findOne(
+    @Req() req: Request,
     @Param('id') id: string,
     @Query('latitude') latitude?: string,
     @Query('longitude') longitude?: string,
@@ -38,7 +40,12 @@ export class CourtsController {
       latitude !== undefined && longitude !== undefined
         ? { latitude: Number(latitude), longitude: Number(longitude) }
         : undefined;
-    return this.courtsService.findOne(id, viewerCoords);
+    return this.courtsService.findOne(id, viewerCoords, this.userId(req));
+  }
+
+  @Post(':id/inquiry')
+  inquiry(@Req() req: Request, @Param('id') id: string, @Body('kind') kind: CourtInquiryKind) {
+    return this.courtsService.recordInquiry(id, this.userId(req), kind);
   }
 
   @Post(':id/report')

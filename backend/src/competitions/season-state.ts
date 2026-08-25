@@ -22,6 +22,7 @@ export interface SeasonDates {
   registrationClosesAt: Date;
   startsAt: Date;
   cancelledAt: Date | null;
+  completedAt?: Date | null;
 }
 
 /**
@@ -36,6 +37,9 @@ export function effectiveSeasonState(
 ): SeasonState {
   if (season.cancelledAt) {
     return 'CANCELLED';
+  }
+  if (season.completedAt) {
+    return 'COMPLETED';
   }
   if (finalRoundClosed) {
     return 'COMPLETED';

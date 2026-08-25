@@ -61,8 +61,11 @@ export class ClubsAdminController {
   @Post(':clubId/verification-request')
   @UseGuards(ClubMembershipGuard)
   @RequireClubRole(...OWNER_OR_ADMIN)
-  submitVerificationRequest(@Param('clubId') clubId: string) {
-    return this.clubsAdmin.submitVerificationRequest(clubId);
+  submitVerificationRequest(
+    @Req() req: Request,
+    @Param('clubId') clubId: string,
+  ) {
+    return this.clubsAdmin.submitVerificationRequest(clubId, this.userId(req));
   }
 
   @Get(':clubId/members')
@@ -74,28 +77,30 @@ export class ClubsAdminController {
   @Post(':clubId/members')
   @UseGuards(ClubMembershipGuard)
   @RequireClubRole(...OWNER_OR_ADMIN)
-  inviteMember(@Param('clubId') clubId: string, @Body() dto: InviteMemberDto) {
-    return this.clubsAdmin.inviteMember(clubId, dto);
+  inviteMember(@Req() req: Request, @Param('clubId') clubId: string, @Body() dto: InviteMemberDto) {
+    return this.clubsAdmin.inviteMember(clubId, dto, this.userId(req));
   }
 
   @Patch(':clubId/members/:membershipId')
   @UseGuards(ClubMembershipGuard)
   @RequireClubRole(...OWNER_OR_ADMIN)
   updateMembership(
+    @Req() req: Request,
     @Param('clubId') clubId: string,
     @Param('membershipId') membershipId: string,
     @Body() dto: UpdateMembershipDto,
   ) {
-    return this.clubsAdmin.updateMembership(clubId, membershipId, dto);
+    return this.clubsAdmin.updateMembership(clubId, membershipId, dto, this.userId(req));
   }
 
   @Delete(':clubId/members/:membershipId')
   @UseGuards(ClubMembershipGuard)
   @RequireClubRole(...OWNER_OR_ADMIN)
   removeMember(
+    @Req() req: Request,
     @Param('clubId') clubId: string,
     @Param('membershipId') membershipId: string,
   ) {
-    return this.clubsAdmin.removeMember(clubId, membershipId);
+    return this.clubsAdmin.removeMember(clubId, membershipId, this.userId(req));
   }
 }

@@ -3,15 +3,26 @@
 import { useRouter, usePathname } from "next/navigation";
 import { useClub } from "@/lib/club-context";
 
-const NAV = [
+const NAV: { href: string; label: string; ownerOnly?: boolean; roles?: string[] }[] = [
   { href: "/", label: "Overview" },
   { href: "/members", label: "Members" },
+  { href: "/coaches", label: "Coaches" },
   { href: "/leagues", label: "Leagues" },
+  { href: "/tournaments", label: "Tournaments" },
+  { href: "/ladders", label: "Ladders" },
+  { href: "/seasons/archive", label: "Season Archive" },
+  { href: "/events", label: "Events" },
   { href: "/disputes", label: "Disputes" },
   { href: "/courts", label: "Courts" },
   { href: "/announcements", label: "Announcements" },
+  { href: "/media", label: "Media Library", roles: ["OWNER", "ADMIN", "CONTENT_MANAGER"] },
+  { href: "/moderation", label: "Moderation", roles: ["OWNER", "ADMIN", "CONTENT_MANAGER"] },
   { href: "/reports", label: "Reports" },
+  { href: "/team", label: "Team Roles", roles: ["OWNER", "ADMIN"] },
+  { href: "/notifications", label: "Notifications", roles: ["OWNER", "ADMIN"] },
+  { href: "/audit", label: "Audit Log", roles: ["OWNER", "ADMIN"] },
   { href: "/settings", label: "Club Settings" },
+  { href: "/billing", label: "Billing", ownerOnly: true },
 ];
 
 /** Doc 5 §5.4: genuine responsive layout down to tablet, not a stretched
@@ -20,7 +31,7 @@ const NAV = [
 export function MobileNav({ clubName }: { clubName: string | null }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { logout } = useClub();
+  const { logout, role } = useClub();
 
   return (
     <div className="flex items-center justify-between gap-3 border-b border-drift-border bg-drift-surface px-4 py-3 sm:hidden">
@@ -37,7 +48,7 @@ export function MobileNav({ clubName }: { clubName: string | null }) {
         onChange={(e) => router.push(e.target.value)}
         className="rounded-md border border-drift-border bg-drift-surface px-2 py-1.5 text-sm text-drift-text-primary"
       >
-        {NAV.map((item) => (
+        {NAV.filter((item) => (!item.ownerOnly || role === "OWNER") && (!item.roles || (role ? item.roles.includes(role) : false))).map((item) => (
           <option key={item.href} value={item.href}>
             {item.label}
           </option>

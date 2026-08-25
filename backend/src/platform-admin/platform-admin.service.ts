@@ -10,6 +10,7 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { ResultsService } from '../matches/results.service';
 import { AuditService } from './audit.service';
+import { randomInt } from 'crypto';
 
 const USER_SELECT = {
   id: true,
@@ -67,17 +68,117 @@ export class PlatformAdminService {
       throw new UnauthorizedException('Invalid credentials.');
     }
 
-    await this.prisma.platformAdmin.update({
-      where: { id: admin.id },
-      data: { lastLoginAt: new Date() },
-    });
+    return this.createTwoFactorChallenge(admin.id, admin.email);
+  }
 
-    const accessToken = await this.jwt.signAsync({
-      sub: admin.id,
-      scope: 'platform',
+  async verifyTwoFactor(challengeToken: string, code: string) {
+    const payload = await this.verifyChallengeToken(challengeToken);
+    const challenge = await this.prisma.platformAdminTwoFactorChallenge.findUnique({
+      where: { id: payload.challengeId },
+      include: { admin: true },
     });
+    if (
+      !challenge ||
+      challenge.adminId !== payload.sub ||
+      challenge.admin.deactivatedAt ||
+      challenge.consumedAt ||
+      challenge.expiresAt <= new Date() ||
+      challenge.attempts >= 5
+    ) {
+      throw new UnauthorizedException('Invalid or expired code.');
+    }
+    const valid = await bcrypt.compare(code, challenge.codeHash);
+    if (!valid) {
+      await this.prisma.platformAdminTwoFactorChallenge.update({
+        where: { id: challenge.id },
+        data: { attempts: { increment: 1 } },
+      });
+      throw new UnauthorizedException('Invalid or expired code.');
+    }
 
-    return { accessToken, adminId: admin.id, name: admin.name };
+    await this.prisma.$transaction([
+      this.prisma.platformAdminTwoFactorChallenge.update({
+        where: { id: challenge.id },
+        data: { consumedAt: new Date() },
+      }),
+      this.prisma.platformAdmin.update({
+        where: { id: challenge.adminId },
+        data: { lastLoginAt: new Date() },
+      }),
+    ]);
+    return {
+      accessToken: await this.issueAccessToken(challenge.adminId),
+      adminId: challenge.adminId,
+      name: challenge.admin.name,
+    };
+  }
+
+  async resendTwoFactor(challengeToken: string) {
+    const payload = await this.verifyChallengeToken(challengeToken);
+    const challenge = await this.prisma.platformAdminTwoFactorChallenge.findUnique({
+      where: { id: payload.challengeId },
+      include: { admin: true },
+    });
+    if (!challenge || challenge.adminId !== payload.sub || challenge.admin.deactivatedAt) {
+      throw new UnauthorizedException('The sign-in challenge has expired. Start again.');
+    }
+    if (!challenge.consumedAt) {
+      await this.prisma.platformAdminTwoFactorChallenge.update({
+        where: { id: challenge.id },
+        data: { consumedAt: new Date() },
+      });
+    }
+    return this.createTwoFactorChallenge(challenge.admin.id, challenge.admin.email);
+  }
+
+  private async createTwoFactorChallenge(adminId: string, email: string) {
+    const code = randomInt(100000, 1000000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    const challenge = await this.prisma.platformAdminTwoFactorChallenge.create({
+      data: {
+        adminId,
+        codeHash: await bcrypt.hash(code, 8),
+        expiresAt,
+      },
+    });
+    const challengeToken = await this.jwt.signAsync(
+      { sub: adminId, scope: 'platform-2fa', challengeId: challenge.id },
+      { expiresIn: '10m' as never },
+    );
+    if (process.env.NODE_ENV !== 'production') {
+      console.info(`[platform-admin] 2FA code for ${email}: ${code}`);
+    }
+    return {
+      requiresTwoFactor: true,
+      challengeToken,
+      expiresAt,
+      maskedDestination: this.maskEmail(email),
+      delivery: process.env.NODE_ENV === 'production' ? 'PENDING_PROVIDER' : 'DEV_CONSOLE',
+      ...(process.env.NODE_ENV !== 'production' ? { devVerificationCode: code } : {}),
+    };
+  }
+
+  private async verifyChallengeToken(token: string) {
+    try {
+      const payload = await this.jwt.verifyAsync<{
+        sub: string;
+        scope: string;
+        challengeId: string;
+      }>(token);
+      if (payload.scope !== 'platform-2fa' || !payload.challengeId) throw new Error();
+      return payload;
+    } catch {
+      throw new UnauthorizedException('The sign-in challenge has expired. Start again.');
+    }
+  }
+
+  private issueAccessToken(adminId: string) {
+    return this.jwt.signAsync({ sub: adminId, scope: 'platform' });
+  }
+
+  private maskEmail(email: string) {
+    const [local, domain] = email.split('@');
+    return `${local.slice(0, 2)}•••@${domain}`;
   }
 
   // ----------------------------------------------------------------- users

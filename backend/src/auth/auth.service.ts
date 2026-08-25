@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from 'crypto';
+import { createHash, randomBytes, randomInt } from 'crypto';
 import {
   BadRequestException,
   ConflictException,
@@ -445,11 +445,13 @@ export class AuthService {
   }
 
   private generateCode(): string {
-    return Math.floor(100000 + Math.random() * 900000).toString();
+    return randomInt(100000, 1_000_000).toString();
   }
 
   private logCode(email: string, code: string) {
-    console.log(`[auth] Verification code for ${email}: ${code}`);
+    if (this.isDev) {
+      console.log(`[auth] Verification code for ${email}: ${code}`);
+    }
   }
 
   private devCode(code: string) {

@@ -1,0 +1,12 @@
+# Copy this file to key.properties for local release builds. key.properties is
+# gitignored. Use an absolute path or a path relative to mobile/android.
+storeFile=app/path-to-release.keystore
+storePassword=replace-with-a-secret
+keyAlias=replace-with-your-key-alias
+keyPassword=replace-with-a-secret
+
+# CI may use environment variables instead of this file:
+# DRIFT_ANDROID_KEYSTORE_PATH
+# DRIFT_ANDROID_STORE_PASSWORD
+# DRIFT_ANDROID_KEY_ALIAS
+# DRIFT_ANDROID_KEY_PASSWORD

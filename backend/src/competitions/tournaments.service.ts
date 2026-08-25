@@ -104,6 +104,27 @@ export class TournamentsService {
     return entry;
   }
 
+  async updateSeeds(tournamentId: string, entries: { entryId: string; seed: number }[]) {
+    const tournament = await this.load(tournamentId);
+    if (![TournamentState.DRAFT, TournamentState.REGISTRATION_OPEN].includes(tournament.state)) {
+      throw new BadRequestException('Seeds can only be changed before the draw is generated.');
+    }
+    const existing = await this.prisma.tournamentEntry.findMany({ where: { tournamentId } });
+    if (entries.length !== existing.length) {
+      throw new BadRequestException('Every entry must be assigned a seed.');
+    }
+    const ids = new Set(existing.map((entry) => entry.id));
+    const seeds = new Set(entries.map((entry) => entry.seed));
+    if (entries.some((entry) => !ids.has(entry.entryId) || entry.seed < 1 || entry.seed > entries.length) || seeds.size !== entries.length) {
+      throw new BadRequestException('Seeds must be unique and cover every registered entry.');
+    }
+    await this.prisma.$transaction(entries.map((entry) => this.prisma.tournamentEntry.update({
+      where: { id: entry.entryId },
+      data: { seed: entry.seed },
+    })));
+    return { seeded: true };
+  }
+
   async leave(tournamentId: string, userId: string) {
     const tournament = await this.load(tournamentId);
     if (tournament.state === TournamentState.RUNNING) {

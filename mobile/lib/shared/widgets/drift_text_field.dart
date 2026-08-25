@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// Thin wrapper over [TextField] so call sites use one consistent
 /// label/hint/error pattern rather than repeating [InputDecoration]
@@ -15,6 +16,8 @@ class DriftTextField extends StatelessWidget {
     this.keyboardType,
     this.onChanged,
     this.maxLines = 1,
+    this.maxLength,
+    this.inputFormatters,
   });
 
   final String label;
@@ -28,6 +31,8 @@ class DriftTextField extends StatelessWidget {
   /// Multi-line inputs (free-text notes, reasons). Must stay 1 when
   /// [obscureText] is set — Flutter disallows obscured multi-line fields.
   final int maxLines;
+  final int? maxLength;
+  final List<TextInputFormatter>? inputFormatters;
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +42,8 @@ class DriftTextField extends StatelessWidget {
       keyboardType: keyboardType,
       onChanged: onChanged,
       maxLines: obscureText ? 1 : maxLines,
+      maxLength: maxLength,
+      inputFormatters: inputFormatters,
       decoration: InputDecoration(
         labelText: label,
         hintText: hintText,

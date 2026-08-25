@@ -27,11 +27,13 @@ import { CoachesModule } from './coaches/coaches.module';
 import { LearningModule } from './learning/learning.module';
 import { NewsModule } from './news/news.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { PaymentsModule } from './payments/payments.module';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { validateEnvironment } from './config/environment';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({ isGlobal: true, validate: validateEnvironment }),
     // Rate limiting (starter docs Phase 18 / PRD security NFR). Defaults are
     // production values; NODE_ENV=test relaxes them so the e2e suites' many
     // rapid auth round trips are never throttled by design.
@@ -74,6 +76,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
     LearningModule,
     NewsModule,
     NotificationsModule,
+    PaymentsModule,
     AnalyticsModule,
   ],
   controllers: [AppController],

@@ -31,4 +31,9 @@ export class ClubCompetitionsAdminController {
   listDisputes(@Param('clubId') clubId: string) {
     return this.competitions.listDisputesForClub(clubId);
   }
+
+  @Get('seasons/archive')
+  listArchive(@Param('clubId') clubId: string) {
+    return this.competitions.listSeasonArchive(clubId);
+  }
 }
