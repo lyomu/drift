@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import * as bcrypt from 'bcrypt';
+import { PlatformPermission } from '@prisma/client';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 
@@ -31,6 +32,7 @@ describe('Platform Admin (e2e)', () => {
     bob: { email: `e2e-pa-bob-${stamp}@test.com`, token: '', id: '' },
   };
   const adminEmail = `e2e-pa-staff-${stamp}@test.com`;
+  const adminRoleName = `E2E Full Access ${stamp}`;
   const adminPassword = 'staff-password-1';
   let adminToken = '';
 
@@ -63,11 +65,9 @@ describe('Platform Admin (e2e)', () => {
     await authed(user.token, 'patch', '/users/me/tennis-experience').send({
       experienceSignal: 'NEW',
     });
-    const start = await authed(
-      user.token,
-      'post',
-      '/assessment/sessions',
-    ).send({});
+    const start = await authed(user.token, 'post', '/assessment/sessions').send(
+      {},
+    );
     let next = start.body.nextQuestion;
     while (next) {
       const answer = await authed(
@@ -142,14 +142,35 @@ describe('Platform Admin (e2e)', () => {
     prisma = moduleFixture.get(PrismaService);
 
     // The bootstrap script's work, done directly so the suite owns its data.
+    const role = await prisma.platformRole.upsert({
+      where: { name: adminRoleName },
+      create: {
+        name: adminRoleName,
+        description: 'E2E full-access platform role',
+        permissions: {
+          create: Object.values(PlatformPermission).map((permission) => ({
+            permission,
+          })),
+        },
+      },
+      update: {},
+    });
+    await prisma.platformRolePermission.createMany({
+      data: Object.values(PlatformPermission).map((permission) => ({
+        roleId: role.id,
+        permission,
+      })),
+      skipDuplicates: true,
+    });
     await prisma.platformAdmin.upsert({
       where: { email: adminEmail },
       create: {
         email: adminEmail,
         passwordHash: await bcrypt.hash(adminPassword, 4),
         name: 'E2E Staff',
+        roleId: role.id,
       },
-      update: {},
+      update: { roleId: role.id, deactivatedAt: null },
     });
 
     await onboard(users.alice);
@@ -200,6 +221,7 @@ describe('Platform Admin (e2e)', () => {
       where: { name: `E2E Source ${stamp}` },
     });
     await prisma.platformAdmin.deleteMany({ where: { email: adminEmail } });
+    await prisma.platformRole.deleteMany({ where: { name: adminRoleName } });
     await app.close();
   }, 60_000);
 
@@ -213,8 +235,17 @@ describe('Platform Admin (e2e)', () => {
       .post('/platform-admin/auth/login')
       .send({ email: adminEmail, password: adminPassword })
       .expect(200);
-    expect(login.body.accessToken).toBeDefined();
-    adminToken = login.body.accessToken;
+    expect(login.body.challengeToken).toBeDefined();
+    expect(login.body.devVerificationCode).toBeDefined();
+    const verified = await request(app.getHttpServer())
+      .post('/platform-admin/auth/verify-2fa')
+      .send({
+        challengeToken: login.body.challengeToken,
+        code: login.body.devVerificationCode,
+      })
+      .expect(200);
+    expect(verified.body.accessToken).toBeDefined();
+    adminToken = verified.body.accessToken;
 
     // A player token can never open a platform route...
     await authed(users.alice.token, 'get', '/platform-admin/users').expect(401);
@@ -293,7 +324,11 @@ describe('Platform Admin (e2e)', () => {
 
   it('manages news sources and moderates stories', async () => {
     const sourceName = `E2E Source ${stamp}`;
-    const source = await authed(adminToken, 'post', '/platform-admin/news/sources')
+    const source = await authed(
+      adminToken,
+      'post',
+      '/platform-admin/news/sources',
+    )
       .send({ name: sourceName, feedUrl: null, status: 'ACTIVE' })
       .expect(201);
     expect(source.body.status).toBe('ACTIVE');
@@ -319,7 +354,9 @@ describe('Platform Admin (e2e)', () => {
       .send({ moderationStatus: 'APPROVED' })
       .expect(200);
 
-    const after = await prisma.newsStory.findUnique({ where: { id: story.id } });
+    const after = await prisma.newsStory.findUnique({
+      where: { id: story.id },
+    });
     expect(after?.moderationStatus).toBe('APPROVED');
 
     // Cleanup of the story happens in afterAll alongside the source.
@@ -336,8 +373,11 @@ describe('Platform Admin (e2e)', () => {
       .send({ outcome: 'SCORE', sets: [{ sideAGames: 3, sideBGames: 6 }] })
       .expect(200);
 
-    const queue = await authed(adminToken, 'get', '/platform-admin/disputes')
-      .expect(200);
+    const queue = await authed(
+      adminToken,
+      'get',
+      '/platform-admin/disputes',
+    ).expect(200);
     const entry = queue.body.disputes.find((d: any) => d.matchId === matchId);
     expect(entry).toBeDefined();
 
@@ -353,9 +393,12 @@ describe('Platform Admin (e2e)', () => {
   });
 
   it('writes an audit trail for every consequential action', async () => {
-    const logs = await authed(adminToken, 'get', '/platform-admin/audit-logs')
-      .expect(200);
-    const actions = logs.body.map((l: any) => l.action);
+    const logs = await authed(
+      adminToken,
+      'get',
+      '/platform-admin/audit-logs',
+    ).expect(200);
+    const actions = logs.body.map((l: { action: string }) => l.action);
     expect(actions).toContain('user.suspend');
     expect(actions).toContain('report.resolved');
     expect(actions).toContain('news_source.create');

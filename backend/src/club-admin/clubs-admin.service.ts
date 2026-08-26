@@ -7,7 +7,6 @@ import {
   ClubMembershipStatus,
   ClubRole,
   ClubPlatformStatus,
-  Prisma,
   ListingVerificationStatus,
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -121,7 +120,9 @@ export class ClubsAdminService {
         })
       )?.userId;
     if (!submitterId) {
-      throw new BadRequestException('A club Owner or Admin must submit verification.');
+      throw new BadRequestException(
+        'A club Owner or Admin must submit verification.',
+      );
     }
     const request = await this.prisma.$transaction(async (tx) => {
       await tx.club.update({
@@ -202,7 +203,10 @@ export class ClubsAdminService {
         status: ClubMembershipStatus.ACTIVE,
       },
     });
-    if (actorId) await this.audit(clubId, actorId, 'team.invite', membership.id, { role: membership.role });
+    if (actorId)
+      await this.audit(clubId, actorId, 'team.invite', membership.id, {
+        role: membership.role,
+      });
     return { membershipId: membership.id, role: membership.role };
   }
 
@@ -254,7 +258,11 @@ export class ClubsAdminService {
       );
     }
 
-    if (actorId) await this.audit(clubId, actorId, 'team.role.update', membershipId, { role: updated.role, status: updated.status });
+    if (actorId)
+      await this.audit(clubId, actorId, 'team.role.update', membershipId, {
+        role: updated.role,
+        status: updated.status,
+      });
     return {
       membershipId: updated.id,
       role: updated.role,
@@ -378,8 +386,23 @@ export class ClubsAdminService {
     return { removed: true };
   }
 
-  private async audit(clubId: string, actorId: string, action: string, entityId: string, metadata?: object) {
-    await this.prisma.clubAuditLog.create({ data: { clubId, actorId, action, entityType: 'ClubMembership', entityId, metadata: metadata as Prisma.InputJsonValue | undefined } });
+  private async audit(
+    clubId: string,
+    actorId: string,
+    action: string,
+    entityId: string,
+    metadata?: object,
+  ) {
+    await this.prisma.clubAuditLog.create({
+      data: {
+        clubId,
+        actorId,
+        action,
+        entityType: 'ClubMembership',
+        entityId,
+        metadata: metadata,
+      },
+    });
   }
 
   private async requireMembership(clubId: string, membershipId: string) {

@@ -69,7 +69,10 @@ export class CompetitionsAdminExpansionController {
 
   @RequireClubRole(...OWNER_OR_ADMIN)
   @Patch('tournaments/:id/seeds')
-  updateSeeds(@Param('id') id: string, @Body() body: { entries: { entryId: string; seed: number }[] }) {
+  updateSeeds(
+    @Param('id') id: string,
+    @Body() body: { entries: { entryId: string; seed: number }[] },
+  ) {
     return this.tournaments.updateSeeds(id, body.entries);
   }
 
@@ -100,7 +103,10 @@ export class CompetitionsAdminExpansionController {
 
   @RequireClubRole(...OWNER_OR_ADMIN)
   @Patch('ladders/:id/positions')
-  updatePositions(@Param('id') id: string, @Body() body: { entries: { entryId: string; position: number }[] }) {
+  updatePositions(
+    @Param('id') id: string,
+    @Body() body: { entries: { entryId: string; position: number }[] },
+  ) {
     return this.ladders.updatePositions(id, body.entries);
   }
 

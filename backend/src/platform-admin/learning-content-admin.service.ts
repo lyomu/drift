@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   AssessmentBranch,
   AssessmentPillar,
@@ -113,9 +117,14 @@ export class LearningContentAdminService {
 
   async createContent(
     actorId: string,
-    type: LearningContentType.LESSON | LearningContentType.DRILL,
+    type: LearningContentType,
     dto: UpsertLearningContentDto,
   ) {
+    if (type === LearningContentType.TRAINING_PLAN) {
+      throw new BadRequestException(
+        'Use the path builder to create learning paths.',
+      );
+    }
     const content = await this.prisma.learningContent.create({
       data: {
         ...this.contentData(dto),
@@ -124,18 +133,32 @@ export class LearningContentAdminService {
       },
       include: CONTENT_INCLUDE,
     });
-    await this.audit.record(actorId, `learning_content.${type.toLowerCase()}.create`, 'LearningContent', content.id, {
-      title: content.title,
-      status: content.status,
-    });
+    await this.audit.record(
+      actorId,
+      `learning_content.${type.toLowerCase()}.create`,
+      'LearningContent',
+      content.id,
+      {
+        title: content.title,
+        status: content.status,
+      },
+    );
     return { content: this.toDto(content) };
   }
 
-  async updateContent(actorId: string, id: string, dto: UpsertLearningContentDto) {
-    const existing = await this.prisma.learningContent.findUnique({ where: { id } });
+  async updateContent(
+    actorId: string,
+    id: string,
+    dto: UpsertLearningContentDto,
+  ) {
+    const existing = await this.prisma.learningContent.findUnique({
+      where: { id },
+    });
     if (!existing) throw new NotFoundException('Learning content not found.');
     if (existing.type === LearningContentType.TRAINING_PLAN) {
-      throw new BadRequestException('Use the path builder to edit learning paths.');
+      throw new BadRequestException(
+        'Use the path builder to edit learning paths.',
+      );
     }
 
     const content = await this.prisma.learningContent.update({
@@ -146,11 +169,17 @@ export class LearningContentAdminService {
       },
       include: CONTENT_INCLUDE,
     });
-    await this.audit.record(actorId, 'learning_content.update', 'LearningContent', id, {
-      previousStatus: existing.status,
-      nextStatus: content.status,
-      title: content.title,
-    });
+    await this.audit.record(
+      actorId,
+      'learning_content.update',
+      'LearningContent',
+      id,
+      {
+        previousStatus: existing.status,
+        nextStatus: content.status,
+        title: content.title,
+      },
+    );
     return { content: this.toDto(content) };
   }
 
@@ -170,16 +199,24 @@ export class LearningContentAdminService {
         include: CONTENT_INCLUDE,
       });
     });
-    await this.audit.record(actorId, 'learning_path.create', 'LearningContent', content.id, {
-      title: content.title,
-      status: content.status,
-      stepCount: dto.stepIds.length,
-    });
+    await this.audit.record(
+      actorId,
+      'learning_path.create',
+      'LearningContent',
+      content.id,
+      {
+        title: content.title,
+        status: content.status,
+        stepCount: dto.stepIds.length,
+      },
+    );
     return { content: this.toDto(content) };
   }
 
   async updatePath(actorId: string, id: string, dto: UpsertLearningPathDto) {
-    const existing = await this.prisma.learningContent.findUnique({ where: { id } });
+    const existing = await this.prisma.learningContent.findUnique({
+      where: { id },
+    });
     if (!existing) throw new NotFoundException('Learning path not found.');
     if (existing.type !== LearningContentType.TRAINING_PLAN) {
       throw new BadRequestException('Only learning paths can be edited here.');
@@ -200,34 +237,51 @@ export class LearningContentAdminService {
         include: CONTENT_INCLUDE,
       });
     });
-    await this.audit.record(actorId, 'learning_path.update', 'LearningContent', id, {
-      previousStatus: existing.status,
-      nextStatus: content.status,
-      title: content.title,
-      stepCount: dto.stepIds.length,
-    });
+    await this.audit.record(
+      actorId,
+      'learning_path.update',
+      'LearningContent',
+      id,
+      {
+        previousStatus: existing.status,
+        nextStatus: content.status,
+        title: content.title,
+        stepCount: dto.stepIds.length,
+      },
+    );
     return { content: this.toDto(content) };
   }
 
-  private async validatePathSteps(stepIds: string[], status: LearningContentStatus) {
+  private async validatePathSteps(
+    stepIds: string[],
+    status: LearningContentStatus,
+  ) {
     if (stepIds.length === 0) {
-      throw new BadRequestException('Add at least one lesson or drill to the path.');
+      throw new BadRequestException(
+        'Add at least one lesson or drill to the path.',
+      );
     }
     const steps = await this.prisma.learningContent.findMany({
       where: { id: { in: stepIds } },
       select: { id: true, type: true, status: true },
     });
     if (steps.length !== stepIds.length) {
-      throw new BadRequestException('Every path step must reference existing content.');
+      throw new BadRequestException(
+        'Every path step must reference existing content.',
+      );
     }
     if (steps.some((step) => step.type === LearningContentType.TRAINING_PLAN)) {
-      throw new BadRequestException('Learning paths cannot contain other paths.');
+      throw new BadRequestException(
+        'Learning paths cannot contain other paths.',
+      );
     }
     if (
       status === LearningContentStatus.PUBLISHED &&
       steps.some((step) => step.status !== LearningContentStatus.PUBLISHED)
     ) {
-      throw new BadRequestException('Publish all lesson and drill steps before publishing this path.');
+      throw new BadRequestException(
+        'Publish all lesson and drill steps before publishing this path.',
+      );
     }
   }
 
@@ -278,16 +332,31 @@ export class LearningContentAdminService {
         ? {
             OR: [
               { title: { contains: query.search.trim(), mode: 'insensitive' } },
-              { summary: { contains: query.search.trim(), mode: 'insensitive' } },
-              { bodyText: { contains: query.search.trim(), mode: 'insensitive' } },
-              { pathGoal: { contains: query.search.trim(), mode: 'insensitive' } },
+              {
+                summary: { contains: query.search.trim(), mode: 'insensitive' },
+              },
+              {
+                bodyText: {
+                  contains: query.search.trim(),
+                  mode: 'insensitive',
+                },
+              },
+              {
+                pathGoal: {
+                  contains: query.search.trim(),
+                  mode: 'insensitive',
+                },
+              },
             ],
           }
         : {}),
     };
   }
 
-  private enumValue<T extends Record<string, string>>(values: T, value?: string) {
+  private enumValue<T extends Record<string, string>>(
+    values: T,
+    value?: string,
+  ) {
     if (!value) return undefined;
     const normalized = value.toUpperCase();
     return Object.values(values).includes(normalized)
@@ -295,7 +364,11 @@ export class LearningContentAdminService {
       : undefined;
   }
 
-  private toDto(content: Prisma.LearningContentGetPayload<{ include: typeof CONTENT_INCLUDE }>) {
+  private toDto(
+    content: Prisma.LearningContentGetPayload<{
+      include: typeof CONTENT_INCLUDE;
+    }>,
+  ) {
     return {
       id: content.id,
       type: content.type,

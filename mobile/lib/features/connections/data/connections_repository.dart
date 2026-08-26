@@ -39,9 +39,12 @@ class ConnectionsRepository {
 
   final Dio _dio;
 
-  Future<void> request(String addresseeId) => _send(
-    () => _dio.post('/connections', data: {'addresseeId': addresseeId}),
-  );
+  Future<String> request(String addresseeId) async {
+    final data = await _send(
+      () => _dio.post('/connections', data: {'addresseeId': addresseeId}),
+    );
+    return data['id'] as String;
+  }
 
   Future<List<ConnectionEntry>> listAccepted() async {
     final data = await _send(() => _dio.get('/connections'));

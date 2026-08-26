@@ -11,16 +11,33 @@ import '../../players/presentation/player_search_screen.dart';
 /// segmented Players / Courts / Clubs / Coaches. The fourth segment became
 /// real once Club Admin gained a coach-authoring path.
 class DiscoverHubScreen extends StatefulWidget {
-  const DiscoverHubScreen({super.key});
+  const DiscoverHubScreen({super.key, this.initialSegment});
+
+  final int? initialSegment;
 
   @override
   State<DiscoverHubScreen> createState() => _DiscoverHubScreenState();
 }
 
 class _DiscoverHubScreenState extends State<DiscoverHubScreen> {
-  int _segment = 0;
+  late int _segment;
 
   static const _labels = ['Players', 'Courts', 'Clubs', 'Coaches'];
+
+  @override
+  void initState() {
+    super.initState();
+    _segment = widget.initialSegment ?? 0;
+  }
+
+  @override
+  void didUpdateWidget(covariant DiscoverHubScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialSegment != widget.initialSegment &&
+        widget.initialSegment != null) {
+      setState(() => _segment = widget.initialSegment!);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

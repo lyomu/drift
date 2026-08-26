@@ -41,6 +41,7 @@ function clubRecord(
     openingHoursNote: null,
     photoUrls: [],
     verificationStatus: 'UNVERIFIED',
+    platformStatus: 'ACTIVE',
     courts: overrides.courts ?? [],
   };
 }

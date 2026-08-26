@@ -49,7 +49,9 @@ export class LaddersService {
         challenges: {
           where: { state: { in: ['PENDING', 'ACCEPTED'] } },
           include: {
-            challenger: { select: { id: true, firstName: true, lastName: true } },
+            challenger: {
+              select: { id: true, firstName: true, lastName: true },
+            },
             defender: { select: { id: true, firstName: true, lastName: true } },
           },
           orderBy: { createdAt: 'desc' },
@@ -88,14 +90,17 @@ export class LaddersService {
     const existing = await this.prisma.ladderEntry.findUnique({
       where: { ladderId_userId: { ladderId, userId } },
     });
-    if (existing) throw new BadRequestException('You are already on this ladder.');
+    if (existing)
+      throw new BadRequestException('You are already on this ladder.');
 
     const max = await this.prisma.ladderEntry.aggregate({
       where: { ladderId },
       _max: { position: true },
     });
     const position = (max._max.position ?? 0) + 1;
-    return this.prisma.ladderEntry.create({ data: { ladderId, userId, position } });
+    return this.prisma.ladderEntry.create({
+      data: { ladderId, userId, position },
+    });
   }
 
   async challenge(
@@ -121,7 +126,11 @@ export class LaddersService {
       throw new BadRequestException('You cannot challenge yourself.');
     }
     if (
-      !canChallenge(challenger.position, defender.position, ladder.challengeRange)
+      !canChallenge(
+        challenger.position,
+        defender.position,
+        ladder.challengeRange,
+      )
     ) {
       throw new BadRequestException(
         `You can only challenge players up to ${ladder.challengeRange} rungs above you.`,
@@ -139,7 +148,9 @@ export class LaddersService {
       },
     });
     if (pending) {
-      throw new BadRequestException('A challenge between you two is already open.');
+      throw new BadRequestException(
+        'A challenge between you two is already open.',
+      );
     }
 
     const created = await this.prisma.ladderChallenge.create({
@@ -207,25 +218,41 @@ export class LaddersService {
     return { archived: true };
   }
 
-  async updatePositions(ladderId: string, entries: { entryId: string; position: number }[]) {
+  async updatePositions(
+    ladderId: string,
+    entries: { entryId: string; position: number }[],
+  ) {
     const ladder = await this.load(ladderId);
     if (ladder.state !== LadderState.ACTIVE) {
       throw new BadRequestException('Archived ladders cannot be reordered.');
     }
-    const existing = await this.prisma.ladderEntry.findMany({ where: { ladderId } });
+    const existing = await this.prisma.ladderEntry.findMany({
+      where: { ladderId },
+    });
     const ids = new Set(existing.map((entry) => entry.id));
     const positions = new Set(entries.map((entry) => entry.position));
     if (
       entries.length !== existing.length ||
       positions.size !== entries.length ||
-      entries.some((entry) => !ids.has(entry.entryId) || entry.position < 1 || entry.position > entries.length)
+      entries.some(
+        (entry) =>
+          !ids.has(entry.entryId) ||
+          entry.position < 1 ||
+          entry.position > entries.length,
+      )
     ) {
-      throw new BadRequestException('Positions must uniquely cover every ladder entry.');
+      throw new BadRequestException(
+        'Positions must uniquely cover every ladder entry.',
+      );
     }
-    await this.prisma.$transaction(entries.map((entry) => this.prisma.ladderEntry.update({
-      where: { id: entry.entryId },
-      data: { position: entry.position },
-    })));
+    await this.prisma.$transaction(
+      entries.map((entry) =>
+        this.prisma.ladderEntry.update({
+          where: { id: entry.entryId },
+          data: { position: entry.position },
+        }),
+      ),
+    );
     return { reordered: true };
   }
 
@@ -245,10 +272,20 @@ export class LaddersService {
     if (!challenge || challenge.state !== LadderChallengeState.ACCEPTED) return;
 
     const challenger = await this.prisma.ladderEntry.findUnique({
-      where: { ladderId_userId: { ladderId: challenge.ladderId, userId: challenge.challengerId } },
+      where: {
+        ladderId_userId: {
+          ladderId: challenge.ladderId,
+          userId: challenge.challengerId,
+        },
+      },
     });
     const defender = await this.prisma.ladderEntry.findUnique({
-      where: { ladderId_userId: { ladderId: challenge.ladderId, userId: challenge.defenderId } },
+      where: {
+        ladderId_userId: {
+          ladderId: challenge.ladderId,
+          userId: challenge.defenderId,
+        },
+      },
     });
     if (!challenger || !defender) return;
 
@@ -260,11 +297,21 @@ export class LaddersService {
 
     await this.prisma.$transaction([
       this.prisma.ladderEntry.update({
-        where: { ladderId_userId: { ladderId: challenge.ladderId, userId: result.winnerUserId } },
+        where: {
+          ladderId_userId: {
+            ladderId: challenge.ladderId,
+            userId: result.winnerUserId,
+          },
+        },
         data: { position: result.winnerPosition, wins: { increment: 1 } },
       }),
       this.prisma.ladderEntry.update({
-        where: { ladderId_userId: { ladderId: challenge.ladderId, userId: result.loserUserId } },
+        where: {
+          ladderId_userId: {
+            ladderId: challenge.ladderId,
+            userId: result.loserUserId,
+          },
+        },
         data: { position: result.loserPosition, losses: { increment: 1 } },
       }),
       this.prisma.ladderChallenge.update({

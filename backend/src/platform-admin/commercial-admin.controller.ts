@@ -30,7 +30,10 @@ export class CommercialAdminController {
   constructor(private readonly commercial: CommercialAdminService) {}
 
   @Get('plans')
-  listPlans(@Query('audience') audience?: string, @Query('status') status?: string) {
+  listPlans(
+    @Query('audience') audience?: string,
+    @Query('status') status?: string,
+  ) {
     return this.commercial.listPlans({ audience, status });
   }
 
@@ -85,7 +88,10 @@ export class CommercialAdminController {
   }
 
   @Get('promotions')
-  listPromotions(@Query('status') status?: string, @Query('audience') audience?: string) {
+  listPromotions(
+    @Query('status') status?: string,
+    @Query('audience') audience?: string,
+  ) {
     return this.commercial.listPromotions({ status, audience });
   }
 
@@ -146,6 +152,10 @@ export class CommercialAdminController {
     @Param('id') id: string,
     @Body() dto: DeactivateSponsorPlacementDto,
   ) {
-    return this.commercial.deactivateSponsorPlacement(req.user.adminId, id, dto);
+    return this.commercial.deactivateSponsorPlacement(
+      req.user.adminId,
+      id,
+      dto,
+    );
   }
 }

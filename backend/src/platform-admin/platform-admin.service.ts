@@ -25,13 +25,19 @@ const USER_SELECT = {
 const REPORT_INCLUDES = {
   player: {
     include: {
-      reporter: { select: { id: true, email: true, firstName: true, lastName: true } },
-      reported: { select: { id: true, email: true, firstName: true, lastName: true } },
+      reporter: {
+        select: { id: true, email: true, firstName: true, lastName: true },
+      },
+      reported: {
+        select: { id: true, email: true, firstName: true, lastName: true },
+      },
     },
   },
   message: {
     include: {
-      reporter: { select: { id: true, email: true, firstName: true, lastName: true } },
+      reporter: {
+        select: { id: true, email: true, firstName: true, lastName: true },
+      },
       message: {
         select: { id: true, body: true, senderId: true, conversationId: true },
       },
@@ -39,7 +45,9 @@ const REPORT_INCLUDES = {
   },
   court: {
     include: {
-      reporter: { select: { id: true, email: true, firstName: true, lastName: true } },
+      reporter: {
+        select: { id: true, email: true, firstName: true, lastName: true },
+      },
       court: { select: { id: true, name: true, address: true } },
     },
   },
@@ -73,10 +81,11 @@ export class PlatformAdminService {
 
   async verifyTwoFactor(challengeToken: string, code: string) {
     const payload = await this.verifyChallengeToken(challengeToken);
-    const challenge = await this.prisma.platformAdminTwoFactorChallenge.findUnique({
-      where: { id: payload.challengeId },
-      include: { admin: true },
-    });
+    const challenge =
+      await this.prisma.platformAdminTwoFactorChallenge.findUnique({
+        where: { id: payload.challengeId },
+        include: { admin: true },
+      });
     if (
       !challenge ||
       challenge.adminId !== payload.sub ||
@@ -115,12 +124,19 @@ export class PlatformAdminService {
 
   async resendTwoFactor(challengeToken: string) {
     const payload = await this.verifyChallengeToken(challengeToken);
-    const challenge = await this.prisma.platformAdminTwoFactorChallenge.findUnique({
-      where: { id: payload.challengeId },
-      include: { admin: true },
-    });
-    if (!challenge || challenge.adminId !== payload.sub || challenge.admin.deactivatedAt) {
-      throw new UnauthorizedException('The sign-in challenge has expired. Start again.');
+    const challenge =
+      await this.prisma.platformAdminTwoFactorChallenge.findUnique({
+        where: { id: payload.challengeId },
+        include: { admin: true },
+      });
+    if (
+      !challenge ||
+      challenge.adminId !== payload.sub ||
+      challenge.admin.deactivatedAt
+    ) {
+      throw new UnauthorizedException(
+        'The sign-in challenge has expired. Start again.',
+      );
     }
     if (!challenge.consumedAt) {
       await this.prisma.platformAdminTwoFactorChallenge.update({
@@ -128,7 +144,10 @@ export class PlatformAdminService {
         data: { consumedAt: new Date() },
       });
     }
-    return this.createTwoFactorChallenge(challenge.admin.id, challenge.admin.email);
+    return this.createTwoFactorChallenge(
+      challenge.admin.id,
+      challenge.admin.email,
+    );
   }
 
   private async createTwoFactorChallenge(adminId: string, email: string) {
@@ -153,8 +172,13 @@ export class PlatformAdminService {
       challengeToken,
       expiresAt,
       maskedDestination: this.maskEmail(email),
-      delivery: process.env.NODE_ENV === 'production' ? 'PENDING_PROVIDER' : 'DEV_CONSOLE',
-      ...(process.env.NODE_ENV !== 'production' ? { devVerificationCode: code } : {}),
+      delivery:
+        process.env.NODE_ENV === 'production'
+          ? 'PENDING_PROVIDER'
+          : 'DEV_CONSOLE',
+      ...(process.env.NODE_ENV !== 'production'
+        ? { devVerificationCode: code }
+        : {}),
     };
   }
 
@@ -165,10 +189,13 @@ export class PlatformAdminService {
         scope: string;
         challengeId: string;
       }>(token);
-      if (payload.scope !== 'platform-2fa' || !payload.challengeId) throw new Error();
+      if (payload.scope !== 'platform-2fa' || !payload.challengeId)
+        throw new Error();
       return payload;
     } catch {
-      throw new UnauthorizedException('The sign-in challenge has expired. Start again.');
+      throw new UnauthorizedException(
+        'The sign-in challenge has expired. Start again.',
+      );
     }
   }
 
@@ -194,15 +221,28 @@ export class PlatformAdminService {
         query.query
           ? {
               OR: [
-                { email: { contains: query.query, mode: 'insensitive' as const } },
-                { firstName: { contains: query.query, mode: 'insensitive' as const } },
-                { lastName: { contains: query.query, mode: 'insensitive' as const } },
+                {
+                  email: {
+                    contains: query.query,
+                    mode: 'insensitive' as const,
+                  },
+                },
+                {
+                  firstName: {
+                    contains: query.query,
+                    mode: 'insensitive' as const,
+                  },
+                },
+                {
+                  lastName: {
+                    contains: query.query,
+                    mode: 'insensitive' as const,
+                  },
+                },
               ],
             }
           : {},
-        query.status
-          ? { accountStatus: query.status as AccountStatus }
-          : {},
+        query.status ? { accountStatus: query.status as AccountStatus } : {},
       ],
     };
 
@@ -220,7 +260,11 @@ export class PlatformAdminService {
     return { total, users };
   }
 
-  async setUserStatus(actorId: string, userId: string, status: 'ACTIVE' | 'SUSPENDED') {
+  async setUserStatus(
+    actorId: string,
+    userId: string,
+    status: 'ACTIVE' | 'SUSPENDED',
+  ) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found.');
     if (user.accountStatus === 'DELETED') {
@@ -258,11 +302,7 @@ export class PlatformAdminService {
 
   async listReports(type: 'player' | 'message' | 'court', status?: string) {
     const reportStatus = status as
-      | 'OPEN'
-      | 'REVIEWING'
-      | 'RESOLVED'
-      | 'DISMISSED'
-      | undefined;
+      'OPEN' | 'REVIEWING' | 'RESOLVED' | 'DISMISSED' | undefined;
     const where = reportStatus ? { status: reportStatus } : undefined;
 
     if (type === 'player') {
@@ -358,19 +398,33 @@ export class PlatformAdminService {
 
   async createNewsSource(
     actorId: string,
-    data: { name: string; feedUrl?: string | null; status: 'ACTIVE' | 'PAUSED' | 'BLOCKED' },
+    data: {
+      name: string;
+      feedUrl?: string | null;
+      status: 'ACTIVE' | 'PAUSED' | 'BLOCKED';
+    },
   ) {
     const source = await this.prisma.newsSource.create({ data });
-    await this.audit.record(actorId, 'news_source.create', 'NewsSource', source.id, {
-      name: source.name,
-    });
+    await this.audit.record(
+      actorId,
+      'news_source.create',
+      'NewsSource',
+      source.id,
+      {
+        name: source.name,
+      },
+    );
     return source;
   }
 
   async updateNewsSource(
     actorId: string,
     sourceId: string,
-    data: { name: string; feedUrl?: string | null; status: 'ACTIVE' | 'PAUSED' | 'BLOCKED' },
+    data: {
+      name: string;
+      feedUrl?: string | null;
+      status: 'ACTIVE' | 'PAUSED' | 'BLOCKED';
+    },
   ) {
     const existing = await this.prisma.newsSource.findUnique({
       where: { id: sourceId },
@@ -381,7 +435,13 @@ export class PlatformAdminService {
       where: { id: sourceId },
       data,
     });
-    await this.audit.record(actorId, 'news_source.update', 'NewsSource', sourceId, data);
+    await this.audit.record(
+      actorId,
+      'news_source.update',
+      'NewsSource',
+      sourceId,
+      data,
+    );
     return source;
   }
 
@@ -408,7 +468,9 @@ export class PlatformAdminService {
     storyId: string,
     moderationStatus: 'PENDING' | 'APPROVED' | 'REJECTED',
   ) {
-    const story = await this.prisma.newsStory.findUnique({ where: { id: storyId } });
+    const story = await this.prisma.newsStory.findUnique({
+      where: { id: storyId },
+    });
     if (!story) throw new NotFoundException('Story not found.');
 
     const updated = await this.prisma.newsStory.update({
@@ -448,7 +510,14 @@ export class PlatformAdminService {
               participants: {
                 select: {
                   side: true,
-                  user: { select: { id: true, firstName: true, lastName: true, email: true } },
+                  user: {
+                    select: {
+                      id: true,
+                      firstName: true,
+                      lastName: true,
+                      email: true,
+                    },
+                  },
                 },
               },
             },
@@ -474,13 +543,20 @@ export class PlatformAdminService {
       ruling,
       { platformAdminId: actorId },
     );
-    await this.audit.record(actorId, 'dispute.resolve', 'Match', matchId, { ruling });
+    await this.audit.record(actorId, 'dispute.resolve', 'Match', matchId, {
+      ruling,
+    });
     return result;
   }
 
   // ----------------------------------------------------------- audit trail
 
-  listAuditLogs(query: { actorId?: string; action?: string; take?: number; skip?: number }) {
+  listAuditLogs(query: {
+    actorId?: string;
+    action?: string;
+    take?: number;
+    skip?: number;
+  }) {
     return this.prisma.adminAuditLog.findMany({
       where: {
         ...(query.actorId ? { actorId: query.actorId } : {}),

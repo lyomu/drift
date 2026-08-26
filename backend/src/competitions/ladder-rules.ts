@@ -17,7 +17,10 @@ export function canChallenge(
   range: number,
 ): boolean {
   // Defender must be ABOVE the challenger (lower rung number) and within range.
-  return defenderPosition < challengerPosition && challengerPosition - defenderPosition <= range;
+  return (
+    defenderPosition < challengerPosition &&
+    challengerPosition - defenderPosition <= range
+  );
 }
 
 export interface PositionSwap {

@@ -249,11 +249,7 @@ export class CoachesService {
     return this.findForClub(clubId, coachId);
   }
 
-  async updateForClub(
-    clubId: string,
-    coachId: string,
-    dto: UpdateCoachDto,
-  ) {
+  async updateForClub(clubId: string, coachId: string, dto: UpdateCoachDto) {
     const existing = await this.prisma.coachProfile.findFirst({
       where: { id: coachId, affiliations: { some: { clubId } } },
       include: coachInclude,

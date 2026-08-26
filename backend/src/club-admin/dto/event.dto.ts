@@ -1,5 +1,14 @@
 import { Type } from 'class-transformer';
-import { IsDate, IsEmail, IsEnum, IsInt, IsOptional, IsString, MaxLength, Min } from 'class-validator';
+import {
+  IsDate,
+  IsEmail,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  MaxLength,
+  Min,
+} from 'class-validator';
 import { ClubEventRegistrationStatus, ClubEventStatus } from '@prisma/client';
 
 export class SaveEventDto {

@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Cron } from '@nestjs/schedule';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import Parser from 'rss-parser';
@@ -14,7 +14,15 @@ import Parser from 'rss-parser';
 @Injectable()
 export class NewsIngestionService {
   private readonly logger = new Logger(NewsIngestionService.name);
-  private readonly parser = new Parser({ timeout: 10_000 });
+  private readonly parser = new Parser<
+    Record<string, never>,
+    {
+      link?: string;
+      title?: string;
+      contentSnippet?: string;
+      isoDate?: string;
+    }
+  >({ timeout: 10_000 });
   private readonly prisma = new PrismaClient({
     adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
   });
@@ -24,7 +32,11 @@ export class NewsIngestionService {
     await this.ingest();
   }
 
-  async ingest(): Promise<{ created: number; skipped: number; errors: number }> {
+  async ingest(): Promise<{
+    created: number;
+    skipped: number;
+    errors: number;
+  }> {
     let created = 0;
     let skipped = 0;
     let errors = 0;
@@ -37,13 +49,19 @@ export class NewsIngestionService {
       try {
         const feed = await this.parser.parseURL(source.feedUrl!);
         for (const item of feed.items.slice(0, 20)) {
-          const url = (item as any).link ?? '';
-          if (!url) { skipped++; continue; }
+          const url = item.link ?? '';
+          if (!url) {
+            skipped++;
+            continue;
+          }
 
           const existing = await this.prisma.newsStory.findFirst({
             where: { sourceId: source.id, originalUrl: url },
           });
-          if (existing) { skipped++; continue; }
+          if (existing) {
+            skipped++;
+            continue;
+          }
 
           await this.prisma.newsStory.create({
             data: {
@@ -51,7 +69,9 @@ export class NewsIngestionService {
               headline: item.title ?? 'Untitled',
               highlight: (item.contentSnippet ?? '').slice(0, 300),
               originalUrl: url,
-              publicationDate: item.isoDate ? new Date(item.isoDate) : new Date(),
+              publicationDate: item.isoDate
+                ? new Date(item.isoDate)
+                : new Date(),
               categories: ['LATEST'],
               topics: [],
               moderationStatus: 'PENDING',
@@ -61,12 +81,16 @@ export class NewsIngestionService {
         }
       } catch (e) {
         errors++;
-        this.logger.warn(`Feed ${source.name} (${source.feedUrl}) failed: ${e}`);
+        this.logger.warn(
+          `Feed ${source.name} (${source.feedUrl}) failed: ${e}`,
+        );
       }
     }
 
     if (created > 0 || errors > 0) {
-      this.logger.log(`Ingestion: ${created} created, ${skipped} skipped, ${errors} errors.`);
+      this.logger.log(
+        `Ingestion: ${created} created, ${skipped} skipped, ${errors} errors.`,
+      );
     }
     return { created, skipped, errors };
   }

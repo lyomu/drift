@@ -77,7 +77,11 @@ export class ClubsAdminController {
   @Post(':clubId/members')
   @UseGuards(ClubMembershipGuard)
   @RequireClubRole(...OWNER_OR_ADMIN)
-  inviteMember(@Req() req: Request, @Param('clubId') clubId: string, @Body() dto: InviteMemberDto) {
+  inviteMember(
+    @Req() req: Request,
+    @Param('clubId') clubId: string,
+    @Body() dto: InviteMemberDto,
+  ) {
     return this.clubsAdmin.inviteMember(clubId, dto, this.userId(req));
   }
 
@@ -90,7 +94,12 @@ export class ClubsAdminController {
     @Param('membershipId') membershipId: string,
     @Body() dto: UpdateMembershipDto,
   ) {
-    return this.clubsAdmin.updateMembership(clubId, membershipId, dto, this.userId(req));
+    return this.clubsAdmin.updateMembership(
+      clubId,
+      membershipId,
+      dto,
+      this.userId(req),
+    );
   }
 
   @Delete(':clubId/members/:membershipId')

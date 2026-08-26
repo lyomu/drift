@@ -8,6 +8,7 @@ export const coachInclude = {
       firstName: true,
       lastName: true,
       photoUrl: true,
+      accountStatus: true,
     },
   },
   affiliations: {

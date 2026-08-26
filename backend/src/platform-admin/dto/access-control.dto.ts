@@ -1,4 +1,14 @@
-import { ArrayUnique, IsArray, IsEmail, IsEnum, IsIn, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import {
+  ArrayUnique,
+  IsArray,
+  IsEmail,
+  IsEnum,
+  IsIn,
+  IsOptional,
+  IsString,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 import { PlatformPermission } from '@prisma/client';
 
 export class VerifyPlatformTwoFactorDto {

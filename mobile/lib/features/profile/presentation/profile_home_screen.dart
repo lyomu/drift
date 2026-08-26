@@ -14,8 +14,7 @@ import '../application/profile_providers.dart';
 /// real content in M10 (the "Learn" entry point) and grew by one more row
 /// in M11 ("News"). Phase M12 gives it a real identity header and the rest
 /// of its documented nav surface: My Sports Hub, Notifications, Settings.
-/// Achievements is still deliberately out of scope — no rules catalogue
-/// exists anywhere in the foundation docs (see PROGRESS.md).
+/// Achievements now links to the derived rule catalogue.
 class ProfileHomeScreen extends ConsumerWidget {
   const ProfileHomeScreen({super.key});
 
@@ -71,6 +70,12 @@ class ProfileHomeScreen extends ConsumerWidget {
             icon: Icons.sports_tennis_outlined,
             label: 'My Sports Hub',
             onTap: () => context.push('/profile/sports-hub'),
+          ),
+          const SizedBox(height: DriftSpacing.s3),
+          _NavRow(
+            icon: Icons.emoji_events_outlined,
+            label: 'Achievements',
+            onTap: () => context.push('/profile/achievements'),
           ),
           const SizedBox(height: DriftSpacing.s3),
           _NavRow(

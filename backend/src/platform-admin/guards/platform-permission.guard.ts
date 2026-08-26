@@ -1,4 +1,9 @@
-import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PlatformPermission } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -18,17 +23,28 @@ export class PlatformPermissionGuard implements CanActivate {
     );
     if (!required?.length) return true;
 
-    const request = context.switchToHttp().getRequest<{ user?: { adminId: string } }>();
+    const request = context
+      .switchToHttp()
+      .getRequest<{ user?: { adminId: string } }>();
     const adminId = request.user?.adminId;
-    if (!adminId) throw new ForbiddenException('Platform permission could not be verified.');
+    if (!adminId)
+      throw new ForbiddenException(
+        'Platform permission could not be verified.',
+      );
 
     const admin = await this.prisma.platformAdmin.findUnique({
       where: { id: adminId },
-      select: { role: { select: { permissions: { select: { permission: true } } } } },
+      select: {
+        role: { select: { permissions: { select: { permission: true } } } },
+      },
     });
-    const granted = new Set(admin?.role.permissions.map((row) => row.permission) ?? []);
+    const granted = new Set(
+      admin?.role.permissions.map((row) => row.permission) ?? [],
+    );
     if (!required.every((permission) => granted.has(permission))) {
-      throw new ForbiddenException('Your platform role does not permit this action.');
+      throw new ForbiddenException(
+        'Your platform role does not permit this action.',
+      );
     }
     return true;
   }

@@ -14,6 +14,8 @@ class ChatMessage {
     required this.body,
     required this.systemEvent,
     required this.relatedMatchId,
+    required this.relatedLeagueId,
+    required this.relatedLeagueName,
     required this.createdAt,
   });
 
@@ -26,6 +28,8 @@ class ChatMessage {
   final String body;
   final String? systemEvent;
   final String? relatedMatchId;
+  final String? relatedLeagueId;
+  final String? relatedLeagueName;
   final DateTime createdAt;
 
   bool get isSystem => kind == 'SYSTEM';
@@ -38,6 +42,8 @@ class ChatMessage {
     body: json['body'] as String,
     systemEvent: json['systemEvent'] as String?,
     relatedMatchId: json['relatedMatchId'] as String?,
+    relatedLeagueId: json['relatedLeagueId'] as String?,
+    relatedLeagueName: json['relatedLeagueName'] as String?,
     createdAt: DateTime.parse(json['createdAt'] as String).toLocal(),
   );
 }

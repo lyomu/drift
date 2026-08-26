@@ -46,7 +46,6 @@ export default function MembersPage() {
   }
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadMembers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clubId]);

@@ -2,26 +2,26 @@
 
 Reviewed 2026-08-25 against the current state of `mobile/`, `club-admin/`, `platform-admin/`, and `backend/`. Full screen specs (Purpose · Entry Point · Primary Action · Secondary Actions · Data · States · Empty · Error · Connects To) for every row below already exist in [`foundation/04-screen-inventory.md`](foundation/04-screen-inventory.md) — this file only tracks what's built vs. not.
 
-**Current tracked gap: 16 unchecked items — 7 Mobile, 0 Club Admin, and 9 Platform Admin.**
+**Current tracked gap: 0 unchecked items — 0 Mobile, 0 Club Admin, and 0 Platform Admin.**
 
 ---
 
-## Mobile (Flutter) — 7 pending out of 123
+## Mobile (Flutter) — 0 pending out of 123
 
-### Confirmed missing or incomplete
-- [ ] Achievements List (§A.9) — explicitly deferred in code (`profile_home_screen.dart` comment: "no rules catalogue")
+### Closed in the screen-gap pass
+- [x] Achievements List (§A.9) — derived achievements API, earned/locked rule catalogue, profile entry point, transparent criteria detail
 - [x] Coach Discovery / List (§A.6) — implemented end to end with club, specialisation, and player-level filters
 - [x] Coach Profile (§A.6) — implemented with qualifications, experience, availability, club links, and explicit public contact handoff
 - [x] Upgrade / Plan Selection (§A.11) — sandbox plan comparison and select-to-pay flow backed by the shared payments module
 - [x] Payment Method (§A.11) — tokenized card/mobile-money metadata, remove action, specific decline reason, and retry
 - [x] Billing History (§A.11) — invoice list, receipt detail, and receipt download
 - [x] Subscription / Plan settings screen (§A.10) — current plan, state, renewal period, entitlements, upgrade/downgrade, methods, and history links
-- [ ] Global Search (§A.3) — no search bar/FAB on Home
-- [ ] Quick Actions Sheet / FAB (§A.3)
-- [ ] Video Lesson Player (§A.7) — `content_detail_screen.dart` only launches an external URL; it has no in-app buffering, playing, completed, or playback-error states
-- [ ] Assessment Progress interstitial (§A.2) — the assessment question screen has a linear progress indicator but no branch-dependent interstitial or Continue action
-- [ ] Connection Request Sent confirmation (§A.4) — Player Profile re-renders a "Request sent" badge, but the consolidated state lacks the specified Done and Cancel Request actions
-- [ ] System Message Detail (§A.9) — match-linked system pills navigate directly to Match Detail, but there is no expandable detail behavior or competition-linked handling
+- [x] Global Search (§A.3) — Home search bar, cross-entity backend search, entity filters, empty/error states, and detail deep links
+- [x] Quick Actions Sheet / FAB (§A.3) — Home FAB opens Find Players, Log Practice, Enter Result, and Find Court flows
+- [x] Video Lesson Player (§A.7) — in-app video screen with buffering, play/pause, completed, playback-error retry, and Mark Complete
+- [x] Assessment Progress interstitial (§A.2) — midpoint reassurance interstitial with Continue before the next question
+- [x] Connection Request Sent confirmation (§A.4) — confirmation sheet with Done and Cancel Request backed by the pending connection id
+- [x] System Message Detail (§A.9) — expandable system event detail with match and league deep links when real references exist
 
 ---
 
@@ -54,9 +54,9 @@ Sidebar and mobile navigation expose the complete Club Admin surface with role-a
 
 ---
 
-## Platform Admin (Next.js) — 9 pending out of 52
+## Platform Admin (Next.js) — 0 pending out of 52
 
-Navigation is grouped by the inventory's top-level sections and filtered against each staff role's persisted permissions. Access & Control, Overview / Analytics, Venues, Organizations, Competitions, Content, and Commercial are complete; the categories below remain the live worklist.
+Navigation is grouped by the inventory's top-level sections and filtered against each staff role's persisted permissions. Access & Control, Overview / Analytics, Venues, Organizations, Competitions, Content, Commercial, Trust & Safety, Platform config, and Support are complete.
 
 ### Access & Control
 - [x] 2FA Verification (post-login step)
@@ -101,19 +101,19 @@ Navigation is grouped by the inventory's top-level sections and filtered against
 - [x] Sponsors / Ads
 
 ### Trust & Safety
-- [ ] Reported Content Queue
-- [ ] Block / Abuse Cases
+- [x] Reported Content Queue
+- [x] Block / Abuse Cases
 
 ### Platform config
-- [ ] Countries / Cities
-- [ ] Feature Flags
-- [ ] Notification Templates
-- [ ] System Settings
-- [ ] API / Integration Settings
+- [x] Countries / Cities
+- [x] Feature Flags
+- [x] Notification Templates
+- [x] System Settings
+- [x] API / Integration Settings
 
 ### Support
-- [ ] Support Tickets
-- [ ] Privacy Requests
+- [x] Support Tickets
+- [x] Privacy Requests
 
 ---
 

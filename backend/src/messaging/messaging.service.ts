@@ -222,8 +222,15 @@ export class MessagingService {
       take,
     });
 
+    const relatedMatches = await this.relatedMatchContext(messages);
+    const dto = messages
+      .reverse()
+      .map((m) =>
+        this.toMessageDto(m, relatedMatches.get(m.relatedMatchId ?? '')),
+      );
+
     // Returned oldest-first so the client can append without reversing.
-    return { messages: messages.reverse().map((m) => this.toMessageDto(m)) };
+    return { messages: dto };
   }
 
   async markRead(userId: string, conversationId: string) {
@@ -244,16 +251,70 @@ export class MessagingService {
     return memberships.map((m) => m.conversationId);
   }
 
-  private toMessageDto(message: {
-    id: string;
-    conversationId: string;
-    senderId: string | null;
-    kind: MessageKind;
-    body: string;
-    systemEvent: string | null;
-    relatedMatchId: string | null;
-    createdAt: Date;
-  }) {
+  private async relatedMatchContext(
+    messages: { relatedMatchId: string | null }[],
+  ): Promise<
+    Map<
+      string,
+      {
+        leagueId: string | null;
+        leagueName: string | null;
+      }
+    >
+  > {
+    const matchIds = [
+      ...new Set(
+        messages
+          .map((message) => message.relatedMatchId)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
+    if (matchIds.length === 0) return new Map();
+
+    const matches = await this.prisma.match.findMany({
+      where: { id: { in: matchIds } },
+      select: {
+        id: true,
+        fixture: {
+          select: {
+            round: {
+              select: {
+                season: {
+                  select: {
+                    league: { select: { id: true, name: true } },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return new Map(
+      matches.map((match) => [
+        match.id,
+        {
+          leagueId: match.fixture?.round.season.league.id ?? null,
+          leagueName: match.fixture?.round.season.league.name ?? null,
+        },
+      ]),
+    );
+  }
+
+  private toMessageDto(
+    message: {
+      id: string;
+      conversationId: string;
+      senderId: string | null;
+      kind: MessageKind;
+      body: string;
+      systemEvent: string | null;
+      relatedMatchId: string | null;
+      createdAt: Date;
+    },
+    related?: { leagueId: string | null; leagueName: string | null },
+  ) {
     return {
       id: message.id,
       conversationId: message.conversationId,
@@ -262,6 +323,8 @@ export class MessagingService {
       body: message.body,
       systemEvent: message.systemEvent,
       relatedMatchId: message.relatedMatchId,
+      relatedLeagueId: related?.leagueId ?? null,
+      relatedLeagueName: related?.leagueName ?? null,
       createdAt: message.createdAt,
     };
   }

@@ -49,10 +49,7 @@ export class PaymentsController {
   }
 
   @Post('subscription')
-  changeSubscription(
-    @Req() req: Request,
-    @Body() dto: ChangeSubscriptionDto,
-  ) {
+  changeSubscription(@Req() req: Request, @Body() dto: ChangeSubscriptionDto) {
     return this.payments.changePlayerSubscription(this.userId(req), dto);
   }
 

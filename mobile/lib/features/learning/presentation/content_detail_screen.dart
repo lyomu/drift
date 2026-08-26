@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
@@ -17,10 +16,8 @@ import '../data/learning_repository.dart';
 /// near-duplicate screens — same discipline M7's `EnterScoreScreen` used
 /// unifying three near-duplicate score-entry screens via a mode enum.
 ///
-/// Video playback is deferred: no seed content has a `videoUrl` yet, and
-/// embedding a video-player package is unjustified without real assets — a
-/// video, if present, renders as an external "Watch video" link instead of
-/// a dedicated Video Lesson Player screen.
+/// Lessons with a `videoUrl` open the dedicated in-app Video Lesson Player
+/// rather than handing off to a browser.
 class ContentDetailScreen extends ConsumerStatefulWidget {
   const ContentDetailScreen({super.key, required this.contentId});
 
@@ -111,10 +108,7 @@ class _Body extends StatelessWidget {
           DriftButton(
             label: 'Watch video',
             variant: DriftButtonVariant.text,
-            onPressed: () => launchUrl(
-              Uri.parse(content.videoUrl!),
-              mode: LaunchMode.externalApplication,
-            ),
+            onPressed: () => context.push('/learn/content/${summary.id}/video'),
           ),
         ],
         const SizedBox(height: DriftSpacing.s6),

@@ -24,6 +24,12 @@ import { LearningContentAdminController } from './learning-content-admin.control
 import { LearningContentAdminService } from './learning-content-admin.service';
 import { CommercialAdminController } from './commercial-admin.controller';
 import { CommercialAdminService } from './commercial-admin.service';
+import { TrustSafetyAdminController } from './trust-safety-admin.controller';
+import { TrustSafetyAdminService } from './trust-safety-admin.service';
+import { PlatformConfigAdminController } from './platform-config-admin.controller';
+import { PlatformConfigAdminService } from './platform-config-admin.service';
+import { SupportAdminController } from './support-admin.controller';
+import { SupportAdminService } from './support-admin.service';
 
 @Module({
   imports: [
@@ -33,7 +39,9 @@ import { CommercialAdminService } from './commercial-admin.service';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService): { signOptions: object; secret: string } => ({
+      useFactory: (
+        config: ConfigService,
+      ): { signOptions: object; secret: string } => ({
         secret: config.get<string>('JWT_SECRET')!,
         signOptions: {
           expiresIn: (config.get<string>('PLATFORM_ADMIN_JWT_TTL') ??
@@ -52,6 +60,9 @@ import { CommercialAdminService } from './commercial-admin.service';
     CompetitionAdminController,
     LearningContentAdminController,
     CommercialAdminController,
+    TrustSafetyAdminController,
+    PlatformConfigAdminController,
+    SupportAdminController,
   ],
   providers: [
     PlatformAdminService,
@@ -63,6 +74,9 @@ import { CommercialAdminService } from './commercial-admin.service';
     CompetitionAdminService,
     LearningContentAdminService,
     CommercialAdminService,
+    TrustSafetyAdminService,
+    PlatformConfigAdminService,
+    SupportAdminService,
     AuditService,
     PlatformJwtStrategy,
     PlatformPermissionGuard,

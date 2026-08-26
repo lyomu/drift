@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { api, ApiError } from "@/lib/api-client";
@@ -27,7 +27,7 @@ export default function OrganizationDetailPage() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function load() {
+  const load = useCallback(async () => {
     setError(null);
     try {
       const response = await api.get<{ club: OrganizationDetail }>(`/organizations/${params.id}`);
@@ -43,9 +43,9 @@ export default function OrganizationDetailPage() {
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "The club could not be loaded.");
     }
-  }
+  }, [params.id]);
 
-  useEffect(() => { void load(); }, [params.id]);
+  useEffect(() => { void load(); }, [load]);
 
   async function saveProfile(event: React.FormEvent) {
     event.preventDefault();

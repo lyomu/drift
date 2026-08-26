@@ -10,10 +10,7 @@ import {
 import { ClubRole } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CoachesService } from '../coaches/coaches.service';
-import {
-  CreateCoachDto,
-  UpdateCoachDto,
-} from '../coaches/dto/coach-admin.dto';
+import { CreateCoachDto, UpdateCoachDto } from '../coaches/dto/coach-admin.dto';
 import { RequireClubRole } from './decorators/require-club-role.decorator';
 import { ClubMembershipGuard } from './guards/club-membership.guard';
 
@@ -36,10 +33,7 @@ export class ClubCoachesAdminController {
   }
 
   @Get(':coachId')
-  findOne(
-    @Param('clubId') clubId: string,
-    @Param('coachId') coachId: string,
-  ) {
+  findOne(@Param('clubId') clubId: string, @Param('coachId') coachId: string) {
     return this.coaches.findForClub(clubId, coachId);
   }
 

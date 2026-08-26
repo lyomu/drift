@@ -49,8 +49,7 @@ export function toSubscriptionDto(subscription: SubscriptionWithPlan) {
 type InvoiceWithRelations = BillingInvoice & {
   plan: PaymentPlan;
   transaction:
-    | (PaymentTransaction & { paymentMethod: PaymentMethod | null })
-    | null;
+    (PaymentTransaction & { paymentMethod: PaymentMethod | null }) | null;
 };
 
 export function toInvoiceDto(invoice: InvoiceWithRelations) {

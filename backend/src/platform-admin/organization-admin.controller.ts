@@ -47,7 +47,10 @@ export class OrganizationAdminController {
   }
 
   @Get('approvals')
-  approvals(@Query('status') status?: string, @Query('clubId') clubId?: string) {
+  approvals(
+    @Query('status') status?: string,
+    @Query('clubId') clubId?: string,
+  ) {
     return this.organizations.approvals(status, clubId);
   }
 
@@ -57,16 +60,26 @@ export class OrganizationAdminController {
     @Param('membershipId') membershipId: string,
     @Body() dto: ReviewAdminApprovalDto,
   ) {
-    return this.organizations.reviewApproval(req.user.adminId, membershipId, dto);
+    return this.organizations.reviewApproval(
+      req.user.adminId,
+      membershipId,
+      dto,
+    );
   }
 
   @Get('subscriptions')
-  subscriptions(@Query('status') status?: string, @Query('clubId') clubId?: string) {
+  subscriptions(
+    @Query('status') status?: string,
+    @Query('clubId') clubId?: string,
+  ) {
     return this.organizations.subscriptions(status, clubId);
   }
 
   @Get('moderation')
-  moderation(@Query('status') status?: string, @Query('clubId') clubId?: string) {
+  moderation(
+    @Query('status') status?: string,
+    @Query('clubId') clubId?: string,
+  ) {
     return this.organizations.moderation(status, clubId);
   }
 

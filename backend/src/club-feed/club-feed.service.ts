@@ -99,9 +99,15 @@ export class ClubFeedService {
     return { reacted: true };
   }
 
-  async report(clubId: string, postId: string, reporterId: string, reason: string) {
+  async report(
+    clubId: string,
+    postId: string,
+    reporterId: string,
+    reason: string,
+  ) {
     await this.requirePost(clubId, postId);
-    if (!reason?.trim()) throw new ForbiddenException('A report reason is required.');
+    if (!reason?.trim())
+      throw new ForbiddenException('A report reason is required.');
     const report = await this.prisma.clubPostModerationReport.create({
       data: { clubId, postId, reporterId, reason: reason.trim() },
     });

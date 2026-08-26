@@ -367,11 +367,26 @@ export class CompetitionsService {
 
   async listSeasonArchive(clubId: string) {
     const seasons = await this.prisma.season.findMany({
-      where: { league: { clubId }, OR: [{ completedAt: { not: null } }, { cancelledAt: { not: null } }] },
+      where: {
+        league: { clubId },
+        OR: [{ completedAt: { not: null } }, { cancelledAt: { not: null } }],
+      },
       include: {
         league: { select: { id: true, name: true } },
-        standings: { orderBy: { rank: 'asc' }, include: { user: { select: { id: true, firstName: true, lastName: true } } } },
-        awards: { orderBy: { issuedAt: 'desc' }, include: { recipient: { select: { id: true, firstName: true, lastName: true } } } },
+        standings: {
+          orderBy: { rank: 'asc' },
+          include: {
+            user: { select: { id: true, firstName: true, lastName: true } },
+          },
+        },
+        awards: {
+          orderBy: { issuedAt: 'desc' },
+          include: {
+            recipient: {
+              select: { id: true, firstName: true, lastName: true },
+            },
+          },
+        },
       },
       orderBy: { startsAt: 'desc' },
     });
@@ -379,16 +394,28 @@ export class CompetitionsService {
   }
 
   async completeSeason(seasonId: string) {
-    const season = await this.prisma.season.update({ where: { id: seasonId }, data: { completedAt: new Date() } });
+    const season = await this.prisma.season.update({
+      where: { id: seasonId },
+      data: { completedAt: new Date() },
+    });
     return { id: season.id, completedAt: season.completedAt };
   }
 
-  async issueSeasonAward(seasonId: string, issuedById: string, input: { recipientId: string; title: string; notes?: string }) {
+  async issueSeasonAward(
+    seasonId: string,
+    issuedById: string,
+    input: { recipientId: string; title: string; notes?: string },
+  ) {
     const registration = await this.prisma.seasonRegistration.findUnique({
       where: { seasonId_userId: { seasonId, userId: input.recipientId } },
     });
-    if (!registration) throw new BadRequestException('Awards can only be issued to season participants.');
-    const award = await this.prisma.seasonAward.create({ data: { seasonId, issuedById, ...input } });
+    if (!registration)
+      throw new BadRequestException(
+        'Awards can only be issued to season participants.',
+      );
+    const award = await this.prisma.seasonAward.create({
+      data: { seasonId, issuedById, ...input },
+    });
     return { award };
   }
 
@@ -915,7 +942,10 @@ export class CompetitionsService {
     if (round.index < season.roundCount) {
       await this.openRound(season.id, round.index + 1);
     } else {
-      await this.prisma.season.update({ where: { id: season.id }, data: { completedAt: new Date() } });
+      await this.prisma.season.update({
+        where: { id: season.id },
+        data: { completedAt: new Date() },
+      });
     }
   }
 }

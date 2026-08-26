@@ -21,6 +21,8 @@ const LANDINGS: { permission: PlatformPermission; href: string }[] = [
   { permission: "CONTENT_MANAGE", href: "/content" },
   { permission: "COMMERCIAL_MANAGE", href: "/commercial/plans" },
   { permission: "TRUST_SAFETY_MANAGE", href: "/reports" },
+  { permission: "PLATFORM_CONFIG_MANAGE", href: "/platform/markets" },
+  { permission: "SUPPORT_MANAGE", href: "/support/tickets" },
   { permission: "USERS_MANAGE", href: "/users" },
   { permission: "COMPETITIONS_MANAGE", href: "/competitions" },
   { permission: "AUDIT_READ", href: "/audit-logs" },

@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   BillingAudience,
   BillingInterval,
@@ -132,14 +136,24 @@ export class OrganizationAdminService {
           },
         },
         courts: {
-          select: { id: true, name: true, address: true, verificationStatus: true },
+          select: {
+            id: true,
+            name: true,
+            address: true,
+            verificationStatus: true,
+          },
           orderBy: { name: 'asc' },
           take: 12,
         },
         memberships: {
           include: {
             user: {
-              select: { id: true, firstName: true, lastName: true, email: true },
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+              },
             },
           },
           orderBy: [{ role: 'asc' }, { createdAt: 'asc' }],
@@ -150,11 +164,12 @@ export class OrganizationAdminService {
     });
     if (!club) throw new NotFoundException('Club not found.');
 
-    const moderationByStatus = await this.prisma.clubPostModerationReport.groupBy({
-      by: ['status'],
-      where: { clubId },
-      _count: { _all: true },
-    });
+    const moderationByStatus =
+      await this.prisma.clubPostModerationReport.groupBy({
+        by: ['status'],
+        where: { clubId },
+        _count: { _all: true },
+      });
 
     return {
       club: {
@@ -210,7 +225,9 @@ export class OrganizationAdminService {
     clubId: string,
     dto: UpdateOrganizationProfileDto,
   ) {
-    const existing = await this.prisma.club.findUnique({ where: { id: clubId } });
+    const existing = await this.prisma.club.findUnique({
+      where: { id: clubId },
+    });
     if (!existing) throw new NotFoundException('Club not found.');
 
     const club = await this.prisma.club.update({
@@ -224,10 +241,16 @@ export class OrganizationAdminService {
         verificationStatus: dto.verificationStatus,
       },
     });
-    await this.audit.record(actorId, 'organization.profile.update', 'Club', clubId, {
-      previousName: existing.name,
-      verificationStatus: club.verificationStatus,
-    });
+    await this.audit.record(
+      actorId,
+      'organization.profile.update',
+      'Club',
+      clubId,
+      {
+        previousName: existing.name,
+        verificationStatus: club.verificationStatus,
+      },
+    );
     return { club };
   }
 
@@ -236,7 +259,9 @@ export class OrganizationAdminService {
     clubId: string,
     dto: UpdateOrganizationStatusDto,
   ) {
-    const existing = await this.prisma.club.findUnique({ where: { id: clubId } });
+    const existing = await this.prisma.club.findUnique({
+      where: { id: clubId },
+    });
     if (!existing) throw new NotFoundException('Club not found.');
     if (dto.status === ClubPlatformStatus.SUSPENDED && !dto.reason?.trim()) {
       throw new BadRequestException('A suspension reason is required.');
@@ -321,8 +346,13 @@ export class OrganizationAdminService {
     if (membership.status !== ClubMembershipStatus.PENDING) {
       throw new BadRequestException('Only pending approvals can be reviewed.');
     }
-    if (![ClubRole.OWNER, ClubRole.ADMIN].includes(membership.role)) {
-      throw new BadRequestException('Only Owner and Admin approvals are handled here.');
+    if (
+      membership.role !== ClubRole.OWNER &&
+      membership.role !== ClubRole.ADMIN
+    ) {
+      throw new BadRequestException(
+        'Only Owner and Admin approvals are handled here.',
+      );
     }
     if (dto.action === 'REJECT' && !dto.reason?.trim()) {
       throw new BadRequestException('A rejection reason is required.');
@@ -433,7 +463,9 @@ export class OrganizationAdminService {
 
     const planId = dto.planId ?? club.billingAccount?.subscription?.planId;
     if (!planId) {
-      throw new BadRequestException('Choose a plan before creating a subscription override.');
+      throw new BadRequestException(
+        'Choose a plan before creating a subscription override.',
+      );
     }
     const plan = await this.prisma.paymentPlan.findFirst({
       where: { id: planId, audience: BillingAudience.CLUB, isActive: true },
@@ -460,25 +492,35 @@ export class OrganizationAdminService {
       },
       update: {
         planId: plan.id,
-        status: dto.status ?? club.billingAccount?.subscription?.status ?? BillingSubscriptionStatus.ACTIVE,
+        status:
+          dto.status ??
+          club.billingAccount?.subscription?.status ??
+          BillingSubscriptionStatus.ACTIVE,
         currentPeriodEnd: periodEnd,
       },
       include: { plan: true },
     });
 
-    await this.audit.record(actorId, 'organization_subscription.override', 'Club', clubId, {
-      previousPlanId: club.billingAccount?.subscription?.planId ?? null,
-      previousStatus: club.billingAccount?.subscription?.status ?? null,
-      nextPlanId: subscription.planId,
-      nextStatus: subscription.status,
-      reason: dto.reason.trim(),
-    });
+    await this.audit.record(
+      actorId,
+      'organization_subscription.override',
+      'Club',
+      clubId,
+      {
+        previousPlanId: club.billingAccount?.subscription?.planId ?? null,
+        previousStatus: club.billingAccount?.subscription?.status ?? null,
+        nextPlanId: subscription.planId,
+        nextStatus: subscription.status,
+        reason: dto.reason.trim(),
+      },
+    );
     return { subscription: toSubscriptionDto(subscription) };
   }
 
   async moderation(status?: string, clubId?: string) {
     const moderationStatus =
-      (status as ClubPostModerationStatus | undefined) ?? ClubPostModerationStatus.ESCALATED;
+      (status as ClubPostModerationStatus | undefined) ??
+      ClubPostModerationStatus.ESCALATED;
     const reports = await this.prisma.clubPostModerationReport.findMany({
       where: {
         status: moderationStatus,
@@ -493,7 +535,12 @@ export class OrganizationAdminService {
             deletedAt: true,
             createdAt: true,
             author: {
-              select: { id: true, firstName: true, lastName: true, email: true },
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+              },
             },
           },
         },
@@ -518,10 +565,14 @@ export class OrganizationAdminService {
     });
     if (!report) throw new NotFoundException('Moderation report not found.');
     if (report.status !== ClubPostModerationStatus.ESCALATED) {
-      throw new BadRequestException('Only escalated reports can be reviewed here.');
+      throw new BadRequestException(
+        'Only escalated reports can be reviewed here.',
+      );
     }
     if (!dto.reason?.trim()) {
-      throw new BadRequestException('A moderation decision reason is required.');
+      throw new BadRequestException(
+        'A moderation decision reason is required.',
+      );
     }
 
     const nextStatus =
@@ -547,7 +598,11 @@ export class OrganizationAdminService {
         : 'organization_moderation.approve',
       'ClubPostModerationReport',
       reportId,
-      { clubId: report.clubId, postId: report.postId, reason: dto.reason.trim() },
+      {
+        clubId: report.clubId,
+        postId: report.postId,
+        reason: dto.reason.trim(),
+      },
     );
     return { reportId, status: nextStatus };
   }
@@ -563,9 +618,21 @@ export class OrganizationAdminService {
         query.search?.trim()
           ? {
               OR: [
-                { name: { contains: query.search.trim(), mode: 'insensitive' } },
-                { address: { contains: query.search.trim(), mode: 'insensitive' } },
-                { website: { contains: query.search.trim(), mode: 'insensitive' } },
+                {
+                  name: { contains: query.search.trim(), mode: 'insensitive' },
+                },
+                {
+                  address: {
+                    contains: query.search.trim(),
+                    mode: 'insensitive',
+                  },
+                },
+                {
+                  website: {
+                    contains: query.search.trim(),
+                    mode: 'insensitive',
+                  },
+                },
               ],
             }
           : {},
@@ -573,7 +640,10 @@ export class OrganizationAdminService {
           ? { platformStatus: query.platformStatus as ClubPlatformStatus }
           : {},
         query.verification
-          ? { verificationStatus: query.verification as ListingVerificationStatus }
+          ? {
+              verificationStatus:
+                query.verification as ListingVerificationStatus,
+            }
           : {},
         query.subscriptionStatus
           ? {
@@ -588,7 +658,11 @@ export class OrganizationAdminService {
     };
   }
 
-  private mapBilling(account: (Prisma.BillingAccountGetPayload<{ include: typeof BILLING_INCLUDE }> | null)) {
+  private mapBilling(
+    account: Prisma.BillingAccountGetPayload<{
+      include: typeof BILLING_INCLUDE;
+    }> | null,
+  ) {
     if (!account) {
       return {
         subscription: null,
@@ -597,7 +671,10 @@ export class OrganizationAdminService {
         totalsByCurrency: [],
       };
     }
-    const totals = new Map<string, { paidMinor: number; failedMinor: number; invoiceCount: number }>();
+    const totals = new Map<
+      string,
+      { paidMinor: number; failedMinor: number; invoiceCount: number }
+    >();
     for (const invoice of account.invoices) {
       const row = totals.get(invoice.currency) ?? {
         paidMinor: 0,
@@ -624,7 +701,8 @@ export class OrganizationAdminService {
         failureReason: transaction.failureReason,
         createdAt: transaction.createdAt,
         plan: transaction.invoice.plan.name,
-        paymentMethodLabel: transaction.paymentMethod?.label ?? 'Removed method',
+        paymentMethodLabel:
+          transaction.paymentMethod?.label ?? 'Removed method',
       })),
       totalsByCurrency: [...totals.entries()].map(([currency, value]) => ({
         currency,

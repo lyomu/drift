@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { LearningContentForm } from "@/components/LearningContentForm";
@@ -33,7 +33,7 @@ export default function ContentDetailPage() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function load() {
+  const load = useCallback(async () => {
     setError(null);
     try {
       const response = await api.get<{ content: LearningContentSummary }>(`/learning-content/${params.id}`);
@@ -41,9 +41,9 @@ export default function ContentDetailPage() {
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Content could not be loaded.");
     }
-  }
+  }, [params.id]);
 
-  useEffect(() => { void load(); }, [params.id]);
+  useEffect(() => { void load(); }, [load]);
 
   async function save(value: LearningContentInput) {
     setBusy(true);

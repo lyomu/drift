@@ -51,7 +51,13 @@ export class CompetitionAdminController {
     @Query('status') status?: string,
     @Query('search') search?: string,
   ) {
-    return this.competitions.listRulesets({ sport, format, type, status, search });
+    return this.competitions.listRulesets({
+      sport,
+      format,
+      type,
+      status,
+      search,
+    });
   }
 
   @Post('rulesets')

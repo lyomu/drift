@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
+import '../../../shared/widgets/buttons/drift_button.dart';
 import '../../auth/data/auth_repository.dart';
 import '../data/assessment_repository.dart';
 
@@ -45,6 +46,8 @@ class _AssessmentQuestionScreenState
   int _questionBudget = 0;
   int _answeredCount = 0;
   AssessmentQuestion? _question;
+  AssessmentQuestion? _pendingQuestion;
+  bool _showProgressInterstitial = false;
   bool _isLoading = true;
   bool _isSubmitting = false;
   String? _errorText;
@@ -108,9 +111,17 @@ class _AssessmentQuestionScreenState
         return;
       }
 
+      final midpoint = (_questionBudget / 2).ceil();
+      final shouldReassure =
+          _answeredCount < midpoint && outcome.answeredCount >= midpoint;
       setState(() {
-        _question = outcome.nextQuestion;
         _answeredCount = outcome.answeredCount;
+        if (shouldReassure) {
+          _pendingQuestion = outcome.nextQuestion;
+          _showProgressInterstitial = true;
+        } else {
+          _question = outcome.nextQuestion;
+        }
       });
     } on AuthException catch (e) {
       setState(() => _errorText = e.message);
@@ -129,6 +140,18 @@ class _AssessmentQuestionScreenState
       body: SafeArea(
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
+            : _showProgressInterstitial
+            ? _AssessmentProgressInterstitial(
+                answeredCount: _answeredCount,
+                questionBudget: _questionBudget,
+                onContinue: () {
+                  setState(() {
+                    _question = _pendingQuestion;
+                    _pendingQuestion = null;
+                    _showProgressInterstitial = false;
+                  });
+                },
+              )
             : _question == null
             ? Center(
                 child: Padding(
@@ -177,6 +200,54 @@ class _AssessmentQuestionScreenState
                   ],
                 ),
               ),
+      ),
+    );
+  }
+}
+
+class _AssessmentProgressInterstitial extends StatelessWidget {
+  const _AssessmentProgressInterstitial({
+    required this.answeredCount,
+    required this.questionBudget,
+    required this.onContinue,
+  });
+
+  final int answeredCount;
+  final int questionBudget;
+  final VoidCallback onContinue;
+
+  @override
+  Widget build(BuildContext context) {
+    final type = Theme.of(context).extension<DriftTypography>()!;
+    final colors = Theme.of(context).extension<DriftColors>()!;
+
+    return Padding(
+      padding: const EdgeInsets.all(DriftSpacing.s6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          LinearProgressIndicator(
+            value: questionBudget == 0
+                ? 0
+                : (answeredCount / questionBudget).clamp(0, 1),
+          ),
+          const SizedBox(height: DriftSpacing.s8),
+          Icon(Icons.trending_up, size: 44, color: colors.primary),
+          const SizedBox(height: DriftSpacing.s4),
+          Text(
+            'Good progress',
+            style: type.h2,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: DriftSpacing.s2),
+          Text(
+            'You are halfway through. The next questions fine-tune your level so Drift can suggest better matches.',
+            style: type.body.copyWith(color: colors.textSecondary),
+            textAlign: TextAlign.center,
+          ),
+          const Spacer(),
+          DriftButton(label: 'Continue', onPressed: onContinue),
+        ],
       ),
     );
   }

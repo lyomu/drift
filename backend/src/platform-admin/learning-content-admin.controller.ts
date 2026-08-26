@@ -56,7 +56,11 @@ export class LearningContentAdminController {
     @Req() req: { user: { adminId: string } },
     @Body() dto: UpsertLearningContentDto,
   ) {
-    return this.content.createContent(req.user.adminId, LearningContentType.LESSON, dto);
+    return this.content.createContent(
+      req.user.adminId,
+      LearningContentType.LESSON,
+      dto,
+    );
   }
 
   @Post('drills')
@@ -64,7 +68,11 @@ export class LearningContentAdminController {
     @Req() req: { user: { adminId: string } },
     @Body() dto: UpsertLearningContentDto,
   ) {
-    return this.content.createContent(req.user.adminId, LearningContentType.DRILL, dto);
+    return this.content.createContent(
+      req.user.adminId,
+      LearningContentType.DRILL,
+      dto,
+    );
   }
 
   @Post('paths')

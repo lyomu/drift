@@ -17,7 +17,10 @@ export const COMPETITIONS_SETTLEMENT = 'COMPETITIONS_SETTLEMENT';
   providers: [
     {
       provide: COMPETITIONS_SETTLEMENT,
-      useFactory: (tournaments: TournamentsService, ladders: LaddersService) => ({
+      useFactory: (
+        tournaments: TournamentsService,
+        ladders: LaddersService,
+      ) => ({
         onMatchSettled: (matchId: string, winnerUserId: string | null) =>
           Promise.all([
             tournaments.onMatchSettled(matchId, winnerUserId),

@@ -64,13 +64,11 @@ export default function SeasonDetailPage() {
   }
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seasonId]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (tab === "Fixtures") loadRound();
     if (tab === "Standings") loadStandings();
     // eslint-disable-next-line react-hooks/exhaustive-deps

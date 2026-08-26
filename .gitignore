@@ -39,3 +39,6 @@ pa-handles.txt
 
 # QA evidence screenshots
 qa-evidence/
+
+# Local dev server logs (runtime artifacts; can capture request/response detail)
+*.log

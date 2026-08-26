@@ -91,8 +91,17 @@ export class VenueAdminService {
               OR: [
                 { name: { contains: query.search, mode: 'insensitive' } },
                 { address: { contains: query.search, mode: 'insensitive' } },
-                { googlePlacesRef: { contains: query.search, mode: 'insensitive' } },
-                { club: { name: { contains: query.search, mode: 'insensitive' } } },
+                {
+                  googlePlacesRef: {
+                    contains: query.search,
+                    mode: 'insensitive',
+                  },
+                },
+                {
+                  club: {
+                    name: { contains: query.search, mode: 'insensitive' },
+                  },
+                },
               ],
             }
           : {},
@@ -209,9 +218,13 @@ export class VenueAdminService {
   }
 
   async bulk(actorId: string, dto: BulkVenueActionDto) {
-    if (dto.ids.length === 0) throw new BadRequestException('Select at least one venue.');
-    const found = await this.prisma.court.count({ where: { id: { in: dto.ids } } });
-    if (found !== dto.ids.length) throw new NotFoundException('One or more venues no longer exist.');
+    if (dto.ids.length === 0)
+      throw new BadRequestException('Select at least one venue.');
+    const found = await this.prisma.court.count({
+      where: { id: { in: dto.ids } },
+    });
+    if (found !== dto.ids.length)
+      throw new NotFoundException('One or more venues no longer exist.');
     const data: Prisma.CourtUpdateManyMutationInput =
       dto.action === 'VERIFY'
         ? { verificationStatus: ListingVerificationStatus.VERIFIED }
@@ -225,10 +238,16 @@ export class VenueAdminService {
       where: { id: { in: dto.ids } },
       data,
     });
-    await this.audit.record(actorId, `venue.bulk.${dto.action.toLowerCase()}`, 'CourtBatch', dto.ids.join(','), {
-      ids: dto.ids,
-      count: result.count,
-    });
+    await this.audit.record(
+      actorId,
+      `venue.bulk.${dto.action.toLowerCase()}`,
+      'CourtBatch',
+      dto.ids.join(','),
+      {
+        ids: dto.ids,
+        count: result.count,
+      },
+    );
     return { updated: result.count };
   }
 
@@ -258,9 +277,15 @@ export class VenueAdminService {
         configured: Boolean(this.config.get<string>('GOOGLE_PLACES_API_KEY')),
         latestSuccess: latestSuccess ?? null,
         counts: {
-          synced: rows.filter((row) => row.syncStatus === VenuePlacesSyncStatus.SYNCED).length,
-          stale: rows.filter((row) => row.syncStatus === VenuePlacesSyncStatus.STALE).length,
-          failed: rows.filter((row) => row.syncStatus === VenuePlacesSyncStatus.FAILED).length,
+          synced: rows.filter(
+            (row) => row.syncStatus === VenuePlacesSyncStatus.SYNCED,
+          ).length,
+          stale: rows.filter(
+            (row) => row.syncStatus === VenuePlacesSyncStatus.STALE,
+          ).length,
+          failed: rows.filter(
+            (row) => row.syncStatus === VenuePlacesSyncStatus.FAILED,
+          ).length,
         },
       },
       venues: rows,
@@ -270,11 +295,19 @@ export class VenueAdminService {
   async forcePlacesSync(actorId: string, id: string) {
     const venue = await this.requireVenue(id);
     if (!venue.googlePlacesRef) {
-      return this.recordPlacesFailure(actorId, venue, 'Add a Google Places reference before syncing.');
+      return this.recordPlacesFailure(
+        actorId,
+        venue,
+        'Add a Google Places reference before syncing.',
+      );
     }
     const apiKey = this.config.get<string>('GOOGLE_PLACES_API_KEY');
     if (!apiKey) {
-      return this.recordPlacesFailure(actorId, venue, 'GOOGLE_PLACES_API_KEY is not configured.');
+      return this.recordPlacesFailure(
+        actorId,
+        venue,
+        'GOOGLE_PLACES_API_KEY is not configured.',
+      );
     }
 
     const placeId = venue.googlePlacesRef.replace(/^places\//, '');
@@ -292,7 +325,10 @@ export class VenueAdminService {
       );
       const body = (await response.json()) as GooglePlace;
       if (!response.ok) {
-        throw new Error(body.error?.message ?? `Google Places returned HTTP ${response.status}.`);
+        throw new Error(
+          body.error?.message ??
+            `Google Places returned HTTP ${response.status}.`,
+        );
       }
 
       const updated = await this.prisma.court.update({
@@ -316,12 +352,17 @@ export class VenueAdminService {
       await this.audit.record(actorId, 'venue.places.sync', 'Court', id, {
         googlePlacesRef: venue.googlePlacesRef,
       });
-      return { venue: this.toVenue(updated), status: VenuePlacesSyncStatus.SYNCED };
+      return {
+        venue: this.toVenue(updated),
+        status: VenuePlacesSyncStatus.SYNCED,
+      };
     } catch (error) {
       return this.recordPlacesFailure(
         actorId,
         venue,
-        error instanceof Error ? error.message.slice(0, 1000) : 'Google Places sync failed.',
+        error instanceof Error
+          ? error.message.slice(0, 1000)
+          : 'Google Places sync failed.',
       );
     }
   }
@@ -346,7 +387,9 @@ export class VenueAdminService {
             _count: { select: { courts: true, memberships: true } },
           },
         },
-        submittedBy: { select: { id: true, firstName: true, lastName: true, email: true } },
+        submittedBy: {
+          select: { id: true, firstName: true, lastName: true, email: true },
+        },
         reviewedBy: { select: { id: true, name: true, email: true } },
       },
       orderBy: { createdAt: 'desc' },
@@ -363,12 +406,17 @@ export class VenueAdminService {
       where: { id: requestId },
       include: { club: true },
     });
-    if (!request) throw new NotFoundException('Verification request not found.');
+    if (!request)
+      throw new NotFoundException('Verification request not found.');
     if (request.status !== VenueVerificationRequestStatus.PENDING) {
-      throw new BadRequestException('This verification request has already been reviewed.');
+      throw new BadRequestException(
+        'This verification request has already been reviewed.',
+      );
     }
     if (dto.action !== 'APPROVE' && !dto.note?.trim()) {
-      throw new BadRequestException('Add a reason or information request before continuing.');
+      throw new BadRequestException(
+        'Add a reason or information request before continuing.',
+      );
     }
     const status =
       dto.action === 'APPROVE'
@@ -396,10 +444,16 @@ export class VenueAdminService {
       });
       return updated;
     });
-    await this.audit.record(actorId, `venue.verification.${dto.action.toLowerCase()}`, 'VenueVerificationRequest', requestId, {
-      clubId: request.clubId,
-      note: dto.note?.trim() || null,
-    });
+    await this.audit.record(
+      actorId,
+      `venue.verification.${dto.action.toLowerCase()}`,
+      'VenueVerificationRequest',
+      requestId,
+      {
+        clubId: request.clubId,
+        note: dto.note?.trim() || null,
+      },
+    );
     return { request: reviewed, clubVerificationStatus: clubStatus };
   }
 
@@ -410,7 +464,9 @@ export class VenueAdminService {
         orderBy: { name: 'asc' },
         take: 1000,
       }),
-      this.prisma.venueDuplicateDecision.findMany({ select: { pairKey: true } }),
+      this.prisma.venueDuplicateDecision.findMany({
+        select: { pairKey: true },
+      }),
     ]);
     const resolved = new Set(decisions.map((decision) => decision.pairKey));
     const candidates: {
@@ -422,7 +478,11 @@ export class VenueAdminService {
     }[] = [];
 
     for (let firstIndex = 0; firstIndex < venues.length; firstIndex += 1) {
-      for (let secondIndex = firstIndex + 1; secondIndex < venues.length; secondIndex += 1) {
+      for (
+        let secondIndex = firstIndex + 1;
+        secondIndex < venues.length;
+        secondIndex += 1
+      ) {
         const first = venues[firstIndex];
         const second = venues[secondIndex];
         const pairKey = this.pairKey(first.id, second.id);
@@ -469,7 +529,12 @@ export class VenueAdminService {
         decidedById: actorId,
       },
     });
-    await this.audit.record(actorId, 'venue.duplicate.distinct', 'VenuePair', pairKey);
+    await this.audit.record(
+      actorId,
+      'venue.duplicate.distinct',
+      'VenuePair',
+      pairKey,
+    );
     return { distinct: true, pairKey };
   }
 
@@ -481,15 +546,23 @@ export class VenueAdminService {
       this.requireVenue(dto.survivorCourtId),
       this.requireVenue(dto.duplicateCourtId),
     ]);
-    if (survivor.clubId && duplicate.clubId && survivor.clubId !== duplicate.clubId) {
-      throw new BadRequestException('These venues belong to different clubs. Resolve ownership before merging.');
+    if (
+      survivor.clubId &&
+      duplicate.clubId &&
+      survivor.clubId !== duplicate.clubId
+    ) {
+      throw new BadRequestException(
+        'These venues belong to different clubs. Resolve ownership before merging.',
+      );
     }
     if (
       survivor.googlePlacesRef &&
       duplicate.googlePlacesRef &&
       survivor.googlePlacesRef !== duplicate.googlePlacesRef
     ) {
-      throw new BadRequestException('These venues have different Google Places references. Mark them distinct or resolve the references first.');
+      throw new BadRequestException(
+        'These venues have different Google Places references. Mark them distinct or resolve the references first.',
+      );
     }
     const pairKey = this.pairKey(survivor.id, duplicate.id);
     const [firstCourtId, secondCourtId] = pairKey.split(':');
@@ -509,11 +582,17 @@ export class VenueAdminService {
               ? duplicate.bookingType
               : survivor.bookingType,
           bookingUrl: survivor.bookingUrl ?? duplicate.bookingUrl,
-          amenities: [...new Set([...survivor.amenities, ...duplicate.amenities])],
-          openingHoursNote: survivor.openingHoursNote ?? duplicate.openingHoursNote,
+          amenities: [
+            ...new Set([...survivor.amenities, ...duplicate.amenities]),
+          ],
+          openingHoursNote:
+            survivor.openingHoursNote ?? duplicate.openingHoursNote,
           isPublic: survivor.isPublic ?? duplicate.isPublic,
-          photoUrls: [...new Set([...survivor.photoUrls, ...duplicate.photoUrls])],
-          googlePlacesRef: survivor.googlePlacesRef ?? duplicate.googlePlacesRef,
+          photoUrls: [
+            ...new Set([...survivor.photoUrls, ...duplicate.photoUrls]),
+          ],
+          googlePlacesRef:
+            survivor.googlePlacesRef ?? duplicate.googlePlacesRef,
           googlePlacesSyncStatus:
             survivor.googlePlacesSyncStatus === VenuePlacesSyncStatus.SYNCED ||
             duplicate.googlePlacesSyncStatus === VenuePlacesSyncStatus.SYNCED
@@ -529,7 +608,10 @@ export class VenueAdminService {
           ),
         },
       });
-      if (survivor.courtGroups.length === 0 && duplicate.courtGroups.length > 0) {
+      if (
+        survivor.courtGroups.length === 0 &&
+        duplicate.courtGroups.length > 0
+      ) {
         await tx.courtGroup.createMany({
           data: duplicate.courtGroups.map((group) => ({
             courtId: survivor.id,
@@ -563,13 +645,19 @@ export class VenueAdminService {
           decision: VenueDuplicateDecisionType.MERGED,
           survivorCourtId: survivor.id,
           decidedById: actorId,
-          metadata: { survivorName: survivor.name, duplicateName: duplicate.name },
+          metadata: {
+            survivorName: survivor.name,
+            duplicateName: duplicate.name,
+          },
         },
         update: {
           decision: VenueDuplicateDecisionType.MERGED,
           survivorCourtId: survivor.id,
           decidedById: actorId,
-          metadata: { survivorName: survivor.name, duplicateName: duplicate.name },
+          metadata: {
+            survivorName: survivor.name,
+            duplicateName: duplicate.name,
+          },
         },
       });
       await tx.adminAuditLog.create({
@@ -588,7 +676,11 @@ export class VenueAdminService {
     return { merged: true, survivor: (await this.detail(survivor.id)).venue };
   }
 
-  private async recordPlacesFailure(actorId: string, venue: VenueRecord, message: string) {
+  private async recordPlacesFailure(
+    actorId: string,
+    venue: VenueRecord,
+    message: string,
+  ) {
     await this.prisma.court.update({
       where: { id: venue.id },
       data: {
@@ -596,31 +688,49 @@ export class VenueAdminService {
         googlePlacesSyncError: message,
       },
     });
-    await this.audit.record(actorId, 'venue.places.sync_failed', 'Court', venue.id, {
-      reason: message,
-    });
+    await this.audit.record(
+      actorId,
+      'venue.places.sync_failed',
+      'Court',
+      venue.id,
+      {
+        reason: message,
+      },
+    );
     return { status: VenuePlacesSyncStatus.FAILED, error: message };
   }
 
   private async validateVenueInput(dto: UpsertPlatformVenueDto) {
-    if (!dto.name.trim()) throw new BadRequestException('Venue name is required.');
+    if (!dto.name.trim())
+      throw new BadRequestException('Venue name is required.');
     if (
       (dto.latitude === null) !== (dto.longitude === null) ||
       (dto.latitude === undefined) !== (dto.longitude === undefined)
     ) {
-      throw new BadRequestException('Latitude and longitude must be supplied together.');
+      throw new BadRequestException(
+        'Latitude and longitude must be supplied together.',
+      );
     }
-    if (dto.bookingType === CourtBookingType.EXTERNAL_LINK && !this.clean(dto.bookingUrl)) {
+    if (
+      dto.bookingType === CourtBookingType.EXTERNAL_LINK &&
+      !this.clean(dto.bookingUrl)
+    ) {
       throw new BadRequestException('External booking requires a booking URL.');
     }
     if (dto.clubId) {
-      const club = await this.prisma.club.findUnique({ where: { id: dto.clubId }, select: { id: true } });
+      const club = await this.prisma.club.findUnique({
+        where: { id: dto.clubId },
+        select: { id: true },
+      });
       if (!club) throw new BadRequestException('Selected club does not exist.');
     }
   }
 
   private async requireVenue(id: string) {
-    const venue = await this.prisma.court.findUnique({ where: { id }, include: venueInclude });
+    const venue = await this.prisma.court.findUnique({
+      where: { id },
+      include: venueInclude,
+    });
     if (!venue) throw new NotFoundException('Venue not found.');
     return venue;
   }
@@ -703,7 +813,10 @@ export class VenueAdminService {
       confidence += 45;
       reasons.push('Same normalized address');
     }
-    if (first.googlePlacesRef && first.googlePlacesRef === second.googlePlacesRef) {
+    if (
+      first.googlePlacesRef &&
+      first.googlePlacesRef === second.googlePlacesRef
+    ) {
       confidence += 70;
       reasons.push('Same Google Places reference');
     }
@@ -750,7 +863,10 @@ export class VenueAdminService {
   }
 
   private normalized(value: string) {
-    return value.toLocaleLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+    return value
+      .toLocaleLowerCase()
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim();
   }
 
   private tokenSimilarity(first: string, second: string) {
@@ -758,7 +874,9 @@ export class VenueAdminService {
     const secondTokens = new Set(second.split(' ').filter(Boolean));
     const union = new Set([...firstTokens, ...secondTokens]);
     if (union.size === 0) return 0;
-    const shared = [...firstTokens].filter((token) => secondTokens.has(token)).length;
+    const shared = [...firstTokens].filter((token) =>
+      secondTokens.has(token),
+    ).length;
     return shared / union.size;
   }
 

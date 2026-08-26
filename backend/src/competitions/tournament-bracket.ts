@@ -47,7 +47,9 @@ export function buildDraw(
     throw new Error('More entries than draw slots.');
   }
 
-  const seeded = entries.filter((e) => e.seed != null).sort((a, b) => a.seed! - b.seed!);
+  const seeded = entries
+    .filter((e) => e.seed != null)
+    .sort((a, b) => a.seed! - b.seed!);
   const unseeded = entries.filter((e) => e.seed == null);
 
   // `order` is the classic position→seed map: pos1vpos2 = 1v8, pos3vpos4 =
@@ -63,30 +65,44 @@ export function buildDraw(
     order.splice(0, order.length, ...next);
   }
 
-  const byUserId = new Map(entries.map((e) => [e.userId, e]));
   const posToEntry: (BracketEntry | null | 'BYE')[] = order.map(
     (seedNo) => seeded.find((e) => e.seed === seedNo) ?? null,
   );
   let cursor = 0;
   for (let i = 0; i < drawSize; i++) {
-    if (posToEntry[i] === null && cursor < unseeded.length) posToEntry[i] = unseeded[cursor++];
+    if (posToEntry[i] === null && cursor < unseeded.length)
+      posToEntry[i] = unseeded[cursor++];
     if (posToEntry[i] === null) posToEntry[i] = 'BYE';
   }
 
-
   // Round 1 pairs; a slot paired with a BYE auto-advances (isBye fixture).
-  const slots: (BracketEntry | null | 'BYE')[] = posToEntry.map((s) => s as BracketEntry | null | 'BYE');
+  const slots: (BracketEntry | null | 'BYE')[] = posToEntry.map((s) => s);
   const rounds: BracketRound[] = [];
   const first: BracketSlot[] = [];
   for (let i = 0; i < drawSize; i += 2) {
     const a = slots[i];
     const b = slots[i + 1];
     if (a === 'BYE' && b === 'BYE') {
-      first.push({ slotIndex: i / 2, sideAUserId: null, sideBUserId: null, isBye: true });
+      first.push({
+        slotIndex: i / 2,
+        sideAUserId: null,
+        sideBUserId: null,
+        isBye: true,
+      });
     } else if (b === 'BYE') {
-      first.push({ slotIndex: i / 2, sideAUserId: (a as BracketEntry).userId, sideBUserId: null, isBye: true });
+      first.push({
+        slotIndex: i / 2,
+        sideAUserId: (a as BracketEntry).userId,
+        sideBUserId: null,
+        isBye: true,
+      });
     } else if (a === 'BYE') {
-      first.push({ slotIndex: i / 2, sideAUserId: (b as BracketEntry).userId, sideBUserId: null, isBye: true });
+      first.push({
+        slotIndex: i / 2,
+        sideAUserId: (b as BracketEntry).userId,
+        sideBUserId: null,
+        isBye: true,
+      });
     } else {
       first.push({
         slotIndex: i / 2,
@@ -104,7 +120,12 @@ export function buildDraw(
   while (size >= 2) {
     const slotsNext: BracketSlot[] = [];
     for (let i = 0; i < size; i += 2) {
-      slotsNext.push({ slotIndex: i / 2, sideAUserId: null, sideBUserId: null, isBye: false });
+      slotsNext.push({
+        slotIndex: i / 2,
+        sideAUserId: null,
+        sideBUserId: null,
+        isBye: false,
+      });
     }
     rounds.push({ index, slots: slotsNext });
     size /= 2;
@@ -114,7 +135,10 @@ export function buildDraw(
 }
 
 /** Which next-round slot feeds from (roundIndex, slotIndex). */
-export function nextSlot(roundIndex: number, slotIndex: number): { roundIndex: number; slotIndex: number } {
+export function nextSlot(
+  roundIndex: number,
+  slotIndex: number,
+): { roundIndex: number; slotIndex: number } {
   return { roundIndex: roundIndex + 1, slotIndex: Math.floor(slotIndex / 2) };
 }
 

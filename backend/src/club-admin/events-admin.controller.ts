@@ -1,11 +1,28 @@
-import { Body, Controller, Get, Header, Param, Patch, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Header,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { ClubRole } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { EventsService } from '../events/events.service';
 import { RequireClubRole } from './decorators/require-club-role.decorator';
 import { ClubMembershipGuard } from './guards/club-membership.guard';
-import { AddEventRegistrationDto, MarkAttendanceDto, SaveEventDto, UpdateEventDto } from './dto/event.dto';
+import {
+  AddEventRegistrationDto,
+  MarkAttendanceDto,
+  SaveEventDto,
+  UpdateEventDto,
+} from './dto/event.dto';
 
 const MANAGERS = [ClubRole.OWNER, ClubRole.ADMIN];
 
@@ -19,8 +36,16 @@ export class EventsAdminController {
   }
 
   @Get()
-  list(@Param('clubId') clubId: string, @Query('from') from?: string, @Query('to') to?: string) {
-    return this.events.list(clubId, from ? new Date(from) : undefined, to ? new Date(to) : undefined);
+  list(
+    @Param('clubId') clubId: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    return this.events.list(
+      clubId,
+      from ? new Date(from) : undefined,
+      to ? new Date(to) : undefined,
+    );
   }
 
   @Get(':id')
@@ -30,32 +55,65 @@ export class EventsAdminController {
 
   @Post()
   @RequireClubRole(...MANAGERS)
-  create(@Req() req: Request, @Param('clubId') clubId: string, @Body() dto: SaveEventDto) {
+  create(
+    @Req() req: Request,
+    @Param('clubId') clubId: string,
+    @Body() dto: SaveEventDto,
+  ) {
     return this.events.create(clubId, this.userId(req), dto);
   }
 
   @Patch(':id')
   @RequireClubRole(...MANAGERS)
-  update(@Req() req: Request, @Param('clubId') clubId: string, @Param('id') id: string, @Body() dto: UpdateEventDto) {
+  update(
+    @Req() req: Request,
+    @Param('clubId') clubId: string,
+    @Param('id') id: string,
+    @Body() dto: UpdateEventDto,
+  ) {
     return this.events.update(clubId, id, this.userId(req), dto);
   }
 
   @Post(':id/registrations')
   @RequireClubRole(...MANAGERS)
-  register(@Req() req: Request, @Param('clubId') clubId: string, @Param('id') id: string, @Body() dto: AddEventRegistrationDto) {
+  register(
+    @Req() req: Request,
+    @Param('clubId') clubId: string,
+    @Param('id') id: string,
+    @Body() dto: AddEventRegistrationDto,
+  ) {
     return this.events.addRegistration(clubId, id, this.userId(req), dto.email);
   }
 
   @Patch(':id/registrations/:registrationId')
   @RequireClubRole(...MANAGERS)
-  attendance(@Req() req: Request, @Param('clubId') clubId: string, @Param('id') id: string, @Param('registrationId') registrationId: string, @Body() dto: MarkAttendanceDto) {
-    return this.events.markAttendance(clubId, id, registrationId, this.userId(req), dto.status);
+  attendance(
+    @Req() req: Request,
+    @Param('clubId') clubId: string,
+    @Param('id') id: string,
+    @Param('registrationId') registrationId: string,
+    @Body() dto: MarkAttendanceDto,
+  ) {
+    return this.events.markAttendance(
+      clubId,
+      id,
+      registrationId,
+      this.userId(req),
+      dto.status,
+    );
   }
 
   @Get(':id/registrations.csv')
   @Header('Content-Type', 'text/csv; charset=utf-8')
-  async exportRegistrations(@Param('clubId') clubId: string, @Param('id') id: string, @Res({ passthrough: true }) res: Response) {
-    res.setHeader('Content-Disposition', `attachment; filename="event-${id}-registrations.csv"`);
+  async exportRegistrations(
+    @Param('clubId') clubId: string,
+    @Param('id') id: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="event-${id}-registrations.csv"`,
+    );
     return this.events.registrationCsv(clubId, id);
   }
 }

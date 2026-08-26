@@ -55,7 +55,10 @@ export class ResultsService {
     @Optional()
     @Inject('COMPETITIONS_SETTLEMENT')
     private readonly settlement?: {
-      onMatchSettled(matchId: string, winnerUserId: string | null): Promise<void>;
+      onMatchSettled(
+        matchId: string,
+        winnerUserId: string | null,
+      ): Promise<void>;
     },
   ) {}
 
@@ -224,25 +227,26 @@ export class ResultsService {
     // Wave 6 competition hooks: a settled result advances a tournament
     // bracket and/or resolves a ladder challenge. Must not fail the result
     // itself — competition bookkeeping is downstream.
-    const winnerUserId = await this.winnerOf(match, version.winningSide);
+    const winnerUserId = this.winnerOf(match, version.winningSide);
     await this.settlement
       ?.onMatchSettled(match.id, winnerUserId)
-      .catch((e) => this.logger.error(`competition settlement hook failed: ${e}`));
+      .catch((e) =>
+        this.logger.error(`competition settlement hook failed: ${e}`),
+      );
 
     return { ratingDeltaA, ratingDeltaB };
   }
 
   private readonly logger = new Logger(ResultsService.name);
 
-  private async winnerOf(
+  private winnerOf(
     match: MatchRecord,
     winningSide: MatchSide | null,
-  ): Promise<string | null> {
+  ): string | null {
     if (!winningSide) return null;
     const participant = match.participants.find((p) => p.side === winningSide);
     return participant?.userId ?? null;
   }
-
 
   // -------------------------------------------------------------- endpoints
 

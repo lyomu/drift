@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Product / External Dependencies Guideline</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #10201b;
+      --muted: #5d6f68;
+      --line: #d9e4df;
+      --panel: #f6faf8;
+      --accent: #0f7b63;
+      --accent-dark: #075442;
+      --warn: #8a5a00;
+      --bg: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+    }
+
+    main {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 40px 0 56px;
+    }
+
+    header {
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 28px;
+      padding-bottom: 22px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 34px;
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 34px 0 12px;
+      font-size: 22px;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 24px 0 10px;
+      font-size: 17px;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0 0 14px;
+    }
+
+    .meta,
+    .muted {
+      color: var(--muted);
+    }
+
+    .notice {
+      border-left: 4px solid var(--accent);
+      background: var(--panel);
+      padding: 14px 16px;
+      margin: 18px 0 24px;
+    }
+
+    ul,
+    ol {
+      margin: 0 0 18px 22px;
+      padding: 0;
+    }
+
+    li {
+      margin: 7px 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0 24px;
+      font-size: 14px;
+    }
+
+    th,
+    td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      vertical-align: top;
+      text-align: left;
+    }
+
+    th {
+      background: var(--panel);
+      color: var(--accent-dark);
+      font-weight: 700;
+    }
+
+    code {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+      font-size: 0.92em;
+    }
+
+    .checklist {
+      list-style: none;
+      margin-left: 0;
+    }
+
+    .checklist li::before {
+      content: "□";
+      color: var(--accent);
+      font-weight: 700;
+      margin-right: 8px;
+    }
+
+    .rule {
+      border: 1px solid var(--line);
+      background: #fffdf7;
+      color: var(--warn);
+      padding: 16px;
+      margin-top: 18px;
+    }
+
+    @media (max-width: 760px) {
+      main {
+        width: min(100% - 24px, 1120px);
+        padding-top: 28px;
+      }
+
+      h1 {
+        font-size: 28px;
+      }
+
+      table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Product / External Dependencies Guideline</h1>
+      <p class="meta">Last updated: 2026-08-25</p>
+    </header>
+
+    <section class="notice">
+      <p>This guideline turns the remaining non-screen dependencies into owner decisions, implementation inputs, and acceptance criteria. Do not hide missing providers behind optimistic UI: when a dependency is absent, the product should show a clear pending, unavailable, or failed state.</p>
+    </section>
+
+    <h2>Decision Principles</h2>
+    <ul>
+      <li>Prefer provider-neutral interfaces in code so vendor changes do not require product rewrites.</li>
+      <li>Separate secrets from configuration. Store API keys, tokens, and private credentials only in the approved runtime secret store.</li>
+      <li>Keep sandbox/dev behavior explicit. Dev-only OTPs, sandbox payments, fake delivery, and <code>providerCall: false</code> audit metadata must never be mistaken for production readiness.</li>
+      <li>Record user-impacting operations in durable audit logs where the feature affects accounts, money, moderation, privacy, or platform configuration.</li>
+      <li>Do not fabricate operational data. Use real provider callbacks, delivery receipts, payment events, sync results, or documented fallback states.</li>
+      <li>Confirm compliance before collecting or processing sensitive user data, especially minors, billing data, location data, and account deletion requests.</li>
+    </ul>
+
+    <h2>Dependency Matrix</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Dependency</th>
+          <th>Why It Matters</th>
+          <th>Current State</th>
+          <th>Owner Decision Needed</th>
+          <th>Implementation Readiness Criteria</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Sharp Sans license</td>
+          <td>Brand typography for production UI.</td>
+          <td>Trial files exist but are not usable as production fonts. Space Grotesk is the placeholder.</td>
+          <td>Buy a full commercial Sharp Sans Display license or formally choose a substitute typeface.</td>
+          <td>Licensed full-glyph font files, usage rights documented, app typography smoke-checked for punctuation and fallback behavior.</td>
+        </tr>
+        <tr>
+          <td>Email/SMS provider</td>
+          <td>OTP delivery, password reset, account alerts, support workflows.</td>
+          <td>Dev-only delivery paths exist; production provider is not selected.</td>
+          <td>Choose provider by launch market, cost, deliverability, compliance, and sender ID needs.</td>
+          <td>Provider account, verified sender/domain, templates approved where required, retry/error handling, delivery webhooks, rate limits, and production secrets configured.</td>
+        </tr>
+        <tr>
+          <td>Push credentials</td>
+          <td>Real push notifications for mobile users.</td>
+          <td>In-app Notification Center works; FCM/APNs delivery is not wired for production.</td>
+          <td>Create Firebase/APNs project and choose operational ownership for certificates/keys.</td>
+          <td>FCM/APNs credentials, device-token registration, notification permission copy, delivery receipt/error monitoring, and opt-out behavior verified.</td>
+        </tr>
+        <tr>
+          <td>Payments provider</td>
+          <td>Real subscription/payment collection and refunds.</td>
+          <td>Schema and service are provider-neutral; sandbox provider exists.</td>
+          <td>Choose Stripe or another provider, supported currencies, refund policy, tax/VAT approach, and dispute handling owner.</td>
+          <td>Provider account, webhook signing, idempotency keys, live/test mode separation, currency-specific pricing, invoice/receipt rules, refund path, and reconciliation report.</td>
+        </tr>
+        <tr>
+          <td>Google Places API key</td>
+          <td>Venue enrichment, place sync, duplicate/quality workflows.</td>
+          <td>Sync workflow exists and records failed state when credentials are absent.</td>
+          <td>Approve billed Google Cloud project, API restrictions, budget alert, and data-use policy.</td>
+          <td>Places API enabled, key restricted by service/environment, quota and billing alerts configured, failure states tested, and provider-owned fields documented.</td>
+        </tr>
+        <tr>
+          <td>Legal/support content</td>
+          <td>Public trust, support routing, terms/privacy compliance.</td>
+          <td>Placeholder help/legal copy exists.</td>
+          <td>Approve legal text, support mailbox, escalation rules, and response-time expectations.</td>
+          <td>Terms, Privacy Policy, FAQ, Contact Support, deletion/export language, minors language, and support ownership reviewed and published.</td>
+        </tr>
+        <tr>
+          <td>Full GDPR deletion project</td>
+          <td>Compliance-grade account deletion/anonymization.</td>
+          <td>Soft delete and privacy request processing exist; full cascading/anonymization is separate.</td>
+          <td>Define legal deletion standard, retention exceptions, audit retention, and data export format.</td>
+          <td>Data inventory, deletion/anonymization map, retention policy, dry-run tooling, irreversible-confirmation flow, admin audit trail, and regression tests.</td>
+        </tr>
+        <tr>
+          <td>Richer achievement catalogue</td>
+          <td>Deeper retention and progression rewards.</td>
+          <td>First derived achievement catalogue exists.</td>
+          <td>Define seasonal, coach, event, Padel, streak, and club-specific badge rules.</td>
+          <td>Product rules, icon/name/copy set, anti-gaming constraints, backfill policy, notification policy, and real-data derivation for each badge.</td>
+        </tr>
+        <tr>
+          <td>Other non-screen scope items</td>
+          <td>Previously documented work that is outside the screen-gap closure.</td>
+          <td>Tracked in <code>PROGRESS.md</code> Open Dependencies and Known Deferred Items.</td>
+          <td>Triage into launch blocker, post-launch, or backlog.</td>
+          <td>Each item has an owner, priority, acceptance criteria, and target milestone.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Provider Selection Guidance</h2>
+    <h3>Email / SMS</h3>
+    <p>Choose based on launch geography first.</p>
+    <ul>
+      <li>Kenya/East Africa launch: shortlist Africa's Talking and Celcom Africa for local SMS economics, sender ID support, and M-Pesa-friendly billing.</li>
+      <li>International launch: shortlist Twilio, Vonage, Infobip, Telnyx, or Plivo for broader reach and mature API tooling.</li>
+      <li>Production requirement: OTP must use a provider-backed channel with retry, throttling, logging, and abuse controls. Console/dev codes are not production delivery.</li>
+    </ul>
+
+    <p><strong>Minimum acceptance criteria:</strong></p>
+    <ul>
+      <li>Transactional sender identity approved.</li>
+      <li>OTP/password-reset templates approved where carriers require it.</li>
+      <li>Delivery callback endpoint configured.</li>
+      <li>Failed delivery and rate-limit states visible to support/admins.</li>
+      <li>Costs documented by destination country and message type.</li>
+    </ul>
+
+    <h3>Push</h3>
+    <p>Use FCM for Android and APNs for iOS, typically through Firebase Cloud Messaging unless there is a strong reason to operate separate APNs infrastructure.</p>
+    <ul>
+      <li>Device token registration and token refresh handled.</li>
+      <li>Notification preferences respected.</li>
+      <li>Permission-denied state handled without blocking in-app notifications.</li>
+      <li>Delivery failures logged by platform.</li>
+    </ul>
+
+    <h3>Payments</h3>
+    <p>Keep the existing provider-neutral boundary. Stripe is the default practical shortlist for cards/subscriptions unless local payment rails are more important for the first market.</p>
+    <ul>
+      <li>Webhook signature verification.</li>
+      <li>Idempotent charge/refund handling.</li>
+      <li>Clear split between sandbox and live credentials.</li>
+      <li>Amounts stored and reported by currency.</li>
+      <li>Receipts, invoices, refunds, and failed payments visible to support/admins.</li>
+    </ul>
+
+    <h3>Google Places</h3>
+    <p>Use a restricted key, not an unrestricted server key.</p>
+    <ul>
+      <li>API key scoped to required Places APIs.</li>
+      <li>Environment-specific key separation.</li>
+      <li>Quota and billing alerts.</li>
+      <li>Sync failures preserve existing venue data and show actionable status.</li>
+    </ul>
+
+    <h2>Launch Readiness Checklist</h2>
+    <ul class="checklist">
+      <li>Font license decision recorded and production font files available.</li>
+      <li>Email/SMS provider selected, configured, and verified in staging.</li>
+      <li>Push credentials configured for Android and iOS.</li>
+      <li>Payments provider selected, webhook flow verified, and refund policy approved.</li>
+      <li>Google Places API key configured with quota and restrictions.</li>
+      <li>Legal/support copy reviewed and support mailbox live.</li>
+      <li>GDPR deletion scope approved and implementation project planned.</li>
+      <li>Achievement expansion product rules prioritized.</li>
+      <li>Remaining non-screen items triaged with owners and milestones.</li>
+    </ul>
+
+    <section class="rule">
+      <h2>Operating Rule</h2>
+      <p>Until a dependency is complete, the app should preserve honest states: sandbox, pending setup, provider unavailable, failed sync, or manual review required. Avoid copy that implies delivery, payment, deletion, legal approval, or provider verification has happened when the system only recorded an internal placeholder.</p>
+    </section>
+  </main>
+</body>
+</html>

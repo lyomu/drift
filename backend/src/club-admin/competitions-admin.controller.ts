@@ -124,7 +124,11 @@ export class CompetitionsAdminController {
   }
 
   @Post('seasons/:id/awards')
-  async issueAward(@Req() req: Request, @Param('id') id: string, @Body() dto: IssueSeasonAwardDto) {
+  async issueAward(
+    @Req() req: Request,
+    @Param('id') id: string,
+    @Body() dto: IssueSeasonAwardDto,
+  ) {
     await this.assertSeasonAccess(req, id);
     return this.competitions.issueSeasonAward(id, this.userId(req), dto);
   }

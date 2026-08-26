@@ -93,6 +93,7 @@ class _PlayerProfileScreenState extends ConsumerState<PlayerProfileScreen> {
             profile: value,
             isSubmitting: _isSubmitting,
             onAction: _run,
+            playerId: widget.playerId,
           ),
           AsyncError() => const Center(child: Text('Player not available.')),
           _ => const Center(child: CircularProgressIndicator()),
@@ -107,11 +108,13 @@ class _ProfileBody extends ConsumerWidget {
     required this.profile,
     required this.isSubmitting,
     required this.onAction,
+    required this.playerId,
   });
 
   final PlayerProfile profile;
   final bool isSubmitting;
   final Future<void> Function(Future<void> Function()) onAction;
+  final String playerId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -147,7 +150,17 @@ class _ProfileBody extends ConsumerWidget {
         _ConnectionAction(
           state: profile.connectionState,
           isSubmitting: isSubmitting,
-          onConnect: () => onAction(() => repo.request(summary.id)),
+          onConnect: () => onAction(() async {
+            final connectionId = await repo.request(summary.id);
+            if (!context.mounted) return;
+            _showRequestSentSheet(
+              context,
+              ref,
+              connectionId: connectionId,
+              playerId: playerId,
+              playerName: summary.displayName,
+            );
+          }),
         ),
         const SizedBox(height: DriftSpacing.s2),
         // §4.1 allows challenging without connecting first — the connection
@@ -221,6 +234,89 @@ class _ProfileBody extends ConsumerWidget {
       ],
     );
   }
+}
+
+void _showRequestSentSheet(
+  BuildContext context,
+  WidgetRef ref, {
+  required String connectionId,
+  required String playerId,
+  required String playerName,
+}) {
+  final type = Theme.of(context).extension<DriftTypography>()!;
+  final colors = Theme.of(context).extension<DriftColors>()!;
+  var isCancelling = false;
+
+  showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    builder: (sheetContext) => StatefulBuilder(
+      builder: (sheetContext, setSheetState) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            DriftSpacing.s5,
+            0,
+            DriftSpacing.s5,
+            DriftSpacing.s5,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.schedule_send, color: colors.primary),
+                  const SizedBox(width: DriftSpacing.s3),
+                  Expanded(child: Text('Request sent', style: type.h3)),
+                ],
+              ),
+              const SizedBox(height: DriftSpacing.s3),
+              Text(
+                '$playerName will see your connection request. You can cancel it while it is still pending.',
+                style: type.body.copyWith(color: colors.textSecondary),
+              ),
+              const SizedBox(height: DriftSpacing.s5),
+              DriftButton(
+                label: 'Done',
+                onPressed: () => Navigator.of(sheetContext).pop(),
+              ),
+              const SizedBox(height: DriftSpacing.s2),
+              DriftButton(
+                label: isCancelling ? 'Cancelling...' : 'Cancel Request',
+                variant: DriftButtonVariant.text,
+                onPressed: isCancelling
+                    ? null
+                    : () async {
+                        setSheetState(() => isCancelling = true);
+                        try {
+                          await ref
+                              .read(connectionsRepositoryProvider)
+                              .remove(connectionId);
+                          ref.invalidate(playerProfileProvider(playerId));
+                          ref.invalidate(connectionsProvider);
+                          ref.invalidate(pendingRequestsProvider);
+                          if (sheetContext.mounted) {
+                            Navigator.of(sheetContext).pop();
+                          }
+                        } on AuthException catch (e) {
+                          if (sheetContext.mounted) {
+                            ScaffoldMessenger.of(sheetContext).showSnackBar(
+                              SnackBar(content: Text(e.message)),
+                            );
+                          }
+                        } finally {
+                          if (sheetContext.mounted) {
+                            setSheetState(() => isCancelling = false);
+                          }
+                        }
+                      },
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
 }
 
 String _titleCase(String enumValue) {

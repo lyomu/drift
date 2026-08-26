@@ -43,11 +43,7 @@ export class ClubBillingController {
     @Param('clubId') clubId: string,
     @Param('methodId') methodId: string,
   ) {
-    return this.payments.removeClubMethod(
-      this.userId(req),
-      clubId,
-      methodId,
-    );
+    return this.payments.removeClubMethod(this.userId(req), clubId, methodId);
   }
 
   @Post('subscription')
@@ -56,11 +52,7 @@ export class ClubBillingController {
     @Param('clubId') clubId: string,
     @Body() dto: ChangeSubscriptionDto,
   ) {
-    return this.payments.changeClubSubscription(
-      this.userId(req),
-      clubId,
-      dto,
-    );
+    return this.payments.changeClubSubscription(this.userId(req), clubId, dto);
   }
 
   @Get('invoices/:invoiceId')

@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   LadderState,
   LeagueState,
@@ -38,117 +42,153 @@ export class CompetitionAdminService {
     const sport = this.resolveEnum(MatchSport, query.sport);
     const search = query.search?.trim();
 
-    const [leagues, tournaments, ladders, leagueTotal, tournamentTotal, ladderTotal] =
-      await this.prisma.$transaction([
-        requestedTypes.includes('LEAGUE')
-          ? this.prisma.league.findMany({
-              where: this.leagueWhere({ sport, state: query.state, clubId: query.clubId, search }),
-              include: {
-                club: {
-                  select: {
-                    id: true,
-                    name: true,
-                    verificationStatus: true,
-                    platformStatus: true,
-                  },
-                },
-                _count: { select: { seasons: true } },
-              },
-              orderBy: { updatedAt: 'desc' },
-              take: preload,
-            })
-          : this.prisma.league.findMany({
-              where: { id: '__none__' },
-              include: {
-                club: {
-                  select: {
-                    id: true,
-                    name: true,
-                    verificationStatus: true,
-                    platformStatus: true,
-                  },
-                },
-                _count: { select: { seasons: true } },
-              },
+    const [
+      leagues,
+      tournaments,
+      ladders,
+      leagueTotal,
+      tournamentTotal,
+      ladderTotal,
+    ] = await this.prisma.$transaction([
+      requestedTypes.includes('LEAGUE')
+        ? this.prisma.league.findMany({
+            where: this.leagueWhere({
+              sport,
+              state: query.state,
+              clubId: query.clubId,
+              search,
             }),
-        requestedTypes.includes('TOURNAMENT')
-          ? this.prisma.tournament.findMany({
-              where: this.tournamentWhere({ sport, state: query.state, clubId: query.clubId, search }),
-              include: {
-                club: {
-                  select: {
-                    id: true,
-                    name: true,
-                    verificationStatus: true,
-                    platformStatus: true,
-                  },
+            include: {
+              club: {
+                select: {
+                  id: true,
+                  name: true,
+                  verificationStatus: true,
+                  platformStatus: true,
                 },
-                _count: { select: { entries: true, rounds: true } },
               },
-              orderBy: { createdAt: 'desc' },
-              take: preload,
-            })
-          : this.prisma.tournament.findMany({
-              where: { id: '__none__' },
-              include: {
-                club: {
-                  select: {
-                    id: true,
-                    name: true,
-                    verificationStatus: true,
-                    platformStatus: true,
-                  },
+              _count: { select: { seasons: true } },
+            },
+            orderBy: { updatedAt: 'desc' },
+            take: preload,
+          })
+        : this.prisma.league.findMany({
+            where: { id: '__none__' },
+            include: {
+              club: {
+                select: {
+                  id: true,
+                  name: true,
+                  verificationStatus: true,
+                  platformStatus: true,
                 },
-                _count: { select: { entries: true, rounds: true } },
               },
+              _count: { select: { seasons: true } },
+            },
+          }),
+      requestedTypes.includes('TOURNAMENT')
+        ? this.prisma.tournament.findMany({
+            where: this.tournamentWhere({
+              sport,
+              state: query.state,
+              clubId: query.clubId,
+              search,
             }),
-        requestedTypes.includes('LADDER')
-          ? this.prisma.ladder.findMany({
-              where: this.ladderWhere({ sport, state: query.state, clubId: query.clubId, search }),
-              include: {
-                club: {
-                  select: {
-                    id: true,
-                    name: true,
-                    verificationStatus: true,
-                    platformStatus: true,
-                  },
+            include: {
+              club: {
+                select: {
+                  id: true,
+                  name: true,
+                  verificationStatus: true,
+                  platformStatus: true,
                 },
-                _count: { select: { entries: true, challenges: true } },
               },
-              orderBy: { createdAt: 'desc' },
-              take: preload,
-            })
-          : this.prisma.ladder.findMany({
-              where: { id: '__none__' },
-              include: {
-                club: {
-                  select: {
-                    id: true,
-                    name: true,
-                    verificationStatus: true,
-                    platformStatus: true,
-                  },
+              _count: { select: { entries: true, rounds: true } },
+            },
+            orderBy: { createdAt: 'desc' },
+            take: preload,
+          })
+        : this.prisma.tournament.findMany({
+            where: { id: '__none__' },
+            include: {
+              club: {
+                select: {
+                  id: true,
+                  name: true,
+                  verificationStatus: true,
+                  platformStatus: true,
                 },
-                _count: { select: { entries: true, challenges: true } },
               },
+              _count: { select: { entries: true, rounds: true } },
+            },
+          }),
+      requestedTypes.includes('LADDER')
+        ? this.prisma.ladder.findMany({
+            where: this.ladderWhere({
+              sport,
+              state: query.state,
+              clubId: query.clubId,
+              search,
             }),
-        requestedTypes.includes('LEAGUE')
-          ? this.prisma.league.count({
-              where: this.leagueWhere({ sport, state: query.state, clubId: query.clubId, search }),
-            })
-          : this.prisma.league.count({ where: { id: '__none__' } }),
-        requestedTypes.includes('TOURNAMENT')
-          ? this.prisma.tournament.count({
-              where: this.tournamentWhere({ sport, state: query.state, clubId: query.clubId, search }),
-            })
-          : this.prisma.tournament.count({ where: { id: '__none__' } }),
-        requestedTypes.includes('LADDER')
-          ? this.prisma.ladder.count({
-              where: this.ladderWhere({ sport, state: query.state, clubId: query.clubId, search }),
-            })
-          : this.prisma.ladder.count({ where: { id: '__none__' } }),
-      ]);
+            include: {
+              club: {
+                select: {
+                  id: true,
+                  name: true,
+                  verificationStatus: true,
+                  platformStatus: true,
+                },
+              },
+              _count: { select: { entries: true, challenges: true } },
+            },
+            orderBy: { createdAt: 'desc' },
+            take: preload,
+          })
+        : this.prisma.ladder.findMany({
+            where: { id: '__none__' },
+            include: {
+              club: {
+                select: {
+                  id: true,
+                  name: true,
+                  verificationStatus: true,
+                  platformStatus: true,
+                },
+              },
+              _count: { select: { entries: true, challenges: true } },
+            },
+          }),
+      requestedTypes.includes('LEAGUE')
+        ? this.prisma.league.count({
+            where: this.leagueWhere({
+              sport,
+              state: query.state,
+              clubId: query.clubId,
+              search,
+            }),
+          })
+        : this.prisma.league.count({ where: { id: '__none__' } }),
+      requestedTypes.includes('TOURNAMENT')
+        ? this.prisma.tournament.count({
+            where: this.tournamentWhere({
+              sport,
+              state: query.state,
+              clubId: query.clubId,
+              search,
+            }),
+          })
+        : this.prisma.tournament.count({ where: { id: '__none__' } }),
+      requestedTypes.includes('LADDER')
+        ? this.prisma.ladder.count({
+            where: this.ladderWhere({
+              sport,
+              state: query.state,
+              clubId: query.clubId,
+              search,
+            }),
+          })
+        : this.prisma.ladder.count({ where: { id: '__none__' } }),
+    ]);
 
     const rows = [
       ...leagues.map((league) => ({
@@ -163,7 +203,12 @@ export class CompetitionAdminService {
         primaryCountLabel: 'Seasons',
         primaryCount: league._count.seasons,
         secondaryCountLabel: 'Rules',
-        secondaryCount: [league.scoringFormat, league.walkoverRule, league.unfinishedMatchPolicy, league.rulesText].filter(Boolean).length,
+        secondaryCount: [
+          league.scoringFormat,
+          league.walkoverRule,
+          league.unfinishedMatchPolicy,
+          league.rulesText,
+        ].filter(Boolean).length,
         createdAt: league.createdAt,
         updatedAt: league.updatedAt,
       })),
@@ -233,7 +278,8 @@ export class CompetitionAdminService {
     const where: Prisma.CompetitionRulesetWhereInput = {
       ...(sport ? { sport } : {}),
       ...(format ? { format } : {}),
-      ...(query.type && COMPETITION_TYPES.includes(query.type.toUpperCase() as CompetitionType)
+      ...(query.type &&
+      COMPETITION_TYPES.includes(query.type.toUpperCase() as CompetitionType)
         ? { competitionTypes: { has: query.type.toUpperCase() } }
         : {}),
       ...(query.status === 'ACTIVE' ? { isActive: true } : {}),
@@ -242,8 +288,18 @@ export class CompetitionAdminService {
         ? {
             OR: [
               { name: { contains: query.search.trim(), mode: 'insensitive' } },
-              { description: { contains: query.search.trim(), mode: 'insensitive' } },
-              { scoringFormat: { contains: query.search.trim(), mode: 'insensitive' } },
+              {
+                description: {
+                  contains: query.search.trim(),
+                  mode: 'insensitive',
+                },
+              },
+              {
+                scoringFormat: {
+                  contains: query.search.trim(),
+                  mode: 'insensitive',
+                },
+              },
             ],
           }
         : {}),
@@ -258,7 +314,9 @@ export class CompetitionAdminService {
   }
 
   async rulesetDetail(id: string) {
-    const ruleset = await this.prisma.competitionRuleset.findUnique({ where: { id } });
+    const ruleset = await this.prisma.competitionRuleset.findUnique({
+      where: { id },
+    });
     if (!ruleset) throw new NotFoundException('Ruleset not found.');
     return { ruleset };
   }
@@ -266,7 +324,9 @@ export class CompetitionAdminService {
   async createRuleset(actorId: string, dto: UpsertCompetitionRulesetDto) {
     const data = this.rulesetData(dto);
     if (!data.isActive && data.isDefault) {
-      throw new BadRequestException('An inactive ruleset cannot be the default.');
+      throw new BadRequestException(
+        'An inactive ruleset cannot be the default.',
+      );
     }
 
     const ruleset = await this.prisma.$transaction(async (tx) => {
@@ -279,54 +339,79 @@ export class CompetitionAdminService {
       return tx.competitionRuleset.create({ data });
     });
 
-    await this.audit.record(actorId, 'competition.ruleset.create', 'CompetitionRuleset', ruleset.id, {
-      name: ruleset.name,
-      sport: ruleset.sport,
-      format: ruleset.format,
-      competitionTypes: ruleset.competitionTypes,
-      isDefault: ruleset.isDefault,
-    });
+    await this.audit.record(
+      actorId,
+      'competition.ruleset.create',
+      'CompetitionRuleset',
+      ruleset.id,
+      {
+        name: ruleset.name,
+        sport: ruleset.sport,
+        format: ruleset.format,
+        competitionTypes: ruleset.competitionTypes,
+        isDefault: ruleset.isDefault,
+      },
+    );
     return { ruleset };
   }
 
-  async updateRuleset(actorId: string, id: string, dto: UpsertCompetitionRulesetDto) {
-    const existing = await this.prisma.competitionRuleset.findUnique({ where: { id } });
+  async updateRuleset(
+    actorId: string,
+    id: string,
+    dto: UpsertCompetitionRulesetDto,
+  ) {
+    const existing = await this.prisma.competitionRuleset.findUnique({
+      where: { id },
+    });
     if (!existing) throw new NotFoundException('Ruleset not found.');
 
     const data = this.rulesetData(dto);
     if (!data.isActive && data.isDefault) {
-      throw new BadRequestException('An inactive ruleset cannot be the default.');
+      throw new BadRequestException(
+        'An inactive ruleset cannot be the default.',
+      );
     }
     if (!data.isActive) data.isDefault = false;
 
     const ruleset = await this.prisma.$transaction(async (tx) => {
       if (data.isDefault) {
         await tx.competitionRuleset.updateMany({
-          where: { sport: data.sport, format: data.format, isDefault: true, id: { not: id } },
+          where: {
+            sport: data.sport,
+            format: data.format,
+            isDefault: true,
+            id: { not: id },
+          },
           data: { isDefault: false },
         });
       }
       return tx.competitionRuleset.update({ where: { id }, data });
     });
 
-    await this.audit.record(actorId, 'competition.ruleset.update', 'CompetitionRuleset', id, {
-      previous: {
-        name: existing.name,
-        sport: existing.sport,
-        format: existing.format,
-        competitionTypes: existing.competitionTypes,
-        isDefault: existing.isDefault,
-        isActive: existing.isActive,
+    await this.audit.record(
+      actorId,
+      'competition.ruleset.update',
+      'CompetitionRuleset',
+      id,
+      {
+        previous: {
+          name: existing.name,
+          sport: existing.sport,
+          format: existing.format,
+          competitionTypes: existing.competitionTypes,
+          isDefault: existing.isDefault,
+          isActive: existing.isActive,
+        },
+        next: {
+          name: ruleset.name,
+          sport: ruleset.sport,
+          format: ruleset.format,
+          competitionTypes: ruleset.competitionTypes,
+          isDefault: ruleset.isDefault,
+          isActive: ruleset.isActive,
+        },
       },
-      next: {
-        name: ruleset.name,
-        sport: ruleset.sport,
-        format: ruleset.format,
-        competitionTypes: ruleset.competitionTypes,
-        isDefault: ruleset.isDefault,
-        isActive: ruleset.isActive,
-      },
-    });
+    );
     return { ruleset };
   }
 
@@ -377,7 +462,14 @@ export class CompetitionAdminService {
         entries: {
           orderBy: { createdAt: 'asc' },
           include: {
-            user: { select: { id: true, firstName: true, lastName: true, email: true } },
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+              },
+            },
           },
           take: 50,
         },
@@ -387,8 +479,12 @@ export class CompetitionAdminService {
             fixtures: {
               orderBy: { slotIndex: 'asc' },
               include: {
-                sideA: { select: { id: true, firstName: true, lastName: true } },
-                sideB: { select: { id: true, firstName: true, lastName: true } },
+                sideA: {
+                  select: { id: true, firstName: true, lastName: true },
+                },
+                sideB: {
+                  select: { id: true, firstName: true, lastName: true },
+                },
                 match: { select: { id: true, state: true } },
               },
             },
@@ -416,14 +512,23 @@ export class CompetitionAdminService {
         entries: {
           orderBy: { position: 'asc' },
           include: {
-            user: { select: { id: true, firstName: true, lastName: true, email: true } },
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+              },
+            },
           },
           take: 50,
         },
         challenges: {
           orderBy: { createdAt: 'desc' },
           include: {
-            challenger: { select: { id: true, firstName: true, lastName: true } },
+            challenger: {
+              select: { id: true, firstName: true, lastName: true },
+            },
             defender: { select: { id: true, firstName: true, lastName: true } },
             match: { select: { id: true, state: true } },
           },
@@ -451,8 +556,14 @@ export class CompetitionAdminService {
         ? {
             OR: [
               { name: { contains: filters.search, mode: 'insensitive' } },
-              { description: { contains: filters.search, mode: 'insensitive' } },
-              { club: { name: { contains: filters.search, mode: 'insensitive' } } },
+              {
+                description: { contains: filters.search, mode: 'insensitive' },
+              },
+              {
+                club: {
+                  name: { contains: filters.search, mode: 'insensitive' },
+                },
+              },
             ],
           }
         : {}),
@@ -475,8 +586,14 @@ export class CompetitionAdminService {
         ? {
             OR: [
               { name: { contains: filters.search, mode: 'insensitive' } },
-              { description: { contains: filters.search, mode: 'insensitive' } },
-              { club: { name: { contains: filters.search, mode: 'insensitive' } } },
+              {
+                description: { contains: filters.search, mode: 'insensitive' },
+              },
+              {
+                club: {
+                  name: { contains: filters.search, mode: 'insensitive' },
+                },
+              },
             ],
           }
         : {}),
@@ -499,7 +616,11 @@ export class CompetitionAdminService {
         ? {
             OR: [
               { name: { contains: filters.search, mode: 'insensitive' } },
-              { club: { name: { contains: filters.search, mode: 'insensitive' } } },
+              {
+                club: {
+                  name: { contains: filters.search, mode: 'insensitive' },
+                },
+              },
             ],
           }
         : {}),
@@ -531,15 +652,15 @@ export class CompetitionAdminService {
   private resolveTypes(type?: string): CompetitionType[] {
     if (!type) return COMPETITION_TYPES;
     const normalized = type.toUpperCase() as CompetitionType;
-    return COMPETITION_TYPES.includes(normalized)
-      ? [normalized]
-      : [];
+    return COMPETITION_TYPES.includes(normalized) ? [normalized] : [];
   }
 
   private requireType(type: string): CompetitionType {
     const normalized = type.toUpperCase() as CompetitionType;
     if (!COMPETITION_TYPES.includes(normalized)) {
-      throw new BadRequestException('Competition type must be LEAGUE, TOURNAMENT, or LADDER.');
+      throw new BadRequestException(
+        'Competition type must be LEAGUE, TOURNAMENT, or LADDER.',
+      );
     }
     return normalized;
   }

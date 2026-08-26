@@ -6,6 +6,8 @@ import { NotificationsService } from '../notifications/notifications.service';
 type MockPrisma = {
   club: Record<string, jest.Mock>;
   clubMembership: Record<string, jest.Mock>;
+  clubAuditLog: Record<string, jest.Mock>;
+  venueVerificationRequest: Record<string, jest.Mock>;
   user: Record<string, jest.Mock>;
   $transaction: jest.Mock;
 };
@@ -21,11 +23,14 @@ function createMockPrisma(): MockPrisma {
     clubMembership: {
       create: jest.fn(),
       findMany: jest.fn().mockResolvedValue([]),
+      findFirst: jest.fn(),
       findUnique: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
       count: jest.fn().mockResolvedValue(1),
     },
+    clubAuditLog: { create: jest.fn() },
+    venueVerificationRequest: { create: jest.fn() },
     user: { findUnique: jest.fn() },
     $transaction: jest.fn(),
   };
@@ -101,8 +106,15 @@ describe('ClubsAdminService', () => {
         id: 'club-1',
         verificationStatus: 'UNVERIFIED',
       });
+      prisma.clubMembership.findFirst.mockResolvedValue({ userId: 'owner-1' });
+      prisma.venueVerificationRequest.create.mockResolvedValue({
+        id: 'request-1',
+      });
       const result = await service.submitVerificationRequest('club-1');
-      expect(result).toEqual({ verificationStatus: 'PENDING' });
+      expect(result).toEqual({
+        requestId: 'request-1',
+        verificationStatus: 'PENDING',
+      });
       expect(prisma.club.update).toHaveBeenCalledWith({
         where: { id: 'club-1' },
         data: { verificationStatus: 'PENDING' },

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/assessment/data/assessment_repository.dart';
 import '../../features/assessment/presentation/assessment_question_screen.dart';
+import '../../features/achievements/presentation/achievements_screen.dart';
 import '../../features/auth/presentation/forgot_password_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/reset_password_screen.dart';
@@ -52,6 +53,7 @@ import '../../features/learning/presentation/skill_category_browse_screen.dart';
 import '../../features/learning/presentation/skill_detail_screen.dart';
 import '../../features/learning/presentation/skill_profile_screen.dart';
 import '../../features/learning/presentation/training_plan_detail_screen.dart';
+import '../../features/learning/presentation/video_lesson_player_screen.dart';
 import '../../features/players/presentation/player_profile_screen.dart';
 import '../../features/players/data/players_repository.dart';
 import '../../features/matches/data/matches_repository.dart';
@@ -81,6 +83,8 @@ import '../../features/payments/presentation/subscription_plan_screen.dart';
 import '../../features/profile/presentation/edit_profile_screen.dart';
 import '../../features/profile/presentation/my_sports_hub_screen.dart';
 import '../../features/profile/presentation/own_profile_screen.dart';
+import '../../features/search/data/global_search_repository.dart';
+import '../../features/search/presentation/global_search_screen.dart';
 import '../../features/settings/presentation/account_security_screen.dart';
 import '../../features/settings/presentation/blocked_users_screen.dart';
 import '../../features/settings/presentation/contact_support_screen.dart';
@@ -171,7 +175,26 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/onboarding/complete',
         builder: (context, state) => const OnboardingCompleteScreen(),
       ),
-      GoRoute(path: '/home', builder: (context, state) => const AppShell()),
+      GoRoute(
+        path: '/home',
+        builder: (context, state) => AppShell(
+          initialIndex: _tabIndex(state.uri.queryParameters['tab']),
+          initialPlaySegment: _segmentIndex(
+            state.uri.queryParameters['play'],
+            const ['find', 'challenges', 'active', 'history'],
+          ),
+          initialDiscoverSegment: _segmentIndex(
+            state.uri.queryParameters['discover'],
+            const ['players', 'courts', 'clubs', 'coaches'],
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/search',
+        builder: (context, state) => GlobalSearchScreen(
+          initialFilter: _searchFilter(state.uri.queryParameters['type']),
+        ),
+      ),
       GoRoute(
         path: '/players/:id',
         builder: (context, state) =>
@@ -339,6 +362,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ContentDetailScreen(contentId: state.pathParameters['id']!),
       ),
       GoRoute(
+        path: '/learn/content/:id/video',
+        builder: (context, state) =>
+            VideoLessonPlayerScreen(contentId: state.pathParameters['id']!),
+      ),
+      GoRoute(
         path: '/learn/plans/:id',
         builder: (context, state) =>
             TrainingPlanDetailScreen(planId: state.pathParameters['id']!),
@@ -412,6 +440,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/profile/own',
         builder: (context, state) => const OwnProfileScreen(),
+      ),
+      GoRoute(
+        path: '/profile/achievements',
+        builder: (context, state) => const AchievementsScreen(),
       ),
       GoRoute(
         path: '/profile/edit',
@@ -494,3 +526,25 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
+
+int _tabIndex(String? tab) => switch (tab) {
+  'play' => 1,
+  'compete' => 2,
+  'discover' => 3,
+  'profile' => 4,
+  _ => 0,
+};
+
+int? _segmentIndex(String? value, List<String> labels) {
+  if (value == null) return null;
+  final index = labels.indexOf(value);
+  return index < 0 ? null : index;
+}
+
+GlobalSearchFilter? _searchFilter(String? type) => switch (type) {
+  'PLAYER' => GlobalSearchFilter.player,
+  'COURT' => GlobalSearchFilter.court,
+  'CLUB' => GlobalSearchFilter.club,
+  'COMPETITION' => GlobalSearchFilter.competition,
+  _ => null,
+};

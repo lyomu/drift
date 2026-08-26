@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api, ApiError } from "@/lib/api-client";
 import type { BillingAudience, CommercialTransaction, PaymentDetailResponse, PaymentsResponse, PaymentTransactionStatus } from "@/lib/commercial-types";
 import { dateLabel, dateTimeLabel, label, money } from "@/lib/commercial-types";
-import { Badge, Button, Card, EmptyState, ErrorBanner, Field, Input, PageHeader, Select, Td, Th, statusTone } from "@/components/ui";
+import { Badge, Button, Card, EmptyState, ErrorBanner, Input, PageHeader, Select, Td, Th, statusTone } from "@/components/ui";
 
 export default function CommercialPaymentsPage() {
   const [search, setSearch] = useState("");

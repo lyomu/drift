@@ -49,7 +49,9 @@ export class PlatformAnalyticsService {
       revenue,
     ] = await Promise.all([
       this.prisma.user.count(),
-      this.prisma.user.count({ where: { accountStatus: AccountStatus.ACTIVE } }),
+      this.prisma.user.count({
+        where: { accountStatus: AccountStatus.ACTIVE },
+      }),
       this.prisma.user.count({ where: { createdAt: date } }),
       this.prisma.user.count({ where: { onboardingCompletedAt: date } }),
       this.prisma.match.count({
@@ -127,7 +129,8 @@ export class PlatformAnalyticsService {
         completedMatchIds: new Set<string>(),
       };
       market.playerIds.add(profile.id);
-      if (profile.accountStatus === AccountStatus.ACTIVE) market.activePlayers += 1;
+      if (profile.accountStatus === AccountStatus.ACTIVE)
+        market.activePlayers += 1;
       if (this.inRange(profile.createdAt, range)) market.newPlayers += 1;
       if (profile.onboardingCompletedAt) market.onboardedPlayers += 1;
       markets.set(key, market);
@@ -166,7 +169,12 @@ export class PlatformAnalyticsService {
           onboardingRate:
             market.playerIds.size === 0
               ? 0
-              : Number(((market.onboardedPlayers / market.playerIds.size) * 100).toFixed(1)),
+              : Number(
+                  (
+                    (market.onboardedPlayers / market.playerIds.size) *
+                    100
+                  ).toFixed(1),
+                ),
           matches: market.matchIds.size,
           completedMatches: market.completedMatchIds.size,
         }))
@@ -178,37 +186,41 @@ export class PlatformAnalyticsService {
     const range = this.parseRange(from, to);
     const date = this.dateFilter(range);
     const unit = this.bucketUnit(range);
-    const [users, assessmentSessions, connections, matches] = await Promise.all([
-      this.prisma.user.findMany({
-        where: {
-          OR: [{ createdAt: date }, { onboardingCompletedAt: date }],
-        },
-        select: {
-          id: true,
-          createdAt: true,
-          onboardingCompletedAt: true,
-          matchParticipations: {
-            where: { match: { state: { in: FINISHED_MATCH_STATES } } },
-            select: { id: true },
-            take: 1,
+    const [users, assessmentSessions, connections, matches] = await Promise.all(
+      [
+        this.prisma.user.findMany({
+          where: {
+            OR: [{ createdAt: date }, { onboardingCompletedAt: date }],
           },
-        },
-      }),
-      this.prisma.assessmentSession.findMany({
-        where: { startedAt: date },
-        select: { startedAt: true, completedAt: true, status: true },
-      }),
-      this.prisma.connection.findMany({
-        where: { createdAt: date },
-        select: { createdAt: true, status: true, respondedAt: true },
-      }),
-      this.prisma.match.findMany({
-        where: { createdAt: date },
-        select: { createdAt: true, state: true },
-      }),
-    ]);
+          select: {
+            id: true,
+            createdAt: true,
+            onboardingCompletedAt: true,
+            matchParticipations: {
+              where: { match: { state: { in: FINISHED_MATCH_STATES } } },
+              select: { id: true },
+              take: 1,
+            },
+          },
+        }),
+        this.prisma.assessmentSession.findMany({
+          where: { startedAt: date },
+          select: { startedAt: true, completedAt: true, status: true },
+        }),
+        this.prisma.connection.findMany({
+          where: { createdAt: date },
+          select: { createdAt: true, status: true, respondedAt: true },
+        }),
+        this.prisma.match.findMany({
+          where: { createdAt: date },
+          select: { createdAt: true, state: true },
+        }),
+      ],
+    );
 
-    const registeredUsers = users.filter((user) => this.inRange(user.createdAt, range));
+    const registeredUsers = users.filter((user) =>
+      this.inRange(user.createdAt, range),
+    );
     const series = this.emptySeries(range, unit).map((bucket) => ({
       ...bucket,
       registrations: 0,
@@ -223,8 +235,13 @@ export class PlatformAnalyticsService {
         const bucket = byKey.get(this.bucketKey(user.createdAt, unit));
         if (bucket) bucket.registrations += 1;
       }
-      if (user.onboardingCompletedAt && this.inRange(user.onboardingCompletedAt, range)) {
-        const bucket = byKey.get(this.bucketKey(user.onboardingCompletedAt, unit));
+      if (
+        user.onboardingCompletedAt &&
+        this.inRange(user.onboardingCompletedAt, range)
+      ) {
+        const bucket = byKey.get(
+          this.bucketKey(user.onboardingCompletedAt, unit),
+        );
         if (bucket) bucket.onboardingCompletions += 1;
       }
     }
@@ -232,12 +249,18 @@ export class PlatformAnalyticsService {
       const bucket = byKey.get(this.bucketKey(match.createdAt, unit));
       if (!bucket) continue;
       bucket.challenges += 1;
-      if (FINISHED_MATCH_STATES.includes(match.state)) bucket.completedMatches += 1;
+      if (FINISHED_MATCH_STATES.includes(match.state))
+        bucket.completedMatches += 1;
     }
 
     const cohorts = new Map<
       string,
-      { cohort: string; registered: number; onboarded: number; playedMatch: number }
+      {
+        cohort: string;
+        registered: number;
+        onboarded: number;
+        playedMatch: number;
+      }
     >();
     for (const user of registeredUsers) {
       const key = this.bucketKey(user.createdAt, unit);
@@ -286,19 +309,23 @@ export class PlatformAnalyticsService {
           },
           {
             name: 'Onboarding completed',
-            count: registeredUsers.filter((user) => user.onboardingCompletedAt).length,
-            definition: 'Those same accounts with an onboarding completion timestamp.',
+            count: registeredUsers.filter((user) => user.onboardingCompletedAt)
+              .length,
+            definition:
+              'Those same accounts with an onboarding completion timestamp.',
           },
         ]),
         funnel('assessment', 'Assessment completion', [
           {
             name: 'Assessment started',
             count: assessmentSessions.length,
-            definition: 'Tennis assessment sessions started during the selected period.',
+            definition:
+              'Tennis assessment sessions started during the selected period.',
           },
           {
             name: 'Assessment completed',
-            count: assessmentSessions.filter((session) => session.completedAt).length,
+            count: assessmentSessions.filter((session) => session.completedAt)
+              .length,
             definition: 'Those sessions with a recorded completion timestamp.',
           },
         ]),
@@ -306,12 +333,16 @@ export class PlatformAnalyticsService {
           {
             name: 'Request sent',
             count: connections.length,
-            definition: 'Connection requests created during the selected period.',
+            definition:
+              'Connection requests created during the selected period.',
           },
           {
             name: 'Accepted',
-            count: connections.filter((connection) => connection.status === 'ACCEPTED').length,
-            definition: 'Those requests whose current persisted state is accepted.',
+            count: connections.filter(
+              (connection) => connection.status === 'ACCEPTED',
+            ).length,
+            definition:
+              'Those requests whose current persisted state is accepted.',
           },
         ]),
         funnel('matches', 'Challenge to completed match', [
@@ -322,13 +353,19 @@ export class PlatformAnalyticsService {
           },
           {
             name: 'Confirmed',
-            count: matches.filter((match) => CONFIRMED_MATCH_STATES.includes(match.state)).length,
-            definition: 'Challenges now scheduled or progressed beyond scheduling.',
+            count: matches.filter((match) =>
+              CONFIRMED_MATCH_STATES.includes(match.state),
+            ).length,
+            definition:
+              'Challenges now scheduled or progressed beyond scheduling.',
           },
           {
             name: 'Completed',
-            count: matches.filter((match) => FINISHED_MATCH_STATES.includes(match.state)).length,
-            definition: 'Matches completed, retired, or recorded as a walkover.',
+            count: matches.filter((match) =>
+              FINISHED_MATCH_STATES.includes(match.state),
+            ).length,
+            definition:
+              'Matches completed, retired, or recorded as a walkover.',
           },
         ]),
       ],
@@ -339,11 +376,15 @@ export class PlatformAnalyticsService {
           onboardingRate:
             cohort.registered === 0
               ? 0
-              : Number(((cohort.onboarded / cohort.registered) * 100).toFixed(1)),
+              : Number(
+                  ((cohort.onboarded / cohort.registered) * 100).toFixed(1),
+                ),
           matchActivationRate:
             cohort.registered === 0
               ? 0
-              : Number(((cohort.playedMatch / cohort.registered) * 100).toFixed(1)),
+              : Number(
+                  ((cohort.playedMatch / cohort.registered) * 100).toFixed(1),
+                ),
         })),
     };
   }
@@ -352,50 +393,70 @@ export class PlatformAnalyticsService {
     const range = this.parseRange(from, to);
     const date = this.dateFilter(range);
     const unit = this.bucketUnit(range);
-    const [transactions, invoiceStates, subscriptionStates] = await Promise.all([
-      this.prisma.paymentTransaction.findMany({
-        where: { createdAt: date },
-        select: {
-          id: true,
-          provider: true,
-          providerReference: true,
-          amountMinor: true,
-          currency: true,
-          status: true,
-          failureReason: true,
-          createdAt: true,
-          invoice: {
-            select: {
-              number: true,
-              description: true,
-              plan: { select: { name: true, audience: true } },
+    const [transactions, invoiceStates, subscriptionStates] = await Promise.all(
+      [
+        this.prisma.paymentTransaction.findMany({
+          where: { createdAt: date },
+          select: {
+            id: true,
+            provider: true,
+            providerReference: true,
+            amountMinor: true,
+            currency: true,
+            status: true,
+            failureReason: true,
+            createdAt: true,
+            invoice: {
+              select: {
+                number: true,
+                description: true,
+                plan: { select: { name: true, audience: true } },
+              },
             },
           },
-        },
-        orderBy: { createdAt: 'desc' },
-      }),
-      this.prisma.billingInvoice.groupBy({
-        by: ['status'],
-        where: { createdAt: date },
-        _count: { _all: true },
-      }),
-      this.prisma.billingSubscription.groupBy({
-        by: ['status'],
-        _count: { _all: true },
-      }),
-    ]);
+          orderBy: { createdAt: 'desc' },
+        }),
+        this.prisma.billingInvoice.groupBy({
+          by: ['status'],
+          where: { createdAt: date },
+          _count: { _all: true },
+        }),
+        this.prisma.billingSubscription.groupBy({
+          by: ['status'],
+          _count: { _all: true },
+        }),
+      ],
+    );
 
     const currencies = new Map<
       string,
-      { currency: string; collectedMinor: number; refundedMinor: number; failedMinor: number; transactions: number }
+      {
+        currency: string;
+        collectedMinor: number;
+        refundedMinor: number;
+        failedMinor: number;
+        transactions: number;
+      }
     >();
     const sourceLines = new Map<
       string,
-      { source: string; audience: string; currency: string; collectedMinor: number; refundedMinor: number; transactions: number }
+      {
+        source: string;
+        audience: string;
+        currency: string;
+        collectedMinor: number;
+        refundedMinor: number;
+        transactions: number;
+      }
     >();
     const trend = new Map<
       string,
-      { key: string; currency: string; collectedMinor: number; refundedMinor: number }
+      {
+        key: string;
+        currency: string;
+        collectedMinor: number;
+        refundedMinor: number;
+      }
     >();
 
     for (const transaction of transactions) {
@@ -454,12 +515,17 @@ export class PlatformAnalyticsService {
     return {
       period: this.serializeRange(range),
       bucketUnit: unit,
-      currencies: [...currencies.values()].sort((a, b) => a.currency.localeCompare(b.currency)),
+      currencies: [...currencies.values()].sort((a, b) =>
+        a.currency.localeCompare(b.currency),
+      ),
       sources: [...sourceLines.values()].sort(
-        (a, b) => b.collectedMinor - a.collectedMinor || a.source.localeCompare(b.source),
+        (a, b) =>
+          b.collectedMinor - a.collectedMinor ||
+          a.source.localeCompare(b.source),
       ),
       trend: [...trend.values()].sort(
-        (a, b) => a.key.localeCompare(b.key) || a.currency.localeCompare(b.currency),
+        (a, b) =>
+          a.key.localeCompare(b.key) || a.currency.localeCompare(b.currency),
       ),
       invoiceStates: Object.fromEntries(
         invoiceStates.map((row) => [row.status, row._count._all]),
@@ -545,8 +611,7 @@ export class PlatformAnalyticsService {
           acknowledgement: acknowledgement
             ? {
                 at: acknowledgement.createdAt,
-                by:
-                  acknowledgement.actor.name ?? acknowledgement.actor.email,
+                by: acknowledgement.actor.name ?? acknowledgement.actor.email,
               }
             : null,
         };
@@ -602,7 +667,8 @@ export class PlatformAnalyticsService {
         status: 'DEGRADED' as HealthStatus,
         latencyMs: null,
         errorRate: null,
-        detail: 'REDIS_URL is not configured; realtime is limited to one API instance.',
+        detail:
+          'REDIS_URL is not configured; realtime is limited to one API instance.',
       };
     }
 
@@ -642,9 +708,12 @@ export class PlatformAnalyticsService {
     const start = from
       ? this.parseDate(from, false)
       : new Date(end.getTime() - 29 * 24 * 60 * 60 * 1_000);
-    if (start > end) throw new BadRequestException('From date must be before to date.');
+    if (start > end)
+      throw new BadRequestException('From date must be before to date.');
     if (end.getTime() - start.getTime() > 2 * 366 * 24 * 60 * 60 * 1_000) {
-      throw new BadRequestException('Analytics ranges are limited to two years.');
+      throw new BadRequestException(
+        'Analytics ranges are limited to two years.',
+      );
     }
     return { from: start, to: end };
   }
@@ -654,7 +723,8 @@ export class PlatformAnalyticsService {
       ? `${value}T${endOfDay ? '23:59:59.999' : '00:00:00.000'}Z`
       : value;
     const date = new Date(normalized);
-    if (Number.isNaN(date.getTime())) throw new BadRequestException('Invalid date range.');
+    if (Number.isNaN(date.getTime()))
+      throw new BadRequestException('Invalid date range.');
     return date;
   }
 
@@ -691,7 +761,9 @@ export class PlatformAnalyticsService {
   }
 
   private emptySeries(range: { from: Date; to: Date }, unit: BucketUnit) {
-    const cursor = new Date(`${this.bucketKey(range.from, unit)}T00:00:00.000Z`);
+    const cursor = new Date(
+      `${this.bucketKey(range.from, unit)}T00:00:00.000Z`,
+    );
     const buckets: { key: string }[] = [];
     while (cursor <= range.to) {
       buckets.push({ key: cursor.toISOString().slice(0, 10) });

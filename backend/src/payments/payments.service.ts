@@ -22,7 +22,8 @@ import { randomUUID } from 'node:crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { ChangeSubscriptionDto } from './dto/change-subscription.dto';
 import { AddPaymentMethodDto } from './dto/payment-method.dto';
-import { PAYMENT_PROVIDER, PaymentProvider } from './payment-provider';
+import { PAYMENT_PROVIDER } from './payment-provider';
+import type { PaymentProvider } from './payment-provider';
 import {
   toInvoiceDto,
   toPaymentMethodDto,
@@ -47,37 +48,58 @@ export class PaymentsService {
   }
 
   async playerSummary(userId: string) {
-    const account = await this.ensureAccount({ userId }, BillingAudience.PLAYER);
+    const account = await this.ensureAccount(
+      { userId },
+      BillingAudience.PLAYER,
+    );
     return this.summary(account.id);
   }
 
   async playerMethods(userId: string) {
-    const account = await this.ensureAccount({ userId }, BillingAudience.PLAYER);
+    const account = await this.ensureAccount(
+      { userId },
+      BillingAudience.PLAYER,
+    );
     return this.methods(account.id);
   }
 
   async addPlayerMethod(userId: string, dto: AddPaymentMethodDto) {
-    const account = await this.ensureAccount({ userId }, BillingAudience.PLAYER);
+    const account = await this.ensureAccount(
+      { userId },
+      BillingAudience.PLAYER,
+    );
     return this.addMethod(account.id, dto);
   }
 
   async removePlayerMethod(userId: string, methodId: string) {
-    const account = await this.ensureAccount({ userId }, BillingAudience.PLAYER);
+    const account = await this.ensureAccount(
+      { userId },
+      BillingAudience.PLAYER,
+    );
     return this.removeMethod(account.id, methodId);
   }
 
   async changePlayerSubscription(userId: string, dto: ChangeSubscriptionDto) {
-    const account = await this.ensureAccount({ userId }, BillingAudience.PLAYER);
+    const account = await this.ensureAccount(
+      { userId },
+      BillingAudience.PLAYER,
+    );
     return this.changeSubscription(account.id, BillingAudience.PLAYER, dto);
   }
 
   async playerInvoices(userId: string) {
-    const account = await this.ensureAccount({ userId }, BillingAudience.PLAYER);
+    const account = await this.ensureAccount(
+      { userId },
+      BillingAudience.PLAYER,
+    );
     return this.invoices(account.id);
   }
 
   async playerReceipt(userId: string, invoiceId: string) {
-    const account = await this.ensureAccount({ userId }, BillingAudience.PLAYER);
+    const account = await this.ensureAccount(
+      { userId },
+      BillingAudience.PLAYER,
+    );
     return this.receipt(account.id, invoiceId);
   }
 
@@ -204,10 +226,7 @@ export class PaymentsService {
     return { paymentMethods: methods.map(toPaymentMethodDto) };
   }
 
-  private async addMethod(
-    billingAccountId: string,
-    dto: AddPaymentMethodDto,
-  ) {
+  private async addMethod(billingAccountId: string, dto: AddPaymentMethodDto) {
     const tokenised = await this.provider.createPaymentMethod(dto);
     const method = await this.prisma.$transaction(async (tx) => {
       await tx.paymentMethod.updateMany({

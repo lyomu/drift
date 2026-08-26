@@ -157,6 +157,12 @@ class _ProfileBody extends StatelessWidget {
         ),
         const SizedBox(height: DriftSpacing.s2),
         DriftButton(
+          label: 'View Achievements',
+          variant: DriftButtonVariant.text,
+          onPressed: () => context.push('/profile/achievements'),
+        ),
+        const SizedBox(height: DriftSpacing.s2),
+        DriftButton(
           label: 'My Sports Hub',
           variant: DriftButtonVariant.text,
           onPressed: () => context.push('/profile/sports-hub'),

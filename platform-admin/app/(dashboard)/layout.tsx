@@ -84,16 +84,26 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
     label: "Trust & Safety",
     items: [
       { href: "/users", label: "Users", permissions: ["USERS_MANAGE"] },
-      { href: "/reports", label: "Reported Content", permissions: ["TRUST_SAFETY_MANAGE"] },
+      { href: "/reports", label: "Reported Content Queue", permissions: ["TRUST_SAFETY_MANAGE"] },
+      { href: "/abuse-cases", label: "Block / Abuse Cases", permissions: ["TRUST_SAFETY_MANAGE"] },
     ],
   },
   {
     label: "Platform config",
-    items: [],
+    items: [
+      { href: "/platform/markets", label: "Countries / Cities", permissions: ["PLATFORM_CONFIG_MANAGE"] },
+      { href: "/platform/feature-flags", label: "Feature Flags", permissions: ["PLATFORM_CONFIG_MANAGE"] },
+      { href: "/platform/notification-templates", label: "Notification Templates", permissions: ["PLATFORM_CONFIG_MANAGE"] },
+      { href: "/platform/system-settings", label: "System Settings", permissions: ["PLATFORM_CONFIG_MANAGE"] },
+      { href: "/platform/integrations", label: "API / Integration Settings", permissions: ["PLATFORM_CONFIG_MANAGE"] },
+    ],
   },
   {
     label: "Support",
-    items: [],
+    items: [
+      { href: "/support/tickets", label: "Support Tickets", permissions: ["SUPPORT_MANAGE"] },
+      { href: "/support/privacy-requests", label: "Privacy Requests", permissions: ["SUPPORT_MANAGE"] },
+    ],
   },
 ];
 

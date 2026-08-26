@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PlatformPermission } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { createHash, randomBytes } from 'crypto';
@@ -10,18 +14,68 @@ export const PLATFORM_PERMISSION_CATALOG: {
   module: string;
   description: string;
 }[] = [
-  { permission: PlatformPermission.ACCESS_MANAGE, module: 'Access & Control', description: 'Manage staff, roles, and the permission matrix.' },
-  { permission: PlatformPermission.USERS_MANAGE, module: 'Users', description: 'Review and suspend player accounts.' },
-  { permission: PlatformPermission.ANALYTICS_READ, module: 'Overview / Analytics', description: 'View platform growth, revenue, market, and health reporting.' },
-  { permission: PlatformPermission.VENUES_MANAGE, module: 'Venues', description: 'Manage venue data, verification, sync, and duplicate resolution.' },
-  { permission: PlatformPermission.ORGANIZATIONS_MANAGE, module: 'Organizations', description: 'Manage clubs, approvals, subscriptions, and club moderation.' },
-  { permission: PlatformPermission.COMPETITIONS_MANAGE, module: 'Competitions', description: 'Manage global competitions, disputes, and rulesets.' },
-  { permission: PlatformPermission.CONTENT_MANAGE, module: 'Content', description: 'Manage learning content and news publishing.' },
-  { permission: PlatformPermission.COMMERCIAL_MANAGE, module: 'Commercial', description: 'Manage plans, invoices, promotions, and sponsors.' },
-  { permission: PlatformPermission.TRUST_SAFETY_MANAGE, module: 'Trust & Safety', description: 'Resolve reports, abuse cases, and escalated moderation.' },
-  { permission: PlatformPermission.PLATFORM_CONFIG_MANAGE, module: 'Platform config', description: 'Manage locations, flags, templates, settings, and integrations.' },
-  { permission: PlatformPermission.SUPPORT_MANAGE, module: 'Support', description: 'Manage support tickets and privacy requests.' },
-  { permission: PlatformPermission.AUDIT_READ, module: 'Audit', description: 'Read the immutable platform audit trail.' },
+  {
+    permission: PlatformPermission.ACCESS_MANAGE,
+    module: 'Access & Control',
+    description: 'Manage staff, roles, and the permission matrix.',
+  },
+  {
+    permission: PlatformPermission.USERS_MANAGE,
+    module: 'Users',
+    description: 'Review and suspend player accounts.',
+  },
+  {
+    permission: PlatformPermission.ANALYTICS_READ,
+    module: 'Overview / Analytics',
+    description: 'View platform growth, revenue, market, and health reporting.',
+  },
+  {
+    permission: PlatformPermission.VENUES_MANAGE,
+    module: 'Venues',
+    description:
+      'Manage venue data, verification, sync, and duplicate resolution.',
+  },
+  {
+    permission: PlatformPermission.ORGANIZATIONS_MANAGE,
+    module: 'Organizations',
+    description: 'Manage clubs, approvals, subscriptions, and club moderation.',
+  },
+  {
+    permission: PlatformPermission.COMPETITIONS_MANAGE,
+    module: 'Competitions',
+    description: 'Manage global competitions, disputes, and rulesets.',
+  },
+  {
+    permission: PlatformPermission.CONTENT_MANAGE,
+    module: 'Content',
+    description: 'Manage learning content and news publishing.',
+  },
+  {
+    permission: PlatformPermission.COMMERCIAL_MANAGE,
+    module: 'Commercial',
+    description: 'Manage plans, invoices, promotions, and sponsors.',
+  },
+  {
+    permission: PlatformPermission.TRUST_SAFETY_MANAGE,
+    module: 'Trust & Safety',
+    description: 'Resolve reports, abuse cases, and escalated moderation.',
+  },
+  {
+    permission: PlatformPermission.PLATFORM_CONFIG_MANAGE,
+    module: 'Platform config',
+    description:
+      'Manage locations, flags, templates, settings, and integrations.',
+  },
+  {
+    permission: PlatformPermission.SUPPORT_MANAGE,
+    module: 'Support',
+    description: 'Manage support tickets and privacy requests.',
+  },
+  {
+    permission: PlatformPermission.AUDIT_READ,
+    module: 'Audit',
+    description: 'Read the immutable platform audit trail.',
+  },
 ];
 
 @Injectable()
@@ -51,7 +105,8 @@ export class AccessControlService {
         },
       },
     });
-    if (!admin) throw new NotFoundException('Platform administrator not found.');
+    if (!admin)
+      throw new NotFoundException('Platform administrator not found.');
     return {
       ...admin,
       role: {
@@ -80,34 +135,54 @@ export class AccessControlService {
 
   async createRole(
     actorId: string,
-    data: { name: string; description?: string; permissions: PlatformPermission[] },
+    data: {
+      name: string;
+      description?: string;
+      permissions: PlatformPermission[];
+    },
   ) {
-    if (!data.permissions.length) throw new BadRequestException('Select at least one permission.');
+    if (!data.permissions.length)
+      throw new BadRequestException('Select at least one permission.');
     const role = await this.prisma.platformRole.create({
       data: {
         name: data.name.trim(),
         description: data.description?.trim() || null,
-        permissions: { create: data.permissions.map((permission) => ({ permission })) },
+        permissions: {
+          create: data.permissions.map((permission) => ({ permission })),
+        },
       },
       include: { permissions: true },
     });
-    await this.audit.record(actorId, 'platform_role.create', 'PlatformRole', role.id, {
-      name: role.name,
-      permissions: data.permissions,
-    });
+    await this.audit.record(
+      actorId,
+      'platform_role.create',
+      'PlatformRole',
+      role.id,
+      {
+        name: role.name,
+        permissions: data.permissions,
+      },
+    );
     return role;
   }
 
   async updateRole(
     actorId: string,
     roleId: string,
-    data: { name: string; description?: string; permissions: PlatformPermission[] },
+    data: {
+      name: string;
+      description?: string;
+      permissions: PlatformPermission[];
+    },
   ) {
     const existing = await this.requireRole(roleId);
     if (existing.isSystem) {
-      throw new BadRequestException('The protected Super Admin role cannot be edited.');
+      throw new BadRequestException(
+        'The protected Super Admin role cannot be edited.',
+      );
     }
-    if (!data.permissions.length) throw new BadRequestException('Select at least one permission.');
+    if (!data.permissions.length)
+      throw new BadRequestException('Select at least one permission.');
     const role = await this.prisma.$transaction(async (tx) => {
       await tx.platformRolePermission.deleteMany({ where: { roleId } });
       return tx.platformRole.update({
@@ -115,15 +190,23 @@ export class AccessControlService {
         data: {
           name: data.name.trim(),
           description: data.description?.trim() || null,
-          permissions: { create: data.permissions.map((permission) => ({ permission })) },
+          permissions: {
+            create: data.permissions.map((permission) => ({ permission })),
+          },
         },
         include: { permissions: true },
       });
     });
-    await this.audit.record(actorId, 'platform_role.update', 'PlatformRole', roleId, {
-      previousName: existing.name,
-      permissions: data.permissions,
-    });
+    await this.audit.record(
+      actorId,
+      'platform_role.update',
+      'PlatformRole',
+      roleId,
+      {
+        previousName: existing.name,
+        permissions: data.permissions,
+      },
+    );
     return role;
   }
 
@@ -160,19 +243,32 @@ export class AccessControlService {
   async invite(actorId: string, emailInput: string, roleId: string) {
     const email = emailInput.trim().toLowerCase();
     await this.requireRole(roleId);
-    const existing = await this.prisma.platformAdmin.findUnique({ where: { email } });
-    if (existing) throw new BadRequestException('A platform staff account already uses this email.');
+    const existing = await this.prisma.platformAdmin.findUnique({
+      where: { email },
+    });
+    if (existing)
+      throw new BadRequestException(
+        'A platform staff account already uses this email.',
+      );
 
     const token = randomBytes(32).toString('hex');
     const tokenHash = this.hashToken(token);
     const expiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000);
     await this.prisma.$transaction(async (tx) => {
-      await tx.platformAdminInvitation.deleteMany({ where: { email, acceptedAt: null } });
+      await tx.platformAdminInvitation.deleteMany({
+        where: { email, acceptedAt: null },
+      });
       await tx.platformAdminInvitation.create({
         data: { email, roleId, invitedById: actorId, tokenHash, expiresAt },
       });
     });
-    await this.audit.record(actorId, 'platform_admin.invite', 'PlatformAdminInvitation', email, { roleId });
+    await this.audit.record(
+      actorId,
+      'platform_admin.invite',
+      'PlatformAdminInvitation',
+      email,
+      { roleId },
+    );
 
     const base = process.env.PLATFORM_ADMIN_WEB_URL ?? 'http://localhost:3002';
     const inviteUrl = `${base}/accept-invite?token=${token}`;
@@ -183,8 +279,13 @@ export class AccessControlService {
       invited: true,
       email,
       expiresAt,
-      delivery: process.env.NODE_ENV === 'production' ? 'PENDING_PROVIDER' : 'DEV_CONSOLE',
-      ...(process.env.NODE_ENV !== 'production' ? { devInviteUrl: inviteUrl } : {}),
+      delivery:
+        process.env.NODE_ENV === 'production'
+          ? 'PENDING_PROVIDER'
+          : 'DEV_CONSOLE',
+      ...(process.env.NODE_ENV !== 'production'
+        ? { devInviteUrl: inviteUrl }
+        : {}),
     };
   }
 
@@ -192,8 +293,14 @@ export class AccessControlService {
     const invitation = await this.prisma.platformAdminInvitation.findUnique({
       where: { tokenHash: this.hashToken(token) },
     });
-    if (!invitation || invitation.acceptedAt || invitation.expiresAt <= new Date()) {
-      throw new BadRequestException('This invitation is invalid or has expired.');
+    if (
+      !invitation ||
+      invitation.acceptedAt ||
+      invitation.expiresAt <= new Date()
+    ) {
+      throw new BadRequestException(
+        'This invitation is invalid or has expired.',
+      );
     }
     const passwordHash = await bcrypt.hash(password, 10);
     const admin = await this.prisma.$transaction(async (tx) => {
@@ -211,9 +318,15 @@ export class AccessControlService {
       });
       return created;
     });
-    await this.audit.record(invitation.invitedById, 'platform_admin.invite.accept', 'PlatformAdmin', admin.id, {
-      email: admin.email,
-    });
+    await this.audit.record(
+      invitation.invitedById,
+      'platform_admin.invite.accept',
+      'PlatformAdmin',
+      admin.id,
+      {
+        email: admin.email,
+      },
+    );
     return { accepted: true };
   }
 
@@ -226,9 +339,12 @@ export class AccessControlService {
       where: { id: adminId },
       include: { role: { include: { permissions: true } } },
     });
-    if (!target) throw new NotFoundException('Platform administrator not found.');
+    if (!target)
+      throw new NotFoundException('Platform administrator not found.');
     if (actorId === adminId && data.status === 'SUSPENDED') {
-      throw new BadRequestException('You cannot suspend your own staff account.');
+      throw new BadRequestException(
+        'You cannot suspend your own staff account.',
+      );
     }
 
     let nextRoleHasAccess = target.role.permissions.some(
@@ -236,23 +352,36 @@ export class AccessControlService {
     );
     if (data.roleId) {
       const nextRole = await this.requireRole(data.roleId);
-      nextRoleHasAccess = await this.prisma.platformRolePermission.count({
-        where: { roleId: nextRole.id, permission: PlatformPermission.ACCESS_MANAGE },
-      }).then((count) => count > 0);
+      nextRoleHasAccess = await this.prisma.platformRolePermission
+        .count({
+          where: {
+            roleId: nextRole.id,
+            permission: PlatformPermission.ACCESS_MANAGE,
+          },
+        })
+        .then((count) => count > 0);
     }
     const removesLastManager =
       !target.deactivatedAt &&
-      target.role.permissions.some((row) => row.permission === PlatformPermission.ACCESS_MANAGE) &&
+      target.role.permissions.some(
+        (row) => row.permission === PlatformPermission.ACCESS_MANAGE,
+      ) &&
       (data.status === 'SUSPENDED' || !nextRoleHasAccess);
     if (removesLastManager) {
       const activeManagers = await this.prisma.platformAdmin.count({
         where: {
           deactivatedAt: null,
-          role: { permissions: { some: { permission: PlatformPermission.ACCESS_MANAGE } } },
+          role: {
+            permissions: {
+              some: { permission: PlatformPermission.ACCESS_MANAGE },
+            },
+          },
         },
       });
       if (activeManagers <= 1) {
-        throw new BadRequestException('At least one active staff member must retain Access & Control permission.');
+        throw new BadRequestException(
+          'At least one active staff member must retain Access & Control permission.',
+        );
       }
     }
 
@@ -260,7 +389,9 @@ export class AccessControlService {
       where: { id: adminId },
       data: {
         roleId: data.roleId,
-        ...(data.status ? { deactivatedAt: data.status === 'SUSPENDED' ? new Date() : null } : {}),
+        ...(data.status
+          ? { deactivatedAt: data.status === 'SUSPENDED' ? new Date() : null }
+          : {}),
       },
       select: {
         id: true,
@@ -275,16 +406,18 @@ export class AccessControlService {
       'platform_admin.update',
       'PlatformAdmin',
       adminId,
-      data as Record<string, unknown>,
+      data,
     );
     return admin;
   }
 
   private requireRole(roleId: string) {
-    return this.prisma.platformRole.findUnique({ where: { id: roleId } }).then((role) => {
-      if (!role) throw new NotFoundException('Platform role not found.');
-      return role;
-    });
+    return this.prisma.platformRole
+      .findUnique({ where: { id: roleId } })
+      .then((role) => {
+        if (!role) throw new NotFoundException('Platform role not found.');
+        return role;
+      });
   }
 
   private hashToken(token: string) {

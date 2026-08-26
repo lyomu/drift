@@ -3,7 +3,12 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { CourtBookingType, CourtInquiryKind, CourtSurface, MatchSport } from '@prisma/client';
+import {
+  CourtBookingType,
+  CourtInquiryKind,
+  CourtSurface,
+  MatchSport,
+} from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { boundingBox, Coordinates, haversineKm } from '../common/distance.util';
 import { buildCourtWhere } from './court-query';
@@ -133,7 +138,14 @@ export class CourtsService {
   async findOne(id: string, viewerCoords?: Coordinates, viewerId?: string) {
     const court = await this.loadCourt(id);
     if (court.clubId) {
-      await this.prisma.courtInquiry.create({ data: { courtId: id, clubId: court.clubId, viewerId, kind: CourtInquiryKind.PROFILE_VIEW } });
+      await this.prisma.courtInquiry.create({
+        data: {
+          courtId: id,
+          clubId: court.clubId,
+          viewerId,
+          kind: CourtInquiryKind.PROFILE_VIEW,
+        },
+      });
     }
     const coords = this.coordsOf(court);
     const distanceKm =
@@ -141,13 +153,24 @@ export class CourtsService {
     return toCourtProfile(court, distanceKm);
   }
 
-  async recordInquiry(courtId: string, viewerId: string, kind: CourtInquiryKind) {
-    if (![CourtInquiryKind.CONTACT, CourtInquiryKind.BOOKING].includes(kind)) {
-      throw new BadRequestException('Only contact and booking inquiries can be recorded explicitly.');
+  async recordInquiry(
+    courtId: string,
+    viewerId: string,
+    kind: CourtInquiryKind,
+  ) {
+    if (
+      kind !== CourtInquiryKind.CONTACT &&
+      kind !== CourtInquiryKind.BOOKING
+    ) {
+      throw new BadRequestException(
+        'Only contact and booking inquiries can be recorded explicitly.',
+      );
     }
     const court = await this.loadCourt(courtId);
     if (!court.clubId) return { recorded: false };
-    await this.prisma.courtInquiry.create({ data: { courtId, clubId: court.clubId, viewerId, kind } });
+    await this.prisma.courtInquiry.create({
+      data: { courtId, clubId: court.clubId, viewerId, kind },
+    });
     return { recorded: true };
   }
 

@@ -150,9 +150,7 @@ class _MessageBubble extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: DriftSpacing.s2),
         child: Center(
           child: GestureDetector(
-            onTap: message.relatedMatchId == null
-                ? null
-                : () => context.push('/matches/${message.relatedMatchId}'),
+            onTap: () => _showSystemMessageDetail(context, message),
             child: Container(
               padding: const EdgeInsets.symmetric(
                 horizontal: DriftSpacing.s3,
@@ -201,6 +199,111 @@ class _MessageBubble extends StatelessWidget {
       ),
     );
   }
+}
+
+void _showSystemMessageDetail(BuildContext context, ChatMessage message) {
+  final type = Theme.of(context).extension<DriftTypography>()!;
+  final colors = Theme.of(context).extension<DriftColors>()!;
+
+  showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    builder: (sheetContext) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          DriftSpacing.s5,
+          0,
+          DriftSpacing.s5,
+          DriftSpacing.s5,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.info_outline, color: colors.primary),
+                const SizedBox(width: DriftSpacing.s3),
+                Expanded(
+                  child: Text(
+                    _systemEventLabel(message.systemEvent),
+                    style: type.h3,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: DriftSpacing.s3),
+            Text(message.body, style: type.body),
+            const SizedBox(height: DriftSpacing.s4),
+            if (message.relatedMatchId != null) ...[
+              _SystemLink(
+                icon: Icons.sports_tennis_outlined,
+                label: 'View related match',
+                onTap: () {
+                  Navigator.of(sheetContext).pop();
+                  context.push('/matches/${message.relatedMatchId}');
+                },
+              ),
+              const SizedBox(height: DriftSpacing.s2),
+            ],
+            if (message.relatedLeagueId != null)
+              _SystemLink(
+                icon: Icons.emoji_events_outlined,
+                label: message.relatedLeagueName == null
+                    ? 'View related league'
+                    : 'View ${message.relatedLeagueName}',
+                onTap: () {
+                  Navigator.of(sheetContext).pop();
+                  context.push('/compete/leagues/${message.relatedLeagueId}');
+                },
+              ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+class _SystemLink extends StatelessWidget {
+  const _SystemLink({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<DriftColors>()!;
+    final type = Theme.of(context).extension<DriftTypography>()!;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: DriftSpacing.s2),
+        child: Row(
+          children: [
+            Icon(icon, color: colors.primary),
+            const SizedBox(width: DriftSpacing.s3),
+            Expanded(child: Text(label, style: type.title)),
+            Icon(Icons.chevron_right, color: colors.textSecondary),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+String _systemEventLabel(String? event) {
+  if (event == null) return 'System message';
+  return event
+      .split('_')
+      .map((word) => word.isEmpty ? word : word[0].toUpperCase() + word.substring(1))
+      .join(' ');
 }
 
 class _Composer extends StatelessWidget {

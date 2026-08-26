@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { TournamentState, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { MatchesService } from '../matches/matches.service';
@@ -16,11 +20,16 @@ export class TournamentsService {
   // ------------------------------------------------------------------ read
 
   async listForClub(clubId: string) {
-    return { tournaments: await this.prisma.tournament.findMany({
-      where: { clubId },
-      orderBy: { createdAt: 'desc' },
-      include: { club: { select: { id: true, name: true } }, _count: { select: { entries: true } } },
-    }) };
+    return {
+      tournaments: await this.prisma.tournament.findMany({
+        where: { clubId },
+        orderBy: { createdAt: 'desc' },
+        include: {
+          club: { select: { id: true, name: true } },
+          _count: { select: { entries: true } },
+        },
+      }),
+    };
   }
 
   async list(clubId?: string) {
@@ -56,8 +65,12 @@ export class TournamentsService {
             fixtures: {
               orderBy: { slotIndex: 'asc' },
               include: {
-                sideA: { select: { id: true, firstName: true, lastName: true } },
-                sideB: { select: { id: true, firstName: true, lastName: true } },
+                sideA: {
+                  select: { id: true, firstName: true, lastName: true },
+                },
+                sideB: {
+                  select: { id: true, firstName: true, lastName: true },
+                },
                 match: { select: { id: true, state: true } },
               },
             },
@@ -71,9 +84,19 @@ export class TournamentsService {
 
   // ----------------------------------------------------------------- write
 
-  async create(clubId: string, data: { name: string; description?: string; drawSize: number; registrationClosesAt: Date }) {
+  async create(
+    clubId: string,
+    data: {
+      name: string;
+      description?: string;
+      drawSize: number;
+      registrationClosesAt: Date;
+    },
+  ) {
     if (!ALLOWED_DRAWS.includes(data.drawSize)) {
-      throw new BadRequestException(`drawSize must be one of ${ALLOWED_DRAWS.join(', ')}.`);
+      throw new BadRequestException(
+        `drawSize must be one of ${ALLOWED_DRAWS.join(', ')}.`,
+      );
     }
     return this.prisma.tournament.create({
       data: {
@@ -89,12 +112,16 @@ export class TournamentsService {
   async join(tournamentId: string, userId: string) {
     const tournament = await this.load(tournamentId);
     if (tournament.state !== TournamentState.REGISTRATION_OPEN) {
-      throw new BadRequestException('Registration is not open for this tournament.');
+      throw new BadRequestException(
+        'Registration is not open for this tournament.',
+      );
     }
     if (tournament.registrationClosesAt < new Date()) {
       throw new BadRequestException('Registration has closed.');
     }
-    const count = await this.prisma.tournamentEntry.count({ where: { tournamentId } });
+    const count = await this.prisma.tournamentEntry.count({
+      where: { tournamentId },
+    });
     if (count >= tournament.drawSize) {
       throw new BadRequestException('The draw is full.');
     }
@@ -104,24 +131,48 @@ export class TournamentsService {
     return entry;
   }
 
-  async updateSeeds(tournamentId: string, entries: { entryId: string; seed: number }[]) {
+  async updateSeeds(
+    tournamentId: string,
+    entries: { entryId: string; seed: number }[],
+  ) {
     const tournament = await this.load(tournamentId);
-    if (![TournamentState.DRAFT, TournamentState.REGISTRATION_OPEN].includes(tournament.state)) {
-      throw new BadRequestException('Seeds can only be changed before the draw is generated.');
+    if (
+      tournament.state !== TournamentState.DRAFT &&
+      tournament.state !== TournamentState.REGISTRATION_OPEN
+    ) {
+      throw new BadRequestException(
+        'Seeds can only be changed before the draw is generated.',
+      );
     }
-    const existing = await this.prisma.tournamentEntry.findMany({ where: { tournamentId } });
+    const existing = await this.prisma.tournamentEntry.findMany({
+      where: { tournamentId },
+    });
     if (entries.length !== existing.length) {
       throw new BadRequestException('Every entry must be assigned a seed.');
     }
     const ids = new Set(existing.map((entry) => entry.id));
     const seeds = new Set(entries.map((entry) => entry.seed));
-    if (entries.some((entry) => !ids.has(entry.entryId) || entry.seed < 1 || entry.seed > entries.length) || seeds.size !== entries.length) {
-      throw new BadRequestException('Seeds must be unique and cover every registered entry.');
+    if (
+      entries.some(
+        (entry) =>
+          !ids.has(entry.entryId) ||
+          entry.seed < 1 ||
+          entry.seed > entries.length,
+      ) ||
+      seeds.size !== entries.length
+    ) {
+      throw new BadRequestException(
+        'Seeds must be unique and cover every registered entry.',
+      );
     }
-    await this.prisma.$transaction(entries.map((entry) => this.prisma.tournamentEntry.update({
-      where: { id: entry.entryId },
-      data: { seed: entry.seed },
-    })));
+    await this.prisma.$transaction(
+      entries.map((entry) =>
+        this.prisma.tournamentEntry.update({
+          where: { id: entry.entryId },
+          data: { seed: entry.seed },
+        }),
+      ),
+    );
     return { seeded: true };
   }
 
@@ -130,7 +181,9 @@ export class TournamentsService {
     if (tournament.state === TournamentState.RUNNING) {
       throw new BadRequestException('The tournament is already running.');
     }
-    await this.prisma.tournamentEntry.deleteMany({ where: { tournamentId, userId } });
+    await this.prisma.tournamentEntry.deleteMany({
+      where: { tournamentId, userId },
+    });
     return { left: true };
   }
 
@@ -141,7 +194,10 @@ export class TournamentsService {
    */
   async generateDraw(tournamentId: string) {
     const tournament = await this.load(tournamentId);
-    if (tournament.state !== TournamentState.REGISTRATION_OPEN && tournament.state !== TournamentState.DRAFT) {
+    if (
+      tournament.state !== TournamentState.REGISTRATION_OPEN &&
+      tournament.state !== TournamentState.DRAFT
+    ) {
       throw new BadRequestException('The draw has already been generated.');
     }
     const entries = await this.prisma.tournamentEntry.findMany({
@@ -149,11 +205,16 @@ export class TournamentsService {
       orderBy: { createdAt: 'asc' },
     });
     if (entries.length < 2) {
-      throw new BadRequestException('At least two entries are required to draw.');
+      throw new BadRequestException(
+        'At least two entries are required to draw.',
+      );
     }
 
     const bracket = buildDraw(
-      entries.map((e, i) => ({ userId: e.userId, seed: e.seed ?? (e.seed === null ? null : i + 1) })),
+      entries.map((e, i) => ({
+        userId: e.userId,
+        seed: e.seed ?? (e.seed === null ? null : i + 1),
+      })),
       tournament.drawSize,
     );
 
@@ -191,7 +252,12 @@ export class TournamentsService {
     });
     if (firstRound) {
       for (const fixture of firstRound.fixtures) {
-        if (!fixture.isBye && !fixture.matchId && fixture.sideAUserId && fixture.sideBUserId) {
+        if (
+          !fixture.isBye &&
+          !fixture.matchId &&
+          fixture.sideAUserId &&
+          fixture.sideBUserId
+        ) {
           const record = await this.matches.createFixtureMatch(
             fixture.sideAUserId,
             fixture.sideBUserId,
@@ -242,7 +308,12 @@ export class TournamentsService {
       slotIndex: Math.floor(fixture.slotIndex / 2),
     };
     const nextRound = await this.prisma.tournamentRound.findUnique({
-      where: { tournamentId_index: { tournamentId: fixture.round.tournamentId, index: next.roundIndex } },
+      where: {
+        tournamentId_index: {
+          tournamentId: fixture.round.tournamentId,
+          index: next.roundIndex,
+        },
+      },
     });
     if (!nextRound) {
       // The final was decided.
@@ -254,7 +325,9 @@ export class TournamentsService {
     }
 
     const nextFixture = await this.prisma.tournamentFixture.findUnique({
-      where: { roundId_slotIndex: { roundId: nextRound.id, slotIndex: next.slotIndex } },
+      where: {
+        roundId_slotIndex: { roundId: nextRound.id, slotIndex: next.slotIndex },
+      },
     });
     if (!nextFixture) return;
 
@@ -262,7 +335,10 @@ export class TournamentsService {
       fixture.slotIndex % 2 === 0
         ? { sideA: { connect: { id: winnerUserId } } }
         : { sideB: { connect: { id: winnerUserId } } };
-    await this.prisma.tournamentFixture.update({ where: { id: nextFixture.id }, data });
+    await this.prisma.tournamentFixture.update({
+      where: { id: nextFixture.id },
+      data,
+    });
 
     // When the next round's pair is complete, create its Match.
     const filled = await this.prisma.tournamentFixture.findUnique({
@@ -310,14 +386,21 @@ export class TournamentsService {
           if (fixture.isBye && !fixture.winnerUserId) {
             const winner = fixture.sideAUserId ?? fixture.sideBUserId;
             if (winner) {
-              await this.onMatchSettled(fixture.matchId ?? 'bye', winner).catch(() => {
-                /* no match linked — fall through to the direct path below */
-              });
+              await this.onMatchSettled(fixture.matchId ?? 'bye', winner).catch(
+                () => {
+                  /* no match linked — fall through to the direct path below */
+                },
+              );
               await this.prisma.tournamentFixture.update({
                 where: { id: fixture.id },
                 data: { winnerUserId: winner },
               });
-              await this.fillNextFrom(round.tournamentId, round.index, fixture.slotIndex, winner);
+              await this.fillNextFrom(
+                round.tournamentId,
+                round.index,
+                fixture.slotIndex,
+                winner,
+              );
               progressing = true;
             }
           }
@@ -347,18 +430,28 @@ export class TournamentsService {
     });
     if (!nextRound) return;
     const nextFixture = await this.prisma.tournamentFixture.findUnique({
-      where: { roundId_slotIndex: { roundId: nextRound.id, slotIndex: Math.floor(slotIndex / 2) } },
+      where: {
+        roundId_slotIndex: {
+          roundId: nextRound.id,
+          slotIndex: Math.floor(slotIndex / 2),
+        },
+      },
     });
     if (!nextFixture) return;
     const data: Prisma.TournamentFixtureUpdateInput =
       slotIndex % 2 === 0
         ? { sideA: { connect: { id: winnerUserId } } }
         : { sideB: { connect: { id: winnerUserId } } };
-    await this.prisma.tournamentFixture.update({ where: { id: nextFixture.id }, data });
+    await this.prisma.tournamentFixture.update({
+      where: { id: nextFixture.id },
+      data,
+    });
   }
 
   private async load(id: string) {
-    const tournament = await this.prisma.tournament.findUnique({ where: { id } });
+    const tournament = await this.prisma.tournament.findUnique({
+      where: { id },
+    });
     if (!tournament) throw new NotFoundException('Tournament not found.');
     return tournament;
   }

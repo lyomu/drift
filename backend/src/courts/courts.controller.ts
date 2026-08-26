@@ -44,7 +44,11 @@ export class CourtsController {
   }
 
   @Post(':id/inquiry')
-  inquiry(@Req() req: Request, @Param('id') id: string, @Body('kind') kind: CourtInquiryKind) {
+  inquiry(
+    @Req() req: Request,
+    @Param('id') id: string,
+    @Body('kind') kind: CourtInquiryKind,
+  ) {
     return this.courtsService.recordInquiry(id, this.userId(req), kind);
   }
 
