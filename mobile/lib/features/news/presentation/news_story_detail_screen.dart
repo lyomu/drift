@@ -6,6 +6,7 @@ import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
+import '../../../shared/widgets/drift_scaffold.dart';
 import '../application/news_providers.dart';
 import '../data/news_repository.dart';
 
@@ -67,26 +68,24 @@ class _NewsStoryDetailScreenState extends ConsumerState<NewsStoryDetailScreen> {
     final type = Theme.of(context).extension<DriftTypography>()!;
     final colors = Theme.of(context).extension<DriftColors>()!;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Story')),
-      body: SafeArea(
-        child: switch (story) {
-          AsyncData(:final value) => _Body(
-            story: value,
-            isBusy: _isBusy,
-            savedOverride: _savedOverride,
-            onToggleSave: _toggleSave,
-            onOpenSource: () => _openSource(value.originalUrl),
+    return DriftScaffold(
+      title: 'Story',
+      body: switch (story) {
+        AsyncData(:final value) => _Body(
+          story: value,
+          isBusy: _isBusy,
+          savedOverride: _savedOverride,
+          onToggleSave: _toggleSave,
+          onOpenSource: () => _openSource(value.originalUrl),
+        ),
+        AsyncError() => Center(
+          child: Text(
+            'Story not available.',
+            style: type.body.copyWith(color: colors.textSecondary),
           ),
-          AsyncError() => Center(
-            child: Text(
-              'Story not available.',
-              style: type.body.copyWith(color: colors.textSecondary),
-            ),
-          ),
-          _ => const Center(child: CircularProgressIndicator()),
-        },
-      ),
+        ),
+        _ => const Center(child: CircularProgressIndicator()),
+      },
     );
   }
 }

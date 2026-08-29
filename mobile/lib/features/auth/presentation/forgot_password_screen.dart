@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
+import '../../../shared/widgets/drift_back_header.dart';
 import '../../../shared/widgets/drift_text_field.dart';
 import '../application/auth_controller.dart';
 import '../data/auth_repository.dart';
@@ -62,43 +63,50 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     final colors = Theme.of(context).extension<DriftColors>()!;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Forgot Password')),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(DriftSpacing.s6),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Enter the email address on your account and we’ll send a '
-                'six-digit code you can use to set a new password.',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: DriftSpacing.s6),
-              DriftTextField(
-                label: 'Email',
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-              ),
-              if (_errorText != null) ...[
-                const SizedBox(height: DriftSpacing.s3),
-                Text(_errorText!, style: TextStyle(color: colors.error)),
-              ],
-              const SizedBox(height: DriftSpacing.s6),
-              DriftButton(
-                label: _isSubmitting ? 'Sending…' : 'Send Code',
-                onPressed: _isSubmitting ? null : _submit,
-              ),
-              const SizedBox(height: DriftSpacing.s2),
-              Center(
-                child: DriftButton(
-                  label: 'Back to Log In',
-                  variant: DriftButtonVariant.text,
-                  onPressed: () => context.pop(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const DriftBackHeader(title: 'Forgot Password'),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Enter the email address on your account and we’ll send a '
+                      'six-digit code you can use to set a new password.',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: DriftSpacing.s6),
+                    DriftTextField(
+                      label: 'Email',
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                    ),
+                    if (_errorText != null) ...[
+                      const SizedBox(height: DriftSpacing.s3),
+                      Text(_errorText!, style: TextStyle(color: colors.error)),
+                    ],
+                    const SizedBox(height: DriftSpacing.s6),
+                    DriftButton(
+                      label: _isSubmitting ? 'Sending…' : 'Send Code',
+                      onPressed: _isSubmitting ? null : _submit,
+                    ),
+                    const SizedBox(height: DriftSpacing.s2),
+                    Center(
+                      child: DriftButton(
+                        label: 'Back to Log In',
+                        variant: DriftButtonVariant.text,
+                        onPressed: () => context.pop(),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/theme/drift_colors.dart';
-import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
+import '../../../shared/widgets/drift_back_header.dart';
+import '../../../shared/widgets/drift_pill_tabs.dart';
 import '../application/courts_providers.dart';
 import 'court_filters_sheet.dart';
 import 'court_list_view.dart';
 import 'court_map_view.dart';
 
 /// Court Finder Hub — `foundation/04-screen-inventory.md` §A.6. Map/List
-/// toggle over one shared search (no separate "Court List" screen row in
-/// the inventory — list is a segment inside this Hub, same as Map).
+/// toggle over one shared search (redesign 2026-08: `App.tsx`
+/// `DiscoverCourtsTab`, plus the Map segment the prototype omits).
 class CourtFinderHubScreen extends ConsumerStatefulWidget {
   const CourtFinderHubScreen({super.key, this.embedded = false});
 
@@ -30,66 +30,30 @@ class _CourtFinderHubScreenState extends ConsumerState<CourtFinderHubScreen> {
   @override
   Widget build(BuildContext context) {
     final type = Theme.of(context).extension<DriftTypography>()!;
-    final colors = Theme.of(context).extension<DriftColors>()!;
     final filters = ref.watch(courtFiltersProvider);
 
-    final content = Column(
+    final body = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: EdgeInsets.fromLTRB(
-            DriftSpacing.s4,
-            widget.embedded ? 0 : DriftSpacing.s4,
-            DriftSpacing.s4,
-            DriftSpacing.s3,
-          ),
+          padding: EdgeInsets.fromLTRB(16, widget.embedded ? 0 : 8, 16, 12),
           child: Row(
             children: [
-              if (!widget.embedded)
-                Expanded(child: Text('Courts', style: type.display))
-              else
-                Expanded(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: SegmentedButton<int>(
-                      segments: [
-                        for (var i = 0; i < _labels.length; i++)
-                          ButtonSegment(value: i, label: Text(_labels[i])),
-                      ],
-                      selected: {_segment},
-                      showSelectedIcon: false,
-                      onSelectionChanged: (s) =>
-                          setState(() => _segment = s.first),
-                    ),
-                  ),
+              Expanded(
+                child: DriftPillTabs(
+                  labels: _labels,
+                  selected: _segment,
+                  onChanged: (i) => setState(() => _segment = i),
                 ),
-              IconButton(
-                onPressed: () => showCourtFiltersSheet(context, ref),
-                tooltip: 'Filters',
-                icon: Icon(
-                  filters.isEmpty
-                      ? Icons.filter_alt_outlined
-                      : Icons.filter_alt,
-                  color: filters.isEmpty ? null : colors.primary,
-                ),
+              ),
+              const SizedBox(width: 8),
+              DriftHeaderSquareButton(
+                icon: filters.isEmpty ? Icons.tune : Icons.filter_alt,
+                onTap: () => showCourtFiltersSheet(context, ref),
               ),
             ],
           ),
         ),
-        if (!widget.embedded)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: DriftSpacing.s4),
-            child: SegmentedButton<int>(
-              segments: [
-                for (var i = 0; i < _labels.length; i++)
-                  ButtonSegment(value: i, label: Text(_labels[i])),
-              ],
-              selected: {_segment},
-              showSelectedIcon: false,
-              onSelectionChanged: (s) => setState(() => _segment = s.first),
-            ),
-          ),
-        const SizedBox(height: DriftSpacing.s3),
         Expanded(
           child: switch (_segment) {
             0 => const CourtMapView(),
@@ -99,6 +63,22 @@ class _CourtFinderHubScreenState extends ConsumerState<CourtFinderHubScreen> {
       ],
     );
 
-    return widget.embedded ? content : SafeArea(child: content);
+    if (widget.embedded) return body;
+
+    return SafeArea(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+            child: Text(
+              'Courts',
+              style: type.h2.copyWith(fontWeight: FontWeight.w800),
+            ),
+          ),
+          Expanded(child: body),
+        ],
+      ),
+    );
   }
 }

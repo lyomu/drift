@@ -37,6 +37,7 @@ dependencies:
 
   go_router: ^14.6.2
   flutter_riverpod: ^2.6.1
+  flutter_svg: ^2.0.10
   dio: ^5.7.0
   flutter_secure_storage: ^9.2.2
   geolocator: ^13.0.2
@@ -75,6 +76,9 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
+  assets:
+    - assets/images/onboarding/
+
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg
@@ -87,28 +91,31 @@ flutter:
   # https://flutter.dev/to/asset-from-package
 
   fonts:
+    # Static weight cuts (instanced from Outfit[wght].ttf). The variable
+    # file's default master is Thin, and Impeller on Android ignores the
+    # `wght` axis — so the variable file rendered every weight as Thin.
     - family: Outfit
       fonts:
-        - asset: assets/fonts/Outfit-Variable.ttf
+        - asset: assets/fonts/Outfit-400.ttf
           weight: 400
-        - asset: assets/fonts/Outfit-Variable.ttf
+        - asset: assets/fonts/Outfit-500.ttf
           weight: 500
-        - asset: assets/fonts/Outfit-Variable.ttf
+        - asset: assets/fonts/Outfit-600.ttf
           weight: 600
-        - asset: assets/fonts/Outfit-Variable.ttf
+        - asset: assets/fonts/Outfit-700.ttf
           weight: 700
-    # Display/headline placeholder until a full Sharp Sans Display licence is
-    # purchased (see foundation/07-mvp-roadmap.md §4.5).
-    #
-    # DO NOT swap in the files under `Sharp-Sans-Font-Family/` at the repo
-    # root: verified 2026-08-23, those are a 64-glyph TRIAL SUBSET. They
-    # carry A-Z, a-z and 0-9 and are missing the em dash, curly apostrophe,
-    # ellipsis and middot — characters this app's copy uses in 800+ places,
-    # which would render as tofu in every heading. A full-glyph licensed
-    # cut is still an open procurement item.
-    - family: SharpSansDisplay
+        - asset: assets/fonts/Outfit-800.ttf
+          weight: 800
+    # Athletic display face for the pre-auth intro carousel hero titles only
+    # (see features/onboarding/presentation/intro_carousel_screen.dart).
+    # Not part of the core type scale — body/UI text stays Outfit. Static
+    # cuts (not the variable file) because Impeller on Android renders
+    # variable-font weight axes at their default instance.
+    - family: Montserrat
       fonts:
-        - asset: assets/fonts/SpaceGrotesk-Variable.ttf
-          weight: 600
-        - asset: assets/fonts/SpaceGrotesk-Variable.ttf
+        - asset: assets/fonts/Montserrat-Bold.ttf
           weight: 700
+        - asset: assets/fonts/Montserrat-ExtraBold.ttf
+          weight: 800
+        - asset: assets/fonts/Montserrat-Black.ttf
+          weight: 900

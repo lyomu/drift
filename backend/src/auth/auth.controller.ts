@@ -78,12 +78,18 @@ export class AuthController {
     return this.authService.login(dto);
   }
 
+  // Refresh tokens are 256-bit random and stored hashed, so brute force isn't
+  // practical — but these were the only two token-bearing auth routes with no
+  // per-route limit, and defence in depth shouldn't have gaps just because
+  // one layer looks sufficient.
+  @Throttle({ default: AUTH_SENSITIVE })
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   refresh(@Body() dto: RefreshDto) {
     return this.authService.refresh(dto.refreshToken);
   }
 
+  @Throttle({ default: AUTH_SENSITIVE })
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   logout(@Body() dto: RefreshDto) {

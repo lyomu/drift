@@ -75,14 +75,19 @@ class DriftButton extends StatelessWidget {
         );
 
       case DriftButtonVariant.text:
+        final colors = Theme.of(context).extension<DriftColors>()!;
+        final type = Theme.of(context).extension<DriftTypography>()!;
         return TextButton(
           onPressed: onPressed,
           style: TextButton.styleFrom(
-            foregroundColor: foregroundColor,
+            foregroundColor: foregroundColor ?? colors.primary,
             padding: const EdgeInsets.symmetric(
               horizontal: DriftSpacing.s2,
               vertical: DriftSpacing.s2,
             ),
+            minimumSize: const Size.fromHeight(0),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            textStyle: type.subtitle.copyWith(fontWeight: FontWeight.w600),
           ),
           child: Text(label),
         );

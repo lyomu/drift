@@ -6,6 +6,7 @@ import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
 import '../../../shared/widgets/drift_card.dart';
+import '../../../shared/widgets/drift_scaffold.dart';
 import '../../../shared/widgets/drift_status_badge.dart';
 import '../../auth/data/auth_repository.dart';
 import '../application/payments_providers.dart';
@@ -18,13 +19,13 @@ class BillingHistoryScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final history = ref.watch(billingHistoryProvider);
-    return Scaffold(
-      appBar: AppBar(title: const Text('Billing history')),
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () => ref.refresh(billingHistoryProvider.future),
-          child: switch (history) {
-            AsyncData(:final value) => value.isEmpty
+    return DriftScaffold(
+      title: 'Billing history',
+      body: RefreshIndicator(
+        onRefresh: () => ref.refresh(billingHistoryProvider.future),
+        child: switch (history) {
+          AsyncData(:final value) =>
+            value.isEmpty
                 ? const _EmptyBillingHistory()
                 : ListView.separated(
                     padding: const EdgeInsets.all(DriftSpacing.s5),
@@ -36,13 +37,12 @@ class BillingHistoryScreen extends ConsumerWidget {
                       onTap: () => _showReceipt(context, ref, value[index].id),
                     ),
                   ),
-            AsyncError() => BillingLoadError(
-                message: "Couldn't load your billing history.",
-                retry: () => ref.invalidate(billingHistoryProvider),
-              ),
-            _ => const Center(child: CircularProgressIndicator()),
-          },
-        ),
+          AsyncError() => BillingLoadError(
+            message: "Couldn't load your billing history.",
+            retry: () => ref.invalidate(billingHistoryProvider),
+          ),
+          _ => const Center(child: CircularProgressIndicator()),
+        },
       ),
     );
   }
@@ -129,7 +129,9 @@ Future<void> _showReceipt(
   String invoiceId,
 ) async {
   try {
-    final receipt = await ref.read(paymentsRepositoryProvider).receipt(invoiceId);
+    final receipt = await ref
+        .read(paymentsRepositoryProvider)
+        .receipt(invoiceId);
     if (!context.mounted) return;
     await showModalBottomSheet<void>(
       context: context,
@@ -143,9 +145,9 @@ Future<void> _showReceipt(
                 .read(paymentsRepositoryProvider)
                 .downloadReceipt(invoiceId);
             if (!sheetContext.mounted) return;
-            ScaffoldMessenger.of(sheetContext).showSnackBar(
-              SnackBar(content: Text('Receipt saved to $path')),
-            );
+            ScaffoldMessenger.of(
+              sheetContext,
+            ).showSnackBar(SnackBar(content: Text('Receipt saved to $path')));
           } on AuthException catch (error) {
             if (!sheetContext.mounted) return;
             ScaffoldMessenger.of(

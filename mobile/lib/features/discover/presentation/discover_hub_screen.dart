@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
+import '../../../shared/widgets/drift_pill_tabs.dart';
 import '../../clubs/presentation/club_list_screen.dart';
 import '../../coaches/presentation/coach_list_screen.dart';
 import '../../courts/presentation/court_finder_hub_screen.dart';
 import '../../players/presentation/player_search_screen.dart';
 
 /// Discover Hub — `foundation/02-information-architecture.md` §1.3,
-/// segmented Players / Courts / Clubs / Coaches. The fourth segment became
-/// real once Club Admin gained a coach-authoring path.
+/// segmented Players / Courts / Clubs / Coaches (redesign 2026-08:
+/// `App.tsx` `DiscoverScreen`).
 class DiscoverHubScreen extends StatefulWidget {
   const DiscoverHubScreen({super.key, this.initialSegment});
 
@@ -48,28 +48,18 @@ class _DiscoverHubScreenState extends State<DiscoverHubScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(
-              DriftSpacing.s4,
-              DriftSpacing.s4,
-              DriftSpacing.s4,
-              DriftSpacing.s3,
-            ),
-            child: Text('Discover', style: type.display),
-          ),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: DriftSpacing.s4),
-            child: SegmentedButton<int>(
-              segments: [
-                for (var i = 0; i < _labels.length; i++)
-                  ButtonSegment(value: i, label: Text(_labels[i])),
-              ],
-              selected: {_segment},
-              showSelectedIcon: false,
-              onSelectionChanged: (s) => setState(() => _segment = s.first),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+            child: Text(
+              'Discover',
+              style: type.h2.copyWith(fontWeight: FontWeight.w800),
             ),
           ),
-          const SizedBox(height: DriftSpacing.s3),
+          DriftPillTabs(
+            labels: _labels,
+            selected: _segment,
+            onChanged: (i) => setState(() => _segment = i),
+          ),
+          const SizedBox(height: 12),
           Expanded(child: _body()),
         ],
       ),

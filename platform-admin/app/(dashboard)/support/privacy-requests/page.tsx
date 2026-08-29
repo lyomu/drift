@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { ModalShell, StatBand } from "@/components/dashboard-design";
 import { api, ApiError } from "@/lib/api-client";
 import type { PrivacyRequest, PrivacyRequestStatus, PrivacyRequestType } from "@/lib/support-types";
 import { dateTime, label, personName } from "@/lib/support-types";
@@ -27,6 +28,7 @@ export default function PrivacyRequestsPage() {
   const [type, setType] = useState<PrivacyRequestType | "">("");
   const [search, setSearch] = useState("");
   const [form, setForm] = useState<RequestForm>(EMPTY_FORM);
+  const [showCreate, setShowCreate] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -64,6 +66,7 @@ export default function PrivacyRequestsPage() {
         requestNote: form.requestNote || null,
       });
       setForm(EMPTY_FORM);
+      setShowCreate(false);
       await load();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "The privacy request could not be created.");
@@ -93,19 +96,25 @@ export default function PrivacyRequestsPage() {
 
   return (
     <div>
-      <PageHeader title="Privacy Requests" description="Data export and deletion queue for compliance handling." />
+      <PageHeader
+        title="Privacy Requests"
+        description="Data export and deletion queue for compliance handling."
+        action={<Button variant="secondary" icon="add" onClick={() => setShowCreate(true)}>Create request</Button>}
+      />
       <ErrorBanner message={error} />
       <div className="mb-5 rounded-md border border-drift-warning/30 bg-drift-warning-surface px-4 py-3 text-sm leading-6 text-drift-warning">
         Deletion processing redacts direct account PII and revokes sessions while preserving historical match and competition relations for integrity.
       </div>
 
-      <div className="mb-4 grid gap-3 md:grid-cols-3">
-        <Card className="p-4"><div className="text-sm font-semibold text-drift-text-secondary">Pending</div><div className="mt-1 font-display text-3xl font-bold tabular-nums text-drift-text-primary">{counts.pending}</div></Card>
-        <Card className="p-4"><div className="text-sm font-semibold text-drift-text-secondary">Fulfilled</div><div className="mt-1 font-display text-3xl font-bold tabular-nums text-drift-text-primary">{counts.fulfilled}</div></Card>
-        <Card className="p-4"><div className="text-sm font-semibold text-drift-text-secondary">Deletion requests</div><div className="mt-1 font-display text-3xl font-bold tabular-nums text-drift-text-primary">{counts.deletion}</div></Card>
-      </div>
+      <StatBand
+        stats={[
+          { label: "Pending", value: counts.pending, icon: "pending_actions", tone: counts.pending ? "amber" : "gray" },
+          { label: "Fulfilled", value: counts.fulfilled, icon: "task_alt", tone: "green" },
+          { label: "Deletion requests", value: counts.deletion, icon: "delete_forever", tone: counts.deletion ? "red" : "gray" },
+        ]}
+      />
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
+      <div>
         <div>
           <Card className="mb-4 p-4">
             <div className="grid gap-3 md:grid-cols-[1fr_180px_180px_auto]">
@@ -139,17 +148,24 @@ export default function PrivacyRequestsPage() {
           )}
         </div>
 
-        <Card>
-          <h2 className="font-display text-xl font-semibold text-drift-text-primary">Create request</h2>
-          <p className="mt-1 text-sm text-drift-text-secondary">Use either a user ID or an email address to link the request to an account.</p>
-          <form onSubmit={createRequest} className="mt-4 flex flex-col gap-4">
-            <Field label="User ID"><Input value={form.userId} onChange={(event) => setForm((current) => ({ ...current, userId: event.target.value }))} /></Field>
-            <Field label="User email"><Input type="email" value={form.userEmail} onChange={(event) => setForm((current) => ({ ...current, userEmail: event.target.value }))} /></Field>
-            <Field label="Request type"><Select value={form.type} onChange={(event) => setForm((current) => ({ ...current, type: event.target.value as PrivacyRequestType }))}><option value="EXPORT">Export</option><option value="DELETION">Deletion</option></Select></Field>
-            <Field label="Request note"><Textarea rows={4} value={form.requestNote} onChange={(event) => setForm((current) => ({ ...current, requestNote: event.target.value }))} /></Field>
-            <Button type="submit" disabled={busyId === "create" || (!form.userId.trim() && !form.userEmail.trim())}>{busyId === "create" ? "Creating..." : "Create request"}</Button>
-          </form>
-        </Card>
+        {showCreate && (
+          <ModalShell
+            title="Create request"
+            description="Use either a user ID or an email address to link the request to an account."
+            onClose={() => setShowCreate(false)}
+          >
+            <form onSubmit={createRequest} className="flex flex-col gap-4">
+              <Field label="User ID"><Input value={form.userId} onChange={(event) => setForm((current) => ({ ...current, userId: event.target.value }))} /></Field>
+              <Field label="User email"><Input type="email" value={form.userEmail} onChange={(event) => setForm((current) => ({ ...current, userEmail: event.target.value }))} /></Field>
+              <Field label="Request type"><Select value={form.type} onChange={(event) => setForm((current) => ({ ...current, type: event.target.value as PrivacyRequestType }))}><option value="EXPORT">Export</option><option value="DELETION">Deletion</option></Select></Field>
+              <Field label="Request note"><Textarea rows={4} value={form.requestNote} onChange={(event) => setForm((current) => ({ ...current, requestNote: event.target.value }))} /></Field>
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="ghost" onClick={() => setShowCreate(false)}>Cancel</Button>
+                <Button type="submit" icon="add" disabled={busyId === "create" || (!form.userId.trim() && !form.userEmail.trim())}>{busyId === "create" ? "Creating..." : "Create request"}</Button>
+              </div>
+            </form>
+          </ModalShell>
+        )}
       </div>
     </div>
   );

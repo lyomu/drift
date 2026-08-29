@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
-import { api, hasToken, setToken } from "./api-client";
+import { api, ApiError, hasToken, setToken } from "./api-client";
 import type { ClubRole, Membership } from "./types";
 
 type ClubContextValue = {
@@ -43,15 +43,19 @@ export function ClubProvider({ children }: { children: React.ReactNode }) {
         "/clubs/me/memberships",
       );
       setMemberships(res.memberships);
-    } catch {
+    } catch (err) {
       setMemberships([]);
+      // An expired session and "this account genuinely has no clubs" used to
+      // look identical here, so a logged-out user got a broken-looking empty
+      // dashboard instead of the login screen. The client clears the token on
+      // a 401, so all that's left is to reflect that in the auth state.
+      if (err instanceof ApiError && err.status === 401) setAuthed(false);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

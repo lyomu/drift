@@ -4,9 +4,17 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api, ApiError } from "@/lib/api-client";
 import { useClub } from "@/lib/club-context";
-import { Button, Card, ErrorBanner, Field, Input, PageHeader, Select } from "@/components/ui";
-import { DataTable } from "@/components/DataTable";
+import { Button, EmptyState, ErrorBanner, Field, Input, Select, Textarea } from "@/components/ui";
+import { StatusBadge } from "@/components/StatusBadge";
+import { IconChip, ModalShell } from "@/components/dashboard-design";
 import type { LeagueSummary, MatchFormat, MatchSport } from "@/lib/types";
+
+type LeagueForm = {
+  name: string;
+  description: string;
+  sport: MatchSport;
+  format: MatchFormat;
+};
 
 export default function LeaguesPage() {
   const { clubId, role: myRole } = useClub();
@@ -16,11 +24,11 @@ export default function LeaguesPage() {
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<LeagueForm>({
     name: "",
     description: "",
-    sport: "TENNIS" as MatchSport,
-    format: "SINGLES" as MatchFormat,
+    sport: "TENNIS",
+    format: "SINGLES",
   });
 
   async function load() {
@@ -61,21 +69,53 @@ export default function LeaguesPage() {
 
   return (
     <div>
-      <PageHeader
-        title="Leagues"
-        description="Create and manage your club's competitions."
+      <PageTitle
         action={
-          canManage && (
-            <Button onClick={() => setShowForm((s) => !s)}>
-              {showForm ? "Cancel" : "New league"}
-            </Button>
-          )
+          canManage ? (
+            <Button onClick={() => setShowForm(true)}>New league</Button>
+          ) : undefined
         }
       />
       <ErrorBanner message={error} />
 
+      {loading ? (
+        <EmptyState message="Loading..." />
+      ) : leagues.length === 0 ? (
+        <EmptyState message="Create your first league" />
+      ) : (
+        <div className="flex flex-col gap-3">
+          {leagues.map((league) => {
+            const state = (league as LeagueSummary & { state?: string }).state ??
+              (league.seasons.length > 0 ? "PUBLISHED" : "DRAFT");
+            return (
+              <Link href={`/leagues/${league.id}`} key={league.id}>
+                <div className="rowcard flex items-center gap-4 rounded-2xl border border-drift-border bg-drift-surface px-5 py-[18px] transition-colors">
+                  <IconChip
+                    icon={league.sport === "PADEL" ? "groups" : "sports_tennis"}
+                    tone="info"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[14.5px] font-bold text-drift-text-primary">
+                      {league.name}
+                    </div>
+                    <div className="mt-0.5 text-[12.5px] text-drift-text-secondary">
+                      {league.sport.replace("_", " ")} / {league.format.replace("_", " ")} /{" "}
+                      {league.seasons.length} {league.seasons.length === 1 ? "season" : "seasons"}
+                    </div>
+                  </div>
+                  <StatusBadge status={state} />
+                  <span className="shrink-0 text-[13px] font-semibold text-drift-primary">
+                    Manage
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+
       {showForm && (
-        <Card className="mb-6">
+        <ModalShell title="New league" onClose={() => setShowForm(false)}>
           <form onSubmit={handleCreate} className="flex flex-col gap-4">
             <Field label="League name">
               <Input
@@ -85,7 +125,8 @@ export default function LeaguesPage() {
               />
             </Field>
             <Field label="Description">
-              <Input
+              <Textarea
+                rows={3}
                 value={form.description}
                 onChange={(e) =>
                   setForm({ ...form, description: e.target.value })
@@ -116,38 +157,33 @@ export default function LeaguesPage() {
                 </Select>
               </Field>
             </div>
-            <Button type="submit" disabled={creating} className="self-start">
-              {creating ? "Creating…" : "Create league"}
-            </Button>
+            <div className="mt-2 flex justify-end gap-3">
+              <Button type="button" variant="secondary" onClick={() => setShowForm(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={creating}>
+                {creating ? "Creating..." : "Create league"}
+              </Button>
+            </div>
           </form>
-        </Card>
+        </ModalShell>
       )}
+    </div>
+  );
+}
 
-      {loading ? (
-        <p className="text-sm text-drift-text-secondary">Loading…</p>
-      ) : (
-        <DataTable
-          rows={leagues}
-          rowKey={(l) => l.id}
-          emptyMessage="No leagues yet."
-          columns={[
-            {
-              header: "Name",
-              cell: (l) => (
-                <Link
-                  href={`/leagues/${l.id}`}
-                  className="font-semibold text-drift-primary hover:underline"
-                >
-                  {l.name}
-                </Link>
-              ),
-            },
-            { header: "Sport", cell: (l) => l.sport },
-            { header: "Format", cell: (l) => l.format },
-            { header: "Seasons", cell: (l) => l.seasons.length },
-          ]}
-        />
-      )}
+function PageTitle({ action }: { action?: React.ReactNode }) {
+  return (
+    <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+      <div>
+        <h1 className="font-display text-[26px] font-extrabold leading-8 tracking-[-0.3px] text-drift-text-primary">
+          Leagues
+        </h1>
+        <p className="mt-1 max-w-[560px] text-sm text-drift-text-secondary">
+          Create and manage your club competitions.
+        </p>
+      </div>
+      {action}
     </div>
   );
 }

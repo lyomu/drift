@@ -7,6 +7,7 @@ import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
 import '../../../shared/widgets/drift_player_card.dart';
+import '../../../shared/widgets/drift_scaffold.dart';
 import '../../auth/data/auth_repository.dart';
 import '../application/connections_providers.dart';
 import '../data/connections_repository.dart';
@@ -47,70 +48,68 @@ class _PendingRequestsScreenState extends ConsumerState<PendingRequestsScreen> {
     final pending = ref.watch(pendingRequestsProvider);
     final repo = ref.read(connectionsRepositoryProvider);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Requests')),
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () => ref.refresh(pendingRequestsProvider.future),
-          child: switch (pending) {
-            AsyncData(:final value) =>
-              value.incoming.isEmpty && value.outgoing.isEmpty
-                  ? const _EmptyRequests()
-                  : ListView(
-                      padding: const EdgeInsets.all(DriftSpacing.s4),
-                      children: [
-                        if (value.incoming.isNotEmpty) ...[
-                          Text('Incoming', style: type.h4),
-                          const SizedBox(height: DriftSpacing.s3),
-                          for (final entry in value.incoming)
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                bottom: DriftSpacing.s3,
+    return DriftScaffold(
+      title: 'Requests',
+      body: RefreshIndicator(
+        onRefresh: () => ref.refresh(pendingRequestsProvider.future),
+        child: switch (pending) {
+          AsyncData(:final value) =>
+            value.incoming.isEmpty && value.outgoing.isEmpty
+                ? const _EmptyRequests()
+                : ListView(
+                    padding: const EdgeInsets.all(DriftSpacing.s4),
+                    children: [
+                      if (value.incoming.isNotEmpty) ...[
+                        Text('Incoming', style: type.h4),
+                        const SizedBox(height: DriftSpacing.s3),
+                        for (final entry in value.incoming)
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              bottom: DriftSpacing.s3,
+                            ),
+                            child: _RequestCard(
+                              entry: entry,
+                              isBusy: _busyId == entry.connectionId,
+                              primaryLabel: 'Accept',
+                              secondaryLabel: 'Decline',
+                              onPrimary: () => _act(
+                                entry.connectionId,
+                                () => repo.accept(entry.connectionId),
                               ),
-                              child: _RequestCard(
-                                entry: entry,
-                                isBusy: _busyId == entry.connectionId,
-                                primaryLabel: 'Accept',
-                                secondaryLabel: 'Decline',
-                                onPrimary: () => _act(
-                                  entry.connectionId,
-                                  () => repo.accept(entry.connectionId),
-                                ),
-                                onSecondary: () => _act(
-                                  entry.connectionId,
-                                  () => repo.decline(entry.connectionId),
-                                ),
+                              onSecondary: () => _act(
+                                entry.connectionId,
+                                () => repo.decline(entry.connectionId),
                               ),
                             ),
-                          const SizedBox(height: DriftSpacing.s4),
-                        ],
-                        if (value.outgoing.isNotEmpty) ...[
-                          Text('Sent', style: type.h4),
-                          const SizedBox(height: DriftSpacing.s3),
-                          for (final entry in value.outgoing)
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                bottom: DriftSpacing.s3,
-                              ),
-                              child: _RequestCard(
-                                entry: entry,
-                                isBusy: _busyId == entry.connectionId,
-                                secondaryLabel: 'Cancel request',
-                                onSecondary: () => _act(
-                                  entry.connectionId,
-                                  () => repo.remove(entry.connectionId),
-                                ),
-                              ),
-                            ),
-                        ],
+                          ),
+                        const SizedBox(height: DriftSpacing.s4),
                       ],
-                    ),
-            AsyncError() => const Center(
-              child: Text("Couldn't load your requests."),
-            ),
-            _ => const Center(child: CircularProgressIndicator()),
-          },
-        ),
+                      if (value.outgoing.isNotEmpty) ...[
+                        Text('Sent', style: type.h4),
+                        const SizedBox(height: DriftSpacing.s3),
+                        for (final entry in value.outgoing)
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              bottom: DriftSpacing.s3,
+                            ),
+                            child: _RequestCard(
+                              entry: entry,
+                              isBusy: _busyId == entry.connectionId,
+                              secondaryLabel: 'Cancel request',
+                              onSecondary: () => _act(
+                                entry.connectionId,
+                                () => repo.remove(entry.connectionId),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ],
+                  ),
+          AsyncError() => const Center(
+            child: Text("Couldn't load your requests."),
+          ),
+          _ => const Center(child: CircularProgressIndicator()),
+        },
       ),
     );
   }

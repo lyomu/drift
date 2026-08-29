@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
+import { ActionLink, RowCard, StatBand } from "@/components/dashboard-design";
 import { api, ApiError } from "@/lib/api-client";
 import type { CompetitionListResponse, CompetitionSummary } from "@/lib/competition-types";
-import { Badge, Card, EmptyState, ErrorBanner, Input, PageHeader, Select, Td, Th, statusTone } from "@/components/ui";
+import { Badge, Card, EmptyState, ErrorBanner, Field, Input, PageHeader, Select, statusTone } from "@/components/ui";
 
 function label(value: string | null) {
   return value ? value.replaceAll("_", " ") : "n/a";
@@ -41,110 +42,70 @@ export default function CompetitionsPage() {
     }
   }, [search, sport, state, type]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   return (
     <div>
       <PageHeader
         title="Global Competitions"
         description="Cross-club league, tournament, and ladder oversight."
-        action={<Link href="/competitions/rulesets" className="rounded-md bg-drift-primary px-4 py-2 text-sm font-semibold text-white hover:bg-drift-primary-dark focus:outline-none focus-visible:ring-2 focus-visible:ring-drift-primary">Rulesets</Link>}
+        action={<ActionLink href="/competitions/rulesets" icon="rule" className="border-drift-primary bg-drift-primary text-white hover:bg-drift-primary-dark">Rulesets</ActionLink>}
       />
       <ErrorBanner message={error} />
 
-      <div className="mb-4 grid gap-3 md:grid-cols-3">
-        <Card className="p-4">
-          <div className="text-xs font-semibold uppercase text-drift-text-secondary">Leagues</div>
-          <div className="mt-1 text-2xl font-bold text-drift-text-primary">{totalsByType.leagues}</div>
-        </Card>
-        <Card className="p-4">
-          <div className="text-xs font-semibold uppercase text-drift-text-secondary">Tournaments</div>
-          <div className="mt-1 text-2xl font-bold text-drift-text-primary">{totalsByType.tournaments}</div>
-        </Card>
-        <Card className="p-4">
-          <div className="text-xs font-semibold uppercase text-drift-text-secondary">Ladders</div>
-          <div className="mt-1 text-2xl font-bold text-drift-text-primary">{totalsByType.ladders}</div>
-        </Card>
-      </div>
+      <StatBand
+        stats={[
+          { label: "Leagues", value: totalsByType.leagues, icon: "calendar_view_week" },
+          { label: "Tournaments", value: totalsByType.tournaments, icon: "emoji_events", tone: "green" },
+          { label: "Ladders", value: totalsByType.ladders, icon: "leaderboard", tone: "amber" },
+        ]}
+      />
 
       <Card className="mb-4 p-4">
         <div className="grid gap-3 lg:grid-cols-[minmax(260px,1fr)_170px_160px_190px]">
-          <Input aria-label="Search competitions" placeholder="Search competition or club..." value={search} onChange={(event) => setSearch(event.target.value)} />
-          <Select aria-label="Competition type" value={type} onChange={(event) => setType(event.target.value)}>
-            <option value="">Any type</option>
-            <option value="LEAGUE">League</option>
-            <option value="TOURNAMENT">Tournament</option>
-            <option value="LADDER">Ladder</option>
-          </Select>
-          <Select aria-label="Sport" value={sport} onChange={(event) => setSport(event.target.value)}>
-            <option value="">Any sport</option>
-            <option value="TENNIS">Tennis</option>
-            <option value="PADEL">Padel</option>
-          </Select>
-          <Select aria-label="Competition state" value={state} onChange={(event) => setState(event.target.value)}>
-            <option value="">Any state</option>
-            <option value="DRAFT">Draft</option>
-            <option value="PUBLISHED">Published</option>
-            <option value="REGISTRATION_OPEN">Registration open</option>
-            <option value="RUNNING">Running</option>
-            <option value="COMPLETED">Completed</option>
-            <option value="ACTIVE">Active</option>
-            <option value="ARCHIVED">Archived</option>
-            <option value="CANCELLED">Cancelled</option>
-          </Select>
+          <Field label="Search"><Input aria-label="Search competitions" placeholder="Search competition or club..." value={search} onChange={(event) => setSearch(event.target.value)} /></Field>
+          <Field label="Type"><Select aria-label="Competition type" value={type} onChange={(event) => setType(event.target.value)}><option value="">Any type</option><option value="LEAGUE">League</option><option value="TOURNAMENT">Tournament</option><option value="LADDER">Ladder</option></Select></Field>
+          <Field label="Sport"><Select aria-label="Sport" value={sport} onChange={(event) => setSport(event.target.value)}><option value="">Any sport</option><option value="TENNIS">Tennis</option><option value="PADEL">Padel</option></Select></Field>
+          <Field label="State"><Select aria-label="Competition state" value={state} onChange={(event) => setState(event.target.value)}><option value="">Any state</option><option value="DRAFT">Draft</option><option value="PUBLISHED">Published</option><option value="REGISTRATION_OPEN">Registration open</option><option value="RUNNING">Running</option><option value="COMPLETED">Completed</option><option value="ACTIVE">Active</option><option value="ARCHIVED">Archived</option><option value="CANCELLED">Cancelled</option></Select></Field>
         </div>
       </Card>
 
       {rows === null && !error && <EmptyState message="Loading competitions..." />}
       {rows?.length === 0 && <EmptyState message="No competitions match these filters." />}
       {rows && rows.length > 0 && (
-        <Card className="overflow-x-auto p-0">
-          <table className="w-full min-w-[980px]">
-            <thead>
-              <tr>
-                <Th>Competition</Th>
-                <Th>Type</Th>
-                <Th>Club</Th>
-                <Th>Status</Th>
-                <Th>Sport</Th>
-                <Th>Activity</Th>
-                <Th className="text-right">Action</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((competition) => (
-                <tr key={`${competition.type}-${competition.id}`}>
-                  <Td>
-                    <div className="font-semibold">{competition.name}</div>
-                    <div className="max-w-sm truncate text-xs text-drift-text-secondary" title={competition.description ?? undefined}>{competition.description ?? "No description"}</div>
-                  </Td>
-                  <Td><Badge tone="info">{label(competition.type)}</Badge></Td>
-                  <Td>
-                    {competition.club ? (
-                      <Link href={`/organizations/${competition.club.id}`} className="font-semibold text-drift-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-drift-primary">
-                        {competition.club.name}
-                      </Link>
-                    ) : (
-                      <span className="text-drift-text-secondary">Platform-run</span>
-                    )}
-                  </Td>
-                  <Td><Badge tone={statusTone(competition.state)}>{label(competition.state)}</Badge></Td>
-                  <Td>{label(competition.sport)}{competition.format ? <span className="text-drift-text-secondary"> / {label(competition.format)}</span> : null}</Td>
-                  <Td>
-                    <div>{competition.primaryCountLabel}: {competition.primaryCount}</div>
-                    <div className="text-xs text-drift-text-secondary">{competition.secondaryCountLabel}: {competition.secondaryCount}</div>
-                  </Td>
-                  <Td className="text-right">
-                    <Link href={`/competitions/${routeType(competition.type)}/${competition.id}`} className="font-semibold text-drift-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-drift-primary">
-                      Open
+        <div className="grid gap-3">
+          {rows.map((competition) => (
+            <RowCard key={`${competition.type}-${competition.id}`}>
+              <div className="grid gap-3 lg:grid-cols-[minmax(0,1.5fr)_150px_1fr_170px_auto] lg:items-center">
+                <div className="min-w-0">
+                  <div className="font-bold text-drift-text-primary">{competition.name}</div>
+                  <div className="truncate text-xs text-drift-text-secondary" title={competition.description ?? undefined}>{competition.description ?? "No description"}</div>
+                </div>
+                <Badge tone="info">{label(competition.type)}</Badge>
+                <div className="text-sm">
+                  {competition.club ? (
+                    <Link href={`/organizations/${competition.club.id}`} className="font-bold text-drift-primary hover:underline">
+                      {competition.club.name}
                     </Link>
-                  </Td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <div className="px-3 py-2 text-xs text-drift-text-secondary">Showing {rows.length} of {total}</div>
-        </Card>
+                  ) : (
+                    <span className="text-drift-text-secondary">Platform-run</span>
+                  )}
+                  <div className="mt-1 text-xs font-semibold text-drift-text-secondary">{label(competition.sport)} / {label(competition.format)}</div>
+                </div>
+                <div className="text-sm">
+                  <Badge tone={statusTone(competition.state)}>{label(competition.state)}</Badge>
+                  <div className="mt-1 text-xs font-semibold text-drift-text-secondary">{competition.primaryCountLabel}: {competition.primaryCount} / {competition.secondaryCountLabel}: {competition.secondaryCount}</div>
+                </div>
+                <Link href={`/competitions/${routeType(competition.type)}/${competition.id}`} className="justify-self-start font-bold text-drift-primary hover:underline lg:justify-self-end">
+                  Open
+                </Link>
+              </div>
+            </RowCard>
+          ))}
+          <div className="px-1 text-xs font-semibold text-drift-text-secondary">Showing {rows.length} of {total}</div>
+        </div>
       )}
     </div>
   );

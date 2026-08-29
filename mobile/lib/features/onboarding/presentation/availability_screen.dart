@@ -6,6 +6,7 @@ import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
+import '../../../shared/widgets/drift_scaffold.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../users/data/users_repository.dart';
 
@@ -56,81 +57,79 @@ class _AvailabilityScreenState extends ConsumerState<AvailabilityScreen> {
     final colors = Theme.of(context).extension<DriftColors>()!;
     final type = Theme.of(context).extension<DriftTypography>()!;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Availability')),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(DriftSpacing.s6),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text('When do you usually have time to play?'),
-              const SizedBox(height: DriftSpacing.s4),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Table(
-                    defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-                    children: [
+    return DriftScaffold(
+      title: 'Availability',
+      body: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text('When do you usually have time to play?'),
+            const SizedBox(height: DriftSpacing.s4),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Table(
+                  defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+                  children: [
+                    TableRow(
+                      children: [
+                        const SizedBox.shrink(),
+                        for (final block in _timeBlocks)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: DriftSpacing.s2,
+                            ),
+                            child: Center(
+                              child: Text(block.$2, style: type.label),
+                            ),
+                          ),
+                      ],
+                    ),
+                    for (var day = 0; day < 7; day++)
                       TableRow(
                         children: [
-                          const SizedBox.shrink(),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: DriftSpacing.s1,
+                            ),
+                            child: Text(_days[day], style: type.body),
+                          ),
                           for (final block in _timeBlocks)
                             Padding(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: DriftSpacing.s2,
-                              ),
-                              child: Center(
-                                child: Text(block.$2, style: type.label),
+                              padding: const EdgeInsets.all(DriftSpacing.s1),
+                              child: _SlotCell(
+                                selected: _selected.contains((day, block.$1)),
+                                onTap: () => setState(() {
+                                  final key = (day, block.$1);
+                                  if (!_selected.remove(key)) {
+                                    _selected.add(key);
+                                  }
+                                }),
                               ),
                             ),
                         ],
                       ),
-                      for (var day = 0; day < 7; day++)
-                        TableRow(
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: DriftSpacing.s1,
-                              ),
-                              child: Text(_days[day], style: type.body),
-                            ),
-                            for (final block in _timeBlocks)
-                              Padding(
-                                padding: const EdgeInsets.all(DriftSpacing.s1),
-                                child: _SlotCell(
-                                  selected: _selected.contains((day, block.$1)),
-                                  onTap: () => setState(() {
-                                    final key = (day, block.$1);
-                                    if (!_selected.remove(key)) {
-                                      _selected.add(key);
-                                    }
-                                  }),
-                                ),
-                              ),
-                          ],
-                        ),
-                    ],
-                  ),
+                  ],
                 ),
               ),
-              if (_errorText != null) ...[
-                Text(_errorText!, style: TextStyle(color: colors.error)),
-                const SizedBox(height: DriftSpacing.s3),
-              ],
-              DriftButton(
-                label: _isSubmitting ? 'Saving…' : 'Continue',
+            ),
+            if (_errorText != null) ...[
+              Text(_errorText!, style: TextStyle(color: colors.error)),
+              const SizedBox(height: DriftSpacing.s3),
+            ],
+            DriftButton(
+              label: _isSubmitting ? 'Saving…' : 'Continue',
+              onPressed: _isSubmitting ? null : _submit,
+            ),
+            const SizedBox(height: DriftSpacing.s2),
+            Center(
+              child: DriftButton(
+                label: 'Skip',
+                variant: DriftButtonVariant.text,
                 onPressed: _isSubmitting ? null : _submit,
               ),
-              const SizedBox(height: DriftSpacing.s2),
-              Center(
-                child: DriftButton(
-                  label: 'Skip',
-                  variant: DriftButtonVariant.text,
-                  onPressed: _isSubmitting ? null : _submit,
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

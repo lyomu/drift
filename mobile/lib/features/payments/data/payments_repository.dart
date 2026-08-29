@@ -184,9 +184,7 @@ class BillingSummary {
     ),
     paymentMethods: (json['paymentMethods'] as List<dynamic>)
         .map(
-          (item) => SavedPaymentMethod.fromJson(
-            item as Map<String, dynamic>,
-          ),
+          (item) => SavedPaymentMethod.fromJson(item as Map<String, dynamic>),
         )
         .toList(),
     sandbox: json['sandbox'] as bool,
@@ -252,7 +250,8 @@ class BillingInvoice {
     );
   }
 
-  String receiptText() => '''
+  String receiptText() =>
+      '''
 Drift Tennis receipt
 $number
 
@@ -272,9 +271,8 @@ class PaymentsRepository {
   PaymentsRepository(this._dio);
   final Dio _dio;
 
-  Future<BillingSummary> summary() async => BillingSummary.fromJson(
-    await _send(() => _dio.get('/payments/summary')),
-  );
+  Future<BillingSummary> summary() async =>
+      BillingSummary.fromJson(await _send(() => _dio.get('/payments/summary')));
 
   Future<List<PaymentPlan>> plans() async {
     final data = await _send(() => _dio.get('/payments/plans'));
@@ -287,9 +285,7 @@ class PaymentsRepository {
     final data = await _send(() => _dio.get('/payments/methods'));
     return (data['paymentMethods'] as List<dynamic>)
         .map(
-          (item) => SavedPaymentMethod.fromJson(
-            item as Map<String, dynamic>,
-          ),
+          (item) => SavedPaymentMethod.fromJson(item as Map<String, dynamic>),
         )
         .toList();
   }

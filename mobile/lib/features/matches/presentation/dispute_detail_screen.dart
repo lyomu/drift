@@ -8,6 +8,7 @@ import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
 import '../../../shared/widgets/drift_card.dart';
 import '../../../shared/widgets/drift_match_score_display.dart';
+import '../../../shared/widgets/drift_scaffold.dart';
 import '../../auth/data/auth_repository.dart';
 import '../application/matches_providers.dart';
 import '../data/matches_repository.dart';
@@ -87,45 +88,41 @@ class _DisputeDetailScreenState extends ConsumerState<DisputeDetailScreen> {
           )
         : _Version(result.outcome, result.sets, result.winningSide);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Dispute')),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(DriftSpacing.s5),
-          children: [
-            Text(
-              "You and your opponent submitted different results. Accept "
-              "their version if it's right, or revise yours.",
-              style: type.body,
-            ),
-            const SizedBox(height: DriftSpacing.s5),
-            _VersionCard(title: 'Your version', version: mine),
-            const SizedBox(height: DriftSpacing.s3),
-            _VersionCard(title: 'Their version', version: theirs),
-            const SizedBox(height: DriftSpacing.s6),
-            DriftButton(
-              label: _isSubmitting ? 'Saving…' : 'Accept their version',
-              onPressed: _isSubmitting
-                  ? null
-                  : () => _acceptTheirVersion(theirs),
-            ),
-            const SizedBox(height: DriftSpacing.s2),
-            DriftButton(
-              label: 'Revise your version',
-              variant: DriftButtonVariant.text,
-              onPressed: _isSubmitting
-                  ? null
-                  : () => context.push(
-                      '/matches/${widget.match.id}/enter-score',
-                      extra: (
-                        match: widget.match,
-                        viewerId: widget.viewerId,
-                        mode: EnterScoreMode.resubmit,
-                      ),
+    return DriftScaffold(
+      title: 'Dispute',
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+        children: [
+          Text(
+            "You and your opponent submitted different results. Accept "
+            "their version if it's right, or revise yours.",
+            style: type.body,
+          ),
+          const SizedBox(height: DriftSpacing.s5),
+          _VersionCard(title: 'Your version', version: mine),
+          const SizedBox(height: DriftSpacing.s3),
+          _VersionCard(title: 'Their version', version: theirs),
+          const SizedBox(height: DriftSpacing.s6),
+          DriftButton(
+            label: _isSubmitting ? 'Saving…' : 'Accept their version',
+            onPressed: _isSubmitting ? null : () => _acceptTheirVersion(theirs),
+          ),
+          const SizedBox(height: DriftSpacing.s2),
+          DriftButton(
+            label: 'Revise your version',
+            variant: DriftButtonVariant.text,
+            onPressed: _isSubmitting
+                ? null
+                : () => context.push(
+                    '/matches/${widget.match.id}/enter-score',
+                    extra: (
+                      match: widget.match,
+                      viewerId: widget.viewerId,
+                      mode: EnterScoreMode.resubmit,
                     ),
-            ),
-          ],
-        ),
+                  ),
+          ),
+        ],
       ),
     );
   }

@@ -2,24 +2,63 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/network/dio_client.dart';
 import '../../../core/theme/drift_colors.dart';
-import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
-import '../../../shared/widgets/drift_card.dart';
+import '../../../shared/widgets/buttons/drift_button.dart';
+import '../../../shared/widgets/drift_icon_tile.dart';
 import '../../../shared/widgets/drift_player_card.dart';
+import '../../../shared/widgets/drift_soft_card.dart';
+import '../../auth/data/auth_repository.dart';
 import '../../users/application/current_user_provider.dart';
 import '../application/profile_providers.dart';
 
-/// Profile — `foundation/04-screen-inventory.md` §A.10. Gained its first
-/// real content in M10 (the "Learn" entry point) and grew by one more row
-/// in M11 ("News"). Phase M12 gives it a real identity header and the rest
-/// of its documented nav surface: My Sports Hub, Notifications, Settings.
-/// Achievements now links to the derived rule catalogue.
-class ProfileHomeScreen extends ConsumerWidget {
+/// Profile — `foundation/04-screen-inventory.md` §A.10 (redesign 2026-08:
+/// `App.tsx` `ProfileScreen`). Identity card + the nav surface: My Sports
+/// Hub, Achievements, Learn, News, Notifications, Settings.
+class ProfileHomeScreen extends ConsumerStatefulWidget {
   const ProfileHomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProfileHomeScreen> createState() => _ProfileHomeScreenState();
+}
+
+class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
+  bool _isLoggingOut = false;
+
+  Future<void> _logout() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Log out?'),
+        content: const Text('You can sign back in any time.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Log out'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    setState(() => _isLoggingOut = true);
+    final storage = ref.read(secureStorageProvider);
+    final refreshToken = await storage.readRefreshToken();
+    if (refreshToken != null) {
+      await ref.read(authRepositoryProvider).logout(refreshToken);
+    }
+    await storage.clear();
+    if (!mounted) return;
+    context.go('/welcome');
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final type = Theme.of(context).extension<DriftTypography>()!;
     final colors = Theme.of(context).extension<DriftColors>()!;
     final ownProfile = ref.watch(ownProfileProvider);
@@ -27,34 +66,41 @@ class ProfileHomeScreen extends ConsumerWidget {
 
     return SafeArea(
       child: ListView(
-        padding: const EdgeInsets.all(DriftSpacing.s5),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
         children: [
-          Text('Profile', style: type.display),
-          const SizedBox(height: DriftSpacing.s5),
-          DriftCard(
+          Text(
+            'Profile',
+            style: type.h2.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 16),
+          DriftSoftCard(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             onTap: () => context.push('/profile/own'),
             child: Row(
               children: [
                 switch (ownProfile) {
                   AsyncData(:final value) => DriftPlayerAvatar(
                     player: value.summary,
-                    radius: 28,
+                    radius: 22,
                   ),
-                  _ => const CircleAvatar(radius: 28),
+                  _ => CircleAvatar(
+                    radius: 22,
+                    backgroundColor: colors.primaryLight,
+                  ),
                 },
-                const SizedBox(width: DriftSpacing.s3),
+                const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         user.valueOrNull?.displayName ?? 'My Profile',
-                        style: type.h4,
+                        style: type.title.copyWith(fontWeight: FontWeight.w700),
                       ),
-                      const SizedBox(height: DriftSpacing.s1),
+                      const SizedBox(height: 3),
                       Text(
                         'View your profile',
-                        style: type.bodySmall.copyWith(
+                        style: type.caption.copyWith(
                           color: colors.textSecondary,
                         ),
                       ),
@@ -65,41 +111,48 @@ class ProfileHomeScreen extends ConsumerWidget {
               ],
             ),
           ),
-          const SizedBox(height: DriftSpacing.s5),
-          _NavRow(
+          const SizedBox(height: 8),
+          _MenuRow(
             icon: Icons.sports_tennis_outlined,
             label: 'My Sports Hub',
             onTap: () => context.push('/profile/sports-hub'),
           ),
-          const SizedBox(height: DriftSpacing.s3),
-          _NavRow(
+          const SizedBox(height: 8),
+          _MenuRow(
             icon: Icons.emoji_events_outlined,
             label: 'Achievements',
             onTap: () => context.push('/profile/achievements'),
           ),
-          const SizedBox(height: DriftSpacing.s3),
-          _NavRow(
+          const SizedBox(height: 8),
+          _MenuRow(
             icon: Icons.school_outlined,
             label: 'Learn',
             onTap: () => context.push('/learn'),
           ),
-          const SizedBox(height: DriftSpacing.s3),
-          _NavRow(
+          const SizedBox(height: 8),
+          _MenuRow(
             icon: Icons.article_outlined,
             label: 'News',
             onTap: () => context.push('/news'),
           ),
-          const SizedBox(height: DriftSpacing.s3),
-          _NavRow(
+          const SizedBox(height: 8),
+          _MenuRow(
             icon: Icons.notifications_outlined,
             label: 'Notifications',
             onTap: () => context.push('/notifications'),
           ),
-          const SizedBox(height: DriftSpacing.s3),
-          _NavRow(
+          const SizedBox(height: 8),
+          _MenuRow(
             icon: Icons.settings_outlined,
             label: 'Settings',
             onTap: () => context.push('/settings'),
+          ),
+          const SizedBox(height: 20),
+          DriftButton(
+            label: _isLoggingOut ? 'Signing out…' : 'Log out',
+            variant: DriftButtonVariant.text,
+            foregroundColor: colors.error,
+            onPressed: _isLoggingOut ? null : _logout,
           ),
         ],
       ),
@@ -107,8 +160,8 @@ class ProfileHomeScreen extends ConsumerWidget {
   }
 }
 
-class _NavRow extends StatelessWidget {
-  const _NavRow({required this.icon, required this.label, required this.onTap});
+class _MenuRow extends StatelessWidget {
+  const _MenuRow({required this.icon, required this.label, required this.onTap});
 
   final IconData icon;
   final String label;
@@ -119,13 +172,19 @@ class _NavRow extends StatelessWidget {
     final type = Theme.of(context).extension<DriftTypography>()!;
     final colors = Theme.of(context).extension<DriftColors>()!;
 
-    return DriftCard(
+    return DriftSoftCard(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       onTap: onTap,
       child: Row(
         children: [
-          Icon(icon, color: colors.primary),
-          const SizedBox(width: DriftSpacing.s3),
-          Expanded(child: Text(label, style: type.title)),
+          DriftIconTile(icon: icon),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              label,
+              style: type.title.copyWith(fontWeight: FontWeight.w600),
+            ),
+          ),
           Icon(Icons.chevron_right, color: colors.textSecondary),
         ],
       ),

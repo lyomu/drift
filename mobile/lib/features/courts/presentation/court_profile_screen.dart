@@ -7,7 +7,9 @@ import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
+import '../../../shared/widgets/drift_back_header.dart';
 import '../../../shared/widgets/drift_card.dart';
+import '../../../shared/widgets/drift_scaffold.dart';
 import '../../../shared/widgets/drift_court_availability_chip.dart';
 import '../../../shared/widgets/drift_court_surface_chip.dart';
 import '../../../shared/widgets/drift_status_badge.dart';
@@ -35,29 +37,22 @@ class CourtProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(courtDetailProvider(courtId));
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Court'),
-        actions: [
-          IconButton(
-            onPressed: () => showReportCourtSheet(context, ref, courtId),
-            icon: const Icon(Icons.flag_outlined),
-            tooltip: 'Report/Update Court Info',
-          ),
-        ],
+    return DriftScaffold(
+      title: 'Court',
+      trailing: DriftHeaderSquareButton(
+        icon: Icons.flag_outlined,
+        onTap: () => showReportCourtSheet(context, ref, courtId),
       ),
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () async {
-            ref.invalidate(courtDetailProvider(courtId));
-            await ref.read(courtDetailProvider(courtId).future);
-          },
-          child: switch (profile) {
-            AsyncData(:final value) => _ProfileBody(profile: value),
-            AsyncError() => const Center(child: Text('Court not available.')),
-            _ => const Center(child: CircularProgressIndicator()),
-          },
-        ),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(courtDetailProvider(courtId));
+          await ref.read(courtDetailProvider(courtId).future);
+        },
+        child: switch (profile) {
+          AsyncData(:final value) => _ProfileBody(profile: value),
+          AsyncError() => const Center(child: Text('Court not available.')),
+          _ => const Center(child: CircularProgressIndicator()),
+        },
       ),
     );
   }

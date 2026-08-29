@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
+import '../../../shared/widgets/drift_scaffold.dart';
 import '../../auth/data/auth_repository.dart';
 import '../application/payments_providers.dart';
 import '../data/payments_repository.dart';
@@ -53,57 +54,54 @@ class _PlanSelectionScreenState extends ConsumerState<PlanSelectionScreen> {
   Widget build(BuildContext context) {
     final plans = ref.watch(paymentPlansProvider);
     final summary = ref.watch(billingSummaryProvider);
-    return Scaffold(
-      appBar: AppBar(title: const Text('Choose a plan')),
-      body: SafeArea(
-        child: switch ((plans, summary)) {
-          (AsyncData(value: final planList), AsyncData(value: final billing)) =>
-            RefreshIndicator(
-              onRefresh: () async {
-                await Future.wait([
-                  ref.refresh(paymentPlansProvider.future),
-                  ref.refresh(billingSummaryProvider.future),
-                ]);
-              },
-              child: ListView(
-                padding: const EdgeInsets.all(DriftSpacing.s5),
-                children: [
-                  if (planList.any((plan) => plan.isTest)) ...[
-                    const BillingSandboxBanner(),
-                    const SizedBox(height: DriftSpacing.s5),
-                  ],
-                  if (_error != null) ...[
-                    _PaymentError(
-                      message: _error!,
-                      onAddMethod: () =>
-                          context.push('/settings/payment-methods'),
-                    ),
-                    const SizedBox(height: DriftSpacing.s4),
-                  ],
-                  for (var index = 0; index < planList.length; index++) ...[
-                    PaymentPlanCard(
-                      plan: planList[index],
-                      current:
-                          billing.subscription.plan.id == planList[index].id,
-                      loading: _processingPlanId == planList[index].id,
-                      onSelect: () => _select(planList[index], billing),
-                    ),
-                    if (index < planList.length - 1)
-                      const SizedBox(height: DriftSpacing.s4),
-                  ],
+    return DriftScaffold(
+      title: 'Choose a plan',
+      body: switch ((plans, summary)) {
+        (AsyncData(value: final planList), AsyncData(value: final billing)) =>
+          RefreshIndicator(
+            onRefresh: () async {
+              await Future.wait([
+                ref.refresh(paymentPlansProvider.future),
+                ref.refresh(billingSummaryProvider.future),
+              ]);
+            },
+            child: ListView(
+              padding: const EdgeInsets.all(DriftSpacing.s5),
+              children: [
+                if (planList.any((plan) => plan.isTest)) ...[
+                  const BillingSandboxBanner(),
+                  const SizedBox(height: DriftSpacing.s5),
                 ],
-              ),
+                if (_error != null) ...[
+                  _PaymentError(
+                    message: _error!,
+                    onAddMethod: () =>
+                        context.push('/settings/payment-methods'),
+                  ),
+                  const SizedBox(height: DriftSpacing.s4),
+                ],
+                for (var index = 0; index < planList.length; index++) ...[
+                  PaymentPlanCard(
+                    plan: planList[index],
+                    current: billing.subscription.plan.id == planList[index].id,
+                    loading: _processingPlanId == planList[index].id,
+                    onSelect: () => _select(planList[index], billing),
+                  ),
+                  if (index < planList.length - 1)
+                    const SizedBox(height: DriftSpacing.s4),
+                ],
+              ],
             ),
-          (AsyncError(), _) || (_, AsyncError()) => BillingLoadError(
-              message: "Couldn't load available plans.",
-              retry: () {
-                ref.invalidate(paymentPlansProvider);
-                ref.invalidate(billingSummaryProvider);
-              },
-            ),
-          _ => const Center(child: CircularProgressIndicator()),
-        },
-      ),
+          ),
+        (AsyncError(), _) || (_, AsyncError()) => BillingLoadError(
+          message: "Couldn't load available plans.",
+          retry: () {
+            ref.invalidate(paymentPlansProvider);
+            ref.invalidate(billingSummaryProvider);
+          },
+        ),
+        _ => const Center(child: CircularProgressIndicator()),
+      },
     );
   }
 }

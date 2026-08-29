@@ -4,6 +4,7 @@ import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/drift_card.dart';
+import '../../../shared/widgets/drift_scaffold.dart';
 
 const _faqs = [
   (
@@ -44,30 +45,28 @@ class HelpScreen extends StatelessWidget {
     final type = Theme.of(context).extension<DriftTypography>()!;
     final colors = Theme.of(context).extension<DriftColors>()!;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Help & FAQ')),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(DriftSpacing.s5),
-          children: [
-            for (final faq in _faqs) ...[
-              DriftCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(faq.$1, style: type.title),
-                    const SizedBox(height: DriftSpacing.s2),
-                    Text(
-                      faq.$2,
-                      style: type.body.copyWith(color: colors.textSecondary),
-                    ),
-                  ],
-                ),
+    return DriftScaffold(
+      title: 'Help & FAQ',
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+        children: [
+          for (final faq in _faqs) ...[
+            DriftCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(faq.$1, style: type.title),
+                  const SizedBox(height: DriftSpacing.s2),
+                  Text(
+                    faq.$2,
+                    style: type.body.copyWith(color: colors.textSecondary),
+                  ),
+                ],
               ),
-              const SizedBox(height: DriftSpacing.s3),
-            ],
+            ),
+            const SizedBox(height: DriftSpacing.s3),
           ],
-        ),
+        ],
       ),
     );
   }

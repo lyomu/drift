@@ -28,7 +28,8 @@ import { LearningModule } from './learning/learning.module';
 import { NewsModule } from './news/news.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { PaymentsModule } from './payments/payments.module';
-import { AnalyticsModule } from './analytics/analytics.module';
+import { AchievementsModule } from './achievements/achievements.module';
+import { GlobalSearchModule } from './global-search/global-search.module';
 import { validateEnvironment } from './config/environment';
 
 @Module({
@@ -77,7 +78,8 @@ import { validateEnvironment } from './config/environment';
     NewsModule,
     NotificationsModule,
     PaymentsModule,
-    AnalyticsModule,
+    AchievementsModule,
+    GlobalSearchModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

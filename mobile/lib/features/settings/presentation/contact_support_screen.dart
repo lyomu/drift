@@ -5,6 +5,7 @@ import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
+import '../../../shared/widgets/drift_scaffold.dart';
 
 const _supportEmail = 'support@drifttennis.app';
 
@@ -33,28 +34,26 @@ class ContactSupportScreen extends StatelessWidget {
     final type = Theme.of(context).extension<DriftTypography>()!;
     final colors = Theme.of(context).extension<DriftColors>()!;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Contact Support')),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(DriftSpacing.s6),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text('Need help?', style: type.h3),
-              const SizedBox(height: DriftSpacing.s2),
-              Text(
-                "Send us an email and we'll get back to you as soon as we "
-                'can.',
-                style: type.body.copyWith(color: colors.textSecondary),
-              ),
-              const SizedBox(height: DriftSpacing.s5),
-              DriftButton(
-                label: 'Email $_supportEmail',
-                onPressed: () => _sendEmail(context),
-              ),
-            ],
-          ),
+    return DriftScaffold(
+      title: 'Contact Support',
+      body: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('Need help?', style: type.h3),
+            const SizedBox(height: DriftSpacing.s2),
+            Text(
+              "Send us an email and we'll get back to you as soon as we "
+              'can.',
+              style: type.body.copyWith(color: colors.textSecondary),
+            ),
+            const SizedBox(height: DriftSpacing.s5),
+            DriftButton(
+              label: 'Email $_supportEmail',
+              onPressed: () => _sendEmail(context),
+            ),
+          ],
         ),
       ),
     );

@@ -1,9 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { api, ApiError } from "@/lib/api-client";
-import type { OverviewReport } from "@/lib/analytics-types";
+import { useCallback, useEffect, useState } from "react";
+import { MaterialIcon, RowCard } from "@/components/dashboard-design";
 import {
   DateRangeToolbar,
   MetricStrip,
@@ -14,6 +13,8 @@ import {
   queryForRange,
 } from "@/components/analytics";
 import { Card, EmptyState, ErrorBanner, PageHeader } from "@/components/ui";
+import { api, ApiError } from "@/lib/api-client";
+import type { OverviewReport } from "@/lib/analytics-types";
 
 const initialRange = defaultDateRange();
 
@@ -59,7 +60,7 @@ export default function OverviewPage() {
         onApply={() => void load()}
       />
       <ErrorBanner message={error} />
-      {loading && !report && <EmptyState message="Loading platform KPIs…" />}
+      {loading && !report && <EmptyState message="Loading platform KPIs..." />}
 
       {report && (
         <>
@@ -96,10 +97,14 @@ export default function OverviewPage() {
             {revenue.length === 0 ? (
               <p className="text-sm text-drift-text-secondary">No revenue recorded in this period.</p>
             ) : (
-              <div className="flex flex-wrap gap-x-10 gap-y-4">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {revenue.map((item) => (
-                  <div key={item.currency}>
-                    <div className="font-display text-2xl font-bold tabular-nums text-drift-text-primary">
+                  <div key={item.currency} className="rounded-xl border border-drift-border bg-drift-background p-4">
+                    <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.08em] text-drift-text-secondary">
+                      <MaterialIcon name="payments" className="text-[17px] text-drift-primary" />
+                      {item.currency}
+                    </div>
+                    <div className="mt-2 font-display text-2xl font-bold text-drift-text-primary tabular">
                       {formatMoney(item.amountMinor, item.currency)}
                     </div>
                     <div className="mt-1 text-sm text-drift-text-secondary">
@@ -115,23 +120,26 @@ export default function OverviewPage() {
             title="Investigate"
             description="Move from the headline into the operating view that explains it."
           />
-          <div className="overflow-hidden rounded-lg border border-drift-border bg-drift-surface shadow-sm">
+          <div className="grid gap-3">
             {[
-              ["Markets", "Compare player density, activation, and match activity by saved city.", "/analytics/markets"],
-              ["Growth", "Inspect lifecycle funnels, time series, and registration cohorts.", "/analytics/growth"],
-              ["Revenue", "Break collected and refunded subscription revenue down by source.", "/analytics/revenue"],
-              ["System health", "Check live API, database, and realtime infrastructure status.", "/analytics/system-health"],
-            ].map(([label, description, href], index) => (
-              <Link
-                key={href}
-                href={href}
-                className={`flex items-center justify-between gap-6 px-5 py-4 transition-colors hover:bg-drift-primary-light focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-drift-primary ${index > 0 ? "border-t border-drift-border" : ""}`}
-              >
-                <span>
-                  <span className="block font-semibold text-drift-text-primary">{label}</span>
-                  <span className="mt-0.5 block text-sm text-drift-text-secondary">{description}</span>
-                </span>
-                <span aria-hidden="true" className="text-drift-primary">→</span>
+              ["Markets", "Compare player density, activation, and match activity by saved city.", "/analytics/markets", "public"],
+              ["Growth", "Inspect lifecycle funnels, time series, and registration cohorts.", "/analytics/growth", "trending_up"],
+              ["Revenue", "Break collected and refunded subscription revenue down by source.", "/analytics/revenue", "receipt_long"],
+              ["System health", "Check live API, database, and realtime infrastructure status.", "/analytics/system-health", "health_and_safety"],
+            ].map(([label, description, href, icon]) => (
+              <Link key={href} href={href}>
+                <RowCard className="flex items-center justify-between gap-4">
+                  <span className="flex min-w-0 items-center gap-3">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-drift-primary-light text-drift-primary">
+                      <MaterialIcon name={icon} filled />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block font-bold text-drift-text-primary">{label}</span>
+                      <span className="mt-0.5 block text-sm text-drift-text-secondary">{description}</span>
+                    </span>
+                  </span>
+                  <MaterialIcon name="chevron_right" className="text-drift-text-secondary" />
+                </RowCard>
               </Link>
             ))}
           </div>

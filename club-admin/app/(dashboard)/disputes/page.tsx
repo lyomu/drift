@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { api, ApiError } from "@/lib/api-client";
 import { useClub } from "@/lib/club-context";
-import { Button, Card, ErrorBanner, PageHeader } from "@/components/ui";
-import { EmptyState } from "@/components/ui";
+import { Button, EmptyState, ErrorBanner, PageHeader } from "@/components/ui";
+import { IconChip, Panel } from "@/components/dashboard-design";
 import type { Dispute } from "@/lib/types";
 
 export default function DisputesPage() {
@@ -46,7 +46,16 @@ export default function DisputesPage() {
   }
 
   function name(p: Dispute["sideA"]) {
-    return p ? `${p.firstName ?? ""} ${p.lastName ?? ""}`.trim() || "Player" : "—";
+    return p ? `${p.firstName ?? ""} ${p.lastName ?? ""}`.trim() || "Player" : "-";
+  }
+
+  function winner(dispute: Dispute, side: "submitted" | "disputant") {
+    const result = dispute.match?.result;
+    const winningSide =
+      side === "submitted" ? result?.winningSide : result?.disputantWinningSide;
+    if (winningSide === "A") return `${name(dispute.sideA)} won`;
+    if (winningSide === "B") return `${name(dispute.sideB)} won`;
+    return "No winning side recorded";
   }
 
   return (
@@ -58,71 +67,62 @@ export default function DisputesPage() {
       <ErrorBanner message={error} />
 
       {loading ? (
-        <p className="text-sm text-drift-text-secondary">Loading…</p>
+        <EmptyState message="Loading..." />
       ) : disputes.length === 0 ? (
         <EmptyState message="No open disputes." />
       ) : (
         <div className="flex flex-col gap-4">
-          {disputes.map((d) => {
-            const result = d.match?.result;
-            const submittedSide = result?.winningSide;
-            const disputantSide = result?.disputantWinningSide;
-            return (
-              <Card key={d.fixtureId}>
-                <div className="mb-3 flex items-center justify-between">
-                  <span className="font-semibold text-drift-text-primary">
-                    {name(d.sideA)} vs {name(d.sideB)}
-                  </span>
+          {disputes.map((dispute) => (
+            <Panel key={dispute.fixtureId}>
+              <div className="mb-4 flex items-start gap-3">
+                <IconChip icon="gavel" tone="error" />
+                <div>
+                  <h2 className="text-[14.5px] font-bold text-drift-text-primary">
+                    {name(dispute.sideA)} vs {name(dispute.sideB)}
+                  </h2>
+                  <p className="mt-1 text-[12.5px] text-drift-text-secondary">
+                    Result dispute awaiting an admin ruling
+                  </p>
                 </div>
-                <div className="mb-4 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-                  <div className="rounded-md border border-drift-border px-3 py-2">
-                    <div className="text-xs font-semibold uppercase text-drift-text-secondary">
-                      Original submission
-                    </div>
-                    <div className="mt-1 text-drift-text-primary">
-                      {submittedSide === "A"
-                        ? name(d.sideA)
-                        : submittedSide === "B"
-                          ? name(d.sideB)
-                          : "—"}{" "}
-                      won
-                    </div>
+              </div>
+              <div className="mb-4 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+                <div className="rounded-xl border border-drift-border bg-drift-background px-4 py-3">
+                  <div className="text-xs font-bold uppercase tracking-[0.3px] text-drift-text-secondary">
+                    Original submission
                   </div>
-                  <div className="rounded-md border border-drift-border px-3 py-2">
-                    <div className="text-xs font-semibold uppercase text-drift-text-secondary">
-                      Disputant claims
-                    </div>
-                    <div className="mt-1 text-drift-text-primary">
-                      {disputantSide === "A"
-                        ? name(d.sideA)
-                        : disputantSide === "B"
-                          ? name(d.sideB)
-                          : "—"}{" "}
-                      won
-                    </div>
+                  <div className="mt-1 text-drift-text-primary">
+                    {winner(dispute, "submitted")}
                   </div>
                 </div>
-                {canManage && (
-                  <div className="flex gap-3">
-                    <Button
-                      variant="secondary"
-                      disabled={resolving === d.fixtureId}
-                      onClick={() => handleResolve(d.fixtureId, "SUBMITTED")}
-                    >
-                      Uphold original submission
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      disabled={resolving === d.fixtureId}
-                      onClick={() => handleResolve(d.fixtureId, "DISPUTANT")}
-                    >
-                      Side with disputant
-                    </Button>
+                <div className="rounded-xl border border-drift-warning/20 bg-drift-warning-surface px-4 py-3">
+                  <div className="text-xs font-bold uppercase tracking-[0.3px] text-drift-warning">
+                    Disputant claims
                   </div>
-                )}
-              </Card>
-            );
-          })}
+                  <div className="mt-1 text-drift-text-primary">
+                    {winner(dispute, "disputant")}
+                  </div>
+                </div>
+              </div>
+              {canManage && (
+                <div className="flex flex-wrap gap-3">
+                  <Button
+                    variant="secondary"
+                    disabled={resolving === dispute.fixtureId}
+                    onClick={() => void handleResolve(dispute.fixtureId, "SUBMITTED")}
+                  >
+                    Uphold original submission
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    disabled={resolving === dispute.fixtureId}
+                    onClick={() => void handleResolve(dispute.fixtureId, "DISPUTANT")}
+                  >
+                    Side with disputant
+                  </Button>
+                </div>
+              )}
+            </Panel>
+          ))}
         </div>
       )}
     </div>

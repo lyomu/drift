@@ -6,6 +6,7 @@ import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
+import '../../../shared/widgets/drift_scaffold.dart';
 import '../application/learning_providers.dart';
 import '../data/learning_repository.dart';
 
@@ -50,19 +51,17 @@ class _ContentDetailScreenState extends ConsumerState<ContentDetailScreen> {
   Widget build(BuildContext context) {
     final content = ref.watch(contentDetailProvider(widget.contentId));
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Learn')),
-      body: SafeArea(
-        child: switch (content) {
-          AsyncData(:final value) => _Body(
-            content: value,
-            isMarking: _isMarking,
-            onMarkComplete: _markComplete,
-          ),
-          AsyncError() => const Center(child: Text('Content not available.')),
-          _ => const Center(child: CircularProgressIndicator()),
-        },
-      ),
+    return DriftScaffold(
+      title: 'Learn',
+      body: switch (content) {
+        AsyncData(:final value) => _Body(
+          content: value,
+          isMarking: _isMarking,
+          onMarkComplete: _markComplete,
+        ),
+        AsyncError() => const Center(child: Text('Content not available.')),
+        _ => const Center(child: CircularProgressIndicator()),
+      },
     );
   }
 }

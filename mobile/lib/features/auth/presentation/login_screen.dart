@@ -4,14 +4,14 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/onboarding/onboarding_step_route.dart';
 import '../../../core/theme/drift_colors.dart';
-import '../../../core/theme/drift_spacing.dart';
-import '../../../shared/widgets/buttons/drift_button.dart';
-import '../../../shared/widgets/drift_text_field.dart';
+import '../../../core/theme/drift_typography.dart';
 import '../../users/data/users_repository.dart';
 import '../application/auth_controller.dart';
 import '../data/auth_repository.dart';
+import 'widgets/auth_form_widgets.dart';
+import 'widgets/auth_page_scaffold.dart';
 
-/// Login — `foundation/04-screen-inventory.md` A.1.
+/// Login — `foundation/04-screen-inventory.md` A.1 (redesign 2026-08).
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -23,6 +23,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isSubmitting = false;
+  bool _obscure = true;
   String? _errorText;
 
   @override
@@ -55,57 +56,101 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  void _notYet(String provider) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(content: Text('$provider sign-in isn\'t available yet.')),
+      );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<DriftColors>()!;
+    final type = Theme.of(context).extension<DriftTypography>()!;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Log In')),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(DriftSpacing.s6),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              DriftTextField(
-                label: 'Email',
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-              ),
-              const SizedBox(height: DriftSpacing.s4),
-              DriftTextField(
-                label: 'Password',
-                controller: _passwordController,
-                obscureText: true,
-              ),
-              Align(
-                alignment: Alignment.centerRight,
-                child: DriftButton(
-                  label: 'Forgot password?',
-                  variant: DriftButtonVariant.text,
-                  onPressed: () => context.push('/forgot-password'),
-                ),
-              ),
-              if (_errorText != null) ...[
-                const SizedBox(height: DriftSpacing.s3),
-                Text(_errorText!, style: TextStyle(color: colors.error)),
-              ],
-              const SizedBox(height: DriftSpacing.s6),
-              DriftButton(
-                label: _isSubmitting ? 'Logging in…' : 'Log In',
-                onPressed: _isSubmitting ? null : _submit,
-              ),
-              const SizedBox(height: DriftSpacing.s2),
-              Center(
-                child: DriftButton(
-                  label: "Don't have an account? Sign Up",
-                  variant: DriftButtonVariant.text,
-                  onPressed: () => context.push('/sign-up'),
-                ),
-              ),
-            ],
+    return AuthPageScaffold(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(height: 32),
+          Text(
+            'Login',
+            textAlign: TextAlign.center,
+            style: type.h1.copyWith(fontSize: 30, fontWeight: FontWeight.w800),
           ),
-        ),
+          const SizedBox(height: 32),
+          AuthInputField(
+            controller: _emailController,
+            hintText: 'Email',
+            icon: Icons.mail_outline,
+            keyboardType: TextInputType.emailAddress,
+          ),
+          const SizedBox(height: 12),
+          AuthInputField(
+            controller: _passwordController,
+            hintText: 'Password',
+            icon: Icons.lock_outline,
+            obscureText: _obscure,
+            onSubmitted: (_) => _isSubmitting ? null : _submit(),
+            trailing: GestureDetector(
+              onTap: () => setState(() => _obscure = !_obscure),
+              child: Icon(
+                _obscure
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
+                size: 20,
+                color: colors.textSecondary,
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerRight,
+            child: GestureDetector(
+              onTap: () => context.push('/forgot-password'),
+              child: Text(
+                'Forgot Password?',
+                style: type.body.copyWith(
+                  color: colors.textSecondary,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
+            ),
+          ),
+          if (_errorText != null) ...[
+            const SizedBox(height: 12),
+            Text(
+              _errorText!,
+              textAlign: TextAlign.center,
+              style: type.body.copyWith(color: colors.error),
+            ),
+          ],
+          const SizedBox(height: 22),
+          AuthPrimaryButton(
+            label: 'Login',
+            loading: _isSubmitting,
+            onPressed: _isSubmitting ? null : _submit,
+          ),
+          const SizedBox(height: 18),
+          AuthSocialButton(
+            label: 'Continue with Google',
+            icon: const GoogleGlyph(),
+            onPressed: () => _notYet('Google'),
+          ),
+          const SizedBox(height: 10),
+          AuthSocialButton(
+            label: 'Continue with Apple',
+            icon: const Icon(Icons.apple, size: 20, color: Color(0xFF1A1A1A)),
+            onPressed: () => _notYet('Apple'),
+          ),
+          const SizedBox(height: 24),
+          AuthFooterPrompt(
+            lead: 'Need an account? ',
+            action: 'Sign up',
+            onTap: () => context.push('/sign-up'),
+          ),
+        ],
       ),
     );
   }

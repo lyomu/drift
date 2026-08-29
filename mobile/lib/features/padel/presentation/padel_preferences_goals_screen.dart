@@ -6,6 +6,7 @@ import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
 import '../../../shared/widgets/drift_filter_chip.dart';
+import '../../../shared/widgets/drift_scaffold.dart';
 import '../../../shared/widgets/drift_text_field.dart';
 import '../../auth/data/auth_repository.dart';
 import '../application/padel_providers.dart';
@@ -20,19 +21,17 @@ class PadelPreferencesGoalsScreen extends ConsumerWidget {
     final profile = ref.watch(padelProfileProvider);
     final type = Theme.of(context).extension<DriftTypography>()!;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Preferences & Goals')),
-      body: SafeArea(
-        child: switch (profile) {
-          AsyncData(:final value) when value != null => _PreferencesForm(
-            profile: value,
-          ),
-          AsyncError() => Center(
-            child: Text("Couldn't load your Padel profile.", style: type.body),
-          ),
-          _ => const Center(child: CircularProgressIndicator()),
-        },
-      ),
+    return DriftScaffold(
+      title: 'Preferences & Goals',
+      body: switch (profile) {
+        AsyncData(:final value) when value != null => _PreferencesForm(
+          profile: value,
+        ),
+        AsyncError() => Center(
+          child: Text("Couldn't load your Padel profile.", style: type.body),
+        ),
+        _ => const Center(child: CircularProgressIndicator()),
+      },
     );
   }
 }

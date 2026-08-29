@@ -3,12 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/drift_colors.dart';
-import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
-import '../../../shared/widgets/drift_card.dart';
+import '../../../shared/widgets/drift_pill.dart';
+import '../../../shared/widgets/drift_soft_card.dart';
 import '../data/expansion_repository.dart';
 
-/// Ladders segment (Wave 6) — browse and open the rung standings.
+/// Ladders segment — browse and open the rung standings.
 class LadderListScreen extends ConsumerWidget {
   const LadderListScreen({super.key, this.embedded = false});
 
@@ -23,67 +23,51 @@ class LadderListScreen extends ConsumerWidget {
     final content = RefreshIndicator(
       onRefresh: () => ref.refresh(laddersListProvider.future),
       child: switch (ladders) {
-        AsyncData(:final value) =>
-          value.isEmpty
-              ? ListView(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(DriftSpacing.s6),
-                      child: Column(
-                        children: [
-                          const SizedBox(height: DriftSpacing.s12),
-                          Text(
-                            'No ladders yet — ask your club to start one.',
-                            textAlign: TextAlign.center,
-                            style: type.body.copyWith(color: colors.textSecondary),
+        AsyncData(:final value) when value.isEmpty => _message(
+          context,
+          'No ladders yet — ask your club to start one.',
+        ),
+        AsyncData(:final value) => ListView.separated(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          itemCount: value.length,
+          separatorBuilder: (_, _) => const SizedBox(height: 12),
+          itemBuilder: (context, i) {
+            final l = value[i];
+            return DriftSoftCard(
+              onTap: () => context.push('/compete/ladders/${l.id}'),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l.name,
+                          style: type.title.copyWith(
+                            fontWeight: FontWeight.w700,
                           ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          l.clubName,
+                          style: type.caption.copyWith(
+                            color: colors.textSecondary,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                )
-              : ListView.separated(
-                  padding: const EdgeInsets.all(DriftSpacing.s4),
-                  itemCount: value.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: DriftSpacing.s3),
-                  itemBuilder: (context, i) {
-                    final l = value[i];
-                    return DriftCard(
-                      onTap: () => context.push('/compete/ladders/${l.id}'),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(l.name, style: type.title),
-                                const SizedBox(height: DriftSpacing.s1),
-                                Text(
-                                  '${l.clubName} · ${l.entryCount} players',
-                                  style: type.bodySmall.copyWith(
-                                    color: colors.textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-        AsyncError() => ListView(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(DriftSpacing.s6),
-                child: Text(
-                  "Couldn't load ladders.",
-                  textAlign: TextAlign.center,
-                  style: type.body,
-                ),
+                  ),
+                  const SizedBox(width: 8),
+                  DriftPill(
+                    label: '${l.entryCount} players',
+                    tone: DriftPillTone.neutral,
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
+        ),
+        AsyncError() => _message(context, "Couldn't load ladders."),
         _ => const Center(child: CircularProgressIndicator()),
       },
     );
@@ -94,12 +78,32 @@ class LadderListScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.all(DriftSpacing.s4),
-            child: Text('Ladders', style: type.display),
+            padding: const EdgeInsets.all(16),
+            child: Text(
+              'Ladders',
+              style: type.h2.copyWith(fontWeight: FontWeight.w800),
+            ),
           ),
           Expanded(child: content),
         ],
       ),
+    );
+  }
+
+  Widget _message(BuildContext context, String text) {
+    final type = Theme.of(context).extension<DriftTypography>()!;
+    final colors = Theme.of(context).extension<DriftColors>()!;
+    return ListView(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 64, 24, 24),
+          child: Text(
+            text,
+            textAlign: TextAlign.center,
+            style: type.body.copyWith(color: colors.textSecondary),
+          ),
+        ),
+      ],
     );
   }
 }

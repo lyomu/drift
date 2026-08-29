@@ -8,6 +8,7 @@ import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
 import '../../../shared/widgets/drift_filter_chip.dart';
+import '../../../shared/widgets/drift_scaffold.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../users/data/users_repository.dart';
 
@@ -61,44 +62,42 @@ class _PadelInterestScreenState extends ConsumerState<PadelInterestScreen> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<DriftColors>()!;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Do You Also Play Padel?')),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(DriftSpacing.s6),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                'Padel is coming to Drift soon — let us know if you play or want to learn.',
-              ),
-              const SizedBox(height: DriftSpacing.s4),
-              Wrap(
-                spacing: DriftSpacing.s2,
-                children: _padelOptions
-                    .map(
-                      (option) => DriftFilterChip(
-                        label: option.$2,
-                        selected: false,
-                        onTap: _isSubmitting ? () {} : () => _submit(option.$1),
-                      ),
-                    )
-                    .toList(),
-              ),
-              if (_errorText != null) ...[
-                const SizedBox(height: DriftSpacing.s3),
-                Text(_errorText!, style: TextStyle(color: colors.error)),
-              ],
-              const SizedBox(height: DriftSpacing.s6),
-              Center(
-                child: DriftButton(
-                  label: 'Skip',
-                  variant: DriftButtonVariant.text,
-                  onPressed: _isSubmitting ? null : () => _submit('NO'),
-                ),
-              ),
+    return DriftScaffold(
+      title: 'Do You Also Play Padel?',
+      body: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Padel is coming to Drift soon — let us know if you play or want to learn.',
+            ),
+            const SizedBox(height: DriftSpacing.s4),
+            Wrap(
+              spacing: DriftSpacing.s2,
+              children: _padelOptions
+                  .map(
+                    (option) => DriftFilterChip(
+                      label: option.$2,
+                      selected: false,
+                      onTap: _isSubmitting ? () {} : () => _submit(option.$1),
+                    ),
+                  )
+                  .toList(),
+            ),
+            if (_errorText != null) ...[
+              const SizedBox(height: DriftSpacing.s3),
+              Text(_errorText!, style: TextStyle(color: colors.error)),
             ],
-          ),
+            const SizedBox(height: DriftSpacing.s6),
+            Center(
+              child: DriftButton(
+                label: 'Skip',
+                variant: DriftButtonVariant.text,
+                onPressed: _isSubmitting ? null : () => _submit('NO'),
+              ),
+            ),
+          ],
         ),
       ),
     );

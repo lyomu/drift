@@ -5,8 +5,9 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
-import '../../../shared/widgets/drift_card.dart';
-import '../../../shared/widgets/drift_status_badge.dart';
+import '../../../shared/widgets/drift_back_header.dart';
+import '../../../shared/widgets/drift_pill.dart';
+import '../../../shared/widgets/drift_soft_card.dart';
 import '../application/competitions_providers.dart';
 import '../data/competitions_repository.dart';
 
@@ -20,69 +21,73 @@ class MySeasonsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final seasons = ref.watch(mySeasonsProvider);
 
+    final type = Theme.of(context).extension<DriftTypography>()!;
+    final colors = Theme.of(context).extension<DriftColors>()!;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('My Seasons')),
       body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () => ref.refresh(mySeasonsProvider.future),
-          child: switch (seasons) {
-            AsyncData(:final value) =>
-              value.isEmpty
-                  ? const _EmptyState()
-                  : ListView.separated(
-                      padding: const EdgeInsets.all(DriftSpacing.s4),
-                      itemCount: value.length,
-                      separatorBuilder: (_, _) =>
-                          const SizedBox(height: DriftSpacing.s3),
-                      itemBuilder: (context, index) {
-                        final season = value[index];
-                        return DriftCard(
-                          onTap: () => context.push(
-                            '/compete/seasons/${season.seasonId}',
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      season.label,
-                                      style: Theme.of(
-                                        context,
-                                      ).extension<DriftTypography>()!.title,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const DriftBackHeader(title: 'My Seasons'),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: () => ref.refresh(mySeasonsProvider.future),
+                child: switch (seasons) {
+                  AsyncData(:final value) when value.isEmpty =>
+                    const _EmptyState(),
+                  AsyncData(:final value) => ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                    itemCount: value.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      final season = value[index];
+                      return DriftSoftCard(
+                        onTap: () => context.push(
+                          '/compete/seasons/${season.seasonId}',
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    season.label,
+                                    style: type.title.copyWith(
+                                      fontWeight: FontWeight.w700,
                                     ),
-                                    const SizedBox(height: DriftSpacing.s1),
-                                    Text(
-                                      season.leagueName,
-                                      style: Theme.of(context)
-                                          .extension<DriftTypography>()!
-                                          .bodySmall
-                                          .copyWith(
-                                            color: Theme.of(context)
-                                                .extension<DriftColors>()!
-                                                .textSecondary,
-                                          ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    season.leagueName,
+                                    style: type.caption.copyWith(
+                                      color: colors.textSecondary,
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
-                              DriftStatusBadge(
-                                label: season.state.label,
-                                tone: season.state == SeasonState.active
-                                    ? DriftStatusTone.success
-                                    : DriftStatusTone.neutral,
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-            AsyncError() => const Center(
-              child: Text("Couldn't load your seasons."),
+                            ),
+                            const SizedBox(width: 8),
+                            DriftPill(
+                              label: season.state.label,
+                              tone: season.state == SeasonState.active
+                                  ? DriftPillTone.success
+                                  : DriftPillTone.neutral,
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                  AsyncError() => const Center(
+                    child: Text("Couldn't load your seasons."),
+                  ),
+                  _ => const Center(child: CircularProgressIndicator()),
+                },
+              ),
             ),
-            _ => const Center(child: CircularProgressIndicator()),
-          },
+          ],
         ),
       ),
     );

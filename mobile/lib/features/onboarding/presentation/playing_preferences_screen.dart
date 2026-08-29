@@ -7,6 +7,7 @@ import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
 import '../../../shared/widgets/drift_filter_chip.dart';
+import '../../../shared/widgets/drift_scaffold.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../users/data/users_repository.dart';
 
@@ -105,52 +106,50 @@ class _PlayingPreferencesScreenState
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<DriftColors>()!;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Playing Preferences')),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(DriftSpacing.s6),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: ListView(
-                  children: [
-                    _chipGroup(
-                      title: 'Format',
-                      options: _formatOptions,
-                      isSelected: (v) => _format == v,
-                      onTap: (v) => setState(() => _format = v),
-                    ),
-                    _chipGroup(
-                      title: 'Style',
-                      options: _styleOptions,
-                      isSelected: (v) => _style == v,
-                      onTap: (v) => setState(() => _style = v),
-                    ),
-                    _chipGroup(
-                      title: 'Preferred times',
-                      options: _timeOptions,
-                      isSelected: (v) => _times.contains(v),
-                      onTap: (v) => setState(() {
-                        if (!_times.remove(v)) {
-                          _times.add(v);
-                        }
-                      }),
-                    ),
-                  ],
-                ),
+    return DriftScaffold(
+      title: 'Playing Preferences',
+      body: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: ListView(
+                children: [
+                  _chipGroup(
+                    title: 'Format',
+                    options: _formatOptions,
+                    isSelected: (v) => _format == v,
+                    onTap: (v) => setState(() => _format = v),
+                  ),
+                  _chipGroup(
+                    title: 'Style',
+                    options: _styleOptions,
+                    isSelected: (v) => _style == v,
+                    onTap: (v) => setState(() => _style = v),
+                  ),
+                  _chipGroup(
+                    title: 'Preferred times',
+                    options: _timeOptions,
+                    isSelected: (v) => _times.contains(v),
+                    onTap: (v) => setState(() {
+                      if (!_times.remove(v)) {
+                        _times.add(v);
+                      }
+                    }),
+                  ),
+                ],
               ),
-              if (_errorText != null) ...[
-                Text(_errorText!, style: TextStyle(color: colors.error)),
-                const SizedBox(height: DriftSpacing.s3),
-              ],
-              DriftButton(
-                label: _isSubmitting ? 'Saving…' : 'Continue',
-                onPressed: _isSubmitting ? null : _submit,
-              ),
+            ),
+            if (_errorText != null) ...[
+              Text(_errorText!, style: TextStyle(color: colors.error)),
+              const SizedBox(height: DriftSpacing.s3),
             ],
-          ),
+            DriftButton(
+              label: _isSubmitting ? 'Saving…' : 'Continue',
+              onPressed: _isSubmitting ? null : _submit,
+            ),
+          ],
         ),
       ),
     );

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/drift_card.dart';
+import '../../../shared/widgets/drift_scaffold.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../users/data/users_repository.dart';
 import '../application/settings_providers.dart';
@@ -20,20 +21,15 @@ class PrivacySettingsScreen extends ConsumerWidget {
     final settings = ref.watch(privacySettingsProvider);
     final type = Theme.of(context).extension<DriftTypography>()!;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Privacy Settings')),
-      body: SafeArea(
-        child: switch (settings) {
-          AsyncData(:final value) => _PrivacyForm(settings: value),
-          AsyncError() => Center(
-            child: Text(
-              "Couldn't load your privacy settings.",
-              style: type.body,
-            ),
-          ),
-          _ => const Center(child: CircularProgressIndicator()),
-        },
-      ),
+    return DriftScaffold(
+      title: 'Privacy Settings',
+      body: switch (settings) {
+        AsyncData(:final value) => _PrivacyForm(settings: value),
+        AsyncError() => Center(
+          child: Text("Couldn't load your privacy settings.", style: type.body),
+        ),
+        _ => const Center(child: CircularProgressIndicator()),
+      },
     );
   }
 }

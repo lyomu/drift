@@ -19,8 +19,10 @@ import { PlatformPermission } from '@prisma/client';
 import { PlatformPermissionGuard } from './guards/platform-permission.guard';
 import { RequirePlatformPermission } from './decorators/require-platform-permission.decorator';
 import {
+  ForgotPlatformAdminPasswordDto,
   LoginPlatformAdminDto,
   ModerateStoryDto,
+  ResetPlatformAdminPasswordDto,
   RuleDisputeDto,
   UpdateReportDto,
   UpdateUserStatusDto,
@@ -60,6 +62,25 @@ export class PlatformAdminController {
     return this.platform.resendTwoFactor(dto.challengeToken);
   }
 
+  @Throttle({ default: { ttl: 60_000, limit: 3 } })
+  @Post('auth/forgot-password')
+  @HttpCode(HttpStatus.OK)
+  forgotPassword(@Body() dto: ForgotPlatformAdminPasswordDto) {
+    return this.platform.forgotPassword(dto.email);
+  }
+
+  @Throttle({ default: { ttl: 60_000, limit: 10 } })
+  @Post('auth/reset-password')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  resetPassword(@Body() dto: ResetPlatformAdminPasswordDto) {
+    return this.platform.resetPassword(dto.email, dto.code, dto.newPassword);
+  }
+
+  // The invite token is 256-bit random, so this is defence in depth rather
+  // than a live hole — but it was the one unauthenticated auth route on this
+  // controller without a limit, and staff-account creation is the last place
+  // to leave an unmetered endpoint.
+  @Throttle({ default: { ttl: 60_000, limit: 10 } })
   @Post('auth/accept-invite')
   acceptInvite(@Body() dto: AcceptPlatformAdminInviteDto) {
     return this.access.acceptInvite(dto.token, dto.name, dto.password);
@@ -167,7 +188,11 @@ export class PlatformAdminController {
     @Param('id') id: string,
     @Body() dto: ModerateStoryDto,
   ) {
-    return this.platform.moderateStory(req.user.adminId, id, dto.moderationStatus);
+    return this.platform.moderateStory(
+      req.user.adminId,
+      id,
+      dto.moderationStatus,
+    );
   }
 
   @UseGuards(PlatformGuard, PlatformPermissionGuard)

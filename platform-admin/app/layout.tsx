@@ -9,8 +9,6 @@ const outfit = localFont({
   display: "swap",
 });
 
-// Display fallback until the Sharp Sans Display licence is purchased —
-// same stand-in the Flutter app and Club Admin use (see PROGRESS.md).
 const displayFace = localFont({
   src: "./fonts/SpaceGrotesk-Variable.ttf",
   variable: "--font-display-face",

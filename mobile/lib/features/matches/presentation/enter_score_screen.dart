@@ -8,6 +8,7 @@ import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
 import '../../../shared/widgets/drift_card.dart';
 import '../../../shared/widgets/drift_filter_chip.dart';
+import '../../../shared/widgets/drift_scaffold.dart';
 import '../../auth/data/auth_repository.dart';
 import '../application/matches_providers.dart';
 import '../data/matches_repository.dart';
@@ -165,150 +166,145 @@ class _EnterScoreScreenState extends ConsumerState<EnterScoreScreen> {
     final colors = Theme.of(context).extension<DriftColors>()!;
     final opponent = widget.match.opponentFor(widget.viewerId);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(switch (widget.mode) {
-          EnterScoreMode.submit => 'Enter Result',
-          EnterScoreMode.dispute => 'Your Version',
-          EnterScoreMode.resubmit => 'Revise Your Version',
-        }),
-      ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(DriftSpacing.s5),
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: DriftFilterChip(
-                    label: 'Score',
-                    selected: _isScore,
-                    onTap: () => setState(() => _isScore = true),
+    return DriftScaffold(
+      title: switch (widget.mode) {
+        EnterScoreMode.submit => 'Enter Result',
+        EnterScoreMode.dispute => 'Your Version',
+        EnterScoreMode.resubmit => 'Revise Your Version',
+      },
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: DriftFilterChip(
+                  label: 'Score',
+                  selected: _isScore,
+                  onTap: () => setState(() => _isScore = true),
+                ),
+              ),
+              const SizedBox(width: DriftSpacing.s2),
+              Expanded(
+                child: DriftFilterChip(
+                  label: 'Walkover / Retirement',
+                  selected: !_isScore,
+                  onTap: () => setState(() => _isScore = false),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: DriftSpacing.s5),
+
+          if (_isScore) ...[
+            for (var i = 0; i < _sets.length; i++)
+              Padding(
+                padding: const EdgeInsets.only(bottom: DriftSpacing.s3),
+                child: DriftCard(
+                  child: Row(
+                    children: [
+                      Text('Set ${i + 1}', style: type.label),
+                      const SizedBox(width: DriftSpacing.s3),
+                      Expanded(
+                        child: _GamesField(
+                          label: 'You',
+                          controller: _sets[i].aController,
+                          tiebreakController: _sets[i].aTiebreakController,
+                        ),
+                      ),
+                      const SizedBox(width: DriftSpacing.s3),
+                      Expanded(
+                        child: _GamesField(
+                          label: opponent?.player.displayName ?? 'Them',
+                          controller: _sets[i].bController,
+                          tiebreakController: _sets[i].bTiebreakController,
+                        ),
+                      ),
+                      if (_sets.length > 1)
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => setState(() {
+                            _sets[i].dispose();
+                            _sets.removeAt(i);
+                          }),
+                        ),
+                    ],
                   ),
                 ),
+              ),
+            if (_sets.length < 5)
+              DriftButton(
+                label: 'Add a set',
+                variant: DriftButtonVariant.text,
+                onPressed: () => setState(() => _sets.add(_SetInput())),
+              ),
+          ] else ...[
+            Text('What happened?', style: type.label),
+            const SizedBox(height: DriftSpacing.s2),
+            Row(
+              children: [
+                DriftFilterChip(
+                  label: 'Walkover',
+                  selected: _outcome == ResultOutcome.walkover,
+                  onTap: () => setState(() {
+                    _outcome = ResultOutcome.walkover;
+                    _winningSide = null;
+                  }),
+                ),
                 const SizedBox(width: DriftSpacing.s2),
-                Expanded(
-                  child: DriftFilterChip(
-                    label: 'Walkover / Retirement',
-                    selected: !_isScore,
-                    onTap: () => setState(() => _isScore = false),
-                  ),
+                DriftFilterChip(
+                  label: 'Retirement',
+                  selected: _outcome == ResultOutcome.retirement,
+                  onTap: () =>
+                      setState(() => _outcome = ResultOutcome.retirement),
                 ),
               ],
             ),
-            const SizedBox(height: DriftSpacing.s5),
-
-            if (_isScore) ...[
-              for (var i = 0; i < _sets.length; i++)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: DriftSpacing.s3),
-                  child: DriftCard(
-                    child: Row(
-                      children: [
-                        Text('Set ${i + 1}', style: type.label),
-                        const SizedBox(width: DriftSpacing.s3),
-                        Expanded(
-                          child: _GamesField(
-                            label: 'You',
-                            controller: _sets[i].aController,
-                            tiebreakController: _sets[i].aTiebreakController,
-                          ),
-                        ),
-                        const SizedBox(width: DriftSpacing.s3),
-                        Expanded(
-                          child: _GamesField(
-                            label: opponent?.player.displayName ?? 'Them',
-                            controller: _sets[i].bController,
-                            tiebreakController: _sets[i].bTiebreakController,
-                          ),
-                        ),
-                        if (_sets.length > 1)
-                          IconButton(
-                            icon: const Icon(Icons.close),
-                            onPressed: () => setState(() {
-                              _sets[i].dispose();
-                              _sets.removeAt(i);
-                            }),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-              if (_sets.length < 5)
-                DriftButton(
-                  label: 'Add a set',
-                  variant: DriftButtonVariant.text,
-                  onPressed: () => setState(() => _sets.add(_SetInput())),
-                ),
-            ] else ...[
-              Text('What happened?', style: type.label),
+            const SizedBox(height: DriftSpacing.s4),
+            if (_outcome == ResultOutcome.retirement) ...[
+              Text('Who won?', style: type.label),
               const SizedBox(height: DriftSpacing.s2),
               Row(
                 children: [
                   DriftFilterChip(
-                    label: 'Walkover',
-                    selected: _outcome == ResultOutcome.walkover,
-                    onTap: () => setState(() {
-                      _outcome = ResultOutcome.walkover;
-                      _winningSide = null;
-                    }),
+                    label: 'You',
+                    selected:
+                        _winningSide ==
+                        widget.match.participants
+                            .firstWhere((p) => p.userId == widget.viewerId)
+                            .side,
+                    onTap: () => setState(
+                      () => _winningSide = widget.match.participants
+                          .firstWhere((p) => p.userId == widget.viewerId)
+                          .side,
+                    ),
                   ),
                   const SizedBox(width: DriftSpacing.s2),
                   DriftFilterChip(
-                    label: 'Retirement',
-                    selected: _outcome == ResultOutcome.retirement,
-                    onTap: () =>
-                        setState(() => _outcome = ResultOutcome.retirement),
+                    label: opponent?.player.displayName ?? 'Them',
+                    selected: _winningSide == opponent?.side,
+                    onTap: () => setState(() => _winningSide = opponent?.side),
                   ),
                 ],
               ),
-              const SizedBox(height: DriftSpacing.s4),
-              if (_outcome == ResultOutcome.retirement) ...[
-                Text('Who won?', style: type.label),
-                const SizedBox(height: DriftSpacing.s2),
-                Row(
-                  children: [
-                    DriftFilterChip(
-                      label: 'You',
-                      selected:
-                          _winningSide ==
-                          widget.match.participants
-                              .firstWhere((p) => p.userId == widget.viewerId)
-                              .side,
-                      onTap: () => setState(
-                        () => _winningSide = widget.match.participants
-                            .firstWhere((p) => p.userId == widget.viewerId)
-                            .side,
-                      ),
-                    ),
-                    const SizedBox(width: DriftSpacing.s2),
-                    DriftFilterChip(
-                      label: opponent?.player.displayName ?? 'Them',
-                      selected: _winningSide == opponent?.side,
-                      onTap: () =>
-                          setState(() => _winningSide = opponent?.side),
-                    ),
-                  ],
-                ),
-              ] else
-                Text(
-                  "A walkover is recorded in favour of neither player.",
-                  style: type.bodySmall.copyWith(color: colors.textSecondary),
-                ),
-            ],
-
-            if (_errorText != null) ...[
-              const SizedBox(height: DriftSpacing.s3),
-              Text(_errorText!, style: TextStyle(color: colors.error)),
-            ],
-
-            const SizedBox(height: DriftSpacing.s6),
-            DriftButton(
-              label: _isSubmitting ? 'Submitting…' : 'Submit',
-              onPressed: _isSubmitting ? null : _submit,
-            ),
+            ] else
+              Text(
+                "A walkover is recorded in favour of neither player.",
+                style: type.bodySmall.copyWith(color: colors.textSecondary),
+              ),
           ],
-        ),
+
+          if (_errorText != null) ...[
+            const SizedBox(height: DriftSpacing.s3),
+            Text(_errorText!, style: TextStyle(color: colors.error)),
+          ],
+
+          const SizedBox(height: DriftSpacing.s6),
+          DriftButton(
+            label: _isSubmitting ? 'Submitting…' : 'Submit',
+            onPressed: _isSubmitting ? null : _submit,
+          ),
+        ],
       ),
     );
   }

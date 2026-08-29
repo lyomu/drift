@@ -6,6 +6,7 @@ import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
+import '../../../shared/widgets/drift_scaffold.dart';
 import '../../auth/data/auth_repository.dart';
 import '../application/padel_providers.dart';
 import '../data/padel_repository.dart';
@@ -45,40 +46,38 @@ class _AddPadelScreenState extends ConsumerState<AddPadelScreen> {
     final type = Theme.of(context).extension<DriftTypography>()!;
     final colors = Theme.of(context).extension<DriftColors>()!;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Add Padel')),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(DriftSpacing.s6),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Icon(
-                Icons.sports_baseball_outlined,
-                size: 56,
-                color: colors.primary,
-              ),
-              const SizedBox(height: DriftSpacing.s4),
-              Text('Add Padel to your profile', style: type.h3),
+    return DriftScaffold(
+      title: 'Add Padel',
+      body: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Icon(
+              Icons.sports_baseball_outlined,
+              size: 56,
+              color: colors.primary,
+            ),
+            const SizedBox(height: DriftSpacing.s4),
+            Text('Add Padel to your profile', style: type.h3),
+            const SizedBox(height: DriftSpacing.s3),
+            Text(
+              "You'll complete a short adaptive assessment scoped to "
+              "Padel — rally consistency, net play, wall shots, and more. "
+              "It generates a Padel Profile that's fully separate from "
+              'your Tennis Profile.',
+              style: type.body.copyWith(color: colors.textSecondary),
+            ),
+            if (_errorText != null) ...[
               const SizedBox(height: DriftSpacing.s3),
-              Text(
-                "You'll complete a short adaptive assessment scoped to "
-                "Padel — rally consistency, net play, wall shots, and more. "
-                "It generates a Padel Profile that's fully separate from "
-                'your Tennis Profile.',
-                style: type.body.copyWith(color: colors.textSecondary),
-              ),
-              if (_errorText != null) ...[
-                const SizedBox(height: DriftSpacing.s3),
-                Text(_errorText!, style: TextStyle(color: colors.error)),
-              ],
-              const SizedBox(height: DriftSpacing.s6),
-              DriftButton(
-                label: _isSubmitting ? 'Adding…' : 'Start Padel Assessment',
-                onPressed: _isSubmitting ? null : _confirm,
-              ),
+              Text(_errorText!, style: TextStyle(color: colors.error)),
             ],
-          ),
+            const SizedBox(height: DriftSpacing.s6),
+            DriftButton(
+              label: _isSubmitting ? 'Adding…' : 'Start Padel Assessment',
+              onPressed: _isSubmitting ? null : _confirm,
+            ),
+          ],
         ),
       ),
     );

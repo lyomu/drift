@@ -6,6 +6,7 @@ import '../../../core/onboarding/onboarding_step_route.dart';
 import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
+import '../../../shared/widgets/drift_scaffold.dart';
 import '../../../shared/widgets/drift_text_field.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../users/data/users_repository.dart';
@@ -101,36 +102,34 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<DriftColors>()!;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Location')),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(DriftSpacing.s6),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              DriftTextField(
-                label: 'General location / city',
-                controller: _locationController,
-                onChanged: (_) => setState(() => _locationSource = 'MANUAL'),
-              ),
+    return DriftScaffold(
+      title: 'Location',
+      body: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            DriftTextField(
+              label: 'General location / city',
+              controller: _locationController,
+              onChanged: (_) => setState(() => _locationSource = 'MANUAL'),
+            ),
+            const SizedBox(height: DriftSpacing.s3),
+            DriftButton(
+              label: _isLocating ? 'Locating…' : 'Use current location',
+              variant: DriftButtonVariant.text,
+              onPressed: _isLocating ? null : _useCurrentLocation,
+            ),
+            if (_errorText != null) ...[
               const SizedBox(height: DriftSpacing.s3),
-              DriftButton(
-                label: _isLocating ? 'Locating…' : 'Use current location',
-                variant: DriftButtonVariant.text,
-                onPressed: _isLocating ? null : _useCurrentLocation,
-              ),
-              if (_errorText != null) ...[
-                const SizedBox(height: DriftSpacing.s3),
-                Text(_errorText!, style: TextStyle(color: colors.error)),
-              ],
-              const SizedBox(height: DriftSpacing.s6),
-              DriftButton(
-                label: _isSubmitting ? 'Saving…' : 'Continue',
-                onPressed: _isSubmitting ? null : _submit,
-              ),
+              Text(_errorText!, style: TextStyle(color: colors.error)),
             ],
-          ),
+            const SizedBox(height: DriftSpacing.s6),
+            DriftButton(
+              label: _isSubmitting ? 'Saving…' : 'Continue',
+              onPressed: _isSubmitting ? null : _submit,
+            ),
+          ],
         ),
       ),
     );

@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { DataTable } from "@/components/DataTable";
+import Link from "next/link";
 import { StatusBadge } from "@/components/StatusBadge";
-import { Button, ErrorBanner, Input, PageHeader } from "@/components/ui";
+import { Button, Card, EmptyState, ErrorBanner, Input, PageHeader } from "@/components/ui";
+import { InitialsAvatar, RowCard } from "@/components/dashboard-design";
 import { api, ApiError } from "@/lib/api-client";
 import { useClub } from "@/lib/club-context";
 import type { CoachAdmin } from "@/lib/types";
@@ -79,57 +79,58 @@ export default function CoachesPage() {
       <div className="mb-4 max-w-sm">
         <Input
           aria-label="Filter coaches"
-          placeholder="Filter by name or specialisation…"
+          placeholder="Filter by name or specialisation..."
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />
       </div>
 
       {visible === null ? (
-        <p className="text-sm text-drift-text-secondary">Loading…</p>
-      ) : (
-        <DataTable
-          rows={visible}
-          rowKey={(coach) => coach.id}
-          emptyMessage={
+        <EmptyState message="Loading..." />
+      ) : visible.length === 0 ? (
+        <EmptyState
+          message={
             canManage
               ? "Add your first coach"
               : "No coaches are affiliated with this club yet."
           }
-          columns={[
-            {
-              header: "Coach",
-              cell: (coach) => (
-                <div>
-                  <Link
-                    href={`/coaches/${coach.id}`}
-                    className="font-semibold text-drift-primary hover:underline"
-                  >
-                    {coachName(coach)}
-                  </Link>
-                  <div className="text-xs text-drift-text-secondary">
-                    {coach.accountEmail}
-                  </div>
-                </div>
-              ),
-            },
-            {
-              header: "Specialisations",
-              cell: (coach) => coach.specialisations.join(", ") || "—",
-            },
-            {
-              header: "Levels",
-              cell: (coach) =>
-                coach.levels.map((level) => level.toLowerCase()).join(", ") || "—",
-            },
-            {
-              header: "Verification",
-              cell: (coach) => (
-                <StatusBadge status={coach.verificationStatus} />
-              ),
-            },
-          ]}
         />
+      ) : (
+        <Card className="p-2">
+          <div className="flex flex-col">
+            {visible.map((coach) => (
+              <Link href={`/coaches/${coach.id}`} key={coach.id}>
+                <RowCard className="flex cursor-pointer items-center gap-3.5 p-3.5">
+                  <InitialsAvatar name={coachName(coach)} />
+                  <div className="min-w-0 flex-[1.1]">
+                    <div className="truncate text-[13.5px] font-bold text-drift-text-primary">
+                      {coachName(coach)}
+                    </div>
+                    <div className="truncate text-xs text-drift-text-secondary">
+                      {coach.accountEmail ?? "No account email"}
+                    </div>
+                  </div>
+                  <div className="flex min-w-0 flex-[1.3] flex-wrap gap-1.5">
+                    {(coach.specialisations.length
+                      ? coach.specialisations
+                      : coach.levels
+                    )
+                      .slice(0, 3)
+                      .map((chip) => (
+                        <span
+                          key={chip}
+                          className="rounded-full bg-drift-neutral-surface px-2.5 py-[3px] text-[11.5px] font-semibold text-drift-text-secondary"
+                        >
+                          {chip.replace(/_/g, " ")}
+                        </span>
+                      ))}
+                  </div>
+                  <StatusBadge status={coach.verificationStatus} />
+                </RowCard>
+              </Link>
+            ))}
+          </div>
+        </Card>
       )}
     </div>
   );

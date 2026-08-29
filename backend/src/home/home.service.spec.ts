@@ -1,171 +1,246 @@
 import { NotFoundException } from '@nestjs/common';
 import { HomeService } from './home.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { LearningService } from '../learning/learning.service';
+import {
+  HOME_CARD_PRIORITY,
+  type HomeCard,
+  type HomeCardType,
+} from './home-card';
+import type { HomeCardContributor } from './contributors/home-contributor';
+
+/**
+ * These cover `HomeService`'s job, which after the contributor refactor is
+ * *orchestration*: resolve context once, fan out, filter dismissals, order by
+ * priority, and never let one contributor take the screen down. What each
+ * card decides to emit is tested in that contributor's own spec.
+ */
 
 type MockPrisma = {
-  tennisProfile: Record<string, jest.Mock>;
+  tennisProfile: { findUnique: jest.Mock };
+  user: { findUnique: jest.Mock };
+  dismissedHomeCard: { findMany: jest.Mock; upsert: jest.Mock };
 };
 
 function createMockPrisma(): MockPrisma {
   return {
     tennisProfile: { findUnique: jest.fn() },
+    user: { findUnique: jest.fn().mockResolvedValue({ firstName: 'Ana' }) },
+    dismissedHomeCard: {
+      findMany: jest.fn().mockResolvedValue([]),
+      upsert: jest.fn().mockResolvedValue({}),
+    },
   };
 }
 
-type MockLearning = { getSkillProfile: jest.Mock };
-
-function createMockLearning(): MockLearning {
+function card(type: HomeCardType, id = type.toLowerCase()): HomeCard {
   return {
-    getSkillProfile: jest.fn().mockResolvedValue({
-      skills: [],
-      weakestSkill: null,
-      recommendations: [],
-    }),
+    id,
+    type,
+    priority: HOME_CARD_PRIORITY[type],
+    title: `${type} title`,
+    body: '',
+    accent: 'neutral',
+    action: null,
+    dismissible: true,
+    data: null,
   };
 }
 
-function baseProfile(overrides: Record<string, unknown> = {}) {
-  return {
-    userSelectedLevel: null,
-    systemSuggestedLevel: null,
-    onboardingGoals: [] as string[],
-    formatPreference: null,
-    stylePreference: null,
-    padelInterest: null,
-    availabilitySlots: [] as unknown[],
-    ...overrides,
-  };
+function stub(key: string, cards: HomeCard[] = []): HomeCardContributor {
+  return { key, contribute: jest.fn().mockResolvedValue(cards) };
 }
+
+/**
+ * The constructor takes its 13 contributors positionally. Building them here
+ * keeps each test to the one or two it actually cares about.
+ */
+function createService(
+  prisma: MockPrisma,
+  contributors: HomeCardContributor[],
+) {
+  const filled = [...contributors];
+  while (filled.length < 13) filled.push(stub(`filler-${filled.length}`));
+
+  return new HomeService(
+    prisma as unknown as PrismaService,
+    ...(filled as unknown as [
+      HomeCardContributor,
+      HomeCardContributor,
+      HomeCardContributor,
+      HomeCardContributor,
+      HomeCardContributor,
+      HomeCardContributor,
+      HomeCardContributor,
+      HomeCardContributor,
+      HomeCardContributor,
+      HomeCardContributor,
+      HomeCardContributor,
+      HomeCardContributor,
+      HomeCardContributor,
+    ]),
+  );
+}
+
+const profile = { padelInterest: null, availabilitySlots: [] };
 
 describe('HomeService', () => {
-  let service: HomeService;
   let prisma: MockPrisma;
-  let learning: MockLearning;
 
   beforeEach(() => {
     prisma = createMockPrisma();
-    learning = createMockLearning();
-    service = new HomeService(
-      prisma as unknown as PrismaService,
-      learning as unknown as LearningService,
-    );
+    prisma.tennisProfile.findUnique.mockResolvedValue(profile);
   });
 
   it('throws NotFoundException when the tennis profile is missing', async () => {
     prisma.tennisProfile.findUnique.mockResolvedValue(null);
+    const service = createService(prisma, []);
     await expect(service.getFeed('user-1')).rejects.toBeInstanceOf(
       NotFoundException,
     );
   });
 
   it('falls back to a single EMPTY_FALLBACK card when nothing qualifies', async () => {
-    prisma.tennisProfile.findUnique.mockResolvedValue(baseProfile());
+    const service = createService(prisma, []);
     const { cards } = await service.getFeed('user-1');
     expect(cards).toHaveLength(1);
     expect(cards[0].type).toBe('EMPTY_FALLBACK');
+    // The fallback must still give the user somewhere to go.
+    expect(cards[0].action).not.toBeNull();
   });
 
-  it('includes the level card with the correct label, preferring userSelectedLevel', async () => {
-    prisma.tennisProfile.findUnique.mockResolvedValue(
-      baseProfile({ userSelectedLevel: 3.0, systemSuggestedLevel: 6.0 }),
-    );
-    const { cards } = await service.getFeed('user-1');
-    const levelCard = cards.find((c) => c.type === 'LEVEL_SUMMARY');
-    expect(levelCard).toBeDefined();
-    expect(levelCard!.title).toContain('3.0');
-    expect(levelCard!.title).toContain('Foundational');
-  });
-
-  it('falls back to systemSuggestedLevel when userSelectedLevel is unset', async () => {
-    prisma.tennisProfile.findUnique.mockResolvedValue(
-      baseProfile({ systemSuggestedLevel: 6.0 }),
-    );
-    const { cards } = await service.getFeed('user-1');
-    const levelCard = cards.find((c) => c.type === 'LEVEL_SUMMARY');
-    expect(levelCard!.title).toContain('6.0');
-    expect(levelCard!.title).toContain('Advanced');
-  });
-
-  it('omits the goals card when onboardingGoals is empty', async () => {
-    prisma.tennisProfile.findUnique.mockResolvedValue(
-      baseProfile({ userSelectedLevel: 3.0, onboardingGoals: [] }),
-    );
-    const { cards } = await service.getFeed('user-1');
-    expect(cards.find((c) => c.type === 'GOALS_SUMMARY')).toBeUndefined();
-  });
-
-  it('includes the goals card when goals were captured', async () => {
-    prisma.tennisProfile.findUnique.mockResolvedValue(
-      baseProfile({ onboardingGoals: ['Improve serve', 'Play more matches'] }),
-    );
-    const { cards } = await service.getFeed('user-1');
-    const goalsCard = cards.find((c) => c.type === 'GOALS_SUMMARY');
-    expect(goalsCard!.body).toBe('Improve serve • Play more matches');
-  });
-
-  it('omits the padel teaser when padelInterest is NO', async () => {
-    prisma.tennisProfile.findUnique.mockResolvedValue(
-      baseProfile({ userSelectedLevel: 3.0, padelInterest: 'NO' }),
-    );
-    const { cards } = await service.getFeed('user-1');
-    expect(cards.find((c) => c.type === 'PADEL_TEASER')).toBeUndefined();
-  });
-
-  it.each(['YES', 'WANT_TO_LEARN'])(
-    'includes the padel teaser when padelInterest is %s',
-    async (padelInterest) => {
-      prisma.tennisProfile.findUnique.mockResolvedValue(
-        baseProfile({ padelInterest }),
-      );
-      const { cards } = await service.getFeed('user-1');
-      expect(cards.find((c) => c.type === 'PADEL_TEASER')).toBeDefined();
-    },
-  );
-
-  it('omits the development recommendation card when there is nothing to recommend', async () => {
-    prisma.tennisProfile.findUnique.mockResolvedValue(
-      baseProfile({ userSelectedLevel: 3.0 }),
-    );
-    const { cards } = await service.getFeed('user-1');
-    expect(
-      cards.find((c) => c.type === 'DEVELOPMENT_RECOMMENDATION'),
-    ).toBeUndefined();
-  });
-
-  it('includes the development recommendation card when learning has a real suggestion', async () => {
-    learning.getSkillProfile.mockResolvedValue({
-      skills: [],
-      weakestSkill: 'BACKHAND',
-      recommendations: [{ id: 'c1', type: 'DRILL', title: 'Backhand basics' }],
-    });
-    prisma.tennisProfile.findUnique.mockResolvedValue(
-      baseProfile({ userSelectedLevel: 3.0 }),
-    );
-    const { cards } = await service.getFeed('user-1');
-    const card = cards.find((c) => c.type === 'DEVELOPMENT_RECOMMENDATION');
-    expect(card).toBeDefined();
-    expect(card!.title).toContain('backhand');
-    expect(card!.body).toContain('Backhand basics');
-  });
-
-  it('orders cards by ascending priority', async () => {
-    prisma.tennisProfile.findUnique.mockResolvedValue(
-      baseProfile({
-        userSelectedLevel: 3.0,
-        onboardingGoals: ['Improve serve'],
-        formatPreference: 'SINGLES',
-        padelInterest: 'YES',
-      }),
-    );
-    const { cards } = await service.getFeed('user-1');
-    const priorities = cards.map((c) => c.priority);
-    expect(priorities).toEqual([...priorities].sort((a, b) => a - b));
-    expect(cards.map((c) => c.type)).toEqual([
-      'LEVEL_SUMMARY',
-      'GOALS_SUMMARY',
-      'PLAY_STYLE_SUMMARY',
-      'PADEL_TEASER',
+  it('orders cards by ascending priority regardless of contributor order', async () => {
+    const service = createService(prisma, [
+      stub('news', [card('NEWS_HIGHLIGHT')]),
+      stub('unconfirmed', [card('UNCONFIRMED_RESULT')]),
+      stub('courts', [card('NEARBY_COURTS')]),
+      stub('challenge', [card('INCOMING_CHALLENGE')]),
     ]);
+
+    const { cards } = await service.getFeed('user-1');
+    expect(cards.map((c) => c.type)).toEqual([
+      'UNCONFIRMED_RESULT',
+      'INCOMING_CHALLENGE',
+      'NEARBY_COURTS',
+      'NEWS_HIGHLIGHT',
+    ]);
+  });
+
+  it('keeps the rest of the feed when one contributor throws', async () => {
+    const exploding: HomeCardContributor = {
+      key: 'exploding',
+      contribute: jest.fn().mockRejectedValue(new Error('boom')),
+    };
+    const service = createService(prisma, [
+      exploding,
+      stub('upcoming', [card('UPCOMING_MATCH')]),
+    ]);
+
+    const { cards } = await service.getFeed('user-1');
+    // Degrades to "that card is absent", never an error on the screen every
+    // user lands on.
+    expect(cards.map((c) => c.type)).toEqual(['UPCOMING_MATCH']);
+  });
+
+  it('filters out cards the user has dismissed', async () => {
+    prisma.dismissedHomeCard.findMany.mockResolvedValue([
+      { cardId: 'nearby_courts' },
+    ]);
+    const service = createService(prisma, [
+      stub('courts', [card('NEARBY_COURTS')]),
+      stub('news', [card('NEWS_HIGHLIGHT')]),
+    ]);
+
+    const { cards } = await service.getFeed('user-1');
+    expect(cards.map((c) => c.type)).toEqual(['NEWS_HIGHLIGHT']);
+  });
+
+  it('shows the fallback when every card has been dismissed', async () => {
+    prisma.dismissedHomeCard.findMany.mockResolvedValue([
+      { cardId: 'nearby_courts' },
+    ]);
+    const service = createService(prisma, [
+      stub('courts', [card('NEARBY_COURTS')]),
+    ]);
+
+    const { cards } = await service.getFeed('user-1');
+    expect(cards.map((c) => c.type)).toEqual(['EMPTY_FALLBACK']);
+  });
+
+  it('gives every contributor the same `now`', async () => {
+    const a = stub('a');
+    const b = stub('b');
+    const service = createService(prisma, [a, b]);
+
+    await service.getFeed('user-1');
+
+    const ctxA = (a.contribute as jest.Mock).mock.calls[0][0] as {
+      now: Date;
+    };
+    const ctxB = (b.contribute as jest.Mock).mock.calls[0][0] as {
+      now: Date;
+    };
+    expect(ctxA.now).toBe(ctxB.now);
+  });
+
+  describe('dismissCard', () => {
+    it('records a permanent dismissal when no snooze is given', async () => {
+      const service = createService(prisma, []);
+      const result = await service.dismissCard('user-1', 'nearby_courts');
+
+      expect(result.snoozedUntil).toBeNull();
+      expect(prisma.dismissedHomeCard.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            userId_cardId: { userId: 'user-1', cardId: 'nearby_courts' },
+          },
+          create: {
+            userId: 'user-1',
+            cardId: 'nearby_courts',
+            snoozedUntil: null,
+          },
+        }),
+      );
+    });
+
+    it('records a future expiry when snoozed', async () => {
+      const service = createService(prisma, []);
+      const before = Date.now();
+      const result = await service.dismissCard('user-1', 'news_highlight', 24);
+
+      expect(result.snoozedUntil).toBeInstanceOf(Date);
+      expect(result.snoozedUntil!.getTime()).toBeGreaterThan(before);
+    });
+  });
+
+  describe('getSummary', () => {
+    it('prefers userSelectedLevel over the system suggestion', async () => {
+      prisma.tennisProfile.findUnique.mockResolvedValue({
+        userSelectedLevel: 3.0,
+        systemSuggestedLevel: 6.0,
+        singlesRating: null,
+        doublesRating: null,
+        onboardingGoals: [],
+      });
+
+      const service = createService(prisma, []);
+      const summary = await service.getSummary('user-1');
+      expect(summary.level).toBe(3.0);
+      expect(summary.levelLabel).toBe('Foundational');
+    });
+
+    it('reports a null level rather than inventing a default', async () => {
+      prisma.tennisProfile.findUnique.mockResolvedValue({
+        userSelectedLevel: null,
+        systemSuggestedLevel: null,
+        singlesRating: null,
+        doublesRating: null,
+        onboardingGoals: [],
+      });
+
+      const service = createService(prisma, []);
+      const summary = await service.getSummary('user-1');
+      expect(summary.level).toBeNull();
+      expect(summary.levelLabel).toBeNull();
+    });
   });
 });

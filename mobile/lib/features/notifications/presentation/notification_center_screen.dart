@@ -6,6 +6,8 @@ import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
+import '../../../shared/widgets/drift_back_header.dart';
+import '../../../shared/widgets/drift_scaffold.dart';
 import '../../auth/data/auth_repository.dart';
 import '../application/notifications_providers.dart';
 import '../data/notifications_repository.dart';
@@ -47,84 +49,75 @@ class _NotificationCenterScreenState
     final type = Theme.of(context).extension<DriftTypography>()!;
     final colors = Theme.of(context).extension<DriftColors>()!;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Notifications'),
-        actions: [
-          IconButton(
-            onPressed: () => context.push('/notifications/preferences'),
-            icon: const Icon(Icons.tune),
-            tooltip: 'Notification Preferences',
-          ),
-        ],
+    return DriftScaffold(
+      title: 'Notifications',
+      trailing: DriftHeaderSquareButton(
+        icon: Icons.tune,
+        onTap: () => context.push('/notifications/preferences'),
       ),
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () => ref.refresh(notificationsListProvider.future),
-          child: switch (page) {
-            AsyncData(:final value) =>
-              value.notifications.isEmpty
-                  ? ListView(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(DriftSpacing.s6),
-                          child: Column(
-                            children: [
-                              const SizedBox(height: DriftSpacing.s12),
-                              Text(
-                                "You're all caught up.",
-                                style: type.body.copyWith(
-                                  color: colors.textSecondary,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    )
-                  : ListView.separated(
-                      padding: const EdgeInsets.all(DriftSpacing.s4),
-                      itemCount: value.notifications.length + 1,
-                      separatorBuilder: (_, _) =>
-                          const SizedBox(height: DriftSpacing.s2),
-                      itemBuilder: (context, index) {
-                        if (index == 0) {
-                          return _MarkAllReadRow(
-                            unreadCount: value.unreadCount,
-                          );
-                        }
-                        final notification = value.notifications[index - 1];
-                        return _NotificationTile(notification: notification);
-                      },
-                    ),
-            AsyncError() => ListView(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(DriftSpacing.s6),
-                  child: Column(
+      body: RefreshIndicator(
+        onRefresh: () => ref.refresh(notificationsListProvider.future),
+        child: switch (page) {
+          AsyncData(:final value) =>
+            value.notifications.isEmpty
+                ? ListView(
                     children: [
-                      const SizedBox(height: DriftSpacing.s12),
-                      Text(
-                        "Couldn't load notifications.",
-                        style: type.body,
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: DriftSpacing.s4),
-                      DriftButton(
-                        label: 'Retry',
-                        variant: DriftButtonVariant.text,
-                        onPressed: () =>
-                            ref.invalidate(notificationsListProvider),
+                      Padding(
+                        padding: const EdgeInsets.all(DriftSpacing.s6),
+                        child: Column(
+                          children: [
+                            const SizedBox(height: DriftSpacing.s12),
+                            Text(
+                              "You're all caught up.",
+                              style: type.body.copyWith(
+                                color: colors.textSecondary,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
                       ),
                     ],
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.all(DriftSpacing.s4),
+                    itemCount: value.notifications.length + 1,
+                    separatorBuilder: (_, _) =>
+                        const SizedBox(height: DriftSpacing.s2),
+                    itemBuilder: (context, index) {
+                      if (index == 0) {
+                        return _MarkAllReadRow(unreadCount: value.unreadCount);
+                      }
+                      final notification = value.notifications[index - 1];
+                      return _NotificationTile(notification: notification);
+                    },
                   ),
+          AsyncError() => ListView(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(DriftSpacing.s6),
+                child: Column(
+                  children: [
+                    const SizedBox(height: DriftSpacing.s12),
+                    Text(
+                      "Couldn't load notifications.",
+                      style: type.body,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: DriftSpacing.s4),
+                    DriftButton(
+                      label: 'Retry',
+                      variant: DriftButtonVariant.text,
+                      onPressed: () =>
+                          ref.invalidate(notificationsListProvider),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            _ => const Center(child: CircularProgressIndicator()),
-          },
-        ),
+              ),
+            ],
+          ),
+          _ => const Center(child: CircularProgressIndicator()),
+        },
       ),
     );
   }
@@ -170,9 +163,9 @@ class _NotificationTile extends ConsumerWidget {
 
     return Material(
       color: notification.isUnread ? colors.primaryLight : colors.surface,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(16),
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         onTap: () => _open(context, ref),
         child: Padding(
           padding: const EdgeInsets.all(DriftSpacing.s4),
@@ -226,7 +219,19 @@ class _NotificationTile extends ConsumerWidget {
     if (!context.mounted) return;
 
     final path = _deepLinkFor(notification);
-    if (path != null) context.push(path);
+    if (path != null) {
+      context.push(path);
+      return;
+    }
+
+    // No route for this entity type — either the server added a category this
+    // build doesn't know, or the notification genuinely has nothing to open.
+    // Silently doing nothing reads as a broken tap, so say so instead: the
+    // notification is already marked read, and its title and body are shown
+    // in full on the row itself.
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Nothing further to open for this update.')),
+    );
   }
 
   String? _deepLinkFor(DriftNotification notification) {

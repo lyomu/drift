@@ -53,6 +53,10 @@ const REPORT_INCLUDES = {
   },
 };
 
+const RESET_CODE_TTL_MS = 30 * 60 * 1000;
+const RESET_CODE_COOLDOWN_MS = 60 * 1000;
+const MAX_RESET_ATTEMPTS = 5;
+
 @Injectable()
 export class PlatformAdminService {
   constructor(
@@ -148,6 +152,99 @@ export class PlatformAdminService {
       challenge.admin.id,
       challenge.admin.email,
     );
+  }
+
+  async forgotPassword(emailInput: string) {
+    const email = emailInput.trim().toLowerCase();
+    const admin = await this.prisma.platformAdmin.findUnique({
+      where: { email },
+    });
+    if (!admin || admin.deactivatedAt) return {};
+
+    const recent = await this.prisma.platformAdminPasswordReset.findFirst({
+      where: {
+        adminId: admin.id,
+        consumedAt: null,
+        lastSentAt: { gt: new Date(Date.now() - RESET_CODE_COOLDOWN_MS) },
+      },
+      orderBy: { lastSentAt: 'desc' },
+    });
+    if (recent) return {};
+
+    const code = randomInt(100000, 1000000).toString();
+    const expiresAt = new Date(Date.now() + RESET_CODE_TTL_MS);
+    await this.prisma.$transaction(async (tx) => {
+      await tx.platformAdminPasswordReset.updateMany({
+        where: { adminId: admin.id, consumedAt: null },
+        data: { consumedAt: new Date() },
+      });
+      await tx.platformAdminPasswordReset.create({
+        data: {
+          adminId: admin.id,
+          codeHash: await bcrypt.hash(code, 8),
+          expiresAt,
+          lastSentAt: new Date(),
+        },
+      });
+    });
+
+    if (process.env.NODE_ENV !== 'production') {
+      console.info(`[platform-admin] Password reset code for ${email}: ${code}`);
+    }
+    return {
+      delivery:
+        process.env.NODE_ENV === 'production'
+          ? 'PENDING_PROVIDER'
+          : 'DEV_CONSOLE',
+      ...(process.env.NODE_ENV !== 'production'
+        ? { devVerificationCode: code }
+        : {}),
+    };
+  }
+
+  async resetPassword(emailInput: string, code: string, newPassword: string) {
+    const email = emailInput.trim().toLowerCase();
+    const reset = await this.prisma.platformAdminPasswordReset.findFirst({
+      where: {
+        consumedAt: null,
+        admin: { email, deactivatedAt: null },
+      },
+      include: { admin: true },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (
+      !reset ||
+      reset.expiresAt <= new Date() ||
+      reset.attempts >= MAX_RESET_ATTEMPTS
+    ) {
+      throw new BadRequestException('Invalid or expired reset code.');
+    }
+
+    const valid = await bcrypt.compare(code, reset.codeHash);
+    if (!valid) {
+      await this.prisma.platformAdminPasswordReset.update({
+        where: { id: reset.id },
+        data: { attempts: { increment: 1 } },
+      });
+      throw new BadRequestException('Invalid or expired reset code.');
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    await this.prisma.$transaction([
+      this.prisma.platformAdmin.update({
+        where: { id: reset.adminId },
+        data: { passwordHash },
+      }),
+      this.prisma.platformAdminPasswordReset.update({
+        where: { id: reset.id },
+        data: { consumedAt: new Date() },
+      }),
+      this.prisma.platformAdminTwoFactorChallenge.updateMany({
+        where: { adminId: reset.adminId, consumedAt: null },
+        data: { consumedAt: new Date() },
+      }),
+    ]);
   }
 
   private async createTwoFactorChallenge(adminId: string, email: string) {

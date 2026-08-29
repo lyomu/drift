@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/drift_card.dart';
+import '../../../shared/widgets/drift_scaffold.dart';
 import '../../auth/data/auth_repository.dart';
 import '../application/notifications_providers.dart';
 import '../data/notifications_repository.dart';
@@ -40,17 +41,15 @@ class NotificationPreferencesScreen extends ConsumerWidget {
     final prefs = ref.watch(notificationPreferencesProvider);
     final type = Theme.of(context).extension<DriftTypography>()!;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Notification Preferences')),
-      body: SafeArea(
-        child: switch (prefs) {
-          AsyncData(:final value) => _PreferencesList(preferences: value),
-          AsyncError() => Center(
-            child: Text("Couldn't load your preferences.", style: type.body),
-          ),
-          _ => const Center(child: CircularProgressIndicator()),
-        },
-      ),
+    return DriftScaffold(
+      title: 'Notification Preferences',
+      body: switch (prefs) {
+        AsyncData(:final value) => _PreferencesList(preferences: value),
+        AsyncError() => Center(
+          child: Text("Couldn't load your preferences.", style: type.body),
+        ),
+        _ => const Center(child: CircularProgressIndicator()),
+      },
     );
   }
 }

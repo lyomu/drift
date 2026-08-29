@@ -14,6 +14,7 @@ import '../../features/onboarding/presentation/availability_screen.dart';
 import '../../features/onboarding/presentation/basic_profile_screen.dart';
 import '../../features/onboarding/presentation/club_courts_screen.dart';
 import '../../features/onboarding/presentation/goals_screen.dart';
+import '../../features/onboarding/presentation/intro_carousel_screen.dart';
 import '../../features/onboarding/presentation/location_screen.dart';
 import '../../features/onboarding/presentation/onboarding_complete_screen.dart';
 import '../../features/onboarding/presentation/padel_interest_screen.dart';
@@ -102,6 +103,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/splash',
         builder: (context, state) => const SplashScreen(),
+      ),
+      GoRoute(
+        path: '/intro',
+        builder: (context, state) => const IntroCarouselScreen(),
       ),
       GoRoute(
         path: '/welcome',

@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 
-/// Type scale for Drift Tennis. Mirrors `foundation/05-design-system.md` §3.
+/// Type scale for Drift Tennis. Mirrors `DESIGN_SPEC.md` §2.
 ///
-/// Two-family pairing: Display/H1/H2/H3/Statistics use `SharpSansDisplay`
-/// (currently backed by the free Space Grotesk fallback — see
-/// `pubspec.yaml` for the licensing note); everything else, including H4,
-/// uses `Outfit`. This split is deliberate — see the design system doc's
-/// "H4 and below stay in Outfit" rule.
+/// Single family — `Outfit` for everything (the 2026-08 redesign dropped
+/// the Sharp Sans Display / Space Grotesk pairing; see `DESIGN_SPEC.md`
+/// "Font family: Outfit"). Static weight cuts are bundled 400–800 because
+/// Impeller on Android ignores a variable font's weight axis.
 class DriftTypography extends ThemeExtension<DriftTypography> {
   const DriftTypography({
     required this.display,
@@ -40,7 +39,7 @@ class DriftTypography extends ThemeExtension<DriftTypography> {
   final TextStyle button;
   final TextStyle statistics;
 
-  static const _displayFamily = 'SharpSansDisplay';
+  static const _displayFamily = 'Outfit';
   static const _bodyFamily = 'Outfit';
 
   factory DriftTypography.from(Color textPrimary, Color textSecondary) {
@@ -142,7 +141,7 @@ class DriftTypography extends ThemeExtension<DriftTypography> {
         fontFamily: _displayFamily,
         fontSize: 34,
         height: 1.1,
-        fontWeight: FontWeight.w700,
+        fontWeight: FontWeight.w800,
         letterSpacing: -0.4,
         color: textPrimary,
         fontFeatures: const [FontFeature.tabularFigures()],

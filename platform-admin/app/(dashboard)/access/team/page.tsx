@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { ModalShell } from "@/components/dashboard-design";
 import { api, ApiError } from "@/lib/api-client";
 import type { PlatformInvitation, PlatformRole, PlatformStaff } from "@/lib/access-types";
 import { Badge, Button, Card, EmptyState, ErrorBanner, Field, Input, PageHeader, Select, Td, Th, statusTone } from "@/components/ui";
@@ -31,7 +32,9 @@ export default function TeamUsersPage() {
     }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   async function invite(e: React.FormEvent) {
     e.preventDefault();
@@ -67,11 +70,16 @@ export default function TeamUsersPage() {
       <PageHeader
         title="Team users"
         description="Invite internal staff, assign one role, and suspend access without deleting the audit history."
-        action={<Button onClick={() => { setShowInvite((value) => !value); setInviteUrl(null); }}>{showInvite ? "Cancel invite" : "Invite staff"}</Button>}
+        action={<Button icon="person_add" onClick={() => { setShowInvite(true); setInviteUrl(null); }}>Invite staff</Button>}
       />
       <ErrorBanner message={error} />
+
       {showInvite && (
-        <Card className="mb-6">
+        <ModalShell
+          title="Invite staff"
+          description="Send a one-time platform-admin invitation tied to the selected role."
+          onClose={() => setShowInvite(false)}
+        >
           <form onSubmit={invite} className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_240px_auto] sm:items-end">
             <Field label="Staff email">
               <Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -81,18 +89,20 @@ export default function TeamUsersPage() {
                 {roles.map((role) => <option key={role.id} value={role.id}>{role.name}</option>)}
               </Select>
             </Field>
-            <Button type="submit" disabled={busyId === "invite"}>{busyId === "invite" ? "Inviting…" : "Send invite"}</Button>
+            <Button type="submit" icon="send" disabled={busyId === "invite"}>
+              {busyId === "invite" ? "Inviting..." : "Send invite"}
+            </Button>
           </form>
           {inviteUrl && (
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md bg-drift-primary-light px-4 py-3 text-sm text-drift-primary-dark">
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-drift-primary/30 bg-drift-primary-light px-4 py-3 text-sm font-semibold text-drift-primary-dark">
               <span>Development invite created. Share the one-time link securely.</span>
-              <Button variant="secondary" onClick={() => void navigator.clipboard.writeText(inviteUrl)}>Copy invite link</Button>
+              <Button variant="secondary" icon="content_copy" onClick={() => void navigator.clipboard.writeText(inviteUrl)}>Copy invite link</Button>
             </div>
           )}
-        </Card>
+        </ModalShell>
       )}
 
-      {admins === null ? <EmptyState message="Loading…" /> : admins.length === 0 ? <EmptyState message="Invite your first team member" /> : (
+      {admins === null ? <EmptyState message="Loading..." /> : admins.length === 0 ? <EmptyState message="Invite your first team member" /> : (
         <Card className="overflow-x-auto p-0">
           <table className="w-full min-w-[820px]">
             <thead><tr><Th>Staff member</Th><Th>Role</Th><Th>2FA</Th><Th>Last sign-in</Th><Th>Status</Th><Th className="text-right">Actions</Th></tr></thead>
@@ -100,12 +110,12 @@ export default function TeamUsersPage() {
               {admins.map((admin) => {
                 const active = !admin.deactivatedAt;
                 return <tr key={admin.id}>
-                  <Td><div className="font-semibold">{admin.name || "—"}</div><div className="text-drift-text-secondary">{admin.email}</div></Td>
+                  <Td><div className="font-bold">{admin.name || "-"}</div><div className="text-drift-text-secondary">{admin.email}</div></Td>
                   <Td><Select value={admin.role.id} disabled={busyId === admin.id} onChange={(e) => void update(admin.id, { roleId: e.target.value })} className="max-w-52">{roles.map((role) => <option key={role.id} value={role.id}>{role.name}</option>)}</Select></Td>
                   <Td><Badge tone={admin.twoFactorEnabled ? "success" : "warning"}>{admin.twoFactorEnabled ? "Required" : "Disabled"}</Badge></Td>
                   <Td>{admin.lastLoginAt ? new Date(admin.lastLoginAt).toLocaleString() : "Never"}</Td>
                   <Td><Badge tone={statusTone(active ? "ACTIVE" : "SUSPENDED")}>{active ? "ACTIVE" : "SUSPENDED"}</Badge></Td>
-                  <Td className="text-right"><Button variant={active ? "destructive" : "secondary"} disabled={busyId === admin.id} onClick={() => void update(admin.id, { status: active ? "SUSPENDED" : "ACTIVE" })}>{busyId === admin.id ? "Working…" : active ? "Suspend" : "Restore"}</Button></Td>
+                  <Td className="text-right"><Button variant={active ? "destructive" : "secondary"} disabled={busyId === admin.id} onClick={() => void update(admin.id, { status: active ? "SUSPENDED" : "ACTIVE" })}>{busyId === admin.id ? "Working..." : active ? "Suspend" : "Restore"}</Button></Td>
                 </tr>;
               })}
             </tbody>

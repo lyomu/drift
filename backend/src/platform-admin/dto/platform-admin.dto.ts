@@ -3,6 +3,8 @@ import {
   IsEmail,
   IsOptional,
   IsString,
+  Length,
+  Matches,
   MaxLength,
   MinLength,
 } from 'class-validator';
@@ -14,6 +16,25 @@ export class LoginPlatformAdminDto {
   @IsString()
   @MinLength(8)
   password!: string;
+}
+
+export class ForgotPlatformAdminPasswordDto {
+  @IsEmail()
+  email!: string;
+}
+
+export class ResetPlatformAdminPasswordDto {
+  @IsEmail()
+  email!: string;
+
+  @IsString()
+  @Length(6, 6)
+  @Matches(/^\d{6}$/)
+  code!: string;
+
+  @IsString()
+  @MinLength(12)
+  newPassword!: string;
 }
 
 export class UpdateUserStatusDto {

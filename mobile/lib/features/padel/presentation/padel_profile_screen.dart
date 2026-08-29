@@ -6,7 +6,9 @@ import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
+import '../../../shared/widgets/drift_back_header.dart';
 import '../../../shared/widgets/drift_card.dart';
+import '../../../shared/widgets/drift_scaffold.dart';
 import '../application/padel_providers.dart';
 import '../data/padel_repository.dart';
 
@@ -40,51 +42,44 @@ class PadelProfileScreen extends ConsumerWidget {
     final profile = ref.watch(padelProfileProvider);
     final type = Theme.of(context).extension<DriftTypography>()!;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Padel Profile'),
-        actions: [
-          IconButton(
-            onPressed: () => context.push('/profile/padel/preferences'),
-            icon: const Icon(Icons.edit_outlined),
-            tooltip: 'Preferences & Goals',
-          ),
-        ],
+    return DriftScaffold(
+      title: 'Padel Profile',
+      trailing: DriftHeaderSquareButton(
+        icon: Icons.edit_outlined,
+        onTap: () => context.push('/profile/padel/preferences'),
       ),
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () => ref.refresh(padelProfileProvider.future),
-          child: switch (profile) {
-            AsyncData(:final value) when value != null => _ProfileBody(
-              profile: value,
-            ),
-            AsyncData() => ListView(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(DriftSpacing.s6),
-                  child: Text(
-                    "Padel hasn't been added yet.",
-                    style: type.body,
-                    textAlign: TextAlign.center,
-                  ),
+      body: RefreshIndicator(
+        onRefresh: () => ref.refresh(padelProfileProvider.future),
+        child: switch (profile) {
+          AsyncData(:final value) when value != null => _ProfileBody(
+            profile: value,
+          ),
+          AsyncData() => ListView(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(DriftSpacing.s6),
+                child: Text(
+                  "Padel hasn't been added yet.",
+                  style: type.body,
+                  textAlign: TextAlign.center,
                 ),
-              ],
-            ),
-            AsyncError() => ListView(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(DriftSpacing.s6),
-                  child: Text(
-                    "Couldn't load your Padel profile.",
-                    style: type.body,
-                    textAlign: TextAlign.center,
-                  ),
+              ),
+            ],
+          ),
+          AsyncError() => ListView(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(DriftSpacing.s6),
+                child: Text(
+                  "Couldn't load your Padel profile.",
+                  style: type.body,
+                  textAlign: TextAlign.center,
                 ),
-              ],
-            ),
-            _ => const Center(child: CircularProgressIndicator()),
-          },
-        ),
+              ),
+            ],
+          ),
+          _ => const Center(child: CircularProgressIndicator()),
+        },
       ),
     );
   }

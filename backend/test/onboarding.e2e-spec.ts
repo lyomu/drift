@@ -148,19 +148,30 @@ describe('Onboarding (e2e)', () => {
     expect(final.body.onboardingStep).toBe('COMPLETE');
     expect(final.body.onboardingCompletedAt).toBeTruthy();
 
+    // Identity data (level, goals) moved out of the feed and into the
+    // header endpoint — see HOME-AND-POLISH-PLAN.md Wave 2.7.
+    const summary = await authed('get', '/home/summary');
+    expect(summary.status).toBe(200);
+    expect(summary.body.level).toBe(7.0);
+    expect(summary.body.levelLabel).toBe('Advanced');
+    expect(summary.body.goals).toEqual(['play_more']);
+
     const feed = await authed('get', '/home/feed');
     expect(feed.status).toBe(200);
-    // First three cards only — a fresh, matchless/competitionless account is
-    // this test's scope (M3/M4). M10 added a 4th possible card,
-    // DEVELOPMENT_RECOMMENDATION, whenever seeded Learning content exists
-    // for this user's weakest skill; asserting the exact full array here
-    // would make this test depend on Learning's seed data, which isn't
-    // this spec's concern.
+    // A fresh, matchless/competitionless account has nothing in Tier 1
+    // (urgent), so the feed falls through to Tier 2 (discovery) cards.
+    // SUGGESTED_OPPONENTS and DEVELOPMENT_RECOMMENDATION are always
+    // reachable for a fully-onboarded user; NEARBY_COURTS, CLUB_ANNOUNCEMENT
+    // and ACHIEVEMENT_PROGRESS depend on seed data this spec doesn't set up
+    // (no club, no achievements yet), so they're absent here rather than
+    // asserted on. NEWS_HIGHLIGHT is the next card that's always reachable,
+    // so it's what actually follows in this environment.
     expect(
       feed.body.cards.slice(0, 3).map((c: { type: string }) => c.type),
-    ).toEqual(['LEVEL_SUMMARY', 'GOALS_SUMMARY', 'PLAY_STYLE_SUMMARY']);
-    expect(feed.body.cards[0].title).toContain('7.0');
-    expect(feed.body.cards[0].title).toContain('Advanced');
-    expect(feed.body.cards[1].body).toBe('play_more');
+    ).toEqual([
+      'SUGGESTED_OPPONENTS',
+      'DEVELOPMENT_RECOMMENDATION',
+      'NEWS_HIGHLIGHT',
+    ]);
   });
 });

@@ -3,21 +3,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/drift_colors.dart';
-import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
-import '../../../shared/widgets/buttons/drift_button.dart';
-import '../../../shared/widgets/drift_card.dart';
+import '../../../shared/widgets/buttons/drift_primary_button.dart';
+import '../../../shared/widgets/drift_back_header.dart';
+import '../../../shared/widgets/drift_pill.dart';
 import '../../../shared/widgets/drift_season_progress.dart';
-import '../../../shared/widgets/drift_status_badge.dart';
+import '../../../shared/widgets/drift_soft_card.dart';
 import '../../auth/data/auth_repository.dart';
 import '../application/competitions_providers.dart';
 import '../data/competitions_repository.dart';
 
-/// Season Detail — `foundation/04-screen-inventory.md` §A.5. Registration
-/// window state, Register/Join Waitlist with an inline confirm dialog
-/// (rather than a separate Registration/Waitlist screen — same fold-in
-/// discipline M6 used for time-proposal review), and entry points into
-/// Registered Players, Current Round, and Standings.
+/// Season Detail — `foundation/04-screen-inventory.md` §A.5 (redesign
+/// 2026-08). Registration window state, Register / Join Waitlist with an
+/// inline confirm dialog, and entry points into Registered Players, Current
+/// Round, and Standings.
 class SeasonDetailScreen extends ConsumerStatefulWidget {
   const SeasonDetailScreen({super.key, required this.seasonId});
 
@@ -51,97 +50,116 @@ class _SeasonDetailScreenState extends ConsumerState<SeasonDetailScreen> {
   Widget build(BuildContext context) {
     final season = ref.watch(seasonDetailProvider(widget.seasonId));
     final currentRound = ref.watch(currentRoundProvider(widget.seasonId));
+    final type = Theme.of(context).extension<DriftTypography>()!;
+    final colors = Theme.of(context).extension<DriftColors>()!;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Season')),
       body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () async {
-            ref.invalidate(seasonDetailProvider(widget.seasonId));
-            ref.invalidate(currentRoundProvider(widget.seasonId));
-            await ref.read(seasonDetailProvider(widget.seasonId).future);
-          },
-          child: switch (season) {
-            AsyncData(:final value) => ListView(
-              padding: const EdgeInsets.all(DriftSpacing.s5),
-              children: [
-                Text(
-                  value.label,
-                  style: Theme.of(context).extension<DriftTypography>()!.h1,
-                ),
-                const SizedBox(height: DriftSpacing.s1),
-                Text(
-                  value.leagueName,
-                  style: Theme.of(context)
-                      .extension<DriftTypography>()!
-                      .bodySmall
-                      .copyWith(
-                        color: Theme.of(
-                          context,
-                        ).extension<DriftColors>()!.textSecondary,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const DriftBackHeader(title: 'Season'),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  ref.invalidate(seasonDetailProvider(widget.seasonId));
+                  ref.invalidate(currentRoundProvider(widget.seasonId));
+                  await ref.read(seasonDetailProvider(widget.seasonId).future);
+                },
+                child: switch (season) {
+                  AsyncData(:final value) => ListView(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+                    children: [
+                      Text(
+                        value.label,
+                        style: type.h2.copyWith(fontWeight: FontWeight.w700),
                       ),
-                ),
-                const SizedBox(height: DriftSpacing.s3),
-                _StateBadge(state: value.state),
-                const SizedBox(height: DriftSpacing.s4),
+                      const SizedBox(height: 4),
+                      Text(
+                        value.leagueName,
+                        style: type.body.copyWith(
+                          color: colors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      DriftPill(
+                        label: value.state.label,
+                        tone: _tone(value.state),
+                      ),
+                      const SizedBox(height: 16),
 
-                if (value.state == SeasonState.active ||
-                    value.state == SeasonState.completed)
-                  DriftCard(
-                    child: DriftSeasonProgress(
-                      currentRound: currentRound.valueOrNull?.index ?? 0,
-                      roundCount: value.roundCount,
-                    ),
-                  ),
+                      if (value.state == SeasonState.active ||
+                          value.state == SeasonState.completed) ...[
+                        DriftSoftCard(
+                          child: DriftSeasonProgress(
+                            currentRound:
+                                currentRound.valueOrNull?.index ?? 0,
+                            roundCount: value.roundCount,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
 
-                const SizedBox(height: DriftSpacing.s4),
-                _RegistrationCard(
-                  season: value,
-                  isBusy: _isBusy,
-                  onRegister: () => _run(
-                    () => ref
-                        .read(competitionsRepositoryProvider)
-                        .register(widget.seasonId),
-                  ),
-                  onWithdraw: () => _run(
-                    () => ref
-                        .read(competitionsRepositoryProvider)
-                        .withdraw(widget.seasonId),
-                  ),
-                ),
+                      _RegistrationCard(
+                        season: value,
+                        isBusy: _isBusy,
+                        onRegister: () => _run(
+                          () => ref
+                              .read(competitionsRepositoryProvider)
+                              .register(widget.seasonId),
+                        ),
+                        onWithdraw: () => _run(
+                          () => ref
+                              .read(competitionsRepositoryProvider)
+                              .withdraw(widget.seasonId),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
 
-                const SizedBox(height: DriftSpacing.s4),
-                DriftCard(
-                  onTap: () => context.push(
-                    '/compete/seasons/${widget.seasonId}/players',
+                      DriftSoftCard(
+                        onTap: () => context.push(
+                          '/compete/seasons/${widget.seasonId}/players',
+                        ),
+                        child: const _LinkRow(label: 'Registered Players'),
+                      ),
+                      if (currentRound.valueOrNull != null) ...[
+                        const SizedBox(height: 12),
+                        DriftSoftCard(
+                          onTap: () => context.push(
+                            '/compete/seasons/${widget.seasonId}/rounds/'
+                            '${currentRound.value!.id}',
+                          ),
+                          child: const _LinkRow(label: 'Current Round'),
+                        ),
+                      ],
+                      const SizedBox(height: 12),
+                      DriftSoftCard(
+                        onTap: () => context.push(
+                          '/compete/seasons/${widget.seasonId}/standings',
+                        ),
+                        child: const _LinkRow(label: 'Standings'),
+                      ),
+                    ],
                   ),
-                  child: _LinkRow(label: 'Registered Players'),
-                ),
-                const SizedBox(height: DriftSpacing.s3),
-                if (currentRound.valueOrNull != null)
-                  DriftCard(
-                    onTap: () => context.push(
-                      '/compete/seasons/${widget.seasonId}/rounds/${currentRound.value!.id}',
-                    ),
-                    child: _LinkRow(label: 'Current Round'),
+                  AsyncError() => const Center(
+                    child: Text('Season not available.'),
                   ),
-                if (currentRound.valueOrNull != null)
-                  const SizedBox(height: DriftSpacing.s3),
-                DriftCard(
-                  onTap: () => context.push(
-                    '/compete/seasons/${widget.seasonId}/standings',
-                  ),
-                  child: _LinkRow(label: 'Standings'),
-                ),
-              ],
+                  _ => const Center(child: CircularProgressIndicator()),
+                },
+              ),
             ),
-            AsyncError() => const Center(child: Text('Season not available.')),
-            _ => const Center(child: CircularProgressIndicator()),
-          },
+          ],
         ),
       ),
     );
   }
+
+  DriftPillTone _tone(SeasonState state) => switch (state) {
+    SeasonState.registrationOpen || SeasonState.active => DriftPillTone.success,
+    SeasonState.scheduled => DriftPillTone.info,
+    SeasonState.cancelled => DriftPillTone.error,
+    _ => DriftPillTone.neutral,
+  };
 }
 
 class _LinkRow extends StatelessWidget {
@@ -151,45 +169,19 @@ class _LinkRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final type = Theme.of(context).extension<DriftTypography>()!;
+    final colors = Theme.of(context).extension<DriftColors>()!;
     return Row(
       children: [
         Expanded(
           child: Text(
             label,
-            style: Theme.of(context).extension<DriftTypography>()!.title,
+            style: type.body.copyWith(fontWeight: FontWeight.w600),
           ),
         ),
-        Icon(
-          Icons.chevron_right,
-          color: Theme.of(context).extension<DriftColors>()!.textSecondary,
-        ),
+        Icon(Icons.chevron_right, color: colors.textSecondary),
       ],
     );
-  }
-}
-
-class _StateBadge extends StatelessWidget {
-  const _StateBadge({required this.state});
-
-  final SeasonState state;
-
-  @override
-  Widget build(BuildContext context) {
-    final (tone, icon) = switch (state) {
-      SeasonState.draft => (DriftStatusTone.neutral, Icons.hourglass_empty),
-      SeasonState.registrationOpen => (
-        DriftStatusTone.success,
-        Icons.how_to_reg,
-      ),
-      SeasonState.scheduled => (DriftStatusTone.info, Icons.event),
-      SeasonState.active => (DriftStatusTone.success, Icons.sports_tennis),
-      SeasonState.completed => (
-        DriftStatusTone.neutral,
-        Icons.check_circle_outline,
-      ),
-      SeasonState.cancelled => (DriftStatusTone.error, Icons.cancel_outlined),
-    };
-    return DriftStatusBadge(label: state.label, tone: tone, icon: icon);
   }
 }
 
@@ -212,21 +204,24 @@ class _RegistrationCard extends StatelessWidget {
     final colors = Theme.of(context).extension<DriftColors>()!;
 
     if (season.viewerRegistrationStatus == SeasonRegistrationStatus.enrolled) {
-      return DriftCard(
+      return DriftSoftCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("You're registered", style: type.h4),
-            const SizedBox(height: DriftSpacing.s3),
+            Text(
+              "You're registered",
+              style: type.title.copyWith(fontWeight: FontWeight.w700),
+            ),
             if (season.state == SeasonState.registrationOpen ||
-                season.state == SeasonState.draft)
-              DriftButton(
+                season.state == SeasonState.draft) ...[
+              const SizedBox(height: 4),
+              DriftTextLink(
                 label: 'Withdraw',
-                variant: DriftButtonVariant.text,
                 onPressed: isBusy
                     ? null
                     : () => _confirmWithdraw(context, onWithdraw),
               ),
+            ],
           ],
         ),
       );
@@ -234,20 +229,22 @@ class _RegistrationCard extends StatelessWidget {
 
     if (season.viewerRegistrationStatus ==
         SeasonRegistrationStatus.waitlisted) {
-      return DriftCard(
+      return DriftSoftCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('On the waitlist', style: type.h4),
-            const SizedBox(height: DriftSpacing.s1),
+            Text(
+              'On the waitlist',
+              style: type.title.copyWith(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 2),
             Text(
               "We'll move you in automatically if a spot opens up.",
               style: type.bodySmall.copyWith(color: colors.textSecondary),
             ),
-            const SizedBox(height: DriftSpacing.s3),
-            DriftButton(
-              label: 'Leave Waitlist',
-              variant: DriftButtonVariant.text,
+            const SizedBox(height: 4),
+            DriftTextLink(
+              label: 'Leave waitlist',
               onPressed: isBusy
                   ? null
                   : () => _confirmWithdraw(context, onWithdraw),
@@ -258,7 +255,7 @@ class _RegistrationCard extends StatelessWidget {
     }
 
     if (season.state != SeasonState.registrationOpen) {
-      return DriftCard(
+      return DriftSoftCard(
         child: Text(
           season.state == SeasonState.draft
               ? 'Registration opens soon.'
@@ -271,20 +268,23 @@ class _RegistrationCard extends StatelessWidget {
     final isFull =
         season.capacity != null && season.enrolledCount >= season.capacity!;
 
-    return DriftCard(
+    return DriftSoftCard(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Registration open', style: type.h4),
-          const SizedBox(height: DriftSpacing.s1),
+          Text(
+            'Registration open',
+            style: type.title.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 2),
           Text(
             season.capacity != null
                 ? '${season.enrolledCount} of ${season.capacity} spots filled'
                 : '${season.enrolledCount} registered',
             style: type.bodySmall.copyWith(color: colors.textSecondary),
           ),
-          const SizedBox(height: DriftSpacing.s3),
-          DriftButton(
+          const SizedBox(height: 12),
+          DriftPrimaryButton(
             label: isFull ? 'Join Waitlist' : 'Register',
             onPressed: isBusy
                 ? null
@@ -308,8 +308,10 @@ class _RegistrationCard extends StatelessWidget {
         ),
         content: Text(
           isFull
-              ? "You'll be added to the waitlist and enrolled automatically if a spot opens up."
-              : "You'll be paired with other registered players once the season starts.",
+              ? "You'll be added to the waitlist and enrolled automatically "
+                    'if a spot opens up.'
+              : "You'll be paired with other registered players once the "
+                    'season starts.',
         ),
         actions: [
           TextButton(
@@ -335,7 +337,8 @@ class _RegistrationCard extends StatelessWidget {
       builder: (context) => AlertDialog(
         title: const Text('Withdraw from this season?'),
         content: const Text(
-          "You can register again later, as long as registration is still open.",
+          'You can register again later, as long as registration is still '
+          'open.',
         ),
         actions: [
           TextButton(

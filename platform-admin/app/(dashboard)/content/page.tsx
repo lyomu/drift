@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ActionLink, RowCard, StatBand } from "@/components/dashboard-design";
 import { api, ApiError } from "@/lib/api-client";
 import {
   BRANCH_OPTIONS,
@@ -9,7 +10,7 @@ import {
   type LearningContentListResponse,
   type LearningContentSummary,
 } from "@/lib/content-types";
-import { Badge, Card, EmptyState, ErrorBanner, Input, PageHeader, Select, Td, Th, statusTone } from "@/components/ui";
+import { Badge, Card, EmptyState, ErrorBanner, Field, Input, PageHeader, Select, statusTone } from "@/components/ui";
 
 function label(value: string | null) {
   return value ? value.replaceAll("_", " ") : "Any level";
@@ -46,7 +47,9 @@ export default function ContentLibraryPage() {
     }
   }, [branch, search, status, targetSkill, type]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   const counts = useMemo(() => ({
     lessons: rows?.filter((item) => item.type === "LESSON").length ?? 0,
@@ -59,63 +62,48 @@ export default function ContentLibraryPage() {
       <PageHeader
         title="Content Library"
         description="Platform lesson, drill, and learning-path catalogue."
-        action={<div className="flex flex-wrap gap-2"><Link href="/content/lessons/new" className="rounded-md bg-drift-primary px-4 py-2 text-sm font-semibold text-white hover:bg-drift-primary-dark focus:outline-none focus-visible:ring-2 focus-visible:ring-drift-primary">Create lesson</Link><Link href="/content/drills/new" className="rounded-md border border-drift-border bg-drift-surface px-4 py-2 text-sm font-semibold text-drift-text-primary hover:bg-drift-primary-light focus:outline-none focus-visible:ring-2 focus-visible:ring-drift-primary">Create drill</Link><Link href="/content/paths" className="rounded-md border border-drift-border bg-drift-surface px-4 py-2 text-sm font-semibold text-drift-text-primary hover:bg-drift-primary-light focus:outline-none focus-visible:ring-2 focus-visible:ring-drift-primary">Learning paths</Link></div>}
+        action={<div className="flex flex-wrap gap-2"><ActionLink href="/content/lessons/new" icon="menu_book" className="border-drift-primary bg-drift-primary text-white hover:bg-drift-primary-dark">Create lesson</ActionLink><ActionLink href="/content/drills/new" icon="sports_tennis">Create drill</ActionLink><ActionLink href="/content/paths" icon="conversion_path">Learning paths</ActionLink></div>}
       />
       <ErrorBanner message={error} />
 
-      <div className="mb-4 grid gap-3 md:grid-cols-3">
-        <Card className="p-4"><div className="text-xs font-semibold uppercase text-drift-text-secondary">Lessons</div><div className="mt-1 text-2xl font-bold text-drift-text-primary">{counts.lessons}</div></Card>
-        <Card className="p-4"><div className="text-xs font-semibold uppercase text-drift-text-secondary">Drills</div><div className="mt-1 text-2xl font-bold text-drift-text-primary">{counts.drills}</div></Card>
-        <Card className="p-4"><div className="text-xs font-semibold uppercase text-drift-text-secondary">Paths</div><div className="mt-1 text-2xl font-bold text-drift-text-primary">{counts.paths}</div></Card>
-      </div>
+      <StatBand
+        stats={[
+          { label: "Lessons", value: counts.lessons, icon: "menu_book" },
+          { label: "Drills", value: counts.drills, icon: "sports_tennis", tone: "green" },
+          { label: "Paths", value: counts.paths, icon: "conversion_path", tone: "amber" },
+        ]}
+      />
 
       <Card className="mb-4 p-4">
         <div className="grid gap-3 lg:grid-cols-[minmax(240px,1fr)_160px_150px_210px_170px]">
-          <Input aria-label="Search content" placeholder="Search title, summary, or instructions..." value={search} onChange={(event) => setSearch(event.target.value)} />
-          <Select aria-label="Content type" value={type} onChange={(event) => setType(event.target.value)}>
-            <option value="">Any type</option>
-            <option value="LESSON">Lesson</option>
-            <option value="DRILL">Drill</option>
-            <option value="TRAINING_PLAN">Learning path</option>
-          </Select>
-          <Select aria-label="Status" value={status} onChange={(event) => setStatus(event.target.value)}>
-            <option value="">Any status</option>
-            <option value="DRAFT">Draft</option>
-            <option value="PUBLISHED">Published</option>
-          </Select>
-          <Select aria-label="Target skill" value={targetSkill} onChange={(event) => setTargetSkill(event.target.value)}>
-            <option value="">Any skill</option>
-            {SKILL_OPTIONS.map((skill) => <option key={skill} value={skill}>{label(skill)}</option>)}
-          </Select>
-          <Select aria-label="Level" value={branch} onChange={(event) => setBranch(event.target.value)}>
-            <option value="">Any level</option>
-            {BRANCH_OPTIONS.map((item) => <option key={item} value={item}>{label(item)}</option>)}
-          </Select>
+          <Field label="Search"><Input aria-label="Search content" placeholder="Search title, summary, or instructions..." value={search} onChange={(event) => setSearch(event.target.value)} /></Field>
+          <Field label="Type"><Select aria-label="Content type" value={type} onChange={(event) => setType(event.target.value)}><option value="">Any type</option><option value="LESSON">Lesson</option><option value="DRILL">Drill</option><option value="TRAINING_PLAN">Learning path</option></Select></Field>
+          <Field label="Status"><Select aria-label="Status" value={status} onChange={(event) => setStatus(event.target.value)}><option value="">Any status</option><option value="DRAFT">Draft</option><option value="PUBLISHED">Published</option></Select></Field>
+          <Field label="Skill"><Select aria-label="Target skill" value={targetSkill} onChange={(event) => setTargetSkill(event.target.value)}><option value="">Any skill</option>{SKILL_OPTIONS.map((skill) => <option key={skill} value={skill}>{label(skill)}</option>)}</Select></Field>
+          <Field label="Level"><Select aria-label="Level" value={branch} onChange={(event) => setBranch(event.target.value)}><option value="">Any level</option>{BRANCH_OPTIONS.map((item) => <option key={item} value={item}>{label(item)}</option>)}</Select></Field>
         </div>
       </Card>
 
       {rows === null && !error && <EmptyState message="Loading content..." />}
       {rows?.length === 0 && <EmptyState message="Create your first lesson." />}
       {rows && rows.length > 0 && (
-        <Card className="overflow-x-auto p-0">
-          <table className="w-full min-w-[980px]">
-            <thead><tr><Th>Item</Th><Th>Type</Th><Th>Status</Th><Th>Skill</Th><Th>Level</Th><Th>Usage</Th><Th className="text-right">Action</Th></tr></thead>
-            <tbody>
-              {rows.map((content) => (
-                <tr key={content.id}>
-                  <Td><div className="font-semibold">{content.title}</div><div className="max-w-sm truncate text-xs text-drift-text-secondary" title={content.summary ?? undefined}>{content.summary ?? content.pathGoal ?? "No summary"}</div></Td>
-                  <Td><Badge tone="info">{label(content.type)}</Badge></Td>
-                  <Td><Badge tone={statusTone(content.status)}>{label(content.status)}</Badge></Td>
-                  <Td>{label(content.targetSkill)}</Td>
-                  <Td>{label(content.branch)}</Td>
-                  <Td>{content.type === "TRAINING_PLAN" ? `${content.counts.steps} steps` : `${content.counts.completions} completions`}<div className="text-xs text-drift-text-secondary">{content.counts.usedInPaths} path refs</div></Td>
-                  <Td className="text-right"><Link href={routeFor(content)} className="font-semibold text-drift-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-drift-primary">Open</Link></Td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <div className="px-3 py-2 text-xs text-drift-text-secondary">Showing {rows.length} of {total}</div>
-        </Card>
+        <div className="grid gap-3">
+          {rows.map((content) => (
+            <RowCard key={content.id}>
+              <div className="grid gap-3 lg:grid-cols-[minmax(0,1.5fr)_130px_190px_150px_auto] lg:items-center">
+                <div className="min-w-0">
+                  <div className="font-bold text-drift-text-primary">{content.title}</div>
+                  <div className="truncate text-xs text-drift-text-secondary" title={content.summary ?? undefined}>{content.summary ?? content.pathGoal ?? "No summary"}</div>
+                </div>
+                <Badge tone="info">{label(content.type)}</Badge>
+                <div className="flex flex-wrap gap-2"><Badge tone={statusTone(content.status)}>{label(content.status)}</Badge><span className="text-sm text-drift-text-secondary">{label(content.targetSkill)}</span></div>
+                <div className="text-sm font-semibold text-drift-text-secondary">{content.type === "TRAINING_PLAN" ? `${content.counts.steps} steps` : `${content.counts.completions} completions`}<div className="text-xs">{content.counts.usedInPaths} path refs</div></div>
+                <Link href={routeFor(content)} className="justify-self-start font-bold text-drift-primary hover:underline lg:justify-self-end">Open</Link>
+              </div>
+            </RowCard>
+          ))}
+          <div className="px-1 text-xs font-semibold text-drift-text-secondary">Showing {rows.length} of {total}</div>
+        </div>
       )}
     </div>
   );

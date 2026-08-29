@@ -6,6 +6,7 @@ import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
 import '../../../shared/widgets/drift_filter_chip.dart';
+import '../../../shared/widgets/drift_scaffold.dart';
 import '../../../shared/widgets/drift_text_field.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../users/data/users_repository.dart';
@@ -71,52 +72,44 @@ class _BasicProfileScreenState extends ConsumerState<BasicProfileScreen> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<DriftColors>()!;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Basic Profile')),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(DriftSpacing.s6),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              DriftTextField(
-                label: 'First name',
-                controller: _firstNameController,
-              ),
-              const SizedBox(height: DriftSpacing.s4),
-              DriftTextField(
-                label: 'Last name',
-                controller: _lastNameController,
-              ),
-              const SizedBox(height: DriftSpacing.s6),
-              Text(
-                'Playing hand',
-                style: Theme.of(context).textTheme.labelLarge,
-              ),
-              const SizedBox(height: DriftSpacing.s2),
-              Wrap(
-                spacing: DriftSpacing.s2,
-                children: _dominantHands
-                    .map(
-                      (hand) => DriftFilterChip(
-                        label: hand.$2,
-                        selected: _dominantHand == hand.$1,
-                        onTap: () => setState(() => _dominantHand = hand.$1),
-                      ),
-                    )
-                    .toList(),
-              ),
-              if (_errorText != null) ...[
-                const SizedBox(height: DriftSpacing.s3),
-                Text(_errorText!, style: TextStyle(color: colors.error)),
-              ],
-              const SizedBox(height: DriftSpacing.s6),
-              DriftButton(
-                label: _isSubmitting ? 'Saving…' : 'Continue',
-                onPressed: _isSubmitting ? null : _submit,
-              ),
+    return DriftScaffold(
+      title: 'Basic Profile',
+      body: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            DriftTextField(
+              label: 'First name',
+              controller: _firstNameController,
+            ),
+            const SizedBox(height: DriftSpacing.s4),
+            DriftTextField(label: 'Last name', controller: _lastNameController),
+            const SizedBox(height: DriftSpacing.s6),
+            Text('Playing hand', style: Theme.of(context).textTheme.labelLarge),
+            const SizedBox(height: DriftSpacing.s2),
+            Wrap(
+              spacing: DriftSpacing.s2,
+              children: _dominantHands
+                  .map(
+                    (hand) => DriftFilterChip(
+                      label: hand.$2,
+                      selected: _dominantHand == hand.$1,
+                      onTap: () => setState(() => _dominantHand = hand.$1),
+                    ),
+                  )
+                  .toList(),
+            ),
+            if (_errorText != null) ...[
+              const SizedBox(height: DriftSpacing.s3),
+              Text(_errorText!, style: TextStyle(color: colors.error)),
             ],
-          ),
+            const SizedBox(height: DriftSpacing.s6),
+            DriftButton(
+              label: _isSubmitting ? 'Saving…' : 'Continue',
+              onPressed: _isSubmitting ? null : _submit,
+            ),
+          ],
         ),
       ),
     );

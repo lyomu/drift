@@ -26,6 +26,14 @@ class DriftFilterChip extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(999),
       child: Container(
+        // 44dp minimum height, per the Material/WCAG touch-target guidance.
+        // The chip's own padding only produced ~32dp, and this widget is
+        // reused across news categories, player filters and court filters, so
+        // the shortfall was systemic rather than cosmetic. Constraining the
+        // box (rather than adding vertical padding) keeps the pill's visual
+        // proportions while growing the tappable area.
+        constraints: const BoxConstraints(minHeight: 44),
+        alignment: Alignment.center,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: selected ? colors.primary : colors.surface,

@@ -404,7 +404,10 @@ StandingRow standingRow({
 RegisteredPlayer registeredPlayer({
   String id = 'u2',
   SeasonRegistrationStatus status = SeasonRegistrationStatus.enrolled,
-}) => RegisteredPlayer(status: status, player: playerSummary(id: id));
+}) => RegisteredPlayer(
+  status: status,
+  player: playerSummary(id: id),
+);
 
 // ----------------------------------------------------------------- courts
 
@@ -481,7 +484,11 @@ ContentDetail contentDetail({
   String? title,
   List<ContentSummary> steps = const [],
 }) => ContentDetail(
-  summary: contentSummary(id: id, type: type, title: title ?? 'Serve placement ladder'),
+  summary: contentSummary(
+    id: id,
+    type: type,
+    title: title ?? 'Serve placement ladder',
+  ),
   bodyText: 'Stand side-on and swing up through the ball.',
   videoUrl: null,
   steps: steps,
@@ -588,6 +595,8 @@ ChatMessage chatMessage({
   body: body,
   systemEvent: systemEvent,
   relatedMatchId: null,
+  relatedLeagueId: null,
+  relatedLeagueName: null,
   createdAt: DateTime(2026, 8, 23, 10),
 );
 
@@ -598,22 +607,47 @@ Conversation conversation({String id = 'conv-1', int unread = 2}) =>
       matchId: 'match-1',
       unreadCount: unread,
       lastMessage: chatMessage(),
-      participants: [playerSummary(id: 'u1'), playerSummary(id: 'u2')],
+      participants: [
+        playerSummary(id: 'u1'),
+        playerSummary(id: 'u2'),
+      ],
       lastMessageAt: DateTime(2026, 8, 23, 10),
     );
 
 // ------------------------------------------------------ home / connections
 
+HomeSummary homeSummary({
+  String? firstName = 'Ana',
+  double? level = 4.0,
+  double? singlesRating = 4.2,
+  double? doublesRating,
+}) => HomeSummary(
+  firstName: firstName,
+  level: level,
+  levelLabel: level == null ? null : 'Intermediate',
+  singlesRating: singlesRating,
+  doublesRating: doublesRating,
+  goals: const ['Play more matches'],
+);
+
 HomeCard homeCard({
   String id = 'card-1',
   String type = 'UNCONFIRMED_RESULT',
   String title = 'Confirm a result',
+  HomeCardAccent accent = HomeCardAccent.urgent,
+  bool dismissible = false,
+  HomeCardAction? action,
+  HomeCardData? data,
 }) => HomeCard(
   id: id,
   type: type,
   priority: 10,
   title: title,
   body: 'Ana submitted a score.',
+  accent: accent,
+  dismissible: dismissible,
+  action: action,
+  data: data,
 );
 
 ConnectionEntry connectionEntry({String id = 'conn-1', bool accepted = true}) =>

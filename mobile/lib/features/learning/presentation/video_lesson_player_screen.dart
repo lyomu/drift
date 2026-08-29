@@ -7,6 +7,7 @@ import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
 import '../../../shared/widgets/drift_card.dart';
+import '../../../shared/widgets/drift_scaffold.dart';
 import '../application/learning_providers.dart';
 import '../data/learning_repository.dart';
 
@@ -106,33 +107,29 @@ class _VideoLessonPlayerScreenState
   Widget build(BuildContext context) {
     final content = ref.watch(contentDetailProvider(widget.contentId));
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Video lesson')),
-      body: SafeArea(
-        child: switch (content) {
-          AsyncData(:final value) => _Body(
-            content: value,
-            controller: _controller,
-            isInitializing: _isInitializing,
-            playbackError: _playbackError,
-            completedPlayback: _completedPlayback,
-            isMarking: _isMarking,
-            onLoad: _ensureController,
-            onRetry: _retry,
-            onMarkComplete: _markComplete,
-            onTogglePlay: () {
-              final controller = _controller;
-              if (controller == null) return;
-              controller.value.isPlaying
-                  ? controller.pause()
-                  : controller.play();
-              setState(() {});
-            },
-          ),
-          AsyncError() => const Center(child: Text('Video lesson not found.')),
-          _ => const Center(child: CircularProgressIndicator()),
-        },
-      ),
+    return DriftScaffold(
+      title: 'Video lesson',
+      body: switch (content) {
+        AsyncData(:final value) => _Body(
+          content: value,
+          controller: _controller,
+          isInitializing: _isInitializing,
+          playbackError: _playbackError,
+          completedPlayback: _completedPlayback,
+          isMarking: _isMarking,
+          onLoad: _ensureController,
+          onRetry: _retry,
+          onMarkComplete: _markComplete,
+          onTogglePlay: () {
+            final controller = _controller;
+            if (controller == null) return;
+            controller.value.isPlaying ? controller.pause() : controller.play();
+            setState(() {});
+          },
+        ),
+        AsyncError() => const Center(child: Text('Video lesson not found.')),
+        _ => const Center(child: CircularProgressIndicator()),
+      },
     );
   }
 }

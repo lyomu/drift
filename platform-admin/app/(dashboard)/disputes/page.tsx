@@ -1,15 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { RowCard } from "@/components/dashboard-design";
 import { api, ApiError } from "@/lib/api-client";
-import {
-  Badge,
-  Button,
-  Card,
-  EmptyState,
-  ErrorBanner,
-  PageHeader,
-} from "@/components/ui";
+import { Badge, Button, EmptyState, ErrorBanner, PageHeader } from "@/components/ui";
 
 interface DisputeRow {
   id: string;
@@ -27,10 +21,8 @@ interface DisputeRow {
 }
 
 function nameOf(p: DisputeRow["match"]["participants"][number] | undefined): string {
-  if (!p) return "—";
-  return (
-    [p.user.firstName, p.user.lastName].filter(Boolean).join(" ") || p.user.email
-  );
+  if (!p) return "-";
+  return [p.user.firstName, p.user.lastName].filter(Boolean).join(" ") || p.user.email;
 }
 
 function setsText(sets: DisputeRow["sets"]): string {
@@ -62,8 +54,9 @@ export default function DisputesPage() {
       !window.confirm(
         `Uphold the ${ruling === "SUBMITTED" ? "submitted" : "disputant"} version? This finalises the match and updates ratings.`,
       )
-    )
+    ) {
       return;
+    }
     setBusyId(matchId);
     try {
       await api.post(`/disputes/${matchId}/rule`, { ruling });
@@ -83,47 +76,47 @@ export default function DisputesPage() {
       />
       <ErrorBanner message={error} />
 
-      {rows === null && !error && <EmptyState message="Loading…" />}
+      {rows === null && !error && <EmptyState message="Loading..." />}
       {rows?.length === 0 && <EmptyState message="No open disputes." />}
 
       {rows && rows.length > 0 && (
         <div className="flex flex-col gap-4">
-          {rows.map((d) => {
-            const a = d.match.participants.find((p) => p.side === "A");
-            const b = d.match.participants.find((p) => p.side === "B");
+          {rows.map((dispute) => {
+            const a = dispute.match.participants.find((p) => p.side === "A");
+            const b = dispute.match.participants.find((p) => p.side === "B");
             return (
-              <Card key={d.id}>
+              <RowCard key={dispute.id}>
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                   <Badge tone="error">DISPUTED</Badge>
                   <span className="text-xs text-drift-text-secondary">
-                    disputed {new Date(d.disputedAt).toLocaleString()}
+                    disputed {new Date(dispute.disputedAt).toLocaleString()}
                   </span>
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-md border border-drift-border p-3">
-                    <div className="text-xs font-bold uppercase tracking-wide text-drift-text-secondary">
+                  <div className="rounded-lg border border-drift-border bg-drift-neutral-surface p-3">
+                    <div className="text-xs font-bold uppercase tracking-[0.08em] text-drift-text-secondary">
                       Submitted version
                     </div>
-                    <div className="mt-1 text-sm">
+                    <div className="mt-1 text-sm text-drift-text-primary">
                       {nameOf(a)} vs {nameOf(b)}
                     </div>
-                    <div className="mt-1 font-display text-lg font-bold">
-                      {setsText(d.sets)}
+                    <div className="mt-1 font-display text-lg font-bold text-drift-text-primary">
+                      {setsText(dispute.sets)}
                     </div>
                     <div className="mt-0.5 text-xs text-drift-text-secondary">
                       submitted by {nameOf(a)}
                     </div>
                   </div>
-                  <div className="rounded-md border border-drift-border p-3">
-                    <div className="text-xs font-bold uppercase tracking-wide text-drift-text-secondary">
+                  <div className="rounded-lg border border-drift-border bg-drift-neutral-surface p-3">
+                    <div className="text-xs font-bold uppercase tracking-[0.08em] text-drift-text-secondary">
                       Disputing version
                     </div>
-                    <div className="mt-1 text-sm">
+                    <div className="mt-1 text-sm text-drift-text-primary">
                       {nameOf(b)} claims the win
                     </div>
-                    <div className="mt-1 font-display text-lg font-bold">
-                      {setsText(d.disputantSets)}
+                    <div className="mt-1 font-display text-lg font-bold text-drift-text-primary">
+                      {setsText(dispute.disputantSets)}
                     </div>
                     <div className="mt-0.5 text-xs text-drift-text-secondary">
                       disputed by {nameOf(b)}
@@ -132,21 +125,14 @@ export default function DisputesPage() {
                 </div>
 
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <Button
-                    disabled={busyId === d.matchId}
-                    onClick={() => rule(d.matchId, "SUBMITTED")}
-                  >
+                  <Button icon="gavel" disabled={busyId === dispute.matchId} onClick={() => rule(dispute.matchId, "SUBMITTED")}>
                     Uphold submitted version
                   </Button>
-                  <Button
-                    variant="secondary"
-                    disabled={busyId === d.matchId}
-                    onClick={() => rule(d.matchId, "DISPUTANT")}
-                  >
+                  <Button icon="rule" variant="secondary" disabled={busyId === dispute.matchId} onClick={() => rule(dispute.matchId, "DISPUTANT")}>
                     Uphold disputing version
                   </Button>
                 </div>
-              </Card>
+              </RowCard>
             );
           })}
         </div>

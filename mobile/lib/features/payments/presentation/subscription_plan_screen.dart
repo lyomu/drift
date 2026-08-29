@@ -7,6 +7,7 @@ import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
 import '../../../shared/widgets/drift_card.dart';
+import '../../../shared/widgets/drift_scaffold.dart';
 import '../../../shared/widgets/drift_status_badge.dart';
 import '../application/payments_providers.dart';
 import '../data/payments_repository.dart';
@@ -18,20 +19,18 @@ class SubscriptionPlanScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final summary = ref.watch(billingSummaryProvider);
-    return Scaffold(
-      appBar: AppBar(title: const Text('Subscription & Plan')),
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () => ref.refresh(billingSummaryProvider.future),
-          child: switch (summary) {
-            AsyncData(:final value) => _SubscriptionBody(summary: value),
-            AsyncError() => BillingLoadError(
-                message: "Couldn't load your subscription.",
-                retry: () => ref.invalidate(billingSummaryProvider),
-              ),
-            _ => const Center(child: CircularProgressIndicator()),
-          },
-        ),
+    return DriftScaffold(
+      title: 'Subscription & Plan',
+      body: RefreshIndicator(
+        onRefresh: () => ref.refresh(billingSummaryProvider.future),
+        child: switch (summary) {
+          AsyncData(:final value) => _SubscriptionBody(summary: value),
+          AsyncError() => BillingLoadError(
+            message: "Couldn't load your subscription.",
+            retry: () => ref.invalidate(billingSummaryProvider),
+          ),
+          _ => const Center(child: CircularProgressIndicator()),
+        },
       ),
     );
   }

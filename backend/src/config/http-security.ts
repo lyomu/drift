@@ -67,5 +67,15 @@ export function configureHttpApp(
 ): void {
   app.use(helmet());
   app.enableCors(corsOptions(environment));
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      // Reject unknown properties rather than silently stripping them.
+      // Stripping hides client bugs: a request with a misspelled field used
+      // to succeed while quietly ignoring it, which is far harder to debug
+      // than a 400 naming the offending property.
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
 }

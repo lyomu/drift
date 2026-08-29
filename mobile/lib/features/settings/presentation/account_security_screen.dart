@@ -8,6 +8,7 @@ import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
 import '../../../shared/widgets/drift_card.dart';
+import '../../../shared/widgets/drift_scaffold.dart';
 import '../../../shared/widgets/drift_text_field.dart';
 import '../../auth/data/auth_repository.dart';
 
@@ -86,52 +87,48 @@ class _AccountSecurityScreenState extends ConsumerState<AccountSecurityScreen> {
     final type = Theme.of(context).extension<DriftTypography>()!;
     final colors = Theme.of(context).extension<DriftColors>()!;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Account & Security')),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(DriftSpacing.s5),
-          children: [
-            DriftCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text('Change password', style: type.title),
+    return DriftScaffold(
+      title: 'Account & Security',
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+        children: [
+          DriftCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text('Change password', style: type.title),
+                const SizedBox(height: DriftSpacing.s3),
+                DriftTextField(
+                  label: 'Current password',
+                  controller: _currentPasswordController,
+                  obscureText: true,
+                ),
+                const SizedBox(height: DriftSpacing.s3),
+                DriftTextField(
+                  label: 'New password',
+                  controller: _newPasswordController,
+                  obscureText: true,
+                ),
+                if (_errorText != null) ...[
                   const SizedBox(height: DriftSpacing.s3),
-                  DriftTextField(
-                    label: 'Current password',
-                    controller: _currentPasswordController,
-                    obscureText: true,
-                  ),
-                  const SizedBox(height: DriftSpacing.s3),
-                  DriftTextField(
-                    label: 'New password',
-                    controller: _newPasswordController,
-                    obscureText: true,
-                  ),
-                  if (_errorText != null) ...[
-                    const SizedBox(height: DriftSpacing.s3),
-                    Text(_errorText!, style: TextStyle(color: colors.error)),
-                  ],
-                  const SizedBox(height: DriftSpacing.s4),
-                  DriftButton(
-                    label: _isChangingPassword
-                        ? 'Updating…'
-                        : 'Update password',
-                    onPressed: _isChangingPassword ? null : _changePassword,
-                  ),
+                  Text(_errorText!, style: TextStyle(color: colors.error)),
                 ],
-              ),
+                const SizedBox(height: DriftSpacing.s4),
+                DriftButton(
+                  label: _isChangingPassword ? 'Updating…' : 'Update password',
+                  onPressed: _isChangingPassword ? null : _changePassword,
+                ),
+              ],
             ),
-            const SizedBox(height: DriftSpacing.s5),
-            DriftButton(
-              label: _isLoggingOut ? 'Signing out…' : 'Log out',
-              variant: DriftButtonVariant.text,
-              foregroundColor: colors.error,
-              onPressed: _isLoggingOut ? null : _logout,
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: DriftSpacing.s5),
+          DriftButton(
+            label: _isLoggingOut ? 'Signing out…' : 'Log out',
+            variant: DriftButtonVariant.text,
+            foregroundColor: colors.error,
+            onPressed: _isLoggingOut ? null : _logout,
+          ),
+        ],
       ),
     );
   }

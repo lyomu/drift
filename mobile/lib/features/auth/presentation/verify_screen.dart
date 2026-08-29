@@ -7,6 +7,7 @@ import '../../../core/onboarding/onboarding_step_route.dart';
 import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
+import '../../../shared/widgets/drift_back_header.dart';
 import '../../../shared/widgets/drift_text_field.dart';
 import '../../users/data/users_repository.dart';
 import '../application/auth_controller.dart';
@@ -97,43 +98,50 @@ class _VerifyScreenState extends ConsumerState<VerifyScreen> {
     final canResend = !_isResending && _cooldownSeconds == 0;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Verify')),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(DriftSpacing.s6),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text('Enter the 6-digit code we sent to ${widget.email}.'),
-              const SizedBox(height: DriftSpacing.s4),
-              DriftTextField(
-                label: 'Code',
-                controller: _codeController,
-                keyboardType: TextInputType.number,
-              ),
-              if (_errorText != null) ...[
-                const SizedBox(height: DriftSpacing.s3),
-                Text(_errorText!, style: TextStyle(color: colors.error)),
-              ],
-              const SizedBox(height: DriftSpacing.s6),
-              DriftButton(
-                label: _isSubmitting ? 'Verifying…' : 'Verify',
-                onPressed: _isSubmitting ? null : _submit,
-              ),
-              const SizedBox(height: DriftSpacing.s2),
-              Center(
-                child: DriftButton(
-                  label: canResend
-                      ? 'Resend code'
-                      : _isResending
-                      ? 'Sending…'
-                      : 'Resend in ${_cooldownSeconds}s',
-                  variant: DriftButtonVariant.text,
-                  onPressed: canResend ? _resend : null,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const DriftBackHeader(title: 'Verify'),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text('Enter the 6-digit code we sent to ${widget.email}.'),
+                    const SizedBox(height: DriftSpacing.s4),
+                    DriftTextField(
+                      label: 'Code',
+                      controller: _codeController,
+                      keyboardType: TextInputType.number,
+                    ),
+                    if (_errorText != null) ...[
+                      const SizedBox(height: DriftSpacing.s3),
+                      Text(_errorText!, style: TextStyle(color: colors.error)),
+                    ],
+                    const SizedBox(height: DriftSpacing.s6),
+                    DriftButton(
+                      label: _isSubmitting ? 'Verifying…' : 'Verify',
+                      onPressed: _isSubmitting ? null : _submit,
+                    ),
+                    const SizedBox(height: DriftSpacing.s2),
+                    Center(
+                      child: DriftButton(
+                        label: canResend
+                            ? 'Resend code'
+                            : _isResending
+                            ? 'Sending…'
+                            : 'Resend in ${_cooldownSeconds}s',
+                        variant: DriftButtonVariant.text,
+                        onPressed: canResend ? _resend : null,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

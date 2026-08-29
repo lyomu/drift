@@ -80,19 +80,30 @@ class DriftPlayerAvatar extends StatelessWidget {
     final colors = Theme.of(context).extension<DriftColors>()!;
     final type = Theme.of(context).extension<DriftTypography>()!;
 
-    if (player.photoUrl != null && player.photoUrl!.isNotEmpty) {
-      return CircleAvatar(
-        radius: radius,
-        backgroundImage: NetworkImage(player.photoUrl!),
-      );
-    }
-
     final initials = [player.firstName, player.lastName]
         .whereType<String>()
         .where((p) => p.isNotEmpty)
         .map((p) => p[0].toUpperCase())
         .take(2)
         .join();
+
+    if (player.photoUrl != null && player.photoUrl!.isNotEmpty) {
+      // `foregroundImage` (not `backgroundImage`) so the initials below stay
+      // visible if the photo fails: a dead or malformed URL previously threw
+      // on every rebuild and left a blank circle with no fallback. The error
+      // callback is required for that fallback to render at all — without it
+      // the exception propagates instead.
+      return CircleAvatar(
+        radius: radius,
+        backgroundColor: colors.primaryLight,
+        foregroundImage: NetworkImage(player.photoUrl!),
+        onForegroundImageError: (_, _) {},
+        child: Text(
+          initials.isEmpty ? '?' : initials,
+          style: type.label.copyWith(color: colors.primaryDark),
+        ),
+      );
+    }
 
     return CircleAvatar(
       radius: radius,

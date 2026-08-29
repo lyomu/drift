@@ -6,6 +6,7 @@ import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
 import '../../../shared/widgets/drift_filter_chip.dart';
+import '../../../shared/widgets/drift_scaffold.dart';
 import '../../../shared/widgets/drift_text_field.dart';
 import '../../auth/data/auth_repository.dart';
 import '../application/learning_providers.dart';
@@ -108,72 +109,70 @@ class _AddPracticeSessionScreenState
     final type = Theme.of(context).extension<DriftTypography>()!;
     final colors = Theme.of(context).extension<DriftColors>()!;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Log Practice')),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(DriftSpacing.s6),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text('Skill focus', style: type.label),
-              const SizedBox(height: DriftSpacing.s2),
-              Wrap(
-                spacing: DriftSpacing.s2,
-                runSpacing: DriftSpacing.s2,
-                children: [
-                  for (final option in _skillOptions)
-                    DriftFilterChip(
-                      label: option.label,
-                      selected: _skillFocus == option.value,
-                      onTap: () => setState(() => _skillFocus = option.value),
-                    ),
-                ],
-              ),
-              const SizedBox(height: DriftSpacing.s4),
-              DriftButton(
-                label:
-                    'Date: ${_occurredAt.day}/${_occurredAt.month}/${_occurredAt.year}',
-                variant: DriftButtonVariant.text,
-                onPressed: _pickDate,
-              ),
-              const SizedBox(height: DriftSpacing.s3),
-              DriftTextField(
-                label: 'Duration (minutes)',
-                controller: _durationController,
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: DriftSpacing.s4),
-              Text('How did it feel?', style: type.label),
-              const SizedBox(height: DriftSpacing.s2),
-              Wrap(
-                spacing: DriftSpacing.s2,
-                children: [
-                  for (var i = 1; i <= 5; i++)
-                    DriftFilterChip(
-                      label: '$i',
-                      selected: _perceivedPerformance == i,
-                      onTap: () => setState(() => _perceivedPerformance = i),
-                    ),
-                ],
-              ),
-              const SizedBox(height: DriftSpacing.s4),
-              DriftTextField(
-                label: 'Notes (optional)',
-                controller: _notesController,
-                maxLines: 3,
-              ),
-              if (_errorText != null) ...[
-                const SizedBox(height: DriftSpacing.s3),
-                Text(_errorText!, style: TextStyle(color: colors.error)),
+    return DriftScaffold(
+      title: 'Log Practice',
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('Skill focus', style: type.label),
+            const SizedBox(height: DriftSpacing.s2),
+            Wrap(
+              spacing: DriftSpacing.s2,
+              runSpacing: DriftSpacing.s2,
+              children: [
+                for (final option in _skillOptions)
+                  DriftFilterChip(
+                    label: option.label,
+                    selected: _skillFocus == option.value,
+                    onTap: () => setState(() => _skillFocus = option.value),
+                  ),
               ],
-              const SizedBox(height: DriftSpacing.s6),
-              DriftButton(
-                label: _isSubmitting ? 'Saving…' : 'Save',
-                onPressed: _isSubmitting ? null : _submit,
-              ),
+            ),
+            const SizedBox(height: DriftSpacing.s4),
+            DriftButton(
+              label:
+                  'Date: ${_occurredAt.day}/${_occurredAt.month}/${_occurredAt.year}',
+              variant: DriftButtonVariant.text,
+              onPressed: _pickDate,
+            ),
+            const SizedBox(height: DriftSpacing.s3),
+            DriftTextField(
+              label: 'Duration (minutes)',
+              controller: _durationController,
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: DriftSpacing.s4),
+            Text('How did it feel?', style: type.label),
+            const SizedBox(height: DriftSpacing.s2),
+            Wrap(
+              spacing: DriftSpacing.s2,
+              children: [
+                for (var i = 1; i <= 5; i++)
+                  DriftFilterChip(
+                    label: '$i',
+                    selected: _perceivedPerformance == i,
+                    onTap: () => setState(() => _perceivedPerformance = i),
+                  ),
+              ],
+            ),
+            const SizedBox(height: DriftSpacing.s4),
+            DriftTextField(
+              label: 'Notes (optional)',
+              controller: _notesController,
+              maxLines: 3,
+            ),
+            if (_errorText != null) ...[
+              const SizedBox(height: DriftSpacing.s3),
+              Text(_errorText!, style: TextStyle(color: colors.error)),
             ],
-          ),
+            const SizedBox(height: DriftSpacing.s6),
+            DriftButton(
+              label: _isSubmitting ? 'Saving…' : 'Save',
+              onPressed: _isSubmitting ? null : _submit,
+            ),
+          ],
         ),
       ),
     );

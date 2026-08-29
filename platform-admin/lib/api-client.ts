@@ -84,11 +84,57 @@ async function apiFetch<T>(
   return data as T;
 }
 
-/** Every path here is already under /platform-admin — callers stay relative. */
+async function rawFetch(path: string, init?: RequestInit): Promise<Response> {
+  const token = getToken();
+  const headers = new Headers(init?.headers);
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+  const res = await fetch(`${API_URL}${path}`, { ...init, headers });
+  if (!res.ok) {
+    if (res.status === 401 && typeof window !== "undefined") setToken(null);
+    const body = (await res.json().catch(() => undefined)) as
+      | { message?: string | string[] }
+      | undefined;
+    const message = Array.isArray(body?.message)
+      ? body.message.join(", ")
+      : (body?.message ?? res.statusText);
+    throw new ApiError(res.status, message);
+  }
+  return res;
+}
+
+/**
+ * Every path here is already under /platform-admin — callers stay relative.
+ *
+ * `delete`/`upload`/`blob` mirror `club-admin/lib/api-client.ts`. They have no
+ * call sites in this console yet; they exist so the first page that needs a
+ * delete or a file download reaches for the shared client instead of
+ * hand-rolling `fetch` with its own auth header and error handling — which is
+ * how the two clients drifted apart in the first place.
+ */
 export const api = {
   get: <T>(path: string) => apiFetch<T>(`/platform-admin${path}`),
   post: <T>(path: string, body?: unknown) =>
     apiFetch<T>(`/platform-admin${path}`, { method: "POST", body }),
   patch: <T>(path: string, body?: unknown) =>
     apiFetch<T>(`/platform-admin${path}`, { method: "PATCH", body }),
+  delete: <T>(path: string) =>
+    apiFetch<T>(`/platform-admin${path}`, { method: "DELETE" }),
+  upload: async <T>(path: string, form: FormData) => {
+    const res = await rawFetch(`/platform-admin${path}`, {
+      method: "POST",
+      body: form,
+    });
+    return res.json() as Promise<T>;
+  },
+  blob: async (path: string) =>
+    (await rawFetch(`/platform-admin${path}`)).blob(),
 };
+
+export function downloadBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}

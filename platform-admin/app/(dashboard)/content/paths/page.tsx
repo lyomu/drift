@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import { ActionLink, RowCard } from "@/components/dashboard-design";
 import { api, ApiError } from "@/lib/api-client";
 import {
   BRANCH_OPTIONS,
@@ -166,23 +166,18 @@ export default function LearningPathsPage() {
       <PageHeader
         title="Learning Path Builder"
         description="Organise lessons and drills into skill, level, and goal-based paths."
-        action={<Link href="/content" className="text-sm font-semibold text-drift-primary hover:underline">Back to library</Link>}
+        action={<ActionLink href="/content" icon="library_books">Back to library</ActionLink>}
       />
       <ErrorBanner message={error} />
       {saved && <div className="mb-4 rounded-md border border-drift-success/30 bg-drift-success-surface px-4 py-3 text-sm text-drift-success">Learning path saved.</div>}
 
       <div className="grid gap-5 xl:grid-cols-[360px_minmax(0,1fr)]">
         <div className="flex flex-col gap-3">
-          <Button type="button" variant="secondary" onClick={startNew}>New path</Button>
+          <Button type="button" variant="secondary" icon="add" onClick={startNew}>New path</Button>
           {paths === null && !error && <EmptyState message="Loading learning paths..." />}
           {paths?.length === 0 && <EmptyState message="Build your first learning path." />}
           {paths?.map((path) => (
-            <button
-              key={path.id}
-              type="button"
-              onClick={() => setSelectedId(path.id)}
-              className={`rounded-lg border bg-drift-surface p-4 text-left shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-drift-primary ${selectedId === path.id ? "border-drift-primary" : "border-drift-border hover:bg-drift-primary-light"}`}
-            >
+            <RowCard key={path.id} selected={selectedId === path.id} onClick={() => setSelectedId(path.id)}>
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <div className="font-semibold text-drift-text-primary">{path.title}</div>
@@ -191,7 +186,7 @@ export default function LearningPathsPage() {
                 <Badge tone={statusTone(path.status)}>{label(path.status)}</Badge>
               </div>
               <div className="mt-3 text-sm text-drift-text-secondary">{path.pathGoal || path.summary || `${path.counts.steps} steps`}</div>
-            </button>
+            </RowCard>
           ))}
         </div>
 
@@ -238,9 +233,9 @@ export default function LearningPathsPage() {
             </div>
 
             <div className="flex flex-wrap gap-2 md:col-span-2">
-              <Button type="submit" disabled={busy || form.stepIds.length === 0} onClick={() => setSubmitStatus(null)}>{busy ? "Saving..." : "Save path"}</Button>
-              <Button type="submit" variant="secondary" disabled={busy || form.stepIds.length === 0} onClick={() => setSubmitStatus("DRAFT")}>Save draft</Button>
-              <Button type="submit" variant="secondary" disabled={busy || form.stepIds.length === 0} onClick={() => setSubmitStatus("PUBLISHED")}>Save & publish</Button>
+              <Button type="submit" icon="save" disabled={busy || form.stepIds.length === 0} onClick={() => setSubmitStatus(null)}>{busy ? "Saving..." : "Save path"}</Button>
+              <Button type="submit" icon="draft" variant="secondary" disabled={busy || form.stepIds.length === 0} onClick={() => setSubmitStatus("DRAFT")}>Save draft</Button>
+              <Button type="submit" icon="publish" variant="secondary" disabled={busy || form.stepIds.length === 0} onClick={() => setSubmitStatus("PUBLISHED")}>Save & publish</Button>
             </div>
           </form>
         </Card>

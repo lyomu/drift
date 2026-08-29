@@ -8,6 +8,7 @@ import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/drift_card.dart';
 import '../../../shared/widgets/drift_match_card.dart';
 import '../../../shared/widgets/drift_player_card.dart';
+import '../../../shared/widgets/drift_scaffold.dart';
 import '../../users/application/current_user_provider.dart';
 import '../application/competitions_providers.dart';
 import '../data/competitions_repository.dart';
@@ -37,40 +38,41 @@ class RoundDetailScreen extends ConsumerWidget {
     final type = Theme.of(context).extension<DriftTypography>()!;
     final colors = Theme.of(context).extension<DriftColors>()!;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Round')),
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () async {
-            final params = (seasonId: seasonId, roundId: roundId);
-            ref.invalidate(roundProvider(params));
-            await ref.read(roundProvider(params).future);
-          },
-          child: switch (round) {
-            AsyncData(:final value) => ListView(
-              padding: const EdgeInsets.all(DriftSpacing.s5),
-              children: [
-                Text('Round ${value.index}', style: type.h1),
-                const SizedBox(height: DriftSpacing.s1),
-                Text(
-                  'Deadline: ${_formatDeadline(value.deadline)}',
-                  style: type.bodySmall.copyWith(color: colors.textSecondary),
-                ),
-                const SizedBox(height: DriftSpacing.s4),
-                for (final fixture in value.fixtures)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: DriftSpacing.s3),
-                    child: _FixtureTile(
-                      fixture: fixture,
-                      viewerId: viewer?.id ?? '',
-                    ),
+    return DriftScaffold(
+      title: 'Round',
+      body: RefreshIndicator(
+        onRefresh: () async {
+          final params = (seasonId: seasonId, roundId: roundId);
+          ref.invalidate(roundProvider(params));
+          await ref.read(roundProvider(params).future);
+        },
+        child: switch (round) {
+          AsyncData(:final value) => ListView(
+            padding: const EdgeInsets.all(DriftSpacing.s5),
+            children: [
+              Text(
+                'Round ${value.index}',
+                style: type.h2.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: DriftSpacing.s1),
+              Text(
+                'Deadline: ${_formatDeadline(value.deadline)}',
+                style: type.bodySmall.copyWith(color: colors.textSecondary),
+              ),
+              const SizedBox(height: DriftSpacing.s4),
+              for (final fixture in value.fixtures)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: DriftSpacing.s3),
+                  child: _FixtureTile(
+                    fixture: fixture,
+                    viewerId: viewer?.id ?? '',
                   ),
-              ],
-            ),
-            AsyncError() => const Center(child: Text('Round not available.')),
-            _ => const Center(child: CircularProgressIndicator()),
-          },
-        ),
+                ),
+            ],
+          ),
+          AsyncError() => const Center(child: Text('Round not available.')),
+          _ => const Center(child: CircularProgressIndicator()),
+        },
       ),
     );
   }

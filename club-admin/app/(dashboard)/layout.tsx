@@ -38,7 +38,7 @@ export default function DashboardLayout({
       <Sidebar clubName={clubName} role={role} />
       <div className="flex min-w-0 flex-1 flex-col">
         <MobileNav clubName={clubName} />
-        <main className="flex-1 min-w-0 px-4 py-6 sm:px-6 sm:py-8 md:px-10">
+        <main className="box-border flex w-full max-w-[1180px] flex-1 flex-col px-4 py-6 sm:px-8 sm:py-8 sm:pb-14">
           {children}
         </main>
       </div>

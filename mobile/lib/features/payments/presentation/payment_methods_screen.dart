@@ -8,6 +8,7 @@ import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
 import '../../../shared/widgets/drift_card.dart';
+import '../../../shared/widgets/drift_scaffold.dart';
 import '../../../shared/widgets/drift_status_badge.dart';
 import '../../../shared/widgets/drift_text_field.dart';
 import '../../auth/data/auth_repository.dart';
@@ -43,16 +44,16 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
       _paymentError = null;
     });
     try {
-      final method = await ref.read(paymentsRepositoryProvider).addMethod(
-            kind: draft.kind,
-            last4: draft.last4,
-            brand: draft.brand,
-          );
+      final method = await ref
+          .read(paymentsRepositoryProvider)
+          .addMethod(kind: draft.kind, last4: draft.last4, brand: draft.brand);
       ref.invalidate(paymentMethodsProvider);
       ref.invalidate(billingSummaryProvider);
       if (widget.pendingPlanId != null) {
         _retryMethodId = method.id;
-        await ref.read(paymentsRepositoryProvider).changeSubscription(
+        await ref
+            .read(paymentsRepositoryProvider)
+            .changeSubscription(
               widget.pendingPlanId!,
               paymentMethodId: method.id,
             );
@@ -74,7 +75,9 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
       _paymentError = null;
     });
     try {
-      await ref.read(paymentsRepositoryProvider).changeSubscription(
+      await ref
+          .read(paymentsRepositoryProvider)
+          .changeSubscription(
             widget.pendingPlanId!,
             paymentMethodId: _retryMethodId,
           );
@@ -93,7 +96,9 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Remove payment method?'),
-        content: Text('${method.label} will no longer be available for charges.'),
+        content: Text(
+          '${method.label} will no longer be available for charges.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -124,75 +129,73 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
   Widget build(BuildContext context) {
     final methods = ref.watch(paymentMethodsProvider);
     final type = Theme.of(context).extension<DriftTypography>()!;
-    return Scaffold(
-      appBar: AppBar(title: const Text('Payment methods')),
+    return DriftScaffold(
+      title: 'Payment methods',
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _saving ? null : _add,
         icon: const Icon(Icons.add_card_outlined),
         label: Text(_saving ? 'Saving…' : 'Add method'),
       ),
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () => ref.refresh(paymentMethodsProvider.future),
-          child: switch (methods) {
-            AsyncData(:final value) => ListView(
-                padding: const EdgeInsets.fromLTRB(
-                  DriftSpacing.s5,
-                  DriftSpacing.s5,
-                  DriftSpacing.s5,
-                  DriftSpacing.s16,
+      body: RefreshIndicator(
+        onRefresh: () => ref.refresh(paymentMethodsProvider.future),
+        child: switch (methods) {
+          AsyncData(:final value) => ListView(
+            padding: const EdgeInsets.fromLTRB(
+              DriftSpacing.s5,
+              DriftSpacing.s5,
+              DriftSpacing.s5,
+              DriftSpacing.s16,
+            ),
+            children: [
+              const BillingSandboxBanner(),
+              if (_paymentError != null) ...[
+                const SizedBox(height: DriftSpacing.s4),
+                _PaymentFailure(
+                  message: _paymentError!,
+                  retry: _retryMethodId == null ? null : _retryPayment,
                 ),
-                children: [
-                  const BillingSandboxBanner(),
-                  if (_paymentError != null) ...[
-                    const SizedBox(height: DriftSpacing.s4),
-                    _PaymentFailure(
-                      message: _paymentError!,
-                      retry: _retryMethodId == null ? null : _retryPayment,
-                    ),
-                  ],
-                  const SizedBox(height: DriftSpacing.s5),
-                  if (value.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: DriftSpacing.s12,
+              ],
+              const SizedBox(height: DriftSpacing.s5),
+              if (value.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: DriftSpacing.s12,
+                  ),
+                  child: Column(
+                    children: [
+                      const Icon(Icons.credit_card_off_outlined, size: 42),
+                      const SizedBox(height: DriftSpacing.s3),
+                      Text(
+                        'No payment method saved',
+                        style: type.body,
+                        textAlign: TextAlign.center,
                       ),
-                      child: Column(
-                        children: [
-                          const Icon(Icons.credit_card_off_outlined, size: 42),
-                          const SizedBox(height: DriftSpacing.s3),
-                          Text(
-                            'No payment method saved',
-                            style: type.body,
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: DriftSpacing.s2),
-                          Text(
-                            'Add a tokenized card or mobile-money method to choose a paid plan.',
-                            style: type.bodySmall,
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
+                      const SizedBox(height: DriftSpacing.s2),
+                      Text(
+                        'Add a tokenized card or mobile-money method to choose a paid plan.',
+                        style: type.bodySmall,
+                        textAlign: TextAlign.center,
                       ),
-                    )
-                  else
-                    for (var index = 0; index < value.length; index++) ...[
-                      _PaymentMethodCard(
-                        method: value[index],
-                        onRemove: () => _remove(value[index]),
-                      ),
-                      if (index < value.length - 1)
-                        const SizedBox(height: DriftSpacing.s3),
                     ],
+                  ),
+                )
+              else
+                for (var index = 0; index < value.length; index++) ...[
+                  _PaymentMethodCard(
+                    method: value[index],
+                    onRemove: () => _remove(value[index]),
+                  ),
+                  if (index < value.length - 1)
+                    const SizedBox(height: DriftSpacing.s3),
                 ],
-              ),
-            AsyncError() => BillingLoadError(
-                message: "Couldn't load your payment methods.",
-                retry: () => ref.invalidate(paymentMethodsProvider),
-              ),
-            _ => const Center(child: CircularProgressIndicator()),
-          },
-        ),
+            ],
+          ),
+          AsyncError() => BillingLoadError(
+            message: "Couldn't load your payment methods.",
+            retry: () => ref.invalidate(paymentMethodsProvider),
+          ),
+          _ => const Center(child: CircularProgressIndicator()),
+        },
       ),
     );
   }
@@ -287,8 +290,7 @@ class _AddPaymentMethodSheet extends StatefulWidget {
   const _AddPaymentMethodSheet();
 
   @override
-  State<_AddPaymentMethodSheet> createState() =>
-      _AddPaymentMethodSheetState();
+  State<_AddPaymentMethodSheet> createState() => _AddPaymentMethodSheetState();
 }
 
 class _AddPaymentMethodSheetState extends State<_AddPaymentMethodSheet> {

@@ -1,6 +1,9 @@
 ﻿# Dependencies
 node_modules/
 
+# Frozen pre-redesign snapshot of mobile/lib — local reference only, delete when redesign is signed off
+_legacy-mobile-ui/
+
 # Builds
 dist/
 .next/

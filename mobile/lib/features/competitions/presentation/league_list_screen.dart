@@ -28,10 +28,9 @@ class LeagueListScreen extends ConsumerWidget {
           value.isEmpty
               ? const _EmptyState()
               : ListView.separated(
-                  padding: const EdgeInsets.all(DriftSpacing.s4),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                   itemCount: value.length,
-                  separatorBuilder: (_, _) =>
-                      const SizedBox(height: DriftSpacing.s3),
+                  separatorBuilder: (_, _) => const SizedBox(height: 12),
                   itemBuilder: (context, index) => DriftLeagueCard(
                     league: value[index],
                     onTap: () =>

@@ -6,6 +6,7 @@ import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
+import '../../../shared/widgets/drift_scaffold.dart';
 import '../../../shared/widgets/drift_text_field.dart';
 import '../../auth/data/auth_repository.dart';
 import '../data/matches_repository.dart';
@@ -61,51 +62,46 @@ class _MatchReflectionScreenState extends ConsumerState<MatchReflectionScreen> {
     final type = Theme.of(context).extension<DriftTypography>()!;
     final colors = Theme.of(context).extension<DriftColors>()!;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('How did it feel?'),
-        actions: [
-          TextButton(
-            onPressed: _isSubmitting ? null : () => context.pop(),
-            child: const Text('Skip'),
-          ),
-        ],
+    return DriftScaffold(
+      title: 'How did it feel?',
+      trailing: DriftButton(
+        label: 'Skip',
+        variant: DriftButtonVariant.text,
+        onPressed: _isSubmitting ? null : () => context.pop(),
       ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(DriftSpacing.s5),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text('Confidence', style: type.label),
-              const SizedBox(height: DriftSpacing.s2),
-              Row(
-                children: [
-                  for (var i = 1; i <= 5; i++)
-                    Expanded(
-                      child: IconButton(
-                        onPressed: () => setState(() => _confidence = i),
-                        icon: Icon(
-                          i <= _confidence ? Icons.star : Icons.star_border,
-                          color: colors.primary,
-                        ),
+      body: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('Confidence', style: type.label),
+            const SizedBox(height: DriftSpacing.s2),
+            Row(
+              children: [
+                for (var i = 1; i <= 5; i++)
+                  Expanded(
+                    child: IconButton(
+                      onPressed: () => setState(() => _confidence = i),
+                      icon: Icon(
+                        i <= _confidence ? Icons.star : Icons.star_border,
+                        color: colors.primary,
                       ),
                     ),
-                ],
-              ),
-              const SizedBox(height: DriftSpacing.s5),
-              DriftTextField(
-                label: 'Notes (optional)',
-                controller: _notesController,
-                maxLines: 4,
-              ),
-              const SizedBox(height: DriftSpacing.s6),
-              DriftButton(
-                label: _isSubmitting ? 'Saving…' : 'Save',
-                onPressed: _isSubmitting ? null : _save,
-              ),
-            ],
-          ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: DriftSpacing.s5),
+            DriftTextField(
+              label: 'Notes (optional)',
+              controller: _notesController,
+              maxLines: 4,
+            ),
+            const SizedBox(height: DriftSpacing.s6),
+            DriftButton(
+              label: _isSubmitting ? 'Saving…' : 'Save',
+              onPressed: _isSubmitting ? null : _save,
+            ),
+          ],
         ),
       ),
     );

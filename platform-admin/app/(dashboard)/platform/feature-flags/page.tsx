@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { ModalShell, StatBand } from "@/components/dashboard-design";
 import { api, ApiError } from "@/lib/api-client";
 import type { FeatureFlag, FeatureFlagStatus, SupportedMarket } from "@/lib/platform-config-types";
 import { label } from "@/lib/platform-config-types";
@@ -50,6 +51,7 @@ export default function FeatureFlagsPage() {
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<FeatureFlag | null>(null);
   const [form, setForm] = useState<FlagForm>(EMPTY_FORM);
+  const [showEditor, setShowEditor] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -80,12 +82,14 @@ export default function FeatureFlagsPage() {
     setEditing(null);
     setForm(EMPTY_FORM);
     setError(null);
+    setShowEditor(true);
   }
 
   function startEdit(flag: FeatureFlag) {
     setEditing(flag);
     setForm(formFromFlag(flag));
     setError(null);
+    setShowEditor(true);
   }
 
   async function save(event: React.FormEvent, override?: Partial<FlagForm>) {
@@ -106,7 +110,9 @@ export default function FeatureFlagsPage() {
       if (editing) await api.patch(`/platform-config/feature-flags/${editing.id}`, payload);
       else await api.post("/platform-config/feature-flags", payload);
       await load();
-      if (!editing) startNew();
+      if (!editing) setForm(EMPTY_FORM);
+      setEditing(null);
+      setShowEditor(false);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "The feature flag could not be saved.");
     } finally {
@@ -140,16 +146,18 @@ export default function FeatureFlagsPage() {
 
   return (
     <div>
-      <PageHeader title="Feature Flags" description="Toggle features by market, cohort, and rollout percentage." action={<Button variant="secondary" onClick={startNew}>New flag</Button>} />
+      <PageHeader title="Feature Flags" description="Toggle features by market, cohort, and rollout percentage." action={<Button variant="secondary" icon="add" onClick={startNew}>New flag</Button>} />
       <ErrorBanner message={error} />
 
-      <div className="mb-4 grid gap-3 md:grid-cols-3">
-        <Card className="p-4"><div className="text-sm font-semibold text-drift-text-secondary">On</div><div className="mt-1 font-display text-3xl font-bold tabular-nums text-drift-text-primary">{counts.on}</div></Card>
-        <Card className="p-4"><div className="text-sm font-semibold text-drift-text-secondary">Partial rollout</div><div className="mt-1 font-display text-3xl font-bold tabular-nums text-drift-text-primary">{counts.partial}</div></Card>
-        <Card className="p-4"><div className="text-sm font-semibold text-drift-text-secondary">Off</div><div className="mt-1 font-display text-3xl font-bold tabular-nums text-drift-text-primary">{counts.off}</div></Card>
-      </div>
+      <StatBand
+        stats={[
+          { label: "On", value: counts.on, icon: "toggle_on", tone: "green" },
+          { label: "Partial rollout", value: counts.partial, icon: "percent", tone: "amber" },
+          { label: "Off", value: counts.off, icon: "toggle_off", tone: "gray" },
+        ]}
+      />
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
+      <div>
         <div>
           <Card className="mb-4 p-4">
             <div className="grid gap-3 md:grid-cols-[1fr_180px_220px_auto]">
@@ -183,24 +191,29 @@ export default function FeatureFlagsPage() {
           )}
         </div>
 
-        <Card>
-          <div className="mb-5 flex items-start justify-between gap-3">
-            <div><h2 className="font-display text-xl font-semibold text-drift-text-primary">{editing ? "Edit flag" : "Create flag"}</h2><p className="mt-1 text-sm text-drift-text-secondary">Partial rollouts require a value from 1 to 99.</p></div>
-            {editing && <Button type="button" variant="ghost" onClick={startNew}>New</Button>}
-          </div>
-          <form onSubmit={save} className="flex flex-col gap-4">
-            <Field label="Key"><Input required value={form.key} onChange={(event) => setForm((current) => ({ ...current, key: event.target.value }))} placeholder="PLAYER_GLOBAL_SEARCH" /></Field>
-            <Field label="Name"><Input required value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} /></Field>
-            <Field label="Description"><Textarea rows={3} value={form.description} onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} /></Field>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Status"><Select value={form.status} onChange={(event) => setForm((current) => ({ ...current, status: event.target.value as FeatureFlagStatus, rolloutPercentage: event.target.value === "ON" ? "100" : event.target.value === "OFF" ? "0" : current.rolloutPercentage }))}><option value="OFF">Off</option><option value="ON">On</option><option value="PARTIAL">Partial rollout</option></Select></Field>
-              <Field label="Rollout %"><Input type="number" min={0} max={100} required value={form.rolloutPercentage} onChange={(event) => setForm((current) => ({ ...current, rolloutPercentage: event.target.value }))} /></Field>
-            </div>
-            <Field label="Market"><Select value={form.marketId} onChange={(event) => setForm((current) => ({ ...current, marketId: event.target.value }))}><option value="">All markets</option>{markets.map((market) => <option key={market.id} value={market.id}>{market.cityName}, {market.countryCode}</option>)}</Select></Field>
-            <Field label="Cohort"><Input value={form.cohort} onChange={(event) => setForm((current) => ({ ...current, cohort: event.target.value }))} placeholder="beta_testers" /></Field>
-            <Button type="submit" disabled={busy}>{busy ? "Saving..." : editing ? "Save flag" : "Create flag"}</Button>
-          </form>
-        </Card>
+        {showEditor && (
+          <ModalShell
+            title={editing ? "Edit flag" : "Create flag"}
+            description="Partial rollouts require a value from 1 to 99."
+            onClose={() => setShowEditor(false)}
+          >
+            <form onSubmit={save} className="flex flex-col gap-4">
+              <Field label="Key"><Input required value={form.key} onChange={(event) => setForm((current) => ({ ...current, key: event.target.value }))} placeholder="PLAYER_GLOBAL_SEARCH" /></Field>
+              <Field label="Name"><Input required value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} /></Field>
+              <Field label="Description"><Textarea rows={3} value={form.description} onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} /></Field>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field label="Status"><Select value={form.status} onChange={(event) => setForm((current) => ({ ...current, status: event.target.value as FeatureFlagStatus, rolloutPercentage: event.target.value === "ON" ? "100" : event.target.value === "OFF" ? "0" : current.rolloutPercentage }))}><option value="OFF">Off</option><option value="ON">On</option><option value="PARTIAL">Partial rollout</option></Select></Field>
+                <Field label="Rollout %"><Input type="number" min={0} max={100} required value={form.rolloutPercentage} onChange={(event) => setForm((current) => ({ ...current, rolloutPercentage: event.target.value }))} /></Field>
+              </div>
+              <Field label="Market"><Select value={form.marketId} onChange={(event) => setForm((current) => ({ ...current, marketId: event.target.value }))}><option value="">All markets</option>{markets.map((market) => <option key={market.id} value={market.id}>{market.cityName}, {market.countryCode}</option>)}</Select></Field>
+              <Field label="Cohort"><Input value={form.cohort} onChange={(event) => setForm((current) => ({ ...current, cohort: event.target.value }))} placeholder="beta_testers" /></Field>
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="ghost" onClick={() => setShowEditor(false)}>Cancel</Button>
+                <Button type="submit" icon="save" disabled={busy}>{busy ? "Saving..." : editing ? "Save flag" : "Create flag"}</Button>
+              </div>
+            </form>
+          </ModalShell>
+        )}
       </div>
     </div>
   );

@@ -13,7 +13,7 @@ export function Button({
   variant?: "primary" | "secondary" | "destructive" | "ghost";
 }) {
   const base =
-    "inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-[15px] font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed";
+    "inline-flex items-center justify-center gap-2 rounded-[9px] px-[18px] py-2.5 text-[13.5px] font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-50";
   const variants: Record<string, string> = {
     primary: "bg-drift-primary text-white hover:bg-drift-primary-dark",
     secondary:
@@ -33,7 +33,7 @@ export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       {...props}
-      className={`w-full rounded-md border border-drift-border bg-drift-surface px-3 py-2 text-sm text-drift-text-primary placeholder:text-drift-text-secondary ${focusRing} ${props.className ?? ""}`}
+      className={`w-full rounded-lg border border-drift-border bg-drift-surface px-3 py-[9px] text-[13.5px] text-drift-text-primary placeholder:text-drift-text-secondary ${focusRing} ${props.className ?? ""}`}
     />
   );
 }
@@ -42,7 +42,7 @@ export function Textarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
     <textarea
       {...props}
-      className={`w-full rounded-md border border-drift-border bg-drift-surface px-3 py-2 text-sm text-drift-text-primary placeholder:text-drift-text-secondary ${focusRing} ${props.className ?? ""}`}
+      className={`w-full rounded-lg border border-drift-border bg-drift-surface px-3 py-[9px] text-[13.5px] text-drift-text-primary placeholder:text-drift-text-secondary ${focusRing} ${props.className ?? ""}`}
     />
   );
 }
@@ -51,7 +51,7 @@ export function Select(props: SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <select
       {...props}
-      className={`w-full rounded-md border border-drift-border bg-drift-surface px-3 py-2 text-sm text-drift-text-primary ${focusRing} ${props.className ?? ""}`}
+      className={`w-full rounded-lg border border-drift-border bg-drift-surface px-3 py-[9px] text-[13.5px] text-drift-text-primary ${focusRing} ${props.className ?? ""}`}
     />
   );
 }
@@ -82,7 +82,7 @@ export function Card({
 }) {
   return (
     <div
-      className={`rounded-lg border border-drift-border bg-drift-surface p-6 shadow-sm ${className}`}
+      className={`rounded-2xl border border-drift-border bg-drift-surface p-5 ${className}`}
     >
       {children}
     </div>
@@ -101,11 +101,11 @@ export function PageHeader({
   return (
     <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
       <div>
-        <h1 className="font-display text-[28px] font-bold leading-[34px] text-drift-text-primary">
+        <h1 className="font-display text-[26px] font-extrabold leading-[32px] tracking-[-0.3px] text-drift-text-primary">
           {title}
         </h1>
         {description && (
-          <p className="mt-1 text-sm text-drift-text-secondary">
+          <p className="mt-1 max-w-[560px] text-sm text-drift-text-secondary">
             {description}
           </p>
         )}
@@ -129,5 +129,140 @@ export function EmptyState({ message }: { message: string }) {
     <div className="rounded-lg border border-dashed border-drift-border px-6 py-12 text-center text-sm text-drift-text-secondary">
       {message}
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Status helpers were originally kept in parity with
+// `platform-admin/components/ui.tsx`; the club admin base primitives now carry
+// the club-dashboard redesign while this status map remains the shared contract.
+//
+// The two consoles had drifted: platform-admin had Badge/statusTone/Th/Td that
+// this app lacked, while this app had a separate StatusBadge with its own
+// status-to-tone map. Two maps meant a status could render green in one console
+// and grey in the other. Until there's a shared package, "identical file in
+// both apps" is the closest thing to one source of truth, so edit them
+// together.
+// ---------------------------------------------------------------------------
+
+export function Badge({
+  tone = "neutral",
+  children,
+}: {
+  tone?: "neutral" | "success" | "warning" | "error" | "info";
+  children: React.ReactNode;
+}) {
+  const tones: Record<string, string> = {
+    neutral: "bg-drift-neutral-surface text-drift-text-secondary border-drift-border",
+    success: "bg-drift-success-surface text-drift-success border-drift-success/30",
+    warning: "bg-drift-warning-surface text-drift-warning border-drift-warning/30",
+    error: "bg-drift-error-surface text-drift-error border-drift-error/30",
+    info: "bg-drift-primary-light text-drift-primary-dark border-drift-primary/30",
+  };
+  return (
+    <span
+      className={`inline-flex items-center rounded-full border px-3 py-[3px] text-[11.5px] font-bold leading-none ${tones[tone]}`}
+    >
+      {children}
+    </span>
+  );
+}
+
+/**
+ * Status-to-badge-tone mapping shared by every list page in both consoles.
+ *
+ * Merged from the two previously-separate maps. Two conflicts were resolved
+ * on meaning rather than on which app got there first:
+ *   - DISPUTED is `warning`, not `error`; a contested result is actionable,
+ *     not broken.
+ *   - DRAFT is `neutral`, not `warning`; unpublished is a normal state, and
+ *     colouring it amber makes every new item look wrong.
+ */
+export function statusTone(status: string): "neutral" | "success" | "warning" | "error" | "info" {
+  switch (status) {
+    case "ACTIVE":
+    case "RESOLVED":
+    case "APPROVED":
+    case "CONFIRMED":
+    case "HEALTHY":
+    case "SUCCEEDED":
+    case "VERIFIED":
+    case "SYNCED":
+    case "PUBLISHED":
+    case "LIVE":
+    case "ON":
+    case "CONNECTED":
+    case "REGISTRATION_OPEN":
+    case "RUNNING":
+    case "COMPLETED":
+    case "ACTIONED":
+    case "FULFILLED":
+    case "ENROLLED":
+    case "PAID":
+    case "ATTENDED":
+    case "REGISTERED":
+      return "success";
+    case "SUSPENDED":
+    case "REJECTED":
+    case "BLOCKED":
+    case "DOWN":
+    case "FAILED":
+    case "CANCELLED":
+    case "REMOVED":
+    case "URGENT":
+    case "WITHDRAWN":
+    case "NO_SHOW":
+      return "error";
+    case "OPEN":
+    case "PENDING":
+    case "PENDING_REVIEW":
+    case "REVIEWING":
+    case "PAUSED":
+    case "DEGRADED":
+    case "PAST_DUE":
+    case "STALE":
+    case "MORE_INFO":
+    case "ESCALATED":
+    case "SCHEDULED":
+    case "HIGH":
+    case "COMING_SOON":
+    case "PARTIAL":
+    case "ASSIGNED":
+    case "DISPUTED":
+      return "warning";
+    case "ARCHIVED":
+    case "INACTIVE":
+    case "EXPIRED":
+    case "ENDED":
+    case "REFUNDED":
+    case "DISMISSED":
+    case "CLOSED":
+    case "OFF":
+    case "DISCONNECTED":
+      return "info";
+    case "DRAFT":
+    case "INVITED":
+    case "UNVERIFIED":
+    case "WAITLISTED":
+    default:
+      return "neutral";
+  }
+}
+
+export function Th({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <th
+      className={`border-b border-drift-border px-3 py-2 text-left text-xs font-bold uppercase tracking-wide text-drift-text-secondary ${className}`}
+    >
+      {children}
+    </th>
+  );
+}
+
+export function Td({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <td className={`border-b border-drift-border px-3 py-2.5 align-middle text-sm text-drift-text-primary ${className}`}>
+      {children}
+    </td>
   );
 }

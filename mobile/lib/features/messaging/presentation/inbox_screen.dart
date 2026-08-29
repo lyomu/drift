@@ -6,6 +6,7 @@ import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/drift_card.dart';
+import '../../../shared/widgets/drift_scaffold.dart';
 import '../application/messaging_providers.dart';
 import '../data/messaging_repository.dart';
 
@@ -17,29 +18,27 @@ class InboxScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final conversations = ref.watch(conversationsProvider);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Messages')),
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () => ref.refresh(conversationsProvider.future),
-          child: switch (conversations) {
-            AsyncData(:final value) =>
-              value.isEmpty
-                  ? const _EmptyInbox()
-                  : ListView.separated(
-                      padding: const EdgeInsets.all(DriftSpacing.s4),
-                      itemCount: value.length,
-                      separatorBuilder: (_, _) =>
-                          const SizedBox(height: DriftSpacing.s3),
-                      itemBuilder: (context, i) =>
-                          _ConversationTile(conversation: value[i]),
-                    ),
-            AsyncError() => const Center(
-              child: Text("Couldn't load your messages."),
-            ),
-            _ => const Center(child: CircularProgressIndicator()),
-          },
-        ),
+    return DriftScaffold(
+      title: 'Messages',
+      body: RefreshIndicator(
+        onRefresh: () => ref.refresh(conversationsProvider.future),
+        child: switch (conversations) {
+          AsyncData(:final value) =>
+            value.isEmpty
+                ? const _EmptyInbox()
+                : ListView.separated(
+                    padding: const EdgeInsets.all(DriftSpacing.s4),
+                    itemCount: value.length,
+                    separatorBuilder: (_, _) =>
+                        const SizedBox(height: DriftSpacing.s3),
+                    itemBuilder: (context, i) =>
+                        _ConversationTile(conversation: value[i]),
+                  ),
+          AsyncError() => const Center(
+            child: Text("Couldn't load your messages."),
+          ),
+          _ => const Center(child: CircularProgressIndicator()),
+        },
       ),
     );
   }

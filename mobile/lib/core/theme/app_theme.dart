@@ -63,11 +63,14 @@ class AppTheme {
       ),
       cardTheme: CardThemeData(
         color: colors.surface,
-        elevation: 0,
+        // Redesign card style (`DESIGN_SPEC.md` §1): white, r16, one soft
+        // shadow, no border. Mirrors `DriftSoftCard`.
+        elevation: 1,
+        shadowColor: const Color(0x12000000),
+        surfaceTintColor: Colors.transparent,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(DriftRadius.lg),
-          side: BorderSide(color: colors.border),
+          borderRadius: BorderRadius.circular(DriftRadius.xl),
         ),
       ),
       dividerTheme: DividerThemeData(color: colors.border, thickness: 1),
@@ -75,15 +78,17 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: colors.primary,
           foregroundColor: Colors.white,
-          disabledBackgroundColor: colors.border,
+          disabledBackgroundColor: colors.primary.withValues(alpha: 0.5),
+          disabledForegroundColor: Colors.white,
           minimumSize: const Size.fromHeight(48),
-          textStyle: typography.button,
+          elevation: 0,
+          textStyle: typography.button.copyWith(fontWeight: FontWeight.w700),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(DriftRadius.md),
+            borderRadius: BorderRadius.circular(DriftRadius.lg),
           ),
           padding: const EdgeInsets.symmetric(
             horizontal: DriftSpacing.s6,
-            vertical: DriftSpacing.s3,
+            vertical: DriftSpacing.s4,
           ),
         ),
       ),

@@ -5,6 +5,7 @@ import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
 import '../../../shared/widgets/drift_player_card.dart';
+import '../../../shared/widgets/drift_scaffold.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../safety/data/safety_repository.dart';
 import '../application/settings_providers.dart';
@@ -20,53 +21,48 @@ class BlockedUsersScreen extends ConsumerWidget {
     final blocks = ref.watch(blockedUsersProvider);
     final type = Theme.of(context).extension<DriftTypography>()!;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Blocked Users')),
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () => ref.refresh(blockedUsersProvider.future),
-          child: switch (blocks) {
-            AsyncData(:final value) =>
-              value.isEmpty
-                  ? ListView(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(DriftSpacing.s6),
-                          child: Column(
-                            children: [
-                              const SizedBox(height: DriftSpacing.s12),
-                              Text(
-                                "You haven't blocked anyone.",
-                                style: type.body,
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ),
+    return DriftScaffold(
+      title: 'Blocked Users',
+      body: RefreshIndicator(
+        onRefresh: () => ref.refresh(blockedUsersProvider.future),
+        child: switch (blocks) {
+          AsyncData(:final value) =>
+            value.isEmpty
+                ? ListView(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(DriftSpacing.s6),
+                        child: Column(
+                          children: [
+                            const SizedBox(height: DriftSpacing.s12),
+                            Text(
+                              "You haven't blocked anyone.",
+                              style: type.body,
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
                         ),
-                      ],
-                    )
-                  : ListView.separated(
-                      padding: const EdgeInsets.all(DriftSpacing.s4),
-                      itemCount: value.length,
-                      separatorBuilder: (_, _) =>
-                          const SizedBox(height: DriftSpacing.s3),
-                      itemBuilder: (context, index) {
-                        final blocked = value[index];
-                        return DriftPlayerCard(
-                          player: blocked.player,
-                          trailing: _UnblockButton(playerId: blocked.player.id),
-                        );
-                      },
-                    ),
-            AsyncError() => Center(
-              child: Text(
-                "Couldn't load your blocked users.",
-                style: type.body,
-              ),
-            ),
-            _ => const Center(child: CircularProgressIndicator()),
-          },
-        ),
+                      ),
+                    ],
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.all(DriftSpacing.s4),
+                    itemCount: value.length,
+                    separatorBuilder: (_, _) =>
+                        const SizedBox(height: DriftSpacing.s3),
+                    itemBuilder: (context, index) {
+                      final blocked = value[index];
+                      return DriftPlayerCard(
+                        player: blocked.player,
+                        trailing: _UnblockButton(playerId: blocked.player.id),
+                      );
+                    },
+                  ),
+          AsyncError() => Center(
+            child: Text("Couldn't load your blocked users.", style: type.body),
+          ),
+          _ => const Center(child: CircularProgressIndicator()),
+        },
       ),
     );
   }

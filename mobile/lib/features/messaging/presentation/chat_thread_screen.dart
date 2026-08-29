@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
+import '../../../shared/widgets/drift_scaffold.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../users/application/current_user_provider.dart';
 import '../application/messaging_providers.dart';
@@ -82,43 +83,41 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
     // Scroll down as live messages land.
     ref.listen(threadProvider(widget.conversationId), (_, _) => _scrollToEnd());
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Chat')),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: switch (messages) {
-                AsyncData(:final value) =>
-                  value.isEmpty
-                      ? const _SayHello()
-                      : ListView.builder(
-                          controller: _scrollController,
-                          padding: const EdgeInsets.all(DriftSpacing.s4),
-                          itemCount: value.length,
-                          itemBuilder: (context, i) => _MessageBubble(
-                            message: value[i],
-                            isMine: value[i].senderId == viewerId,
-                            onReport: () => showMessageReportSheet(
-                              context,
-                              ref,
-                              messageId: value[i].id,
-                            ),
+    return DriftScaffold(
+      title: 'Chat',
+      body: Column(
+        children: [
+          Expanded(
+            child: switch (messages) {
+              AsyncData(:final value) =>
+                value.isEmpty
+                    ? const _SayHello()
+                    : ListView.builder(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.all(DriftSpacing.s4),
+                        itemCount: value.length,
+                        itemBuilder: (context, i) => _MessageBubble(
+                          message: value[i],
+                          isMine: value[i].senderId == viewerId,
+                          onReport: () => showMessageReportSheet(
+                            context,
+                            ref,
+                            messageId: value[i].id,
                           ),
                         ),
-                AsyncError() => const Center(
-                  child: Text("Couldn't load this conversation."),
-                ),
-                _ => const Center(child: CircularProgressIndicator()),
-              },
-            ),
-            _Composer(
-              controller: _controller,
-              isSending: _isSending,
-              onSend: _send,
-            ),
-          ],
-        ),
+                      ),
+              AsyncError() => const Center(
+                child: Text("Couldn't load this conversation."),
+              ),
+              _ => const Center(child: CircularProgressIndicator()),
+            },
+          ),
+          _Composer(
+            controller: _controller,
+            isSending: _isSending,
+            onSend: _send,
+          ),
+        ],
       ),
     );
   }
@@ -176,19 +175,19 @@ class _MessageBubble extends StatelessWidget {
       child: GestureDetector(
         onLongPress: isMine ? null : onReport,
         child: Container(
-        margin: const EdgeInsets.only(bottom: DriftSpacing.s2),
-        padding: const EdgeInsets.symmetric(
-          horizontal: DriftSpacing.s4,
-          vertical: DriftSpacing.s3,
-        ),
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.75,
-        ),
-        decoration: BoxDecoration(
-          color: isMine ? colors.primary : colors.surface,
-          border: Border.all(color: isMine ? colors.primary : colors.border),
-          borderRadius: BorderRadius.circular(16),
-        ),
+          margin: const EdgeInsets.only(bottom: DriftSpacing.s2),
+          padding: const EdgeInsets.symmetric(
+            horizontal: DriftSpacing.s4,
+            vertical: DriftSpacing.s3,
+          ),
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.75,
+          ),
+          decoration: BoxDecoration(
+            color: isMine ? colors.primary : colors.surface,
+            border: Border.all(color: isMine ? colors.primary : colors.border),
+            borderRadius: BorderRadius.circular(16),
+          ),
           child: Text(
             message.body,
             style: type.body.copyWith(
@@ -302,7 +301,10 @@ String _systemEventLabel(String? event) {
   if (event == null) return 'System message';
   return event
       .split('_')
-      .map((word) => word.isEmpty ? word : word[0].toUpperCase() + word.substring(1))
+      .map(
+        (word) =>
+            word.isEmpty ? word : word[0].toUpperCase() + word.substring(1),
+      )
       .join(' ');
 }
 

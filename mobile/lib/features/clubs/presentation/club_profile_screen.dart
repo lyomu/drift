@@ -3,21 +3,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/drift_colors.dart';
-import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
-import '../../../shared/widgets/drift_card.dart';
-import '../../../shared/widgets/drift_court_card.dart';
-import '../../../shared/widgets/drift_status_badge.dart';
-import '../../../shared/widgets/buttons/drift_button.dart';
+import '../../../shared/widgets/buttons/drift_primary_button.dart';
+import '../../../shared/widgets/drift_back_header.dart';
+import '../../../shared/widgets/drift_pill.dart';
+import '../../../shared/widgets/drift_soft_card.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../courts/data/courts_repository.dart';
 import '../application/clubs_providers.dart';
 import '../data/clubs_repository.dart';
 
-/// Club Profile — `foundation/04-screen-inventory.md` §A.6. Read-only:
-/// name, description, contact, amenities, and its owned courts (may be
-/// empty — a club owning no court is still a valid profile, not an error,
-/// since courts and clubs are independently discoverable).
+/// Club Profile — `foundation/04-screen-inventory.md` §A.6 (redesign 2026-08:
+/// `App.tsx` `ClubDetailScreen`). Read-only: name, description, contact,
+/// and its owned courts (may be empty — a club owning no court is still a
+/// valid profile).
 class ClubProfileScreen extends ConsumerWidget {
   const ClubProfileScreen({super.key, required this.clubId});
 
@@ -28,18 +27,27 @@ class ClubProfileScreen extends ConsumerWidget {
     final profile = ref.watch(clubDetailProvider(clubId));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Club')),
       body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () async {
-            ref.invalidate(clubDetailProvider(clubId));
-            await ref.read(clubDetailProvider(clubId).future);
-          },
-          child: switch (profile) {
-            AsyncData(:final value) => _ProfileBody(profile: value),
-            AsyncError() => const Center(child: Text('Club not available.')),
-            _ => const Center(child: CircularProgressIndicator()),
-          },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const DriftBackHeader(title: 'Club'),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  ref.invalidate(clubDetailProvider(clubId));
+                  await ref.read(clubDetailProvider(clubId).future);
+                },
+                child: switch (profile) {
+                  AsyncData(:final value) => _ProfileBody(profile: value),
+                  AsyncError() => const Center(
+                    child: Text('Club not available.'),
+                  ),
+                  _ => const Center(child: CircularProgressIndicator()),
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -80,118 +88,204 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
     final type = Theme.of(context).extension<DriftTypography>()!;
     final colors = Theme.of(context).extension<DriftColors>()!;
     final summary = profile.summary;
+    final clubId = summary.id;
 
     return ListView(
-      padding: const EdgeInsets.all(DriftSpacing.s5),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
       children: [
         Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(child: Text(summary.name, style: type.h2)),
-            if (summary.verificationStatus ==
-                ListingVerificationStatus.verified)
-              const DriftStatusBadge(
-                label: 'Verified',
-                tone: DriftStatusTone.success,
-                icon: Icons.verified_outlined,
+            Expanded(
+              child: Text(
+                summary.name,
+                style: type.h2.copyWith(fontWeight: FontWeight.w700),
               ),
+            ),
+            if (summary.verificationStatus ==
+                ListingVerificationStatus.verified) ...[
+              const SizedBox(width: 8),
+              const Padding(
+                padding: EdgeInsets.only(top: 4),
+                child: DriftPill(
+                  label: 'Verified',
+                  tone: DriftPillTone.success,
+                ),
+              ),
+            ],
           ],
         ),
         if (summary.address != null) ...[
-          const SizedBox(height: DriftSpacing.s1),
+          const SizedBox(height: 4),
           Text(
             summary.address!,
             style: type.bodySmall.copyWith(color: colors.textSecondary),
           ),
         ],
         if (profile.description != null) ...[
-          const SizedBox(height: DriftSpacing.s3),
-          Text(profile.description!, style: type.body),
+          const SizedBox(height: 8),
+          Text(
+            profile.description!,
+            style: type.bodySmall.copyWith(
+              color: colors.textSecondary,
+              height: 1.5,
+            ),
+          ),
         ],
-        const SizedBox(height: DriftSpacing.s4),
+        const SizedBox(height: 16),
 
         _MembershipActions(
-          profile: profile,
+          membership: profile.membership,
           isBusy: _isBusy,
+          clubId: clubId,
           onJoin: () => _run(
-            () => ref
-                .read(clubsRepositoryProvider)
-                .requestToJoin(profile.summary.id),
+            () => ref.read(clubsRepositoryProvider).requestToJoin(clubId),
           ),
-          onLeave: () => _run(
-            () => ref.read(clubsRepositoryProvider).leave(profile.summary.id),
-          ),
+          onLeave: () =>
+              _run(() => ref.read(clubsRepositoryProvider).leave(clubId)),
         ),
         if (_errorText != null) ...[
-          const SizedBox(height: DriftSpacing.s2),
-          Text(_errorText!, style: TextStyle(color: colors.error)),
+          const SizedBox(height: 8),
+          Text(
+            _errorText!,
+            style: type.bodySmall.copyWith(color: colors.error),
+          ),
         ],
-        const SizedBox(height: DriftSpacing.s4),
+        const SizedBox(height: 8),
 
-        DriftButton(
+        DriftTextLink(
           label: 'View coaches',
-          variant: DriftButtonVariant.text,
           onPressed: () => context.push(
             Uri(
               path: '/discover/coaches',
-              queryParameters: {
-                'clubId': summary.id,
-                'clubName': summary.name,
-              },
+              queryParameters: {'clubId': clubId, 'clubName': summary.name},
             ).toString(),
           ),
         ),
-        const SizedBox(height: DriftSpacing.s4),
 
-        if (profile.phone != null || profile.website != null)
-          DriftCard(
+        if (profile.phone != null || profile.website != null) ...[
+          const SizedBox(height: 12),
+          DriftSoftCard(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Contact', style: type.h4),
-                const SizedBox(height: DriftSpacing.s2),
+                Text(
+                  'Contact',
+                  style: type.title.copyWith(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 8),
                 if (profile.phone != null)
-                  Text(profile.phone!, style: type.body),
+                  Text(profile.phone!, style: type.bodySmall),
                 if (profile.website != null)
-                  Text(profile.website!, style: type.body),
+                  Text(profile.website!, style: type.bodySmall),
               ],
             ),
           ),
-        if (profile.phone != null || profile.website != null)
-          const SizedBox(height: DriftSpacing.s4),
+        ],
 
-        Text('Courts', style: type.h4),
-        const SizedBox(height: DriftSpacing.s3),
+        const SizedBox(height: 18),
+        Text('Courts', style: type.h4.copyWith(fontWeight: FontWeight.w700)),
+        const SizedBox(height: 10),
         if (profile.courts.isEmpty)
           Text(
             'No courts found',
-            style: type.body.copyWith(color: colors.textSecondary),
+            style: type.bodySmall.copyWith(color: colors.textSecondary),
           )
         else
           for (final court in profile.courts)
             Padding(
-              padding: const EdgeInsets.only(bottom: DriftSpacing.s3),
-              child: DriftCourtCard(
-                court: court,
-                onTap: () => context.push('/discover/courts/${court.id}'),
-              ),
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _CourtRow(court: court, clubName: summary.name),
             ),
       ],
     );
   }
 }
 
+class _CourtRow extends StatelessWidget {
+  const _CourtRow({required this.court, required this.clubName});
+
+  final CourtSummary court;
+  final String clubName;
+
+  @override
+  Widget build(BuildContext context) {
+    final type = Theme.of(context).extension<DriftTypography>()!;
+
+    return DriftSoftCard(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      onTap: () => context.push('/discover/courts/${court.id}'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            court.name,
+            style: type.title.copyWith(fontWeight: FontWeight.w700),
+          ),
+          if (court.address != null) ...[
+            const SizedBox(height: 4),
+            _MetaRow(icon: Icons.place_outlined, text: court.address!),
+          ],
+          const SizedBox(height: 2),
+          _MetaRow(icon: Icons.groups_outlined, text: clubName),
+          if (court.surfaces.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final s in court.surfaces)
+                  DriftPill(label: s, tone: DriftPillTone.neutral),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _MetaRow extends StatelessWidget {
+  const _MetaRow({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final type = Theme.of(context).extension<DriftTypography>()!;
+    final colors = Theme.of(context).extension<DriftColors>()!;
+    return Row(
+      children: [
+        Icon(icon, size: 12, color: colors.textSecondary),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            text,
+            style: type.caption.copyWith(color: colors.textSecondary),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 /// Join / Requested / Leave, plus the community links a member has earned.
-/// Doc 2 §67: "Club Profile → Join / Follow → Club Feed".
 class _MembershipActions extends StatelessWidget {
   const _MembershipActions({
-    required this.profile,
+    required this.membership,
     required this.isBusy,
+    required this.clubId,
     required this.onJoin,
     required this.onLeave,
   });
 
-  final ClubProfile profile;
+  final ClubMembership membership;
   final bool isBusy;
+  final String clubId;
   final VoidCallback onJoin;
   final VoidCallback onLeave;
 
@@ -199,28 +293,23 @@ class _MembershipActions extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<DriftColors>()!;
     final type = Theme.of(context).extension<DriftTypography>()!;
-    final clubId = profile.summary.id;
 
-    return switch (profile.membership) {
-      ClubMembership.none => DriftButton(
+    return switch (membership) {
+      ClubMembership.none => DriftPrimaryButton(
         label: isBusy ? 'Requesting…' : 'Request to join',
         onPressed: isBusy ? null : onJoin,
       ),
-      // A request an admin hasn't actioned yet. Withdrawing is the only
-      // move available, so the button does that rather than nothing.
       ClubMembership.pending || ClubMembership.invited => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            profile.membership == ClubMembership.pending
+            membership == ClubMembership.pending
                 ? 'Your request is waiting for a club admin.'
                 : 'You have been invited to this club.',
             style: type.bodySmall.copyWith(color: colors.textSecondary),
           ),
-          const SizedBox(height: DriftSpacing.s2),
-          DriftButton(
+          DriftTextLink(
             label: isBusy ? 'Working…' : 'Withdraw request',
-            variant: DriftButtonVariant.text,
             onPressed: isBusy ? null : onLeave,
           ),
         ],
@@ -228,19 +317,18 @@ class _MembershipActions extends StatelessWidget {
       ClubMembership.active => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          DriftButton(
+          DriftPrimaryButton(
             label: 'Announcements',
-            onPressed: () => context.push('/discover/clubs/$clubId/announcements'),
+            onPressed: () =>
+                context.push('/discover/clubs/$clubId/announcements'),
           ),
-          const SizedBox(height: DriftSpacing.s2),
-          DriftButton(
+          const SizedBox(height: 4),
+          DriftTextLink(
             label: 'Club Feed',
-            variant: DriftButtonVariant.text,
             onPressed: () => context.push('/discover/clubs/$clubId/feed'),
           ),
-          DriftButton(
+          DriftTextLink(
             label: isBusy ? 'Working…' : 'Leave club',
-            variant: DriftButtonVariant.text,
             onPressed: isBusy ? null : onLeave,
           ),
         ],

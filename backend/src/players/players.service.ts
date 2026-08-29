@@ -20,6 +20,13 @@ import { SearchPlayersDto } from './dto/search-players.dto';
 const DEFAULT_TAKE = 20;
 
 /**
+ * Most candidates scored in one search. Generous relative to `DEFAULT_TAKE`
+ * (25 pages of results) so it is unreachable at current scale, while keeping
+ * a pathological query from loading the whole user table into memory.
+ */
+const CANDIDATE_LIMIT = 500;
+
+/**
  * Ranking weights. `foundation/03-user-journeys.md` §4.1 specifies "proximity
  * + level compatibility weighted" without fixing the weights, so an even
  * split is the documented implementation decision for this phase — same
@@ -134,6 +141,18 @@ export class PlayersService {
           : { tennisProfile: { is: profileFilter } }),
       },
       include: playerInclude,
+      // Hard ceiling on the candidate set. Ranking is by a *computed* score
+      // (proximity blended with level compatibility), which can't be
+      // expressed in SQL without PostGIS — so results can't be paginated in
+      // the database, and this query previously loaded every matching user,
+      // with their full profile include, into memory on every search.
+      //
+      // The cap trades exhaustiveness for a bounded worst case: above this
+      // many matches the tail is dropped before scoring, so a distant but
+      // well-matched player could be missed. That is the point at which this
+      // needs a real geospatial index rather than a bigger number here —
+      // see the `total` note below and PROGRESS.md's open dependencies.
+      take: CANDIDATE_LIMIT,
     });
 
     const viewerLevel =
@@ -164,7 +183,11 @@ export class PlayersService {
     const take = dto.take ?? DEFAULT_TAKE;
 
     return {
+      // Matches *considered*, not matches in existence — once the candidate
+      // ceiling is hit these differ, and `truncated` says so rather than
+      // presenting a capped count as the true total.
       total: scored.length,
+      truncated: candidates.length === CANDIDATE_LIMIT,
       players: scored
         .slice(skip, skip + take)
         .map((row) => toPlayerSummary(row.player, row.distanceKm)),

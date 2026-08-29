@@ -2,10 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/global_search_repository.dart';
 
-typedef GlobalSearchRequest = ({
-  String query,
-  GlobalSearchFilter filter,
-});
+typedef GlobalSearchRequest = ({String query, GlobalSearchFilter filter});
 
 // `.autoDispose` is load-bearing here, not just the house convention: this is
 // a `.family` keyed on the query string, so without it every distinct search

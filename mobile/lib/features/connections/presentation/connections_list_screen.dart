@@ -6,6 +6,7 @@ import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/drift_player_card.dart';
+import '../../../shared/widgets/drift_scaffold.dart';
 import '../application/connections_providers.dart';
 import '../data/connections_repository.dart';
 
@@ -19,31 +20,25 @@ class ConnectionsListScreen extends ConsumerWidget {
     final pending = ref.watch(pendingRequestsProvider);
     final incomingCount = pending.valueOrNull?.incoming.length ?? 0;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Connections'),
-        actions: [
-          _RequestsButton(
-            count: incomingCount,
-            onPressed: () => context.push('/connections/pending'),
-          ),
-        ],
+    return DriftScaffold(
+      title: 'Connections',
+      trailing: _RequestsButton(
+        count: incomingCount,
+        onPressed: () => context.push('/connections/pending'),
       ),
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () {
-            ref.invalidate(pendingRequestsProvider);
-            return ref.refresh(connectionsProvider.future);
-          },
-          child: switch (connections) {
-            AsyncData(:final value) =>
-              value.isEmpty ? const _EmptyConnections() : _List(entries: value),
-            AsyncError() => const Center(
-              child: Text("Couldn't load your connections."),
-            ),
-            _ => const Center(child: CircularProgressIndicator()),
-          },
-        ),
+      body: RefreshIndicator(
+        onRefresh: () {
+          ref.invalidate(pendingRequestsProvider);
+          return ref.refresh(connectionsProvider.future);
+        },
+        child: switch (connections) {
+          AsyncData(:final value) =>
+            value.isEmpty ? const _EmptyConnections() : _List(entries: value),
+          AsyncError() => const Center(
+            child: Text("Couldn't load your connections."),
+          ),
+          _ => const Center(child: CircularProgressIndicator()),
+        },
       ),
     );
   }

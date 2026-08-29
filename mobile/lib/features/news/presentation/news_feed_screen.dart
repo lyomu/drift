@@ -3,12 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/drift_colors.dart';
-import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
-import '../../../shared/widgets/buttons/drift_button.dart';
+import '../../../shared/widgets/drift_back_header.dart';
 import '../../../shared/widgets/drift_filter_chip.dart';
-import '../../../shared/widgets/drift_news_story_card.dart';
+import '../../../shared/widgets/drift_soft_card.dart';
 import '../application/news_providers.dart';
+import '../data/news_repository.dart';
 
 const _categoryOptions = [
   (value: 'LATEST', label: 'Latest'),
@@ -21,10 +21,8 @@ const _categoryOptions = [
   (value: 'COMMUNITY', label: 'Community'),
 ];
 
-/// News Feed — `foundation/04-screen-inventory.md` §A.8. "Follow topic" is
-/// deferred (see PROGRESS.md) — topics have no controlled vocabulary and no
-/// dedicated screen the way Saved Stories does, so only category filtering
-/// and Save are built this phase.
+/// News Feed — `foundation/04-screen-inventory.md` §A.8 (redesign 2026-08:
+/// `App.tsx` `NewsView`).
 class NewsFeedScreen extends ConsumerWidget {
   const NewsFeedScreen({super.key});
 
@@ -36,29 +34,22 @@ class NewsFeedScreen extends ConsumerWidget {
     final colors = Theme.of(context).extension<DriftColors>()!;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('News'),
-        actions: [
-          IconButton(
-            onPressed: () => context.push('/news/saved'),
-            icon: const Icon(Icons.bookmark_outline),
-            tooltip: 'Saved Stories',
-          ),
-        ],
-      ),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                DriftSpacing.s4,
-                DriftSpacing.s3,
-                DriftSpacing.s4,
-                0,
+            DriftBackHeader(
+              title: 'News',
+              trailing: DriftHeaderSquareButton(
+                icon: Icons.bookmark_border,
+                onTap: () => context.push('/news/saved'),
               ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(0, 0, 0, 12),
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
                   children: [
                     for (final option in _categoryOptions) ...[
@@ -69,7 +60,7 @@ class NewsFeedScreen extends ConsumerWidget {
                             ref.read(newsCategoryProvider.notifier).state =
                                 category == option.value ? null : option.value,
                       ),
-                      const SizedBox(width: DriftSpacing.s2),
+                      const SizedBox(width: 8),
                     ],
                   ],
                 ),
@@ -81,60 +72,23 @@ class NewsFeedScreen extends ConsumerWidget {
                 child: switch (feed) {
                   AsyncData(:final value) =>
                     value.isEmpty
-                        ? ListView(
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.all(DriftSpacing.s6),
-                                child: Column(
-                                  children: [
-                                    const SizedBox(height: DriftSpacing.s12),
-                                    Text(
-                                      'No stories in this category yet',
-                                      style: type.body.copyWith(
-                                        color: colors.textSecondary,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
+                        ? _message(
+                            type,
+                            colors,
+                            'No stories in this category yet',
                           )
                         : ListView.separated(
-                            padding: const EdgeInsets.all(DriftSpacing.s4),
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                             itemCount: value.length,
                             separatorBuilder: (_, _) =>
-                                const SizedBox(height: DriftSpacing.s3),
-                            itemBuilder: (context, index) {
-                              final story = value[index];
-                              return DriftNewsStoryCard(
-                                story: story,
-                                onTap: () => context.push('/news/${story.id}'),
-                              );
-                            },
+                                const SizedBox(height: 8),
+                            itemBuilder: (context, i) =>
+                                _ArticleCard(story: value[i]),
                           ),
-                  AsyncError() => ListView(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(DriftSpacing.s6),
-                        child: Column(
-                          children: [
-                            const SizedBox(height: DriftSpacing.s12),
-                            Text(
-                              "Couldn't load news.",
-                              style: type.body,
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: DriftSpacing.s4),
-                            DriftButton(
-                              label: 'Retry',
-                              variant: DriftButtonVariant.text,
-                              onPressed: () => ref.invalidate(newsFeedProvider),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                  AsyncError() => _message(
+                    type,
+                    colors,
+                    "Couldn't load news. Pull to retry.",
                   ),
                   _ => const Center(child: CircularProgressIndicator()),
                 },
@@ -142,6 +96,73 @@ class NewsFeedScreen extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _message(DriftTypography type, DriftColors colors, String text) {
+    return ListView(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 64, 24, 24),
+          child: Text(
+            text,
+            style: type.body.copyWith(color: colors.textSecondary),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ArticleCard extends StatelessWidget {
+  const _ArticleCard({required this.story});
+
+  final StorySummary story;
+
+  @override
+  Widget build(BuildContext context) {
+    final type = Theme.of(context).extension<DriftTypography>()!;
+    final colors = Theme.of(context).extension<DriftColors>()!;
+
+    return DriftSoftCard(
+      padding: const EdgeInsets.all(16),
+      onTap: () => context.push('/news/${story.id}'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            story.headline,
+            style: type.title.copyWith(
+              fontWeight: FontWeight.w700,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            story.highlight,
+            style: type.bodySmall.copyWith(
+              color: colors.textSecondary,
+              height: 1.5,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '${story.publisher} · ${story.publicationDate.day}/${story.publicationDate.month}/${story.publicationDate.year}',
+                  style: type.caption.copyWith(color: colors.textSecondary),
+                ),
+              ),
+              if (story.savedByViewer)
+                Icon(Icons.bookmark, size: 16, color: colors.primary),
+            ],
+          ),
+        ],
       ),
     );
   }

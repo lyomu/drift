@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { api, ApiError, setToken } from "@/lib/api-client";
 import { useClub } from "@/lib/club-context";
-import { Button, Card, ErrorBanner, Field, Input } from "@/components/ui";
+import { Button, ErrorBanner, Field, Input } from "@/components/ui";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -35,14 +35,17 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-drift-background px-4">
-      <Card className="w-full max-w-sm">
+    <div className="flex min-h-screen items-center justify-center bg-drift-background px-4 py-10">
+      <div className="w-full max-w-[380px] rounded-[20px] bg-drift-surface p-8 shadow-[0_24px_60px_rgba(17,24,39,0.12)]">
         <div className="mb-6 text-center">
-          <div className="font-display text-2xl font-bold text-drift-text-primary">
-            Drift Club Admin
+          <div className="font-display text-xl font-extrabold tracking-[-0.2px] text-drift-text-primary">
+            Drift
           </div>
-          <p className="mt-1 text-sm text-drift-text-secondary">
-            Sign in with your Drift account
+          <h1 className="mt-4 text-[24px] font-extrabold tracking-[-0.3px] text-drift-text-primary">
+            Welcome back
+          </h1>
+          <p className="mt-1 text-[13.5px] text-drift-text-secondary">
+            Sign in to manage your club
           </p>
         </div>
         <ErrorBanner message={error} />
@@ -54,28 +57,38 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
+              placeholder="you@club.com"
             />
           </Field>
-          <Field label="Password">
+          <div>
+            <div className="mb-1.5 flex items-center justify-between gap-3">
+              <span className="text-[13px] font-semibold text-drift-text-secondary">
+                Password
+              </span>
+              <Link href="/reset-password" className="text-[12.5px] font-bold text-drift-primary">
+                Forgot password?
+              </Link>
+            </div>
             <Input
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
+              placeholder="••••••••"
             />
-          </Field>
-          <Button type="submit" disabled={submitting} className="mt-2 w-full">
-            {submitting ? "Signing in…" : "Sign in"}
+          </div>
+          <Button type="submit" disabled={submitting} className="mt-1 w-full">
+            {submitting ? "Signing in..." : "Sign in"}
           </Button>
         </form>
         <p className="mt-6 text-center text-sm text-drift-text-secondary">
           New to Drift Club Admin?{" "}
-          <Link href="/signup" className="font-semibold text-drift-primary">
+          <Link href="/signup" className="font-bold text-drift-primary">
             Create an account
           </Link>
         </p>
-      </Card>
+      </div>
     </div>
   );
 }

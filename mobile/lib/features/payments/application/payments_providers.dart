@@ -2,11 +2,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/payments_repository.dart';
 
-final billingSummaryProvider = FutureProvider.autoDispose<BillingSummary>((ref) {
+final billingSummaryProvider = FutureProvider.autoDispose<BillingSummary>((
+  ref,
+) {
   return ref.watch(paymentsRepositoryProvider).summary();
 });
 
-final paymentPlansProvider = FutureProvider.autoDispose<List<PaymentPlan>>((ref) {
+final paymentPlansProvider = FutureProvider.autoDispose<List<PaymentPlan>>((
+  ref,
+) {
   return ref.watch(paymentsRepositoryProvider).plans();
 });
 
@@ -15,7 +19,8 @@ final paymentMethodsProvider =
       return ref.watch(paymentsRepositoryProvider).methods();
     });
 
-final billingHistoryProvider =
-    FutureProvider.autoDispose<List<BillingInvoice>>((ref) {
-      return ref.watch(paymentsRepositoryProvider).invoices();
-    });
+final billingHistoryProvider = FutureProvider.autoDispose<List<BillingInvoice>>(
+  (ref) {
+    return ref.watch(paymentsRepositoryProvider).invoices();
+  },
+);

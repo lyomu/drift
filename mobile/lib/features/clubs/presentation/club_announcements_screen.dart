@@ -5,6 +5,7 @@ import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/drift_card.dart';
+import '../../../shared/widgets/drift_scaffold.dart';
 import '../application/clubs_providers.dart';
 import '../data/clubs_repository.dart';
 
@@ -23,27 +24,24 @@ class ClubAnnouncementsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final announcements = ref.watch(clubAnnouncementsProvider(clubId));
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Announcements')),
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () async {
-            ref.invalidate(clubAnnouncementsProvider(clubId));
-            await ref.read(clubAnnouncementsProvider(clubId).future);
-          },
-          child: switch (announcements) {
-            AsyncData(:final value) when value.isEmpty => const _Empty(),
-            AsyncData(:final value) => ListView.separated(
-              padding: const EdgeInsets.all(DriftSpacing.s5),
-              itemCount: value.length,
-              separatorBuilder: (_, _) =>
-                  const SizedBox(height: DriftSpacing.s3),
-              itemBuilder: (context, i) => _AnnouncementCard(value[i]),
-            ),
-            AsyncError() => const _NotAvailable(),
-            _ => const Center(child: CircularProgressIndicator()),
-          },
-        ),
+    return DriftScaffold(
+      title: 'Announcements',
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(clubAnnouncementsProvider(clubId));
+          await ref.read(clubAnnouncementsProvider(clubId).future);
+        },
+        child: switch (announcements) {
+          AsyncData(:final value) when value.isEmpty => const _Empty(),
+          AsyncData(:final value) => ListView.separated(
+            padding: const EdgeInsets.all(DriftSpacing.s5),
+            itemCount: value.length,
+            separatorBuilder: (_, _) => const SizedBox(height: DriftSpacing.s3),
+            itemBuilder: (context, i) => _AnnouncementCard(value[i]),
+          ),
+          AsyncError() => const _NotAvailable(),
+          _ => const Center(child: CircularProgressIndicator()),
+        },
       ),
     );
   }
@@ -69,9 +67,7 @@ class _AnnouncementCard extends StatelessWidget {
                 Icon(Icons.push_pin, size: 16, color: colors.primary),
                 const SizedBox(width: DriftSpacing.s2),
               ],
-              Expanded(
-                child: Text(announcement.title, style: type.title),
-              ),
+              Expanded(child: Text(announcement.title, style: type.title)),
             ],
           ),
           const SizedBox(height: DriftSpacing.s2),

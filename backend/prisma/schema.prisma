@@ -178,6 +178,84 @@ enum ReportStatus {
   DISMISSED
 }
 
+enum TrustSafetyPriority {
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum AbuseCaseStatus {
+  OPEN
+  CLOSED
+}
+
+enum PlatformMarketStatus {
+  ACTIVE
+  COMING_SOON
+  INACTIVE
+}
+
+enum PlatformFeatureFlagStatus {
+  OFF
+  ON
+  PARTIAL
+}
+
+enum NotificationTemplateChannel {
+  PUSH
+  EMAIL
+  SMS
+}
+
+enum NotificationTemplateStatus {
+  DRAFT
+  LIVE
+}
+
+enum PlatformSystemSettingType {
+  STRING
+  NUMBER
+  BOOLEAN
+  JSON
+}
+
+enum PlatformIntegrationStatus {
+  CONNECTED
+  DISCONNECTED
+  ERROR
+}
+
+enum SupportTicketStatus {
+  OPEN
+  ASSIGNED
+  RESOLVED
+}
+
+enum SupportTicketPriority {
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum SupportTicketCategory {
+  ACCOUNT
+  BILLING
+  MATCHES
+  CLUBS
+  TECHNICAL
+  OTHER
+}
+
+enum PrivacyRequestType {
+  EXPORT
+  DELETION
+}
+
+enum PrivacyRequestStatus {
+  PENDING
+  FULFILLED
+}
+
 enum MatchSport {
   TENNIS
   PADEL
@@ -528,6 +606,9 @@ model User {
   reportsMade          PlayerReport[]  @relation("Reporter")
   reportsReceived      PlayerReport[]  @relation("Reported")
   courtReportsMade     CourtReport[]   @relation("CourtReporter")
+  abuseCasesSubject    AbuseCase[]      @relation("AbuseCaseSubject")
+  supportTickets       SupportTicket[]
+  privacyRequests      PrivacyRequest[]
   savedStories         SavedStory[]
   messageReportsMade   MessageReport[] @relation("MessageReporter")
 
@@ -568,6 +649,7 @@ model User {
   mediaAssetsUploaded     ClubMediaAsset[]           @relation("ClubMediaUploader")
   courtInquiries          CourtInquiry[]
   venueVerificationRequests VenueVerificationRequest[]
+  dismissedHomeCards        DismissedHomeCard[]
 
   @@map("users")
 }
@@ -807,10 +889,12 @@ model PlayerReport {
   reason ReportReason
   notes  String?
   status ReportStatus @default(OPEN)
+  priority TrustSafetyPriority @default(NORMAL)
 
   createdAt DateTime @default(now())
 
   @@index([reportedUserId, status])
+  @@index([priority, status, createdAt])
   @@map("player_reports")
 }
 
@@ -1379,10 +1463,12 @@ model CourtReport {
   reason CourtReportReason
   notes  String?
   status ReportStatus      @default(OPEN)
+  priority TrustSafetyPriority @default(NORMAL)
 
   createdAt DateTime @default(now())
 
   @@index([courtId, status])
+  @@index([priority, status, createdAt])
   @@map("court_reports")
 }
 
@@ -1578,12 +1664,14 @@ model ClubPostModerationReport {
   reporter     User @relation("ClubPostReporter", fields: [reporterId], references: [id], onDelete: Cascade)
   reason       String
   status       ClubPostModerationStatus @default(PENDING)
+  priority     TrustSafetyPriority @default(NORMAL)
   resolvedById String?
   resolvedBy   User? @relation("ClubPostReportResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
   resolvedAt   DateTime?
   createdAt    DateTime @default(now())
 
   @@index([clubId, status, createdAt])
+  @@index([priority, status, createdAt])
   @@map("club_post_moderation_reports")
 }
 
@@ -1978,10 +2066,12 @@ model MessageReport {
   reason ReportReason
   notes  String?
   status ReportStatus @default(OPEN)
+  priority TrustSafetyPriority @default(NORMAL)
 
   createdAt DateTime @default(now())
 
   @@index([messageId, status])
+  @@index([priority, status, createdAt])
   @@map("message_reports")
 }
 
@@ -2007,9 +2097,17 @@ model PlatformAdmin {
   auditLogs AdminAuditLog[]
   ruledResults MatchResult[]
   twoFactorChallenges PlatformAdminTwoFactorChallenge[]
+  passwordResets PlatformAdminPasswordReset[]
   invitationsSent PlatformAdminInvitation[] @relation("PlatformInvitationSender")
   venueVerificationReviews VenueVerificationRequest[] @relation("VenueVerificationReviewer")
   venueDuplicateDecisions VenueDuplicateDecision[]
+  abuseCasesOpened AbuseCase[] @relation("AbuseCaseOpenedBy")
+  abuseCasesClosed AbuseCase[] @relation("AbuseCaseClosedBy")
+  abuseCaseNotes AbuseCaseNote[]
+  assignedSupportTickets SupportTicket[] @relation("SupportTicketAssignee")
+  resolvedSupportTickets SupportTicket[] @relation("SupportTicketResolver")
+  supportMessages SupportTicketMessage[]
+  processedPrivacyRequests PrivacyRequest[] @relation("PrivacyRequestProcessor")
 
   @@index([roleId, deactivatedAt])
   @@map("platform_admins")
@@ -2067,6 +2165,21 @@ model PlatformAdminTwoFactorChallenge {
 
   @@index([adminId, expiresAt])
   @@map("platform_admin_two_factor_challenges")
+}
+
+model PlatformAdminPasswordReset {
+  id         String @id @default(uuid())
+  adminId    String
+  admin      PlatformAdmin @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  codeHash   String
+  expiresAt  DateTime
+  attempts   Int @default(0)
+  consumedAt DateTime?
+  lastSentAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  @@index([adminId, expiresAt])
+  @@map("platform_admin_password_resets")
 }
 
 model PlatformAdminInvitation {
@@ -2295,6 +2408,158 @@ model SponsorPlacement {
   @@map("sponsor_placements")
 }
 
+model SupportedMarket {
+  id          String               @id @default(uuid())
+  countryCode String
+  countryName String
+  cityName    String
+  timezone    String?
+  status      PlatformMarketStatus @default(COMING_SOON)
+  notes       String?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  featureFlags FeatureFlag[]
+
+  @@unique([countryCode, cityName])
+  @@index([status, countryName, cityName])
+  @@map("supported_markets")
+}
+
+model FeatureFlag {
+  id                String                    @id @default(uuid())
+  key               String                    @unique
+  name              String
+  description       String?
+  status            PlatformFeatureFlagStatus @default(OFF)
+  rolloutPercentage Int                       @default(0)
+  marketId          String?
+  market            SupportedMarket?          @relation(fields: [marketId], references: [id], onDelete: SetNull)
+  cohort            String?
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+
+  @@index([status, key])
+  @@index([marketId])
+  @@map("feature_flags")
+}
+
+model NotificationTemplate {
+  id          String                      @id @default(uuid())
+  key         String
+  name        String
+  description String?
+  channel     NotificationTemplateChannel
+  subject     String?
+  body        String
+  previewData Json?
+  status      NotificationTemplateStatus  @default(DRAFT)
+  createdAt   DateTime                    @default(now())
+  updatedAt   DateTime                    @updatedAt
+
+  @@unique([key, channel])
+  @@index([status, channel])
+  @@map("notification_templates")
+}
+
+model SystemSetting {
+  id          String                    @id @default(uuid())
+  key         String                    @unique
+  label       String
+  description String?
+  valueType   PlatformSystemSettingType @default(STRING)
+  value       Json
+  createdAt   DateTime                  @default(now())
+  updatedAt   DateTime                  @updatedAt
+
+  @@index([valueType, key])
+  @@map("system_settings")
+}
+
+model IntegrationConfig {
+  id            String                    @id @default(uuid())
+  providerKey   String                    @unique
+  name          String
+  description   String?
+  config        Json?
+  secretRef     String?
+  status        PlatformIntegrationStatus @default(DISCONNECTED)
+  lastCheckedAt DateTime?
+  lastError     String?
+  disabledAt    DateTime?
+  createdAt     DateTime                  @default(now())
+  updatedAt     DateTime                  @updatedAt
+
+  @@index([status, providerKey])
+  @@map("integration_configs")
+}
+
+model SupportTicket {
+  id          String                @id @default(uuid())
+  userId      String?
+  user        User?                 @relation(fields: [userId], references: [id], onDelete: SetNull)
+  subject     String
+  body        String
+  category    SupportTicketCategory @default(OTHER)
+  priority    SupportTicketPriority @default(NORMAL)
+  status      SupportTicketStatus   @default(OPEN)
+
+  assignedToId String?
+  assignedTo   PlatformAdmin? @relation("SupportTicketAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  resolvedById String?
+  resolvedBy   PlatformAdmin? @relation("SupportTicketResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+  resolvedAt   DateTime?
+  resolutionNote String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages SupportTicketMessage[]
+
+  @@index([status, priority, createdAt])
+  @@index([userId, createdAt])
+  @@index([assignedToId, status])
+  @@map("support_tickets")
+}
+
+model SupportTicketMessage {
+  id       String @id @default(uuid())
+  ticketId String
+  ticket   SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  actorId  String
+  actor    PlatformAdmin @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  body      String
+  createdAt DateTime @default(now())
+
+  @@index([ticketId, createdAt])
+  @@index([actorId, createdAt])
+  @@map("support_ticket_messages")
+}
+
+model PrivacyRequest {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type   PrivacyRequestType
+  status PrivacyRequestStatus @default(PENDING)
+  requestNote String?
+  fulfillmentNote String?
+  exportSnapshot Json?
+
+  processedById String?
+  processedBy   PlatformAdmin? @relation("PrivacyRequestProcessor", fields: [processedById], references: [id], onDelete: SetNull)
+  fulfilledAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, type, createdAt])
+  @@index([userId, status])
+  @@map("privacy_requests")
+}
+
 /// Consequential administrative writes land here. Club-admin actions are
 /// already scoped by club membership; this log covers the platform surface,
 /// where the operator's power is broadest and history matters most.
@@ -2313,6 +2578,50 @@ model AdminAuditLog {
   @@index([entityType, entityId])
   @@index([actorId, createdAt])
   @@map("admin_audit_logs")
+}
+
+model AbuseCase {
+  id            String @id @default(uuid())
+  subjectUserId String
+  subjectUser   User   @relation("AbuseCaseSubject", fields: [subjectUserId], references: [id], onDelete: Cascade)
+
+  status   AbuseCaseStatus @default(OPEN)
+  priority TrustSafetyPriority @default(HIGH)
+  summary  String
+
+  openedById String
+  openedBy   PlatformAdmin @relation("AbuseCaseOpenedBy", fields: [openedById], references: [id], onDelete: Restrict)
+  closedById String?
+  closedBy   PlatformAdmin? @relation("AbuseCaseClosedBy", fields: [closedById], references: [id], onDelete: SetNull)
+  closedAt   DateTime?
+  closeReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  notes AbuseCaseNote[]
+
+  @@index([status, priority, createdAt])
+  @@index([subjectUserId, status])
+  @@map("abuse_cases")
+}
+
+model AbuseCaseNote {
+  id      String @id @default(uuid())
+  caseId  String
+  case    AbuseCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  actorId String
+  actor   PlatformAdmin @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  action   String
+  body     String?
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([caseId, createdAt])
+  @@index([actorId, createdAt])
+  @@map("abuse_case_notes")
 }
 
 model CompetitionRuleset {
@@ -2516,3 +2825,28 @@ model LadderChallenge {
   @@map("ladder_challenges")
 }
 
+
+/// Home feed card dismissal / snooze (foundation/04-screen-inventory.md §A.3
+/// lists "Dismiss/snooze a card" as a Home secondary action).
+///
+/// Keyed by the card's stable `id` rather than its type, so dismissing "the
+/// challenge from Alice" doesn't also hide a later challenge from Bob. Card
+/// ids embed their subject entity id for exactly this reason — see
+/// `src/home/home-card.ts`.
+///
+/// `snoozedUntil` null means dismissed permanently; a date means hidden until
+/// then. One row covers both so the feed only has to consult one table.
+model DismissedHomeCard {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  cardId       String
+  snoozedUntil DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, cardId])
+  @@index([userId])
+  @@map("dismissed_home_cards")
+}

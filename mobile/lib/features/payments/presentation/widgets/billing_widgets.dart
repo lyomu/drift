@@ -115,7 +115,11 @@ class PaymentPlanCard extends StatelessWidget {
 }
 
 class BillingLoadError extends StatelessWidget {
-  const BillingLoadError({super.key, required this.message, required this.retry});
+  const BillingLoadError({
+    super.key,
+    required this.message,
+    required this.retry,
+  });
 
   final String message;
   final VoidCallback retry;

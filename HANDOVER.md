@@ -1,234 +1,182 @@
-# Drift Tennis — Handover
+# Handover — Home Rebuild & Polish, Wave 7 (Testing)
 
-Last updated: 2026-08-24. Written for the next agent picking up this project.
+Waves 1-6 are code-complete. Nothing has been run. The prompt below is written to be pasted into a fresh session, or handed to another engineer, with no memory of this work.
 
----
-
-## Part 1 — The handover prompt
-
-> Copy everything in this block into a fresh session as your first message.
-
-```
-You are picking up the Drift Tennis project, mid-way through a six-wave
-implementation plan that takes it from demo to beta.
-
-Read HANDOVER.md at the repo root first — it is the full context document.
-Then read PROGRESS.md, which is the running engineering log (one row per
-milestone, plus a long "open gaps" tail that is deliberately honest about
-what is unbuilt).
-
-Your immediate task, in this order:
-
-1. FIRST, before anything else: `cd mobile && flutter analyze`.
-   test/support/fixtures.dart was expanded in the last session and never
-   compiled. It is the one file in the tree that may not build. Fix whatever
-   it reports before starting new work.
-
-2. Then continue Wave 3, Layer 3a — the screen state matrix. 6 of 85 screens
-   are covered. HANDOVER.md §6 has the full screen inventory, the provider
-   each one watches, and the exact family-provider call signatures.
-
-Working agreements that the project owner has confirmed and expects:
-- Write a plan and get it approved BEFORE multi-file edits. Picking the task
-  is not approving the approach.
-- Build the whole feature first, then do all testing in one pass at the end.
-- Update PROGRESS.md at every phase boundary, not just at session end.
-- Do not commit unless asked.
-
-Report honestly. If something is blocked, say so and finish everything else.
-```
+Full reasoning for every decision lives in [HOME-AND-POLISH-PLAN.md](HOME-AND-POLISH-PLAN.md).
 
 ---
 
-## Part 2 — The context
-
-### 1. What this is
-
-A tennis (and Padel) social/competition platform. Three surfaces:
-
-| Surface | Stack | Location |
-|---|---|---|
-| Backend API | NestJS + Prisma + PostgreSQL 16 | `backend/` |
-| Mobile app | Flutter — Riverpod, go_router, dio | `mobile/` |
-| Club Admin | Next.js 15 App Router | `club-admin/` |
-
-Postgres runs in Docker on **port 5434**. The emulator reaches the host API at
-`10.0.2.2`; the app accepts `--dart-define=DRIFT_API_BASE_URL=...`.
-
-The product spec lives in `starter docs/` (3 documents) and `foundation/`
-(7 documents, also published as artifacts — see `MEMORY.md`).
-
-### 2. The plan being executed
-
-A six-wave plan to beta, published here:
-https://claude.ai/code/artifact/be203580-2244-4fb6-b4ab-d9e4aa4e7e22
-
-The current wave's detailed plan is at
-`C:\Users\gmnyo\.claude\plans\create-a-plan-first-velvety-swing.md` (Wave 3).
-
-### 3. Status by wave
-
-| Wave | State | Notes |
-|---|---|---|
-| 1.1 Password reset | **Done** | 2 endpoints, 2 screens, 11 tests. Non-enumerating. |
-| 1.2 Email provider | **Blocked on owner** | No provider chosen. Verification codes are logged, not sent. |
-| 1.3 Push (FCM/APNs) | **Blocked on owner** | Needs a Firebase project + credentials. |
-| 1.4 Notification triggers | **Done** | Was 1 of 13 Play-loop events notifying; now 15. |
-| 2 Community | **Done** | Club join/approval, `CLUBS` category, announcements fanout, Club Feed. |
-| 3 Quality gate | **Partial** | Layers 0–2 done. Layer 3a is 6/85 screens. See §6. |
-| 3.2 Device pass | **Partial** | Priority flows verified on an AVD. Club Feed + match loop not yet. |
-| 3.3 Club Admin click-through | **Blocked** | No browser automation in this environment. Human task. |
-| 4 Court data ingestion | **Blocked on owner** | Needs an ingestion route + cost decision (Google Places or similar). |
-| 5.2 Redis socket adapter | **Done** | Best-effort; falls back cleanly when `REDIS_URL` is absent. |
-
-### 4. Verified numbers
-
-From the last full run:
-
-| Check | Value |
-|---|---|
-| Backend unit | 394 tests / 30 suites |
-| Backend e2e | 75 tests / 14 suites |
-| Flutter tests | 231 (was 1) |
-| Mapper coverage | 70 of 70 |
-| `flutter analyze` | clean **at that point** — see the warning below |
-
-### 5. State of the working tree — read this
-
-**Nothing is committed.** `git log` shows only two pre-existing commits.
-`backend/`, `mobile/`, `club-admin/`, `PROGRESS.md` and everything else are
-untracked. Three waves of work exist only in the working tree. The owner has
-not asked for a commit; do not make one unprompted, but do raise it.
-
-**`mobile/test/support/fixtures.dart` is unverified.** It was rewritten in the
-last session — expanded from 6 fixtures to roughly 40, covering every domain
-type the screen matrix needs — and the session ended before `flutter analyze`
-ran on it. Compile it first. Likely failure points are enum member names
-(`SeasonState`, `SeasonRegistrationStatus`, `FieldVisibility`, `OnboardingStep`)
-and `const` correctness on the nested fixtures.
-
-Three migrations were added and applied:
-- `20260822101500_add_password_reset_purpose`
-- `20260822213210_add_club_join_and_clubs_notifications`
-- `20260822213833_add_club_feed`
-
-### 6. Wave 3 Layer 3a — the remaining work, mapped
-
-**85 screen files** in `mobile/lib/**/presentation/*_screen.dart`. They split
-cleanly into two groups.
-
-**Group A — screens that watch an async provider (~45).** These get the
-four-state matrix: loading, data, empty, error, in both brightnesses. Override
-the *provider*, not the repository — `overrideWith` returning a value, an empty
-value, a never-completing future, and a throwing future.
-
-**Group B — static and form screens (~40).** No `ref.watch`. One
-"renders without throwing" test each, both brightnesses. Cheaper, and still
-catches theme-extension breakage.
-
-The harness already exists in `mobile/test/support/`:
-- `pump.dart` — `pumpScreen`, `pumpRouted`, `pending<T>()`, `failing<T>()`.
-  Supplying the real `AppTheme` is load-bearing: every screen reads
-  `Theme.of(context).extension<DriftColors>()!` and throws on a bare
-  `MaterialApp`.
-- `fixtures.dart` — canned domain objects (see the warning in §5).
-- `mocks.dart` — mocktail mocks. `mocktail` is a dev dependency; no codegen.
-
-**Family-provider call signatures**, extracted from the screens — these are the
-easy thing to get wrong:
-
 ```
-clubAnnouncementsProvider(clubId)
-clubFeedProvider(clubId)
-clubDetailProvider(clubId)
-leagueDetailProvider(leagueId)          // also used by LeagueRulesScreen
-registeredPlayersProvider(seasonId)
-roundProvider((seasonId: seasonId, roundId: roundId))
-seasonDetailProvider(seasonId)
-currentRoundProvider(seasonId)
-standingsProvider(seasonId)
-courtDetailProvider(courtId)
-contentDetailProvider(contentId)        // also TrainingPlanDetailScreen(planId)
-goalDetailProvider(goalId)
-contentBrowseProvider((type: null, targetSkill: skill))
-skillDetailProvider(skill)
-matchDetailProvider(matchId)
-matchListProvider(segment)              // MatchSegment enum
-threadProvider(conversationId)          // AsyncNotifierProvider.family
-storyDetailProvider(storyId)
-playerProfileProvider(playerId)
+You are picking up the Drift Tennis "Home rebuild + polish" work at the
+testing stage. All the CODE is written across six waves. NOTHING has been
+run — no build, no lint, no tests, no migration applied. That was deliberate
+(the repo owner works code-first, test-last). Your job is Wave 7: make it all
+actually pass, then report honestly on what broke.
+
+READ FIRST:
+- HOME-AND-POLISH-PLAN.md (repo root) — the full plan, every wave checked
+  off, and the reasoning behind each decision. Wave 7 is what's outstanding.
+- PROGRESS.md — project history and the standing "Open Dependencies" list.
+- foundation/04-screen-inventory.md section A.3 — the Home Dashboard spec
+  this rebuild implements.
+
+WORKING TREE — ALREADY CLEANED UP FOR YOU:
+Unrelated in-flight work that predated this pass has been committed as
+`0f6f557 chore: checkpoint in-flight work before Home rebuild`. So
+`git status` now shows ~50 files, and all of them are this work — you can
+review the whole thing with `git diff` plus the untracked files.
+
+Two caveats on that checkpoint commit:
+  - It is UNVERIFIED. It is a snapshot of work as found, never built or
+    tested. If something fails in a file this work never touched, suspect
+    that commit, not this pass.
+  - Three files in it (backend/src/achievements/achievements.module.ts,
+    mobile achievements + search providers) also carry a one-line edit from
+    this pass — an `exports:` addition and two `.autoDispose` conversions.
+    They were included because excluding them would have left the commit
+    missing a module file whose controller and service were in it.
+
+Files this work created or modified (i.e. everything still uncommitted):
+
+BACKEND (backend/)
+  src/home/home-card.ts                                (new: card contract)
+  src/home/contributors/                               (new: 12 contributors
+                                                        + 3 spec files)
+  src/home/home.service.ts                             (rewritten)
+  src/home/home.service.spec.ts                        (rewritten)
+  src/home/home.module.ts                              (rewritten)
+  src/home/home.controller.ts                          (rewritten)
+  src/home/dto/dismiss-card.dto.ts                     (new)
+  prisma/schema.prisma                                 (+DismissedHomeCard,
+                                                        +User back-relation)
+  prisma/migrations/20260826120000_add_home_card_dismissals/   (new)
+  src/players/players.module.ts                        (exports service)
+  src/achievements/achievements.module.ts              (exports service)
+  src/players/players.service.ts                       (CANDIDATE_LIMIT)
+  src/config/http-security.ts                          (forbidNonWhitelisted)
+  src/auth/auth.controller.ts                          (+2 @Throttle)
+  src/platform-admin/platform-admin.controller.ts      (+1 @Throttle)
+  src/app.module.ts                                    (-AnalyticsModule)
+  src/analytics/                                       (DELETED entirely)
+  src/payments/payments.service.spec.ts                (new)
+  src/payments/sandbox-payment.provider.spec.ts        (new)
+
+MOBILE (mobile/)
+  lib/features/home/data/home_repository.dart          (rewritten)
+  lib/features/home/application/home_feed_provider.dart (rewritten)
+  lib/features/home/presentation/home_screen.dart      (rewritten)
+  lib/features/home/presentation/home_header.dart      (new)
+  lib/features/home/presentation/cards/                (new: 2 files)
+  lib/features/matches/application/matches_providers.dart
+  lib/features/players/application/players_providers.dart
+  lib/features/connections/application/connections_providers.dart
+  lib/features/messaging/application/messaging_providers.dart
+  lib/features/achievements/application/achievements_providers.dart
+  lib/features/search/application/global_search_providers.dart
+  lib/features/matches/presentation/match_detail_screen.dart
+  lib/features/matches/presentation/play_hub_screen.dart
+  lib/features/notifications/presentation/notification_center_screen.dart
+  lib/shared/widgets/drift_error_retry.dart            (new)
+  lib/shared/widgets/drift_filter_chip.dart
+  lib/shared/widgets/drift_player_card.dart
+  test/support/fixtures.dart
+  test/features/home/presentation/home_screen_test.dart
+
+ADMIN WEB
+  club-admin/app/(dashboard)/announcements/page.tsx
+  club-admin/lib/api-client.ts
+  club-admin/lib/club-context.tsx
+  club-admin/components/ui.tsx
+  club-admin/components/StatusBadge.tsx
+  club-admin/next.config.ts
+  platform-admin/app/(dashboard)/users/page.tsx
+  platform-admin/components/ui.tsx
+  platform-admin/components/DataTable.tsx              (new)
+  platform-admin/lib/api-client.ts
+  platform-admin/next.config.ts
+
+DO THESE IN ORDER:
+
+1. MOBILE TOOLCHAIN FIRST — it blocks the most.
+   `flutter pub get` and `flutter analyze` were reported hanging with no
+   output BEFORE this work began (see PROGRESS.md "Verification Status").
+   That is pre-existing, not caused by these changes. Diagnose it before
+   anything mobile: `flutter doctor -v`, `flutter clean`, delete
+   `.dart_tool/` and `pubspec.lock` then re-run pub get, and check for a
+   stale Dart analysis server process. If you cannot unblock it, say so
+   plainly and move on — do not fake a mobile verification.
+
+2. BACKEND.
+   cd backend
+   npx prisma generate        # DismissedHomeCard won't type-check without this
+   npx prisma migrate deploy  # applies 20260826120000_add_home_card_dismissals
+   npm run build
+   npx eslint src             # read-only, no --fix
+   npm test
+   npm run test:e2e           # needs local Postgres running
+
+   Baseline before this work: 34 suites / 419 unit tests, 16 suites / 86 e2e,
+   all green. Expect the unit count to RISE (5 new spec files) and one suite
+   to disappear (the analytics module was deleted; it had no tests).
+
+3. ADMIN WEB (both apps).
+   `npm run build && npm run lint` in club-admin/ and in platform-admin/
+   Note: both apps carry an AGENTS.md saying this Next.js (16.3.1) has
+   breaking changes and that you should read node_modules/next/dist/docs/
+   before writing config code. Honour that if you touch next.config.ts.
+
+4. MOBILE (only if step 1 succeeded).
+   cd mobile
+   flutter analyze && dart format --set-exit-if-changed . && flutter test
+   flutter build apk --debug
+
+5. MANUAL PASS on the new Home. This is the one thing tests cannot cover —
+   the entire point of the rebuild is how the screen FEELS on launch. Seed
+   real activity (backend/prisma/seed.ts) so Tier 1 cards actually appear,
+   then check: cards render by type with the right accent colour and icon;
+   every card's action routes to a real screen; swipe-to-dismiss works and
+   the card stays gone after a refresh; the header shows real level/rating.
+
+KNOWN LANDMINES, most likely first:
+
+a) `forbidNonWhitelisted: true` was added to the global ValidationPipe
+   (src/config/http-security.ts). Requests carrying unexpected body fields
+   now 400 instead of silently stripping them. This is intended — but if an
+   e2e test or a client sends an extra field, this is what broke it. Fix the
+   CALLER, don't revert the pipe, unless the extra field is legitimate.
+
+b) ~35 files were written without ever running a compiler. Expect ordinary
+   type errors, especially across the 12 new Home contributors.
+
+c) The HomeService constructor now takes 13 contributors positionally.
+   home.service.spec.ts has a `createService` helper that pads the list to
+   13 — if you add or remove a contributor, update that padding too.
+
+d) Two `statusTone` conflicts were resolved by CHANGING platform-admin's
+   existing behaviour: DISPUTED went error->warning, DRAFT went
+   warning->neutral. If a Playwright snapshot asserts those colours, the
+   snapshot is what needs updating, not the mapping.
+
+RULES:
+- Fix forward. Do not undo the architecture to make a test pass. If a
+  decision looks wrong, say so and ask — HOME-AND-POLISH-PLAN.md explains
+  why each was made, and several look surprising until you read the
+  reasoning. Two in particular:
+    * HomeModule deliberately does NOT import MatchesModule or
+      CompetitionsModule (it would drag the write-side graph into the app's
+      hottest endpoint and risk circular imports). Contributors read via
+      PrismaService and reuse the pure mappers instead.
+    * The chat thread provider deliberately does NOT leave its socket room
+      on dispose — the gateway auto-joins every conversation room on
+      connect, so leaving would silently break inbox live updates.
+- Report failures honestly, with real command output. Never describe
+  something as verified that you did not actually run.
+- Update HOME-AND-POLISH-PLAN.md's Wave 7 checkboxes as you go, and add a
+  PROGRESS.md row when the pass completes.
 ```
 
-Screens taking constructor objects rather than ids:
-`DisputeDetailScreen(match:, viewerId:)`, `EnterScoreScreen(match:, viewerId:, mode:)`,
-`ChallengeComposerScreen(opponent:)`, `SuggestedLevelReviewScreen(result:)`,
-`AdjustLevelScreen(suggestedLevel:)`, `RatingsStatsScreen(title:, stats:)`,
-`CourtPhotosGalleryScreen(photoUrls:)`.
+---
 
-**Layer 3b remainder** — behavioural tests still outstanding: the match loop
-(propose time → counter → accept; enter score → confirm; enter score → dispute)
-and the onboarding resume path.
+## What was built, in one paragraph
 
-### 7. Traps already hit — don't re-discover these
-
-**Sharp Sans is a trial subset.** The files in `Sharp-Sans-Font-Family/` at the
-repo root carry 64 glyphs — A–Z, a–z, 0–9. They are missing the em dash, curly
-apostrophe, ellipsis and middot, which this app's copy uses in **802 places**.
-Swapping them in renders tofu in every heading. `mobile/pubspec.yaml` carries a
-comment saying so. Both the original audit and I called this "a one-hour win"
-before checking. The licence is genuinely open; the files are not usable.
-
-**Unknown enum values must degrade, not throw.** Adding `CLUBS` to the backend's
-`NotificationCategory` crashed the entire mobile Notification Centre, because
-`firstWhere` had no `orElse` — one unrecognised row failed the whole page parse.
-`notifications_repository.dart` now has an `unknown('')` fallback. Apply the same
-pattern to any new wire enum.
-
-**`grep -P` does not work in this shell** ("supports only unibyte and UTF-8
-locales"). Use Python for anything beyond basic patterns.
-
-**Bash heredocs break on large Dart payloads.** Repeatedly, in two sessions.
-Use the Write tool for Dart and long Markdown; keep heredocs for short scripts.
-
-**Emulator ANR dialogs silently swallow taps.** Under host memory pressure
-SystemUI and Pixel Launcher ANR, and the modal intercepts input so a broken tap
-looks identical to a broken coordinate. Fix:
-`am force-stop com.google.android.apps.nexuslauncher` and
-`settings put global anr_show_background 0`.
-
-**Emulator screenshot coordinates need scaling.** Displayed 896x2000 vs native
-1280x2856 — factor 1.43. Verify raw input with `getevent`.
-
-**Device pass needs ~2 GB free RAM.** Below that, `flutter build apk --debug`
-OOMs during `llvm-strip` and silently emits a ~450 MB unstripped APK that won't
-fit the AVD partition. The install error is usually truncated. The
-`retailbooks-*` Docker containers belong to a **different project** — stopping
-them frees the RAM, but ask first, and restart them afterwards.
-
-### 8. Open bugs and gaps
-
-Logged in `PROGRESS.md`, worth surfacing here:
-
-- **Notification Centre shows stale empty data on re-entry.** Found on device.
-  Only pull-to-refresh recovers it. The provider is `.autoDispose`, so a fresh
-  push should refetch — worth investigating why it doesn't.
-- **Silent waitlist promotion.** `CompetitionsService.withdraw()` promotes a
-  WAITLISTED registration to ENROLLED and notifies nobody.
-- **Player/message report triage has nowhere to go.** No platform role exists in
-  the schema at all, so `PlayerReport`/`MessageReport` rows are written and never
-  read. Only `CourtReport` is wired into Club Admin's Reports queue.
-
-`PROGRESS.md` has a long tail of further known gaps, each with the reasoning for
-why it was deferred. Read it rather than re-deriving.
-
-### 9. Conventions the owner has confirmed
-
-- **Plan before implementing.** Written plan, approved, before multi-file edits.
-  Choosing the task is not approving the approach.
-- **Build then test.** Build the whole feature, then one testing pass at the end.
-- **Keep `PROGRESS.md` live.** Update at every phase boundary.
-- **Typography is locked:** Outfit + Sharp Sans Display. Confirmed three times.
-  (See §7 for why Sharp Sans is not yet actually installed.)
-- **Don't commit unless asked.**
-- **Don't close the owner's other applications** (Docker, WSL, IDEs, browser)
-  without asking — that is their call, not the agent's.
+Home was frozen at M4: five static cards built only from onboarding answers, none of them tappable, on a screen the spec defines as a dynamic priority feed answering *"What should I do next?"*. It now has 13 server-side card contributors across two priority tiers — six urgent (unconfirmed result, incoming challenge, league deadline, upcoming match, pending connection, unread messages) and seven discovery (suggested opponents, development recommendation, nearby courts, club announcements, achievement progress, news, padel) — each carrying an action, an accent and a typed payload the client renders by type. Identity data moved out of the feed into a header. Dismiss/snooze was built. Alongside that, the findings from a code review of the whole project were cleared: a `.autoDispose` regression across six mobile provider files (two of which were real leaks), an announcement form whose validation never fired, an unbounded player search, missing rate limits, a dead module, CSP headers, and `ui.tsx` drift between the two admin consoles.

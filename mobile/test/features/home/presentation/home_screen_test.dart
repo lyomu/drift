@@ -13,6 +13,15 @@ void main() {
   // The screen has no Scaffold of its own — it lives inside the shell tab.
   Widget screen() => const Scaffold(body: HomeScreen());
 
+  // The header is a sibling of the feed and fetches independently, so every
+  // case has to stub it too — otherwise it reaches for the real repository.
+  final summaryOverride = homeSummaryProvider.overrideWith(
+    (ref) async => homeSummary(),
+  );
+  final notificationsOverride = notificationsListProvider.overrideWith(
+    (ref) async => notificationsPage(),
+  );
+
   group('HomeScreen', () {
     for (final brightness in Brightness.values) {
       final label = brightness.name;
@@ -24,35 +33,65 @@ void main() {
           brightness: brightness,
           overrides: [
             homeFeedProvider.overrideWith((ref) => Future.value([homeCard()])),
-            notificationsListProvider.overrideWith(
-              (ref) async => notificationsPage(),
-            ),
+            summaryOverride,
+            notificationsOverride,
           ],
         );
 
-        expect(find.text('Home'), findsOneWidget);
+        // The identity header replaced the old static "Home" title.
+        expect(find.text('Hi, Ana'), findsOneWidget);
         expect(find.text('Confirm a result'), findsOneWidget);
       });
 
-      testWidgets("renders an empty feed without throwing in $label",
-          (tester) async {
+      testWidgets("renders an empty feed without throwing in $label", (
+        tester,
+      ) async {
         await pumpScreen(
           tester,
           screen(),
           brightness: brightness,
           overrides: [
-            homeFeedProvider.overrideWith(
-              (ref) => Future.value(<HomeCard>[]),
-            ),
-            notificationsListProvider.overrideWith(
-              (ref) async => notificationsPage(),
-            ),
+            homeFeedProvider.overrideWith((ref) => Future.value(<HomeCard>[])),
+            summaryOverride,
+            notificationsOverride,
           ],
         );
 
         expect(tester.takeException(), isNull);
       });
     }
+
+    testWidgets('renders a card action and its payload', (tester) async {
+      await pumpScreen(
+        tester,
+        screen(),
+        overrides: [
+          homeFeedProvider.overrideWith(
+            (ref) => Future.value([
+              homeCard(
+                type: 'SUGGESTED_OPPONENTS',
+                title: 'Players near your level',
+                dismissible: true,
+                action: const HomeCardAction(
+                  label: 'Find players',
+                  route: '/home?tab=play&play=find',
+                ),
+                data: HomeCardData(
+                  kind: 'players',
+                  players: [playerSummary(id: 'u1')],
+                ),
+              ),
+            ]),
+          ),
+          summaryOverride,
+          notificationsOverride,
+        ],
+      );
+
+      expect(find.text('Players near your level'), findsOneWidget);
+      expect(find.text('Find players'), findsWidgets);
+      expect(tester.takeException(), isNull);
+    });
 
     testWidgets('shows a spinner while loading', (tester) async {
       await pumpScreen(
@@ -61,9 +100,8 @@ void main() {
         settle: false,
         overrides: [
           homeFeedProvider.overrideWith((ref) => pending<List<HomeCard>>()),
-          notificationsListProvider.overrideWith(
-            (ref) async => notificationsPage(),
-          ),
+          summaryOverride,
+          notificationsOverride,
         ],
       );
 
@@ -76,14 +114,15 @@ void main() {
         screen(),
         overrides: [
           homeFeedProvider.overrideWith((ref) => failing<List<HomeCard>>()),
-          notificationsListProvider.overrideWith(
-            (ref) async => notificationsPage(),
-          ),
+          summaryOverride,
+          notificationsOverride,
         ],
       );
 
-      expect(find.text("Couldn't load your Home feed. Please try again."),
-          findsOneWidget);
+      expect(
+        find.text("Couldn't load your Home feed. Please try again."),
+        findsOneWidget,
+      );
       expect(tester.takeException(), isNull);
     });
   });

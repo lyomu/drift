@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, ReactNode } from "react";
+import type { FormEvent, ReactNode } from "react";
+import { MaterialIcon, MetricCard } from "@/components/dashboard-design";
 import { Button, Card, Field, Input, Td, Th } from "@/components/ui";
 
 export function defaultDateRange(days = 30) {
@@ -59,8 +60,8 @@ export function DateRangeToolbar({
             onChange={(event) => onToChange(event.target.value)}
           />
         </Field>
-        <Button type="submit" disabled={loading}>
-          {loading ? "Refreshing…" : "Apply date range"}
+        <Button type="submit" icon="calendar_month" disabled={loading}>
+          {loading ? "Refreshing..." : "Apply date range"}
         </Button>
       </form>
     </Card>
@@ -72,33 +73,19 @@ export function MetricStrip({
 }: {
   metrics: { label: string; value: ReactNode; note?: string }[];
 }) {
+  const icons = ["groups", "person_add", "check_circle", "sports_tennis"];
   return (
-    <Card className="overflow-hidden p-0">
-      <dl className="grid sm:grid-cols-2 xl:grid-cols-4">
-        {metrics.map((metric, index) => (
-          <div
-            key={metric.label}
-            className={`min-w-0 px-5 py-5 ${
-              index > 0 ? "border-t border-drift-border sm:border-l" : ""
-            } ${index === 2 ? "sm:border-l-0 xl:border-l" : ""} ${
-              index > 1 ? "sm:border-t xl:border-t-0" : ""
-            }`}
-          >
-            <dt className="text-sm font-semibold text-drift-text-secondary">
-              {metric.label}
-            </dt>
-            <dd className="mt-1 font-display text-3xl font-bold tabular-nums text-drift-text-primary">
-              {metric.value}
-            </dd>
-            {metric.note && (
-              <div className="mt-1 text-xs leading-5 text-drift-text-secondary">
-                {metric.note}
-              </div>
-            )}
-          </div>
-        ))}
-      </dl>
-    </Card>
+    <dl className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      {metrics.map((metric, index) => (
+        <MetricCard
+          key={metric.label}
+          label={metric.label}
+          value={metric.value}
+          note={metric.note}
+          icon={icons[index] ?? "analytics"}
+        />
+      ))}
+    </dl>
   );
 }
 
@@ -114,7 +101,7 @@ export function SectionHeading({
   return (
     <div className="mb-3 mt-8 flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h2 className="font-display text-xl font-semibold text-drift-text-primary">
+        <h2 className="font-display text-xl font-bold text-drift-text-primary">
           {title}
         </h2>
         {description && (
@@ -142,12 +129,15 @@ export function BarList({
         {rows.map((row) => (
           <div key={row.label}>
             <div className="mb-1.5 flex items-baseline justify-between gap-4 text-sm">
-              <span className="font-semibold text-drift-text-primary">{row.label}</span>
-              <span className="tabular-nums text-drift-text-secondary">
+              <span className="flex items-center gap-2 font-bold text-drift-text-primary">
+                <MaterialIcon name="bar_chart" className="text-[17px] text-drift-primary" />
+                {row.label}
+              </span>
+              <span className="tabular text-drift-text-secondary">
                 {row.display ?? formatNumber(row.value)}
               </span>
             </div>
-            <div className="h-2 overflow-hidden rounded-sm bg-drift-background">
+            <div className="h-2 overflow-hidden rounded-sm bg-drift-neutral-surface">
               <div
                 className="h-full rounded-sm bg-drift-primary"
                 style={{ width: `${Math.max(row.value > 0 ? 2 : 0, (row.value / maximum) * 100)}%` }}

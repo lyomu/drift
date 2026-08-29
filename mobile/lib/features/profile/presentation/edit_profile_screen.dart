@@ -5,6 +5,7 @@ import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
 import '../../../shared/widgets/drift_filter_chip.dart';
+import '../../../shared/widgets/drift_scaffold.dart';
 import '../../../shared/widgets/drift_text_field.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../users/application/current_user_provider.dart';
@@ -37,13 +38,11 @@ class EditProfileScreen extends ConsumerWidget {
       return const Center(child: CircularProgressIndicator());
     }
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Edit Profile')),
-      body: SafeArea(
-        child: _EditForm(
-          user: userValue,
-          dominantHand: ownProfileValue.dominantHand,
-        ),
+    return DriftScaffold(
+      title: 'Edit Profile',
+      body: _EditForm(
+        user: userValue,
+        dominantHand: ownProfileValue.dominantHand,
       ),
     );
   }

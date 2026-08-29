@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
+import '../../../shared/widgets/drift_back_header.dart';
 import '../../../shared/widgets/drift_text_field.dart';
 import '../application/auth_controller.dart';
 import '../data/auth_repository.dart';
@@ -125,57 +126,64 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
     final canResend = _cooldownSeconds == 0 && !_isResending;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Reset Password')),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(DriftSpacing.s6),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'If an account exists for ${widget.email}, a six-digit code '
-                'is on its way. Enter it below with your new password.',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: DriftSpacing.s6),
-              DriftTextField(
-                label: 'Six-digit code',
-                controller: _codeController,
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: DriftSpacing.s4),
-              DriftTextField(
-                label: 'New password',
-                controller: _passwordController,
-                obscureText: true,
-              ),
-              const SizedBox(height: DriftSpacing.s4),
-              DriftTextField(
-                label: 'Confirm new password',
-                controller: _confirmController,
-                obscureText: true,
-              ),
-              if (_errorText != null) ...[
-                const SizedBox(height: DriftSpacing.s3),
-                Text(_errorText!, style: TextStyle(color: colors.error)),
-              ],
-              const SizedBox(height: DriftSpacing.s6),
-              DriftButton(
-                label: _isSubmitting ? 'Updating…' : 'Set New Password',
-                onPressed: _isSubmitting ? null : _submit,
-              ),
-              const SizedBox(height: DriftSpacing.s2),
-              Center(
-                child: DriftButton(
-                  label: _cooldownSeconds > 0
-                      ? 'Resend code in ${_cooldownSeconds}s'
-                      : 'Resend code',
-                  variant: DriftButtonVariant.text,
-                  onPressed: canResend ? _resend : null,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const DriftBackHeader(title: 'Reset Password'),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'If an account exists for ${widget.email}, a six-digit code '
+                      'is on its way. Enter it below with your new password.',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: DriftSpacing.s6),
+                    DriftTextField(
+                      label: 'Six-digit code',
+                      controller: _codeController,
+                      keyboardType: TextInputType.number,
+                    ),
+                    const SizedBox(height: DriftSpacing.s4),
+                    DriftTextField(
+                      label: 'New password',
+                      controller: _passwordController,
+                      obscureText: true,
+                    ),
+                    const SizedBox(height: DriftSpacing.s4),
+                    DriftTextField(
+                      label: 'Confirm new password',
+                      controller: _confirmController,
+                      obscureText: true,
+                    ),
+                    if (_errorText != null) ...[
+                      const SizedBox(height: DriftSpacing.s3),
+                      Text(_errorText!, style: TextStyle(color: colors.error)),
+                    ],
+                    const SizedBox(height: DriftSpacing.s6),
+                    DriftButton(
+                      label: _isSubmitting ? 'Updating…' : 'Set New Password',
+                      onPressed: _isSubmitting ? null : _submit,
+                    ),
+                    const SizedBox(height: DriftSpacing.s2),
+                    Center(
+                      child: DriftButton(
+                        label: _cooldownSeconds > 0
+                            ? 'Resend code in ${_cooldownSeconds}s'
+                            : 'Resend code',
+                        variant: DriftButtonVariant.text,
+                        onPressed: canResend ? _resend : null,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

@@ -1,151 +1,144 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/drift_colors.dart';
-import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
-import '../../../shared/widgets/drift_card.dart';
-import '../../notifications/application/notifications_providers.dart';
+import '../../news/application/news_providers.dart';
 import '../application/home_feed_provider.dart';
-import '../data/home_repository.dart';
+import '../application/home_sections.dart';
+import 'home_header.dart';
+import 'sections/action_needed_rail.dart';
+import 'sections/courts_near_you_list.dart';
+import 'sections/next_match_card.dart';
+import 'sections/players_near_you_rail.dart';
+import 'sections/progress_card.dart';
+import 'sections/quick_actions_grid.dart';
+import 'sections/tennis_news_rail.dart';
 
-/// Home Dashboard — `foundation/04-screen-inventory.md` §A.3. Every real
-/// Drift user is currently in the "New user" state (no Match/Competition
-/// data exists until M5+), so the feed is built entirely from onboarding
-/// data — see `HomeService` on the backend for the card-priority logic.
+/// Home Dashboard — `foundation/04-screen-inventory.md` §A.3 (redesign 2026-08).
+///
+/// Fixed sections instead of a flat list. Content still comes from
+/// `/home/feed` + `/home/summary` — [HomeSections] just decides which section
+/// each feed card belongs to. The core sections (Next match, Players/Courts
+/// near you, Your progress) always render, with an empty state when the feed
+/// gave them nothing; "Action needed" and "Tennis news" hide when empty.
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final type = Theme.of(context).extension<DriftTypography>()!;
     final feed = ref.watch(homeFeedProvider);
 
+    Future<void> refresh() {
+      ref.invalidate(homeSummaryProvider);
+      ref.invalidate(newsFeedProvider);
+      return ref.refresh(homeFeedProvider.future);
+    }
+
     return SafeArea(
+      bottom: false,
       child: RefreshIndicator(
-        onRefresh: () => ref.refresh(homeFeedProvider.future),
+        onRefresh: refresh,
         child: switch (feed) {
-          AsyncData(:final value) => _HomeFeedList(cards: value, type: type),
-          AsyncError() => _HomeFeedError(
+          AsyncData(:final value) => _HomeBody(sections: HomeSections(value)),
+          AsyncError() => _HomeError(
             onRetry: () => ref.invalidate(homeFeedProvider),
           ),
-          _ => const Center(child: CircularProgressIndicator()),
+          _ => const _HomeLoading(),
         },
       ),
     );
   }
 }
 
-class _HomeFeedList extends StatelessWidget {
-  const _HomeFeedList({required this.cards, required this.type});
+class _HomeBody extends StatelessWidget {
+  const _HomeBody({required this.sections});
 
-  final List<HomeCard> cards;
-  final DriftTypography type;
+  final HomeSections sections;
+
+  @override
+  Widget build(BuildContext context) {
+    const gap = SizedBox(height: 20);
+    final actionNeeded = sections.actionNeeded;
+
+    return ListView(
+      padding: const EdgeInsets.only(top: 8, bottom: 32),
+      children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: HomeHeader(),
+        ),
+        gap,
+        if (actionNeeded.isNotEmpty) ...[
+          ActionNeededRail(cards: actionNeeded),
+          gap,
+        ],
+        const QuickActionsGrid(),
+        gap,
+        NextMatchSection(matchId: sections.nextMatch?.data?.matchId),
+        gap,
+        PlayersNearYouSection(
+          players: sections.players?.data?.players ?? const [],
+        ),
+        gap,
+        CourtsNearYouSection(
+          courts: sections.courts?.data?.courts ?? const [],
+        ),
+        gap,
+        const ProgressSection(),
+        gap,
+        const TennisNewsRail(),
+      ],
+    );
+  }
+}
+
+class _HomeLoading extends StatelessWidget {
+  const _HomeLoading();
 
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.all(DriftSpacing.s4),
-      children: [
-        Row(
-          children: [
-            Expanded(child: Text('Home', style: type.display)),
-            const _NotificationBell(),
-          ],
+      padding: const EdgeInsets.only(top: 8),
+      children: const [
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: HomeHeader(),
         ),
-        const SizedBox(height: DriftSpacing.s4),
-        for (final card in cards) ...[
-          DriftCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(card.title, style: type.h4),
-                if (card.body.isNotEmpty) ...[
-                  const SizedBox(height: DriftSpacing.s1),
-                  Text(card.body, style: type.body),
-                ],
-              ],
-            ),
-          ),
-          const SizedBox(height: DriftSpacing.s3),
-        ],
+        SizedBox(height: 40),
+        Center(child: CircularProgressIndicator()),
       ],
     );
   }
 }
 
-/// The second of Notification Center's two documented entry points
-/// (alongside Profile) — every user lands on Home, so it's the one place
-/// the badge is guaranteed to be seen.
-class _NotificationBell extends ConsumerWidget {
-  const _NotificationBell();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final colors = Theme.of(context).extension<DriftColors>()!;
-    final unreadCount = ref
-        .watch(notificationsListProvider)
-        .valueOrNull
-        ?.unreadCount;
-
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        IconButton(
-          onPressed: () => context.push('/notifications'),
-          icon: const Icon(Icons.notifications_outlined),
-          tooltip: 'Notifications',
-        ),
-        if (unreadCount != null && unreadCount > 0)
-          Positioned(
-            right: 6,
-            top: 6,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-              decoration: BoxDecoration(
-                color: colors.error,
-                borderRadius: BorderRadius.circular(999),
-              ),
-              constraints: const BoxConstraints(minWidth: 16),
-              child: Text(
-                unreadCount > 9 ? '9+' : '$unreadCount',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _HomeFeedError extends StatelessWidget {
-  const _HomeFeedError({required this.onRetry});
+class _HomeError extends StatelessWidget {
+  const _HomeError({required this.onRetry});
 
   final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<DriftColors>()!;
     final type = Theme.of(context).extension<DriftTypography>()!;
     return ListView(
       children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: HomeHeader(),
+        ),
+        const SizedBox(height: 40),
         Padding(
-          padding: const EdgeInsets.all(DriftSpacing.s6),
+          padding: const EdgeInsets.all(24),
           child: Column(
             children: [
-              const SizedBox(height: DriftSpacing.s16),
               Text(
                 "Couldn't load your Home feed. Please try again.",
-                style: type.body,
+                style: type.body.copyWith(color: colors.textSecondary),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: DriftSpacing.s4),
+              const SizedBox(height: 16),
               DriftButton(
                 label: 'Retry',
                 variant: DriftButtonVariant.text,

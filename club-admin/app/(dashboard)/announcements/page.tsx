@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api, ApiError } from "@/lib/api-client";
 import { useClub } from "@/lib/club-context";
 import {
   Button,
-  Card,
+  EmptyState,
   ErrorBanner,
   Field,
   Input,
@@ -13,7 +13,7 @@ import {
   Textarea,
 } from "@/components/ui";
 import { StatusBadge } from "@/components/StatusBadge";
-import { EmptyState } from "@/components/ui";
+import { MaterialIcon, ModalShell, Panel } from "@/components/dashboard-design";
 import type { Announcement } from "@/lib/types";
 
 export default function AnnouncementsPage() {
@@ -25,6 +25,7 @@ export default function AnnouncementsPage() {
   const [showForm, setShowForm] = useState(false);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({ title: "", body: "", pinned: false });
+  const publishIntent = useRef(false);
 
   async function load() {
     if (!clubId) return;
@@ -36,7 +37,6 @@ export default function AnnouncementsPage() {
   }
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clubId]);
@@ -93,20 +93,66 @@ export default function AnnouncementsPage() {
     <div>
       <PageHeader
         title="Announcements"
-        description="Authored here; there's no Club Feed in the mobile app yet to display these."
+        description="Published announcements surface on members' mobile Home feed."
         action={
           canManage && (
-            <Button onClick={() => setShowForm((s) => !s)}>
-              {showForm ? "Cancel" : "New announcement"}
-            </Button>
+            <Button onClick={() => setShowForm(true)}>New announcement</Button>
           )
         }
       />
       <ErrorBanner message={error} />
 
+      {loading ? (
+        <EmptyState message="Loading..." />
+      ) : announcements.length === 0 ? (
+        <EmptyState message="No announcements yet." />
+      ) : (
+        <div className="flex flex-col gap-3">
+          {announcements.map((a) => (
+            <Panel key={a.id}>
+              <div className="mb-3 flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="text-[14.5px] font-bold text-drift-text-primary">
+                      {a.title}
+                    </h2>
+                    {a.pinned && (
+                      <MaterialIcon name="push_pin" filled className="text-[17px] text-drift-primary" />
+                    )}
+                    <StatusBadge status={a.status} />
+                  </div>
+                </div>
+                {canManage && (
+                  <div className="flex shrink-0 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => void handlePin(a)}
+                      className="text-[13px] font-semibold text-drift-text-secondary hover:text-drift-text-primary"
+                    >
+                      {a.pinned ? "Unpin" : "Pin"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handlePublish(a)}
+                      className="text-[13px] font-semibold text-drift-primary hover:text-drift-primary-dark"
+                    >
+                      {a.status === "PUBLISHED" ? "Unpublish" : "Publish"}
+                    </button>
+                  </div>
+                )}
+              </div>
+              <p className="text-sm leading-6 text-drift-text-secondary">{a.body}</p>
+            </Panel>
+          ))}
+        </div>
+      )}
+
       {showForm && (
-        <Card className="mb-6">
-          <form className="flex flex-col gap-4">
+        <ModalShell title="New announcement" onClose={() => setShowForm(false)}>
+          <form
+            className="flex flex-col gap-4"
+            onSubmit={(e) => handleCreate(e, publishIntent.current)}
+          >
             <Field label="Title">
               <Input
                 required
@@ -122,7 +168,7 @@ export default function AnnouncementsPage() {
                 onChange={(e) => setForm({ ...form, body: e.target.value })}
               />
             </Field>
-            <label className="flex items-center gap-2 text-sm text-drift-text-primary">
+            <label className="flex items-center gap-2 text-sm font-medium text-drift-text-primary">
               <input
                 type="checkbox"
                 checked={form.pinned}
@@ -130,61 +176,29 @@ export default function AnnouncementsPage() {
               />
               Pin to top
             </label>
-            <div className="flex gap-3">
+            <div className="mt-2 flex justify-end gap-3">
               <Button
+                type="submit"
                 disabled={creating}
-                onClick={(e) => handleCreate(e, false)}
+                onClick={() => {
+                  publishIntent.current = false;
+                }}
                 variant="secondary"
               >
                 Save as draft
               </Button>
-              <Button disabled={creating} onClick={(e) => handleCreate(e, true)}>
-                Publish
+              <Button
+                type="submit"
+                disabled={creating}
+                onClick={() => {
+                  publishIntent.current = true;
+                }}
+              >
+                {creating ? "Publishing..." : "Publish"}
               </Button>
             </div>
           </form>
-        </Card>
-      )}
-
-      {loading ? (
-        <p className="text-sm text-drift-text-secondary">Loading…</p>
-      ) : announcements.length === 0 ? (
-        <EmptyState message="No announcements yet." />
-      ) : (
-        <div className="flex flex-col gap-3">
-          {announcements.map((a) => (
-            <Card key={a.id}>
-              <div className="mb-2 flex items-start justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-drift-text-primary">
-                      {a.title}
-                    </span>
-                    {a.pinned && <StatusBadge status="PINNED" />}
-                  </div>
-                  <StatusBadge status={a.status} />
-                </div>
-                {canManage && (
-                  <div className="flex shrink-0 gap-3">
-                    <button
-                      onClick={() => handlePin(a)}
-                      className="text-sm font-semibold text-drift-text-secondary hover:underline"
-                    >
-                      {a.pinned ? "Unpin" : "Pin"}
-                    </button>
-                    <button
-                      onClick={() => handlePublish(a)}
-                      className="text-sm font-semibold text-drift-primary hover:underline"
-                    >
-                      {a.status === "PUBLISHED" ? "Unpublish" : "Publish"}
-                    </button>
-                  </div>
-                )}
-              </div>
-              <p className="text-sm text-drift-text-secondary">{a.body}</p>
-            </Card>
-          ))}
-        </div>
+        </ModalShell>
       )}
     </div>
   );

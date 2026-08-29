@@ -1,7 +1,57 @@
 import type { NextConfig } from "next";
 
+/**
+ * The API origin has to be reachable from the browser, so it must be named in
+ * `connect-src` explicitly — a bare 'self' policy would block every request
+ * this app makes.
+ */
+const API_ORIGIN = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
+
+/**
+ * Baseline security headers — kept identical to `club-admin/next.config.ts`
+ * so the two consoles can't drift into different security postures.
+ *
+ * There is no known XSS vector today (no `dangerouslySetInnerHTML` anywhere
+ * in either console), but the staff token lives in `localStorage` rather than
+ * an httpOnly cookie, so any future script injection would hand over a
+ * session — and this console's sessions are the highest-privilege ones in the
+ * product.
+ *
+ * `'unsafe-inline'` on styles is required by Tailwind's runtime style
+ * injection; `'unsafe-eval'` is deliberately **not** granted.
+ */
+const securityHeaders = [
+  {
+    key: "Content-Security-Policy",
+    value: [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline'",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "img-src 'self' data: blob: https:",
+      "font-src 'self' data: https://fonts.gstatic.com",
+      `connect-src 'self' ${API_ORIGIN}`,
+      "frame-ancestors 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "object-src 'none'",
+    ].join("; "),
+  },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "X-Frame-Options", value: "DENY" },
+  {
+    key: "Permissions-Policy",
+    value: "camera=(), microphone=(), geolocation=()",
+  },
+];
+
 const nextConfig: NextConfig = {
-  /* config options here */
+  experimental: {
+    cpus: 4,
+  },
+  headers() {
+    return Promise.resolve([{ source: "/:path*", headers: securityHeaders }]);
+  },
 };
 
 export default nextConfig;

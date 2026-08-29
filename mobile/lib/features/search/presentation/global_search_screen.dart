@@ -6,6 +6,8 @@ import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/drift_card.dart';
+import '../../../shared/widgets/drift_pill_tabs.dart';
+import '../../../shared/widgets/drift_scaffold.dart';
 import '../application/global_search_providers.dart';
 import '../data/global_search_repository.dart';
 
@@ -41,48 +43,40 @@ class _GlobalSearchScreenState extends ConsumerState<GlobalSearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final type = Theme.of(context).extension<DriftTypography>()!;
     final colors = Theme.of(context).extension<DriftColors>()!;
     final trimmed = _query.trim();
     final results = trimmed.length < 2
         ? null
         : ref.watch(globalSearchProvider((query: trimmed, filter: _filter)));
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Search')),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(DriftSpacing.s5),
-          children: [
-            Text('Find anything', style: type.h2),
-            const SizedBox(height: DriftSpacing.s3),
-            SearchBar(
-              controller: _controller,
-              leading: const Icon(Icons.search),
-              hintText: 'Players, courts, clubs, competitions',
-              onChanged: (value) => setState(() => _query = value),
-              onSubmitted: (value) => setState(() => _query = value),
-            ),
-            const SizedBox(height: DriftSpacing.s3),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: SegmentedButton<GlobalSearchFilter>(
-                segments: [
-                  for (final filter in GlobalSearchFilter.values)
-                    ButtonSegment(value: filter, label: Text(filter.label)),
-                ],
-                selected: {_filter},
-                showSelectedIcon: false,
-                onSelectionChanged: (selection) =>
-                    setState(() => _filter = selection.first),
-              ),
-            ),
-            const SizedBox(height: DriftSpacing.s5),
-            if (trimmed.length < 2)
-              _SearchHint(colors: colors)
-            else
-              switch (results) {
-                AsyncData(:final value) => value.isEmpty
+    return DriftScaffold(
+      title: 'Search',
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+        children: [
+          SearchBar(
+            controller: _controller,
+            leading: const Icon(Icons.search),
+            hintText: 'Players, courts, clubs, competitions',
+            onChanged: (value) => setState(() => _query = value),
+            onSubmitted: (value) => setState(() => _query = value),
+          ),
+          const SizedBox(height: DriftSpacing.s3),
+          DriftPillTabs(
+            labels: [
+              for (final filter in GlobalSearchFilter.values) filter.label,
+            ],
+            selected: GlobalSearchFilter.values.indexOf(_filter),
+            onChanged: (i) =>
+                setState(() => _filter = GlobalSearchFilter.values[i]),
+          ),
+          const SizedBox(height: DriftSpacing.s5),
+          if (trimmed.length < 2)
+            _SearchHint(colors: colors)
+          else
+            switch (results) {
+              AsyncData(:final value) =>
+                value.isEmpty
                     ? _EmptySearch(query: trimmed)
                     : Column(
                         children: [
@@ -92,15 +86,14 @@ class _GlobalSearchScreenState extends ConsumerState<GlobalSearchScreen> {
                           ],
                         ],
                       ),
-                AsyncError() => _SearchError(
-                  onRetry: () => ref.invalidate(
-                    globalSearchProvider((query: trimmed, filter: _filter)),
-                  ),
+              AsyncError() => _SearchError(
+                onRetry: () => ref.invalidate(
+                  globalSearchProvider((query: trimmed, filter: _filter)),
                 ),
-                _ => const Center(child: CircularProgressIndicator()),
-              },
-          ],
-        ),
+              ),
+              _ => const Center(child: CircularProgressIndicator()),
+            },
+        ],
       ),
     );
   }

@@ -6,6 +6,7 @@ import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/drift_card.dart';
 import '../../../shared/widgets/drift_match_card.dart';
+import '../../../shared/widgets/drift_scaffold.dart';
 import '../../../shared/widgets/drift_recent_form.dart';
 import '../../users/application/current_user_provider.dart';
 import '../application/padel_providers.dart';
@@ -23,52 +24,50 @@ class PadelMatchHistoryScreen extends ConsumerWidget {
     final viewer = ref.watch(currentUserProvider).valueOrNull;
     final type = Theme.of(context).extension<DriftTypography>()!;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Padel Match History')),
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () async {
-            ref.invalidate(padelMatchHistoryProvider);
-            ref.invalidate(padelStatsProvider);
-            await ref.read(padelMatchHistoryProvider.future);
-          },
-          child: switch (matches) {
-            AsyncData(:final value) => ListView(
-              padding: const EdgeInsets.all(DriftSpacing.s4),
-              children: [
-                if (stats.valueOrNull != null) ...[
-                  DriftCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Your Padel stats', style: type.h4),
-                        const SizedBox(height: DriftSpacing.s2),
-                        DriftRecentForm(results: stats.value!.recentForm),
-                      ],
+    return DriftScaffold(
+      title: 'Padel Match History',
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(padelMatchHistoryProvider);
+          ref.invalidate(padelStatsProvider);
+          await ref.read(padelMatchHistoryProvider.future);
+        },
+        child: switch (matches) {
+          AsyncData(:final value) => ListView(
+            padding: const EdgeInsets.all(DriftSpacing.s4),
+            children: [
+              if (stats.valueOrNull != null) ...[
+                DriftCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Your Padel stats', style: type.h4),
+                      const SizedBox(height: DriftSpacing.s2),
+                      DriftRecentForm(results: stats.value!.recentForm),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: DriftSpacing.s4),
+              ],
+              if (value.isEmpty)
+                const _EmptyState()
+              else
+                for (final match in value)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: DriftSpacing.s3),
+                    child: DriftMatchCard(
+                      match: match,
+                      viewerId: viewer?.id ?? '',
+                      onTap: () => context.push('/matches/${match.id}'),
                     ),
                   ),
-                  const SizedBox(height: DriftSpacing.s4),
-                ],
-                if (value.isEmpty)
-                  const _EmptyState()
-                else
-                  for (final match in value)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: DriftSpacing.s3),
-                      child: DriftMatchCard(
-                        match: match,
-                        viewerId: viewer?.id ?? '',
-                        onTap: () => context.push('/matches/${match.id}'),
-                      ),
-                    ),
-              ],
-            ),
-            AsyncError() => const Center(
-              child: Text("Couldn't load your Padel match history."),
-            ),
-            _ => const Center(child: CircularProgressIndicator()),
-          },
-        ),
+            ],
+          ),
+          AsyncError() => const Center(
+            child: Text("Couldn't load your Padel match history."),
+          ),
+          _ => const Center(child: CircularProgressIndicator()),
+        },
       ),
     );
   }

@@ -3,19 +3,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/realtime/socket_client.dart';
 import '../data/messaging_repository.dart';
 
-final conversationsProvider = FutureProvider<List<Conversation>>((ref) {
+// `.autoDispose` per the M9 convention. The socket keeps an *open* screen
+// current, but it can't help a screen that was closed and reopened — without
+// autoDispose the inbox and any previously-viewed thread render from a cache
+// that may be hours old.
+
+final conversationsProvider = FutureProvider.autoDispose<List<Conversation>>((
+  ref,
+) {
   ref.listen(socketMessagesProvider, (_, _) => ref.invalidateSelf());
   return ref.watch(messagingRepositoryProvider).listConversations();
 });
 
 /// Thread contents. Seeded from REST so the thread renders even with the
 /// socket down, then appended to as live messages arrive.
-final threadProvider =
-    AsyncNotifierProvider.family<ThreadNotifier, List<ChatMessage>, String>(
-      ThreadNotifier.new,
-    );
+final threadProvider = AsyncNotifierProvider.autoDispose
+    .family<ThreadNotifier, List<ChatMessage>, String>(ThreadNotifier.new);
 
-class ThreadNotifier extends FamilyAsyncNotifier<List<ChatMessage>, String> {
+class ThreadNotifier
+    extends AutoDisposeFamilyAsyncNotifier<List<ChatMessage>, String> {
   @override
   Future<List<ChatMessage>> build(String conversationId) async {
     // Append anything the socket delivers for this thread.
@@ -33,6 +39,11 @@ class ThreadNotifier extends FamilyAsyncNotifier<List<ChatMessage>, String> {
     final socket = await ref.watch(socketClientProvider.future);
     socket.joinConversation(conversationId);
 
+    // Deliberately no `leaveConversation` on dispose: the gateway joins a
+    // client to *every* one of its conversation rooms on connect
+    // (messaging.gateway.ts), so leaving here would silently stop the inbox
+    // from live-updating for this thread until the socket reconnects. The
+    // join above is idempotent, so re-entering a thread costs nothing.
     return ref.watch(messagingRepositoryProvider).getMessages(conversationId);
   }
 

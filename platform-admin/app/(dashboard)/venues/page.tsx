@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
+import { ActionLink, RowCard } from "@/components/dashboard-design";
 import { api, ApiError } from "@/lib/api-client";
 import type { Venue } from "@/lib/venue-types";
-import { Badge, Button, Card, EmptyState, ErrorBanner, Input, PageHeader, Select, Td, Th, statusTone } from "@/components/ui";
+import { Badge, Button, Card, EmptyState, ErrorBanner, Field, Input, PageHeader, Select, statusTone } from "@/components/ui";
 
 export default function VenueDatabasePage() {
   const [search, setSearch] = useState("");
@@ -32,7 +33,9 @@ export default function VenueDatabasePage() {
     }
   }, [placesSync, search, verification]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   function toggle(id: string) {
     setSelected((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
@@ -58,48 +61,52 @@ export default function VenueDatabasePage() {
       <PageHeader
         title="Venue database"
         description="Every court and venue record used across discovery, clubs, matches, and platform operations."
-        action={<Link href="/venues/new" className="inline-flex min-h-10 items-center rounded-md bg-drift-primary px-4 py-2 text-[15px] font-semibold text-white transition-colors hover:bg-drift-primary-dark focus:outline-none focus-visible:ring-2 focus-visible:ring-drift-primary focus-visible:ring-offset-1">Add venue</Link>}
+        action={<ActionLink href="/venues/new" icon="add_location_alt" className="border-drift-primary bg-drift-primary text-white hover:bg-drift-primary-dark">Add venue</ActionLink>}
       />
       <ErrorBanner message={error} />
 
       <Card className="mb-4 p-4">
         <div className="grid gap-3 md:grid-cols-[minmax(240px,1fr)_200px_180px]">
-          <Input aria-label="Search venues" placeholder="Search name, address, club, or Place ID…" value={search} onChange={(event) => setSearch(event.target.value)} />
-          <Select aria-label="Verification status" value={verification} onChange={(event) => setVerification(event.target.value)}><option value="">Any verification</option><option value="UNVERIFIED">Unverified</option><option value="PENDING">Pending</option><option value="VERIFIED">Verified</option></Select>
-          <Select aria-label="Places sync status" value={placesSync} onChange={(event) => setPlacesSync(event.target.value)}><option value="">Any sync state</option><option value="SYNCED">Synced</option><option value="STALE">Stale</option><option value="FAILED">Failed</option></Select>
+          <Field label="Search"><Input aria-label="Search venues" placeholder="Search name, address, club, or Place ID..." value={search} onChange={(event) => setSearch(event.target.value)} /></Field>
+          <Field label="Verification"><Select aria-label="Verification status" value={verification} onChange={(event) => setVerification(event.target.value)}><option value="">Any verification</option><option value="UNVERIFIED">Unverified</option><option value="PENDING">Pending</option><option value="VERIFIED">Verified</option></Select></Field>
+          <Field label="Places"><Select aria-label="Places sync status" value={placesSync} onChange={(event) => setPlacesSync(event.target.value)}><option value="">Any sync state</option><option value="SYNCED">Synced</option><option value="STALE">Stale</option><option value="FAILED">Failed</option></Select></Field>
         </div>
       </Card>
 
       {selected.length > 0 && (
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-drift-primary/30 bg-drift-primary-light px-4 py-3">
-          <span className="text-sm font-semibold text-drift-primary-dark">{selected.length} venue{selected.length === 1 ? "" : "s"} selected</span>
-          <div className="flex flex-wrap gap-2"><Button variant="secondary" disabled={busy} onClick={() => void runBulk("VERIFY")}>Mark verified</Button><Button variant="secondary" disabled={busy} onClick={() => void runBulk("UNVERIFY")}>Mark unverified</Button><Button variant="secondary" disabled={busy} onClick={() => void runBulk("MARK_PLACES_STALE")}>Queue enrichment refresh</Button></div>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-drift-primary/30 bg-drift-primary-light px-4 py-3">
+          <span className="text-sm font-bold text-drift-primary-dark">{selected.length} venue{selected.length === 1 ? "" : "s"} selected</span>
+          <div className="flex flex-wrap gap-2"><Button variant="secondary" icon="verified" disabled={busy} onClick={() => void runBulk("VERIFY")}>Mark verified</Button><Button variant="secondary" icon="remove_done" disabled={busy} onClick={() => void runBulk("UNVERIFY")}>Mark unverified</Button><Button variant="secondary" icon="sync" disabled={busy} onClick={() => void runBulk("MARK_PLACES_STALE")}>Queue refresh</Button></div>
         </div>
       )}
 
-      {rows === null && !error && <EmptyState message="Loading venues…" />}
+      {rows === null && !error && <EmptyState message="Loading venues..." />}
       {rows?.length === 0 && <EmptyState message="No venues match these filters." />}
       {rows && rows.length > 0 && (
-        <Card className="overflow-x-auto p-0">
-          <table className="w-full min-w-[980px]">
-            <thead><tr><Th className="w-12"><span className="sr-only">Select</span></Th><Th>Venue</Th><Th>Ownership</Th><Th>Courts</Th><Th>Verification</Th><Th>Places</Th><Th>Updated</Th><Th className="text-right">Action</Th></tr></thead>
-            <tbody>
-              {rows.map((venue) => (
-                <tr key={venue.id}>
-                  <Td><input aria-label={`Select ${venue.name}`} type="checkbox" checked={selected.includes(venue.id)} onChange={() => toggle(venue.id)} /></Td>
-                  <Td><div className="font-semibold">{venue.name}</div><div className="max-w-xs truncate text-xs text-drift-text-secondary" title={venue.address ?? undefined}>{venue.address ?? "Address unknown"}</div></Td>
-                  <Td>{venue.club?.name ?? "Independent"}</Td>
-                  <Td>{venue.courtGroups.reduce((sum, group) => sum + group.count, 0)}<div className="text-xs text-drift-text-secondary">{venue.courtGroups.length || "No"} group{venue.courtGroups.length === 1 ? "" : "s"}</div></Td>
-                  <Td><Badge tone={statusTone(venue.verificationStatus)}>{venue.verificationStatus}</Badge></Td>
-                  <Td><Badge tone={statusTone(venue.placesSyncStatus)}>{venue.placesSyncStatus}</Badge>{!venue.googlePlacesRef && <div className="mt-1 text-xs text-drift-text-secondary">No Place ID</div>}</Td>
-                  <Td>{new Date(venue.updatedAt).toLocaleDateString()}</Td>
-                  <Td className="text-right"><Link href={`/venues/${venue.id}`} className="font-semibold text-drift-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-drift-primary">Open venue</Link></Td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <div className="px-3 py-2 text-xs text-drift-text-secondary">Showing {rows.length} of {total}</div>
-        </Card>
+        <div className="grid gap-3">
+          {rows.map((venue) => {
+            const courtCount = venue.courtGroups.reduce((sum, group) => sum + group.count, 0);
+            return (
+              <RowCard key={venue.id} selected={selected.includes(venue.id)}>
+                <div className="grid gap-3 lg:grid-cols-[auto_minmax(0,1.4fr)_1fr_110px_220px_auto] lg:items-center">
+                  <input aria-label={`Select ${venue.name}`} type="checkbox" checked={selected.includes(venue.id)} onChange={() => toggle(venue.id)} className="h-4 w-4" />
+                  <div className="min-w-0">
+                    <div className="font-bold text-drift-text-primary">{venue.name}</div>
+                    <div className="truncate text-xs text-drift-text-secondary" title={venue.address ?? undefined}>{venue.address ?? "Address unknown"}</div>
+                  </div>
+                  <div className="text-sm text-drift-text-primary">{venue.club?.name ?? "Independent"}</div>
+                  <div className="text-sm font-bold tabular">{courtCount}<div className="text-xs font-semibold text-drift-text-secondary">{venue.courtGroups.length || "No"} groups</div></div>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge tone={statusTone(venue.verificationStatus)}>{venue.verificationStatus}</Badge>
+                    <Badge tone={statusTone(venue.placesSyncStatus)}>{venue.placesSyncStatus}</Badge>
+                  </div>
+                  <Link href={`/venues/${venue.id}`} className="justify-self-start font-bold text-drift-primary hover:underline lg:justify-self-end">Open venue</Link>
+                </div>
+              </RowCard>
+            );
+          })}
+          <div className="px-1 text-xs font-semibold text-drift-text-secondary">Showing {rows.length} of {total}</div>
+        </div>
       )}
     </div>
   );

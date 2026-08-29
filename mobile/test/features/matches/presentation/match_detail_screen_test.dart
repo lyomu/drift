@@ -62,7 +62,11 @@ void main() {
         ],
       );
 
-      expect(find.text('Match not available.'), findsOneWidget);
+      // Wave 4.2 replaced the dead-end "Match not available." text with a
+      // DriftErrorRetry block (message + Retry button) — see
+      // HOME-AND-POLISH-PLAN.md.
+      expect(find.text("Couldn't load this match."), findsOneWidget);
+      expect(find.text('Retry'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   });

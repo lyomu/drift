@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { MaterialIcon } from "@/components/dashboard-design";
+import { Button, Card, ErrorBanner, Field, Input } from "@/components/ui";
+import type { CurrentPlatformAdmin, PlatformPermission } from "@/lib/access-types";
 import {
   api,
   ApiError,
@@ -10,8 +13,6 @@ import {
   setTwoFactorChallenge,
   type TwoFactorChallenge,
 } from "@/lib/api-client";
-import { Button, Card, ErrorBanner, Field, Input } from "@/components/ui";
-import type { CurrentPlatformAdmin, PlatformPermission } from "@/lib/access-types";
 
 const LANDINGS: { permission: PlatformPermission; href: string }[] = [
   { permission: "ANALYTICS_READ", href: "/" },
@@ -54,10 +55,10 @@ export default function VerifyTwoFactorPage() {
       setToken(result.accessToken);
       setTwoFactorChallenge(null);
       const admin = await api.get<CurrentPlatformAdmin>("/auth/me");
-      const canUseOverview = admin.role.permissions.includes("ANALYTICS_READ");
-      const landing = canUseOverview
-        ? "/"
-        : (LANDINGS.find((item) => admin.role.permissions.includes(item.permission))?.href ?? "/");
+      const landing =
+        admin.role.permissions.includes("ANALYTICS_READ")
+          ? "/"
+          : (LANDINGS.find((item) => admin.role.permissions.includes(item.permission))?.href ?? "/");
       router.replace(landing);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "The code could not be verified.");
@@ -86,11 +87,14 @@ export default function VerifyTwoFactorPage() {
 
   if (!challenge) return null;
   return (
-    <div className="flex min-h-screen items-center justify-center bg-drift-background px-4">
-      <Card className="w-full max-w-sm">
-        <div className="mb-6">
+    <main className="flex min-h-screen items-center justify-center bg-drift-background px-4 py-10">
+      <Card className="w-full max-w-[420px] rounded-[20px] p-8 shadow-[0_12px_40px_rgba(17,24,39,0.08)]">
+        <div className="mb-7">
+          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-drift-primary-light text-drift-primary">
+            <MaterialIcon name="password" filled />
+          </div>
           <h1 className="font-display text-2xl font-bold text-drift-text-primary">
-            Verify it’s you
+            Verify it is you
           </h1>
           <p className="mt-2 text-sm leading-6 text-drift-text-secondary">
             Enter the six-digit code sent to {challenge.maskedDestination}.
@@ -98,8 +102,8 @@ export default function VerifyTwoFactorPage() {
         </div>
         <ErrorBanner message={error} />
         {challenge.devVerificationCode && (
-          <div className="mb-4 rounded-md bg-drift-primary-light px-4 py-3 text-sm text-drift-primary-dark">
-            Development code: <strong>{challenge.devVerificationCode}</strong>
+          <div className="mb-4 rounded-xl border border-drift-primary/30 bg-drift-primary-light px-4 py-3 text-sm font-semibold text-drift-primary-dark">
+            Development code: <span className="tabular">{challenge.devVerificationCode}</span>
           </div>
         )}
         <form onSubmit={verify} className="flex flex-col gap-4">
@@ -113,17 +117,17 @@ export default function VerifyTwoFactorPage() {
               required
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-              className="text-center text-xl font-semibold tracking-[0.25em]"
+              className="text-center text-2xl font-bold tracking-[0.25em]"
             />
           </Field>
-          <Button type="submit" disabled={busy || code.length !== 6}>
-            {busy ? "Verifying…" : "Verify code"}
+          <Button type="submit" icon="verified_user" disabled={busy || code.length !== 6}>
+            {busy ? "Verifying..." : "Verify code"}
           </Button>
-          <Button type="button" variant="ghost" disabled={busy} onClick={() => void resend()}>
+          <Button type="button" variant="ghost" icon="refresh" disabled={busy} onClick={() => void resend()}>
             Resend code
           </Button>
         </form>
       </Card>
-    </div>
+    </main>
   );
 }

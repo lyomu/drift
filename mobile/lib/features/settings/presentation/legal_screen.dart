@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
+import '../../../shared/widgets/drift_scaffold.dart';
 
 const _sections = [
   (
@@ -34,23 +35,21 @@ class LegalScreen extends StatelessWidget {
     final type = Theme.of(context).extension<DriftTypography>()!;
     final colors = Theme.of(context).extension<DriftColors>()!;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Terms & Privacy Policy')),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(DriftSpacing.s5),
-          children: [
-            for (final section in _sections) ...[
-              Text(section.$1, style: type.h3),
-              const SizedBox(height: DriftSpacing.s2),
-              Text(
-                section.$2,
-                style: type.body.copyWith(color: colors.textSecondary),
-              ),
-              const SizedBox(height: DriftSpacing.s5),
-            ],
+    return DriftScaffold(
+      title: 'Terms & Privacy Policy',
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+        children: [
+          for (final section in _sections) ...[
+            Text(section.$1, style: type.h3),
+            const SizedBox(height: DriftSpacing.s2),
+            Text(
+              section.$2,
+              style: type.body.copyWith(color: colors.textSecondary),
+            ),
+            const SizedBox(height: DriftSpacing.s5),
           ],
-        ),
+        ],
       ),
     );
   }

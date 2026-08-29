@@ -3,13 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/drift_colors.dart';
-import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
-import '../../../shared/widgets/buttons/drift_button.dart';
-import '../../../shared/widgets/drift_card.dart';
-import '../../../shared/widgets/drift_match_card.dart';
-import '../../../shared/widgets/drift_match_score_display.dart';
+import '../../../shared/widgets/buttons/drift_primary_button.dart';
+import '../../../shared/widgets/drift_back_header.dart';
+import '../../../shared/widgets/drift_error_retry.dart';
+import '../../../shared/widgets/drift_match_card.dart' show formatMatchTime;
+import '../../../shared/widgets/drift_pill.dart';
 import '../../../shared/widgets/drift_player_card.dart';
+import '../../../shared/widgets/drift_soft_card.dart';
 import '../../../shared/widgets/drift_text_field.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../connections/application/connections_providers.dart';
@@ -20,8 +21,9 @@ import 'enter_score_screen.dart';
 import 'propose_time_sheet.dart';
 
 /// Challenge Status / Match Detail — `foundation/04-screen-inventory.md`
-/// §A.4. One screen covers the whole lifecycle; which actions appear is
-/// driven entirely by match state plus the viewer's own participant status.
+/// §A.4 (redesign 2026-08). One screen covers the whole lifecycle; which
+/// actions appear is driven by match state plus the viewer's participant
+/// status.
 class MatchDetailScreen extends ConsumerStatefulWidget {
   const MatchDetailScreen({super.key, required this.matchId});
 
@@ -56,35 +58,68 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
   Widget build(BuildContext context) {
     final match = ref.watch(matchDetailProvider(widget.matchId));
     final viewer = ref.watch(currentUserProvider).valueOrNull;
+    final conversationId = match.valueOrNull?.conversationId;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Match'),
-        actions: [
-          if (match.valueOrNull?.conversationId != null)
-            IconButton(
-              onPressed: () =>
-                  context.push('/messages/${match.value!.conversationId}'),
-              icon: const Icon(Icons.chat_bubble_outline),
-              tooltip: 'Message',
-            ),
-        ],
-      ),
       body: SafeArea(
-        child: switch (match) {
-          AsyncData(:final value) => _Body(
-            match: value,
-            viewerId: viewer?.id ?? '',
-            isBusy: _isBusy,
-            onAction: _run,
-          ),
-          AsyncError() => const Center(child: Text('Match not available.')),
-          _ => const Center(child: CircularProgressIndicator()),
-        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            DriftBackHeader(
+              title: 'Match',
+              trailing: conversationId == null
+                  ? null
+                  : DriftHeaderSquareButton(
+                      icon: Icons.chat_bubble_outline,
+                      onTap: () => context.push('/messages/$conversationId'),
+                    ),
+            ),
+            Expanded(
+              child: switch (match) {
+                AsyncData(:final value) => _Body(
+                  match: value,
+                  viewerId: viewer?.id ?? '',
+                  isBusy: _isBusy,
+                  onAction: _run,
+                ),
+                AsyncError() => DriftErrorRetry(
+                  message: "Couldn't load this match.",
+                  onRetry: () =>
+                      ref.invalidate(matchDetailProvider(widget.matchId)),
+                ),
+                _ => const Center(child: CircularProgressIndicator()),
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
 }
+
+Text _cardLabel(BuildContext context, String text) {
+  final type = Theme.of(context).extension<DriftTypography>()!;
+  final colors = Theme.of(context).extension<DriftColors>()!;
+  return Text(
+    text.toUpperCase(),
+    style: type.caption.copyWith(
+      color: colors.textSecondary,
+      fontWeight: FontWeight.w700,
+      letterSpacing: 1,
+    ),
+  );
+}
+
+DriftPillTone _stateTone(MatchState state) => switch (state) {
+  MatchState.scheduled => DriftPillTone.success,
+  MatchState.scheduling || MatchState.rescheduled => DriftPillTone.warning,
+  MatchState.proposed => DriftPillTone.info,
+  MatchState.disputed => DriftPillTone.error,
+  MatchState.completed ||
+  MatchState.walkover ||
+  MatchState.retired => DriftPillTone.neutral,
+  _ => DriftPillTone.neutral,
+};
 
 class _Body extends ConsumerWidget {
   const _Body({
@@ -106,42 +141,59 @@ class _Body extends ConsumerWidget {
     final repo = ref.read(matchesRepositoryProvider);
 
     return ListView(
-      padding: const EdgeInsets.all(DriftSpacing.s5),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
       children: [
         if (match.competitionContext != null) ...[
           _CompetitionBanner(context: match.competitionContext!),
-          const SizedBox(height: DriftSpacing.s4),
+          const SizedBox(height: 12),
         ],
-        DriftMatchCard(match: match, viewerId: viewerId),
-        const SizedBox(height: DriftSpacing.s4),
 
-        DriftCard(
+        _OpponentCard(match: match, viewerId: viewerId),
+        const SizedBox(height: 12),
+
+        DriftSoftCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Players', style: type.h4),
-              const SizedBox(height: DriftSpacing.s3),
-              for (final p in match.participants)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: DriftSpacing.s2),
+              _cardLabel(context, 'Players'),
+              const SizedBox(height: 10),
+              for (var i = 0; i < match.participants.length; i++)
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 9),
+                  decoration: i < match.participants.length - 1
+                      ? BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(color: colors.border),
+                          ),
+                        )
+                      : null,
                   child: Row(
                     children: [
-                      DriftPlayerAvatar(player: p.player, radius: 16),
-                      const SizedBox(width: DriftSpacing.s3),
+                      DriftPlayerAvatar(
+                        player: match.participants[i].player,
+                        radius: 18,
+                      ),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          '${p.player.displayName}${p.userId == viewerId ? ' (you)' : ''}',
-                          style: type.body,
+                          '${match.participants[i].player.displayName}'
+                          '${match.participants[i].userId == viewerId ? ' (you)' : ''}',
+                          style: type.body.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                       Text(
-                        switch (p.status) {
+                        switch (match.participants[i].status) {
                           ParticipantStatus.accepted => 'In',
                           ParticipantStatus.declined => 'Declined',
                           ParticipantStatus.invited => 'Invited',
                         },
                         style: type.caption.copyWith(
-                          color: p.status == ParticipantStatus.accepted
+                          fontWeight: FontWeight.w600,
+                          color:
+                              match.participants[i].status ==
+                                  ParticipantStatus.accepted
                               ? colors.success
                               : colors.textSecondary,
                         ),
@@ -154,14 +206,17 @@ class _Body extends ConsumerWidget {
         ),
 
         if (match.courtName != null) ...[
-          const SizedBox(height: DriftSpacing.s4),
-          DriftCard(
+          const SizedBox(height: 12),
+          DriftSoftCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Court', style: type.h4),
-                const SizedBox(height: DriftSpacing.s1),
-                Text(match.courtName!, style: type.body),
+                _cardLabel(context, 'Court'),
+                const SizedBox(height: 8),
+                Text(
+                  match.courtName!,
+                  style: type.body.copyWith(fontWeight: FontWeight.w600),
+                ),
                 if (match.courtNote != null)
                   Text(
                     match.courtNote!,
@@ -173,12 +228,12 @@ class _Body extends ConsumerWidget {
         ],
 
         if (match.result == null && match.state == MatchState.walkover) ...[
-          const SizedBox(height: DriftSpacing.s4),
+          const SizedBox(height: 12),
           const _UnplayedWalkoverCard(),
         ],
 
         if (match.result != null) ...[
-          const SizedBox(height: DriftSpacing.s4),
+          const SizedBox(height: 12),
           _ResultCard(
             match: match,
             viewerId: viewerId,
@@ -202,7 +257,7 @@ class _Body extends ConsumerWidget {
 
         if (match.latestProposal != null &&
             match.latestProposal!.isPending) ...[
-          const SizedBox(height: DriftSpacing.s4),
+          const SizedBox(height: 12),
           _ProposalCard(
             match: match,
             viewerId: viewerId,
@@ -212,7 +267,7 @@ class _Body extends ConsumerWidget {
           ),
         ],
 
-        const SizedBox(height: DriftSpacing.s5),
+        const SizedBox(height: 16),
         _Actions(
           match: match,
           viewerId: viewerId,
@@ -220,6 +275,82 @@ class _Body extends ConsumerWidget {
           onAction: onAction,
         ),
       ],
+    );
+  }
+}
+
+class _OpponentCard extends StatelessWidget {
+  const _OpponentCard({required this.match, required this.viewerId});
+
+  final DriftMatch match;
+  final String viewerId;
+
+  @override
+  Widget build(BuildContext context) {
+    final type = Theme.of(context).extension<DriftTypography>()!;
+    final colors = Theme.of(context).extension<DriftColors>()!;
+    final opponent = match.opponentFor(viewerId)?.player;
+
+    return DriftSoftCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              if (opponent != null) ...[
+                DriftPlayerAvatar(player: opponent, radius: 22),
+                const SizedBox(width: 12),
+              ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      opponent?.displayName ?? 'Match',
+                      style: type.title.copyWith(fontWeight: FontWeight.w700),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      match.isDoubles ? 'Doubles' : 'Singles',
+                      style: type.caption.copyWith(color: colors.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              DriftPill(
+                label: match.state.label,
+                tone: _stateTone(match.state),
+              ),
+            ],
+          ),
+          if (match.confirmedTime != null) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.only(top: 10),
+              decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: colors.border)),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.calendar_today_outlined,
+                    size: 14,
+                    color: colors.textSecondary,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    formatMatchTime(match.confirmedTime!),
+                    style: type.caption.copyWith(color: colors.textSecondary),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
@@ -244,22 +375,22 @@ class _ProposalCard extends StatelessWidget {
     final proposal = match.latestProposal!;
     final isMine = proposal.proposedById == viewerId;
 
-    return DriftCard(
+    return DriftSoftCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(isMine ? 'Your proposed times' : 'Pick a time', style: type.h4),
-          const SizedBox(height: DriftSpacing.s1),
+          _cardLabel(context, isMine ? 'Your proposed times' : 'Pick a time'),
+          const SizedBox(height: 4),
           Text(
             isMine
                 ? 'Waiting for them to choose.'
                 : 'Tap a time to confirm the match.',
             style: type.bodySmall.copyWith(color: colors.textSecondary),
           ),
-          const SizedBox(height: DriftSpacing.s3),
+          const SizedBox(height: 12),
           for (final option in proposal.options)
             Padding(
-              padding: const EdgeInsets.only(bottom: DriftSpacing.s2),
+              padding: const EdgeInsets.only(bottom: 8),
               child: SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(
@@ -272,7 +403,8 @@ class _ProposalCard extends StatelessWidget {
             ),
           if (match.roundsRemaining == 0)
             Text(
-              "You've used all your proposal rounds — sort the rest out in chat.",
+              "You've used all your proposal rounds — sort the rest out in "
+              "chat.",
               style: type.caption.copyWith(color: colors.warning),
             ),
         ],
@@ -281,9 +413,8 @@ class _ProposalCard extends StatelessWidget {
   }
 }
 
-/// Covers all three moments a submitted result can be in: awaiting the
-/// other side's reply, disputed (both versions shown, link to Dispute
-/// Detail), or settled (final score + Rematch + reflection prompt).
+/// Covers the three states a submitted result can be in: awaiting the other
+/// side's reply, disputed, or settled.
 class _ResultCard extends StatelessWidget {
   const _ResultCard({
     required this.match,
@@ -312,10 +443,11 @@ class _ResultCard extends StatelessWidget {
 
     Widget scoreOrOutcome() {
       if (result.outcome == ResultOutcome.score && result.sets != null) {
-        final opponent = match.opponentFor(viewerId);
-        return DriftMatchScoreDisplay(
+        return _Score(
           sets: result.sets!,
-          sideBLabel: opponent?.player.displayName ?? 'Them',
+          viewerSide: viewer.side,
+          opponentLabel:
+              match.opponentFor(viewerId)?.player.displayName ?? 'Them',
         );
       }
       return Text(
@@ -325,22 +457,24 @@ class _ResultCard extends StatelessWidget {
     }
 
     if (result.isDisputed) {
-      return DriftCard(
+      return DriftSoftCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _cardLabel(context, 'Result'),
+            const SizedBox(height: 8),
             Text(
               'Result disputed',
               style: type.h4.copyWith(color: colors.error),
             ),
-            const SizedBox(height: DriftSpacing.s1),
+            const SizedBox(height: 2),
             Text(
-              "You and your opponent submitted different results.",
+              'You and your opponent submitted different results.',
               style: type.bodySmall.copyWith(color: colors.textSecondary),
             ),
-            const SizedBox(height: DriftSpacing.s3),
-            DriftButton(
-              label: 'View Dispute',
+            const SizedBox(height: 12),
+            DriftPrimaryButton(
+              label: 'View dispute',
               onPressed: () => context.push(
                 '/matches/${match.id}/dispute',
                 extra: (match: match, viewerId: viewerId),
@@ -352,29 +486,30 @@ class _ResultCard extends StatelessWidget {
     }
 
     if (result.isPendingConfirmation) {
-      return DriftCard(
+      return DriftSoftCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Result', style: type.h4),
-            const SizedBox(height: DriftSpacing.s3),
+            _cardLabel(context, 'Result'),
+            const SizedBox(height: 14),
             scoreOrOutcome(),
-            const SizedBox(height: DriftSpacing.s3),
+            const SizedBox(height: 16),
             if (isSubmitter)
               Text(
                 'Waiting for them to confirm.',
                 style: type.bodySmall.copyWith(color: colors.textSecondary),
               )
             else ...[
-              DriftButton(
+              DriftPrimaryButton(
                 label: 'Confirm',
                 onPressed: isBusy ? null : onConfirm,
               ),
-              const SizedBox(height: DriftSpacing.s2),
-              DriftButton(
-                label: 'Dispute',
-                variant: DriftButtonVariant.text,
-                onPressed: isBusy ? null : onDispute,
+              const SizedBox(height: 6),
+              Center(
+                child: DriftTextLink(
+                  label: 'Dispute',
+                  onPressed: isBusy ? null : onDispute,
+                ),
               ),
             ],
           ],
@@ -382,16 +517,73 @@ class _ResultCard extends StatelessWidget {
       );
     }
 
-    // CONFIRMED — settled.
-    return DriftCard(
+    return DriftSoftCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Result', style: type.h4),
-          const SizedBox(height: DriftSpacing.s3),
+          _cardLabel(context, 'Result'),
+          const SizedBox(height: 14),
           scoreOrOutcome(),
         ],
       ),
+    );
+  }
+}
+
+/// Viewer-aware set-by-set score with the prototype's large figures.
+class _Score extends StatelessWidget {
+  const _Score({
+    required this.sets,
+    required this.viewerSide,
+    required this.opponentLabel,
+  });
+
+  final List<SetScore> sets;
+  final String viewerSide;
+  final String opponentLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final type = Theme.of(context).extension<DriftTypography>()!;
+    final colors = Theme.of(context).extension<DriftColors>()!;
+
+    int mine(SetScore s) => viewerSide == 'A' ? s.sideAGames : s.sideBGames;
+    int theirs(SetScore s) => viewerSide == 'A' ? s.sideBGames : s.sideAGames;
+
+    Widget row(String label, int Function(SetScore) games, bool isViewer) {
+      return Row(
+        children: [
+          SizedBox(
+            width: 72,
+            child: Text(
+              label,
+              style: type.caption.copyWith(color: colors.textSecondary),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          for (final s in sets)
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: Text(
+                '${games(s)}',
+                style: type.statistics.copyWith(
+                  fontSize: 30,
+                  color: isViewer ? colors.textPrimary : colors.textSecondary,
+                ),
+              ),
+            ),
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        row('You', mine, true),
+        const SizedBox(height: 2),
+        row(opponentLabel, theirs, false),
+      ],
     );
   }
 }
@@ -434,16 +626,18 @@ class _Actions extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (opponent != null)
-            DriftButton(
+            DriftPrimaryButton(
               label: 'Rematch',
               onPressed: () =>
                   context.push('/challenge', extra: opponent.player),
             ),
-          const SizedBox(height: DriftSpacing.s2),
-          DriftButton(
-            label: 'How did it feel?',
-            variant: DriftButtonVariant.text,
-            onPressed: () => context.push('/matches/${match.id}/reflection'),
+          const SizedBox(height: 2),
+          Center(
+            child: DriftTextLink(
+              label: 'How did it feel?',
+              onPressed: () =>
+                  context.push('/matches/${match.id}/reflection'),
+            ),
           ),
         ],
       );
@@ -453,29 +647,32 @@ class _Actions extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (awaitingMe) ...[
-          DriftButton(
+          DriftPrimaryButton(
             label: 'Accept',
             onPressed: isBusy ? null : () => _accept(context, ref, repo),
           ),
-          const SizedBox(height: DriftSpacing.s2),
-          DriftButton(
-            label: 'Decline',
-            variant: DriftButtonVariant.text,
-            onPressed: isBusy
-                ? null
-                : () => onAction(() => repo.decline(match.id)),
+          const SizedBox(height: 2),
+          Center(
+            child: DriftTextLink(
+              label: 'Decline',
+              onPressed: isBusy
+                  ? null
+                  : () => onAction(() => repo.decline(match.id)),
+            ),
           ),
         ],
 
         if (canProposeTime && !proposalPending && match.roundsRemaining > 0)
-          DriftButton(
+          DriftPrimaryButton(
             label: 'Propose Times',
             onPressed: isBusy
                 ? null
                 : () async {
                     final times = await showProposeTimeSheet(context);
                     if (times != null && times.isNotEmpty) {
-                      await onAction(() => repo.proposeTimes(match.id, times));
+                      await onAction(
+                        () => repo.proposeTimes(match.id, times),
+                      );
                     }
                   },
           ),
@@ -484,24 +681,26 @@ class _Actions extends ConsumerWidget {
             proposalPending &&
             match.latestProposal!.proposedById != viewerId &&
             match.roundsRemaining > 0) ...[
-          const SizedBox(height: DriftSpacing.s2),
-          DriftButton(
-            label: 'Suggest Different Times',
-            variant: DriftButtonVariant.text,
-            onPressed: isBusy
-                ? null
-                : () async {
-                    final times = await showProposeTimeSheet(context);
-                    if (times != null && times.isNotEmpty) {
-                      await onAction(() => repo.proposeTimes(match.id, times));
-                    }
-                  },
+          const SizedBox(height: 2),
+          Center(
+            child: DriftTextLink(
+              label: 'Suggest different times',
+              onPressed: isBusy
+                  ? null
+                  : () async {
+                      final times = await showProposeTimeSheet(context);
+                      if (times != null && times.isNotEmpty) {
+                        await onAction(
+                          () => repo.proposeTimes(match.id, times),
+                        );
+                      }
+                    },
+            ),
           ),
         ],
 
         if (match.state == MatchState.scheduled && match.result == null) ...[
-          const SizedBox(height: DriftSpacing.s2),
-          DriftButton(
+          DriftPrimaryButton(
             label: 'Enter Result',
             onPressed: isBusy
                 ? null
@@ -516,52 +715,57 @@ class _Actions extends ConsumerWidget {
                     );
                     if (saved != null) {
                       ref.invalidate(matchDetailProvider(match.id));
-                      ref.invalidate(matchListProvider(MatchSegment.active));
-                    }
-                  },
-          ),
-          const SizedBox(height: DriftSpacing.s2),
-          DriftButton(
-            label: 'Reschedule',
-            variant: DriftButtonVariant.text,
-            onPressed: isBusy
-                ? null
-                : () => onAction(() => repo.reschedule(match.id)),
-          ),
-        ] else if (match.state == MatchState.scheduled) ...[
-          const SizedBox(height: DriftSpacing.s2),
-          DriftButton(
-            label: 'Reschedule',
-            variant: DriftButtonVariant.text,
-            onPressed: isBusy
-                ? null
-                : () => onAction(() => repo.reschedule(match.id)),
-          ),
-        ],
-
-        if (!awaitingMe && !isDisputed && match.result == null) ...[
-          const SizedBox(height: DriftSpacing.s2),
-          DriftButton(
-            label: 'Suggest Court',
-            variant: DriftButtonVariant.text,
-            onPressed: isBusy
-                ? null
-                : () async {
-                    final court = await _promptCourt(context);
-                    if (court != null && court.isNotEmpty) {
-                      await onAction(
-                        () => repo.suggestCourt(match.id, courtName: court),
+                      ref.invalidate(
+                        matchListProvider(MatchSegment.active),
                       );
                     }
                   },
           ),
-          const SizedBox(height: DriftSpacing.s2),
-          DriftButton(
-            label: 'Cancel Match',
-            variant: DriftButtonVariant.text,
-            onPressed: isBusy
-                ? null
-                : () => onAction(() => repo.cancel(match.id)),
+          const SizedBox(height: 2),
+          Center(
+            child: DriftTextLink(
+              label: 'Reschedule',
+              onPressed: isBusy
+                  ? null
+                  : () => onAction(() => repo.reschedule(match.id)),
+            ),
+          ),
+        ] else if (match.state == MatchState.scheduled) ...[
+          const SizedBox(height: 2),
+          Center(
+            child: DriftTextLink(
+              label: 'Reschedule',
+              onPressed: isBusy
+                  ? null
+                  : () => onAction(() => repo.reschedule(match.id)),
+            ),
+          ),
+        ],
+
+        if (!awaitingMe && !isDisputed && match.result == null) ...[
+          const SizedBox(height: 2),
+          Center(
+            child: DriftTextLink(
+              label: 'Suggest court',
+              onPressed: isBusy
+                  ? null
+                  : () async {
+                      final court = await _promptCourt(context);
+                      if (court != null && court.isNotEmpty) {
+                        await onAction(
+                          () => repo.suggestCourt(match.id, courtName: court),
+                        );
+                      }
+                    },
+            ),
+          ),
+          Center(
+            child: DriftTextLink(
+              label: 'Cancel match',
+              onPressed: isBusy
+                  ? null
+                  : () => onAction(() => repo.cancel(match.id)),
+            ),
           ),
         ],
       ],
@@ -646,7 +850,7 @@ class _Actions extends ConsumerWidget {
   }
 }
 
-/// League Round N banner — Doc 6 §1's `competitionContext` made visible.
+/// League Round N banner — the prototype's blue pill with a trophy.
 class _CompetitionBanner extends StatelessWidget {
   const _CompetitionBanner({required this.context});
 
@@ -658,26 +862,26 @@ class _CompetitionBanner extends StatelessWidget {
     final type = Theme.of(buildContext).extension<DriftTypography>()!;
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: DriftSpacing.s3,
-        vertical: DriftSpacing.s2,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
       decoration: BoxDecoration(
         color: colors.primaryLight,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         children: [
           Icon(
             Icons.emoji_events_outlined,
-            size: 16,
-            color: colors.primaryDark,
+            size: 14,
+            color: colors.primary,
           ),
-          const SizedBox(width: DriftSpacing.s2),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               'Round ${context.roundIndex} · ${context.leagueName}',
-              style: type.bodySmall.copyWith(color: colors.primaryDark),
+              style: type.caption.copyWith(
+                color: colors.primary,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
@@ -686,10 +890,7 @@ class _CompetitionBanner extends StatelessWidget {
   }
 }
 
-/// A league fixture that never got played before its round's deadline —
-/// system-applied WALKOVER with no `MatchResult` row (see
-/// competitions.service.ts's closeRoundAndAdvance), distinct from a player
-/// voluntarily declaring a walkover.
+/// A league fixture that never got played before its round's deadline.
 class _UnplayedWalkoverCard extends StatelessWidget {
   const _UnplayedWalkoverCard();
 
@@ -698,14 +899,14 @@ class _UnplayedWalkoverCard extends StatelessWidget {
     final type = Theme.of(context).extension<DriftTypography>()!;
     final colors = Theme.of(context).extension<DriftColors>()!;
 
-    return DriftCard(
+    return DriftSoftCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Unplayed — walkover', style: type.h4),
-          const SizedBox(height: DriftSpacing.s1),
+          _cardLabel(context, 'Unplayed — walkover'),
+          const SizedBox(height: 6),
           Text(
-            "The round deadline passed before this fixture was played. "
+            'The round deadline passed before this fixture was played. '
             "It's recorded as a walkover in favour of neither player.",
             style: type.bodySmall.copyWith(color: colors.textSecondary),
           ),

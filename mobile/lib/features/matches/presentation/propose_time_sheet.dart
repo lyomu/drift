@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
-import '../../../shared/widgets/buttons/drift_button.dart';
+import '../../../shared/widgets/buttons/drift_primary_button.dart';
 import '../../../shared/widgets/drift_match_card.dart';
 
 /// Propose Time — `foundation/04-screen-inventory.md` §A.4. Several candidate
@@ -116,14 +116,10 @@ class _ProposeTimeSheetState extends State<_ProposeTimeSheet> {
 
             const SizedBox(height: DriftSpacing.s2),
             if (_times.length < _maxOptions)
-              DriftButton(
-                label: 'Add a time',
-                variant: DriftButtonVariant.text,
-                onPressed: _addTime,
-              ),
+              Center(child: DriftTextLink(label: 'Add a time', onPressed: _addTime)),
 
             const SizedBox(height: DriftSpacing.s4),
-            DriftButton(
+            DriftPrimaryButton(
               label:
                   'Send ${_times.length} time${_times.length == 1 ? '' : 's'}',
               onPressed: _times.isEmpty

@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/theme/drift_spacing.dart';
+import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_typography.dart';
+import '../../../shared/widgets/drift_back_header.dart';
+import '../../../shared/widgets/drift_pill_tabs.dart';
 import 'ladder_list_screen.dart';
 import 'league_list_screen.dart';
 import 'tournament_list_screen.dart';
 
-/// Compete Hub — `foundation/04-screen-inventory.md` A5, segmented
-/// Leagues / Ladders / Tournaments / Events. Leagues shipped in M8;
-/// Ladders and Tournaments shipped in Wave 6. Events remain P1.
+/// Compete Hub — `foundation/04-screen-inventory.md` A5 (redesign 2026-08).
+/// Pill tabs: Leagues / Ladders / Tournaments / Events.
 class CompeteHubScreen extends StatefulWidget {
   const CompeteHubScreen({super.key});
 
@@ -25,77 +26,93 @@ class _CompeteHubScreenState extends State<CompeteHubScreen> {
   @override
   Widget build(BuildContext context) {
     final type = Theme.of(context).extension<DriftTypography>()!;
+    final colors = Theme.of(context).extension<DriftColors>()!;
 
     return SafeArea(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(
-              DriftSpacing.s4,
-              DriftSpacing.s4,
-              DriftSpacing.s4,
-              DriftSpacing.s3,
-            ),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
             child: Row(
               children: [
-                Expanded(child: Text('Compete', style: type.display)),
-                IconButton(
-                  onPressed: () => context.push('/compete/my-seasons'),
-                  icon: const Icon(Icons.event_note_outlined),
-                  tooltip: 'My Seasons',
+                Expanded(
+                  child: Text(
+                    'Compete',
+                    style: type.h2.copyWith(fontWeight: FontWeight.w800),
+                  ),
+                ),
+                DriftHeaderSquareButton(
+                  icon: Icons.event_note_outlined,
+                  onTap: () => context.push('/compete/my-seasons'),
                 ),
               ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: DriftSpacing.s4),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: SegmentedButton<int>(
-                segments: [
-                  for (var i = 0; i < _labels.length; i++)
-                    ButtonSegment(value: i, label: Text(_labels[i])),
-                ],
-                selected: {_segment},
-                showSelectedIcon: false,
-                onSelectionChanged: (s) => setState(() => _segment = s.first),
-              ),
+          DriftPillTabs(
+            labels: _labels,
+            selected: _segment,
+            onChanged: (i) => setState(() => _segment = i),
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: Container(
+              color: colors.background,
+              child: switch (_segment) {
+                0 => const LeagueListScreen(embedded: true),
+                1 => const LadderListScreen(embedded: true),
+                2 => const TournamentListScreen(embedded: true),
+                _ => const _EventsComingSoon(),
+              },
             ),
           ),
-          const SizedBox(height: DriftSpacing.s3),
-          Expanded(child: _body()),
         ],
       ),
     );
   }
-
-  Widget _body() {
-    return switch (_segment) {
-      0 => const LeagueListScreen(embedded: true),
-      1 => const LadderListScreen(embedded: true),
-      2 => const TournamentListScreen(embedded: true),
-      _ => _ComingLater(label: _labels[_segment]),
-    };
-  }
 }
 
-class _ComingLater extends StatelessWidget {
-  const _ComingLater({required this.label});
-
-  final String label;
+class _EventsComingSoon extends StatelessWidget {
+  const _EventsComingSoon();
 
   @override
   Widget build(BuildContext context) {
     final type = Theme.of(context).extension<DriftTypography>()!;
+    final colors = Theme.of(context).extension<DriftColors>()!;
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(label, style: type.h2),
-          const SizedBox(height: DriftSpacing.s2),
-          const Text('Coming in a later phase'),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(32, 0, 32, 60),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: colors.primaryLight,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Icon(
+                Icons.calendar_month_outlined,
+                size: 30,
+                color: colors.primary,
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              'Events coming soon',
+              style: type.h4.copyWith(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Club events and tournaments will appear here once available '
+              'in your area.',
+              textAlign: TextAlign.center,
+              style: type.body.copyWith(color: colors.textSecondary),
+            ),
+          ],
+        ),
       ),
     );
   }

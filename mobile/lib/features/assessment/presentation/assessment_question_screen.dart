@@ -6,6 +6,7 @@ import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
+import '../../../shared/widgets/drift_scaffold.dart';
 import '../../auth/data/auth_repository.dart';
 import '../data/assessment_repository.dart';
 
@@ -135,72 +136,70 @@ class _AssessmentQuestionScreenState
     final colors = Theme.of(context).extension<DriftColors>()!;
     final type = Theme.of(context).extension<DriftTypography>()!;
 
-    return Scaffold(
-      appBar: AppBar(title: Text(widget.title)),
-      body: SafeArea(
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : _showProgressInterstitial
-            ? _AssessmentProgressInterstitial(
-                answeredCount: _answeredCount,
-                questionBudget: _questionBudget,
-                onContinue: () {
-                  setState(() {
-                    _question = _pendingQuestion;
-                    _pendingQuestion = null;
-                    _showProgressInterstitial = false;
-                  });
-                },
-              )
-            : _question == null
-            ? Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(DriftSpacing.s6),
-                  child: Text(_errorText ?? 'Unable to load the assessment.'),
-                ),
-              )
-            : Padding(
+    return DriftScaffold(
+      title: widget.title,
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _showProgressInterstitial
+          ? _AssessmentProgressInterstitial(
+              answeredCount: _answeredCount,
+              questionBudget: _questionBudget,
+              onContinue: () {
+                setState(() {
+                  _question = _pendingQuestion;
+                  _pendingQuestion = null;
+                  _showProgressInterstitial = false;
+                });
+              },
+            )
+          : _question == null
+          ? Center(
+              child: Padding(
                 padding: const EdgeInsets.all(DriftSpacing.s6),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    LinearProgressIndicator(
-                      value: _questionBudget == 0
-                          ? 0
-                          : (_answeredCount / _questionBudget).clamp(0, 1),
-                    ),
-                    const SizedBox(height: DriftSpacing.s2),
-                    Text(
-                      'Question ${_answeredCount + 1} of $_questionBudget',
-                      style: type.label.copyWith(color: colors.textSecondary),
-                    ),
-                    const SizedBox(height: DriftSpacing.s4),
-                    Text(_question!.prompt, style: type.h3),
-                    const SizedBox(height: DriftSpacing.s4),
-                    if (_errorText != null) ...[
-                      Text(_errorText!, style: TextStyle(color: colors.error)),
-                      const SizedBox(height: DriftSpacing.s3),
-                    ],
-                    Expanded(
-                      child: ListView.separated(
-                        itemCount: _question!.options.length,
-                        separatorBuilder: (_, _) =>
-                            const SizedBox(height: DriftSpacing.s2),
-                        itemBuilder: (context, index) {
-                          final option = _question!.options[index];
-                          return _AssessmentOptionCard(
-                            optionKey: option.key,
-                            text: option.text,
-                            enabled: !_isSubmitting,
-                            onTap: () => _selectOption(option.key),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
+                child: Text(_errorText ?? 'Unable to load the assessment.'),
               ),
-      ),
+            )
+          : Padding(
+              padding: const EdgeInsets.all(DriftSpacing.s6),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  LinearProgressIndicator(
+                    value: _questionBudget == 0
+                        ? 0
+                        : (_answeredCount / _questionBudget).clamp(0, 1),
+                  ),
+                  const SizedBox(height: DriftSpacing.s2),
+                  Text(
+                    'Question ${_answeredCount + 1} of $_questionBudget',
+                    style: type.label.copyWith(color: colors.textSecondary),
+                  ),
+                  const SizedBox(height: DriftSpacing.s4),
+                  Text(_question!.prompt, style: type.h3),
+                  const SizedBox(height: DriftSpacing.s4),
+                  if (_errorText != null) ...[
+                    Text(_errorText!, style: TextStyle(color: colors.error)),
+                    const SizedBox(height: DriftSpacing.s3),
+                  ],
+                  Expanded(
+                    child: ListView.separated(
+                      itemCount: _question!.options.length,
+                      separatorBuilder: (_, _) =>
+                          const SizedBox(height: DriftSpacing.s2),
+                      itemBuilder: (context, index) {
+                        final option = _question!.options[index];
+                        return _AssessmentOptionCard(
+                          optionKey: option.key,
+                          text: option.text,
+                          enabled: !_isSubmitting,
+                          onTap: () => _selectOption(option.key),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
     );
   }
 }
@@ -234,11 +233,7 @@ class _AssessmentProgressInterstitial extends StatelessWidget {
           const SizedBox(height: DriftSpacing.s8),
           Icon(Icons.trending_up, size: 44, color: colors.primary),
           const SizedBox(height: DriftSpacing.s4),
-          Text(
-            'Good progress',
-            style: type.h2,
-            textAlign: TextAlign.center,
-          ),
+          Text('Good progress', style: type.h2, textAlign: TextAlign.center),
           const SizedBox(height: DriftSpacing.s2),
           Text(
             'You are halfway through. The next questions fine-tune your level so Drift can suggest better matches.',

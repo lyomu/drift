@@ -1,48 +1,13 @@
-const TONES: Record<string, string> = {
-  neutral: "bg-drift-primary-light text-drift-primary-dark",
-  success: "bg-drift-success-surface text-drift-success",
-  warning: "bg-drift-warning-surface text-drift-warning",
-  error: "bg-drift-error-surface text-drift-error",
-};
+import { Badge, statusTone } from "@/components/ui";
 
-const STATUS_TONE: Record<string, keyof typeof TONES> = {
-  ACTIVE: "success",
-  PUBLISHED: "success",
-  ENROLLED: "success",
-  VERIFIED: "success",
-  RESOLVED: "success",
-  COMPLETED: "success",
-  PAID: "success",
-  ATTENDED: "success",
-  APPROVED: "success",
-  REGISTERED: "success",
-  RUNNING: "success",
-  INVITED: "neutral",
-  DRAFT: "neutral",
-  UNVERIFIED: "neutral",
-  WAITLISTED: "neutral",
-  REVIEWING: "warning",
-  PENDING: "warning",
-  PAST_DUE: "warning",
-  OPEN: "warning",
-  DISPUTED: "warning",
-  ESCALATED: "warning",
-  SUSPENDED: "error",
-  CANCELLED: "error",
-  FAILED: "error",
-  WITHDRAWN: "error",
-  DISMISSED: "error",
-  REMOVED: "error",
-  NO_SHOW: "error",
-};
-
+/**
+ * Thin wrapper over the shared `Badge` + `statusTone` in `ui.tsx`.
+ *
+ * This used to carry its own private status-to-tone map, which meant the same
+ * status could render one colour here and a different one in Platform Admin.
+ * Keeping the mapping in exactly one place per app, and the same mapping in
+ * both, is what stops that drifting again. Call sites are unchanged.
+ */
 export function StatusBadge({ status }: { status: string }) {
-  const tone = TONES[STATUS_TONE[status] ?? "neutral"];
-  return (
-    <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${tone}`}
-    >
-      {status.replace(/_/g, " ")}
-    </span>
-  );
+  return <Badge tone={statusTone(status)}>{status.replace(/_/g, " ")}</Badge>;
 }

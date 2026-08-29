@@ -3,12 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/drift_colors.dart';
-import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
-import '../../../shared/widgets/buttons/drift_button.dart';
-import '../../../shared/widgets/drift_card.dart';
+import '../../../shared/widgets/buttons/drift_primary_button.dart';
+import '../../../shared/widgets/drift_back_header.dart';
 import '../../../shared/widgets/drift_filter_chip.dart';
 import '../../../shared/widgets/drift_player_card.dart';
+import '../../../shared/widgets/drift_soft_card.dart';
 import '../../../shared/widgets/drift_text_field.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../connections/application/connections_providers.dart';
@@ -16,12 +16,9 @@ import '../../padel/application/padel_providers.dart';
 import '../../players/data/players_repository.dart';
 import '../data/matches_repository.dart';
 
-/// Challenge Composer — `foundation/04-screen-inventory.md` §A.4.
-///
-/// For doubles the challenger picks their own partner here; the opponent
-/// nominates theirs when accepting. That split is a documented decision —
-/// the foundation specifies a singles/doubles toggle but never how partners
-/// are chosen.
+/// Challenge Composer — `foundation/04-screen-inventory.md` §A.4
+/// (redesign 2026-08). For doubles the challenger picks their own partner
+/// here; the opponent nominates theirs when accepting.
 class ChallengeComposerScreen extends ConsumerStatefulWidget {
   const ChallengeComposerScreen({super.key, required this.opponent});
 
@@ -87,140 +84,175 @@ class _ChallengeComposerScreenState
     final connections = ref.watch(connectionsProvider);
     final hasPadelProfile = ref.watch(padelProfileProvider).valueOrNull != null;
 
+    Text sectionLabel(String text) => Text(
+      text,
+      style: type.label.copyWith(fontWeight: FontWeight.w700, fontSize: 13),
+    );
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Challenge')),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(DriftSpacing.s5),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            DriftCard(
-              child: Row(
+            const DriftBackHeader(title: 'Challenge'),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
                 children: [
-                  DriftPlayerAvatar(player: widget.opponent, radius: 22),
-                  const SizedBox(width: DriftSpacing.s3),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  DriftSoftCard(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                    child: Row(
                       children: [
-                        Text(widget.opponent.displayName, style: type.title),
-                        if (widget.opponent.levelLabel != null)
-                          Text(
-                            widget.opponent.levelLabel!,
-                            style: type.caption.copyWith(
-                              color: colors.textSecondary,
-                            ),
+                        DriftPlayerAvatar(
+                          player: widget.opponent,
+                          radius: 22,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.opponent.displayName,
+                                style: type.title.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              if (widget.opponent.levelLabel != null ||
+                                  widget.opponent.level != null)
+                                Text(
+                                  widget.opponent.level != null
+                                      ? 'Level '
+                                            '${widget.opponent.level!.toStringAsFixed(1)}'
+                                      : widget.opponent.levelLabel!,
+                                  style: type.caption.copyWith(
+                                    color: colors.textSecondary,
+                                  ),
+                                ),
+                            ],
                           ),
+                        ),
                       ],
                     ),
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: DriftSpacing.s5),
+                  const SizedBox(height: 16),
 
-            if (hasPadelProfile) ...[
-              Text('Sport', style: type.label),
-              const SizedBox(height: DriftSpacing.s2),
-              Row(
-                children: [
-                  DriftFilterChip(
-                    label: 'Tennis',
-                    selected: !_isPadel,
-                    onTap: () => setState(() => _sport = 'TENNIS'),
-                  ),
-                  const SizedBox(width: DriftSpacing.s2),
-                  DriftFilterChip(
-                    label: 'Padel',
-                    selected: _isPadel,
-                    onTap: () => setState(() => _sport = 'PADEL'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: DriftSpacing.s5),
-            ],
-
-            Text('Format', style: type.label),
-            const SizedBox(height: DriftSpacing.s2),
-            Row(
-              children: [
-                DriftFilterChip(
-                  label: 'Singles',
-                  selected: !_isDoubles,
-                  onTap: () => setState(() {
-                    _format = 'SINGLES';
-                    _partnerId = null;
-                  }),
-                ),
-                const SizedBox(width: DriftSpacing.s2),
-                DriftFilterChip(
-                  label: 'Doubles',
-                  selected: _isDoubles,
-                  onTap: () => setState(() => _format = 'DOUBLES'),
-                ),
-              ],
-            ),
-
-            if (_isDoubles) ...[
-              const SizedBox(height: DriftSpacing.s5),
-              Text('Your partner', style: type.label),
-              const SizedBox(height: DriftSpacing.s1),
-              Text(
-                "${widget.opponent.displayName} picks their own partner when they accept.",
-                style: type.caption.copyWith(color: colors.textSecondary),
-              ),
-              const SizedBox(height: DriftSpacing.s2),
-              switch (connections) {
-                AsyncData(:final value) =>
-                  value.isEmpty
-                      ? Text(
-                          'Connect with a player first to partner with them.',
-                          style: type.bodySmall.copyWith(
-                            color: colors.textSecondary,
-                          ),
-                        )
-                      : Column(
-                          children: [
-                            for (final entry in value)
-                              if (entry.player.id != widget.opponent.id)
-                                RadioGroup<String>(
-                                  groupValue: _partnerId,
-                                  onChanged: (v) =>
-                                      setState(() => _partnerId = v),
-                                  child: RadioListTile<String>(
-                                    contentPadding: EdgeInsets.zero,
-                                    value: entry.player.id,
-                                    title: Text(
-                                      entry.player.displayName,
-                                      style: type.body,
-                                    ),
-                                  ),
-                                ),
-                          ],
+                  if (hasPadelProfile) ...[
+                    sectionLabel('Sport'),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        DriftFilterChip(
+                          label: 'Tennis',
+                          selected: !_isPadel,
+                          onTap: () => setState(() => _sport = 'TENNIS'),
                         ),
-                AsyncError() => Text(
-                  "Couldn't load your connections.",
-                  style: type.bodySmall.copyWith(color: colors.error),
-                ),
-                _ => const Center(child: CircularProgressIndicator()),
-              },
-            ],
+                        const SizedBox(width: 8),
+                        DriftFilterChip(
+                          label: 'Padel',
+                          selected: _isPadel,
+                          onTap: () => setState(() => _sport = 'PADEL'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                  ],
 
-            const SizedBox(height: DriftSpacing.s5),
-            DriftTextField(
-              label: 'Add a note (optional)',
-              controller: _noteController,
-              maxLines: 3,
-            ),
+                  sectionLabel('Format'),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      DriftFilterChip(
+                        label: 'Singles',
+                        selected: !_isDoubles,
+                        onTap: () => setState(() {
+                          _format = 'SINGLES';
+                          _partnerId = null;
+                        }),
+                      ),
+                      const SizedBox(width: 8),
+                      DriftFilterChip(
+                        label: 'Doubles',
+                        selected: _isDoubles,
+                        onTap: () => setState(() => _format = 'DOUBLES'),
+                      ),
+                    ],
+                  ),
 
-            if (_errorText != null) ...[
-              const SizedBox(height: DriftSpacing.s3),
-              Text(_errorText!, style: TextStyle(color: colors.error)),
-            ],
+                  if (_isDoubles) ...[
+                    const SizedBox(height: 16),
+                    sectionLabel('Your partner'),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${widget.opponent.displayName} picks their own partner '
+                      'when they accept.',
+                      style: type.caption.copyWith(
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    switch (connections) {
+                      AsyncData(:final value) =>
+                        value.isEmpty
+                            ? Text(
+                                'Connect with a player first to partner with '
+                                'them.',
+                                style: type.bodySmall.copyWith(
+                                  color: colors.textSecondary,
+                                ),
+                              )
+                            : Column(
+                                children: [
+                                  for (final entry in value)
+                                    if (entry.player.id != widget.opponent.id)
+                                      RadioGroup<String>(
+                                        groupValue: _partnerId,
+                                        onChanged: (v) =>
+                                            setState(() => _partnerId = v),
+                                        child: RadioListTile<String>(
+                                          contentPadding: EdgeInsets.zero,
+                                          value: entry.player.id,
+                                          title: Text(
+                                            entry.player.displayName,
+                                            style: type.body,
+                                          ),
+                                        ),
+                                      ),
+                                ],
+                              ),
+                      AsyncError() => Text(
+                        "Couldn't load your connections.",
+                        style: type.bodySmall.copyWith(color: colors.error),
+                      ),
+                      _ => const Center(child: CircularProgressIndicator()),
+                    },
+                  ],
 
-            const SizedBox(height: DriftSpacing.s6),
-            DriftButton(
-              label: _isSubmitting ? 'Sending…' : 'Send Challenge',
-              onPressed: _isSubmitting ? null : _send,
+                  const SizedBox(height: 16),
+                  DriftTextField(
+                    label: 'Add a note (optional)',
+                    controller: _noteController,
+                    maxLines: 4,
+                  ),
+
+                  if (_errorText != null) ...[
+                    const SizedBox(height: 12),
+                    Text(_errorText!, style: TextStyle(color: colors.error)),
+                  ],
+
+                  const SizedBox(height: 24),
+                  DriftPrimaryButton(
+                    label: 'Send Challenge',
+                    loading: _isSubmitting,
+                    fontSize: 16,
+                    verticalPadding: 16,
+                    onPressed: _isSubmitting ? null : _send,
+                  ),
+                ],
+              ),
             ),
           ],
         ),

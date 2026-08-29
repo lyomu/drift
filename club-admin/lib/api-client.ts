@@ -45,6 +45,12 @@ async function apiFetch<T>(
   const data: unknown = text ? JSON.parse(text) : undefined;
 
   if (!res.ok) {
+    // A 401 means the stored token is expired or revoked. Dropping it here
+    // (as platform-admin's client already did) is what lets the app fall
+    // back to the login route instead of rendering an authed shell that
+    // fails every request.
+    if (res.status === 401) setToken(null);
+
     const body = data as { message?: string | string[] } | undefined;
     const message = Array.isArray(body?.message)
       ? body.message.join(", ")
@@ -64,6 +70,7 @@ async function rawFetch(path: string, init?: RequestInit): Promise<Response> {
     headers,
   });
   if (!res.ok) {
+    if (res.status === 401) setToken(null);
     const body = await res.json().catch(() => undefined) as { message?: string | string[] } | undefined;
     const message = Array.isArray(body?.message) ? body.message.join(', ') : (body?.message ?? res.statusText);
     throw new ApiError(res.status, message);

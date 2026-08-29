@@ -5,6 +5,7 @@ import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/drift_card.dart';
+import '../../../shared/widgets/drift_scaffold.dart';
 import '../../auth/data/auth_repository.dart';
 import '../application/clubs_providers.dart';
 import '../data/clubs_repository.dart';
@@ -66,8 +67,11 @@ class _ClubFeedScreenState extends ConsumerState<ClubFeedScreen> {
     }
   }
 
-  Future<void> _toggleReaction(ClubPost post, ClubPostReaction? existing,
-      String emoji) async {
+  Future<void> _toggleReaction(
+    ClubPost post,
+    ClubPostReaction? existing,
+    String emoji,
+  ) async {
     final repo = ref.read(clubsRepositoryProvider);
     await _run(
       () => existing?.mine == true
@@ -81,58 +85,53 @@ class _ClubFeedScreenState extends ConsumerState<ClubFeedScreen> {
     final colors = Theme.of(context).extension<DriftColors>()!;
     final feed = ref.watch(clubFeedProvider(widget.clubId));
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Club Feed')),
-      body: SafeArea(
-        child: Column(
-          children: [
-            if (_errorText != null)
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: DriftSpacing.s5,
-                  vertical: DriftSpacing.s2,
-                ),
-                child: Text(
-                  _errorText!,
-                  style: TextStyle(color: colors.error),
-                ),
+    return DriftScaffold(
+      title: 'Club Feed',
+      body: Column(
+        children: [
+          if (_errorText != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: DriftSpacing.s5,
+                vertical: DriftSpacing.s2,
               ),
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: _refresh,
-                child: switch (feed) {
-                  AsyncData(:final value) when value.isEmpty => const _Empty(),
-                  AsyncData(:final value) => ListView.separated(
-                    padding: const EdgeInsets.all(DriftSpacing.s5),
-                    itemCount: value.length,
-                    separatorBuilder: (_, _) =>
-                        const SizedBox(height: DriftSpacing.s3),
-                    itemBuilder: (context, i) => _PostCard(
-                      post: value[i],
-                      onReact: (emoji, existing) =>
-                          _toggleReaction(value[i], existing, emoji),
-                      onDelete: value[i].isMine
-                          ? () => _run(
-                              () => ref
-                                  .read(clubsRepositoryProvider)
-                                  .deletePost(widget.clubId, value[i].id),
-                            )
-                          : null,
-                    ),
-                  ),
-                  AsyncError() => const _NotAMember(),
-                  _ => const Center(child: CircularProgressIndicator()),
-                },
-              ),
+              child: Text(_errorText!, style: TextStyle(color: colors.error)),
             ),
-            if (feed.hasValue)
-              _Composer(
-                controller: _composer,
-                isPosting: _isPosting,
-                onPost: _isPosting ? null : _post,
-              ),
-          ],
-        ),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _refresh,
+              child: switch (feed) {
+                AsyncData(:final value) when value.isEmpty => const _Empty(),
+                AsyncData(:final value) => ListView.separated(
+                  padding: const EdgeInsets.all(DriftSpacing.s5),
+                  itemCount: value.length,
+                  separatorBuilder: (_, _) =>
+                      const SizedBox(height: DriftSpacing.s3),
+                  itemBuilder: (context, i) => _PostCard(
+                    post: value[i],
+                    onReact: (emoji, existing) =>
+                        _toggleReaction(value[i], existing, emoji),
+                    onDelete: value[i].isMine
+                        ? () => _run(
+                            () => ref
+                                .read(clubsRepositoryProvider)
+                                .deletePost(widget.clubId, value[i].id),
+                          )
+                        : null,
+                  ),
+                ),
+                AsyncError() => const _NotAMember(),
+                _ => const Center(child: CircularProgressIndicator()),
+              },
+            ),
+          ),
+          if (feed.hasValue)
+            _Composer(
+              controller: _composer,
+              isPosting: _isPosting,
+              onPost: _isPosting ? null : _post,
+            ),
+        ],
       ),
     );
   }
@@ -228,15 +227,10 @@ class _ReactionChip extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: mine ? colors.primary.withValues(alpha: 0.12) : null,
-          border: Border.all(
-            color: mine ? colors.primary : colors.border,
-          ),
+          border: Border.all(color: mine ? colors.primary : colors.border),
           borderRadius: BorderRadius.circular(999),
         ),
-        child: Text(
-          count > 0 ? '$emoji $count' : emoji,
-          style: type.caption,
-        ),
+        child: Text(count > 0 ? '$emoji $count' : emoji, style: type.caption),
       ),
     );
   }
@@ -275,10 +269,7 @@ class _Composer extends StatelessWidget {
             ),
           ),
           const SizedBox(width: DriftSpacing.s3),
-          IconButton.filled(
-            onPressed: onPost,
-            icon: const Icon(Icons.send),
-          ),
+          IconButton.filled(onPressed: onPost, icon: const Icon(Icons.send)),
         ],
       ),
     );

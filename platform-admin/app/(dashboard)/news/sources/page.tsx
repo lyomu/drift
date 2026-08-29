@@ -1,18 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { ModalShell, RowCard, StatBand } from "@/components/dashboard-design";
 import { api, ApiError } from "@/lib/api-client";
-import {
-  Badge,
-  Button,
-  Card,
-  EmptyState,
-  ErrorBanner,
-  Field,
-  Input,
-  PageHeader,
-  statusTone,
-} from "@/components/ui";
+import { Badge, Button, EmptyState, ErrorBanner, Field, Input, PageHeader, statusTone } from "@/components/ui";
 
 interface NewsSource {
   id: string;
@@ -26,6 +17,7 @@ export default function NewsSourcesPage() {
   const [sources, setSources] = useState<NewsSource[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
   const [name, setName] = useState("");
   const [feedUrl, setFeedUrl] = useState("");
 
@@ -55,6 +47,7 @@ export default function NewsSourcesPage() {
       });
       setName("");
       setFeedUrl("");
+      setShowCreate(false);
       await load();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Create failed.");
@@ -64,12 +57,7 @@ export default function NewsSourcesPage() {
   }
 
   async function cycleStatus(source: NewsSource) {
-    const next =
-      source.status === "ACTIVE"
-        ? "PAUSED"
-        : source.status === "PAUSED"
-          ? "BLOCKED"
-          : "ACTIVE";
+    const next = source.status === "ACTIVE" ? "PAUSED" : source.status === "PAUSED" ? "BLOCKED" : "ACTIVE";
     setBusyId(source.id);
     try {
       await api.patch(`/news/sources/${source.id}`, {
@@ -89,72 +77,64 @@ export default function NewsSourcesPage() {
     <div>
       <PageHeader
         title="News sources"
-        description="The approved-source list. Ingestion is a later phase — this manages the registry and its lifecycle states."
+        description="The approved-source list. Ingestion is a later phase - this manages the registry and its lifecycle states."
+        action={<Button variant="secondary" icon="add" onClick={() => setShowCreate(true)}>Add source</Button>}
       />
       <ErrorBanner message={error} />
 
-      <Card className="mb-4">
-        <form onSubmit={createSource} className="flex flex-wrap items-end gap-3">
-          <Field label="Name">
-            <Input
-              required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Drift Tennis Digest"
-              className="min-w-[220px]"
-            />
-          </Field>
-          <Field label="Feed URL (optional, for ingestion later)">
-            <Input
-              type="url"
-              value={feedUrl}
-              onChange={(e) => setFeedUrl(e.target.value)}
-              placeholder="https://…"
-              className="min-w-[280px]"
-            />
-          </Field>
-          <Button type="submit" disabled={busyId === "new"}>
-            Add source
-          </Button>
-        </form>
-      </Card>
+      <StatBand
+        stats={[
+          { label: "Active", value: sources?.filter((source) => source.status === "ACTIVE").length ?? 0, icon: "rss_feed", tone: "green" },
+          { label: "Paused", value: sources?.filter((source) => source.status === "PAUSED").length ?? 0, icon: "pause_circle", tone: "amber" },
+          { label: "Blocked", value: sources?.filter((source) => source.status === "BLOCKED").length ?? 0, icon: "block", tone: "red" },
+        ]}
+      />
 
-      {sources === null && !error && <EmptyState message="Loading…" />}
+      {sources === null && !error && <EmptyState message="Loading..." />}
       {sources?.length === 0 && <EmptyState message="No sources registered yet." />}
 
       {sources && sources.length > 0 && (
         <div className="flex flex-col gap-3">
-          {sources.map((s) => (
-            <Card
-              key={s.id}
-              className="flex flex-wrap items-center justify-between gap-3"
-            >
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-drift-text-primary">
-                    {s.name}
-                  </span>
-                  <Badge tone={statusTone(s.status)}>{s.status}</Badge>
+          {sources.map((source) => (
+            <RowCard key={source.id}>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-drift-text-primary">{source.name}</span>
+                    <Badge tone={statusTone(source.status)}>{source.status}</Badge>
+                  </div>
+                  <div className="mt-0.5 text-xs text-drift-text-secondary">
+                    {source.feedUrl ?? "No feed URL yet"} / {source._count?.stories ?? 0} stories
+                  </div>
                 </div>
-                <div className="mt-0.5 text-xs text-drift-text-secondary">
-                  {s.feedUrl ?? "No feed URL yet"} · {s._count?.stories ?? 0}{" "}
-                  stories
-                </div>
+                <Button variant="secondary" disabled={busyId === source.id} onClick={() => cycleStatus(source)}>
+                  {source.status === "ACTIVE" ? "Pause" : source.status === "PAUSED" ? "Block" : "Re-activate"}
+                </Button>
               </div>
-              <Button
-                variant="secondary"
-                disabled={busyId === s.id}
-                onClick={() => cycleStatus(s)}
-              >
-                {s.status === "ACTIVE"
-                  ? "Pause"
-                  : s.status === "PAUSED"
-                    ? "Block"
-                    : "Re-activate"}
-              </Button>
-            </Card>
+            </RowCard>
           ))}
         </div>
+      )}
+
+      {showCreate && (
+        <ModalShell
+          title="Add source"
+          description="Register an approved publisher or feed for the platform news queue."
+          onClose={() => setShowCreate(false)}
+        >
+          <form onSubmit={createSource} className="flex flex-col gap-4">
+            <Field label="Name">
+              <Input required value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Drift Tennis Digest" />
+            </Field>
+            <Field label="Feed URL (optional, for ingestion later)">
+              <Input type="url" value={feedUrl} onChange={(e) => setFeedUrl(e.target.value)} placeholder="https://example.com/feed" />
+            </Field>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="ghost" onClick={() => setShowCreate(false)}>Cancel</Button>
+              <Button type="submit" icon="add" disabled={busyId === "new"}>Add source</Button>
+            </div>
+          </form>
+        </ModalShell>
       )}
     </div>
   );
