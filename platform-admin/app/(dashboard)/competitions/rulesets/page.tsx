@@ -135,35 +135,35 @@ export default function CompetitionRulesetsPage() {
       <ErrorBanner message={error} />
       {saved && <div className="mb-4 rounded-md border border-drift-success/30 bg-drift-success-surface px-4 py-3 text-sm text-drift-success">Ruleset saved.</div>}
 
+      <Card className="mb-5 p-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(200px,1fr)_140px_140px_170px_150px]">
+          <Input aria-label="Search rulesets" placeholder="Search rulesets..." value={search} onChange={(event) => setSearch(event.target.value)} />
+          <Select aria-label="Sport" value={sport} onChange={(event) => setSport(event.target.value)}>
+            <option value="">Any sport</option>
+            <option value="TENNIS">Tennis</option>
+            <option value="PADEL">Padel</option>
+          </Select>
+          <Select aria-label="Format" value={format} onChange={(event) => setFormat(event.target.value)}>
+            <option value="">Any format</option>
+            <option value="SINGLES">Singles</option>
+            <option value="DOUBLES">Doubles</option>
+          </Select>
+          <Select aria-label="Competition type" value={type} onChange={(event) => setType(event.target.value)}>
+            <option value="">Any type</option>
+            <option value="LEAGUE">League</option>
+            <option value="TOURNAMENT">Tournament</option>
+            <option value="LADDER">Ladder</option>
+          </Select>
+          <Select aria-label="Ruleset status" value={status} onChange={(event) => setStatus(event.target.value)}>
+            <option value="">Any status</option>
+            <option value="ACTIVE">Active</option>
+            <option value="INACTIVE">Inactive</option>
+          </Select>
+        </div>
+      </Card>
+
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
         <div className="flex flex-col gap-4">
-          <Card className="p-4">
-            <div className="grid gap-3 lg:grid-cols-[minmax(220px,1fr)_140px_140px_170px_150px]">
-              <Input aria-label="Search rulesets" placeholder="Search rulesets..." value={search} onChange={(event) => setSearch(event.target.value)} />
-              <Select aria-label="Sport" value={sport} onChange={(event) => setSport(event.target.value)}>
-                <option value="">Any sport</option>
-                <option value="TENNIS">Tennis</option>
-                <option value="PADEL">Padel</option>
-              </Select>
-              <Select aria-label="Format" value={format} onChange={(event) => setFormat(event.target.value)}>
-                <option value="">Any format</option>
-                <option value="SINGLES">Singles</option>
-                <option value="DOUBLES">Doubles</option>
-              </Select>
-              <Select aria-label="Competition type" value={type} onChange={(event) => setType(event.target.value)}>
-                <option value="">Any type</option>
-                <option value="LEAGUE">League</option>
-                <option value="TOURNAMENT">Tournament</option>
-                <option value="LADDER">Ladder</option>
-              </Select>
-              <Select aria-label="Ruleset status" value={status} onChange={(event) => setStatus(event.target.value)}>
-                <option value="">Any status</option>
-                <option value="ACTIVE">Active</option>
-                <option value="INACTIVE">Inactive</option>
-              </Select>
-            </div>
-          </Card>
-
           {rulesets === null && !error && <EmptyState message="Loading rulesets..." />}
           {rulesets?.length === 0 && <EmptyState message="No rulesets match these filters." />}
           {rulesets && rulesets.length > 0 && (

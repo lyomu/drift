@@ -62,7 +62,7 @@ export default function ContentLibraryPage() {
       <PageHeader
         title="Content Library"
         description="Platform lesson, drill, and learning-path catalogue."
-        action={<div className="flex flex-wrap gap-2"><ActionLink href="/content/lessons/new" icon="menu_book" className="border-drift-primary bg-drift-primary text-white hover:bg-drift-primary-dark">Create lesson</ActionLink><ActionLink href="/content/drills/new" icon="sports_tennis">Create drill</ActionLink><ActionLink href="/content/paths" icon="conversion_path">Learning paths</ActionLink></div>}
+        action={<div className="flex flex-wrap gap-2"><ActionLink href="/content/lessons/new" icon="menu_book" variant="primary">Create lesson</ActionLink><ActionLink href="/content/drills/new" icon="sports_tennis">Create drill</ActionLink><ActionLink href="/content/paths" icon="conversion_path">Learning paths</ActionLink></div>}
       />
       <ErrorBanner message={error} />
 

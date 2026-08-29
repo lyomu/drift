@@ -51,7 +51,7 @@ export default function CompetitionsPage() {
       <PageHeader
         title="Global Competitions"
         description="Cross-club league, tournament, and ladder oversight."
-        action={<ActionLink href="/competitions/rulesets" icon="rule" className="border-drift-primary bg-drift-primary text-white hover:bg-drift-primary-dark">Rulesets</ActionLink>}
+        action={<ActionLink href="/competitions/rulesets" icon="rule" variant="primary">Rulesets</ActionLink>}
       />
       <ErrorBanner message={error} />
 

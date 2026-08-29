@@ -5,6 +5,7 @@ import { api, ApiError } from "@/lib/api-client";
 import type { SystemSetting, SystemSettingType } from "@/lib/platform-config-types";
 import { jsonText, label, parseSettingValue } from "@/lib/platform-config-types";
 import { Badge, Button, Card, EmptyState, ErrorBanner, Field, Input, PageHeader, Select, Td, Textarea, Th, statusTone } from "@/components/ui";
+import { StatBand } from "@/components/dashboard-design";
 
 type SettingForm = {
   key: string;
@@ -116,10 +117,12 @@ export default function SystemSettingsPage() {
       <PageHeader title="System Settings" description="Edit typed global app configuration values." action={<Button variant="secondary" onClick={startNew}>New setting</Button>} />
       <ErrorBanner message={error} />
 
-      <div className="mb-4 grid gap-3 md:grid-cols-2">
-        <Card className="p-4"><div className="text-sm font-semibold text-drift-text-secondary">Visible settings</div><div className="mt-1 font-display text-3xl font-bold tabular-nums text-drift-text-primary">{counts.total}</div></Card>
-        <Card className="p-4"><div className="text-sm font-semibold text-drift-text-secondary">JSON settings</div><div className="mt-1 font-display text-3xl font-bold tabular-nums text-drift-text-primary">{counts.json}</div></Card>
-      </div>
+      <StatBand
+        stats={[
+          { label: "Visible settings", value: counts.total, icon: "tune", tone: "blue" },
+          { label: "JSON settings", value: counts.json, icon: "data_object", tone: "gray" },
+        ]}
+      />
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
         <div>

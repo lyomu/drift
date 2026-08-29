@@ -264,12 +264,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         <Link
                           key={item.href}
                           href={item.href}
-                          className={`navitem flex min-h-9 items-center gap-2 rounded-lg px-3 text-[13px] font-bold transition ${
+                          className={`navitem flex min-h-9 items-center gap-2 rounded-lg px-3 py-1.5 text-[13px] font-bold leading-tight transition ${
                             active ? "bg-drift-primary-light text-drift-primary-dark" : "text-drift-text-secondary"
                           }`}
                         >
                           <MaterialIcon name={item.icon} filled={active} className="text-[18px]" />
-                          <span className="truncate">{item.label}</span>
+                          <span>{item.label}</span>
                         </Link>
                       );
                     })}

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { ModalShell, RowCard, StatBand } from "@/components/dashboard-design";
 import { api, ApiError } from "@/lib/api-client";
-import { Badge, Button, EmptyState, ErrorBanner, Field, Input, PageHeader, statusTone } from "@/components/ui";
+import { Badge, Button, EmptyState, ErrorBanner, Field, Input, PageHeader, plural, statusTone } from "@/components/ui";
 
 interface NewsSource {
   id: string;
@@ -104,7 +104,7 @@ export default function NewsSourcesPage() {
                     <Badge tone={statusTone(source.status)}>{source.status}</Badge>
                   </div>
                   <div className="mt-0.5 text-xs text-drift-text-secondary">
-                    {source.feedUrl ?? "No feed URL yet"} / {source._count?.stories ?? 0} stories
+                    {source.feedUrl ?? "No feed URL yet"} / {source._count?.stories ?? 0} {plural(source._count?.stories ?? 0, "story", "stories")}
                   </div>
                 </div>
                 <Button variant="secondary" disabled={busyId === source.id} onClick={() => cycleStatus(source)}>

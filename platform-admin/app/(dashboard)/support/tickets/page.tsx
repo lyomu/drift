@@ -154,18 +154,18 @@ export default function SupportTicketsPage() {
         ]}
       />
 
+      <Card className="mb-5 p-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_160px_160px_200px_auto]">
+          <Field label="Search"><Input value={search} onChange={(event) => { setSearch(event.target.value); setTickets(null); }} placeholder="Subject, body, or user" /></Field>
+          <Field label="Status"><Select value={status} onChange={(event) => { setStatus(event.target.value as SupportTicketStatus | ""); setTickets(null); }}><option value="">Any status</option><option value="OPEN">Open</option><option value="ASSIGNED">Assigned</option><option value="RESOLVED">Resolved</option></Select></Field>
+          <Field label="Priority"><Select value={priority} onChange={(event) => { setPriority(event.target.value as SupportTicketPriority | ""); setTickets(null); }}><option value="">Any priority</option><option value="NORMAL">Normal</option><option value="HIGH">High</option><option value="URGENT">Urgent</option></Select></Field>
+          <Field label="Assignee"><Select value={assignedToId} onChange={(event) => { setAssignedToId(event.target.value); setTickets(null); }}><option value="">Any assignee</option><option value="UNASSIGNED">Unassigned</option>{staff.map((person) => <option key={person.id} value={person.id}>{personName(person)}</option>)}</Select></Field>
+          <div className="flex items-end"><Button type="button" variant="secondary" icon="refresh" onClick={() => void load()}>Refresh</Button></div>
+        </div>
+      </Card>
+
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
         <div>
-          <Card className="mb-4 p-4">
-            <div className="grid gap-3 lg:grid-cols-[1fr_160px_160px_200px_auto]">
-              <Field label="Search"><Input value={search} onChange={(event) => { setSearch(event.target.value); setTickets(null); }} placeholder="Subject, body, or user" /></Field>
-              <Field label="Status"><Select value={status} onChange={(event) => { setStatus(event.target.value as SupportTicketStatus | ""); setTickets(null); }}><option value="">Any status</option><option value="OPEN">Open</option><option value="ASSIGNED">Assigned</option><option value="RESOLVED">Resolved</option></Select></Field>
-              <Field label="Priority"><Select value={priority} onChange={(event) => { setPriority(event.target.value as SupportTicketPriority | ""); setTickets(null); }}><option value="">Any priority</option><option value="NORMAL">Normal</option><option value="HIGH">High</option><option value="URGENT">Urgent</option></Select></Field>
-              <Field label="Assignee"><Select value={assignedToId} onChange={(event) => { setAssignedToId(event.target.value); setTickets(null); }}><option value="">Any assignee</option><option value="UNASSIGNED">Unassigned</option>{staff.map((person) => <option key={person.id} value={person.id}>{personName(person)}</option>)}</Select></Field>
-              <div className="flex items-end"><Button type="button" variant="secondary" icon="refresh" onClick={() => void load()}>Refresh</Button></div>
-            </div>
-          </Card>
-
           {tickets === null && !error && <EmptyState message="Loading support tickets..." />}
           {tickets?.length === 0 && <EmptyState message={status === "OPEN" && !priority && !assignedToId && !search.trim() ? "No open tickets" : "No support tickets match these filters."} />}
           {tickets && tickets.length > 0 && (

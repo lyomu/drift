@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { RowCard, StatBand } from "@/components/dashboard-design";
 import { api, ApiError } from "@/lib/api-client";
 import type { OrganizationSummary } from "@/lib/organization-types";
-import { Badge, Card, EmptyState, ErrorBanner, Field, Input, PageHeader, Select, statusTone } from "@/components/ui";
+import { Badge, Card, EmptyState, ErrorBanner, Field, Input, PageHeader, plural, Select, statusTone } from "@/components/ui";
 
 function label(value: string) {
   return value.replaceAll("_", " ");
@@ -90,8 +90,8 @@ export default function OrganizationsPage() {
                   <Badge tone={statusTone(club.verificationStatus)}>{club.verificationStatus}</Badge>
                 </div>
                 <div className="text-sm">
-                  <span className="font-bold tabular">{club.counts.members}</span> members
-                  <div className="text-xs font-semibold text-drift-text-secondary">{club.counts.courts} courts</div>
+                  <span className="font-bold tabular">{club.counts.members}</span> {plural(club.counts.members, "member")}
+                  <div className="text-xs font-semibold text-drift-text-secondary">{club.counts.courts} {plural(club.counts.courts, "court")}</div>
                 </div>
                 <div className="text-sm text-drift-text-primary">
                   {club.subscription ? <><Badge tone={statusTone(club.subscription.status)}>{label(club.subscription.status)}</Badge><div className="mt-1 text-xs text-drift-text-secondary">{club.subscription.plan.name} / {money(club.subscription.plan.priceMinor, club.subscription.plan.currency)}</div></> : <span className="text-drift-text-secondary">Not configured</span>}

@@ -216,17 +216,33 @@ export function ModalShell({
   );
 }
 
+// Base layout shared by CompactButton and ActionLink. The tone classes are kept
+// out of here so a caller never ends up with two competing `bg-*` / `text-*`
+// utilities in one class list — under Tailwind v4 the winner is decided by CSS
+// source order, not by the order they appear in `className`, which is how the
+// "primary" buttons rendered white-on-white before.
+const compactBase =
+  "inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg border px-3 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-50";
+
+// "secondary" keeps the `pbtn` hover (light-blue wash from globals.css); "primary"
+// drops `pbtn` so that same rule can't wash white text onto a light background.
+const compactTone: Record<"primary" | "secondary", string> = {
+  primary: "border-drift-primary bg-drift-primary text-white hover:bg-drift-primary-dark",
+  secondary: "pbtn border-drift-border bg-drift-surface text-drift-text-primary",
+};
+
 export function CompactButton({
   icon,
   children,
+  variant = "secondary",
   className = "",
   type = "button",
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { icon?: string }) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & { icon?: string; variant?: "primary" | "secondary" }) {
   return (
     <button
       type={type}
-      className={`pbtn inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-drift-border bg-drift-surface px-3 text-sm font-bold text-drift-text-primary transition disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+      className={`${compactBase} ${compactTone[variant]} ${className}`}
       {...props}
     >
       {icon && <MaterialIcon name={icon} className="text-[18px]" />}
@@ -239,18 +255,17 @@ export function ActionLink({
   href,
   icon,
   children,
+  variant = "secondary",
   className = "",
 }: {
   href: string;
   icon?: string;
   children: ReactNode;
+  variant?: "primary" | "secondary";
   className?: string;
 }) {
   return (
-    <Link
-      href={href}
-      className={`pbtn inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-drift-border bg-drift-surface px-3 text-sm font-bold text-drift-text-primary transition ${className}`}
-    >
+    <Link href={href} className={`${compactBase} ${compactTone[variant]} ${className}`}>
       {icon && <MaterialIcon name={icon} className="text-[18px]" />}
       {children}
     </Link>

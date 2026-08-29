@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ActionLink, RowCard } from "@/components/dashboard-design";
 import { api, ApiError } from "@/lib/api-client";
 import type { Venue } from "@/lib/venue-types";
-import { Badge, Button, Card, EmptyState, ErrorBanner, Field, Input, PageHeader, Select, statusTone } from "@/components/ui";
+import { Badge, Button, Card, EmptyState, ErrorBanner, Field, Input, PageHeader, plural, Select, statusTone } from "@/components/ui";
 
 export default function VenueDatabasePage() {
   const [search, setSearch] = useState("");
@@ -61,7 +61,7 @@ export default function VenueDatabasePage() {
       <PageHeader
         title="Venue database"
         description="Every court and venue record used across discovery, clubs, matches, and platform operations."
-        action={<ActionLink href="/venues/new" icon="add_location_alt" className="border-drift-primary bg-drift-primary text-white hover:bg-drift-primary-dark">Add venue</ActionLink>}
+        action={<ActionLink href="/venues/new" icon="add_location_alt" variant="primary">Add venue</ActionLink>}
       />
       <ErrorBanner message={error} />
 
@@ -95,7 +95,7 @@ export default function VenueDatabasePage() {
                     <div className="truncate text-xs text-drift-text-secondary" title={venue.address ?? undefined}>{venue.address ?? "Address unknown"}</div>
                   </div>
                   <div className="text-sm text-drift-text-primary">{venue.club?.name ?? "Independent"}</div>
-                  <div className="text-sm font-bold tabular">{courtCount}<div className="text-xs font-semibold text-drift-text-secondary">{venue.courtGroups.length || "No"} groups</div></div>
+                  <div className="text-sm font-bold tabular">{courtCount}<div className="text-xs font-semibold text-drift-text-secondary">{venue.courtGroups.length || "No"} {plural(venue.courtGroups.length, "group")}</div></div>
                   <div className="flex flex-wrap gap-2">
                     <Badge tone={statusTone(venue.verificationStatus)}>{venue.verificationStatus}</Badge>
                     <Badge tone={statusTone(venue.placesSyncStatus)}>{venue.placesSyncStatus}</Badge>

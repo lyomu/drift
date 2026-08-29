@@ -219,6 +219,11 @@ export function Badge({
   );
 }
 
+/** "1 court" / "0 courts" / "3 courts" — the noun agrees with the count. */
+export function plural(count: number, singular: string, pluralForm?: string): string {
+  return count === 1 ? singular : (pluralForm ?? `${singular}s`);
+}
+
 export function statusTone(status: string): "neutral" | "success" | "warning" | "error" | "info" {
   switch (status) {
     case "ACTIVE":

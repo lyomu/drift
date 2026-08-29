@@ -5,6 +5,7 @@ import { api, ApiError } from "@/lib/api-client";
 import type { IntegrationConfig, IntegrationStatus } from "@/lib/platform-config-types";
 import { dateLabel, jsonText, label, parseJsonObject } from "@/lib/platform-config-types";
 import { Badge, Button, Card, EmptyState, ErrorBanner, Field, Input, PageHeader, Select, Td, Textarea, Th, statusTone } from "@/components/ui";
+import { StatBand } from "@/components/dashboard-design";
 
 type IntegrationForm = {
   providerKey: string;
@@ -167,11 +168,13 @@ export default function IntegrationsPage() {
         Connection checks here record the latest known provider state. This screen does not call Maps, Places, news, payment, push, email, or SMS providers.
       </div>
 
-      <div className="mb-4 grid gap-3 md:grid-cols-3">
-        <Card className="p-4"><div className="text-sm font-semibold text-drift-text-secondary">Connected</div><div className="mt-1 font-display text-3xl font-bold tabular-nums text-drift-text-primary">{counts.connected}</div></Card>
-        <Card className="p-4"><div className="text-sm font-semibold text-drift-text-secondary">Disconnected</div><div className="mt-1 font-display text-3xl font-bold tabular-nums text-drift-text-primary">{counts.disconnected}</div></Card>
-        <Card className="p-4"><div className="text-sm font-semibold text-drift-text-secondary">Error</div><div className="mt-1 font-display text-3xl font-bold tabular-nums text-drift-text-primary">{counts.error}</div></Card>
-      </div>
+      <StatBand
+        stats={[
+          { label: "Connected", value: counts.connected, icon: "hub", tone: "green" },
+          { label: "Disconnected", value: counts.disconnected, icon: "sync", tone: "gray" },
+          { label: "Error", value: counts.error, icon: "priority_high", tone: "red" },
+        ]}
+      />
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_440px]">
         <div>
