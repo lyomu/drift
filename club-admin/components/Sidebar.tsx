@@ -29,7 +29,7 @@ const NAV_GROUPS: {
       { href: "/leagues", label: "Leagues" },
       { href: "/tournaments", label: "Tournaments" },
       { href: "/ladders", label: "Ladders" },
-      { href: "/seasons/archive", label: "Season Archive" },
+      { href: "/leagues/archive", label: "League Archive" },
     ],
   },
   {
@@ -107,7 +107,7 @@ export function Sidebar({
     (!item.roles || (role ? item.roles.includes(role) : false));
 
   return (
-    <aside className="hidden w-[264px] shrink-0 flex-col border-r border-drift-border bg-drift-surface px-4 py-6 sm:flex">
+    <aside className="sticky top-0 hidden h-screen w-[264px] shrink-0 flex-col border-r border-drift-border bg-drift-surface px-4 py-6 sm:flex">
       <div className="flex flex-col px-2 pb-5">
         <div className="font-display text-[19px] font-extrabold tracking-[-0.2px] text-drift-text-primary">
           Drift
@@ -122,10 +122,10 @@ export function Sidebar({
         )}
       </div>
 
-      <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto">
+      <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto pr-1">
         <Link
           href="/"
-          className={`navitem flex items-center gap-2.5 rounded-lg px-2.5 py-[9px] text-sm transition-colors ${
+          className={`navitem flex items-center gap-2.5 rounded-md px-2.5 py-[9px] text-sm transition-colors ${
             pathname === "/"
               ? "bg-drift-primary-light font-bold text-drift-primary-dark"
               : "font-semibold text-drift-text-secondary"
@@ -148,7 +148,7 @@ export function Sidebar({
                     [group.key]: !prev[group.key],
                   }))
                 }
-                className="navgroup flex items-center gap-2.5 rounded-lg px-2.5 py-[9px] text-left transition-colors"
+                className="navgroup flex items-center gap-2.5 rounded-md px-2.5 py-[9px] text-left transition-colors"
               >
                 <MaterialIcon name={group.icon} className="text-xl text-drift-text-secondary" />
                 <span className="flex-1 text-sm font-semibold text-drift-text-primary">
@@ -189,7 +189,7 @@ export function Sidebar({
       <button
         type="button"
         onClick={logout}
-        className="navitem mt-4 flex items-center gap-2.5 rounded-lg px-2.5 py-[9px] text-left text-sm font-semibold text-drift-text-secondary transition-colors"
+        className="navitem mt-4 flex shrink-0 items-center gap-2.5 rounded-md px-2.5 py-[9px] text-left text-sm font-semibold text-drift-text-secondary transition-colors"
       >
         <MaterialIcon name="logout" className="text-xl" />
         <span>Log out</span>

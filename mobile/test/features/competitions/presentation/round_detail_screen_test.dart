@@ -22,9 +22,10 @@ void main() {
           const RoundDetailScreen(seasonId: 'season-1', roundId: 'round-1'),
           brightness: brightness,
           overrides: [
-            roundProvider(
-              (seasonId: 'season-1', roundId: 'round-1'),
-            ).overrideWith((ref) async => competitionRound()),
+            roundProvider((
+              seasonId: 'season-1',
+              roundId: 'round-1',
+            )).overrideWith((ref) async => competitionRound()),
             currentUserProvider.overrideWith((ref) async => userProfile()),
           ],
         );
@@ -39,9 +40,10 @@ void main() {
           const RoundDetailScreen(seasonId: 'season-1', roundId: 'round-1'),
           brightness: brightness,
           overrides: [
-            roundProvider(
-              (seasonId: 'season-1', roundId: 'round-1'),
-            ).overrideWith(
+            roundProvider((
+              seasonId: 'season-1',
+              roundId: 'round-1',
+            )).overrideWith(
               (ref) async => CompetitionRound(
                 id: 'round-1',
                 seasonId: 'season-1',
@@ -75,9 +77,10 @@ void main() {
         const RoundDetailScreen(seasonId: 'season-1', roundId: 'round-1'),
         settle: false,
         overrides: [
-          roundProvider(
-            (seasonId: 'season-1', roundId: 'round-1'),
-          ).overrideWith((ref) => pending<CompetitionRound>()),
+          roundProvider((
+            seasonId: 'season-1',
+            roundId: 'round-1',
+          )).overrideWith((ref) => pending<CompetitionRound>()),
           currentUserProvider.overrideWith((ref) async => userProfile()),
         ],
       );
@@ -90,9 +93,10 @@ void main() {
         tester,
         const RoundDetailScreen(seasonId: 'season-1', roundId: 'round-1'),
         overrides: [
-          roundProvider(
-            (seasonId: 'season-1', roundId: 'round-1'),
-          ).overrideWith((ref) => failing<CompetitionRound>()),
+          roundProvider((
+            seasonId: 'season-1',
+            roundId: 'round-1',
+          )).overrideWith((ref) => failing<CompetitionRound>()),
           currentUserProvider.overrideWith((ref) async => userProfile()),
         ],
       );

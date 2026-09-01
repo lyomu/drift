@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { api, ApiError } from "@/lib/api-client";
 import { useClub } from "@/lib/club-context";
-import { Button, EmptyState, ErrorBanner, PageHeader } from "@/components/ui";
+import { Button, ErrorBanner, PageHeader } from "@/components/ui";
 import { IconChip, Panel } from "@/components/dashboard-design";
+import { Listing } from "@/components/Listing";
 import type { Dispute } from "@/lib/types";
 
 export default function DisputesPage() {
@@ -66,13 +67,18 @@ export default function DisputesPage() {
       />
       <ErrorBanner message={error} />
 
-      {loading ? (
-        <EmptyState message="Loading..." />
-      ) : disputes.length === 0 ? (
-        <EmptyState message="No open disputes." />
-      ) : (
-        <div className="flex flex-col gap-4">
-          {disputes.map((dispute) => (
+      <Listing
+        title="Open disputes"
+        count={loading ? null : disputes.length}
+        loading={loading}
+        empty={{
+          icon: "gavel",
+          title: "No open disputes",
+          description:
+            "When a player contests a submitted result, it lands here for an admin ruling.",
+        }}
+      >
+        {disputes.map((dispute) => (
             <Panel key={dispute.fixtureId}>
               <div className="mb-4 flex items-start gap-3">
                 <IconChip icon="gavel" tone="error" />
@@ -86,7 +92,7 @@ export default function DisputesPage() {
                 </div>
               </div>
               <div className="mb-4 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-                <div className="rounded-xl border border-drift-border bg-drift-background px-4 py-3">
+                <div className="rounded-md border border-drift-border bg-drift-background px-4 py-3">
                   <div className="text-xs font-bold uppercase tracking-[0.3px] text-drift-text-secondary">
                     Original submission
                   </div>
@@ -94,7 +100,7 @@ export default function DisputesPage() {
                     {winner(dispute, "submitted")}
                   </div>
                 </div>
-                <div className="rounded-xl border border-drift-warning/20 bg-drift-warning-surface px-4 py-3">
+                <div className="rounded-md border border-drift-warning/20 bg-drift-warning-surface px-4 py-3">
                   <div className="text-xs font-bold uppercase tracking-[0.3px] text-drift-warning">
                     Disputant claims
                   </div>
@@ -122,9 +128,8 @@ export default function DisputesPage() {
                 </div>
               )}
             </Panel>
-          ))}
-        </div>
-      )}
+        ))}
+      </Listing>
     </div>
   );
 }

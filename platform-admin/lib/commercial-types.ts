@@ -25,6 +25,20 @@ export type CommercialPlan = {
 
 export type PlansResponse = { plans: CommercialPlan[] };
 
+/**
+ * Served by `GET platform-admin/commercial/currencies`. The list is owned by
+ * the backend (`supported-currencies.ts`) — the same one the plan and
+ * promotion DTOs validate against — so the dropdown can never offer a code the
+ * API would reject.
+ */
+export type SupportedCurrency = {
+  code: string;
+  name: string;
+  minorUnits: number;
+};
+
+export type CurrenciesResponse = { currencies: SupportedCurrency[] };
+
 export type CommercialTransaction = {
   id: string;
   amountMinor: number;

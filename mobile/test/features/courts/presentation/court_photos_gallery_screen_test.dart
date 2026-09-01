@@ -8,8 +8,9 @@ import '../../../support/pump.dart';
 void main() {
   group('CourtPhotosGalleryScreen', () {
     for (final brightness in Brightness.values) {
-      testWidgets('renders without throwing in ${brightness.name}',
-          (tester) async {
+      testWidgets('renders without throwing in ${brightness.name}', (
+        tester,
+      ) async {
         await pumpScreen(
           tester,
           const Scaffold(

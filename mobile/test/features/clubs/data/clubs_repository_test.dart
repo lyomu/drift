@@ -126,11 +126,7 @@ void main() {
 
   group('ClubPost.fromJson', () {
     Map<String, dynamic> json({
-      Object? author = const {
-        'id': 'u1',
-        'name': 'Ana Diaz',
-        'photoUrl': null,
-      },
+      Object? author = const {'id': 'u1', 'name': 'Ana Diaz', 'photoUrl': null},
       List<dynamic> reactions = const [],
       bool isMine = false,
     }) => {

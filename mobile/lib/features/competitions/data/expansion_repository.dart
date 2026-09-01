@@ -27,9 +27,11 @@ class TournamentSummary {
         id: json['id'] as String,
         name: json['name'] as String,
         state: json['state'] as String,
-        clubName: (json['club'] as Map<String, dynamic>)['name'] as String? ?? '',
+        clubName:
+            (json['club'] as Map<String, dynamic>)['name'] as String? ?? '',
         drawSize: json['drawSize'] as int,
-        entryCount: (json['_count'] as Map<String, dynamic>)['entries'] as int? ?? 0,
+        entryCount:
+            (json['_count'] as Map<String, dynamic>)['entries'] as int? ?? 0,
       );
 }
 
@@ -47,16 +49,15 @@ class LadderSummary {
   final int entryCount;
 
   factory LadderSummary.fromJson(Map<String, dynamic> json) => LadderSummary(
-        id: json['id'] as String,
-        name: json['name'] as String,
-        clubName:
-            (json['club'] as Map<String, dynamic>?)?['name'] as String? ?? '',
-        // `_count` on the list payload; the detail payload carries `entries`.
-        entryCount: (json['_count'] as Map<String, dynamic>?)?['entries']
-                as int? ??
-            (json['entries'] as List<dynamic>?)?.length ??
-            0,
-      );
+    id: json['id'] as String,
+    name: json['name'] as String,
+    clubName: (json['club'] as Map<String, dynamic>?)?['name'] as String? ?? '',
+    // `_count` on the list payload; the detail payload carries `entries`.
+    entryCount:
+        (json['_count'] as Map<String, dynamic>?)?['entries'] as int? ??
+        (json['entries'] as List<dynamic>?)?.length ??
+        0,
+  );
 }
 
 class TournamentDetail {
@@ -128,11 +129,11 @@ class LadderDetail {
   final List<LadderEntryData> entries;
 
   factory LadderDetail.fromJson(Map<String, dynamic> json) => LadderDetail(
-        ladder: LadderSummary.fromJson(json['ladder']),
-        entries: (json['ladder']['entries'] as List<dynamic>)
-            .map((e) => LadderEntryData.fromJson(e))
-            .toList(),
-      );
+    ladder: LadderSummary.fromJson(json['ladder']),
+    entries: (json['ladder']['entries'] as List<dynamic>)
+        .map((e) => LadderEntryData.fromJson(e))
+        .toList(),
+  );
 }
 
 class LadderEntryData {
@@ -169,22 +170,23 @@ class LadderEntryData {
 
 final tournamentsListProvider =
     FutureProvider.autoDispose<List<TournamentSummary>>((ref) async {
-  final dio = ref.watch(dioClientProvider);
-  final data = await dio.get('/tournaments');
-  return (data.data['tournaments'] as List<dynamic>)
-      .map((t) => TournamentSummary.fromJson(t as Map<String, dynamic>))
-      .toList();
-});
+      final dio = ref.watch(dioClientProvider);
+      final data = await dio.get('/tournaments');
+      return (data.data['tournaments'] as List<dynamic>)
+          .map((t) => TournamentSummary.fromJson(t as Map<String, dynamic>))
+          .toList();
+    });
 
-final tournamentDetailProvider =
-    FutureProvider.autoDispose.family<TournamentDetail, String>((ref, id) async {
-  final dio = ref.watch(dioClientProvider);
-  final data = await dio.get('/tournaments/$id');
-  return TournamentDetail.fromJson(data.data);
-});
+final tournamentDetailProvider = FutureProvider.autoDispose
+    .family<TournamentDetail, String>((ref, id) async {
+      final dio = ref.watch(dioClientProvider);
+      final data = await dio.get('/tournaments/$id');
+      return TournamentDetail.fromJson(data.data);
+    });
 
-final laddersListProvider =
-    FutureProvider.autoDispose<List<LadderSummary>>((ref) async {
+final laddersListProvider = FutureProvider.autoDispose<List<LadderSummary>>((
+  ref,
+) async {
   final dio = ref.watch(dioClientProvider);
   final data = await dio.get('/ladders');
   return (data.data['ladders'] as List<dynamic>)
@@ -192,10 +194,9 @@ final laddersListProvider =
       .toList();
 });
 
-final ladderDetailProvider =
-    FutureProvider.autoDispose.family<LadderDetail, String>((ref, id) async {
-  final dio = ref.watch(dioClientProvider);
-  final data = await dio.get('/ladders/$id');
-  return LadderDetail.fromJson(data.data);
-});
-
+final ladderDetailProvider = FutureProvider.autoDispose
+    .family<LadderDetail, String>((ref, id) async {
+      final dio = ref.watch(dioClientProvider);
+      final data = await dio.get('/ladders/$id');
+      return LadderDetail.fromJson(data.data);
+    });

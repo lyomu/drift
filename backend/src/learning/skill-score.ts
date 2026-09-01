@@ -120,7 +120,7 @@ export interface GoalStatusInput {
 
 /**
  * Derived on read, same discipline as `match-state.ts`'s `effectiveState`
- * and `season-state.ts` — a goal's status is never a stored field the app
+ * and `competition-state.ts` — a goal's status is never a stored field the app
  * can forget to update. Pacing compares actual progress against a linear
  * expected-progress line from baseline to target over the goal's full
  * baseline→deadline window.

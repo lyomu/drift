@@ -13,8 +13,9 @@ void main() {
     for (final brightness in Brightness.values) {
       final label = brightness.name;
 
-      testWidgets('renders the goal with its milestones in $label',
-          (tester) async {
+      testWidgets('renders the goal with its milestones in $label', (
+        tester,
+      ) async {
         await pumpScreen(
           tester,
           const GoalDetailScreen(goalId: 'g1'),
@@ -40,9 +41,7 @@ void main() {
           brightness: brightness,
           settle: false,
           overrides: [
-            goalDetailProvider('g1').overrideWith(
-              (ref) => pending<Goal>(),
-            ),
+            goalDetailProvider('g1').overrideWith((ref) => pending<Goal>()),
           ],
         );
 
@@ -55,9 +54,7 @@ void main() {
         tester,
         const GoalDetailScreen(goalId: 'g1'),
         overrides: [
-          goalDetailProvider('g1').overrideWith(
-            (ref) => failing<Goal>(),
-          ),
+          goalDetailProvider('g1').overrideWith((ref) => failing<Goal>()),
         ],
       );
 

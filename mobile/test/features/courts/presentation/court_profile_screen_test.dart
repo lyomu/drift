@@ -19,9 +19,9 @@ void main() {
           const CourtProfileScreen(courtId: 'court-1'),
           brightness: brightness,
           overrides: [
-            courtDetailProvider('court-1').overrideWith(
-              (ref) => Future.value(courtProfile()),
-            ),
+            courtDetailProvider(
+              'court-1',
+            ).overrideWith((ref) => Future.value(courtProfile())),
           ],
         );
 
@@ -36,9 +36,9 @@ void main() {
         const CourtProfileScreen(courtId: 'court-1'),
         settle: false,
         overrides: [
-          courtDetailProvider('court-1').overrideWith(
-            (ref) => pending<CourtProfile>(),
-          ),
+          courtDetailProvider(
+            'court-1',
+          ).overrideWith((ref) => pending<CourtProfile>()),
         ],
       );
 
@@ -50,9 +50,9 @@ void main() {
         tester,
         const CourtProfileScreen(courtId: 'court-1'),
         overrides: [
-          courtDetailProvider('court-1').overrideWith(
-            (ref) => failing<CourtProfile>(),
-          ),
+          courtDetailProvider(
+            'court-1',
+          ).overrideWith((ref) => failing<CourtProfile>()),
         ],
       );
 

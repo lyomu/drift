@@ -28,8 +28,9 @@ void main() {
         expect(find.text('Forehand'), findsOneWidget);
       });
 
-      testWidgets('reports a skill with no data honestly in $label',
-          (tester) async {
+      testWidgets('reports a skill with no data honestly in $label', (
+        tester,
+      ) async {
         await pumpScreen(
           tester,
           const SkillProfileScreen(),

@@ -48,6 +48,9 @@ dependencies:
   url_launcher: ^6.3.2
   path_provider: ^2.1.5
   video_player: ^2.9.2
+  # Renders the sanitised HTML the backend stores for league rules
+  # (see backend common/rich-text.util.ts). Core-only, no JS/WebView.
+  flutter_widget_from_html_core: ^0.16.0
 
 dev_dependencies:
   flutter_test:

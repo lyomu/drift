@@ -6,9 +6,11 @@ import '../../auth/data/auth_repository.dart';
 import '../../matches/data/matches_repository.dart';
 import '../../players/data/players_repository.dart';
 
-/// Mirrors the backend's derived `SeasonState` (`competitions/season-state.ts`)
-/// — `RegistrationClosed` folds into `scheduled` there, since nothing
-/// distinguishes the two once registration is purely time-derived.
+/// Mirrors the backend's derived `CompetitionState`
+/// (`competitions/competition-state.ts`) — `RegistrationClosed` folds into
+/// `scheduled` there, since nothing distinguishes the two once registration
+/// is purely time-derived. Since M15 a league *is* the competition (no
+/// Season layer), so this state lives on the league row.
 enum SeasonState {
   draft,
   registrationOpen,
@@ -67,15 +69,32 @@ class League {
     required this.rulesText,
     required this.format,
     required this.seasons,
+    this.startDate,
+    this.endDate,
+    this.scoringFormat,
+    this.walkoverRule,
+    this.unfinishedMatchPolicy,
   });
 
   final String id;
   final String sport;
   final String name;
   final String? description;
+
+  /// Sanitised HTML (backend common/rich-text.util.ts) — render with an
+  /// HTML widget, not a plain [Text].
   final String? rulesText;
   final String format;
+
+  /// Since M15 a league is one competition run. This carries a single
+  /// self-reference so existing "pick a season" navigation still resolves
+  /// straight into the league's own registration/rounds surface.
   final List<LeagueSeasonRef> seasons;
+  final DateTime? startDate;
+  final DateTime? endDate;
+  final String? scoringFormat;
+  final String? walkoverRule;
+  final String? unfinishedMatchPolicy;
 
   factory League.fromJson(Map<String, dynamic> json) => League(
     id: json['id'] as String,
@@ -84,9 +103,16 @@ class League {
     description: json['description'] as String?,
     rulesText: json['rulesText'] as String?,
     format: json['format'] as String,
-    seasons: (json['seasons'] as List<dynamic>)
-        .map((s) => LeagueSeasonRef.fromJson(s as Map<String, dynamic>))
-        .toList(),
+    seasons: [
+      LeagueSeasonRef(id: json['id'] as String, label: json['name'] as String),
+    ],
+    startDate: json['startsAt'] == null
+        ? null
+        : DateTime.parse(json['startsAt'] as String),
+    endDate: null,
+    scoringFormat: json['scoringFormat'] as String?,
+    walkoverRule: json['walkoverRule'] as String?,
+    unfinishedMatchPolicy: json['unfinishedMatchPolicy'] as String?,
   );
 }
 
@@ -123,20 +149,20 @@ class SeasonDetail {
       viewerRegistrationStatus == SeasonRegistrationStatus.enrolled ||
       viewerRegistrationStatus == SeasonRegistrationStatus.waitlisted;
 
+  static DateTime _date(Object? value) => value == null
+      ? DateTime.fromMillisecondsSinceEpoch(0)
+      : DateTime.parse(value as String).toLocal();
+
   factory SeasonDetail.fromJson(Map<String, dynamic> json) => SeasonDetail(
     id: json['id'] as String,
-    leagueId: json['leagueId'] as String,
-    leagueName: json['leagueName'] as String,
-    label: json['label'] as String,
-    state: SeasonState.fromJson(json['state'] as String),
-    registrationOpensAt: DateTime.parse(
-      json['registrationOpensAt'] as String,
-    ).toLocal(),
-    registrationClosesAt: DateTime.parse(
-      json['registrationClosesAt'] as String,
-    ).toLocal(),
-    startsAt: DateTime.parse(json['startsAt'] as String).toLocal(),
-    roundCount: json['roundCount'] as int,
+    leagueId: json['id'] as String,
+    leagueName: json['name'] as String,
+    label: json['name'] as String,
+    state: SeasonState.fromJson(json['competitionState'] as String),
+    registrationOpensAt: _date(json['registrationOpensAt']),
+    registrationClosesAt: _date(json['registrationClosesAt']),
+    startsAt: _date(json['startsAt']),
+    roundCount: (json['roundCount'] as int?) ?? 0,
     enrolledCount: json['enrolledCount'] as int,
     capacity: json['capacity'] as int?,
     viewerRegistrationStatus: json['viewerRegistrationStatus'] == null
@@ -177,17 +203,21 @@ class MySeasonSummary {
   final SeasonState state;
   final SeasonRegistrationStatus registrationStatus;
 
-  factory MySeasonSummary.fromJson(Map<String, dynamic> json) =>
-      MySeasonSummary(
-        seasonId: json['seasonId'] as String,
-        leagueId: json['leagueId'] as String,
-        leagueName: json['leagueName'] as String,
-        label: json['label'] as String,
-        state: SeasonState.fromJson(json['state'] as String),
-        registrationStatus: SeasonRegistrationStatus.fromJson(
-          json['registrationStatus'] as String,
-        ),
-      );
+  factory MySeasonSummary.fromJson(Map<String, dynamic> json) {
+    final leagueId = json['leagueId'] as String;
+    final name =
+        (json['leagueName'] ?? json['name']) as String;
+    return MySeasonSummary(
+      seasonId: leagueId,
+      leagueId: leagueId,
+      leagueName: name,
+      label: name,
+      state: SeasonState.fromJson(json['state'] as String),
+      registrationStatus: SeasonRegistrationStatus.fromJson(
+        json['registrationStatus'] as String,
+      ),
+    );
+  }
 }
 
 class Fixture {
@@ -230,6 +260,9 @@ class CompetitionRound {
   });
 
   final String id;
+
+  /// The owning league id (route/provider key). Named `seasonId` for
+  /// backwards compatibility with the screens that key off it.
   final String seasonId;
   final int index;
   final DateTime deadline;
@@ -240,7 +273,7 @@ class CompetitionRound {
   factory CompetitionRound.fromJson(Map<String, dynamic> json) =>
       CompetitionRound(
         id: json['id'] as String,
-        seasonId: json['seasonId'] as String,
+        seasonId: json['leagueId'] as String,
         index: json['index'] as int,
         deadline: DateTime.parse(json['deadline'] as String).toLocal(),
         openedAt: json['openedAt'] == null
@@ -304,50 +337,50 @@ class CompetitionsRepository {
       League.fromJson(await _send(() => _dio.get('/leagues/$id')));
 
   Future<SeasonDetail> getSeason(String id) async =>
-      SeasonDetail.fromJson(await _send(() => _dio.get('/seasons/$id')));
+      SeasonDetail.fromJson(await _send(() => _dio.get('/leagues/$id')));
 
-  Future<List<RegisteredPlayer>> getRegisteredPlayers(String seasonId) async {
+  Future<List<RegisteredPlayer>> getRegisteredPlayers(String leagueId) async {
     final data = await _send(
-      () => _dio.get('/seasons/$seasonId/registrations'),
+      () => _dio.get('/leagues/$leagueId/registrations'),
     );
     return (data['players'] as List<dynamic>)
         .map((p) => RegisteredPlayer.fromJson(p as Map<String, dynamic>))
         .toList();
   }
 
-  Future<SeasonRegistrationStatus> register(String seasonId) async {
-    final data = await _send(() => _dio.post('/seasons/$seasonId/register'));
+  Future<SeasonRegistrationStatus> register(String leagueId) async {
+    final data = await _send(() => _dio.post('/leagues/$leagueId/register'));
     return SeasonRegistrationStatus.fromJson(data['status'] as String);
   }
 
-  Future<void> withdraw(String seasonId) =>
-      _send(() => _dio.delete('/seasons/$seasonId/register'));
+  Future<void> withdraw(String leagueId) =>
+      _send(() => _dio.delete('/leagues/$leagueId/register'));
 
   Future<List<MySeasonSummary>> getMySeasons() async {
-    final data = await _send(() => _dio.get('/me/seasons'));
-    return (data['seasons'] as List<dynamic>)
+    final data = await _send(() => _dio.get('/me/leagues'));
+    return (data['leagues'] as List<dynamic>)
         .map((s) => MySeasonSummary.fromJson(s as Map<String, dynamic>))
         .toList();
   }
 
-  Future<CompetitionRound?> getCurrentRound(String seasonId) async {
+  Future<CompetitionRound?> getCurrentRound(String leagueId) async {
     final data = await _send(
-      () => _dio.get('/seasons/$seasonId/rounds/current'),
+      () => _dio.get('/leagues/$leagueId/rounds/current'),
     );
     return data['round'] == null
         ? null
         : CompetitionRound.fromJson(data['round'] as Map<String, dynamic>);
   }
 
-  Future<CompetitionRound> getRound(String seasonId, String roundId) async {
+  Future<CompetitionRound> getRound(String leagueId, String roundId) async {
     final data = await _send(
-      () => _dio.get('/seasons/$seasonId/rounds/$roundId'),
+      () => _dio.get('/leagues/$leagueId/rounds/$roundId'),
     );
     return CompetitionRound.fromJson(data['round'] as Map<String, dynamic>);
   }
 
-  Future<List<StandingRow>> getStandings(String seasonId) async {
-    final data = await _send(() => _dio.get('/seasons/$seasonId/standings'));
+  Future<List<StandingRow>> getStandings(String leagueId) async {
+    final data = await _send(() => _dio.get('/leagues/$leagueId/standings'));
     return (data['standings'] as List<dynamic>)
         .map((s) => StandingRow.fromJson(s as Map<String, dynamic>))
         .toList();

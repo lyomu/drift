@@ -1,5 +1,5 @@
 import { IsEnum, IsOptional, IsString } from 'class-validator';
-import { SeasonRegistrationStatus } from '@prisma/client';
+import { LeagueRegistrationStatus } from '@prisma/client';
 
 /** Not a Prisma enum — a transient instruction, never persisted as-is. */
 export enum DisputeRuling {
@@ -8,8 +8,8 @@ export enum DisputeRuling {
 }
 
 export class UpdateRegistrationDto {
-  @IsEnum(SeasonRegistrationStatus)
-  status: SeasonRegistrationStatus;
+  @IsEnum(LeagueRegistrationStatus)
+  status: LeagueRegistrationStatus;
 }
 
 /** Only takes effect while the fixture's match hasn't been created yet

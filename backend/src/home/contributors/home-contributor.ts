@@ -10,7 +10,7 @@ export type HomeProfile = Prisma.TennisProfileGetPayload<{
  *
  * `now` is captured once per feed build and shared, so two contributors can't
  * disagree about whether a deadline has passed — the same discipline
- * `season-state.ts` and `match-state.ts` already apply to derived state.
+ * `competition-state.ts` and `match-state.ts` already apply to derived state.
  */
 export interface HomeContext {
   userId: string;

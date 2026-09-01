@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api, ApiError } from "@/lib/api-client";
 import { useClub } from "@/lib/club-context";
-import { Button, Card, EmptyState, ErrorBanner, Field, Input, PageHeader } from "@/components/ui";
+import { Button, Card, ErrorBanner, Field, Input, PageHeader } from "@/components/ui";
 import { CourtGroupsEditor } from "@/components/CourtGroupsEditor";
 import { StatusBadge } from "@/components/StatusBadge";
 import { IconChip, ModalShell, RowCard } from "@/components/dashboard-design";
+import { Listing } from "@/components/Listing";
 import type { CourtGroup, CourtSummary } from "@/lib/types";
 
 export default function CourtsPage() {
@@ -23,6 +24,7 @@ export default function CourtsPage() {
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
+  const [mapsUrl, setMapsUrl] = useState("");
   const [groups, setGroups] = useState<CourtGroup[]>([
     { surface: "HARD", indoor: false, lighting: false, count: 1 },
   ]);
@@ -51,10 +53,12 @@ export default function CourtsPage() {
       await api.post(`/clubs/${clubId}/courts`, {
         name,
         address: address || undefined,
+        mapsUrl: mapsUrl.trim() || undefined,
         courtGroups: groups,
       });
       setName("");
       setAddress("");
+      setMapsUrl("");
       setGroups([{ surface: "HARD", indoor: false, lighting: false, count: 1 }]);
       setShowForm(false);
       await load();
@@ -107,13 +111,21 @@ export default function CourtsPage() {
       />
       <ErrorBanner message={error} />
 
-      {loading ? (
-        <EmptyState message="Loading..." />
-      ) : courts.length === 0 ? (
-        <EmptyState message="No courts yet." />
-      ) : (
-        <Card className="p-2">
-          <div className="flex flex-col">
+      <Listing
+        title="Courts"
+        count={loading ? null : courts.length}
+        loading={loading}
+        empty={{
+          icon: "sports_tennis",
+          title: "No courts",
+          description:
+            "Courts are optional — many clubs don't own any and members find courts themselves. Add a court this club owns, or claim an existing independent listing.",
+          action: canManage ? (
+            <Button onClick={() => setShowForm(true)}>New court</Button>
+          ) : undefined,
+        }}
+      >
+        <div className="flex flex-col">
             {courts.map((court) => (
               <Link href={`/courts/${court.id}`} key={court.id}>
                 <RowCard className="flex items-center gap-3.5 p-3.5">
@@ -130,9 +142,8 @@ export default function CourtsPage() {
                 </RowCard>
               </Link>
             ))}
-          </div>
-        </Card>
-      )}
+        </div>
+      </Listing>
 
       {canManage && (
         <Card className="mt-6">
@@ -157,7 +168,7 @@ export default function CourtsPage() {
               {claimResults.map((court) => (
                 <RowCard
                   key={court.id}
-                  className="flex items-center justify-between gap-3 rounded-xl border-drift-border"
+                  className="flex items-center justify-between gap-3 rounded-md border-drift-border"
                 >
                   <div>
                     <div className="font-bold text-drift-text-primary">{court.name}</div>
@@ -180,13 +191,16 @@ export default function CourtsPage() {
       )}
 
       {showForm && (
-        <ModalShell title="New court" onClose={() => setShowForm(false)}>
+        <ModalShell title="New court" size="lg" onClose={() => setShowForm(false)}>
           <form onSubmit={handleCreate} className="flex flex-col gap-4">
             <Field label="Name">
               <Input required value={name} onChange={(e) => setName(e.target.value)} />
             </Field>
-            <Field label="Address">
-              <Input value={address} onChange={(e) => setAddress(e.target.value)} />
+            <Field label="Address / Location">
+              <Input value={address} placeholder="Street, area, city" onChange={(e) => setAddress(e.target.value)} />
+            </Field>
+            <Field label="Google Maps link (optional)">
+              <Input type="url" inputMode="url" placeholder="https://maps.google.com/…" value={mapsUrl} onChange={(e) => setMapsUrl(e.target.value)} />
             </Field>
             <CourtGroupsEditor groups={groups} onChange={setGroups} />
             <div className="mt-2 flex justify-end gap-3">

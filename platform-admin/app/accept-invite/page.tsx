@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { MaterialIcon } from "@/components/dashboard-design";
-import { Button, Card, ErrorBanner, Field, Input } from "@/components/ui";
+import { Button, Card, ErrorBanner, Field, Input, PasswordField } from "@/components/ui";
 import { api, ApiError } from "@/lib/api-client";
 
 function AcceptInviteForm() {
@@ -54,26 +54,22 @@ function AcceptInviteForm() {
           <Field label="Full name">
             <Input required value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
           </Field>
-          <Field label="Password">
-            <Input
-              type="password"
-              minLength={12}
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="new-password"
-            />
-          </Field>
-          <Field label="Confirm password">
-            <Input
-              type="password"
-              minLength={12}
-              required
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              autoComplete="new-password"
-            />
-          </Field>
+          <PasswordField
+            label="Password"
+            minLength={12}
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="new-password"
+          />
+          <PasswordField
+            label="Confirm password"
+            minLength={12}
+            required
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            autoComplete="new-password"
+          />
           <Button type="submit" icon="person_add" disabled={busy || !token}>
             {busy ? "Creating account..." : "Create staff account"}
           </Button>

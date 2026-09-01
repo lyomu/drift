@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { api, ApiError } from "@/lib/api-client";
 import { useClub } from "@/lib/club-context";
 import { Button, Card, ErrorBanner, Field, Input, Select, Textarea } from "@/components/ui";
+import { EventImageUpload, uploadEventImage } from "@/components/EventImageUpload";
 import type { ClubEvent } from "@/lib/types";
 
 export function EventForm({ event }: { event?: ClubEvent }) {
@@ -12,6 +13,9 @@ export function EventForm({ event }: { event?: ClubEvent }) {
   const { clubId } = useClub();
   const [name, setName] = useState(event?.name ?? "");
   const [description, setDescription] = useState(event?.description ?? "");
+  const [imageUrl, setImageUrl] = useState(event?.imageUrl ?? "");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
   const [startsAt, setStartsAt] = useState(event ? event.startsAt.slice(0, 16) : "");
   const [endsAt, setEndsAt] = useState(event?.endsAt ? event.endsAt.slice(0, 16) : "");
   const [capacity, setCapacity] = useState(event?.capacity?.toString() ?? "");
@@ -21,9 +25,12 @@ export function EventForm({ event }: { event?: ClubEvent }) {
 
   async function save(nextStatus: ClubEvent["status"]) {
     if (!clubId || !name.trim() || !startsAt) return;
-    setBusy(true); setError(null);
+    setBusy(true); setError(null); setImageError(null);
     try {
-      const body = { name: name.trim(), description: description.trim() || undefined, startsAt: new Date(startsAt).toISOString(), endsAt: endsAt ? new Date(endsAt).toISOString() : undefined, capacity: capacity ? Number(capacity) : undefined, status: nextStatus };
+      const nextImageUrl = imageFile
+        ? await uploadEventImage(clubId, imageFile, `${name.trim()} event image`)
+        : imageUrl;
+      const body = { name: name.trim(), description: description.trim() || undefined, imageUrl: event ? nextImageUrl : nextImageUrl || undefined, startsAt: new Date(startsAt).toISOString(), endsAt: endsAt ? new Date(endsAt).toISOString() : undefined, capacity: capacity ? Number(capacity) : undefined, status: nextStatus };
       const result = event
         ? await api.patch<{ event: ClubEvent }>(`/clubs/${clubId}/events/${event.id}`, body)
         : await api.post<{ event: ClubEvent }>(`/clubs/${clubId}/events`, body);
@@ -41,6 +48,21 @@ export function EventForm({ event }: { event?: ClubEvent }) {
       <div><Field label="Capacity (optional)"><Input type="number" min={1} value={capacity} onChange={(e) => setCapacity(e.target.value)} /></Field></div>
       {event && <div><Field label="Status"><Select value={status} onChange={(e) => setStatus(e.target.value as ClubEvent["status"])}><option value="DRAFT">Draft</option><option value="PUBLISHED">Published</option><option value="COMPLETED">Completed</option><option value="CANCELLED">Cancelled</option></Select></Field></div>}
       <div className="sm:col-span-2"><Field label="Description"><Textarea rows={6} value={description} onChange={(e) => setDescription(e.target.value)} /></Field></div>
+      <div className="sm:col-span-2">
+        <EventImageUpload
+          file={imageFile}
+          existingImageUrl={imageUrl || null}
+          disabled={busy}
+          onFileChange={setImageFile}
+          onClearExisting={() => setImageUrl("")}
+          onError={setImageError}
+        />
+        {imageError && (
+          <p className="mt-2 text-[13px] font-semibold text-drift-error" role="alert">
+            {imageError}
+          </p>
+        )}
+      </div>
     </div>
     <div className="mt-6 flex flex-wrap gap-3">
       <Button disabled={busy} onClick={() => void save(event ? status : "PUBLISHED")}>{busy ? "Saving…" : event ? "Save changes" : "Save & publish"}</Button>

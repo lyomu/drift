@@ -24,6 +24,32 @@ export type CoachFormPayload = {
   bookingUrl: string | null;
 };
 
+function Section({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Card>
+      <div className="mb-4">
+        <h2 className="font-display text-base font-bold text-drift-text-primary">
+          {title}
+        </h2>
+        {description && (
+          <p className="mt-1 text-[13px] text-drift-text-secondary">
+            {description}
+          </p>
+        )}
+      </div>
+      <div className="flex flex-col gap-5">{children}</div>
+    </Card>
+  );
+}
+
 export function CoachForm({
   coach,
   saving,
@@ -99,8 +125,11 @@ export function CoachForm({
   }
 
   return (
-    <Card>
-      <form onSubmit={submit} className="flex flex-col gap-5">
+    <form onSubmit={submit} className="flex flex-col gap-5">
+      <Section
+        title="Profile"
+        description="The coach's Drift account and background."
+      >
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Field label="Drift account email">
             <Input
@@ -121,7 +150,6 @@ export function CoachForm({
             />
           </Field>
         </div>
-
         <Field label="Bio">
           <Textarea
             rows={5}
@@ -130,7 +158,12 @@ export function CoachForm({
             placeholder="Coaching background and approach"
           />
         </Field>
+      </Section>
 
+      <Section
+        title="Coaching"
+        description="What this coach teaches and who they work with."
+      >
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Field label="Qualifications — one per line">
             <Textarea
@@ -170,25 +203,12 @@ export function CoachForm({
             ))}
           </div>
         </fieldset>
+      </Section>
 
-        <Field label="Availability">
-          <Textarea
-            rows={3}
-            value={availabilityNote}
-            onChange={(event) => setAvailabilityNote(event.target.value)}
-            placeholder="e.g. Weekday evenings and Saturday mornings"
-          />
-        </Field>
-
-        <div>
-          <h2 className="font-display text-lg font-bold text-drift-text-primary">
-            Public contact
-          </h2>
-          <p className="mt-1 text-sm text-drift-text-secondary">
-            Only these details appear in the player app. Private account contact
-            information is never exposed.
-          </p>
-        </div>
+      <Section
+        title="Public contact"
+        description="Only these details appear in the player app. Private account contact information is never exposed."
+      >
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <Field label="Public email">
             <Input
@@ -213,16 +233,24 @@ export function CoachForm({
             />
           </Field>
         </div>
+        <Field label="Availability">
+          <Textarea
+            rows={3}
+            value={availabilityNote}
+            onChange={(event) => setAvailabilityNote(event.target.value)}
+            placeholder="e.g. Weekday evenings and Saturday mornings"
+          />
+        </Field>
         {contactError && (
           <p className="text-sm font-medium text-drift-error" role="alert">
             {contactError}
           </p>
         )}
+      </Section>
 
-        <Button type="submit" disabled={saving} className="self-start">
-          {saving ? "Saving…" : coach ? "Save coach" : "Add coach"}
-        </Button>
-      </form>
-    </Card>
+      <Button type="submit" disabled={saving} className="self-start">
+        {saving ? "Saving…" : coach ? "Save coach" : "Add coach"}
+      </Button>
+    </form>
   );
 }

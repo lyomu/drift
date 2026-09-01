@@ -68,7 +68,7 @@ const RULES: AchievementRule[] = [
     id: 'league_rookie',
     title: 'League rookie',
     description: 'Step into structured competition.',
-    criteria: 'Register for 1 league season.',
+    criteria: 'Register for 1 league.',
     target: 1,
     icon: 'leaderboard',
   },
@@ -98,7 +98,7 @@ export class AchievementsService {
       completions,
       goals,
       activeClubMemberships,
-      seasonRegistrations,
+      leagueRegistrations,
     ] = await Promise.all([
       this.prisma.matchParticipant.count({
         where: { userId, match: { state: { in: PLAYED_STATES } } },
@@ -126,7 +126,7 @@ export class AchievementsService {
       this.prisma.clubMembership.count({
         where: { userId, status: ClubMembershipStatus.ACTIVE },
       }),
-      this.prisma.seasonRegistration.count({ where: { userId } }),
+      this.prisma.leagueRegistration.count({ where: { userId } }),
     ]);
 
     const wins = confirmedResults.filter((result) => {
@@ -143,7 +143,7 @@ export class AchievementsService {
       lesson_finisher: completions,
       goal_setter: goals,
       club_member: activeClubMemberships,
-      league_rookie: seasonRegistrations,
+      league_rookie: leagueRegistrations,
     };
 
     const achievements = RULES.map((rule) => {

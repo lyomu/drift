@@ -113,7 +113,12 @@ export default function OverviewPage() {
   }, [clubId]);
 
   const activeMembers = members.filter((member) => member.status === "ACTIVE");
-  const activeLeagues = leagues.filter((league) => league.seasons.length > 0);
+  const activeLeagues = leagues.filter(
+    (league) =>
+      league.competitionState === "ACTIVE" ||
+      league.competitionState === "REGISTRATION_OPEN" ||
+      league.competitionState === "SCHEDULED",
+  );
   const nextEvent = events[0] ?? null;
 
   const comingUp = useMemo(
@@ -188,8 +193,8 @@ export default function OverviewPage() {
       ) : (
         <>
           {club?.verificationStatus === "UNVERIFIED" && (
-            <div className="mb-6 flex items-center gap-3.5 rounded-[14px] border border-drift-warning/20 bg-drift-warning-surface px-5 py-4">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-white">
+            <div className="mb-6 flex items-center gap-3.5 rounded-lg border border-drift-warning/20 bg-drift-warning-surface px-5 py-4">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-white">
                 <MaterialIcon name="verified" className="text-[21px] text-drift-warning" />
               </span>
               <div className="min-w-0 flex-1">
@@ -209,10 +214,33 @@ export default function OverviewPage() {
           )}
 
           <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard icon="groups" label="Members" value={members.length} detail={`${activeMembers.length} active`} />
-            <StatCard icon="emoji_events" label="Active leagues" value={activeLeagues.length} tone="success" />
-            <StatCard icon="gavel" label="Open disputes" value={disputes.length} tone="error" />
-            <StatCard icon="event" label="Upcoming event" value={nextEvent ? 1 : 0} />
+            <StatCard
+              href="/members"
+              icon="groups"
+              label="Members"
+              value={members.length}
+              detail={`${activeMembers.length} active`}
+            />
+            <StatCard
+              href="/leagues"
+              icon="emoji_events"
+              label="Active leagues"
+              value={activeLeagues.length}
+              tone="success"
+            />
+            <StatCard
+              href="/disputes"
+              icon="gavel"
+              label="Open disputes"
+              value={disputes.length}
+              tone="error"
+            />
+            <StatCard
+              href="/events"
+              icon="event"
+              label="Upcoming event"
+              value={nextEvent ? 1 : 0}
+            />
           </div>
 
           <div className="mt-6 grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
@@ -224,14 +252,14 @@ export default function OverviewPage() {
                 />
                 <div className="mt-3.5 flex flex-col gap-2.5">
                   {disputes.length === 0 ? (
-                    <div className="rounded-xl border border-drift-border bg-drift-background px-3 py-4 text-sm text-drift-text-secondary">
+                    <div className="rounded-md border border-drift-border bg-drift-background px-3 py-4 text-sm text-drift-text-secondary">
                       No open disputes.
                     </div>
                   ) : (
                     disputes.slice(0, 3).map((dispute) => (
                       <div
                         key={dispute.fixtureId}
-                        className="flex items-center gap-3 rounded-xl border border-drift-error-surface bg-drift-error-surface/30 p-3"
+                        className="flex items-center gap-3 rounded-md border border-drift-error-surface bg-drift-error-surface/30 p-3"
                       >
                         <IconChip icon="gavel" tone="error" round />
                         <div className="min-w-0 flex-1">
@@ -244,7 +272,7 @@ export default function OverviewPage() {
                         </div>
                         <Link
                           href="/disputes"
-                          className="shrink-0 rounded-lg border border-drift-border bg-drift-surface px-3.5 py-[7px] text-[12.5px] font-bold text-drift-text-primary"
+                          className="shrink-0 rounded-md border border-drift-border bg-drift-surface px-3.5 py-[7px] text-[12.5px] font-bold text-drift-text-primary"
                         >
                           Review
                         </Link>
@@ -261,7 +289,7 @@ export default function OverviewPage() {
                 />
                 <div className="mt-3.5 flex flex-col gap-1">
                   {comingUp.length === 0 ? (
-                    <div className="rounded-xl border border-drift-border bg-drift-background px-3 py-4 text-sm text-drift-text-secondary">
+                    <div className="rounded-md border border-drift-border bg-drift-background px-3 py-4 text-sm text-drift-text-secondary">
                       No events scheduled.
                     </div>
                   ) : (
@@ -343,12 +371,14 @@ export default function OverviewPage() {
 }
 
 function StatCard({
+  href,
   icon,
   label,
   value,
   detail,
   tone = "info",
 }: {
+  href: string;
   icon: string;
   label: string;
   value: number;
@@ -356,7 +386,11 @@ function StatCard({
   tone?: "info" | "success" | "warning" | "error" | "neutral";
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-[14px] border border-drift-border bg-drift-surface px-[18px] py-4">
+    <Link
+      href={href}
+      aria-label={`View ${label.toLowerCase()}`}
+      className="actionbtn flex items-center gap-3 rounded-lg border border-drift-border bg-drift-surface px-[18px] py-4 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-drift-primary focus-visible:ring-offset-1"
+    >
       <IconChip icon={icon} tone={tone} />
       <div className="min-w-0">
         <div className="text-[22px] font-extrabold leading-7 text-drift-text-primary tabular">
@@ -364,7 +398,7 @@ function StatCard({
         </div>
         <div className="text-xs text-drift-text-secondary">{detail ?? label}</div>
       </div>
-    </div>
+    </Link>
   );
 }
 
@@ -380,7 +414,7 @@ function QuickAction({
   return (
     <Link
       href={href}
-      className="actionbtn flex min-w-0 flex-col gap-2 rounded-xl border border-drift-border p-3.5 transition-colors"
+      className="actionbtn flex min-w-0 flex-col gap-2 rounded-md border border-drift-border p-3.5 transition-colors"
     >
       <MaterialIcon name={icon} className="text-xl text-drift-primary" />
       <span className="text-[13px] font-semibold text-drift-text-primary">{label}</span>

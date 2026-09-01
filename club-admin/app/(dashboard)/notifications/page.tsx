@@ -23,7 +23,7 @@ const OPTIONS: { key: keyof Settings; label: string; detail: string }[] = [
   {
     key: "competitionUpdates",
     label: "Competition updates",
-    detail: "Registrations, disputes, draws, and season milestones.",
+    detail: "Registrations, disputes, draws, and league milestones.",
   },
   {
     key: "eventRegistrations",

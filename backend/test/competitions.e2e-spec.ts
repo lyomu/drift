@@ -12,11 +12,11 @@ interface TestUser {
 }
 
 /**
- * The §5 competition flow against live Postgres: register into a seeded
- * season, watch Round 1 open automatically once it starts, play the
- * fixture through the (already-e2e-tested) §4.3 result flow, and see it
- * reflected on Standings — all without any organizer/admin endpoint,
- * matching the "seed-script only" scope decision for this phase.
+ * The §5 competition flow against live Postgres: register into a league,
+ * watch Round 1 open automatically once it starts, play the fixture through
+ * the (already-e2e-tested) §4.3 result flow, and see it reflected on
+ * Standings. Since M15 a league is a single competition run — no Season
+ * layer.
  */
 describe('Competitions (e2e)', () => {
   let app: INestApplication<App>;
@@ -29,7 +29,6 @@ describe('Competitions (e2e)', () => {
   };
   const password = 'password123';
   const leagueId = `e2e-m8-league-${stamp}`;
-  const seasonId = `e2e-m8-season-${stamp}`;
 
   const authed = (
     token: string,
@@ -136,13 +135,6 @@ describe('Competitions (e2e)', () => {
       data: {
         id: leagueId,
         name: `E2E League ${stamp}`,
-      },
-    });
-    await prisma.season.create({
-      data: {
-        id: seasonId,
-        leagueId,
-        label: 'E2E Season',
         registrationOpensAt: new Date(now - 1000),
         registrationClosesAt: new Date(now + 2000),
         startsAt: new Date(now + 3000),
@@ -190,7 +182,7 @@ describe('Competitions (e2e)', () => {
       await prisma.tennisProfile.deleteMany({ where: { userId: record.id } });
       await prisma.user.delete({ where: { id: record.id } });
     }
-    // Cascades to Season → SeasonRegistration/Round → Fixture.
+    // Cascades to LeagueRegistration/Round → Fixture/Standing.
     await prisma.league.deleteMany({ where: { id: leagueId } });
     await app.close();
   }, 30_000);
@@ -201,37 +193,37 @@ describe('Competitions (e2e)', () => {
     const aliceReg = await authed(
       alice.token,
       'post',
-      `/seasons/${seasonId}/register`,
+      `/leagues/${leagueId}/register`,
     ).expect(201);
     expect(aliceReg.body.status).toBe('ENROLLED');
 
     const bobReg = await authed(
       bob.token,
       'post',
-      `/seasons/${seasonId}/register`,
+      `/leagues/${leagueId}/register`,
     ).expect(201);
     expect(bobReg.body.status).toBe('ENROLLED');
 
     // Duplicate registration is rejected.
-    await authed(alice.token, 'post', `/seasons/${seasonId}/register`).expect(
+    await authed(alice.token, 'post', `/leagues/${leagueId}/register`).expect(
       400,
     );
 
     const players = await authed(
       alice.token,
       'get',
-      `/seasons/${seasonId}/registrations`,
+      `/leagues/${leagueId}/registrations`,
     ).expect(200);
     expect(players.body.players).toHaveLength(2);
 
-    // Round 1 doesn't exist until startsAt passes — ensureSeasonProgressed
+    // Round 1 doesn't exist until startsAt passes — ensureLeagueProgressed
     // is lazy, so poll rather than sleep a fixed guess.
     let matchId = '';
     await waitUntil(async () => {
       const res = await authed(
         alice.token,
         'get',
-        `/seasons/${seasonId}/rounds/current`,
+        `/leagues/${leagueId}/rounds/current`,
       ).expect(200);
       const round = res.body.round;
       if (!round) return false;
@@ -279,7 +271,7 @@ describe('Competitions (e2e)', () => {
     const standings = await authed(
       alice.token,
       'get',
-      `/seasons/${seasonId}/standings`,
+      `/leagues/${leagueId}/standings`,
     ).expect(200);
     const rows = standings.body.standings as Array<{
       userId: string;
@@ -297,12 +289,12 @@ describe('Competitions (e2e)', () => {
     expect(loser.losses).toBe(1);
 
     // The round's deadline is hours away — playing the fixture doesn't
-    // early-close the round or the season; only the deadline does.
-    const season = await authed(
+    // early-close the round or the league; only the deadline does.
+    const league = await authed(
       alice.token,
       'get',
-      `/seasons/${seasonId}`,
+      `/leagues/${leagueId}`,
     ).expect(200);
-    expect(season.body.state).toBe('ACTIVE');
+    expect(league.body.competitionState).toBe('ACTIVE');
   }, 30_000);
 });

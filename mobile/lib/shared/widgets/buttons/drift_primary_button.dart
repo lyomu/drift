@@ -63,7 +63,11 @@ class DriftPrimaryButton extends StatelessWidget {
 
 /// Centred text link ("Dispute", "Reschedule", "How did it feel?").
 class DriftTextLink extends StatelessWidget {
-  const DriftTextLink({super.key, required this.label, required this.onPressed});
+  const DriftTextLink({
+    super.key,
+    required this.label,
+    required this.onPressed,
+  });
 
   final String label;
   final VoidCallback? onPressed;
@@ -77,7 +81,9 @@ class DriftTextLink extends StatelessWidget {
       style: TextButton.styleFrom(
         foregroundColor: colors.primary,
         padding: const EdgeInsets.symmetric(vertical: 8),
-        minimumSize: const Size.fromHeight(0),
+        // Size.zero, not Size.fromHeight(0) — the latter forces an infinite
+        // minWidth and crashes this link in any unbounded-width parent.
+        minimumSize: Size.zero,
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
       child: Text(

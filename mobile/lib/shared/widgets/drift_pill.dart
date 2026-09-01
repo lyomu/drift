@@ -9,7 +9,11 @@ enum DriftPillTone { info, success, warning, error, neutral }
 /// Small rounded label — no icon (that's [DriftStatusBadge]). 12px / w600,
 /// 3×10 padding, fully rounded.
 class DriftPill extends StatelessWidget {
-  const DriftPill({super.key, required this.label, this.tone = DriftPillTone.info});
+  const DriftPill({
+    super.key,
+    required this.label,
+    this.tone = DriftPillTone.info,
+  });
 
   final String label;
   final DriftPillTone tone;

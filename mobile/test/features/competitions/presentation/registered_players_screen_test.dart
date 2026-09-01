@@ -19,9 +19,9 @@ void main() {
           const RegisteredPlayersScreen(seasonId: 'season-1'),
           brightness: brightness,
           overrides: [
-            registeredPlayersProvider('season-1').overrideWith(
-              (ref) async => [registeredPlayer()],
-            ),
+            registeredPlayersProvider(
+              'season-1',
+            ).overrideWith((ref) async => [registeredPlayer()]),
           ],
         );
 
@@ -38,9 +38,7 @@ void main() {
           overrides: [
             registeredPlayersProvider('season-1').overrideWith(
               (ref) async => [
-                registeredPlayer(
-                  status: SeasonRegistrationStatus.waitlisted,
-                ),
+                registeredPlayer(status: SeasonRegistrationStatus.waitlisted),
               ],
             ),
           ],
@@ -55,9 +53,9 @@ void main() {
           const RegisteredPlayersScreen(seasonId: 'season-1'),
           brightness: brightness,
           overrides: [
-            registeredPlayersProvider('season-1').overrideWith(
-              (ref) async => <RegisteredPlayer>[],
-            ),
+            registeredPlayersProvider(
+              'season-1',
+            ).overrideWith((ref) async => <RegisteredPlayer>[]),
           ],
         );
 
@@ -71,9 +69,9 @@ void main() {
         const RegisteredPlayersScreen(seasonId: 'season-1'),
         settle: false,
         overrides: [
-          registeredPlayersProvider('season-1').overrideWith(
-            (ref) => pending<List<RegisteredPlayer>>(),
-          ),
+          registeredPlayersProvider(
+            'season-1',
+          ).overrideWith((ref) => pending<List<RegisteredPlayer>>()),
         ],
       );
 
@@ -85,9 +83,9 @@ void main() {
         tester,
         const RegisteredPlayersScreen(seasonId: 'season-1'),
         overrides: [
-          registeredPlayersProvider('season-1').overrideWith(
-            (ref) => failing<List<RegisteredPlayer>>(),
-          ),
+          registeredPlayersProvider(
+            'season-1',
+          ).overrideWith((ref) => failing<List<RegisteredPlayer>>()),
         ],
       );
 

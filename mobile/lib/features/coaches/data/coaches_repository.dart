@@ -36,10 +36,8 @@ class CoachClub {
   final String id;
   final String name;
 
-  factory CoachClub.fromJson(Map<String, dynamic> json) => CoachClub(
-    id: json['id'] as String,
-    name: json['name'] as String,
-  );
+  factory CoachClub.fromJson(Map<String, dynamic> json) =>
+      CoachClub(id: json['id'] as String, name: json['name'] as String);
 }
 
 class CoachSummary {
@@ -70,9 +68,10 @@ class CoachSummary {
   final List<CoachClub> clubs;
 
   String get displayName {
-    final parts = [firstName, lastName].whereType<String>().where(
-      (part) => part.isNotEmpty,
-    );
+    final parts = [
+      firstName,
+      lastName,
+    ].whereType<String>().where((part) => part.isNotEmpty);
     return parts.isEmpty ? 'Coach' : parts.join(' ');
   }
 

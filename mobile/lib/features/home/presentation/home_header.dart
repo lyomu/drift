@@ -44,7 +44,8 @@ class HomeHeader extends ConsumerWidget {
     final summary = ref.watch(homeSummaryProvider).valueOrNull;
 
     final now = DateTime.now();
-    final dateLine = '${_weekdays[now.weekday - 1]}, ${now.day} '
+    final dateLine =
+        '${_weekdays[now.weekday - 1]}, ${now.day} '
         '${_months[now.month - 1]}';
     final greeting = summary?.firstName == null
         ? 'Welcome back'

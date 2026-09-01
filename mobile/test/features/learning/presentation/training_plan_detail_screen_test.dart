@@ -45,9 +45,9 @@ void main() {
         const TrainingPlanDetailScreen(planId: 'c1'),
         settle: false,
         overrides: [
-          contentDetailProvider('c1').overrideWith(
-            (ref) => pending<ContentDetail>(),
-          ),
+          contentDetailProvider(
+            'c1',
+          ).overrideWith((ref) => pending<ContentDetail>()),
         ],
       );
 
@@ -59,9 +59,9 @@ void main() {
         tester,
         const TrainingPlanDetailScreen(planId: 'c1'),
         overrides: [
-          contentDetailProvider('c1').overrideWith(
-            (ref) => failing<ContentDetail>(),
-          ),
+          contentDetailProvider(
+            'c1',
+          ).overrideWith((ref) => failing<ContentDetail>()),
         ],
       );
 

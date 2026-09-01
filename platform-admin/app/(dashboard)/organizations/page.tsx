@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { RowCard, StatBand } from "@/components/dashboard-design";
+import { StatBand } from "@/components/dashboard-design";
 import { api, ApiError } from "@/lib/api-client";
 import type { OrganizationSummary } from "@/lib/organization-types";
+import { DataTable } from "@/components/DataTable";
 import { Badge, Card, EmptyState, ErrorBanner, Field, Input, PageHeader, plural, Select, statusTone } from "@/components/ui";
 
 function label(value: string) {
@@ -77,36 +78,78 @@ export default function OrganizationsPage() {
       {rows === null && !error && <EmptyState message="Loading organizations..." />}
       {rows?.length === 0 && <EmptyState message="No clubs match these filters." />}
       {rows && rows.length > 0 && (
-        <div className="grid gap-3">
-          {rows.map((club) => (
-            <RowCard key={club.id}>
-              <div className="grid gap-3 lg:grid-cols-[minmax(0,1.5fr)_1fr_160px_180px_auto] lg:items-center">
-                <div className="min-w-0">
-                  <div className="font-bold text-drift-text-primary">{club.name}</div>
-                  <div className="truncate text-xs text-drift-text-secondary" title={club.address ?? undefined}>{club.address ?? "Address unknown"}</div>
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  <Badge tone={statusTone(club.platformStatus)}>{label(club.platformStatus)}</Badge>
-                  <Badge tone={statusTone(club.verificationStatus)}>{club.verificationStatus}</Badge>
-                </div>
-                <div className="text-sm">
-                  <span className="font-bold tabular">{club.counts.members}</span> {plural(club.counts.members, "member")}
-                  <div className="text-xs font-semibold text-drift-text-secondary">{club.counts.courts} {plural(club.counts.courts, "court")}</div>
-                </div>
-                <div className="text-sm text-drift-text-primary">
-                  {club.subscription ? <><Badge tone={statusTone(club.subscription.status)}>{label(club.subscription.status)}</Badge><div className="mt-1 text-xs text-drift-text-secondary">{club.subscription.plan.name} / {money(club.subscription.plan.priceMinor, club.subscription.plan.currency)}</div></> : <span className="text-drift-text-secondary">Not configured</span>}
-                </div>
-                <Link href={`/organizations/${club.id}`} className="justify-self-start font-bold text-drift-primary hover:underline lg:justify-self-end">Open club</Link>
-              </div>
-              {(club.counts.pendingAdminApprovals > 0 || club.counts.moderationReports > 0) && (
-                <div className="mt-3 flex gap-2 text-xs font-semibold text-drift-text-secondary">
-                  <span>{club.counts.pendingAdminApprovals} approvals</span>
-                  <span>/</span>
-                  <span>{club.counts.moderationReports} moderation reports</span>
-                </div>
-              )}
-            </RowCard>
-          ))}
+        <div>
+          <DataTable
+            rows={rows}
+            rowKey={(club) => club.id}
+            columns={[
+              {
+                header: "Organization",
+                cell: (club) => (
+                  <div className="min-w-0">
+                    <Link href={`/organizations/${club.id}`} className="font-bold text-drift-primary hover:underline">
+                      {club.name}
+                    </Link>
+                    <div className="truncate text-xs text-drift-text-secondary" title={club.address ?? undefined}>
+                      {club.address ?? "Address unknown"}
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                header: "Status",
+                cell: (club) => (
+                  <div className="flex flex-wrap gap-1.5">
+                    <Badge tone={statusTone(club.platformStatus)}>{label(club.platformStatus)}</Badge>
+                    <Badge tone={statusTone(club.verificationStatus)}>{club.verificationStatus}</Badge>
+                  </div>
+                ),
+              },
+              {
+                header: "Directory",
+                cell: (club) => (
+                  <div>
+                    <span className="font-bold tabular">{club.counts.members}</span> {plural(club.counts.members, "member")}
+                    <div className="text-xs font-semibold text-drift-text-secondary">
+                      {club.counts.courts} {plural(club.counts.courts, "court")}
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                header: "Subscription",
+                cell: (club) =>
+                  club.subscription ? (
+                    <div>
+                      <Badge tone={statusTone(club.subscription.status)}>{label(club.subscription.status)}</Badge>
+                      <div className="mt-1 text-xs text-drift-text-secondary">
+                        {club.subscription.plan.name} / {money(club.subscription.plan.priceMinor, club.subscription.plan.currency)}
+                      </div>
+                    </div>
+                  ) : (
+                    <span className="text-drift-text-secondary">Not configured</span>
+                  ),
+              },
+              {
+                header: "Signals",
+                cell: (club) => (
+                  <div className="text-xs font-semibold text-drift-text-secondary">
+                    <div>{club.counts.pendingAdminApprovals} approvals</div>
+                    <div>{club.counts.moderationReports} moderation reports</div>
+                  </div>
+                ),
+              },
+              {
+                header: "Action",
+                className: "text-right",
+                cell: (club) => (
+                  <Link href={`/organizations/${club.id}`} className="font-bold text-drift-primary hover:underline">
+                    Open
+                  </Link>
+                ),
+              },
+            ]}
+          />
           <div className="px-1 text-xs font-semibold text-drift-text-secondary">Showing {rows.length} of {total}</div>
         </div>
       )}

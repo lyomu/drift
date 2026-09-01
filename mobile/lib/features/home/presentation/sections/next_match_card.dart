@@ -119,8 +119,7 @@ class _MatchCard extends StatelessWidget {
                   whenLine,
                   style: type.caption.copyWith(color: colors.textSecondary),
                 ),
-                if (match.courtName != null &&
-                    match.courtName!.isNotEmpty) ...[
+                if (match.courtName != null && match.courtName!.isNotEmpty) ...[
                   const SizedBox(height: 1),
                   Text(
                     match.courtName!,

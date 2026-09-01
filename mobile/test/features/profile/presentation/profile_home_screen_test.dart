@@ -24,7 +24,9 @@ void main() {
           screen(),
           brightness: brightness,
           overrides: [
-            ownProfileProvider.overrideWith((ref) => Future.value(playerProfile())),
+            ownProfileProvider.overrideWith(
+              (ref) => Future.value(playerProfile()),
+            ),
             currentUserProvider.overrideWith((ref) async => userProfile()),
           ],
         );
@@ -34,8 +36,9 @@ void main() {
         expect(find.text('Settings'), findsOneWidget);
       });
 
-      testWidgets("survives failed profiles without throwing in $label",
-          (tester) async {
+      testWidgets("survives failed profiles without throwing in $label", (
+        tester,
+      ) async {
         await pumpScreen(
           tester,
           screen(),

@@ -25,47 +25,42 @@ export class CompetitionsController {
     return this.competitions.listLeagues();
   }
 
+  @Get('me/leagues')
+  getMyLeagues(@Req() req: Request) {
+    return this.competitions.getMyLeagues(this.userId(req));
+  }
+
   @Get('leagues/:id')
-  getLeague(@Param('id') id: string) {
-    return this.competitions.getLeague(id);
+  getLeague(@Req() req: Request, @Param('id') id: string) {
+    return this.competitions.getLeague(id, this.userId(req));
   }
 
-  @Get('seasons/:id')
-  getSeason(@Req() req: Request, @Param('id') id: string) {
-    return this.competitions.getSeason(id, this.userId(req));
-  }
-
-  @Get('seasons/:id/registrations')
+  @Get('leagues/:id/registrations')
   getRegisteredPlayers(@Param('id') id: string) {
     return this.competitions.getRegisteredPlayers(id);
   }
 
-  @Post('seasons/:id/register')
+  @Post('leagues/:id/register')
   register(@Req() req: Request, @Param('id') id: string) {
     return this.competitions.register(this.userId(req), id);
   }
 
-  @Delete('seasons/:id/register')
+  @Delete('leagues/:id/register')
   withdraw(@Req() req: Request, @Param('id') id: string) {
     return this.competitions.withdraw(this.userId(req), id);
   }
 
-  @Get('me/seasons')
-  getMySeasons(@Req() req: Request) {
-    return this.competitions.getMySeasons(this.userId(req));
-  }
-
-  @Get('seasons/:id/rounds/current')
+  @Get('leagues/:id/rounds/current')
   getCurrentRound(@Param('id') id: string) {
     return this.competitions.getCurrentRound(id);
   }
 
-  @Get('seasons/:id/rounds/:roundId')
+  @Get('leagues/:id/rounds/:roundId')
   getRound(@Param('id') id: string, @Param('roundId') roundId: string) {
     return this.competitions.getRound(id, roundId);
   }
 
-  @Get('seasons/:id/standings')
+  @Get('leagues/:id/standings')
   getStandings(@Param('id') id: string) {
     return this.competitions.getStandings(id);
   }

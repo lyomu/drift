@@ -333,6 +333,16 @@ describe('Platform Admin (e2e)', () => {
       .expect(201);
     expect(source.body.status).toBe('ACTIVE');
 
+    // SSRF policy: a feed URL pointing at a private/loopback address or a
+    // non-HTTPS scheme is rejected at write time.
+    await authed(adminToken, 'post', '/platform-admin/news/sources')
+      .send({
+        name: `${sourceName} bad`,
+        feedUrl: 'http://169.254.169.254/latest/meta-data/',
+        status: 'ACTIVE',
+      })
+      .expect(400);
+
     const story = await prisma.newsStory.create({
       data: {
         sourceId: source.body.id,

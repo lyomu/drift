@@ -37,11 +37,7 @@ class DriftScaffold extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            DriftBackHeader(
-              title: title,
-              onBack: onBack,
-              trailing: trailing,
-            ),
+            DriftBackHeader(title: title, onBack: onBack, trailing: trailing),
             Expanded(child: body),
           ],
         ),

@@ -5,7 +5,7 @@
  * except where noted, so it respects the same state-machine invariants a
  * real user would.
  *
- * Prereqs: backend on :3000 (npm run start:dev), Postgres up.
+ * Prereqs: backend on :3009 (npm run start:dev), Postgres up.
  * Run:     node scripts/seed-demo-content.mjs
  *
  * Safe to re-run: account creation falls back to login if the email
@@ -15,7 +15,7 @@
  * conflicts from a previous pass.
  */
 
-const BASE = 'http://localhost:3000';
+const BASE = process.env.DRIFT_API_BASE ?? 'http://localhost:3009';
 const DEMO_PASSWORD = 'DriftDemo123!';
 
 const log = (m) => console.log(`[seed] ${m}`);
@@ -545,19 +545,14 @@ async function seedClubAdmin(people, ownerToken) {
 export async function createDisputeSeason(people, ownerToken, clubId) {
   if (!clubId) return null;
 
-  const league = await step('create demo dispute league', () =>
+  // M15 — a league is a single competition run; scheduling lives on the
+  // league row directly, no separate season resource.
+  const league = await step('create dispute league (registration open now)', () =>
     api('post', `/clubs/${clubId}/leagues`, ownerToken, {
       name: 'Riverside Head-to-Head Demo',
       description: 'Two-player demo league for exercising the dispute queue.',
       sport: 'TENNIS',
       format: 'SINGLES',
-    }),
-  );
-  if (!league) return null;
-
-  const season = await step('create dispute season (registration open now)', () =>
-    api('post', `/leagues/${league.id}/seasons`, ownerToken, {
-      label: 'Demo Round',
       registrationOpensAt: futureIso(-1),
       registrationClosesAt: futureIso(2),
       startsAt: futureIso(2.5),
@@ -565,21 +560,21 @@ export async function createDisputeSeason(people, ownerToken, clubId) {
       roundIntervalMinutes: 3 * 24 * 60, // 3-day deadline once open
     }),
   );
-  if (!season) return null;
+  if (!league) return null;
 
   await step('register Ana + Ben in the demo dispute league', async () => {
-    await api('post', `/seasons/${season.id}/register`, people.ana.token);
-    await api('post', `/seasons/${season.id}/register`, people.ben.token);
+    await api('post', `/leagues/${league.id}/register`, people.ana.token);
+    await api('post', `/leagues/${league.id}/register`, people.ben.token);
   });
 
-  return { seasonId: season.id, readyAt: Date.now() + 2.5 * 60_000 };
+  return { seasonId: league.id, readyAt: Date.now() + 2.5 * 60_000 };
 }
 
 export async function driveDisputeSeason(people, seasonId) {
   if (!seasonId) return;
 
   const round = await step('open round 1 (lazy progression)', () =>
-    api('get', `/seasons/${seasonId}/rounds/current`, people.ana.token),
+    api('get', `/leagues/${seasonId}/rounds/current`, people.ana.token),
   );
   const fixture = round?.round?.fixtures?.[0];
   if (!fixture?.match) {
@@ -632,19 +627,12 @@ export async function driveDisputeSeason(people, seasonId) {
 export async function createActiveLeague(people, ownerToken, clubId) {
   if (!clubId) return null;
 
-  const league = await step('create Riverside Autumn Singles league', () =>
+  const league = await step('create Riverside Autumn Singles league (registration open now)', () =>
     api('post', `/clubs/${clubId}/leagues`, ownerToken, {
       name: 'Riverside Autumn Singles',
       description: 'Friendly round-robin singles — register, get paired, climb the standings.',
       sport: 'TENNIS',
       format: 'SINGLES',
-    }),
-  );
-  if (!league) return null;
-
-  const season = await step('create active season (registration open now)', () =>
-    api('post', `/leagues/${league.id}/seasons`, ownerToken, {
-      label: 'Season 1',
       registrationOpensAt: futureIso(-1),
       registrationClosesAt: futureIso(2),
       startsAt: futureIso(2.5),
@@ -652,21 +640,21 @@ export async function createActiveLeague(people, ownerToken, clubId) {
       roundIntervalMinutes: 3 * 24 * 60,
     }),
   );
-  if (!season) return null;
+  if (!league) return null;
 
   await step('register Ana, Carla, Diego, Emma', async () => {
     for (const key of ['ana', 'carla', 'diego', 'emma']) {
-      await api('post', `/seasons/${season.id}/register`, people[key].token);
+      await api('post', `/leagues/${league.id}/register`, people[key].token);
     }
   });
 
-  return { seasonId: season.id, readyAt: Date.now() + 2.5 * 60_000 };
+  return { seasonId: league.id, readyAt: Date.now() + 2.5 * 60_000 };
 }
 
 export async function driveActiveLeague(people, seasonId) {
   if (!seasonId) return;
   await step('open round 1 (lazy progression)', () =>
-    api('get', `/seasons/${seasonId}/rounds/current`, people.ana.token),
+    api('get', `/leagues/${seasonId}/rounds/current`, people.ana.token),
   );
   log('Riverside Autumn Singles is active — Ana should see a LEAGUE_ROUND_DEADLINE card');
 }

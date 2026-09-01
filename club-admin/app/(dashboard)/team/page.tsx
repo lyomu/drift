@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   InitialsAvatar,
   MaterialIcon,
+  ModalShell,
   Panel,
   RowCard,
   SectionTitle,
@@ -18,6 +19,7 @@ import {
   Select,
 } from "@/components/ui";
 import { StatusBadge } from "@/components/StatusBadge";
+import { SelectEditControl } from "@/components/EditFieldModal";
 import { api, ApiError } from "@/lib/api-client";
 import { useClub } from "@/lib/club-context";
 import type { ClubRole, Member } from "@/lib/types";
@@ -35,6 +37,8 @@ export default function TeamPage() {
   const [email, setEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<ClubRole>("ADMIN");
   const [error, setError] = useState<string | null>(null);
+  const [showInvite, setShowInvite] = useState(false);
+  const [inviting, setInviting] = useState(false);
 
   const load = useCallback(async () => {
     if (!clubId) return;
@@ -52,23 +56,26 @@ export default function TeamPage() {
   async function invite(e: React.FormEvent) {
     e.preventDefault();
     if (!clubId) return;
+    setError(null);
+    setInviting(true);
     try {
       await api.post(`/clubs/${clubId}/members`, { email, role: inviteRole });
       setEmail("");
+      setInviteRole("ADMIN");
+      setShowInvite(false);
       await load();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "The administrator could not be invited.");
+    } finally {
+      setInviting(false);
     }
   }
 
   async function change(id: string, nextRole: ClubRole) {
     if (!clubId) return;
-    try {
-      await api.patch(`/clubs/${clubId}/members/${id}`, { role: nextRole });
-      await load();
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "The role could not be changed.");
-    }
+    setError(null);
+    await api.patch(`/clubs/${clubId}/members/${id}`, { role: nextRole });
+    await load();
   }
 
   async function remove(id: string) {
@@ -88,17 +95,35 @@ export default function TeamPage() {
       <PageHeader
         title="Team roles"
         description="Invite administrators and keep operational access aligned with each person's responsibilities."
+        action={
+          canManage ? (
+            <Button onClick={() => setShowInvite(true)}>
+              <MaterialIcon name="person_add" className="text-[18px]" />
+              Invite admin
+            </Button>
+          ) : undefined
+        }
       />
       <ErrorBanner message={error} />
 
-      {canManage && (
-        <Panel className="mb-6">
-          <form onSubmit={invite} className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_230px_auto] lg:items-end">
+      {showInvite && (
+        <ModalShell title="Invite an admin" onClose={() => setShowInvite(false)}>
+          <form onSubmit={invite} className="flex flex-col gap-4">
             <Field label="Existing Drift account email">
-              <Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Input
+                type="email"
+                required
+                autoFocus
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Must already have a Drift account"
+              />
             </Field>
             <Field label="Role">
-              <Select value={inviteRole} onChange={(e) => setInviteRole(e.target.value as ClubRole)}>
+              <Select
+                value={inviteRole}
+                onChange={(e) => setInviteRole(e.target.value as ClubRole)}
+              >
                 {ADMIN_ROLES.filter((r) => r !== "READ_ONLY").map((r) => (
                   <option key={r} value={r}>
                     {r.replaceAll("_", " ")}
@@ -106,12 +131,20 @@ export default function TeamPage() {
                 ))}
               </Select>
             </Field>
-            <Button type="submit">
-              <MaterialIcon name="person_add" className="text-[18px]" />
-              Invite admin
-            </Button>
+            <div className="mt-1 flex justify-end gap-3">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setShowInvite(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={inviting}>
+                {inviting ? "Inviting…" : "Invite admin"}
+              </Button>
+            </div>
           </form>
-        </Panel>
+        </ModalShell>
       )}
 
       <Panel>
@@ -143,17 +176,20 @@ export default function TeamPage() {
                     </div>
                     <div className="flex flex-wrap items-center gap-3">
                       {canManage ? (
-                        <Select
+                        <SelectEditControl
                           value={member.role}
-                          onChange={(e) => void change(member.membershipId, e.target.value as ClubRole)}
-                          className="w-[220px]"
-                        >
-                          {ADMIN_ROLES.map((r) => (
-                            <option key={r} value={r}>
-                              {r.replaceAll("_", " ")}
-                            </option>
-                          ))}
-                        </Select>
+                          options={ADMIN_ROLES.map((r) => ({
+                            value: r,
+                            label: r.replaceAll("_", " "),
+                          }))}
+                          onSave={(next) =>
+                            change(member.membershipId, next as ClubRole)
+                          }
+                          title="Change role"
+                          description={`${memberName(member)} · ${member.email}`}
+                          fieldLabel="Role"
+                          confirmLabel="Save role"
+                        />
                       ) : (
                         <span className="text-sm font-semibold text-drift-text-primary">
                           {member.role.replaceAll("_", " ")}

@@ -53,38 +53,46 @@ void main() {
   });
 
   group('League.fromJson', () {
-    test('maps a league and its seasons', () {
+    // Since M15 a league is a single competition run — the list endpoint no
+    // longer nests seasons, so the model synthesises a single self-reference.
+    test('maps a league and a self-referential season', () {
       final l = League.fromJson({
         'id': 'l1',
         'sport': 'TENNIS',
         'name': 'Winter Singles',
         'description': 'A friendly league',
-        'rulesText': 'Best of 3',
-        'format': 'ROUND_ROBIN',
-        'seasons': [
-          {'id': 's1', 'label': '2026 Winter'},
-        ],
+        'rulesText': '<p>Best of 3</p>',
+        'startsAt': '2026-09-01T00:00:00.000Z',
+        'scoringFormat': 'Best of 3 sets',
+        'walkoverRule': 'Forfeit after 15 minutes',
+        'unfinishedMatchPolicy': 'Resume within 48h',
+        'format': 'SINGLES',
       });
 
       expect(l.name, 'Winter Singles');
       expect(l.seasons, hasLength(1));
-      expect(l.seasons.first.label, '2026 Winter');
+      expect(l.seasons.first.id, 'l1');
+      expect(l.seasons.first.label, 'Winter Singles');
+      expect(l.startDate, DateTime.utc(2026, 9, 1));
+      expect(l.scoringFormat, 'Best of 3 sets');
+      expect(l.walkoverRule, 'Forfeit after 15 minutes');
+      expect(l.unfinishedMatchPolicy, 'Resume within 48h');
     });
 
-    test('tolerates a league with no description, rules or seasons', () {
+    test('tolerates a league with no description, rules or schedule', () {
       final l = League.fromJson({
         'id': 'l1',
         'sport': 'TENNIS',
         'name': 'New League',
         'description': null,
         'rulesText': null,
-        'format': 'ROUND_ROBIN',
-        'seasons': <dynamic>[],
+        'format': 'SINGLES',
       });
 
       expect(l.description, isNull);
       expect(l.rulesText, isNull);
-      expect(l.seasons, isEmpty);
+      expect(l.startDate, isNull);
+      expect(l.scoringFormat, isNull);
     });
   });
 
@@ -93,11 +101,9 @@ void main() {
       Object? capacity = 16,
       Object? viewerRegistrationStatus,
     }) => {
-      'id': 's1',
-      'leagueId': 'l1',
-      'leagueName': 'Winter Singles',
-      'label': '2026 Winter',
-      'state': 'REGISTRATION_OPEN',
+      'id': 'l1',
+      'name': 'Winter Singles',
+      'competitionState': 'REGISTRATION_OPEN',
       'registrationOpensAt': '2026-08-01T00:00:00.000Z',
       'registrationClosesAt': '2026-09-01T00:00:00.000Z',
       'startsAt': '2026-09-08T00:00:00.000Z',
@@ -107,37 +113,47 @@ void main() {
       'viewerRegistrationStatus': viewerRegistrationStatus,
     };
 
-    test('maps the season and converts its dates to local', () {
+    test('maps the competition and converts its dates to local', () {
       final s = SeasonDetail.fromJson(json());
 
-      expect(s.label, '2026 Winter');
+      expect(s.leagueName, 'Winter Singles');
+      expect(s.label, 'Winter Singles');
       expect(s.state, SeasonState.registrationOpen);
       expect(s.roundCount, 5);
       expect(s.enrolledCount, 7);
       expect(s.startsAt.isUtc, isFalse);
     });
 
-    // An uncapped season is valid — capacity gates the waitlist, and its
+    // An uncapped competition is valid — capacity gates the waitlist, and its
     // absence means "no limit", not zero.
-    test('tolerates an uncapped season', () {
+    test('tolerates an uncapped competition', () {
       expect(SeasonDetail.fromJson(json(capacity: null)).capacity, isNull);
     });
 
+    // A draft league can have no dates set yet.
+    test('tolerates a competition with no schedule', () {
+      final s = SeasonDetail.fromJson({
+        'id': 'l1',
+        'name': 'Draft League',
+        'competitionState': 'DRAFT',
+        'roundCount': null,
+        'enrolledCount': 0,
+        'capacity': null,
+        'viewerRegistrationStatus': null,
+      });
+      expect(s.roundCount, 0);
+      expect(s.state, SeasonState.draft);
+    });
+
     test('reports the viewer as unregistered when no status is sent', () {
-      expect(
-        SeasonDetail.fromJson(json()).viewerRegistrationStatus,
-        isNull,
-      );
+      expect(SeasonDetail.fromJson(json()).viewerRegistrationStatus, isNull);
     });
 
     test('surfaces a waitlisted viewer', () {
       final s = SeasonDetail.fromJson(
         json(viewerRegistrationStatus: 'WAITLISTED'),
       );
-      expect(
-        s.viewerRegistrationStatus,
-        SeasonRegistrationStatus.waitlisted,
-      );
+      expect(s.viewerRegistrationStatus, SeasonRegistrationStatus.waitlisted);
     });
   });
 
@@ -152,16 +168,17 @@ void main() {
       expect(r.player.id, 'u1');
     });
 
-    test('maps a season the viewer is in', () {
+    test('maps a league the viewer is in', () {
       final m = MySeasonSummary.fromJson({
-        'seasonId': 's1',
         'leagueId': 'l1',
         'leagueName': 'Winter Singles',
-        'label': '2026 Winter',
+        'name': 'Winter Singles',
         'state': 'ACTIVE',
         'registrationStatus': 'ENROLLED',
       });
 
+      expect(m.seasonId, 'l1');
+      expect(m.leagueName, 'Winter Singles');
       expect(m.state, SeasonState.active);
       expect(m.registrationStatus, SeasonRegistrationStatus.enrolled);
     });
@@ -198,14 +215,19 @@ void main() {
   group('CompetitionRound.fromJson', () {
     Map<String, dynamic> json({Object? openedAt, Object? closedAt}) => {
       'id': 'r1',
-      'seasonId': 's1',
+      'leagueId': 'l1',
       'index': 2,
       'deadline': '2026-09-15T00:00:00.000Z',
       'openedAt': openedAt,
       'closedAt': closedAt,
       'fixtures': <dynamic>[
-        {'id': 'f1', 'sideA': _player('u1'), 'sideB': null, 'isBye': true,
-          'match': null},
+        {
+          'id': 'f1',
+          'sideA': _player('u1'),
+          'sideB': null,
+          'isBye': true,
+          'match': null,
+        },
       ],
     };
 

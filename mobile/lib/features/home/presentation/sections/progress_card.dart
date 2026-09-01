@@ -43,7 +43,8 @@ class ProgressSection extends ConsumerWidget {
           if (earned == 0)
             HomeEmptyState(
               icon: Icons.emoji_events_outlined,
-              message: 'Play matches and log practice to start earning '
+              message:
+                  'Play matches and log practice to start earning '
                   'achievements.',
               actionLabel: 'View',
               onAction: () => context.push('/profile/achievements'),
@@ -84,9 +85,7 @@ class ProgressSection extends ConsumerWidget {
                     const SizedBox(height: 8),
                     Text(
                       'Next: ${nextLocked.title} — ${nextLocked.criteria}',
-                      style: type.caption.copyWith(
-                        color: colors.textSecondary,
-                      ),
+                      style: type.caption.copyWith(color: colors.textSecondary),
                     ),
                   ],
                 ],

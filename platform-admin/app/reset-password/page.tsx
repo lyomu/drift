@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { MaterialIcon } from "@/components/dashboard-design";
-import { Button, Card, ErrorBanner, Field, Input } from "@/components/ui";
+import { Button, Card, ErrorBanner, Field, Input, PasswordField } from "@/components/ui";
 import { api, ApiError } from "@/lib/api-client";
 
 type ForgotResponse = {
@@ -106,26 +106,22 @@ export default function ResetPasswordPage() {
                 className="text-center text-2xl font-bold tracking-[0.25em]"
               />
             </Field>
-            <Field label="New password">
-              <Input
-                type="password"
-                minLength={12}
-                required
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                autoComplete="new-password"
-              />
-            </Field>
-            <Field label="Confirm password">
-              <Input
-                type="password"
-                minLength={12}
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                autoComplete="new-password"
-              />
-            </Field>
+            <PasswordField
+              label="New password"
+              minLength={12}
+              required
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              autoComplete="new-password"
+            />
+            <PasswordField
+              label="Confirm password"
+              minLength={12}
+              required
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              autoComplete="new-password"
+            />
             <Button type="submit" icon="lock_open" disabled={busy || code.length !== 6}>
               {busy ? "Resetting..." : "Reset password"}
             </Button>

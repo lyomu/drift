@@ -68,6 +68,7 @@ export function toCourtProfile(court: CourtRecord, distanceKm: number | null) {
     ...toCourtSummary(court, distanceKm),
     phone: court.phone,
     website: court.website,
+    mapsUrl: court.mapsUrl,
     bookingUrl: court.bookingType === 'EXTERNAL_LINK' ? court.bookingUrl : null,
     amenities: court.amenities,
     openingHoursNote: court.openingHoursNote,

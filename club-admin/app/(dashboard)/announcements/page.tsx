@@ -10,11 +10,23 @@ import {
   Field,
   Input,
   PageHeader,
+  Select,
   Textarea,
 } from "@/components/ui";
 import { StatusBadge } from "@/components/StatusBadge";
 import { MaterialIcon, ModalShell, Panel } from "@/components/dashboard-design";
-import type { Announcement } from "@/lib/types";
+import type { Announcement, AnnouncementAudience } from "@/lib/types";
+
+const AUDIENCES: { value: AnnouncementAudience; label: string; hint: string }[] = [
+  { value: "EVERYONE", label: "Everyone", hint: "All active members" },
+  { value: "MEMBERS", label: "Members", hint: "Regular members only" },
+  { value: "COACHES", label: "Coaches", hint: "Members with the Coach role" },
+  { value: "ADMINS", label: "Admins & managers", hint: "Owner, admin and manager roles" },
+];
+
+function audienceLabel(a: AnnouncementAudience) {
+  return AUDIENCES.find((x) => x.value === a)?.label ?? a;
+}
 
 export default function AnnouncementsPage() {
   const { clubId, role: myRole } = useClub();
@@ -24,7 +36,12 @@ export default function AnnouncementsPage() {
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [form, setForm] = useState({ title: "", body: "", pinned: false });
+  const [form, setForm] = useState<{
+    title: string;
+    body: string;
+    pinned: boolean;
+    audience: AnnouncementAudience;
+  }>({ title: "", body: "", pinned: false, audience: "EVERYONE" });
   const publishIntent = useRef(false);
 
   async function load() {
@@ -51,9 +68,10 @@ export default function AnnouncementsPage() {
         title: form.title,
         body: form.body,
         pinned: form.pinned,
+        audience: form.audience,
         status: publish ? "PUBLISHED" : "DRAFT",
       });
-      setForm({ title: "", body: "", pinned: false });
+      setForm({ title: "", body: "", pinned: false, audience: "EVERYONE" });
       setShowForm(false);
       await load();
     } catch (err) {
@@ -120,6 +138,10 @@ export default function AnnouncementsPage() {
                       <MaterialIcon name="push_pin" filled className="text-[17px] text-drift-primary" />
                     )}
                     <StatusBadge status={a.status} />
+                    <span className="inline-flex items-center gap-1 rounded-full bg-drift-neutral-surface px-2.5 py-[3px] text-[11px] font-semibold text-drift-text-secondary">
+                      <MaterialIcon name="group" className="text-[13px]" />
+                      {audienceLabel(a.audience)}
+                    </span>
                   </div>
                 </div>
                 {canManage && (
@@ -167,6 +189,23 @@ export default function AnnouncementsPage() {
                 value={form.body}
                 onChange={(e) => setForm({ ...form, body: e.target.value })}
               />
+            </Field>
+            <Field label="Send to">
+              <Select
+                value={form.audience}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    audience: e.target.value as AnnouncementAudience,
+                  })
+                }
+              >
+                {AUDIENCES.map((a) => (
+                  <option key={a.value} value={a.value}>
+                    {a.label} — {a.hint}
+                  </option>
+                ))}
+              </Select>
             </Field>
             <label className="flex items-center gap-2 text-sm font-medium text-drift-text-primary">
               <input

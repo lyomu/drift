@@ -22,14 +22,15 @@ void main() {
 
   setUp(() {
     usersRepo = MockUsersRepository();
-    when(() => usersRepo.getMe()).thenAnswer(
-      (_) async => userProfile(step: OnboardingStep.goals),
-    );
+    when(
+      () => usersRepo.getMe(),
+    ).thenAnswer((_) async => userProfile(step: OnboardingStep.goals));
     storage = _TokenStorage();
   });
 
-  testWidgets('resumes a mid-onboarding session at the saved step',
-      (tester) async {
+  testWidgets('resumes a mid-onboarding session at the saved step', (
+    tester,
+  ) async {
     await pumpRouted(
       tester,
       const SplashScreen(),
@@ -43,10 +44,7 @@ void main() {
             ),
           ),
         ),
-        GoRoute(
-          path: '/welcome',
-          builder: (_, _) => const SizedBox.shrink(),
-        ),
+        GoRoute(path: '/welcome', builder: (_, _) => const SizedBox.shrink()),
         GoRoute(path: '/home', builder: (_, _) => const SizedBox.shrink()),
       ],
       overrides: [
@@ -60,8 +58,9 @@ void main() {
     verify(() => usersRepo.getMe()).called(1);
   });
 
-  testWidgets('a stored-but-invalid token falls back to Welcome',
-      (tester) async {
+  testWidgets('a stored-but-invalid token falls back to the intro carousel', (
+    tester,
+  ) async {
     when(() => usersRepo.getMe()).thenThrow(Exception('expired'));
 
     await pumpRouted(
@@ -69,9 +68,8 @@ void main() {
       const SplashScreen(),
       extraRoutes: [
         GoRoute(
-          path: '/welcome',
-          builder: (_, _) =>
-              const Center(child: Text('BACK-TO-WELCOME')),
+          path: '/intro',
+          builder: (_, _) => const Center(child: Text('BACK-TO-INTRO')),
         ),
         GoRoute(
           path: '/onboarding/goals',
@@ -86,7 +84,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('BACK-TO-WELCOME'), findsOneWidget);
+    expect(find.text('BACK-TO-INTRO'), findsOneWidget);
     // The dead token must have been cleared, not left for the next launch.
     expect(storage.cleared, isTrue);
   });

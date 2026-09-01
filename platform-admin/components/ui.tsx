@@ -7,6 +7,7 @@ import type {
   SelectHTMLAttributes,
   TextareaHTMLAttributes,
 } from "react";
+import { useId, useState } from "react";
 import { MaterialIcon } from "./dashboard-design";
 
 const focusRing =
@@ -23,7 +24,7 @@ export function Button({
   icon?: string;
 }) {
   const base =
-    "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg px-4 py-2 text-[14px] font-bold transition disabled:cursor-not-allowed disabled:opacity-50";
+    "inline-flex min-h-10 items-center justify-center gap-2 rounded-md px-4 py-2 text-[14px] font-bold transition disabled:cursor-not-allowed disabled:opacity-50";
   const variants: Record<string, string> = {
     primary: "bg-drift-primary text-white hover:bg-drift-primary-dark",
     secondary:
@@ -46,8 +47,71 @@ export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       {...props}
-      className={`w-full rounded-lg border border-drift-border bg-drift-surface px-3 py-2.5 text-sm font-medium text-drift-text-primary placeholder:text-drift-text-secondary ${focusRing} ${props.className ?? ""}`}
+      className={`w-full rounded-md border border-drift-border bg-drift-surface px-3 py-2.5 text-sm font-medium text-drift-text-primary placeholder:text-drift-text-secondary ${focusRing} ${props.className ?? ""}`}
     />
+  );
+}
+
+export function PasswordField({
+  label,
+  className = "",
+  inputClassName = "",
+  labelClassName,
+  toggleVariant = "icon",
+  toggleClassName = "",
+  ...props
+}: InputHTMLAttributes<HTMLInputElement> & {
+  label: string;
+  inputClassName?: string;
+  labelClassName?: string;
+  toggleVariant?: "icon" | "text";
+  toggleClassName?: string;
+}) {
+  const generatedId = useId();
+  const id = props.id ?? generatedId;
+  const [visible, setVisible] = useState(false);
+
+  return (
+    <div className={`flex flex-col gap-1.5 ${className}`}>
+      <label
+        htmlFor={id}
+        className={
+          labelClassName ??
+          "text-[12px] font-bold uppercase text-drift-text-secondary"
+        }
+      >
+        {label}
+      </label>
+      <div className="relative">
+        <input
+          {...props}
+          id={id}
+          type={visible ? "text" : "password"}
+          className={`w-full rounded-md border border-drift-border bg-drift-surface px-3 py-2.5 pr-11 text-sm font-medium text-drift-text-primary placeholder:text-drift-text-secondary ${focusRing} ${inputClassName}`}
+        />
+        <button
+          type="button"
+          aria-label={visible ? "Hide password" : "Show password"}
+          aria-pressed={visible}
+          disabled={props.disabled}
+          onClick={() => setVisible((current) => !current)}
+          className={
+            toggleVariant === "text"
+              ? `absolute right-4 top-1/2 -translate-y-1/2 rounded-md px-1.5 py-1 text-[12.5px] font-bold text-drift-text-secondary transition hover:text-drift-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-drift-primary focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 ${toggleClassName}`
+              : `absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-drift-text-secondary transition hover:bg-drift-primary-light hover:text-drift-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-drift-primary focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 ${toggleClassName}`
+          }
+        >
+          {toggleVariant === "text" ? (
+            visible ? "Hide" : "Show"
+          ) : (
+            <MaterialIcon
+              name={visible ? "visibility_off" : "visibility"}
+              className="text-[18px]"
+            />
+          )}
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -55,7 +119,7 @@ export function Select(props: SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <select
       {...props}
-      className={`w-full rounded-lg border border-drift-border bg-drift-surface px-3 py-2.5 text-sm font-medium text-drift-text-primary ${focusRing} ${props.className ?? ""}`}
+      className={`w-full rounded-md border border-drift-border bg-drift-surface px-3 py-2.5 text-sm font-medium text-drift-text-primary ${focusRing} ${props.className ?? ""}`}
     />
   );
 }
@@ -64,7 +128,7 @@ export function Textarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
     <textarea
       {...props}
-      className={`w-full rounded-lg border border-drift-border bg-drift-surface px-3 py-2.5 text-sm font-medium text-drift-text-primary placeholder:text-drift-text-secondary ${focusRing} ${props.className ?? ""}`}
+      className={`w-full rounded-md border border-drift-border bg-drift-surface px-3 py-2.5 text-sm font-medium text-drift-text-primary placeholder:text-drift-text-secondary ${focusRing} ${props.className ?? ""}`}
     />
   );
 }
@@ -95,7 +159,7 @@ export function Card({
 }) {
   return (
     <section
-      className={`rounded-[14px] border border-drift-border bg-drift-surface p-5 ${className}`}
+      className={`rounded-lg border border-drift-border bg-drift-surface p-5 ${className}`}
     >
       {children}
     </section>
@@ -118,7 +182,7 @@ export function PageHeader({
   return (
     <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
       <div className="flex min-w-0 items-start gap-3">
-        <span className="mt-0.5 flex h-11 w-11 items-center justify-center rounded-xl bg-drift-primary-light text-drift-primary">
+        <span className="mt-0.5 flex h-11 w-11 items-center justify-center rounded-lg bg-drift-primary-light text-drift-primary">
           <MaterialIcon name={icon} filled />
         </span>
         <div className="min-w-0">
@@ -170,11 +234,6 @@ const titleIconMap: Record<string, string> = {
   "Users": "person_search",
   "Reported Content Queue": "flag",
   "Block / Abuse Cases": "block",
-  "Countries / Cities": "language",
-  "Feature Flags": "toggle_on",
-  "Notification Templates": "notifications",
-  "System Settings": "settings",
-  "API / Integration Settings": "hub",
   "Support Tickets": "support_agent",
   "Privacy Requests": "privacy_tip",
 };
@@ -182,7 +241,7 @@ const titleIconMap: Record<string, string> = {
 export function ErrorBanner({ message }: { message: string | null }) {
   if (!message) return null;
   return (
-    <div className="mb-4 rounded-xl border border-drift-error/30 bg-drift-error-surface px-4 py-3 text-sm font-semibold text-drift-error">
+    <div className="mb-4 rounded-lg border border-drift-error/30 bg-drift-error-surface px-4 py-3 text-sm font-semibold text-drift-error">
       {message}
     </div>
   );
@@ -190,7 +249,7 @@ export function ErrorBanner({ message }: { message: string | null }) {
 
 export function EmptyState({ message }: { message: string }) {
   return (
-    <div className="rounded-[14px] border border-dashed border-drift-border bg-drift-surface px-6 py-12 text-center text-sm font-semibold text-drift-text-secondary">
+    <div className="rounded-lg border border-dashed border-drift-border bg-drift-surface px-6 py-12 text-center text-sm font-semibold text-drift-text-secondary">
       {message}
     </div>
   );
@@ -298,7 +357,7 @@ export function statusTone(status: string): "neutral" | "success" | "warning" | 
 export function Th({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
     <th
-      className={`border-b border-drift-border px-4 py-3 text-left text-[11px] font-bold uppercase tracking-[0.08em] text-drift-text-secondary ${className}`}
+      className={`border-b border-drift-border bg-drift-primary-light px-5 py-4 text-left text-[11px] font-extrabold uppercase text-drift-text-secondary ${className}`}
     >
       {children}
     </th>
@@ -307,7 +366,7 @@ export function Th({ children, className = "" }: { children: ReactNode; classNam
 
 export function Td({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
-    <td className={`border-b border-drift-border px-4 py-3 align-middle text-sm text-drift-text-primary ${className}`}>
+    <td className={`border-b border-drift-border px-5 py-4 align-middle text-sm text-drift-text-primary ${className}`}>
       {children}
     </td>
   );

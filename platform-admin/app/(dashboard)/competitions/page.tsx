@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { ActionLink, RowCard, StatBand } from "@/components/dashboard-design";
+import { ActionLink, StatBand } from "@/components/dashboard-design";
 import { api, ApiError } from "@/lib/api-client";
 import type { CompetitionListResponse, CompetitionSummary } from "@/lib/competition-types";
+import { DataTable } from "@/components/DataTable";
 import { Badge, Card, EmptyState, ErrorBanner, Field, Input, PageHeader, Select, statusTone } from "@/components/ui";
 
 function label(value: string | null) {
@@ -75,35 +76,72 @@ export default function CompetitionsPage() {
       {rows === null && !error && <EmptyState message="Loading competitions..." />}
       {rows?.length === 0 && <EmptyState message="No competitions match these filters." />}
       {rows && rows.length > 0 && (
-        <div className="grid gap-3">
-          {rows.map((competition) => (
-            <RowCard key={`${competition.type}-${competition.id}`}>
-              <div className="grid gap-3 lg:grid-cols-[minmax(0,1.5fr)_150px_1fr_170px_auto] lg:items-center">
-                <div className="min-w-0">
-                  <div className="font-bold text-drift-text-primary">{competition.name}</div>
-                  <div className="truncate text-xs text-drift-text-secondary" title={competition.description ?? undefined}>{competition.description ?? "No description"}</div>
-                </div>
-                <Badge tone="info">{label(competition.type)}</Badge>
-                <div className="text-sm">
-                  {competition.club ? (
-                    <Link href={`/organizations/${competition.club.id}`} className="font-bold text-drift-primary hover:underline">
-                      {competition.club.name}
+        <div>
+          <DataTable
+            rows={rows}
+            rowKey={(competition) => `${competition.type}-${competition.id}`}
+            columns={[
+              {
+                header: "Competition",
+                cell: (competition) => (
+                  <div className="min-w-0">
+                    <Link
+                      href={`/competitions/${routeType(competition.type)}/${competition.id}`}
+                      className="font-bold text-drift-primary hover:underline"
+                    >
+                      {competition.name}
                     </Link>
-                  ) : (
-                    <span className="text-drift-text-secondary">Platform-run</span>
-                  )}
-                  <div className="mt-1 text-xs font-semibold text-drift-text-secondary">{label(competition.sport)} / {label(competition.format)}</div>
-                </div>
-                <div className="text-sm">
-                  <Badge tone={statusTone(competition.state)}>{label(competition.state)}</Badge>
-                  <div className="mt-1 text-xs font-semibold text-drift-text-secondary">{competition.primaryCountLabel}: {competition.primaryCount} / {competition.secondaryCountLabel}: {competition.secondaryCount}</div>
-                </div>
-                <Link href={`/competitions/${routeType(competition.type)}/${competition.id}`} className="justify-self-start font-bold text-drift-primary hover:underline lg:justify-self-end">
-                  Open
-                </Link>
-              </div>
-            </RowCard>
-          ))}
+                    <div className="truncate text-xs text-drift-text-secondary" title={competition.description ?? undefined}>
+                      {competition.description ?? "No description"}
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                header: "Type",
+                cell: (competition) => <Badge tone="info">{label(competition.type)}</Badge>,
+              },
+              {
+                header: "Owner",
+                cell: (competition) => (
+                  <div>
+                    {competition.club ? (
+                      <Link href={`/organizations/${competition.club.id}`} className="font-bold text-drift-primary hover:underline">
+                        {competition.club.name}
+                      </Link>
+                    ) : (
+                      <span className="text-drift-text-secondary">Platform-run</span>
+                    )}
+                    <div className="mt-1 text-xs font-semibold text-drift-text-secondary">
+                      {label(competition.sport)} / {label(competition.format)}
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                header: "State",
+                cell: (competition) => <Badge tone={statusTone(competition.state)}>{label(competition.state)}</Badge>,
+              },
+              {
+                header: "Activity",
+                cell: (competition) => (
+                  <div className="text-xs font-semibold text-drift-text-secondary">
+                    <div>{competition.primaryCountLabel}: {competition.primaryCount}</div>
+                    <div>{competition.secondaryCountLabel}: {competition.secondaryCount}</div>
+                  </div>
+                ),
+              },
+              {
+                header: "Action",
+                className: "text-right",
+                cell: (competition) => (
+                  <Link href={`/competitions/${routeType(competition.type)}/${competition.id}`} className="font-bold text-drift-primary hover:underline">
+                    Open
+                  </Link>
+                ),
+              },
+            ]}
+          />
           <div className="px-1 text-xs font-semibold text-drift-text-secondary">Showing {rows.length} of {total}</div>
         </div>
       )}

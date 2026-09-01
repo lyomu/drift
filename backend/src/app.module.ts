@@ -19,6 +19,7 @@ import { CompetitionsModule } from './competitions/competitions.module';
 import { CourtsModule } from './courts/courts.module';
 import { ClubsModule } from './clubs/clubs.module';
 import { ClubAdminModule } from './club-admin/club-admin.module';
+import { ClubOnboardingModule } from './club-onboarding/club-onboarding.module';
 import { PlatformAdminModule } from './platform-admin/platform-admin.module';
 import { CompetitionHooksModule } from './competition-hooks.module';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -71,6 +72,7 @@ import { validateEnvironment } from './config/environment';
     CourtsModule,
     ClubsModule,
     ClubAdminModule,
+    ClubOnboardingModule,
     PlatformAdminModule,
     ClubFeedModule,
     CoachesModule,

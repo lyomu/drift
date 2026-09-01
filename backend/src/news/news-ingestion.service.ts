@@ -3,6 +3,7 @@ import { Cron } from '@nestjs/schedule';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import Parser from 'rss-parser';
+import { fetchFeedXml } from './feed-fetch';
 
 /**
  * Wave 7 — RSS ingestion worker. Runs every 6 hours, fetches every ACTIVE
@@ -10,6 +11,12 @@ import Parser from 'rss-parser';
  * queue. Dedupes on (sourceId, originalUrl) so a re-run is a no-op for
  * already-ingested items. Broken feeds log a warning and skip — one bad
  * source must not block the others.
+ *
+ * The feed body is fetched via `fetchFeedXml`, which enforces the SSRF policy
+ * (HTTPS, host allowlist, private-IP rejection, redirect revalidation, size
+ * and time limits) — see `feed-fetch.ts` and OWASP A10 in `SECURITY_REVIEW.md`.
+ * A rejected feed is caught below and counts as an error, exactly like an
+ * unreachable or malformed one.
  */
 @Injectable()
 export class NewsIngestionService {
@@ -47,7 +54,8 @@ export class NewsIngestionService {
 
     for (const source of sources) {
       try {
-        const feed = await this.parser.parseURL(source.feedUrl!);
+        const xml = await fetchFeedXml(source.feedUrl!);
+        const feed = await this.parser.parseString(xml);
         for (const item of feed.items.slice(0, 20)) {
           const url = item.link ?? '';
           if (!url) {

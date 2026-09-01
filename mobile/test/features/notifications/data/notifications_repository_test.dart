@@ -95,7 +95,11 @@ void main() {
 
     test('parses a CLUBS notification end to end', () {
       final n = DriftNotification.fromJson(
-        json(category: 'CLUBS', entityType: 'CLUB_ANNOUNCEMENT', entityId: 'c1'),
+        json(
+          category: 'CLUBS',
+          entityType: 'CLUB_ANNOUNCEMENT',
+          entityId: 'c1',
+        ),
       );
       expect(n.category, NotificationCategory.clubs);
       expect(n.relatedEntityType, 'CLUB_ANNOUNCEMENT');

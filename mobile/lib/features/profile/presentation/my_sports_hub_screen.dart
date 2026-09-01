@@ -24,9 +24,10 @@ class MySportsHubScreen extends ConsumerWidget {
     final padelProfile = ref.watch(padelProfileProvider);
 
     final tennisLevel = switch (tennisProfile) {
-      AsyncData(:final value) => value.summary.levelLabel == null
-          ? 'Level not yet assessed'
-          : 'Level ${value.summary.level!.toStringAsFixed(1)} · ${value.summary.levelLabel}',
+      AsyncData(:final value) =>
+        value.summary.levelLabel == null
+            ? 'Level not yet assessed'
+            : 'Level ${value.summary.level!.toStringAsFixed(1)} · ${value.summary.levelLabel}',
       _ => 'Your active profile',
     };
 

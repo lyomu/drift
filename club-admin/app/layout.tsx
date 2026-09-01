@@ -24,13 +24,19 @@ export const metadata: Metadata = {
   description: "Manage your club, leagues, courts, and members on Drift.",
 };
 
+// Set the saved theme before first paint so a light-mode user on a dark OS
+// (or vice-versa) never sees a flash of the wrong palette.
+const themeScript = `try{var t=localStorage.getItem("drift-theme");if(t==="dark"||t==="light")document.documentElement.dataset.theme=t;}catch(e){}`;
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${outfit.variable} ${displayFace.variable} h-full antialiased`}
     >
       <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link

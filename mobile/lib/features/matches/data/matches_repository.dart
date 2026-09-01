@@ -232,16 +232,12 @@ class MatchCompetitionContext {
   const MatchCompetitionContext({
     required this.leagueId,
     required this.leagueName,
-    required this.seasonId,
-    required this.seasonLabel,
     required this.roundId,
     required this.roundIndex,
   });
 
   final String leagueId;
   final String leagueName;
-  final String seasonId;
-  final String seasonLabel;
   final String roundId;
   final int roundIndex;
 
@@ -249,8 +245,6 @@ class MatchCompetitionContext {
       MatchCompetitionContext(
         leagueId: json['leagueId'] as String,
         leagueName: json['leagueName'] as String,
-        seasonId: json['seasonId'] as String,
-        seasonLabel: json['seasonLabel'] as String,
         roundId: json['roundId'] as String,
         roundIndex: json['roundIndex'] as int,
       );

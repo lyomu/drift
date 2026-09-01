@@ -25,9 +25,18 @@ export type LeagueState = "DRAFT" | "PUBLISHED" | "CANCELLED";
 export type MatchSport = "TENNIS" | "PADEL";
 export type MatchFormat = "SINGLES" | "DOUBLES";
 
-export type SeasonRegistrationStatus = "ENROLLED" | "WAITLISTED" | "WITHDRAWN";
+export type LeagueRegistrationStatus = "ENROLLED" | "WAITLISTED" | "WITHDRAWN";
+
+export type CompetitionState =
+  | "DRAFT"
+  | "REGISTRATION_OPEN"
+  | "SCHEDULED"
+  | "ACTIVE"
+  | "COMPLETED"
+  | "CANCELLED";
 
 export type AnnouncementStatus = "DRAFT" | "PUBLISHED";
+export type AnnouncementAudience = "EVERYONE" | "MEMBERS" | "COACHES" | "ADMINS";
 
 export type ReportStatus = "OPEN" | "REVIEWING" | "RESOLVED" | "DISMISSED";
 
@@ -42,6 +51,23 @@ export type Membership = {
   clubId: string;
   clubName: string;
   role: ClubRole;
+  setupComplete: boolean;
+};
+
+export type ClubCreationRequestStatus = "PENDING" | "APPROVED" | "REJECTED";
+
+export type ClubCreationRequest = {
+  id: string;
+  clubName: string;
+  location: string;
+  requesterName: string;
+  requesterEmail: string;
+  status: ClubCreationRequestStatus;
+  decisionNote: string | null;
+  reviewedAt: string | null;
+  completedAt: string | null;
+  createdClubId: string | null;
+  createdAt: string;
 };
 
 export type ClubProfile = {
@@ -53,6 +79,7 @@ export type ClubProfile = {
   longitude: number | null;
   phone: string | null;
   website: string | null;
+  sports: MatchSport[];
   amenities: string[];
   openingHoursNote: string | null;
   photoUrls: string[];
@@ -70,8 +97,11 @@ export type Member = {
   joinedAt: string;
 };
 
+// A league is a single competition run since M15 — registration window,
+// round count, standings and the derived competition state all live here.
 export type LeagueSummary = {
   id: string;
+  clubId: string | null;
   sport: MatchSport;
   name: string;
   description: string | null;
@@ -80,22 +110,18 @@ export type LeagueSummary = {
   walkoverRule: string | null;
   unfinishedMatchPolicy: string | null;
   format: MatchFormat;
-  seasons: { id: string; label: string }[];
-};
-
-export type SeasonDetail = {
-  id: string;
-  leagueId: string;
-  leagueName: string;
-  label: string;
-  state: string;
-  registrationOpensAt: string;
-  registrationClosesAt: string;
-  startsAt: string;
-  roundCount: number;
-  enrolledCount: number;
+  state: LeagueState;
+  competitionState: CompetitionState;
+  registrationOpensAt: string | null;
+  registrationClosesAt: string | null;
+  startsAt: string | null;
+  roundCount: number | null;
+  roundIntervalMinutes: number;
   capacity: number | null;
-  viewerRegistrationStatus: SeasonRegistrationStatus | null;
+  enrolledCount: number;
+  completedAt: string | null;
+  cancelledAt: string | null;
+  viewerRegistrationStatus: LeagueRegistrationStatus | null;
 };
 
 export type PlayerSummary = {
@@ -130,7 +156,7 @@ export type Fixture = {
 
 export type RoundDto = {
   id: string;
-  seasonId: string;
+  leagueId: string;
   index: number;
   deadline: string;
   openedAt: string | null;
@@ -150,7 +176,7 @@ export type StandingRow = {
 
 export type Dispute = {
   fixtureId: string;
-  seasonId: string;
+  leagueId: string;
   sideA: PlayerSummary;
   sideB: PlayerSummary;
   match: MatchDto | null;
@@ -184,6 +210,7 @@ export type CourtSummary = {
 export type CourtProfile = CourtSummary & {
   phone: string | null;
   website: string | null;
+  mapsUrl: string | null;
   bookingUrl: string | null;
   amenities: string[];
   openingHoursNote: string | null;
@@ -200,6 +227,7 @@ export type Announcement = {
   body: string;
   pinned: boolean;
   status: AnnouncementStatus;
+  audience: AnnouncementAudience;
   publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -219,6 +247,7 @@ export type ClubEvent = {
   id: string;
   name: string;
   description: string | null;
+  imageUrl: string | null;
   startsAt: string;
   endsAt: string | null;
   capacity: number | null;
@@ -237,8 +266,10 @@ export type EventRegistration = {
 export type LadderAdmin = {
   id: string;
   name: string;
+  sport: MatchSport;
   challengeRange: number;
   state: "ACTIVE" | "ARCHIVED";
+  createdAt?: string;
   _count?: { entries: number };
   entries?: { id: string; position: number; wins: number; losses: number; user: { id: string; firstName: string | null; lastName: string | null } }[];
 };

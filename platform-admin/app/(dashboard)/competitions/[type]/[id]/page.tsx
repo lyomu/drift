@@ -20,7 +20,8 @@ function personName(person: { firstName: string | null; lastName: string | null;
   return [person.firstName, person.lastName].filter(Boolean).join(" ") || person.email || "Unknown";
 }
 
-function date(value: string) {
+function date(value: string | null | undefined) {
+  if (!value) return "n/a";
   return new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
 }
 
@@ -122,21 +123,18 @@ function LeaguePanel({ league }: { league: LeagueDetail & { type: "LEAGUE" } }) 
       </Card>
       <Card className="overflow-x-auto p-0">
         <table className="w-full min-w-[820px]">
-          <thead><tr><Th>Season</Th><Th>Registration</Th><Th>Starts</Th><Th>Rounds</Th><Th>Players</Th><Th>Status</Th></tr></thead>
+          <thead><tr><Th>Registration</Th><Th>Starts</Th><Th>Rounds</Th><Th>Players</Th><Th>Standings</Th><Th>Status</Th></tr></thead>
           <tbody>
-            {league.seasons.map((season) => (
-              <tr key={season.id}>
-                <Td className="font-semibold">{season.label}</Td>
-                <Td>{date(season.registrationOpensAt)}<div className="text-xs text-drift-text-secondary">to {date(season.registrationClosesAt)}</div></Td>
-                <Td>{date(season.startsAt)}</Td>
-                <Td>{season._count.rounds} / {season.roundCount}</Td>
-                <Td>{season._count.registrations}{season.capacity ? ` of ${season.capacity}` : ""}</Td>
-                <Td><Badge tone={season.cancelledAt ? "error" : season.completedAt ? "success" : "warning"}>{season.cancelledAt ? "Cancelled" : season.completedAt ? "Completed" : "Scheduled"}</Badge></Td>
-              </tr>
-            ))}
+            <tr>
+              <Td>{date(league.registrationOpensAt)}<div className="text-xs text-drift-text-secondary">to {date(league.registrationClosesAt)}</div></Td>
+              <Td>{date(league.startsAt)}</Td>
+              <Td>{league._count.rounds}{league.roundCount ? ` / ${league.roundCount}` : ""}</Td>
+              <Td>{league._count.registrations}{league.capacity ? ` of ${league.capacity}` : ""}</Td>
+              <Td>{league._count.standings}</Td>
+              <Td><Badge tone={league.cancelledAt ? "error" : league.completedAt ? "success" : "warning"}>{league.cancelledAt ? "Cancelled" : league.completedAt ? "Completed" : league.startsAt ? "Scheduled" : "Draft"}</Badge></Td>
+            </tr>
           </tbody>
         </table>
-        {league.seasons.length === 0 && <div className="p-4"><EmptyState message="No seasons exist for this league." /></div>}
       </Card>
     </>
   );

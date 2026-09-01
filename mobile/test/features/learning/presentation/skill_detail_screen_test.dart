@@ -19,9 +19,9 @@ void main() {
           const SkillDetailScreen(skill: 'SERVE'),
           brightness: brightness,
           overrides: [
-            skillDetailProvider('SERVE').overrideWith(
-              (ref) async => skillDetail(),
-            ),
+            skillDetailProvider(
+              'SERVE',
+            ).overrideWith((ref) async => skillDetail()),
           ],
         );
 
@@ -31,8 +31,9 @@ void main() {
         expect(find.text('Set a Goal'), findsOneWidget);
       });
 
-      testWidgets('explains a skill with nothing behind it in $label',
-          (tester) async {
+      testWidgets('explains a skill with nothing behind it in $label', (
+        tester,
+      ) async {
         await pumpScreen(
           tester,
           const SkillDetailScreen(skill: 'SERVE'),
@@ -66,9 +67,9 @@ void main() {
         const SkillDetailScreen(skill: 'SERVE'),
         settle: false,
         overrides: [
-          skillDetailProvider('SERVE').overrideWith(
-            (ref) => pending<SkillDetail>(),
-          ),
+          skillDetailProvider(
+            'SERVE',
+          ).overrideWith((ref) => pending<SkillDetail>()),
         ],
       );
 
@@ -80,9 +81,9 @@ void main() {
         tester,
         const SkillDetailScreen(skill: 'SERVE'),
         overrides: [
-          skillDetailProvider('SERVE').overrideWith(
-            (ref) => failing<SkillDetail>(),
-          ),
+          skillDetailProvider(
+            'SERVE',
+          ).overrideWith((ref) => failing<SkillDetail>()),
         ],
       );
 

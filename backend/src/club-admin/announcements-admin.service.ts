@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import {
+  AnnouncementAudience,
   AnnouncementStatus,
   ClubMembershipStatus,
   ClubRole,
@@ -20,6 +21,37 @@ const AUTHORING_ROLES: ClubRole[] = [
   ClubRole.CONTENT_MANAGER,
 ];
 
+const ADMIN_AUDIENCE_ROLES: ClubRole[] = [
+  ClubRole.OWNER,
+  ClubRole.ADMIN,
+  ClubRole.COMPETITION_MANAGER,
+  ClubRole.CONTENT_MANAGER,
+];
+
+/** The club roles a given announcement audience is delivered to. */
+function rolesForAudience(audience: AnnouncementAudience): ClubRole[] | null {
+  switch (audience) {
+    case AnnouncementAudience.COACHES:
+      return [ClubRole.COACH];
+    case AnnouncementAudience.ADMINS:
+      return ADMIN_AUDIENCE_ROLES;
+    case AnnouncementAudience.MEMBERS:
+      return [ClubRole.READ_ONLY];
+    case AnnouncementAudience.EVERYONE:
+    default:
+      return null; // no role restriction
+  }
+}
+
+/** Would a member with this role receive/see an announcement to this audience? */
+function audienceIncludesRole(
+  audience: AnnouncementAudience,
+  role: ClubRole,
+): boolean {
+  const roles = rolesForAudience(audience);
+  return roles === null || roles.includes(role);
+}
+
 @Injectable()
 export class AnnouncementsAdminService {
   constructor(
@@ -36,11 +68,19 @@ export class AnnouncementsAdminService {
       },
       orderBy: [{ pinned: 'desc' }, { createdAt: 'desc' }],
     });
-    return { announcements };
+    // Authoring roles manage every announcement regardless of audience;
+    // ordinary members only see the ones aimed at them.
+    const role = viewerRole;
+    const visible =
+      canSeeDrafts || role === undefined
+        ? announcements
+        : announcements.filter((a) => audienceIncludesRole(a.audience, role));
+    return { announcements: visible };
   }
 
   async create(clubId: string, authorId: string, dto: CreateAnnouncementDto) {
     const status = dto.status ?? AnnouncementStatus.DRAFT;
+    const audience = dto.audience ?? AnnouncementAudience.EVERYONE;
     const announcement = await this.prisma.announcement.create({
       data: {
         clubId,
@@ -49,13 +89,14 @@ export class AnnouncementsAdminService {
         body: dto.body,
         pinned: dto.pinned ?? false,
         status,
+        audience,
         publishedAt:
           status === AnnouncementStatus.PUBLISHED ? new Date() : null,
       },
     });
 
     if (status === AnnouncementStatus.PUBLISHED) {
-      await this.notifyMembers(clubId, authorId, announcement.id, dto.title);
+      await this.notifyMembers(clubId, authorId, dto.title, audience);
     }
     return announcement;
   }
@@ -73,6 +114,7 @@ export class AnnouncementsAdminService {
         body: dto.body,
         pinned: dto.pinned,
         status: dto.status,
+        audience: dto.audience,
         publishedAt: nowPublishing ? new Date() : undefined,
       },
     });
@@ -83,8 +125,8 @@ export class AnnouncementsAdminService {
       await this.notifyMembers(
         clubId,
         updated.authorId,
-        updated.id,
         updated.title,
+        updated.audience,
       );
     }
     return updated;
@@ -103,9 +145,10 @@ export class AnnouncementsAdminService {
   private async notifyMembers(
     clubId: string,
     authorId: string,
-    _announcementId: string,
     title: string,
+    audience: AnnouncementAudience,
   ) {
+    const audienceRoles = rolesForAudience(audience);
     const [club, members] = await Promise.all([
       this.prisma.club.findUnique({
         where: { id: clubId },
@@ -116,6 +159,7 @@ export class AnnouncementsAdminService {
           clubId,
           status: ClubMembershipStatus.ACTIVE,
           userId: { not: authorId },
+          ...(audienceRoles ? { role: { in: audienceRoles } } : {}),
         },
         select: { userId: true },
       }),

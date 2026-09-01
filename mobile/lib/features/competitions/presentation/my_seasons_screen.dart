@@ -29,7 +29,7 @@ class MySeasonsScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const DriftBackHeader(title: 'My Seasons'),
+            const DriftBackHeader(title: 'My Leagues'),
             Expanded(
               child: RefreshIndicator(
                 onRefresh: () => ref.refresh(mySeasonsProvider.future),
@@ -43,9 +43,8 @@ class MySeasonsScreen extends ConsumerWidget {
                     itemBuilder: (context, index) {
                       final season = value[index];
                       return DriftSoftCard(
-                        onTap: () => context.push(
-                          '/compete/seasons/${season.seasonId}',
-                        ),
+                        onTap: () =>
+                            context.push('/compete/leagues/${season.seasonId}'),
                         child: Row(
                           children: [
                             Expanded(
@@ -81,7 +80,7 @@ class MySeasonsScreen extends ConsumerWidget {
                     },
                   ),
                   AsyncError() => const Center(
-                    child: Text("Couldn't load your seasons."),
+                    child: Text("Couldn't load your leagues."),
                   ),
                   _ => const Center(child: CircularProgressIndicator()),
                 },
@@ -115,7 +114,7 @@ class _EmptyState extends StatelessWidget {
               ),
               const SizedBox(height: DriftSpacing.s3),
               Text(
-                "You haven't joined a season yet",
+                "You haven't joined a league yet",
                 style: type.body.copyWith(color: colors.textSecondary),
                 textAlign: TextAlign.center,
               ),

@@ -10,7 +10,26 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { ResultsService } from '../matches/results.service';
 import { AuditService } from './audit.service';
+import { assertFeedUrlAllowed, FeedUrlError } from '../news/feed-fetch';
 import { randomInt } from 'crypto';
+
+/**
+ * Reject a feed URL an admin cannot save: malformed, non-HTTPS, pointed at a
+ * blocked IP literal, or off `NEWS_FEED_ALLOWED_HOSTS`. This is a write-time
+ * shape check only — the ingestion worker still re-validates DNS on every fetch
+ * (`feed-fetch.ts`), which is the control that survives a later DNS change.
+ */
+function validateNewsSourceFeedUrl(feedUrl?: string | null): void {
+  if (feedUrl == null || feedUrl.trim() === '') return;
+  try {
+    assertFeedUrlAllowed(feedUrl);
+  } catch (error) {
+    if (error instanceof FeedUrlError) {
+      throw new BadRequestException(error.message);
+    }
+    throw error;
+  }
+}
 
 const USER_SELECT = {
   id: true,
@@ -501,6 +520,7 @@ export class PlatformAdminService {
       status: 'ACTIVE' | 'PAUSED' | 'BLOCKED';
     },
   ) {
+    validateNewsSourceFeedUrl(data.feedUrl);
     const source = await this.prisma.newsSource.create({ data });
     await this.audit.record(
       actorId,
@@ -523,6 +543,7 @@ export class PlatformAdminService {
       status: 'ACTIVE' | 'PAUSED' | 'BLOCKED';
     },
   ) {
+    validateNewsSourceFeedUrl(data.feedUrl);
     const existing = await this.prisma.newsSource.findUnique({
       where: { id: sourceId },
     });

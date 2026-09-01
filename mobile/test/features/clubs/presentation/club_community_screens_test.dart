@@ -187,9 +187,7 @@ void main() {
       await pumpScreen(
         tester,
         const ClubFeedScreen(clubId: clubId),
-        overrides: [
-          clubFeedProvider(clubId).overrideWith((ref) async => []),
-        ],
+        overrides: [clubFeedProvider(clubId).overrideWith((ref) async => [])],
       );
 
       expect(find.text('Share something with the club'), findsOneWidget);
@@ -201,9 +199,7 @@ void main() {
       await pumpScreen(
         tester,
         const ClubFeedScreen(clubId: clubId),
-        overrides: [
-          clubFeedProvider(clubId).overrideWith((ref) async => []),
-        ],
+        overrides: [clubFeedProvider(clubId).overrideWith((ref) async => [])],
       );
 
       expect(find.text('No posts yet'), findsOneWidget);

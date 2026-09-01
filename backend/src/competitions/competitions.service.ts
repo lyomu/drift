@@ -5,25 +5,27 @@ import {
 } from '@nestjs/common';
 import {
   LeagueState,
+  LeagueRegistrationStatus,
   MatchFormat,
   MatchSide,
   MatchSport,
   MatchState,
-  SeasonRegistrationStatus,
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { MatchesService } from '../matches/matches.service';
 import { assertTransition, effectiveState } from '../matches/match-state';
 import { matchInclude, toMatchDto } from '../matches/match.mapper';
 import { playerInclude, toPlayerSummary } from '../players/player.mapper';
-import { generateRounds } from './round-robin';
+import { generateRounds, foldForNearestSeed } from './round-robin';
+import { playerCompetitionLevel } from './player-level';
 import {
   PlayerRecord as StandingsPlayerRecord,
   StandingRow,
   computeStandings,
 } from './standings';
-import { effectiveSeasonState, isRegistrationOpen } from './season-state';
+import { effectiveCompetitionState, isRegistrationOpen } from './competition-state';
 import { NotificationsService } from '../notifications/notifications.service';
+import { sanitizeRichText } from '../common/rich-text.util';
 
 const MINUTE_MS = 60 * 1000;
 
@@ -52,53 +54,36 @@ export class CompetitionsService {
   async listLeagues() {
     const leagues = await this.prisma.league.findMany({
       where: { state: LeagueState.PUBLISHED },
-      include: { seasons: { orderBy: { startsAt: 'desc' } } },
+      include: { rounds: { select: { index: true, closedAt: true } } },
       orderBy: { createdAt: 'desc' },
     });
-    return { leagues: leagues.map((l) => this.toLeagueSummary(l)) };
-  }
-
-  async getLeague(leagueId: string) {
-    const league = await this.loadLeague(leagueId);
-    return this.toLeagueSummary(league);
-  }
-
-  async getSeason(seasonId: string, userId: string) {
-    await this.ensureSeasonProgressed(seasonId);
-    const season = await this.loadSeason(seasonId);
-    const finalRoundClosed = await this.isFinalRoundClosed(season);
-    const registration = await this.prisma.seasonRegistration.findUnique({
-      where: { seasonId_userId: { seasonId, userId } },
-    });
-    const enrolledCount = await this.prisma.seasonRegistration.count({
-      where: { seasonId, status: SeasonRegistrationStatus.ENROLLED },
-    });
-
     return {
-      id: season.id,
-      leagueId: season.leagueId,
-      leagueName: season.league.name,
-      label: season.label,
-      state: effectiveSeasonState(season, finalRoundClosed),
-      registrationOpensAt: season.registrationOpensAt,
-      registrationClosesAt: season.registrationClosesAt,
-      startsAt: season.startsAt,
-      roundCount: season.roundCount,
-      enrolledCount,
-      capacity: season.capacity,
-      viewerRegistrationStatus: registration?.status ?? null,
+      leagues: await Promise.all(
+        leagues.map((l) => this.toLeagueSummary(l)),
+      ),
     };
   }
 
-  async getRegisteredPlayers(seasonId: string) {
-    await this.loadSeason(seasonId);
-    const registrations = await this.prisma.seasonRegistration.findMany({
+  async getLeague(leagueId: string, userId?: string) {
+    await this.ensureLeagueProgressed(leagueId);
+    const league = await this.loadLeague(leagueId);
+    const registration = userId
+      ? await this.prisma.leagueRegistration.findUnique({
+          where: { leagueId_userId: { leagueId, userId } },
+        })
+      : null;
+    return this.toLeagueSummary(league, registration?.status ?? null);
+  }
+
+  async getRegisteredPlayers(leagueId: string) {
+    await this.loadLeague(leagueId);
+    const registrations = await this.prisma.leagueRegistration.findMany({
       where: {
-        seasonId,
+        leagueId,
         status: {
           in: [
-            SeasonRegistrationStatus.ENROLLED,
-            SeasonRegistrationStatus.WAITLISTED,
+            LeagueRegistrationStatus.ENROLLED,
+            LeagueRegistrationStatus.WAITLISTED,
           ],
         },
       },
@@ -107,7 +92,7 @@ export class CompetitionsService {
     });
     return {
       // registrationId included alongside the player so Club Admin can
-      // target PATCH /seasons/:id/registrations/:registrationId directly
+      // target PATCH /leagues/:id/registrations/:registrationId directly
       // from this same list — no separate admin-only read path needed.
       players: registrations.map((r) => ({
         registrationId: r.id,
@@ -117,42 +102,39 @@ export class CompetitionsService {
     };
   }
 
-  async getMySeasons(userId: string) {
-    const registrations = await this.prisma.seasonRegistration.findMany({
+  async getMyLeagues(userId: string) {
+    const registrations = await this.prisma.leagueRegistration.findMany({
       where: {
         userId,
         status: {
           in: [
-            SeasonRegistrationStatus.ENROLLED,
-            SeasonRegistrationStatus.WAITLISTED,
+            LeagueRegistrationStatus.ENROLLED,
+            LeagueRegistrationStatus.WAITLISTED,
           ],
         },
       },
-      include: { season: { include: { league: true } } },
-      orderBy: { season: { startsAt: 'desc' } },
+      include: { league: { include: { rounds: { select: { index: true, closedAt: true } } } } },
+      orderBy: { league: { startsAt: 'desc' } },
     });
 
     return {
-      seasons: await Promise.all(
-        registrations.map(async (r) => {
-          const finalRoundClosed = await this.isFinalRoundClosed(r.season);
-          return {
-            seasonId: r.season.id,
-            leagueId: r.season.leagueId,
-            leagueName: r.season.league.name,
-            label: r.season.label,
-            state: effectiveSeasonState(r.season, finalRoundClosed),
-            registrationStatus: r.status,
-          };
-        }),
-      ),
+      leagues: registrations.map((r) => ({
+        leagueId: r.league.id,
+        leagueName: r.league.name,
+        name: r.league.name,
+        state: effectiveCompetitionState(
+          r.league,
+          this.isFinalRoundClosedFromRounds(r.league.roundCount, r.league.rounds),
+        ),
+        registrationStatus: r.status,
+      })),
     };
   }
 
-  async getCurrentRound(seasonId: string) {
-    await this.ensureSeasonProgressed(seasonId);
+  async getCurrentRound(leagueId: string) {
+    await this.ensureLeagueProgressed(leagueId);
     const round = await this.prisma.round.findFirst({
-      where: { seasonId, openedAt: { not: null } },
+      where: { leagueId, openedAt: { not: null } },
       orderBy: { index: 'desc' },
     });
     if (!round) {
@@ -161,22 +143,22 @@ export class CompetitionsService {
     return { round: await this.toRoundDto(round.id) };
   }
 
-  async getRound(seasonId: string, roundId: string) {
+  async getRound(leagueId: string, roundId: string) {
     const round = await this.prisma.round.findUnique({
       where: { id: roundId },
     });
-    if (!round || round.seasonId !== seasonId) {
+    if (!round || round.leagueId !== leagueId) {
       throw new NotFoundException('Round not found.');
     }
     return { round: await this.toRoundDto(roundId) };
   }
 
-  async getStandings(seasonId: string) {
-    await this.ensureSeasonProgressed(seasonId);
-    const season = await this.loadSeason(seasonId);
-    const liveRows = await this.liveStandingRows(seasonId);
+  async getStandings(leagueId: string) {
+    await this.ensureLeagueProgressed(leagueId);
+    const league = await this.loadLeague(leagueId);
+    const liveRows = await this.liveStandingRows(leagueId);
     const snapshot = await this.prisma.standing.findMany({
-      where: { seasonId },
+      where: { leagueId },
     });
     const snapshotRank = new Map(snapshot.map((s) => [s.userId, s.rank]));
 
@@ -185,104 +167,103 @@ export class CompetitionsService {
         ...row,
         previousRank: snapshotRank.get(row.userId) ?? null,
       })),
-      seasonState: effectiveSeasonState(
-        season,
-        await this.isFinalRoundClosed(season),
+      competitionState: effectiveCompetitionState(
+        league,
+        await this.isFinalRoundClosed(league),
       ),
     };
   }
 
   // ------------------------------------------------------------- actions
 
-  async register(userId: string, seasonId: string) {
-    const season = await this.loadSeason(seasonId);
-    if (!isRegistrationOpen(season)) {
+  async register(userId: string, leagueId: string) {
+    const league = await this.loadLeague(leagueId);
+    if (!isRegistrationOpen(league)) {
       throw new BadRequestException(
-        'Registration is not open for this season.',
+        'Registration is not open for this league.',
       );
     }
 
-    const existing = await this.prisma.seasonRegistration.findUnique({
-      where: { seasonId_userId: { seasonId, userId } },
+    const existing = await this.prisma.leagueRegistration.findUnique({
+      where: { leagueId_userId: { leagueId, userId } },
     });
-    if (existing && existing.status !== SeasonRegistrationStatus.WITHDRAWN) {
+    if (existing && existing.status !== LeagueRegistrationStatus.WITHDRAWN) {
       throw new BadRequestException(
-        "You're already registered for this season.",
+        "You're already registered for this league.",
       );
     }
 
-    const enrolledCount = await this.prisma.seasonRegistration.count({
-      where: { seasonId, status: SeasonRegistrationStatus.ENROLLED },
+    const enrolledCount = await this.prisma.leagueRegistration.count({
+      where: { leagueId, status: LeagueRegistrationStatus.ENROLLED },
     });
     const status =
-      season.capacity != null && enrolledCount >= season.capacity
-        ? SeasonRegistrationStatus.WAITLISTED
-        : SeasonRegistrationStatus.ENROLLED;
+      league.capacity != null && enrolledCount >= league.capacity
+        ? LeagueRegistrationStatus.WAITLISTED
+        : LeagueRegistrationStatus.ENROLLED;
 
-    const registration = await this.prisma.seasonRegistration.upsert({
-      where: { seasonId_userId: { seasonId, userId } },
-      create: { seasonId, userId, status },
+    const registration = await this.prisma.leagueRegistration.upsert({
+      where: { leagueId_userId: { leagueId, userId } },
+      create: { leagueId, userId, status },
       update: { status, registeredAt: new Date() },
     });
 
-    // Registration outcome notifications (the batch Wave 1.4 deferred —
-    // a player who registers should never have to discover their status
-    // by reopening the screen).
-    if (registration.status === SeasonRegistrationStatus.ENROLLED) {
+    // Registration outcome notifications — a player who registers should
+    // never have to discover their status by reopening the screen.
+    if (registration.status === LeagueRegistrationStatus.ENROLLED) {
       await this.notifications.create(
         userId,
         'COMPETITIONS',
         "You're registered",
-        `${season.league.name} — ${season.label}. We'll let you know when your round opens.`,
-        'SEASON',
-        seasonId,
+        `${league.name}. We'll let you know when your first round opens.`,
+        'LEAGUE',
+        leagueId,
       );
     } else {
       await this.notifications.create(
         userId,
         'COMPETITIONS',
         "You're on the waitlist",
-        `${season.league.name} — ${season.label} is full. You move in automatically if a spot opens.`,
-        'SEASON',
-        seasonId,
+        `${league.name} is full. You move in automatically if a spot opens.`,
+        'LEAGUE',
+        leagueId,
       );
     }
 
     return { status: registration.status };
   }
 
-  async withdraw(userId: string, seasonId: string) {
-    const season = await this.loadSeason(seasonId);
-    if (Date.now() >= season.startsAt.getTime()) {
+  async withdraw(userId: string, leagueId: string) {
+    const league = await this.loadLeague(leagueId);
+    if (league.startsAt && Date.now() >= league.startsAt.getTime()) {
       throw new BadRequestException(
-        'You can no longer withdraw once the season has started.',
+        'You can no longer withdraw once the league has started.',
       );
     }
 
-    await this.prisma.seasonRegistration.updateMany({
-      where: { seasonId, userId },
-      data: { status: SeasonRegistrationStatus.WITHDRAWN },
+    await this.prisma.leagueRegistration.updateMany({
+      where: { leagueId, userId },
+      data: { status: LeagueRegistrationStatus.WITHDRAWN },
     });
 
-    if (season.capacity != null) {
-      const nextWaiting = await this.prisma.seasonRegistration.findFirst({
-        where: { seasonId, status: SeasonRegistrationStatus.WAITLISTED },
+    if (league.capacity != null) {
+      const nextWaiting = await this.prisma.leagueRegistration.findFirst({
+        where: { leagueId, status: LeagueRegistrationStatus.WAITLISTED },
         orderBy: { registeredAt: 'asc' },
       });
       if (nextWaiting) {
-        await this.prisma.seasonRegistration.update({
+        await this.prisma.leagueRegistration.update({
           where: { id: nextWaiting.id },
-          data: { status: SeasonRegistrationStatus.ENROLLED },
+          data: { status: LeagueRegistrationStatus.ENROLLED },
         });
-        // The promotion must never be silent again (PROGRESS.md carried
-        // forward since Wave 1.4): the player believes they're still queued.
+        // The promotion must never be silent: the player believes they're
+        // still queued.
         await this.notifications.create(
           nextWaiting.userId,
           'COMPETITIONS',
           "You're in",
-          `A spot opened up in ${season.league.name} — ${season.label}. You've been enrolled.`,
-          'SEASON',
-          seasonId,
+          `A spot opened up in ${league.name}. You've been enrolled.`,
+          'LEAGUE',
+          leagueId,
         );
       }
     }
@@ -290,11 +271,6 @@ export class CompetitionsService {
   }
 
   // ---------------------------------------------------- club-admin writes
-  //
-  // Phase M14 — the create/manage-league surface M8 explicitly deferred
-  // ("no create/manage-league API or screen at all"). Reuses every read
-  // path and the lazy-progression engine above unmodified; these are the
-  // first writes against League/Season/Fixture/SeasonRegistration.
 
   async leagueClubId(leagueId: string): Promise<string | null> {
     const league = await this.prisma.league.findUnique({
@@ -303,15 +279,6 @@ export class CompetitionsService {
     });
     if (!league) throw new NotFoundException('League not found.');
     return league.clubId;
-  }
-
-  async seasonClubId(seasonId: string): Promise<string | null> {
-    const season = await this.prisma.season.findUnique({
-      where: { id: seasonId },
-      select: { league: { select: { clubId: true } } },
-    });
-    if (!season) throw new NotFoundException('Season not found.');
-    return season.league.clubId;
   }
 
   async fixtureMatchId(fixtureId: string): Promise<string | null> {
@@ -327,15 +294,11 @@ export class CompetitionsService {
     const fixture = await this.prisma.fixture.findUnique({
       where: { id: fixtureId },
       select: {
-        round: {
-          select: {
-            season: { select: { league: { select: { clubId: true } } } },
-          },
-        },
+        round: { select: { league: { select: { clubId: true } } } },
       },
     });
     if (!fixture) throw new NotFoundException('Fixture not found.');
-    return fixture.round.season.league.clubId;
+    return fixture.round.league.clubId;
   }
 
   async createLeague(
@@ -347,32 +310,48 @@ export class CompetitionsService {
       scoringFormat?: string;
       walkoverRule?: string;
       unfinishedMatchPolicy?: string;
+      registrationOpensAt?: Date;
+      registrationClosesAt?: Date;
+      startsAt?: Date;
+      roundCount?: number;
+      roundIntervalMinutes?: number;
+      capacity?: number;
       sport?: MatchSport;
       format?: MatchFormat;
     },
   ) {
+    this.assertCompetitionWindow(dto);
     const league = await this.prisma.league.create({
       data: {
         clubId,
         name: dto.name,
         description: dto.description,
-        rulesText: dto.rulesText,
+        rulesText: sanitizeRichText(dto.rulesText),
+        scoringFormat: dto.scoringFormat,
+        walkoverRule: dto.walkoverRule,
+        unfinishedMatchPolicy: dto.unfinishedMatchPolicy,
+        registrationOpensAt: dto.registrationOpensAt,
+        registrationClosesAt: dto.registrationClosesAt,
+        startsAt: dto.startsAt,
+        roundCount: dto.roundCount,
+        roundIntervalMinutes: dto.roundIntervalMinutes ?? 1440,
+        capacity: dto.capacity,
         sport: dto.sport,
         format: dto.format,
         state: LeagueState.DRAFT,
       },
+      include: { rounds: { select: { index: true, closedAt: true } } },
     });
-    return this.toLeagueSummary({ ...league, seasons: [] });
+    return this.toLeagueSummary(league);
   }
 
-  async listSeasonArchive(clubId: string) {
-    const seasons = await this.prisma.season.findMany({
+  async listLeagueArchive(clubId: string) {
+    const leagues = await this.prisma.league.findMany({
       where: {
-        league: { clubId },
+        clubId,
         OR: [{ completedAt: { not: null } }, { cancelledAt: { not: null } }],
       },
       include: {
-        league: { select: { id: true, name: true } },
         standings: {
           orderBy: { rank: 'asc' },
           include: {
@@ -390,31 +369,31 @@ export class CompetitionsService {
       },
       orderBy: { startsAt: 'desc' },
     });
-    return { seasons };
+    return { leagues };
   }
 
-  async completeSeason(seasonId: string) {
-    const season = await this.prisma.season.update({
-      where: { id: seasonId },
+  async completeLeague(leagueId: string) {
+    const league = await this.prisma.league.update({
+      where: { id: leagueId },
       data: { completedAt: new Date() },
     });
-    return { id: season.id, completedAt: season.completedAt };
+    return { id: league.id, completedAt: league.completedAt };
   }
 
-  async issueSeasonAward(
-    seasonId: string,
+  async issueLeagueAward(
+    leagueId: string,
     issuedById: string,
     input: { recipientId: string; title: string; notes?: string },
   ) {
-    const registration = await this.prisma.seasonRegistration.findUnique({
-      where: { seasonId_userId: { seasonId, userId: input.recipientId } },
+    const registration = await this.prisma.leagueRegistration.findUnique({
+      where: { leagueId_userId: { leagueId, userId: input.recipientId } },
     });
     if (!registration)
       throw new BadRequestException(
-        'Awards can only be issued to season participants.',
+        'Awards can only be issued to league participants.',
       );
-    const award = await this.prisma.seasonAward.create({
-      data: { seasonId, issuedById, ...input },
+    const award = await this.prisma.leagueAward.create({
+      data: { leagueId, issuedById, ...input },
     });
     return { award };
   }
@@ -422,10 +401,12 @@ export class CompetitionsService {
   async listLeaguesForClub(clubId: string) {
     const leagues = await this.prisma.league.findMany({
       where: { clubId },
-      include: { seasons: { orderBy: { startsAt: 'desc' } } },
+      include: { rounds: { select: { index: true, closedAt: true } } },
       orderBy: { createdAt: 'desc' },
     });
-    return { leagues: leagues.map((l) => this.toLeagueSummary(l)) };
+    return {
+      leagues: await Promise.all(leagues.map((l) => this.toLeagueSummary(l))),
+    };
   }
 
   async updateLeague(
@@ -434,79 +415,86 @@ export class CompetitionsService {
       name?: string;
       description?: string;
       rulesText?: string;
+      scoringFormat?: string;
+      walkoverRule?: string;
+      unfinishedMatchPolicy?: string;
+      registrationOpensAt?: Date;
+      registrationClosesAt?: Date;
+      startsAt?: Date;
+      roundCount?: number;
+      roundIntervalMinutes?: number;
+      capacity?: number;
+      cancelReason?: string;
       state?: LeagueState;
     },
   ) {
+    const current = await this.prisma.league.findUnique({
+      where: { id: leagueId },
+      select: {
+        registrationOpensAt: true,
+        registrationClosesAt: true,
+        startsAt: true,
+      },
+    });
+    if (!current) throw new NotFoundException('League not found.');
+
+    this.assertCompetitionWindow({
+      registrationOpensAt:
+        dto.registrationOpensAt ?? current.registrationOpensAt ?? undefined,
+      registrationClosesAt:
+        dto.registrationClosesAt ?? current.registrationClosesAt ?? undefined,
+      startsAt: dto.startsAt ?? current.startsAt ?? undefined,
+    });
+
+    const data: Record<string, unknown> = { ...dto };
+    if ('rulesText' in data) {
+      data.rulesText = sanitizeRichText(data.rulesText as string | undefined);
+    }
+    if (dto.cancelReason) {
+      data.cancelledAt = new Date();
+    }
+
     const league = await this.prisma.league.update({
       where: { id: leagueId },
-      data: dto,
-      include: { seasons: { orderBy: { startsAt: 'desc' } } },
+      data,
+      include: { rounds: { select: { index: true, closedAt: true } } },
     });
     return this.toLeagueSummary(league);
   }
 
-  async createSeason(
-    leagueId: string,
-    dto: {
-      label: string;
-      registrationOpensAt: Date;
-      registrationClosesAt: Date;
-      startsAt: Date;
-      roundCount: number;
-      roundIntervalMinutes?: number;
-      capacity?: number;
-    },
-  ) {
-    if (dto.registrationOpensAt >= dto.registrationClosesAt) {
+  /**
+   * Registration must open before it closes, and close on or before the
+   * competition starts. Skipped for any bound that isn't set yet — a league
+   * can be drafted with no dates and filled in later.
+   */
+  private assertCompetitionWindow(dto: {
+    registrationOpensAt?: Date;
+    registrationClosesAt?: Date;
+    startsAt?: Date;
+  }) {
+    if (
+      dto.registrationOpensAt &&
+      dto.registrationClosesAt &&
+      dto.registrationOpensAt >= dto.registrationClosesAt
+    ) {
       throw new BadRequestException('Registration must open before it closes.');
     }
-    if (dto.registrationClosesAt > dto.startsAt) {
+    if (
+      dto.registrationClosesAt &&
+      dto.startsAt &&
+      dto.registrationClosesAt > dto.startsAt
+    ) {
       throw new BadRequestException(
-        'Registration must close on or before the season starts.',
+        'Registration must close on or before the league starts.',
       );
     }
-    const season = await this.prisma.season.create({
-      data: { leagueId, ...dto },
-    });
-    return { id: season.id };
-  }
-
-  async updateSeason(
-    seasonId: string,
-    dto: {
-      label?: string;
-      registrationOpensAt?: Date;
-      registrationClosesAt?: Date;
-      startsAt?: Date;
-      capacity?: number;
-      cancelReason?: string;
-    },
-  ) {
-    const data: Record<string, unknown> = { ...dto };
-    if (dto.cancelReason) {
-      data.cancelledAt = new Date();
-    }
-    const season = await this.prisma.season.update({
-      where: { id: seasonId },
-      data,
-      include: { league: true },
-    });
-    return {
-      id: season.id,
-      label: season.label,
-      registrationOpensAt: season.registrationOpensAt,
-      registrationClosesAt: season.registrationClosesAt,
-      startsAt: season.startsAt,
-      capacity: season.capacity,
-      cancelledAt: season.cancelledAt,
-    };
   }
 
   async updateRegistration(
     registrationId: string,
-    status: SeasonRegistrationStatus,
+    status: LeagueRegistrationStatus,
   ) {
-    const registration = await this.prisma.seasonRegistration.update({
+    const registration = await this.prisma.leagueRegistration.update({
       where: { id: registrationId },
       data: { status },
     });
@@ -514,21 +502,26 @@ export class CompetitionsService {
   }
 
   /**
-   * Admin-triggered fixture generation — distinct from `ensureSeasonProgressed`
-   * above, which only generates rounds once `now >= season.startsAt`. Doc 4's
+   * Admin-triggered fixture generation — distinct from `ensureLeagueProgressed`,
+   * which only generates rounds once `now >= league.startsAt`. Doc 4's
    * "Generate fixtures once registration closes" is a different condition,
    * so this calls the same pure `generateRounds`/`openRound` machinery
    * directly rather than waiting for the date gate. Idempotent — a no-op if
    * rounds already exist.
    */
-  async adminGenerateFixtures(seasonId: string) {
-    const season = await this.loadSeason(seasonId);
-    const roundCount = await this.prisma.round.count({ where: { seasonId } });
-    if (roundCount === 0) {
-      await this.generateSeasonRounds(season);
+  async adminGenerateFixtures(leagueId: string) {
+    const league = await this.loadLeague(leagueId);
+    if (!league.startsAt || !league.roundCount) {
+      throw new BadRequestException(
+        'Set the start date and number of rounds before generating fixtures.',
+      );
     }
-    await this.openRound(seasonId, 1);
-    return this.getCurrentRound(seasonId);
+    const roundCount = await this.prisma.round.count({ where: { leagueId } });
+    if (roundCount === 0) {
+      await this.generateLeagueRounds(league);
+    }
+    await this.openRound(leagueId, 1);
+    return this.getCurrentRound(leagueId);
   }
 
   /** Only takes effect before the fixture's match exists (before its round
@@ -558,7 +551,7 @@ export class CompetitionsService {
   async listDisputesForClub(clubId: string) {
     const fixtures = await this.prisma.fixture.findMany({
       where: {
-        round: { season: { league: { clubId } } },
+        round: { league: { clubId } },
         match: { state: MatchState.DISPUTED },
       },
       include: {
@@ -571,7 +564,7 @@ export class CompetitionsService {
     return {
       disputes: fixtures.map((f) => ({
         fixtureId: f.id,
-        seasonId: f.round.seasonId,
+        leagueId: f.round.leagueId,
         sideA: toPlayerSummary(f.sideA, null),
         sideB: f.sideB ? toPlayerSummary(f.sideB, null) : null,
         match: f.match ? toMatchDto(f.match, f.sideAUserId) : null,
@@ -584,7 +577,7 @@ export class CompetitionsService {
   private async loadLeague(leagueId: string) {
     const league = await this.prisma.league.findUnique({
       where: { id: leagueId },
-      include: { seasons: { orderBy: { startsAt: 'desc' } } },
+      include: { rounds: { select: { index: true, closedAt: true } } },
     });
     if (!league) {
       throw new NotFoundException('League not found.');
@@ -592,31 +585,37 @@ export class CompetitionsService {
     return league;
   }
 
-  private async loadSeason(seasonId: string) {
-    const season = await this.prisma.season.findUnique({
-      where: { id: seasonId },
-      include: { league: true },
+  private async toLeagueSummary(
+    league: {
+      id: string;
+      clubId: string | null;
+      sport: string;
+      name: string;
+      description: string | null;
+      rulesText: string | null;
+      scoringFormat: string | null;
+      walkoverRule: string | null;
+      unfinishedMatchPolicy: string | null;
+      format: string;
+      state: LeagueState;
+      registrationOpensAt: Date | null;
+      registrationClosesAt: Date | null;
+      startsAt: Date | null;
+      roundCount: number | null;
+      roundIntervalMinutes: number;
+      capacity: number | null;
+      cancelledAt: Date | null;
+      completedAt: Date | null;
+      rounds: { index: number; closedAt: Date | null }[];
+    },
+    viewerRegistrationStatus: LeagueRegistrationStatus | null = null,
+  ) {
+    const enrolledCount = await this.prisma.leagueRegistration.count({
+      where: { leagueId: league.id, status: LeagueRegistrationStatus.ENROLLED },
     });
-    if (!season) {
-      throw new NotFoundException('Season not found.');
-    }
-    return season;
-  }
-
-  private toLeagueSummary(league: {
-    id: string;
-    sport: string;
-    name: string;
-    description: string | null;
-    rulesText: string | null;
-    scoringFormat: string | null;
-    walkoverRule: string | null;
-    unfinishedMatchPolicy: string | null;
-    format: string;
-    seasons: { id: string; label: string }[];
-  }) {
     return {
       id: league.id,
+      clubId: league.clubId,
       sport: league.sport,
       name: league.name,
       description: league.description,
@@ -625,20 +624,41 @@ export class CompetitionsService {
       walkoverRule: league.walkoverRule,
       unfinishedMatchPolicy: league.unfinishedMatchPolicy,
       format: league.format,
-      seasons: league.seasons.map((s) => ({
-        id: s.id,
-        label: s.label,
-      })),
+      state: league.state,
+      competitionState: effectiveCompetitionState(
+        league,
+        this.isFinalRoundClosedFromRounds(league.roundCount, league.rounds),
+      ),
+      registrationOpensAt: league.registrationOpensAt?.toISOString() ?? null,
+      registrationClosesAt: league.registrationClosesAt?.toISOString() ?? null,
+      startsAt: league.startsAt?.toISOString() ?? null,
+      roundCount: league.roundCount,
+      roundIntervalMinutes: league.roundIntervalMinutes,
+      capacity: league.capacity,
+      enrolledCount,
+      completedAt: league.completedAt?.toISOString() ?? null,
+      cancelledAt: league.cancelledAt?.toISOString() ?? null,
+      viewerRegistrationStatus,
     };
   }
 
-  private async isFinalRoundClosed(season: {
+  private isFinalRoundClosedFromRounds(
+    roundCount: number | null,
+    rounds: { index: number; closedAt: Date | null }[],
+  ): boolean {
+    if (!roundCount) return false;
+    const finalRound = rounds.find((r) => r.index === roundCount);
+    return Boolean(finalRound?.closedAt);
+  }
+
+  private async isFinalRoundClosed(league: {
     id: string;
-    roundCount: number;
+    roundCount: number | null;
   }): Promise<boolean> {
+    if (!league.roundCount) return false;
     const finalRound = await this.prisma.round.findUnique({
       where: {
-        seasonId_index: { seasonId: season.id, index: season.roundCount },
+        leagueId_index: { leagueId: league.id, index: league.roundCount },
       },
     });
     return Boolean(finalRound?.closedAt);
@@ -660,7 +680,7 @@ export class CompetitionsService {
 
     return {
       id: round.id,
-      seasonId: round.seasonId,
+      leagueId: round.leagueId,
       index: round.index,
       deadline: round.deadline,
       openedAt: round.openedAt,
@@ -682,9 +702,9 @@ export class CompetitionsService {
    * closes. The persisted snapshot exists only to answer "what was the rank
    * as of the last round close", for the movement arrow.
    */
-  private async liveStandingRows(seasonId: string): Promise<StandingRow[]> {
+  private async liveStandingRows(leagueId: string): Promise<StandingRow[]> {
     const fixtures = await this.prisma.fixture.findMany({
-      where: { round: { seasonId }, matchId: { not: null } },
+      where: { round: { leagueId }, matchId: { not: null } },
       include: {
         match: { include: matchInclude },
         sideA: { select: { id: true, firstName: true, lastName: true } },
@@ -744,19 +764,19 @@ export class CompetitionsService {
 
   /** Persists this moment's standings as the baseline for the *next*
    * round's movement arrow. Only called from `closeRoundAndAdvance`. */
-  private async snapshotStandings(seasonId: string) {
+  private async snapshotStandings(leagueId: string) {
     const before = await this.prisma.standing.findMany({
-      where: { seasonId },
+      where: { leagueId },
     });
     const beforeRank = new Map(before.map((s) => [s.userId, s.rank]));
-    const liveRows = await this.liveStandingRows(seasonId);
+    const liveRows = await this.liveStandingRows(leagueId);
 
     await this.prisma.$transaction(
       liveRows.map((row) =>
         this.prisma.standing.upsert({
-          where: { seasonId_userId: { seasonId, userId: row.userId } },
+          where: { leagueId_userId: { leagueId, userId: row.userId } },
           create: {
-            seasonId,
+            leagueId,
             userId: row.userId,
             rank: row.rank,
             points: row.points,
@@ -779,61 +799,83 @@ export class CompetitionsService {
   // ---------------------------------------------------- lazy progression
 
   /**
-   * Called at the top of every season/round/standings read. Idempotent —
+   * Called at the top of every league/round/standings read. Idempotent —
    * safe to call on every request, same "derive on read" discipline as
    * `effectiveState()` for a single match's expiry.
    */
-  async ensureSeasonProgressed(seasonId: string): Promise<void> {
-    const season = await this.prisma.season.findUnique({
-      where: { id: seasonId },
+  async ensureLeagueProgressed(leagueId: string): Promise<void> {
+    const league = await this.prisma.league.findUnique({
+      where: { id: leagueId },
     });
-    if (!season || season.cancelledAt || season.completedAt) return;
+    if (!league || league.cancelledAt || league.completedAt) return;
+    if (!league.startsAt || !league.roundCount) return;
 
     const now = Date.now();
 
-    if (now >= season.startsAt.getTime()) {
-      const roundCount = await this.prisma.round.count({ where: { seasonId } });
+    if (now >= league.startsAt.getTime()) {
+      const roundCount = await this.prisma.round.count({ where: { leagueId } });
       if (roundCount === 0) {
-        await this.generateSeasonRounds(season);
-        await this.openRound(seasonId, 1);
+        await this.generateLeagueRounds(league);
+        await this.openRound(leagueId, 1);
       }
     }
 
     const openRoundRow = await this.prisma.round.findFirst({
-      where: { seasonId, openedAt: { not: null }, closedAt: null },
+      where: { leagueId, openedAt: { not: null }, closedAt: null },
     });
     if (openRoundRow && openRoundRow.deadline.getTime() < now) {
-      await this.closeRoundAndAdvance(season, openRoundRow);
+      await this.closeRoundAndAdvance(league, openRoundRow);
     }
   }
 
-  private async generateSeasonRounds(season: {
+  private async generateLeagueRounds(league: {
     id: string;
-    startsAt: Date;
-    roundCount: number;
+    startsAt: Date | null;
+    roundCount: number | null;
     roundIntervalMinutes: number;
   }) {
-    const registrations = await this.prisma.seasonRegistration.findMany({
-      where: { seasonId: season.id, status: SeasonRegistrationStatus.ENROLLED },
-      orderBy: { registeredAt: 'asc' },
-    });
-    const playerIds = registrations.map((r) => r.userId);
-    // Fewer than 2 enrolled players — no season to run. No rounds get
-    // generated; a re-read after more players register (before startsAt)
-    // or an operator fixing the seed data is the only way forward. Not a
-    // crash, just an inert season.
-    if (playerIds.length < 2) return;
+    if (!league.startsAt || !league.roundCount) return;
 
-    const schedule = generateRounds(playerIds, season.roundCount);
+    const registrations = await this.prisma.leagueRegistration.findMany({
+      where: { leagueId: league.id, status: LeagueRegistrationStatus.ENROLLED },
+      orderBy: { registeredAt: 'asc' },
+      include: {
+        user: {
+          select: {
+            id: true,
+            tennisProfile: {
+              select: { userSelectedLevel: true, systemSuggestedLevel: true },
+            },
+          },
+        },
+      },
+    });
+    // Fewer than 2 enrolled players — no competition to run. No rounds get
+    // generated; a re-read after more players register (before startsAt)
+    // or an operator fixing the data is the only way forward.
+    if (registrations.length < 2) return;
+
+    // M15 — seed by level so players meet nearest-level opponents first:
+    // sort strongest-first, then fold so the circle method's round-1
+    // opposite-end pairing lands adjacent seeds together.
+    const byLevel = [...registrations].sort(
+      (a, b) =>
+        playerCompetitionLevel(b.user.tennisProfile) -
+        playerCompetitionLevel(a.user.tennisProfile),
+    );
+    const playerIds = foldForNearestSeed(byLevel.map((r) => r.user.id));
+
+    const schedule = generateRounds(playerIds, league.roundCount);
+    const startsAt = league.startsAt;
 
     for (const roundPairing of schedule) {
       const deadline = new Date(
-        season.startsAt.getTime() +
-          roundPairing.index * season.roundIntervalMinutes * MINUTE_MS,
+        startsAt.getTime() +
+          roundPairing.index * league.roundIntervalMinutes * MINUTE_MS,
       );
       await this.prisma.round.create({
         data: {
-          seasonId: season.id,
+          leagueId: league.id,
           index: roundPairing.index,
           deadline,
           fixtures: {
@@ -847,12 +889,12 @@ export class CompetitionsService {
     }
   }
 
-  private async openRound(seasonId: string, index: number) {
+  private async openRound(leagueId: string, index: number) {
     const round = await this.prisma.round.findUnique({
-      where: { seasonId_index: { seasonId, index } },
+      where: { leagueId_index: { leagueId, index } },
       include: {
         fixtures: true,
-        season: { include: { league: true } },
+        league: true,
       },
     });
     if (!round || round.openedAt) return;
@@ -862,8 +904,8 @@ export class CompetitionsService {
       const match = await this.matches.createFixtureMatch(
         fixture.sideAUserId,
         fixture.sideBUserId,
-        round.season.league.format,
-        `You've been paired for Round ${round.index} of ${round.season.league.name}.`,
+        round.league.format,
+        `You've been paired for Round ${round.index} of ${round.league.name}.`,
       );
       await this.prisma.fixture.update({
         where: { id: fixture.id },
@@ -876,20 +918,16 @@ export class CompetitionsService {
       data: { openedAt: new Date() },
     });
 
-    await this.notifyRoundOpened(
-      seasonId,
-      round.index,
-      round.season.league.name,
-    );
+    await this.notifyRoundOpened(leagueId, round.index, round.league.name);
   }
 
   private async notifyRoundOpened(
-    seasonId: string,
+    leagueId: string,
     roundIndex: number,
     leagueName: string,
   ) {
-    const registered = await this.prisma.seasonRegistration.findMany({
-      where: { seasonId, status: SeasonRegistrationStatus.ENROLLED },
+    const registered = await this.prisma.leagueRegistration.findMany({
+      where: { leagueId, status: LeagueRegistrationStatus.ENROLLED },
       select: { userId: true },
     });
     await Promise.all(
@@ -899,15 +937,15 @@ export class CompetitionsService {
           'COMPETITIONS',
           `Round ${roundIndex} is now open`,
           `${leagueName} — check your fixture and get a time agreed.`,
-          'SEASON',
-          seasonId,
+          'LEAGUE',
+          leagueId,
         ),
       ),
     );
   }
 
   private async closeRoundAndAdvance(
-    season: { id: string; roundCount: number },
+    league: { id: string; roundCount: number | null },
     round: { id: string; index: number },
   ) {
     const fixtures = await this.prisma.fixture.findMany({
@@ -933,17 +971,17 @@ export class CompetitionsService {
       );
     }
 
-    await this.snapshotStandings(season.id);
+    await this.snapshotStandings(league.id);
     await this.prisma.round.update({
       where: { id: round.id },
       data: { closedAt: new Date() },
     });
 
-    if (round.index < season.roundCount) {
-      await this.openRound(season.id, round.index + 1);
+    if (league.roundCount && round.index < league.roundCount) {
+      await this.openRound(league.id, round.index + 1);
     } else {
-      await this.prisma.season.update({
-        where: { id: season.id },
+      await this.prisma.league.update({
+        where: { id: league.id },
         data: { completedAt: new Date() },
       });
     }

@@ -67,7 +67,7 @@ export class CompetitionAdminService {
                   platformStatus: true,
                 },
               },
-              _count: { select: { seasons: true } },
+              _count: { select: { registrations: true } },
             },
             orderBy: { updatedAt: 'desc' },
             take: preload,
@@ -83,7 +83,7 @@ export class CompetitionAdminService {
                   platformStatus: true,
                 },
               },
-              _count: { select: { seasons: true } },
+              _count: { select: { registrations: true } },
             },
           }),
       requestedTypes.includes('TOURNAMENT')
@@ -200,8 +200,8 @@ export class CompetitionAdminService {
         format: league.format,
         state: league.state,
         club: league.club,
-        primaryCountLabel: 'Seasons',
-        primaryCount: league._count.seasons,
+        primaryCountLabel: 'Registrations',
+        primaryCount: league._count.registrations,
         secondaryCountLabel: 'Rules',
         secondaryCount: [
           league.scoringFormat,
@@ -427,19 +427,13 @@ export class CompetitionAdminService {
             platformStatus: true,
           },
         },
-        seasons: {
-          orderBy: { startsAt: 'desc' },
-          include: {
-            _count: {
-              select: {
-                registrations: true,
-                rounds: true,
-                standings: true,
-                awards: true,
-              },
-            },
+        _count: {
+          select: {
+            registrations: true,
+            rounds: true,
+            standings: true,
+            awards: true,
           },
-          take: 25,
         },
       },
     });

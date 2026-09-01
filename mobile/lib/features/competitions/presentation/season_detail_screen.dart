@@ -13,13 +13,15 @@ import '../../auth/data/auth_repository.dart';
 import '../application/competitions_providers.dart';
 import '../data/competitions_repository.dart';
 
-/// Season Detail — `foundation/04-screen-inventory.md` §A.5 (redesign
-/// 2026-08). Registration window state, Register / Join Waitlist with an
-/// inline confirm dialog, and entry points into Registered Players, Current
-/// Round, and Standings.
+/// League Competition Detail — `foundation/04-screen-inventory.md` §A.5
+/// (redesign 2026-08). Since M15 a league *is* the competition: registration
+/// window state, Register / Join Waitlist with an inline confirm dialog, and
+/// entry points into Rules, Registered Players, Current Round, and Standings.
 class SeasonDetailScreen extends ConsumerStatefulWidget {
   const SeasonDetailScreen({super.key, required this.seasonId});
 
+  /// The league id (route key). Named `seasonId` for continuity with the
+  /// providers that key off it.
   final String seasonId;
 
   @override
@@ -51,14 +53,13 @@ class _SeasonDetailScreenState extends ConsumerState<SeasonDetailScreen> {
     final season = ref.watch(seasonDetailProvider(widget.seasonId));
     final currentRound = ref.watch(currentRoundProvider(widget.seasonId));
     final type = Theme.of(context).extension<DriftTypography>()!;
-    final colors = Theme.of(context).extension<DriftColors>()!;
 
     return Scaffold(
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const DriftBackHeader(title: 'Season'),
+            const DriftBackHeader(title: 'League'),
             Expanded(
               child: RefreshIndicator(
                 onRefresh: () async {
@@ -71,15 +72,8 @@ class _SeasonDetailScreenState extends ConsumerState<SeasonDetailScreen> {
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
                     children: [
                       Text(
-                        value.label,
-                        style: type.h2.copyWith(fontWeight: FontWeight.w700),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
                         value.leagueName,
-                        style: type.body.copyWith(
-                          color: colors.textSecondary,
-                        ),
+                        style: type.h2.copyWith(fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(height: 12),
                       DriftPill(
@@ -92,8 +86,7 @@ class _SeasonDetailScreenState extends ConsumerState<SeasonDetailScreen> {
                           value.state == SeasonState.completed) ...[
                         DriftSoftCard(
                           child: DriftSeasonProgress(
-                            currentRound:
-                                currentRound.valueOrNull?.index ?? 0,
+                            currentRound: currentRound.valueOrNull?.index ?? 0,
                             roundCount: value.roundCount,
                           ),
                         ),
@@ -118,7 +111,14 @@ class _SeasonDetailScreenState extends ConsumerState<SeasonDetailScreen> {
 
                       DriftSoftCard(
                         onTap: () => context.push(
-                          '/compete/seasons/${widget.seasonId}/players',
+                          '/compete/leagues/${widget.seasonId}/rules',
+                        ),
+                        child: const _LinkRow(label: 'Rules'),
+                      ),
+                      const SizedBox(height: 12),
+                      DriftSoftCard(
+                        onTap: () => context.push(
+                          '/compete/leagues/${widget.seasonId}/players',
                         ),
                         child: const _LinkRow(label: 'Registered Players'),
                       ),
@@ -126,7 +126,7 @@ class _SeasonDetailScreenState extends ConsumerState<SeasonDetailScreen> {
                         const SizedBox(height: 12),
                         DriftSoftCard(
                           onTap: () => context.push(
-                            '/compete/seasons/${widget.seasonId}/rounds/'
+                            '/compete/leagues/${widget.seasonId}/rounds/'
                             '${currentRound.value!.id}',
                           ),
                           child: const _LinkRow(label: 'Current Round'),
@@ -135,14 +135,14 @@ class _SeasonDetailScreenState extends ConsumerState<SeasonDetailScreen> {
                       const SizedBox(height: 12),
                       DriftSoftCard(
                         onTap: () => context.push(
-                          '/compete/seasons/${widget.seasonId}/standings',
+                          '/compete/leagues/${widget.seasonId}/standings',
                         ),
                         child: const _LinkRow(label: 'Standings'),
                       ),
                     ],
                   ),
                   AsyncError() => const Center(
-                    child: Text('Season not available.'),
+                    child: Text('League not available.'),
                   ),
                   _ => const Center(child: CircularProgressIndicator()),
                 },
@@ -259,7 +259,7 @@ class _RegistrationCard extends StatelessWidget {
         child: Text(
           season.state == SeasonState.draft
               ? 'Registration opens soon.'
-              : 'Registration is closed for this season.',
+              : 'Registration is closed for this league.',
           style: type.body.copyWith(color: colors.textSecondary),
         ),
       );
@@ -304,14 +304,14 @@ class _RegistrationCard extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(
-          isFull ? 'Join the waitlist?' : 'Register for this season?',
+          isFull ? 'Join the waitlist?' : 'Register for this league?',
         ),
         content: Text(
           isFull
               ? "You'll be added to the waitlist and enrolled automatically "
                     'if a spot opens up.'
               : "You'll be paired with other registered players once the "
-                    'season starts.',
+                    'league starts.',
         ),
         actions: [
           TextButton(
@@ -335,7 +335,7 @@ class _RegistrationCard extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Withdraw from this season?'),
+        title: const Text('Withdraw from this league?'),
         content: const Text(
           'You can register again later, as long as registration is still '
           'open.',

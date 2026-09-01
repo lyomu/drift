@@ -212,13 +212,6 @@ enum NotificationTemplateStatus {
   LIVE
 }
 
-enum PlatformSystemSettingType {
-  STRING
-  NUMBER
-  BOOLEAN
-  JSON
-}
-
 enum PlatformIntegrationStatus {
   CONNECTED
   DISCONNECTED
@@ -322,15 +315,15 @@ enum MatchResultOutcome {
   RETIREMENT
 }
 
-// A league itself is just published or not — the real registration/round
-// lifecycle lives on Season, since one league runs many seasons over time.
+// A league itself is just published or not — the derived registration/round
+// lifecycle lives on the League row's dates (see competition-state.ts).
 enum LeagueState {
   DRAFT
   PUBLISHED
   CANCELLED
 }
 
-enum SeasonRegistrationStatus {
+enum LeagueRegistrationStatus {
   ENROLLED
   WAITLISTED
   WITHDRAWN
@@ -635,12 +628,12 @@ model User {
   resultsDisputed  MatchResult[]     @relation("ResultDisputer")
   matchReflections MatchReflection[] @relation("ReflectionAuthor")
 
-  seasonRegistrations SeasonRegistration[]
+  leagueRegistrations LeagueRegistration[]
   fixturesAsSideA     Fixture[]            @relation("FixtureSideA")
   fixturesAsSideB     Fixture[]            @relation("FixtureSideB")
   standings           Standing[]
-  seasonAwardsReceived    SeasonAward[]              @relation("SeasonAwardRecipient")
-  seasonAwardsIssued      SeasonAward[]              @relation("SeasonAwardIssuer")
+  leagueAwardsReceived    LeagueAward[]             @relation("LeagueAwardRecipient")
+  leagueAwardsIssued      LeagueAward[]             @relation("LeagueAwardIssuer")
   eventRegistrations      ClubEventRegistration[]
   clubEventsCreated       ClubEvent[]                @relation("ClubEventCreator")
   clubPostReportsMade     ClubPostModerationReport[] @relation("ClubPostReporter")
@@ -1092,6 +1085,12 @@ model MatchReflection {
 // don't exist yet would be inventing scope. No create/manage API — leagues
 // are seeded directly (backend/prisma/seed.ts); no Club Admin app exists
 // until M14+.
+// A league is now a single competition run: registration + a fixed number
+// of rounds, no intermediate Season layer (dropped in the M15 "leagues own
+// rounds directly" change — one club runs one competition per league).
+// The live states (RegistrationOpen/Closed/Scheduled/Active) stay derived
+// on read from now() vs. these dates — see competitions/competition-state.ts.
+// Draft/Cancelled/Completed stay explicit since they aren't time-derivable.
 model League {
   id          String      @id @default(uuid())
   // Phase M14 — every league now has an owning club (Club Admin is the
@@ -1113,35 +1112,19 @@ model League {
   format      MatchFormat @default(SINGLES)
   state       LeagueState @default(PUBLISHED)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  seasons Season[]
-
-  @@map("leagues")
-}
-
-// No stored state for the live states (RegistrationOpen/Closed/Scheduled/
-// Active) — they're pure functions of now() vs. these dates, same
-// "derive on read" pattern as effectiveState() in matches/match-state.ts.
-// See competitions/season-state.ts. Draft/Cancelled stay explicit since
-// they aren't time-derivable.
-model Season {
-  id       String @id @default(uuid())
-  leagueId String
-  league   League @relation(fields: [leagueId], references: [id], onDelete: Cascade)
-
-  label String
-
-  registrationOpensAt  DateTime
-  registrationClosesAt DateTime
-  startsAt             DateTime
-  roundCount           Int
-  // Minutes, not days — an integer field needs fine-enough granularity so
-  // dev/demo seeding can compress a season into minutes for manual testing
-  // (see prisma/seed.ts) without resorting to a fractional-day float. A
-  // real season just uses a larger number (e.g. 10080 for one week).
-  roundIntervalMinutes Int      @default(1440)
+  // Competition scheduling (folded up from the former Season model).
+  // Nullable so a league can be drafted before its dates are set and so
+  // pre-M15 rows migrate cleanly; competitions.service.ts refuses to
+  // generate rounds until registrationOpensAt/registrationClosesAt/
+  // startsAt/roundCount are all present.
+  registrationOpensAt  DateTime?
+  registrationClosesAt DateTime?
+  startsAt             DateTime?
+  roundCount           Int?
+  // Minutes, not days — fine-enough granularity that dev/demo seeding can
+  // compress a competition into minutes for manual testing (see seed.ts).
+  // A real league just uses a larger number (e.g. 10080 for one week).
+  roundIntervalMinutes Int       @default(1440)
   capacity             Int?
 
   cancelledAt  DateTime?
@@ -1151,54 +1134,54 @@ model Season {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  registrations SeasonRegistration[]
+  registrations LeagueRegistration[]
   rounds        Round[]
   standings     Standing[]
-  awards        SeasonAward[]
+  awards        LeagueAward[]
 
-  @@map("seasons")
+  @@map("leagues")
 }
 
-model SeasonAward {
+model LeagueAward {
   id          String @id @default(uuid())
-  seasonId    String
-  season      Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  leagueId    String
+  league      League @relation(fields: [leagueId], references: [id], onDelete: Cascade)
   recipientId String
-  recipient   User   @relation("SeasonAwardRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  recipient   User   @relation("LeagueAwardRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
   issuedById  String
-  issuedBy    User   @relation("SeasonAwardIssuer", fields: [issuedById], references: [id], onDelete: Restrict)
+  issuedBy    User   @relation("LeagueAwardIssuer", fields: [issuedById], references: [id], onDelete: Restrict)
   title       String
   notes       String?
   issuedAt    DateTime @default(now())
 
-  @@unique([seasonId, recipientId, title])
-  @@index([seasonId, issuedAt])
-  @@map("season_awards")
+  @@unique([leagueId, recipientId, title])
+  @@index([leagueId, issuedAt])
+  @@map("league_awards")
 }
 
-model SeasonRegistration {
+model LeagueRegistration {
   id       String @id @default(uuid())
-  seasonId String
+  leagueId String
   userId   String
-  season   Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  league   League @relation(fields: [leagueId], references: [id], onDelete: Cascade)
   user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  status       SeasonRegistrationStatus @default(ENROLLED)
+  status       LeagueRegistrationStatus @default(ENROLLED)
   registeredAt DateTime                 @default(now())
 
-  @@unique([seasonId, userId])
-  @@index([seasonId, status])
-  @@map("season_registrations")
+  @@unique([leagueId, userId])
+  @@index([leagueId, status])
+  @@map("league_registrations")
 }
 
 // openedAt is set (and that round's Fixture→Match rows created) when the
 // round becomes current; closedAt is set once the unplayed-fixture
 // walkover sweep + standings recompute for that round has run — the
-// idempotency guard for competitions.service.ts's ensureSeasonProgressed.
+// idempotency guard for competitions.service.ts's ensureLeagueProgressed.
 model Round {
   id       String @id @default(uuid())
-  seasonId String
-  season   Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  leagueId String
+  league   League @relation(fields: [leagueId], references: [id], onDelete: Cascade)
 
   index    Int
   deadline DateTime
@@ -1210,7 +1193,7 @@ model Round {
 
   fixtures Fixture[]
 
-  @@unique([seasonId, index])
+  @@unique([leagueId, index])
   @@map("rounds")
 }
 
@@ -1242,14 +1225,14 @@ model Fixture {
 }
 
 // Fully recomputed (not incrementally patched) whenever a round closes —
-// season-scale data, so wholesale recompute is simpler and can't drift.
+// league-scale data, so wholesale recompute is simpler and can't drift.
 // points: win = 3, loss = 0, a neutral (unplayed) walkover = 0 for both
 // sides (documented decision, same class as rating.ts's Elo formula).
 model Standing {
   id       String @id @default(uuid())
-  seasonId String
+  leagueId String
   userId   String
-  season   Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  league   League @relation(fields: [leagueId], references: [id], onDelete: Cascade)
   user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   rank         Int
@@ -1260,7 +1243,7 @@ model Standing {
 
   updatedAt DateTime @updatedAt
 
-  @@unique([seasonId, userId])
+  @@unique([leagueId, userId])
   @@map("standings")
 }
 
@@ -1384,6 +1367,12 @@ model Court {
   phone   String?
   website String?
 
+  // A curator-supplied Google Maps (or other maps provider) link for the
+  // venue. Distinct from the lat/long-derived directions link and from the
+  // optional Google Places enrichment ref below — this is a plain URL an
+  // admin pastes in. Shown as "Open in Maps" on the player court profile.
+  mapsUrl String?
+
   // Doc 6 §1: "bookingInfo (external link | none | native-partner)".
   // bookingUrl is only meaningful when bookingType is EXTERNAL_LINK.
   bookingType CourtBookingType @default(UNKNOWN)
@@ -1492,6 +1481,10 @@ model Club {
   phone   String?
   website String?
 
+  // Which sports the club runs — surfaced on Club Settings and public
+  // profile. Defaults to TENNIS (every pre-M15 club is a tennis club).
+  sports MatchSport[] @default([TENNIS])
+
   amenities        String[]
   openingHoursNote String?
   photoUrls        String[]
@@ -1500,6 +1493,11 @@ model Club {
   platformStatus     ClubPlatformStatus        @default(ACTIVE)
   platformStatusReason String?
   platformSuspendedAt  DateTime?
+
+  // Null until the owner finishes (or dismisses) the multi-step setup
+  // wizard reached from an approved ClubCreationRequest. The dashboard
+  // bounces an owner back into `/setup` while this is null.
+  setupCompletedAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1524,6 +1522,42 @@ model Club {
   @@index([latitude, longitude])
   @@index([platformStatus, updatedAt])
   @@map("clubs")
+}
+
+enum ClubCreationRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+/// A prospective owner's request to stand up a club. Replaces self-service
+/// club creation: a platform admin reviews it, and only on APPROVE is a
+/// one-time setup link (setupTokenHash) minted. `POST /clubs` no longer
+/// exists — the setup-link completion path is the only way a club is born.
+model ClubCreationRequest {
+  id             String @id @default(uuid())
+  clubName       String
+  location       String
+  requesterName  String
+  requesterEmail String
+  status         ClubCreationRequestStatus @default(PENDING)
+  decisionNote   String?
+  // PlatformAdmin id — no FK relation; the admin audit log is the
+  // authoritative trail for who decided what.
+  reviewedById        String?
+  reviewedAt          DateTime?
+  // sha256 hex of the raw token. The raw token only ever exists in the
+  // emailed link; cleared once setup completes.
+  setupTokenHash      String?
+  setupTokenExpiresAt DateTime?
+  completedAt         DateTime?
+  createdClubId       String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@index([requesterEmail])
+  @@map("club_creation_requests")
 }
 
 // Phase M14 (Club Admin). A player account becomes a club admin by holding
@@ -1586,8 +1620,9 @@ model Announcement {
 
   title       String
   body        String
-  pinned      Boolean            @default(false)
-  status      AnnouncementStatus @default(DRAFT)
+  pinned      Boolean             @default(false)
+  status      AnnouncementStatus  @default(DRAFT)
+  audience    AnnouncementAudience @default(EVERYONE)
   publishedAt DateTime?
 
   createdAt DateTime @default(now())
@@ -1744,6 +1779,9 @@ model ClubEvent {
   createdBy   User @relation("ClubEventCreator", fields: [createdById], references: [id], onDelete: Restrict)
   name        String
   description String?
+  // Event image reference. Club-admin stores uploaded media content paths here
+  // while older records may still contain external URLs.
+  imageUrl    String?
   startsAt    DateTime
   endsAt      DateTime?
   capacity    Int?
@@ -1791,6 +1829,18 @@ model ClubPostReaction {
 enum AnnouncementStatus {
   DRAFT
   PUBLISHED
+}
+
+/// Who a published announcement is aimed at. Drives the notification
+/// fan-out (announcements-admin.service.ts `notifyMembers`) and hides
+/// off-audience items from ordinary members' read list. Roles map:
+/// COACHES → COACH; ADMINS → OWNER/ADMIN/COMPETITION_MANAGER/CONTENT_MANAGER;
+/// MEMBERS → READ_ONLY; EVERYONE → all active members.
+enum AnnouncementAudience {
+  EVERYONE
+  MEMBERS
+  COACHES
+  ADMINS
 }
 
 // foundation/06-domain-technical-architecture.md §1 (LEARNING CONTENT).
@@ -1906,7 +1956,7 @@ model PracticeSession {
 // snapshotted at creation (the skill's computed score that day) so pacing
 // can be judged against where the player actually started, not a moving
 // target. No stored "current progress" field — it's the same derive-on-read
-// discipline as match-state.ts/season-state.ts, recomputed from
+// discipline as match-state.ts/competition-state.ts, recomputed from
 // learning/skill-score.ts every time the goal is read.
 model Goal {
   id String @id @default(uuid())
@@ -2460,20 +2510,6 @@ model NotificationTemplate {
   @@unique([key, channel])
   @@index([status, channel])
   @@map("notification_templates")
-}
-
-model SystemSetting {
-  id          String                    @id @default(uuid())
-  key         String                    @unique
-  label       String
-  description String?
-  valueType   PlatformSystemSettingType @default(STRING)
-  value       Json
-  createdAt   DateTime                  @default(now())
-  updatedAt   DateTime                  @updatedAt
-
-  @@index([valueType, key])
-  @@map("system_settings")
 }
 
 model IntegrationConfig {

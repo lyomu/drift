@@ -5,7 +5,7 @@ import type { NextConfig } from "next";
  * `connect-src` explicitly; a bare 'self' policy would block every request
  * this app makes.
  */
-const API_ORIGIN = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
+const API_ORIGIN = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3009";
 
 /**
  * Baseline security headers.
@@ -16,14 +16,20 @@ const API_ORIGIN = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
  * session. This is the defence-in-depth layer for that.
  *
  * `'unsafe-inline'` on styles is required by Tailwind's runtime style
- * injection; `'unsafe-eval'` is deliberately **not** granted.
+ * injection; Next/React development tooling also requires `'unsafe-eval'`.
+ * Production keeps eval blocked.
  */
+const scriptSrc =
+  process.env.NODE_ENV === "production"
+    ? "script-src 'self' 'unsafe-inline'"
+    : "script-src 'self' 'unsafe-inline' 'unsafe-eval'";
+
 const securityHeaders = [
   {
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline'",
+      scriptSrc,
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "img-src 'self' data: blob: https:",
       "font-src 'self' data: https://fonts.gstatic.com",

@@ -21,16 +21,20 @@ void main() {
           const StandingsScreen(seasonId: 'season-1'),
           brightness: brightness,
           overrides: [
-            standingsProvider('season-1').overrideWith(
-              (ref) async => [standingRow()],
-            ),
+            standingsProvider(
+              'season-1',
+            ).overrideWith((ref) async => [standingRow()]),
+            seasonDetailProvider(
+              'season-1',
+            ).overrideWith((ref) async => seasonDetail()),
             currentUserProvider.overrideWith((ref) async => userProfile()),
           ],
         );
 
         expect(find.text('Standings'), findsOneWidget);
-        expect(find.text('Ana Diaz'), findsOneWidget);
-        expect(find.text('3-1'), findsOneWidget);
+        // The row is the current user, so the table tags it "(You)".
+        expect(find.textContaining('Ana Diaz'), findsOneWidget);
+        expect(find.text('9'), findsOneWidget); // points column
       });
 
       testWidgets('explains an empty table in $label', (tester) async {
@@ -39,15 +43,18 @@ void main() {
           const StandingsScreen(seasonId: 'season-1'),
           brightness: brightness,
           overrides: [
-            standingsProvider('season-1').overrideWith(
-              (ref) async => <StandingRow>[],
-            ),
+            standingsProvider(
+              'season-1',
+            ).overrideWith((ref) async => <StandingRow>[]),
+            seasonDetailProvider(
+              'season-1',
+            ).overrideWith((ref) async => seasonDetail()),
             currentUserProvider.overrideWith((ref) async => userProfile()),
           ],
         );
 
         expect(
-          find.text('Standings appear once the first round is played'),
+          find.text('Standings appear once the first round is played.'),
           findsOneWidget,
         );
       });
@@ -59,9 +66,12 @@ void main() {
         const StandingsScreen(seasonId: 'season-1'),
         settle: false,
         overrides: [
-          standingsProvider('season-1').overrideWith(
-            (ref) => pending<List<StandingRow>>(),
-          ),
+          standingsProvider(
+            'season-1',
+          ).overrideWith((ref) => pending<List<StandingRow>>()),
+          seasonDetailProvider(
+            'season-1',
+          ).overrideWith((ref) async => seasonDetail()),
           currentUserProvider.overrideWith((ref) async => userProfile()),
         ],
       );
@@ -74,9 +84,12 @@ void main() {
         tester,
         const StandingsScreen(seasonId: 'season-1'),
         overrides: [
-          standingsProvider('season-1').overrideWith(
-            (ref) => failing<List<StandingRow>>(),
-          ),
+          standingsProvider(
+            'season-1',
+          ).overrideWith((ref) => failing<List<StandingRow>>()),
+          seasonDetailProvider(
+            'season-1',
+          ).overrideWith((ref) async => seasonDetail()),
           currentUserProvider.overrideWith((ref) async => userProfile()),
         ],
       );

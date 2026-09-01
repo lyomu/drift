@@ -44,7 +44,7 @@ class _CompeteHubScreenState extends State<CompeteHubScreen> {
                 ),
                 DriftHeaderSquareButton(
                   icon: Icons.event_note_outlined,
-                  onTap: () => context.push('/compete/my-seasons'),
+                  onTap: () => context.push('/compete/my-leagues'),
                 ),
               ],
             ),

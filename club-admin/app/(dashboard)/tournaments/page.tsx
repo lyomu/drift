@@ -4,9 +4,10 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { api, ApiError } from "@/lib/api-client";
 import { useClub } from "@/lib/club-context";
-import { Button, EmptyState, ErrorBanner, Field, Input, PageHeader, Select, Textarea } from "@/components/ui";
+import { Button, ErrorBanner, Field, Input, PageHeader, Select, Textarea } from "@/components/ui";
 import { StatusBadge } from "@/components/StatusBadge";
 import { IconChip, ModalShell } from "@/components/dashboard-design";
+import { Listing } from "@/components/Listing";
 
 interface Tournament {
   id: string;
@@ -104,15 +105,22 @@ export default function TournamentsPage() {
       />
       <ErrorBanner message={error} />
 
-      {rows === null && !error && <EmptyState message="Loading..." />}
-      {rows?.length === 0 && <EmptyState message="No tournaments yet." />}
-
-      {rows && rows.length > 0 && (
-        <div className="flex flex-col gap-3">
-          {rows.map((tournament) => (
+      <Listing
+        title="Tournaments"
+        count={rows?.length ?? null}
+        loading={rows === null && !error}
+        empty={{
+          icon: "grid_view",
+          title: "No tournaments yet",
+          description:
+            "Set up a single-elimination knockout draw and generate the bracket once registration closes.",
+          action: <Button onClick={() => setShowForm(true)}>New tournament</Button>,
+        }}
+      >
+        {rows?.map((tournament) => (
             <div
               key={tournament.id}
-              className="rowcard flex flex-wrap items-center gap-4 rounded-2xl border border-drift-border bg-drift-surface px-5 py-[18px] transition-colors"
+              className="rowcard flex flex-wrap items-center gap-4 rounded-lg border border-drift-border bg-drift-surface px-5 py-[18px] transition-colors"
             >
               <IconChip icon="grid_view" tone="success" />
               <div className="min-w-0 flex-1">
@@ -153,9 +161,8 @@ export default function TournamentsPage() {
                   )}
               </div>
             </div>
-          ))}
-        </div>
-      )}
+        ))}
+      </Listing>
 
       {showForm && (
         <ModalShell title="New tournament" onClose={() => setShowForm(false)}>

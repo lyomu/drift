@@ -19,9 +19,9 @@ void main() {
           const NewsStoryDetailScreen(storyId: 'n1'),
           brightness: brightness,
           overrides: [
-            storyDetailProvider('n1').overrideWith(
-              (ref) => Future.value(storyDetail()),
-            ),
+            storyDetailProvider(
+              'n1',
+            ).overrideWith((ref) => Future.value(storyDetail())),
           ],
         );
 
@@ -36,9 +36,9 @@ void main() {
         const NewsStoryDetailScreen(storyId: 'n1'),
         settle: false,
         overrides: [
-          storyDetailProvider('n1').overrideWith(
-            (ref) => pending<StoryDetail>(),
-          ),
+          storyDetailProvider(
+            'n1',
+          ).overrideWith((ref) => pending<StoryDetail>()),
         ],
       );
 
@@ -50,9 +50,9 @@ void main() {
         tester,
         const NewsStoryDetailScreen(storyId: 'n1'),
         overrides: [
-          storyDetailProvider('n1').overrideWith(
-            (ref) => failing<StoryDetail>(),
-          ),
+          storyDetailProvider(
+            'n1',
+          ).overrideWith((ref) => failing<StoryDetail>()),
         ],
       );
 

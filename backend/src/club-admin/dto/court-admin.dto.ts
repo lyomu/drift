@@ -54,6 +54,11 @@ export class CreateCourtDto {
   @IsNumber()
   longitude?: number;
 
+  @IsOptional()
+  @IsString()
+  @MaxLength(2048)
+  mapsUrl?: string;
+
   @IsArray()
   @ArrayMaxSize(20)
   @ValidateNested({ each: true })
@@ -86,6 +91,11 @@ export class UpdateCourtDto {
   @IsOptional()
   @IsString()
   website?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2048)
+  mapsUrl?: string;
 
   @IsOptional()
   @IsEnum(CourtBookingType)

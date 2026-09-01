@@ -67,7 +67,7 @@ void main() {
         ],
       );
 
-      expect(find.text("Couldn't load news."), findsOneWidget);
+      expect(find.text("Couldn't load news. Pull to retry."), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   });

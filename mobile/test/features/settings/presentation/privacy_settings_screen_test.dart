@@ -13,8 +13,7 @@ void main() {
     for (final brightness in Brightness.values) {
       final label = brightness.name;
 
-      testWidgets('renders the visibility controls in $label',
-          (tester) async {
+      testWidgets('renders the visibility controls in $label', (tester) async {
         await pumpScreen(
           tester,
           const PrivacySettingsScreen(),
@@ -56,8 +55,7 @@ void main() {
         ],
       );
 
-      expect(find.text("Couldn't load your privacy settings."),
-          findsOneWidget);
+      expect(find.text("Couldn't load your privacy settings."), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   });

@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useClub } from "@/lib/club-context";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const NAV: { href: string; label: string; ownerOnly?: boolean; roles?: string[] }[] = [
   { href: "/", label: "Overview" },
@@ -10,7 +11,7 @@ const NAV: { href: string; label: string; ownerOnly?: boolean; roles?: string[] 
   { href: "/leagues", label: "Leagues" },
   { href: "/tournaments", label: "Tournaments" },
   { href: "/ladders", label: "Ladders" },
-  { href: "/seasons/archive", label: "Season Archive" },
+  { href: "/leagues/archive", label: "League Archive" },
   { href: "/events", label: "Events" },
   { href: "/announcements", label: "Announcements" },
   { href: "/media", label: "Media Library", roles: ["OWNER", "ADMIN", "CONTENT_MANAGER"] },
@@ -49,7 +50,7 @@ export function MobileNav({ clubName }: { clubName: string | null }) {
       <select
         value={value}
         onChange={(event) => router.push(event.target.value)}
-        className="min-w-0 rounded-lg border border-drift-border bg-drift-surface px-2 py-1.5 text-sm font-semibold text-drift-text-primary"
+        className="min-w-0 rounded-md border border-drift-border bg-drift-surface px-2 py-1.5 text-sm font-semibold text-drift-text-primary"
       >
         {visible.map((item) => (
           <option key={item.href} value={item.href}>
@@ -57,6 +58,7 @@ export function MobileNav({ clubName }: { clubName: string | null }) {
           </option>
         ))}
       </select>
+      <ThemeToggle className="h-9 w-9" />
       <button
         type="button"
         onClick={logout}

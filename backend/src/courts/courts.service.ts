@@ -34,6 +34,7 @@ export interface CreateCourtInput {
   address?: string;
   latitude?: number;
   longitude?: number;
+  mapsUrl?: string;
   courtGroups: CourtGroupInput[];
 }
 
@@ -42,6 +43,7 @@ export interface UpdateCourtInput {
   address?: string;
   latitude?: number;
   longitude?: number;
+  mapsUrl?: string;
   phone?: string;
   website?: string;
   bookingType?: CourtBookingType;
@@ -54,6 +56,14 @@ export interface UpdateCourtInput {
 }
 
 const DEFAULT_TAKE = 20;
+
+/** Trim a pasted URL and fold a blank value to null. Leaves `undefined`
+ * untouched so a PATCH that omits the field doesn't wipe it. */
+function normaliseUrl(value: string | undefined): string | null | undefined {
+  if (value === undefined) return undefined;
+  const trimmed = value.trim();
+  return trimmed === '' ? null : trimmed;
+}
 
 @Injectable()
 export class CourtsService {
@@ -204,6 +214,7 @@ export class CourtsService {
         address: input.address,
         latitude: input.latitude,
         longitude: input.longitude,
+        mapsUrl: normaliseUrl(input.mapsUrl),
         courtGroups: {
           create: input.courtGroups.map((g) => ({
             sport: g.sport,
@@ -230,6 +241,8 @@ export class CourtsService {
           address: input.address,
           latitude: input.latitude,
           longitude: input.longitude,
+          mapsUrl:
+            input.mapsUrl === undefined ? undefined : normaliseUrl(input.mapsUrl),
           phone: input.phone,
           website: input.website,
           bookingType: input.bookingType,

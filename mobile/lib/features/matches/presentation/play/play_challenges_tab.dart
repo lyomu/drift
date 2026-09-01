@@ -76,10 +76,7 @@ class _ChallengeCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              DriftPill(
-                label: match.state.label,
-                tone: _tone(match.state),
-              ),
+              DriftPill(label: match.state.label, tone: _tone(match.state)),
             ],
           ),
           const SizedBox(height: 12),

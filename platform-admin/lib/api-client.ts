@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3009";
 
 // Deliberately a different storage key from Club Admin's: the two consoles
 // hold different authorities and must never read each other's tokens.

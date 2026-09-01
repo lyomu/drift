@@ -2,7 +2,6 @@ export type MarketStatus = "ACTIVE" | "COMING_SOON" | "INACTIVE";
 export type FeatureFlagStatus = "OFF" | "ON" | "PARTIAL";
 export type NotificationTemplateChannel = "PUSH" | "EMAIL" | "SMS";
 export type NotificationTemplateStatus = "DRAFT" | "LIVE";
-export type SystemSettingType = "STRING" | "NUMBER" | "BOOLEAN" | "JSON";
 export type IntegrationStatus = "CONNECTED" | "DISCONNECTED" | "ERROR";
 
 export type SupportedMarket = {
@@ -52,17 +51,6 @@ export type NotificationTemplatePreview = {
   data: Record<string, unknown>;
 };
 
-export type SystemSetting = {
-  id: string;
-  key: string;
-  label: string;
-  description: string | null;
-  valueType: SystemSettingType;
-  value: unknown;
-  createdAt: string;
-  updatedAt: string;
-};
-
 export type IntegrationConfig = {
   id: string;
   providerKey: string;
@@ -101,15 +89,4 @@ export function parseJsonObject(value: string, fallback: Record<string, unknown>
     throw new Error("Use a JSON object.");
   }
   return parsed as Record<string, unknown>;
-}
-
-export function parseSettingValue(type: SystemSettingType, value: string) {
-  if (type === "STRING") return value;
-  if (type === "NUMBER") {
-    const parsed = Number(value);
-    if (!Number.isFinite(parsed)) throw new Error("Use a valid number.");
-    return parsed;
-  }
-  if (type === "BOOLEAN") return value === "true";
-  return JSON.parse(value) as unknown;
 }

@@ -72,19 +72,16 @@ class _CoachListScreenState extends ConsumerState<CoachListScreen> {
           child: RefreshIndicator(
             onRefresh: () => ref.refresh(coachSearchProvider.future),
             child: switch (results) {
-              AsyncData(:final value) => value.isEmpty
-                  ? _message(
-                      colors,
-                      type,
-                      'No coaches listed near you yet',
-                    )
-                  : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                      itemCount: value.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 8),
-                      itemBuilder: (context, i) =>
-                          _CoachCard(coach: value[i]),
-                    ),
+              AsyncData(:final value) =>
+                value.isEmpty
+                    ? _message(colors, type, 'No coaches listed near you yet')
+                    : ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                        itemCount: value.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 8),
+                        itemBuilder: (context, i) =>
+                            _CoachCard(coach: value[i]),
+                      ),
               AsyncError() => _message(
                 colors,
                 type,
@@ -202,8 +199,9 @@ class _CoachCard extends StatelessWidget {
                 foregroundImage: coach.photoUrl == null
                     ? null
                     : NetworkImage(coach.photoUrl!),
-                onForegroundImageError:
-                    coach.photoUrl == null ? null : (_, _) {},
+                onForegroundImageError: coach.photoUrl == null
+                    ? null
+                    : (_, _) {},
                 child: Text(
                   initials.isEmpty ? 'C' : initials,
                   style: type.label.copyWith(color: Colors.white),

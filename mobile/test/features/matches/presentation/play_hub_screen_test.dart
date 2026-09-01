@@ -9,7 +9,7 @@ import 'package:drift_tennis/features/players/application/players_providers.dart
 import 'package:drift_tennis/features/players/data/players_repository.dart';
 import 'package:drift_tennis/features/users/application/current_user_provider.dart';
 import 'package:drift_tennis/features/matches/presentation/play_hub_screen.dart';
-import 'package:drift_tennis/shared/widgets/drift_match_card.dart';
+import 'package:drift_tennis/shared/widgets/drift_soft_card.dart';
 
 import '../../../support/fixtures.dart';
 import '../../../support/pump.dart';
@@ -52,9 +52,7 @@ void main() {
           tester,
           screen(),
           brightness: brightness,
-          overrides: baseOverrides(
-            search: Future.value([playerSummary()]),
-          ),
+          overrides: baseOverrides(search: Future.value([playerSummary()])),
         );
 
         expect(find.text('Ana Diaz'), findsOneWidget);
@@ -76,16 +74,15 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Your stats'), findsOneWidget);
-      expect(find.byType(DriftMatchCard), findsOneWidget);
+      // The history tab renders each match as a DriftSoftCard row, not the
+      // full DriftMatchCard.
+      expect(find.byType(DriftSoftCard), findsWidgets);
     });
 
-    testWidgets("renders an empty challenges tab's empty state",
-        (tester) async {
-      await pumpScreen(
-        tester,
-        screen(),
-        overrides: baseOverrides(),
-      );
+    testWidgets("renders an empty challenges tab's empty state", (
+      tester,
+    ) async {
+      await pumpScreen(tester, screen(), overrides: baseOverrides());
 
       await tester.tap(find.text('Challenges'));
       await tester.pumpAndSettle();
@@ -93,15 +90,14 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('survives a failed match list without throwing',
-        (tester) async {
+    testWidgets('survives a failed match list without throwing', (
+      tester,
+    ) async {
       await pumpScreen(
         tester,
         screen(),
         overrides: baseOverrides(
-          matches: {
-            MatchSegment.challenges: failing<List<DriftMatch>>,
-          },
+          matches: {MatchSegment.challenges: failing<List<DriftMatch>>},
         ),
       );
 

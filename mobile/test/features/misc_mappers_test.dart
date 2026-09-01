@@ -55,7 +55,10 @@ void main() {
   });
 
   group('StorySummary / StoryDetail', () {
-    Map<String, dynamic> json({Object? imageUrl = 'https://img', bool saved = false}) => {
+    Map<String, dynamic> json({
+      Object? imageUrl = 'https://img',
+      bool saved = false,
+    }) => {
       'id': 'n1',
       'headline': 'A big win',
       'publisher': 'Drift Wire',
@@ -215,8 +218,10 @@ void main() {
 
     test('wire values are the backend SCREAMING_SNAKE form', () {
       expect(ReportReason.fakeProfile.wireValue, 'FAKE_PROFILE');
-      expect(ReportReason.inappropriateContent.wireValue,
-          'INAPPROPRIATE_CONTENT');
+      expect(
+        ReportReason.inappropriateContent.wireValue,
+        'INAPPROPRIATE_CONTENT',
+      );
     });
   });
 

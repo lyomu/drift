@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { StatusBadge } from "@/components/StatusBadge";
-import { Button, Card, EmptyState, ErrorBanner, Input, PageHeader } from "@/components/ui";
+import { Button, ErrorBanner, Input, PageHeader } from "@/components/ui";
 import { InitialsAvatar, RowCard } from "@/components/dashboard-design";
+import { Listing } from "@/components/Listing";
 import { api, ApiError } from "@/lib/api-client";
 import { useClub } from "@/lib/club-context";
 import type { CoachAdmin } from "@/lib/types";
@@ -85,20 +86,30 @@ export default function CoachesPage() {
         />
       </div>
 
-      {visible === null ? (
-        <EmptyState message="Loading..." />
-      ) : visible.length === 0 ? (
-        <EmptyState
-          message={
-            canManage
-              ? "Add your first coach"
-              : "No coaches are affiliated with this club yet."
-          }
-        />
-      ) : (
-        <Card className="p-2">
-          <div className="flex flex-col">
-            {visible.map((coach) => (
+      <Listing
+        title="Coaches"
+        count={visible?.length ?? null}
+        loading={visible === null}
+        empty={{
+          icon: "sports",
+          title: query
+            ? "No coaches match that filter"
+            : canManage
+              ? "No coaches yet"
+              : "No coaches affiliated yet",
+          description: query
+            ? "Try a different name, specialisation or level."
+            : "Coach profiles you add here are public and show on the club's page in the Drift app.",
+          action:
+            canManage && !query ? (
+              <Link href="/coaches/new">
+                <Button>Add coach</Button>
+              </Link>
+            ) : undefined,
+        }}
+      >
+        <div className="flex flex-col">
+            {visible?.map((coach) => (
               <Link href={`/coaches/${coach.id}`} key={coach.id}>
                 <RowCard className="flex cursor-pointer items-center gap-3.5 p-3.5">
                   <InitialsAvatar name={coachName(coach)} />
@@ -129,9 +140,8 @@ export default function CoachesPage() {
                 </RowCard>
               </Link>
             ))}
-          </div>
-        </Card>
-      )}
+        </div>
+      </Listing>
     </div>
   );
 }

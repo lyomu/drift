@@ -33,10 +33,7 @@ void main() {
     });
 
     test('defaults to none on anything unrecognised', () {
-      expect(
-        PlayerConnectionState.fromJson('???'),
-        PlayerConnectionState.none,
-      );
+      expect(PlayerConnectionState.fromJson('???'), PlayerConnectionState.none);
     });
   });
 

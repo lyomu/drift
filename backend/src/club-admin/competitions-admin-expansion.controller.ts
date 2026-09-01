@@ -8,7 +8,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { ClubRole } from '@prisma/client';
+import { ClubRole, MatchSport } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ClubMembershipGuard } from './guards/club-membership.guard';
 import { RequireClubRole } from './decorators/require-club-role.decorator';
@@ -62,6 +62,11 @@ export class CompetitionsAdminExpansionController {
     return this.tournaments.generateDraw(id);
   }
 
+  @Get('tournaments')
+  listTournaments(@Param('clubId') clubId: string) {
+    return this.tournaments.listForClub(clubId);
+  }
+
   @Get('tournaments/:id')
   tournament(@Param('id') id: string) {
     return this.tournaments.detail(id);
@@ -86,8 +91,12 @@ export class CompetitionsAdminExpansionController {
   @Post('ladders')
   createLadder(
     @Param('clubId') clubId: string,
-    @Body() body: { name: string; challengeRange?: number },
+    @Body()
+    body: { name: string; challengeRange?: number; sport?: MatchSport },
   ) {
+    if (body.sport && !Object.values(MatchSport).includes(body.sport)) {
+      throw new BadRequestException('sport must be TENNIS or PADEL.');
+    }
     return this.ladders.create(clubId, body);
   }
 

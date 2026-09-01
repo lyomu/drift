@@ -37,8 +37,9 @@ void main() {
         expect(tester.takeException(), isNull);
       });
 
-      testWidgets('renders results on the list segment in $label',
-          (tester) async {
+      testWidgets('renders results on the list segment in $label', (
+        tester,
+      ) async {
         await pumpScreen(
           tester,
           screen(),
@@ -57,8 +58,9 @@ void main() {
         expect(find.text('Riverside Courts'), findsOneWidget);
       });
 
-      testWidgets("survives a failed search without throwing in $label",
-          (tester) async {
+      testWidgets("survives a failed search without throwing in $label", (
+        tester,
+      ) async {
         await pumpScreen(
           tester,
           screen(),
@@ -74,8 +76,10 @@ void main() {
         await tester.tap(find.text('List'));
         await tester.pumpAndSettle();
 
-        expect(find.text("Couldn't load courts. Please try again."),
-            findsOneWidget);
+        expect(
+          find.text("Couldn't load courts. Pull to retry."),
+          findsOneWidget,
+        );
         expect(tester.takeException(), isNull);
       });
     }
@@ -86,7 +90,9 @@ void main() {
         screen(),
         settle: false,
         overrides: [
-          courtSearchProvider.overrideWith((ref) => pending<CourtSearchResult>()),
+          courtSearchProvider.overrideWith(
+            (ref) => pending<CourtSearchResult>(),
+          ),
         ],
       );
 

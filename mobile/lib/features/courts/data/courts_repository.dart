@@ -147,6 +147,7 @@ class CourtProfile {
     required this.summary,
     required this.phone,
     required this.website,
+    required this.mapsUrl,
     required this.bookingUrl,
     required this.amenities,
     required this.openingHoursNote,
@@ -159,6 +160,10 @@ class CourtProfile {
   final CourtSummary summary;
   final String? phone;
   final String? website;
+
+  /// Curator-supplied maps link. Preferred over the lat/long directions URL
+  /// when present.
+  final String? mapsUrl;
 
   /// Null unless [CourtSummary.bookingType] is [CourtBookingType.externalLink]
   /// — never a fabricated link for any other booking type.
@@ -178,6 +183,7 @@ class CourtProfile {
     summary: CourtSummary.fromJson(json),
     phone: json['phone'] as String?,
     website: json['website'] as String?,
+    mapsUrl: json['mapsUrl'] as String?,
     bookingUrl: json['bookingUrl'] as String?,
     amenities: (json['amenities'] as List<dynamic>).cast<String>(),
     openingHoursNote: json['openingHoursNote'] as String?,

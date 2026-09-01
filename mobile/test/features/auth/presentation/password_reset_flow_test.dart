@@ -63,9 +63,7 @@ void main() {
       verify(() => auth.forgotPassword(email: 'player@test.com')).called(1);
     });
 
-    testWidgets('continues to Reset Password after requesting', (
-      tester,
-    ) async {
+    testWidgets('continues to Reset Password after requesting', (tester) async {
       when(
         () => auth.forgotPassword(email: any(named: 'email')),
       ).thenAnswer((_) async => '123456');
@@ -92,9 +90,7 @@ void main() {
     // The endpoint is deliberately non-enumerating — an address with no
     // account answers 200 exactly like one that has. The UI must not leak
     // the difference by behaving differently.
-    testWidgets('moves on identically when no code was issued', (
-      tester,
-    ) async {
+    testWidgets('moves on identically when no code was issued', (tester) async {
       when(
         () => auth.forgotPassword(email: any(named: 'email')),
       ).thenAnswer((_) async => null);

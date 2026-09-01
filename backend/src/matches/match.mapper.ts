@@ -16,7 +16,7 @@ export const matchInclude = {
   // Doc 6 §1's "competitionContext" hook — present only for fixture-
   // generated matches (Phase M8).
   fixture: {
-    include: { round: { include: { season: { include: { league: true } } } } },
+    include: { round: { include: { league: true } } },
   },
   // Optional real-court link (Phase M9) — courtName/courtNote below stay
   // authoritative free text; this is populated only once a real court is
@@ -107,10 +107,8 @@ export function toMatchDto(match: MatchRecord, viewerId: string) {
 
     competitionContext: match.fixture
       ? {
-          leagueId: match.fixture.round.season.league.id,
-          leagueName: match.fixture.round.season.league.name,
-          seasonId: match.fixture.round.season.id,
-          seasonLabel: match.fixture.round.season.label,
+          leagueId: match.fixture.round.league.id,
+          leagueName: match.fixture.round.league.name,
           roundId: match.fixture.round.id,
           roundIndex: match.fixture.round.index,
         }

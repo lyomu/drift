@@ -15,7 +15,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ClubMembershipGuard } from './guards/club-membership.guard';
 import { RequireClubRole } from './decorators/require-club-role.decorator';
 import { ClubsAdminService } from './clubs-admin.service';
-import { CreateClubDto, UpdateClubDto } from './dto/club.dto';
+import { UpdateClubDto } from './dto/club.dto';
 import { InviteMemberDto, UpdateMembershipDto } from './dto/membership.dto';
 
 const OWNER_OR_ADMIN = [ClubRole.OWNER, ClubRole.ADMIN];
@@ -29,14 +29,19 @@ export class ClubsAdminController {
     return (req.user as { userId: string }).userId;
   }
 
-  @Post()
-  create(@Req() req: Request, @Body() dto: CreateClubDto) {
-    return this.clubsAdmin.createClub(this.userId(req), dto);
-  }
+  // Self-service `POST /clubs` was removed — clubs are now born only from an
+  // approved ClubCreationRequest (see `club-onboarding/`).
 
   @Get('me/memberships')
   myMemberships(@Req() req: Request) {
     return this.clubsAdmin.myMemberships(this.userId(req));
+  }
+
+  @Post(':clubId/complete-setup')
+  @UseGuards(ClubMembershipGuard)
+  @RequireClubRole(...OWNER_OR_ADMIN)
+  completeSetup(@Param('clubId') clubId: string) {
+    return this.clubsAdmin.completeSetup(clubId);
   }
 
   // Deliberately NOT behind ClubMembershipGuard — the whole point is that

@@ -17,8 +17,9 @@ void main() {
   for (final entry in screens.entries) {
     group(entry.key, () {
       for (final brightness in Brightness.values) {
-        testWidgets('renders without throwing in ${brightness.name}',
-            (tester) async {
+        testWidgets('renders without throwing in ${brightness.name}', (
+          tester,
+        ) async {
           await pumpScreen(
             tester,
             Scaffold(body: entry.value()),

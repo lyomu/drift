@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -19,23 +18,33 @@ class _FakeSecureStorage extends SecureStorage {
 }
 
 void main() {
-  testWidgets('Splash routes to Welcome, and Get Started opens Sign Up', (
+  testWidgets('first run: intro carousel → Welcome → Sign Up', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [secureStorageProvider.overrideWithValue(const _FakeSecureStorage())],
+        overrides: [
+          secureStorageProvider.overrideWithValue(const _FakeSecureStorage()),
+        ],
         child: const DriftTennisApp(),
       ),
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Find your next match.'), findsOneWidget);
+    // No stored session → the pre-auth intro carousel.
+    expect(find.text('The Game\nNever Stops'), findsOneWidget);
     expect(find.text('Get Started'), findsOneWidget);
 
     await tester.tap(find.text('Get Started'));
     await tester.pumpAndSettle();
 
-    expect(find.widgetWithText(AppBar, 'Create Account'), findsOneWidget);
+    // Join the Court — the post-intro auth entry point.
+    expect(find.text('Join the Court'), findsOneWidget);
+
+    await tester.tap(find.text('Continue with Email'));
+    await tester.pumpAndSettle();
+
+    // Heading + submit button both read "Create account".
+    expect(find.text('Create account'), findsWidgets);
   });
 }

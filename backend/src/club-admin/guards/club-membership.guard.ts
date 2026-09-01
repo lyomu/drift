@@ -13,7 +13,7 @@ import { ClubMembershipStatus } from '@prisma/client';
 /**
  * For routes with a literal `:clubId` route param only (clubs, members,
  * court/announcement/report creation under a club). Resource-nested routes
- * (a league/season/fixture/result id, not a club id) resolve their owning
+ * (a league/fixture/result id, not a club id) resolve their owning
  * club first and then call `ClubAuthService.assertRole` directly from the
  * service method instead — see `club-auth.service.ts`.
  */

@@ -151,17 +151,24 @@ describe('Competitions Expansion (e2e)', () => {
     await onboard(users.ben, 'Ben');
     await onboard(users.cara, 'Cara');
 
-    // Olivia creates a club (becomes OWNER) — the management surface.
-    const club = await authed(users.olivia.token, 'post', '/clubs')
-      .send({ name: `W6 Club ${stamp}` })
-      .expect(201);
-    clubId = club.body.id ?? club.body.club?.id;
-    if (!clubId) {
-      const found = await prisma.club.findFirst({
-        where: { name: `W6 Club ${stamp}` },
-      });
-      clubId = found!.id;
-    }
+    // Olivia owns a club — the management surface. Self-serve `POST /clubs`
+    // was replaced by the club-onboarding request flow, so seed it directly.
+    const club = await prisma.club.create({
+      data: {
+        name: `W6 Club ${stamp}`,
+        platformStatus: 'ACTIVE',
+        setupCompletedAt: new Date(),
+      },
+    });
+    clubId = club.id;
+    await prisma.clubMembership.create({
+      data: {
+        clubId,
+        userId: users.olivia.id,
+        role: 'OWNER',
+        status: 'ACTIVE',
+      },
+    });
   }, 180_000);
 
   afterAll(async () => {

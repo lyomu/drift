@@ -22,8 +22,12 @@ export class ClubsAdminService {
     private readonly notifications: NotificationsService,
   ) {}
 
-  /** Self-service creation (Doc 3 §10's ENTRY step) — the caller becomes
-   * OWNER immediately, no invitation/approval step exists to gate this. */
+  /**
+   * @deprecated Self-service club creation was removed (Club onboarding is now
+   * request → platform approval → magic-link setup — see `club-onboarding/`).
+   * No route calls this; kept only so historical unit tests still reference a
+   * symbol. New clubs are minted in `ClubOnboardingService.complete`.
+   */
   async createClub(userId: string, dto: CreateClubDto) {
     const club = await this.prisma.$transaction(async (tx) => {
       const created = await tx.club.create({
@@ -33,7 +37,7 @@ export class ClubsAdminService {
           address: dto.address,
           latitude: dto.latitude,
           longitude: dto.longitude,
-          platformStatus: ClubPlatformStatus.PENDING_REVIEW,
+          platformStatus: ClubPlatformStatus.ACTIVE,
         },
       });
       await tx.clubMembership.create({
@@ -67,8 +71,20 @@ export class ClubsAdminService {
         clubId: m.clubId,
         clubName: m.club.name,
         role: m.role,
+        setupComplete: m.club.setupCompletedAt != null,
       })),
     };
+  }
+
+  /** Marks the setup wizard done (or dismissed) — stops the dashboard
+   * bouncing the owner back into `/setup`. Idempotent. */
+  async completeSetup(clubId: string) {
+    const club = await this.prisma.club.update({
+      where: { id: clubId },
+      data: { setupCompletedAt: new Date() },
+      select: { id: true, setupCompletedAt: true },
+    });
+    return { clubId: club.id, setupCompletedAt: club.setupCompletedAt };
   }
 
   async updateClub(clubId: string, dto: UpdateClubDto) {
@@ -82,6 +98,7 @@ export class ClubsAdminService {
         longitude: dto.longitude,
         phone: dto.phone,
         website: dto.website,
+        sports: dto.sports,
         amenities: dto.amenities,
         openingHoursNote: dto.openingHoursNote,
         photoUrls: dto.photoUrls,

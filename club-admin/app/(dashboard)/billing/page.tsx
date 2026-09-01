@@ -186,7 +186,7 @@ export default function BillingPage() {
       {success && (
         <div
           role="status"
-          className="mb-4 rounded-xl border border-drift-success/20 bg-drift-success-surface px-4 py-3 text-sm font-semibold text-drift-success"
+          className="mb-4 rounded-md border border-drift-success/20 bg-drift-success-surface px-4 py-3 text-sm font-semibold text-drift-success"
         >
           {success}
         </div>
@@ -426,7 +426,7 @@ function PlanEntitlements({
 
 function InvoiceFact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl bg-drift-neutral-surface p-3">
+    <div className="rounded-md bg-drift-neutral-surface p-3">
       <dt className="text-xs font-bold uppercase tracking-[0.4px] text-drift-text-secondary">{label}</dt>
       <dd className="mt-1 font-semibold text-drift-text-primary">{value}</dd>
     </div>

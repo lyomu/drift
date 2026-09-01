@@ -23,7 +23,6 @@ import '../../features/onboarding/presentation/splash_screen.dart';
 import '../../features/onboarding/presentation/suggested_level_review_screen.dart';
 import '../../features/onboarding/presentation/tennis_experience_screen.dart';
 import '../../features/onboarding/presentation/welcome_screen.dart';
-import '../../features/competitions/presentation/league_detail_screen.dart';
 import '../../features/competitions/presentation/ladder_detail_screen.dart';
 import '../../features/competitions/presentation/tournament_detail_screen.dart';
 import '../../features/competitions/presentation/league_rules_screen.dart';
@@ -261,7 +260,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/compete/leagues/:id',
         builder: (context, state) =>
-            LeagueDetailScreen(leagueId: state.pathParameters['id']!),
+            SeasonDetailScreen(seasonId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: '/compete/leagues/:id/rules',
@@ -269,36 +268,36 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             LeagueRulesScreen(leagueId: state.pathParameters['id']!),
       ),
       GoRoute(
-        path: '/compete/seasons/:id',
-        builder: (context, state) =>
-            SeasonDetailScreen(seasonId: state.pathParameters['id']!),
-      ),
-      GoRoute(
-        path: '/compete/seasons/:id/players',
+        path: '/compete/leagues/:id/players',
         builder: (context, state) =>
             RegisteredPlayersScreen(seasonId: state.pathParameters['id']!),
       ),
       GoRoute(
-        path: '/compete/seasons/:id/rounds/:roundId',
+        path: '/compete/leagues/:id/rounds/:roundId',
         builder: (context, state) => RoundDetailScreen(
           seasonId: state.pathParameters['id']!,
           roundId: state.pathParameters['roundId']!,
         ),
       ),
       GoRoute(
-        path: '/compete/seasons/:id/standings',
+        path: '/compete/leagues/:id/standings',
         builder: (context, state) =>
             StandingsScreen(seasonId: state.pathParameters['id']!),
       ),
+      // Legacy alias — old notifications / deep links used /compete/seasons/:id.
       GoRoute(
-        path: '/compete/my-seasons',
+        path: '/compete/seasons/:id',
+        builder: (context, state) =>
+            SeasonDetailScreen(seasonId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/compete/my-leagues',
         builder: (context, state) => const MySeasonsScreen(),
       ),
       GoRoute(
         path: '/compete/tournaments/:id',
-        builder: (context, state) => TournamentDetailScreen(
-          tournamentId: state.pathParameters['id']!,
-        ),
+        builder: (context, state) =>
+            TournamentDetailScreen(tournamentId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: '/compete/ladders/:id',

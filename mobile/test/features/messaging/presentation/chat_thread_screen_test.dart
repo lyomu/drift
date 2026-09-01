@@ -18,8 +18,9 @@ import '../../../support/pump.dart';
 /// test pins a mocked one.
 class _DataThreadNotifier extends ThreadNotifier {
   @override
-  Future<List<ChatMessage>> build(String conversationId) async =>
-      [chatMessage()];
+  Future<List<ChatMessage>> build(String conversationId) async => [
+    chatMessage(),
+  ];
 }
 
 class _EmptyThreadNotifier extends ThreadNotifier {
@@ -49,10 +50,10 @@ void main() {
   });
 
   List<Override> overrides(ThreadNotifier Function() notifier) => [
-        threadProvider.overrideWith(notifier),
-        currentUserProvider.overrideWith((ref) async => userProfile()),
-        messagingRepositoryProvider.overrideWithValue(messagingRepo),
-      ];
+    threadProvider.overrideWith(notifier),
+    currentUserProvider.overrideWith((ref) async => userProfile()),
+    messagingRepositoryProvider.overrideWithValue(messagingRepo),
+  ];
 
   group('ChatThreadScreen', () {
     for (final brightness in Brightness.values) {

@@ -29,8 +29,14 @@
   --color-neutral-surface: #f1f3f5;
 }
 
+/*
+ * Dark palette. Applied three ways: the OS preference (unless the user has
+ * explicitly chosen light via the header toggle), and an explicit
+ * `data-theme="dark"` on <html> (set by ThemeToggle + the no-flash script in
+ * layout.tsx). Keep the values in the two blocks below identical.
+ */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --color-primary: #4fb3e8;
     --color-primary-dark: #7cc9ef;
     --color-primary-light: #16324a;
@@ -48,6 +54,25 @@
     --color-error-surface: #341415;
     --color-neutral-surface: #1c2738;
   }
+}
+
+:root[data-theme="dark"] {
+  --color-primary: #4fb3e8;
+  --color-primary-dark: #7cc9ef;
+  --color-primary-light: #16324a;
+  --color-background: #0a121f;
+  --color-surface: #111b2c;
+  --color-surface-raised: #162236;
+  --color-text-primary: #eef2f7;
+  --color-text-secondary: #93a2b7;
+  --color-border: #24324a;
+  --color-success: #34d399;
+  --color-success-surface: #10291f;
+  --color-warning: #fbbf24;
+  --color-warning-surface: #2e2408;
+  --color-error: #f87171;
+  --color-error-surface: #341415;
+  --color-neutral-surface: #1c2738;
 }
 
 @theme inline {
@@ -72,9 +97,9 @@
   --font-display: var(--font-display-face);
 
   --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
 }
 
 body {
@@ -120,4 +145,60 @@ body {
 
 .tabular {
   font-variant-numeric: tabular-nums;
+}
+
+/*
+ * Rendered + editable league-rules rich text. The stored HTML is
+ * server-sanitised (backend common/rich-text.util.ts) to this exact tag set,
+ * so the rules here and that allowlist move together.
+ */
+.drift-prose {
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--color-text-primary);
+}
+.drift-prose :where(p, ul, ol, blockquote, h2, h3, h4):not(:first-child) {
+  margin-top: 0.7em;
+}
+.drift-prose h2 {
+  font-size: 1.2em;
+  font-weight: 700;
+}
+.drift-prose h3 {
+  font-size: 1.08em;
+  font-weight: 700;
+}
+.drift-prose h4 {
+  font-size: 1em;
+  font-weight: 700;
+}
+.drift-prose ul,
+.drift-prose ol {
+  padding-left: 1.4em;
+}
+.drift-prose ul {
+  list-style: disc;
+}
+.drift-prose ol {
+  list-style: decimal;
+}
+.drift-prose li {
+  margin-top: 0.2em;
+}
+.drift-prose a {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+.drift-prose blockquote {
+  border-left: 3px solid var(--color-border);
+  padding-left: 0.9em;
+  color: var(--color-text-secondary);
+}
+.drift-prose[data-placeholder]:empty::before,
+.drift-prose .is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--color-text-secondary);
+  pointer-events: none;
+  float: left;
+  height: 0;
 }

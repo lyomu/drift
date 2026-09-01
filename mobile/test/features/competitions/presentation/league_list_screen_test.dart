@@ -36,9 +36,7 @@ void main() {
           tester,
           screen(),
           brightness: brightness,
-          overrides: [
-            leaguesProvider.overrideWith((ref) async => <League>[]),
-          ],
+          overrides: [leaguesProvider.overrideWith((ref) async => <League>[])],
         );
 
         expect(
@@ -70,8 +68,10 @@ void main() {
         ],
       );
 
-      expect(find.text("Couldn't load leagues. Please try again."),
-          findsOneWidget);
+      expect(
+        find.text("Couldn't load leagues. Please try again."),
+        findsOneWidget,
+      );
       expect(tester.takeException(), isNull);
     });
   });

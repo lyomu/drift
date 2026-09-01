@@ -21,9 +21,9 @@ void main() {
           const SkillCategoryBrowseScreen(skill: 'SERVE'),
           brightness: brightness,
           overrides: [
-            contentBrowseProvider(params).overrideWith(
-              (ref) async => [contentSummary()],
-            ),
+            contentBrowseProvider(
+              params,
+            ).overrideWith((ref) async => [contentSummary()]),
           ],
         );
 
@@ -37,9 +37,9 @@ void main() {
           const SkillCategoryBrowseScreen(skill: 'SERVE'),
           brightness: brightness,
           overrides: [
-            contentBrowseProvider(params).overrideWith(
-              (ref) async => <ContentSummary>[],
-            ),
+            contentBrowseProvider(
+              params,
+            ).overrideWith((ref) async => <ContentSummary>[]),
           ],
         );
 
@@ -53,9 +53,9 @@ void main() {
         const SkillCategoryBrowseScreen(skill: 'SERVE'),
         settle: false,
         overrides: [
-          contentBrowseProvider(params).overrideWith(
-            (ref) => pending<List<ContentSummary>>(),
-          ),
+          contentBrowseProvider(
+            params,
+          ).overrideWith((ref) => pending<List<ContentSummary>>()),
         ],
       );
 
@@ -67,9 +67,9 @@ void main() {
         tester,
         const SkillCategoryBrowseScreen(skill: 'SERVE'),
         overrides: [
-          contentBrowseProvider(params).overrideWith(
-            (ref) => failing<List<ContentSummary>>(),
-          ),
+          contentBrowseProvider(
+            params,
+          ).overrideWith((ref) => failing<List<ContentSummary>>()),
         ],
       );
 

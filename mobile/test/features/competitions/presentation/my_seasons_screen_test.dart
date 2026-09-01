@@ -23,7 +23,7 @@ void main() {
           ],
         );
 
-        expect(find.text('My Seasons'), findsOneWidget);
+        expect(find.text('My Leagues'), findsOneWidget);
         expect(find.text('Autumn 2026'), findsOneWidget);
         expect(find.text('In progress'), findsOneWidget);
       });
@@ -34,13 +34,11 @@ void main() {
           const MySeasonsScreen(),
           brightness: brightness,
           overrides: [
-            mySeasonsProvider.overrideWith(
-              (ref) async => <MySeasonSummary>[],
-            ),
+            mySeasonsProvider.overrideWith((ref) async => <MySeasonSummary>[]),
           ],
         );
 
-        expect(find.text("You haven't joined a season yet"), findsOneWidget);
+        expect(find.text("You haven't joined a league yet"), findsOneWidget);
       });
     }
 
@@ -70,7 +68,7 @@ void main() {
         ],
       );
 
-      expect(find.text("Couldn't load your seasons."), findsOneWidget);
+      expect(find.text("Couldn't load your leagues."), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   });

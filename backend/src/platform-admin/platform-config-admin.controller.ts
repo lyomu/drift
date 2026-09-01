@@ -23,7 +23,6 @@ import {
   UpsertIntegrationConfigDto,
   UpsertMarketDto,
   UpsertNotificationTemplateDto,
-  UpsertSystemSettingDto,
 } from './dto/platform-config-admin.dto';
 
 @Controller('platform-admin/platform-config')
@@ -129,31 +128,6 @@ export class PlatformConfigAdminController {
   @Post('notification-templates/:id/preview')
   previewNotificationTemplate(@Param('id') id: string) {
     return this.platformConfig.previewNotificationTemplate(id);
-  }
-
-  @Get('system-settings')
-  systemSettings(
-    @Query('type') type?: string,
-    @Query('search') search?: string,
-  ) {
-    return this.platformConfig.listSystemSettings({ type, search });
-  }
-
-  @Post('system-settings')
-  createSystemSetting(
-    @Req() req: { user: { adminId: string } },
-    @Body() dto: UpsertSystemSettingDto,
-  ) {
-    return this.platformConfig.createSystemSetting(req.user.adminId, dto);
-  }
-
-  @Patch('system-settings/:id')
-  updateSystemSetting(
-    @Req() req: { user: { adminId: string } },
-    @Param('id') id: string,
-    @Body() dto: UpsertSystemSettingDto,
-  ) {
-    return this.platformConfig.updateSystemSetting(req.user.adminId, id, dto);
   }
 
   @Get('integrations')

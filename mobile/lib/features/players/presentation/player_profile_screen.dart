@@ -313,9 +313,9 @@ void _showRequestSentSheet(
                           }
                         } on AuthException catch (e) {
                           if (sheetContext.mounted) {
-                            ScaffoldMessenger.of(sheetContext).showSnackBar(
-                              SnackBar(content: Text(e.message)),
-                            );
+                            ScaffoldMessenger.of(
+                              sheetContext,
+                            ).showSnackBar(SnackBar(content: Text(e.message)));
                           }
                         } finally {
                           if (sheetContext.mounted) {
@@ -444,9 +444,7 @@ class _Fact extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
-        border: last
-            ? null
-            : Border(bottom: BorderSide(color: colors.border)),
+        border: last ? null : Border(bottom: BorderSide(color: colors.border)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

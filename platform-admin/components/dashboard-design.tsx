@@ -38,7 +38,7 @@ export function IconChip({
     gray: "bg-drift-neutral-surface text-drift-text-secondary",
   };
   return (
-    <span className={`inline-flex h-9 w-9 items-center justify-center rounded-lg ${tones[tone]} ${className}`}>
+    <span className={`inline-flex h-9 w-9 items-center justify-center rounded-md ${tones[tone]} ${className}`}>
       <MaterialIcon name={icon} />
     </span>
   );
@@ -52,7 +52,7 @@ export function Panel({
   className?: string;
 }) {
   return (
-    <section className={`rounded-[14px] border border-drift-border bg-drift-surface ${className}`}>
+    <section className={`rounded-lg border border-drift-border bg-drift-surface ${className}`}>
       {children}
     </section>
   );
@@ -71,8 +71,8 @@ export function RowCard({
 }) {
   const content = (
     <div
-      className={`rowcard rounded-xl border px-4 py-3 transition ${
-        selected ? "border-drift-primary bg-drift-primary-light" : "border-drift-border bg-drift-surface"
+      className={`rowcard rounded-lg border px-5 py-4 transition-colors ${
+        selected ? "border-drift-primary bg-drift-primary-light" : "border-drift-border bg-drift-surface hover:bg-drift-primary-light/35"
       } ${className}`}
     >
       {children}
@@ -199,13 +199,13 @@ export function ModalShell({
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4 py-6">
-      <div className="w-full max-w-2xl rounded-2xl border border-drift-border bg-drift-surface shadow-[0_24px_80px_rgba(17,24,39,0.18)]">
+      <div className="w-full max-w-2xl rounded-lg border border-drift-border bg-drift-surface shadow-[0_24px_80px_rgba(17,24,39,0.18)]">
         <div className="flex items-start justify-between gap-4 border-b border-drift-border px-6 py-5">
           <div>
             <h2 className="font-display text-xl font-bold text-drift-text-primary">{title}</h2>
             {description && <p className="mt-1 text-sm leading-6 text-drift-text-secondary">{description}</p>}
           </div>
-          <button type="button" onClick={onClose} className="actionbtn rounded-lg p-2 text-drift-text-secondary" aria-label="Close">
+          <button type="button" onClick={onClose} className="actionbtn rounded-md p-2 text-drift-text-secondary" aria-label="Close">
             <MaterialIcon name="close" />
           </button>
         </div>
@@ -222,7 +222,7 @@ export function ModalShell({
 // source order, not by the order they appear in `className`, which is how the
 // "primary" buttons rendered white-on-white before.
 const compactBase =
-  "inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg border px-3 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md border px-3 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-50";
 
 // "secondary" keeps the `pbtn` hover (light-blue wash from globals.css); "primary"
 // drops `pbtn` so that same rule can't wash white text onto a light background.
@@ -280,7 +280,7 @@ export function InitialsAvatar({ label }: { label: string }) {
     .map((part) => part[0]?.toUpperCase())
     .join("");
   return (
-    <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-drift-primary text-sm font-bold text-white">
+    <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-drift-primary text-sm font-bold text-white">
       {initials || "D"}
     </span>
   );

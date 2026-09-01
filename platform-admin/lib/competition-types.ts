@@ -88,23 +88,22 @@ export type LeagueDetail = {
   unfinishedMatchPolicy: string | null;
   createdAt: string;
   updatedAt: string;
-  seasons: Array<{
-    id: string;
-    label: string;
-    registrationOpensAt: string;
-    registrationClosesAt: string;
-    startsAt: string;
-    roundCount: number;
-    capacity: number | null;
-    cancelledAt: string | null;
-    completedAt: string | null;
-    _count: {
-      registrations: number;
-      rounds: number;
-      standings: number;
-      awards: number;
-    };
-  }>;
+  // Since M15 a league is a single competition run — the scheduling that
+  // used to live on a Season row now lives here directly.
+  registrationOpensAt: string | null;
+  registrationClosesAt: string | null;
+  startsAt: string | null;
+  roundCount: number | null;
+  roundIntervalMinutes: number;
+  capacity: number | null;
+  cancelledAt: string | null;
+  completedAt: string | null;
+  _count: {
+    registrations: number;
+    rounds: number;
+    standings: number;
+    awards: number;
+  };
 };
 
 export type TournamentDetail = {

@@ -635,8 +635,7 @@ class _Actions extends ConsumerWidget {
           Center(
             child: DriftTextLink(
               label: 'How did it feel?',
-              onPressed: () =>
-                  context.push('/matches/${match.id}/reflection'),
+              onPressed: () => context.push('/matches/${match.id}/reflection'),
             ),
           ),
         ],
@@ -670,9 +669,7 @@ class _Actions extends ConsumerWidget {
                 : () async {
                     final times = await showProposeTimeSheet(context);
                     if (times != null && times.isNotEmpty) {
-                      await onAction(
-                        () => repo.proposeTimes(match.id, times),
-                      );
+                      await onAction(() => repo.proposeTimes(match.id, times));
                     }
                   },
           ),
@@ -715,9 +712,7 @@ class _Actions extends ConsumerWidget {
                     );
                     if (saved != null) {
                       ref.invalidate(matchDetailProvider(match.id));
-                      ref.invalidate(
-                        matchListProvider(MatchSegment.active),
-                      );
+                      ref.invalidate(matchListProvider(MatchSegment.active));
                     }
                   },
           ),
@@ -869,11 +864,7 @@ class _CompetitionBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.emoji_events_outlined,
-            size: 14,
-            color: colors.primary,
-          ),
+          Icon(Icons.emoji_events_outlined, size: 14, color: colors.primary),
           const SizedBox(width: 8),
           Expanded(
             child: Text(

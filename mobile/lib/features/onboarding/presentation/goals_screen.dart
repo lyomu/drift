@@ -63,24 +63,30 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('What are you hoping to get out of Drift?'),
-            const SizedBox(height: DriftSpacing.s4),
-            Wrap(
-              spacing: DriftSpacing.s2,
-              runSpacing: DriftSpacing.s2,
-              children: _goalOptions
-                  .map(
-                    (goal) => DriftFilterChip(
-                      label: goal.$2,
-                      selected: _selected.contains(goal.$1),
-                      onTap: () => setState(() {
-                        if (!_selected.remove(goal.$1)) {
-                          _selected.add(goal.$1);
-                        }
-                      }),
-                    ),
-                  )
-                  .toList(),
+            Expanded(
+              child: ListView(
+                children: [
+                  const Text('What are you hoping to get out of Drift?'),
+                  const SizedBox(height: DriftSpacing.s4),
+                  Wrap(
+                    spacing: DriftSpacing.s2,
+                    runSpacing: DriftSpacing.s2,
+                    children: _goalOptions
+                        .map(
+                          (goal) => DriftFilterChip(
+                            label: goal.$2,
+                            selected: _selected.contains(goal.$1),
+                            onTap: () => setState(() {
+                              if (!_selected.remove(goal.$1)) {
+                                _selected.add(goal.$1);
+                              }
+                            }),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ],
+              ),
             ),
             if (_errorText != null) ...[
               const SizedBox(height: DriftSpacing.s3),

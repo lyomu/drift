@@ -34,10 +34,7 @@ class TournamentListScreen extends ConsumerWidget {
           itemBuilder: (context, i) {
             final t = value[i];
             return DriftSoftCard(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 14,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               onTap: () => context.push('/compete/tournaments/${t.id}'),
               child: Row(
                 children: [

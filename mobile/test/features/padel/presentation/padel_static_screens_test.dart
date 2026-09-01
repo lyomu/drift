@@ -15,8 +15,9 @@ void main() {
 
   setUp(() {
     assessmentRepo = MockAssessmentRepository();
-    when(() => assessmentRepo.startOrResumeSession())
-        .thenAnswer((_) async => assessmentSession());
+    when(
+      () => assessmentRepo.startOrResumeSession(),
+    ).thenAnswer((_) async => assessmentSession());
   });
 
   final screens = <String, Widget Function()>{
@@ -24,14 +25,16 @@ void main() {
     // The question screen starts a real session on mount through the padel
     // repository provider; pin it to the mock so no Dio timer outlives the
     // test, and pump once because its spinner never settles in fake async.
-    'PadelAssessmentQuestionScreen': () => const PadelAssessmentQuestionScreen(),
+    'PadelAssessmentQuestionScreen': () =>
+        const PadelAssessmentQuestionScreen(),
   };
 
   for (final entry in screens.entries) {
     group(entry.key, () {
       for (final brightness in Brightness.values) {
-        testWidgets('renders without throwing in ${brightness.name}',
-            (tester) async {
+        testWidgets('renders without throwing in ${brightness.name}', (
+          tester,
+        ) async {
           await pumpScreen(
             tester,
             Scaffold(body: entry.value()),

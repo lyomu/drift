@@ -38,12 +38,11 @@ void main() {
           brightness: brightness,
           overrides: [
             notificationsListProvider.overrideWith(
-              (ref) async =>
-                  const NotificationsPage(
-                    total: 0,
-                    unreadCount: 0,
-                    notifications: [],
-                  ),
+              (ref) async => const NotificationsPage(
+                total: 0,
+                unreadCount: 0,
+                notifications: [],
+              ),
             ),
           ],
         );

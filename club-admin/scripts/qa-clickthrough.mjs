@@ -5,14 +5,14 @@
  *
  *   node scripts/qa-clickthrough.mjs
  *
- * Prereqs: backend on :3000, club-admin on :3003, platform-admin on :3002.
+ * Prereqs: backend on :3009, club-admin on :3010, platform-admin on :3011.
  */
 import { chromium } from "playwright";
 import { mkdirSync } from "fs";
 import { execSync } from "child_process";
 
-const CLUB = "http://localhost:3003";
-const PLATFORM = "http://localhost:3002";
+const CLUB = "http://localhost:3010";
+const PLATFORM = "http://localhost:3011";
 const OUT = new URL("../../qa-evidence/", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1");
 mkdirSync(OUT, { recursive: true });
 
@@ -48,6 +48,8 @@ await page.goto(`${CLUB}/leagues`);
 await page.getByRole("button", { name: /create|new league/i }).first().click();
 await page.getByLabel("League name").fill(`QA League ${stamp}`);
 await page.getByLabel("Description").fill("Created by the M14 closure click-through.");
+await page.getByLabel("Start date").fill("2026-09-01");
+await page.getByLabel("End date").fill("2026-12-15");
 await page.getByRole("button", { name: /create league/i }).click();
 await page.waitForLoadState("networkidle");
 await shot(page, "02-club-league-created");
@@ -96,7 +98,7 @@ await shot(page, "08-platform-overview");
 
 // Seed one OPEN player report via the API so triage has something to chew.
 log("Platform Admin: seed an OPEN player report via API");
-const login = await fetch("http://localhost:3000/platform-admin/auth/login", {
+const login = await fetch("http://localhost:3009/platform-admin/auth/login", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
@@ -104,19 +106,19 @@ const login = await fetch("http://localhost:3000/platform-admin/auth/login", {
     password: "DriftReview2026",
   }),
 }).then((r) => r.json());
-const users = await fetch("http://localhost:3000/platform-admin/users?take=50", {
+const users = await fetch("http://localhost:3009/platform-admin/users?take=50", {
   headers: { Authorization: `Bearer ${login.accessToken}` },
 }).then((r) => r.json());
 const reporter = users.users.find((u) => u.email === "owner@drift.test");
 const reported = users.users.find((u) => u.email !== "owner@drift.test");
 if (reporter && reported) {
   // Report seeding needs a *player* token — /safety/* is a player surface.
-  const playerLogin = await fetch("http://localhost:3000/auth/login", {
+  const playerLogin = await fetch("http://localhost:3009/auth/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email: "owner@drift.test", password: "Password123!" }),
   }).then((r) => r.json());
-  await fetch("http://localhost:3000/safety/reports", {
+  await fetch("http://localhost:3009/safety/reports", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -164,7 +166,7 @@ await page.waitForLoadState("networkidle");
 await shot(page, "14-platform-source-created");
 
 // Seed a PENDING story for the first source directly (no ingestion yet).
-const sources = await fetch("http://localhost:3000/platform-admin/news/sources", {
+const sources = await fetch("http://localhost:3009/platform-admin/news/sources", {
   headers: { Authorization: `Bearer ${login.accessToken}` },
 }).then((r) => r.json());
 const src = sources.sources.find((s) => s.name === `QA Source ${stamp}`);

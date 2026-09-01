@@ -22,8 +22,7 @@ class _CoachFiltersSheet extends ConsumerStatefulWidget {
   const _CoachFiltersSheet();
 
   @override
-  ConsumerState<_CoachFiltersSheet> createState() =>
-      _CoachFiltersSheetState();
+  ConsumerState<_CoachFiltersSheet> createState() => _CoachFiltersSheetState();
 }
 
 class _CoachFiltersSheetState extends ConsumerState<_CoachFiltersSheet> {
@@ -91,7 +90,10 @@ class _CoachFiltersSheetState extends ConsumerState<_CoachFiltersSheet> {
                   controller: _clubController,
                 )
               else
-                Text('Club: ${_draft.clubName ?? 'Selected club'}', style: type.body),
+                Text(
+                  'Club: ${_draft.clubName ?? 'Selected club'}',
+                  style: type.body,
+                ),
               const SizedBox(height: DriftSpacing.s4),
               Text('Players coached', style: type.label),
               const SizedBox(height: DriftSpacing.s2),

@@ -66,10 +66,7 @@ class RegisteredPlayersScreen extends ConsumerWidget {
                             context.push('/players/${entry.player.id}'),
                         child: Row(
                           children: [
-                            DriftPlayerAvatar(
-                              player: entry.player,
-                              radius: 20,
-                            ),
+                            DriftPlayerAvatar(player: entry.player, radius: 20),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(

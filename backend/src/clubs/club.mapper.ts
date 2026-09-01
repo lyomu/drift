@@ -41,6 +41,7 @@ export function toClubProfile(
     description: club.description,
     phone: club.phone,
     website: club.website,
+    sports: club.sports,
     amenities: club.amenities,
     openingHoursNote: club.openingHoursNote,
     photoUrls: club.photoUrls,

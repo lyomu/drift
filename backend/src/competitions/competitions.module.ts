@@ -12,7 +12,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
   controllers: [CompetitionsController, CompetitionsExpansionController],
   providers: [CompetitionsService, TournamentsService, LaddersService],
   // Phase M14's club-admin module is a second consumer, for the
-  // league/season/fixture admin write paths.
+  // league/fixture admin write paths.
   exports: [CompetitionsService, TournamentsService, LaddersService],
 })
 export class CompetitionsModule {}

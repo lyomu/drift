@@ -22,12 +22,23 @@ import {
   UpsertPromotionDto,
   UpsertSponsorPlacementDto,
 } from './dto/commercial-admin.dto';
+import { SUPPORTED_CURRENCIES } from './supported-currencies';
 
 @Controller('platform-admin/commercial')
 @UseGuards(PlatformGuard, PlatformPermissionGuard)
 @RequirePlatformPermission(PlatformPermission.COMMERCIAL_MANAGE)
 export class CommercialAdminController {
   constructor(private readonly commercial: CommercialAdminService) {}
+
+  /**
+   * The currencies a plan or promotion may be priced in. The console renders
+   * its currency dropdown from this, so the options it offers and the codes
+   * the DTOs accept can never drift apart.
+   */
+  @Get('currencies')
+  listCurrencies() {
+    return { currencies: SUPPORTED_CURRENCIES };
+  }
 
   @Get('plans')
   listPlans(

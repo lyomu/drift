@@ -17,6 +17,8 @@ type ClubContextValue = {
   clubId: string | null;
   clubName: string | null;
   role: ClubRole | null;
+  /** false while the owner still has the setup wizard to finish/dismiss. */
+  setupComplete: boolean;
   memberships: Membership[];
   refresh: () => Promise<void>;
   logout: () => void;
@@ -77,6 +79,7 @@ export function ClubProvider({ children }: { children: React.ReactNode }) {
         clubId: primary?.clubId ?? null,
         clubName: primary?.clubName ?? null,
         role: primary?.role ?? null,
+        setupComplete: primary?.setupComplete ?? true,
         memberships,
         refresh,
         logout,

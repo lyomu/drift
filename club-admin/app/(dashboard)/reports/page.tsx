@@ -3,8 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, ApiError, downloadBlob } from "@/lib/api-client";
 import { useClub } from "@/lib/club-context";
-import { Button, Card, EmptyState, ErrorBanner, Input, PageHeader, Select } from "@/components/ui";
+import { Button, Card, EmptyState, ErrorBanner, Input, PageHeader } from "@/components/ui";
 import { StatusBadge } from "@/components/StatusBadge";
+import { SelectEditControl } from "@/components/EditFieldModal";
 import { IconChip, RowCard } from "@/components/dashboard-design";
 import type { CourtReport, ReportStatus } from "@/lib/types";
 
@@ -78,8 +79,9 @@ export default function ReportsPage() {
 
   async function updateStatus(id: string, status: ReportStatus) {
     if (!clubId) return;
-    try { await api.patch(`/clubs/${clubId}/reports/${id}`, { status }); await load(); }
-    catch (err) { setError(err instanceof ApiError ? err.message : "Report status could not be saved."); }
+    setError(null);
+    await api.patch(`/clubs/${clubId}/reports/${id}`, { status });
+    await load();
   }
 
   const hasExport = tab === "Engagement" || tab === "Court inquiries" || tab === "Events";
@@ -186,9 +188,15 @@ export default function ReportsPage() {
               </div>
               <div className="min-w-[180px] flex-1 text-[12.5px] text-drift-text-secondary">{row.notes ?? "-"}</div>
               {canManage ? (
-                <Select value={row.status} onChange={(e) => void updateStatus(row.id, e.target.value as ReportStatus)} className="max-w-[160px]">
-                  {STATUSES.map((status) => <option key={status} value={status}>{status}</option>)}
-                </Select>
+                <SelectEditControl
+                  value={row.status}
+                  options={STATUSES.map((status) => ({ value: status, label: status }))}
+                  onSave={(next) => updateStatus(row.id, next as ReportStatus)}
+                  title="Update report status"
+                  description={`${row.courtName} · ${row.reason.replaceAll("_", " ")}`}
+                  fieldLabel="Status"
+                  confirmLabel="Save status"
+                />
               ) : (
                 <StatusBadge status={row.status} />
               )}

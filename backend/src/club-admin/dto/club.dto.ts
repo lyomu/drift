@@ -1,10 +1,12 @@
 import {
   IsArray,
+  IsEnum,
   IsNumber,
   IsOptional,
   IsString,
   MaxLength,
 } from 'class-validator';
+import { MatchSport } from '@prisma/client';
 
 export class CreateClubDto {
   @IsString()
@@ -59,6 +61,11 @@ export class UpdateClubDto {
   @IsOptional()
   @IsString()
   website?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsEnum(MatchSport, { each: true })
+  sports?: MatchSport[];
 
   @IsOptional()
   @IsArray()

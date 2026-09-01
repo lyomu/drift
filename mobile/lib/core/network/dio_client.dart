@@ -10,7 +10,7 @@ import '../storage/secure_storage.dart';
 /// the usual loopback aliases — chiefly a debug APK on a physical phone,
 /// which needs the dev machine's LAN address:
 ///
-///   flutter build apk --dart-define=DRIFT_API_BASE_URL=http://192.168.1.x:3000
+///   flutter build apk --dart-define=DRIFT_API_BASE_URL=http://192.168.1.x:3009
 const _apiBaseUrlOverride = String.fromEnvironment('DRIFT_API_BASE_URL');
 
 /// `10.0.2.2` is the Android emulator's alias for the host machine's
@@ -24,9 +24,9 @@ String apiBaseUrl() {
     return _apiBaseUrlOverride;
   }
   if (!kIsWeb && Platform.isAndroid) {
-    return 'http://10.0.2.2:3000';
+    return 'http://10.0.2.2:3009';
   }
-  return 'http://localhost:3000';
+  return 'http://localhost:3009';
 }
 
 final secureStorageProvider = Provider<SecureStorage>(

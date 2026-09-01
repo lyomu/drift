@@ -116,7 +116,9 @@ class _ProposeTimeSheetState extends State<_ProposeTimeSheet> {
 
             const SizedBox(height: DriftSpacing.s2),
             if (_times.length < _maxOptions)
-              Center(child: DriftTextLink(label: 'Add a time', onPressed: _addTime)),
+              Center(
+                child: DriftTextLink(label: 'Add a time', onPressed: _addTime),
+              ),
 
             const SizedBox(height: DriftSpacing.s4),
             DriftPrimaryButton(

@@ -32,8 +32,9 @@ void main() {
         expect(find.text('Tennis'), findsNothing);
       });
 
-      testWidgets('offers the sport toggle with a padel profile in $label',
-          (tester) async {
+      testWidgets('offers the sport toggle with a padel profile in $label', (
+        tester,
+      ) async {
         await pumpScreen(
           tester,
           ChallengeComposerScreen(opponent: playerSummary()),
@@ -53,8 +54,9 @@ void main() {
       });
     }
 
-    testWidgets('explains missing connections when picking a doubles partner',
-        (tester) async {
+    testWidgets('explains missing connections when picking a doubles partner', (
+      tester,
+    ) async {
       await pumpScreen(
         tester,
         ChallengeComposerScreen(opponent: playerSummary()),
@@ -75,8 +77,9 @@ void main() {
       );
     });
 
-    testWidgets("survives a failed connections load without throwing",
-        (tester) async {
+    testWidgets("survives a failed connections load without throwing", (
+      tester,
+    ) async {
       await pumpScreen(
         tester,
         ChallengeComposerScreen(opponent: playerSummary()),

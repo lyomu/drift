@@ -30,8 +30,9 @@ void main() {
         expect(find.text('Level 4.0'), findsOneWidget);
       });
 
-      testWidgets("says so when there's no second assessment yet in $label",
-          (tester) async {
+      testWidgets("says so when there's no second assessment yet in $label", (
+        tester,
+      ) async {
         await pumpScreen(
           tester,
           const AssessmentHistoryScreen(),

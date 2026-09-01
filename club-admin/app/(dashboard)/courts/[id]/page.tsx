@@ -19,6 +19,7 @@ export default function EditCourtPage() {
   const [form, setForm] = useState({
     name: "",
     address: "",
+    mapsUrl: "",
     phone: "",
     website: "",
   });
@@ -29,6 +30,7 @@ export default function EditCourtPage() {
       setForm({
         name: res.name,
         address: res.address ?? "",
+        mapsUrl: res.mapsUrl ?? "",
         phone: res.phone ?? "",
         website: res.website ?? "",
       });
@@ -70,10 +72,20 @@ export default function EditCourtPage() {
               onChange={(e) => setForm({ ...form, name: e.target.value })}
             />
           </Field>
-          <Field label="Address">
+          <Field label="Address / Location">
             <Input
               value={form.address}
+              placeholder="Street, area, city"
               onChange={(e) => setForm({ ...form, address: e.target.value })}
+            />
+          </Field>
+          <Field label="Google Maps link (optional)">
+            <Input
+              type="url"
+              inputMode="url"
+              placeholder="https://maps.google.com/…"
+              value={form.mapsUrl}
+              onChange={(e) => setForm({ ...form, mapsUrl: e.target.value })}
             />
           </Field>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

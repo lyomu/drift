@@ -39,9 +39,8 @@ void main() {
           brightness: brightness,
           overrides: [
             clubSearchProvider.overrideWith(
-              (ref) => Future.value(
-                const ClubSearchResult(total: 0, clubs: []),
-              ),
+              (ref) =>
+                  Future.value(const ClubSearchResult(total: 0, clubs: [])),
             ),
           ],
         );
@@ -72,8 +71,7 @@ void main() {
         ],
       );
 
-      expect(find.text("Couldn't load clubs. Please try again."),
-          findsOneWidget);
+      expect(find.text("Couldn't load clubs. Pull to retry."), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   });

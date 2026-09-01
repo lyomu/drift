@@ -16,14 +16,14 @@ void main() {
 
   setUp(() {
     assessmentRepo = MockAssessmentRepository();
-    when(() => assessmentRepo.startOrResumeSession())
-        .thenAnswer((_) async => assessmentSession());
+    when(
+      () => assessmentRepo.startOrResumeSession(),
+    ).thenAnswer((_) async => assessmentSession());
   });
 
   group('AssessmentQuestionScreen', () {
     for (final brightness in Brightness.values) {
-      testWidgets('renders the question in ${brightness.name}',
-          (tester) async {
+      testWidgets('renders the question in ${brightness.name}', (tester) async {
         await pumpScreen(
           tester,
           Scaffold(
@@ -45,11 +45,12 @@ void main() {
       });
     }
 
-    testWidgets("survives a failed session start without throwing",
-        (tester) async {
-      when(() => assessmentRepo.startOrResumeSession()).thenThrow(
-        AuthException('Something went wrong. Please try again.'),
-      );
+    testWidgets("survives a failed session start without throwing", (
+      tester,
+    ) async {
+      when(
+        () => assessmentRepo.startOrResumeSession(),
+      ).thenThrow(AuthException('Something went wrong. Please try again.'));
 
       await pumpScreen(
         tester,

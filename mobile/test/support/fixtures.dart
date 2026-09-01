@@ -321,16 +321,24 @@ DriftMatch match({
 
 // ----------------------------------------------------------- competitions
 
-League league({String id = 'league-1', String name = 'Richmond Singles'}) =>
-    League(
-      id: id,
-      sport: 'TENNIS',
-      name: name,
-      description: 'A local ladder.',
-      rulesText: 'Best of three sets.',
-      format: 'SINGLES',
-      seasons: const [LeagueSeasonRef(id: 'season-1', label: 'Autumn 2026')],
-    );
+League league({
+  String id = 'league-1',
+  String name = 'Richmond Singles',
+  String? rulesText = '<p>Best of three sets.</p>',
+}) => League(
+  id: id,
+  sport: 'TENNIS',
+  name: name,
+  description: 'A local ladder.',
+  rulesText: rulesText,
+  format: 'SINGLES',
+  seasons: const [LeagueSeasonRef(id: 'season-1', label: 'Autumn 2026')],
+  startDate: DateTime(2026, 9, 1),
+  endDate: DateTime(2026, 12, 15),
+  scoringFormat: 'Best of 3 sets, match tiebreak at one set all.',
+  walkoverRule: 'No-show after 15 minutes forfeits the match.',
+  unfinishedMatchPolicy: 'Resume from the recorded score within 48 hours.',
+);
 
 SeasonDetail seasonDetail({
   String id = 'season-1',
@@ -434,6 +442,7 @@ CourtProfile courtProfile({String id = 'court-1'}) => CourtProfile(
   summary: courtSummary(id: id),
   phone: '020 7000 0000',
   website: 'https://example.test',
+  mapsUrl: null,
   bookingUrl: null,
   amenities: const ['Parking', 'Floodlights'],
   openingHoursNote: 'Open 7am to 10pm',

@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { RowCard } from "@/components/dashboard-design";
 import { api, ApiError } from "@/lib/api-client";
+import { DataTable } from "@/components/DataTable";
 import { Badge, Button, EmptyState, ErrorBanner, PageHeader } from "@/components/ui";
 
 interface DisputeRow {
@@ -80,62 +80,76 @@ export default function DisputesPage() {
       {rows?.length === 0 && <EmptyState message="No open disputes." />}
 
       {rows && rows.length > 0 && (
-        <div className="flex flex-col gap-4">
-          {rows.map((dispute) => {
-            const a = dispute.match.participants.find((p) => p.side === "A");
-            const b = dispute.match.participants.find((p) => p.side === "B");
-            return (
-              <RowCard key={dispute.id}>
-                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                  <Badge tone="error">DISPUTED</Badge>
-                  <span className="text-xs text-drift-text-secondary">
-                    disputed {new Date(dispute.disputedAt).toLocaleString()}
-                  </span>
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-lg border border-drift-border bg-drift-neutral-surface p-3">
-                    <div className="text-xs font-bold uppercase tracking-[0.08em] text-drift-text-secondary">
-                      Submitted version
-                    </div>
-                    <div className="mt-1 text-sm text-drift-text-primary">
+        <DataTable
+          rows={rows}
+          rowKey={(dispute) => dispute.id}
+          columns={[
+            {
+              header: "Match",
+              cell: (dispute) => {
+                const a = dispute.match.participants.find((p) => p.side === "A");
+                const b = dispute.match.participants.find((p) => p.side === "B");
+                return (
+                  <div>
+                    <div className="font-bold text-drift-text-primary">
                       {nameOf(a)} vs {nameOf(b)}
                     </div>
-                    <div className="mt-1 font-display text-lg font-bold text-drift-text-primary">
+                    <div className="mt-1 flex flex-wrap gap-1.5">
+                      <Badge tone="error">DISPUTED</Badge>
+                      <Badge tone="warning">{dispute.match.state}</Badge>
+                    </div>
+                  </div>
+                );
+              },
+            },
+            {
+              header: "Submitted score",
+              cell: (dispute) => {
+                const a = dispute.match.participants.find((p) => p.side === "A");
+                return (
+                  <div>
+                    <div className="font-display text-base font-bold text-drift-text-primary">
                       {setsText(dispute.sets)}
                     </div>
-                    <div className="mt-0.5 text-xs text-drift-text-secondary">
-                      submitted by {nameOf(a)}
-                    </div>
+                    <div className="text-xs text-drift-text-secondary">by {nameOf(a)}</div>
                   </div>
-                  <div className="rounded-lg border border-drift-border bg-drift-neutral-surface p-3">
-                    <div className="text-xs font-bold uppercase tracking-[0.08em] text-drift-text-secondary">
-                      Disputing version
-                    </div>
-                    <div className="mt-1 text-sm text-drift-text-primary">
-                      {nameOf(b)} claims the win
-                    </div>
-                    <div className="mt-1 font-display text-lg font-bold text-drift-text-primary">
+                );
+              },
+            },
+            {
+              header: "Disputing score",
+              cell: (dispute) => {
+                const b = dispute.match.participants.find((p) => p.side === "B");
+                return (
+                  <div>
+                    <div className="font-display text-base font-bold text-drift-text-primary">
                       {setsText(dispute.disputantSets)}
                     </div>
-                    <div className="mt-0.5 text-xs text-drift-text-secondary">
-                      disputed by {nameOf(b)}
-                    </div>
+                    <div className="text-xs text-drift-text-secondary">by {nameOf(b)}</div>
                   </div>
-                </div>
-
-                <div className="mt-4 flex flex-wrap gap-2">
+                );
+              },
+            },
+            {
+              header: "Disputed",
+              cell: (dispute) => new Date(dispute.disputedAt).toLocaleString(),
+            },
+            {
+              header: "Actions",
+              className: "text-right",
+              cell: (dispute) => (
+                <div className="flex flex-wrap justify-end gap-2">
                   <Button icon="gavel" disabled={busyId === dispute.matchId} onClick={() => rule(dispute.matchId, "SUBMITTED")}>
-                    Uphold submitted version
+                    Submitted
                   </Button>
                   <Button icon="rule" variant="secondary" disabled={busyId === dispute.matchId} onClick={() => rule(dispute.matchId, "DISPUTANT")}>
-                    Uphold disputing version
+                    Disputing
                   </Button>
                 </div>
-              </RowCard>
-            );
-          })}
-        </div>
+              ),
+            },
+          ]}
+        />
       )}
     </div>
   );

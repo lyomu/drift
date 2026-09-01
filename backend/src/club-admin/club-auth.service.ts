@@ -5,7 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 /**
  * Shared by every club-admin write path. Routes with a literal `:clubId`
  * param use `ClubMembershipGuard` instead; this is for resource-nested
- * routes (a league/season/fixture/result id) that must first resolve their
+ * routes (a league/fixture/result id) that must first resolve their
  * owning club before there's a club to check membership against.
  */
 @Injectable()

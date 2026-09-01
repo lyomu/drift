@@ -64,10 +64,7 @@ void main() {
     // Connections-only is the safe default: an unrecognised value must
     // never widen who can see a player's skill breakdown or availability.
     test('defaults to connections-only, never to everyone', () {
-      expect(
-        FieldVisibility.fromJson('???'),
-        FieldVisibility.connectionsOnly,
-      );
+      expect(FieldVisibility.fromJson('???'), FieldVisibility.connectionsOnly);
     });
   });
 

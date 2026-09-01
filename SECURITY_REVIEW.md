@@ -7,10 +7,12 @@
 ## Product-owner decision
 
 **Status: conditional NO-GO for a public production launch.** The baseline HTTP and
-credential controls in this work item are complete, but the RSS ingestion SSRF path
-and privileged-admin MFA must be closed before launch. The Android release key must
-also be rotated if the existing local keystore has ever been used for a distributable
-build.
+credential controls in this work item are complete. The RSS ingestion SSRF path was
+hardened in application code on 2026-08-29 (see A10 below); network-egress
+restriction for the ingestion worker remains an infrastructure task. Privileged-admin
+MFA shipped in the Platform Admin 2FA work (Pending screens Phase 5A). The Android
+release key must still be rotated if the existing local keystore has ever been used
+for a distributable build.
 
 ## Controls completed in this work item
 
@@ -37,16 +39,20 @@ build.
 | A04 Insecure Design | Partially controlled | Auth throttles, verification attempt caps, token rotation, suspension checks, and match/competition state rules exist. Complete the minors/guardian-consent policy, account deletion/data-retention workflow, and abuse-case review. |
 | A05 Security Misconfiguration | Improved | Helmet and fail-closed production CORS are now centralized and tested. Configure equivalent CSP/security headers on both deployed admin sites, disable source maps unless operationally required, and confirm proxy/TLS settings per environment. |
 | A06 Vulnerable and Outdated Components | Exception open | Club Admin and Platform Admin production audits report zero vulnerabilities. Backend audit reports three high findings through Prisma 7.9.1 -> `@prisma/config` -> `deepmerge-ts` 7.1.5 (GHSA-ggr8-5vv4-36mx). The current stable Prisma release has no patched dependency; do not use `npm audit fix --force`, which proposes a breaking downgrade. Track Prisma's stable fix and upgrade immediately when available. The known vulnerable merge path is configuration tooling and no attacker-controlled recursive-object path was identified in the running API. |
-| A07 Identification and Authentication Failures | Partially controlled | Access/refresh token separation, hashed refresh tokens, rotation/revocation, rate limiting, and current-user status checks are present. Add mandatory MFA for Platform Admin, strengthen the minimum password policy beyond eight characters, and add breached-password screening or equivalent controls. |
+| A07 Identification and Authentication Failures | Partially controlled | Access/refresh token separation, hashed refresh tokens, rotation/revocation, rate limiting, and current-user status checks are present. Mandatory MFA for Platform Admin is now in place (single-use 2FA challenge before the staff JWT). Still open: strengthen the minimum password policy beyond eight characters and add breached-password screening or equivalent controls. |
 | A08 Software and Data Integrity Failures | Partially controlled | Lockfiles and CI build/test gates exist; Android signing no longer embeds credentials. Pin CI actions to immutable commit SHAs and add artifact provenance/signing plus dependency update automation. |
 | A09 Security Logging and Monitoring Failures | Partially controlled | Platform administration has audit events and OTP values no longer log in production. Centralize structured security logs, redact tokens and personal data, alert on auth/OTP abuse and admin changes, define retention, and resolve the backend E2E open-handle warning. |
-| A10 Server-Side Request Forgery | **High risk / open** | Active RSS source records can supply an arbitrary `feedUrl` to `rss-parser.parseURL`. Before production ingestion is enabled, require HTTPS, constrain sources to an approved host list, resolve and reject private/loopback/link-local IP ranges (IPv4 and IPv6), revalidate every redirect, set response-size/time limits, and restrict network egress. |
+| A10 Server-Side Request Forgery | Mitigated in code; egress control outstanding | `NewsIngestionService` no longer calls `rss-parser.parseURL`. Feed bodies are fetched through `src/news/feed-fetch.ts`, which requires HTTPS (an `http:` escape hatch is non-production only), enforces the optional `NEWS_FEED_ALLOWED_HOSTS` allowlist, resolves every A/AAAA record and rejects private/loopback/link-local/CGNAT ranges (IPv4 and IPv6, including IPv4-mapped), pins the socket to the vetted address via the `lookup` hook (no DNS-rebinding window), follows redirects manually with a cap and re-validates every hop, and bounds response size (2 MB) and time (10 s). The Platform Admin news-source create/update path rejects a disallowed `feedUrl` at write time. Covered by `feed-fetch.spec.ts` (private IPs, allowlist, redirect revalidation, oversized response, timeout, non-2xx) and a `platform-admin.e2e-spec.ts` case. **Remaining:** restrict the ingestion worker's outbound network egress at the infrastructure layer as defence in depth. |
 
 ## Prioritized release actions
 
-1. **P0:** Harden RSS fetching against SSRF and add tests for private IPs, DNS rebinding,
-   redirects, timeouts, and oversized responses.
-2. **P0:** Add and enforce MFA for Platform Admin accounts.
+1. ~~**P0:** Harden RSS fetching against SSRF and add tests for private IPs, DNS
+   rebinding, redirects, timeouts, and oversized responses.~~ **Done 2026-08-29**
+   (`src/news/feed-fetch.ts`, `feed-fetch.spec.ts`). Infra follow-up: restrict the
+   ingestion worker's network egress.
+2. ~~**P0:** Add and enforce MFA for Platform Admin accounts.~~ **Done** — Platform
+   Admin login issues a single-use 2FA challenge before the staff JWT (Pending
+   screens Phase 5A).
 3. **P0:** Rotate the Android release key when applicable; store signing material and
    JWT secrets in the CI/hosting secret manager, never in repository variables or
    build logs.

@@ -183,22 +183,33 @@ class _ProfileBody extends StatelessWidget {
           onPressed: () => showBookingOptionsSheet(context, profile),
         ),
         const SizedBox(height: DriftSpacing.s2),
-        DriftButton(
-          label: 'Get Directions',
-          variant: DriftButtonVariant.text,
-          onPressed: summary.latitude != null && summary.longitude != null
-              ? () => _openDirections(summary.latitude!, summary.longitude!)
-              : null,
+        Builder(
+          builder: (context) {
+            final url = _directionsUrl(profile);
+            return DriftButton(
+              label: 'Get Directions',
+              variant: DriftButtonVariant.text,
+              onPressed: url == null
+                  ? null
+                  : () => launchUrl(url, mode: LaunchMode.externalApplication),
+            );
+          },
         ),
       ],
     );
   }
 
-  Future<void> _openDirections(double latitude, double longitude) async {
-    final uri = Uri.parse(
-      'https://www.google.com/maps/dir/?api=1&destination=$latitude,$longitude',
+  /// The curator's maps link if they set one, otherwise a lat/long directions
+  /// URL, otherwise null (no button).
+  Uri? _directionsUrl(CourtProfile profile) {
+    final maps = profile.mapsUrl?.trim();
+    if (maps != null && maps.isNotEmpty) return Uri.tryParse(maps);
+    final lat = profile.summary.latitude;
+    final lng = profile.summary.longitude;
+    if (lat == null || lng == null) return null;
+    return Uri.parse(
+      'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng',
     );
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 }
 

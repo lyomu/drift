@@ -3,6 +3,7 @@ import {
   IsBoolean,
   IsDateString,
   IsEnum,
+  IsIn,
   IsInt,
   IsOptional,
   IsString,
@@ -17,6 +18,7 @@ import {
   BillingInterval,
   PromotionDiscountType,
 } from '@prisma/client';
+import { SUPPORTED_CURRENCY_CODES } from '../supported-currencies';
 
 export class UpsertPaymentPlanDto {
   @IsString()
@@ -42,8 +44,7 @@ export class UpsertPaymentPlanDto {
   priceMinor!: number;
 
   @IsString()
-  @MinLength(3)
-  @MaxLength(3)
+  @IsIn(SUPPORTED_CURRENCY_CODES)
   currency!: string;
 
   @IsEnum(BillingInterval)
@@ -110,8 +111,7 @@ export class UpsertPromotionDto {
 
   @IsOptional()
   @IsString()
-  @MinLength(3)
-  @MaxLength(3)
+  @IsIn(SUPPORTED_CURRENCY_CODES)
   currency?: string | null;
 
   @IsDateString()

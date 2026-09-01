@@ -8,6 +8,22 @@ export type ClubRole =
   | "CONTENT_MANAGER"
   | "READ_ONLY";
 export type ClubMembershipStatus = "INVITED" | "PENDING" | "ACTIVE" | "SUSPENDED";
+
+export type ClubCreationRequestStatus = "PENDING" | "APPROVED" | "REJECTED";
+
+export type ClubCreationRequest = {
+  id: string;
+  clubName: string;
+  location: string;
+  requesterName: string;
+  requesterEmail: string;
+  status: ClubCreationRequestStatus;
+  decisionNote: string | null;
+  reviewedAt: string | null;
+  completedAt: string | null;
+  createdClubId: string | null;
+  createdAt: string;
+};
 export type BillingSubscriptionStatus = "ACTIVE" | "PAST_DUE" | "CANCELLED";
 
 export type BillingPlan = {

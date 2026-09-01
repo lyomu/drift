@@ -134,9 +134,7 @@ class _ProfileBody extends StatelessWidget {
                     children: [
                       Text(
                         'Development areas',
-                        style: type.title.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
+                        style: type.title.copyWith(fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(height: 14),
                       for (final entry in breakdown.entries) ...[
@@ -147,7 +145,9 @@ class _ProfileBody extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 5),
-                        _SkillBar(value: (entry.value / 6).clamp(0.0, 1.0).toDouble()),
+                        _SkillBar(
+                          value: (entry.value / 6).clamp(0.0, 1.0).toDouble(),
+                        ),
                         const SizedBox(height: 11),
                       ],
                     ],
@@ -164,9 +164,7 @@ class _ProfileBody extends StatelessWidget {
                     children: [
                       Text(
                         'Availability',
-                        style: type.title.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
+                        style: type.title.copyWith(fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(height: 12),
                       Wrap(
@@ -380,10 +378,8 @@ class _ViewStatsLink extends StatelessWidget {
       alignment: Alignment.center,
       child: DriftTextLink(
         label: 'View Stats',
-        onPressed: () => context.push(
-          '/stats',
-          extra: (title: 'My Stats', stats: stats),
-        ),
+        onPressed: () =>
+            context.push('/stats', extra: (title: 'My Stats', stats: stats)),
       ),
     );
   }
@@ -404,9 +400,7 @@ class _Fact extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 9),
       decoration: BoxDecoration(
-        border: last
-            ? null
-            : Border(bottom: BorderSide(color: colors.border)),
+        border: last ? null : Border(bottom: BorderSide(color: colors.border)),
       ),
       child: Row(
         children: [

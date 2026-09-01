@@ -9,7 +9,6 @@ import {
   PlatformFeatureFlagStatus,
   PlatformIntegrationStatus,
   PlatformMarketStatus,
-  PlatformSystemSettingType,
   Prisma,
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -22,7 +21,6 @@ import {
   UpsertIntegrationConfigDto,
   UpsertMarketDto,
   UpsertNotificationTemplateDto,
-  UpsertSystemSettingDto,
 } from './dto/platform-config-admin.dto';
 
 @Injectable()
@@ -316,68 +314,6 @@ export class PlatformConfigAdminService {
     };
   }
 
-  async listSystemSettings(query: { type?: string; search?: string }) {
-    const valueType = this.enumValue(PlatformSystemSettingType, query.type);
-    const search = query.search?.trim();
-    const settings = await this.prisma.systemSetting.findMany({
-      where: {
-        ...(valueType ? { valueType } : {}),
-        ...(search
-          ? {
-              OR: [
-                { key: { contains: search, mode: 'insensitive' } },
-                { label: { contains: search, mode: 'insensitive' } },
-                { description: { contains: search, mode: 'insensitive' } },
-              ],
-            }
-          : {}),
-      },
-      orderBy: [{ key: 'asc' }],
-      take: 250,
-    });
-    return { settings };
-  }
-
-  async createSystemSetting(actorId: string, dto: UpsertSystemSettingDto) {
-    const setting = await this.prisma.systemSetting.create({
-      data: this.systemSettingData(dto),
-    });
-    await this.audit.record(
-      actorId,
-      'platform_config.system_setting.create',
-      'SystemSetting',
-      setting.id,
-      {
-        key: setting.key,
-        valueType: setting.valueType,
-      },
-    );
-    return { setting };
-  }
-
-  async updateSystemSetting(
-    actorId: string,
-    settingId: string,
-    dto: UpsertSystemSettingDto,
-  ) {
-    const existing = await this.requireSystemSetting(settingId);
-    const setting = await this.prisma.systemSetting.update({
-      where: { id: settingId },
-      data: this.systemSettingData(dto),
-    });
-    await this.audit.record(
-      actorId,
-      'platform_config.system_setting.update',
-      'SystemSetting',
-      settingId,
-      {
-        previous: { key: existing.key, valueType: existing.valueType },
-        next: { key: setting.key, valueType: setting.valueType },
-      },
-    );
-    return { setting };
-  }
-
   async listIntegrations(query: { status?: string; search?: string }) {
     const status = this.enumValue(PlatformIntegrationStatus, query.status);
     const search = query.search?.trim();
@@ -611,16 +547,6 @@ export class PlatformConfigAdminService {
     };
   }
 
-  private systemSettingData(dto: UpsertSystemSettingDto) {
-    return {
-      key: this.normalizeKey(dto.key),
-      label: dto.label.trim(),
-      description: dto.description?.trim() || null,
-      valueType: dto.valueType,
-      value: this.typedValue(dto.valueType, dto.value),
-    };
-  }
-
   private integrationData(dto: UpsertIntegrationConfigDto) {
     if (
       dto.status === PlatformIntegrationStatus.ERROR &&
@@ -650,57 +576,9 @@ export class PlatformConfigAdminService {
     };
   }
 
-  private typedValue(
-    type: PlatformSystemSettingType,
-    value: unknown,
-  ): Prisma.InputJsonValue {
-    if (value === null || value === undefined) {
-      throw new BadRequestException('Setting value is required.');
-    }
-    if (type === PlatformSystemSettingType.STRING) {
-      if (
-        typeof value !== 'string' &&
-        typeof value !== 'number' &&
-        typeof value !== 'boolean'
-      ) {
-        throw new BadRequestException(
-          'String settings require a primitive value.',
-        );
-      }
-      return String(value);
-    }
-    if (type === PlatformSystemSettingType.NUMBER) {
-      const next = typeof value === 'number' ? value : Number(value);
-      if (!Number.isFinite(next))
-        throw new BadRequestException(
-          'Number settings require a numeric value.',
-        );
-      return next;
-    }
-    if (type === PlatformSystemSettingType.BOOLEAN) {
-      if (typeof value === 'boolean') return value;
-      if (value === 'true') return true;
-      if (value === 'false') return false;
-      throw new BadRequestException('Boolean settings require true or false.');
-    }
-    return this.jsonValue(value);
-  }
-
   private jsonObject(value: unknown): Record<string, unknown> {
     if (!value || Array.isArray(value) || typeof value !== 'object') return {};
     return value as Record<string, unknown>;
-  }
-
-  private jsonValue(value: unknown): Prisma.InputJsonValue {
-    if (value === null || value === undefined) {
-      throw new BadRequestException('JSON settings require a non-null value.');
-    }
-    try {
-      JSON.stringify(value);
-    } catch {
-      throw new BadRequestException('JSON settings must be serialisable.');
-    }
-    return value;
   }
 
   private renderTemplate(value: string, data: Record<string, unknown>) {
@@ -799,15 +677,6 @@ export class PlatformConfigAdminService {
         if (!template)
           throw new NotFoundException('Notification template not found.');
         return template;
-      });
-  }
-
-  private requireSystemSetting(id: string) {
-    return this.prisma.systemSetting
-      .findUnique({ where: { id } })
-      .then((setting) => {
-        if (!setting) throw new NotFoundException('System setting not found.');
-        return setting;
       });
   }
 

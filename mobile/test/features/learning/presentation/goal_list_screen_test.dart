@@ -33,9 +33,7 @@ void main() {
           tester,
           const GoalListScreen(),
           brightness: brightness,
-          overrides: [
-            goalsProvider.overrideWith((ref) async => <Goal>[]),
-          ],
+          overrides: [goalsProvider.overrideWith((ref) async => <Goal>[])],
         );
 
         expect(find.text('Set your first development goal'), findsOneWidget);
@@ -47,9 +45,7 @@ void main() {
         tester,
         const GoalListScreen(),
         settle: false,
-        overrides: [
-          goalsProvider.overrideWith((ref) => pending<List<Goal>>()),
-        ],
+        overrides: [goalsProvider.overrideWith((ref) => pending<List<Goal>>())],
       );
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
@@ -59,9 +55,7 @@ void main() {
       await pumpScreen(
         tester,
         const GoalListScreen(),
-        overrides: [
-          goalsProvider.overrideWith((ref) => failing<List<Goal>>()),
-        ],
+        overrides: [goalsProvider.overrideWith((ref) => failing<List<Goal>>())],
       );
 
       expect(find.text("Couldn't load goals."), findsOneWidget);

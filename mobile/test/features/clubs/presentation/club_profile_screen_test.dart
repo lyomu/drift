@@ -109,10 +109,7 @@ void main() {
     testWidgets('treats an invitation as not-yet-joined', (tester) async {
       await pumpProfile(tester, ClubMembership.invited);
 
-      expect(
-        find.text('You have been invited to this club.'),
-        findsOneWidget,
-      );
+      expect(find.text('You have been invited to this club.'), findsOneWidget);
       expect(find.text('Announcements'), findsNothing);
     });
 
@@ -150,7 +147,9 @@ void main() {
         settle: false,
         overrides: [
           clubsRepositoryProvider.overrideWithValue(clubs),
-          clubDetailProvider(clubId).overrideWith((ref) => pending<ClubProfile>()),
+          clubDetailProvider(
+            clubId,
+          ).overrideWith((ref) => pending<ClubProfile>()),
         ],
       );
 
@@ -163,7 +162,9 @@ void main() {
         const ClubProfileScreen(clubId: clubId),
         overrides: [
           clubsRepositoryProvider.overrideWithValue(clubs),
-          clubDetailProvider(clubId).overrideWith((ref) => failing<ClubProfile>()),
+          clubDetailProvider(
+            clubId,
+          ).overrideWith((ref) => failing<ClubProfile>()),
         ],
       );
 

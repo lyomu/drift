@@ -3,10 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, ApiError } from "@/lib/api-client";
 import { useClub } from "@/lib/club-context";
-import { Button, EmptyState, ErrorBanner, Field, Input, PageHeader } from "@/components/ui";
+import { Button, EmptyState, ErrorBanner, Field, Input, PageHeader, Select } from "@/components/ui";
 import { StatusBadge } from "@/components/StatusBadge";
 import { MaterialIcon, ModalShell, Panel } from "@/components/dashboard-design";
-import type { LadderAdmin } from "@/lib/types";
+import { Listing } from "@/components/Listing";
+import type { LadderAdmin, MatchSport } from "@/lib/types";
 
 export default function LaddersPage() {
   const { clubId, role } = useClub();
@@ -14,6 +15,7 @@ export default function LaddersPage() {
   const [ladders, setLadders] = useState<LadderAdmin[] | null>(null);
   const [selected, setSelected] = useState<LadderAdmin | null>(null);
   const [name, setName] = useState("");
+  const [sport, setSport] = useState<MatchSport>("TENNIS");
   const [range, setRange] = useState("2");
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,9 +42,12 @@ export default function LaddersPage() {
     try {
       await api.post(`/clubs/${clubId}/ladders`, {
         name,
+        sport,
         challengeRange: Number(range),
       });
       setName("");
+      setSport("TENNIS");
+      setRange("2");
       setShowForm(false);
       await load();
     } catch (err) {
@@ -112,37 +117,49 @@ export default function LaddersPage() {
         }
       />
       <ErrorBanner message={error} />
-      {ladders === null ? (
-        <EmptyState message="Loading..." />
-      ) : ladders.length === 0 ? (
-        <EmptyState message="Create your first ladder" />
-      ) : (
-        <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(260px,0.7fr)_minmax(0,1.3fr)]">
-          <div className="flex flex-col gap-2.5">
-            {ladders.map((ladder) => (
-              <button
-                type="button"
-                key={ladder.id}
-                onClick={() => void open(ladder.id)}
-                className={`rowcard rounded-[14px] border bg-drift-surface p-4 text-left transition-colors ${
-                  selected?.id === ladder.id ? "border-drift-primary" : "border-drift-border"
-                }`}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <span className="text-sm font-bold text-drift-text-primary">
-                    {ladder.name}
-                  </span>
-                  <StatusBadge status={ladder.state} />
-                </div>
-                <div className="mt-1 text-[12.5px] text-drift-text-secondary">
-                  {ladder._count?.entries ?? 0} players / challenge {ladder.challengeRange} rungs
-                </div>
-              </button>
-            ))}
-          </div>
-          <div>
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(260px,0.7fr)_minmax(0,1.3fr)]">
+        <Listing
+          title="Ladders"
+          count={ladders?.length ?? null}
+          loading={ladders === null}
+          empty={{
+            icon: "leaderboard",
+            title: "No ladders yet",
+            description:
+              "A ladder is a rolling ranking — players climb by challenging opponents a few rungs above them.",
+            action: canManage ? (
+              <Button onClick={() => setShowForm(true)}>Create ladder</Button>
+            ) : undefined,
+          }}
+        >
+          {ladders?.map((ladder) => (
+            <button
+              type="button"
+              key={ladder.id}
+              onClick={() => void open(ladder.id)}
+              className={`rowcard rounded-lg border bg-drift-surface p-4 text-left transition-colors ${
+                selected?.id === ladder.id ? "border-drift-primary" : "border-drift-border"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <span className="text-sm font-bold text-drift-text-primary">
+                  {ladder.name}
+                </span>
+                <StatusBadge status={ladder.state} />
+              </div>
+              <div className="mt-1 text-[12.5px] text-drift-text-secondary">
+                {(ladder.sport ?? "TENNIS").replace(/_/g, " ")} / {ladder._count?.entries ?? 0} players / challenge {ladder.challengeRange} rungs
+              </div>
+            </button>
+          ))}
+        </Listing>
+        <div>
             {!selected ? (
-              <EmptyState message="Select a ladder to manage its positions." />
+              <EmptyState
+                icon="ads_click"
+                title="No ladder selected"
+                description="Choose a ladder on the left to review its rungs and adjust positions after a ruling."
+              />
             ) : (
               <Panel>
                 <div className="mb-4 flex items-center justify-between gap-3">
@@ -161,13 +178,19 @@ export default function LaddersPage() {
                   )}
                 </div>
                 {!selected.entries?.length ? (
-                  <EmptyState message="Members join this ladder from the Drift app." />
+                  <EmptyState
+                    bare
+                    compact
+                    icon="group_add"
+                    title="No players on this ladder yet"
+                    description="Members join a ladder from the Drift app. Once they do, their rungs appear here."
+                  />
                 ) : (
                   <div className="flex flex-col gap-2">
                     {selected.entries.map((entry, index) => (
                       <div
                         key={entry.id}
-                        className="flex items-center gap-3 rounded-xl border border-drift-border px-3 py-2.5"
+                        className="flex items-center gap-3 rounded-md border border-drift-border px-3 py-2.5"
                       >
                         <span className="w-7 shrink-0 text-center text-base font-extrabold text-drift-primary tabular">
                           {entry.position}
@@ -213,17 +236,30 @@ export default function LaddersPage() {
                 )}
               </Panel>
             )}
-          </div>
         </div>
-      )}
+      </div>
 
       {showForm && (
         <ModalShell title="Create ladder" onClose={() => setShowForm(false)}>
           <form onSubmit={create} className="flex flex-col gap-4">
             <Field label="Ladder name">
-              <Input required value={name} onChange={(e) => setName(e.target.value)} />
+              <Input
+                required
+                placeholder="e.g. Club Singles Ladder"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
             </Field>
-            <Field label="Challenge range">
+            <Field label="Sport">
+              <Select
+                value={sport}
+                onChange={(e) => setSport(e.target.value as MatchSport)}
+              >
+                <option value="TENNIS">Tennis</option>
+                <option value="PADEL">Padel</option>
+              </Select>
+            </Field>
+            <Field label="Challenge range (rungs)">
               <Input
                 type="number"
                 min={1}
@@ -232,6 +268,10 @@ export default function LaddersPage() {
                 onChange={(e) => setRange(e.target.value)}
               />
             </Field>
+            <p className="-mt-1 text-[12px] leading-4 text-drift-text-secondary">
+              How many positions above themselves a player may challenge. A
+              range of 2 means rung 5 can challenge rungs 3 and 4.
+            </p>
             <div className="mt-2 flex justify-end gap-3">
               <Button type="button" variant="secondary" onClick={() => setShowForm(false)}>
                 Cancel

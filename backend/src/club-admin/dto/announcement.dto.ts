@@ -5,7 +5,7 @@ import {
   IsString,
   MaxLength,
 } from 'class-validator';
-import { AnnouncementStatus } from '@prisma/client';
+import { AnnouncementAudience, AnnouncementStatus } from '@prisma/client';
 
 export class CreateAnnouncementDto {
   @IsString()
@@ -23,6 +23,10 @@ export class CreateAnnouncementDto {
   @IsOptional()
   @IsEnum(AnnouncementStatus)
   status?: AnnouncementStatus;
+
+  @IsOptional()
+  @IsEnum(AnnouncementAudience)
+  audience?: AnnouncementAudience;
 }
 
 export class UpdateAnnouncementDto {
@@ -43,4 +47,8 @@ export class UpdateAnnouncementDto {
   @IsOptional()
   @IsEnum(AnnouncementStatus)
   status?: AnnouncementStatus;
+
+  @IsOptional()
+  @IsEnum(AnnouncementAudience)
+  audience?: AnnouncementAudience;
 }

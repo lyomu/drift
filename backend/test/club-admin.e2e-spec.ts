@@ -8,7 +8,7 @@ import { PrismaService } from './../src/prisma/prisma.service';
 /**
  * Club / Community Admin (Phase M14) against live Postgres — the core
  * loop: create a club (self-service, caller becomes OWNER) → invite a
- * member as ADMIN → create a league/season → generate fixtures → approve
+ * member as ADMIN → create a league → generate fixtures → approve
  * a result → open + admin-resolve a dispute → confirm a non-member is
  * rejected throughout.
  */
@@ -38,7 +38,6 @@ describe('Club Admin (e2e)', () => {
 
   let clubId: string;
   let leagueId: string;
-  let seasonId: string;
 
   const authed = (
     token: string,
@@ -142,20 +141,14 @@ describe('Club Admin (e2e)', () => {
       await prisma.clubMembership.deleteMany({ where: { clubId } });
       const leagues = await prisma.league.findMany({ where: { clubId } });
       for (const league of leagues) {
-        const seasons = await prisma.season.findMany({
+        await prisma.standing.deleteMany({ where: { leagueId: league.id } });
+        await prisma.fixture.deleteMany({
+          where: { round: { leagueId: league.id } },
+        });
+        await prisma.round.deleteMany({ where: { leagueId: league.id } });
+        await prisma.leagueRegistration.deleteMany({
           where: { leagueId: league.id },
         });
-        for (const season of seasons) {
-          await prisma.standing.deleteMany({ where: { seasonId: season.id } });
-          await prisma.fixture.deleteMany({
-            where: { round: { seasonId: season.id } },
-          });
-          await prisma.round.deleteMany({ where: { seasonId: season.id } });
-          await prisma.seasonRegistration.deleteMany({
-            where: { seasonId: season.id },
-          });
-        }
-        await prisma.season.deleteMany({ where: { leagueId: league.id } });
       }
       await prisma.league.deleteMany({ where: { clubId } });
       await prisma.club.delete({ where: { id: clubId } });
@@ -205,11 +198,21 @@ describe('Club Admin (e2e)', () => {
     await app.close();
   });
 
-  it('creates a club — the caller becomes OWNER', async () => {
-    const created = await authed(owner.token, 'post', '/clubs')
-      .send({ name: `E2E Tennis Club ${stamp}` })
-      .expect(201);
-    clubId = created.body.id;
+  it('provisions a club with the caller as OWNER', async () => {
+    // Self-serve `POST /clubs` was replaced by the request → approval →
+    // setup-link flow (see `club-onboarding/`). This suite isn't testing that
+    // flow, so it seeds the finished state directly.
+    const club = await prisma.club.create({
+      data: {
+        name: `E2E Tennis Club ${stamp}`,
+        platformStatus: 'ACTIVE',
+        setupCompletedAt: new Date(),
+      },
+    });
+    clubId = club.id;
+    await prisma.clubMembership.create({
+      data: { clubId, userId: owner.id, role: 'OWNER', status: 'ACTIVE' },
+    });
 
     const memberships = await authed(
       owner.token,
@@ -260,35 +263,26 @@ describe('Club Admin (e2e)', () => {
       .expect(200);
   });
 
-  it('creates a league and a season as ADMIN', async () => {
-    const league = await authed(admin.token, 'post', `/clubs/${clubId}/leagues`)
-      .send({ name: 'E2E League' })
-      .expect(201);
-    leagueId = league.body.id;
-    expect(league.body.sport).toBe('TENNIS');
-
+  it('creates a league as ADMIN with a competition window', async () => {
     const now = Date.now();
-    const season = await authed(
-      admin.token,
-      'post',
-      `/leagues/${leagueId}/seasons`,
-    )
+    const league = await authed(admin.token, 'post', `/clubs/${clubId}/leagues`)
       .send({
-        label: 'Season 1',
+        name: 'E2E League',
         registrationOpensAt: new Date(now - 60_000).toISOString(),
         registrationClosesAt: new Date(now + 30_000).toISOString(),
         startsAt: new Date(now + 60 * 60 * 1000).toISOString(), // an hour from now
         roundCount: 1,
       })
       .expect(201);
-    seasonId = season.body.id;
+    leagueId = league.body.id;
+    expect(league.body.sport).toBe('TENNIS');
   });
 
   it('registers two players while registration is open', async () => {
-    await authed(playerA.token, 'post', `/seasons/${seasonId}/register`).expect(
+    await authed(playerA.token, 'post', `/leagues/${leagueId}/register`).expect(
       201,
     );
-    await authed(playerB.token, 'post', `/seasons/${seasonId}/register`).expect(
+    await authed(playerB.token, 'post', `/leagues/${leagueId}/register`).expect(
       201,
     );
   });
@@ -297,14 +291,14 @@ describe('Club Admin (e2e)', () => {
     // Close registration by moving registrationClosesAt into the past —
     // the admin-generate-fixtures path isn't gated on registration state,
     // only demonstrating it works well before startsAt (an hour away).
-    await authed(admin.token, 'patch', `/seasons/${seasonId}`)
+    await authed(admin.token, 'patch', `/leagues/${leagueId}`)
       .send({ registrationClosesAt: new Date(Date.now() - 1000).toISOString() })
       .expect(200);
 
     const generated = await authed(
       admin.token,
       'post',
-      `/seasons/${seasonId}/generate-fixtures`,
+      `/leagues/${leagueId}/generate-fixtures`,
     ).expect(201);
     expect(generated.body.round).not.toBeNull();
     expect(generated.body.round.fixtures).toHaveLength(1);
@@ -317,7 +311,7 @@ describe('Club Admin (e2e)', () => {
     const round = await authed(
       admin.token,
       'get',
-      `/seasons/${seasonId}/rounds/current`,
+      `/leagues/${leagueId}/rounds/current`,
     ).expect(200);
     const fixture = round.body.round.fixtures[0];
     fixtureId = fixture.id;

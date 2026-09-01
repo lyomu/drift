@@ -106,10 +106,7 @@ class _ChallengeComposerScreenState
                     ),
                     child: Row(
                       children: [
-                        DriftPlayerAvatar(
-                          player: widget.opponent,
-                          radius: 22,
-                        ),
+                        DriftPlayerAvatar(player: widget.opponent, radius: 22),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
@@ -189,9 +186,7 @@ class _ChallengeComposerScreenState
                     Text(
                       '${widget.opponent.displayName} picks their own partner '
                       'when they accept.',
-                      style: type.caption.copyWith(
-                        color: colors.textSecondary,
-                      ),
+                      style: type.caption.copyWith(color: colors.textSecondary),
                     ),
                     const SizedBox(height: 8),
                     switch (connections) {

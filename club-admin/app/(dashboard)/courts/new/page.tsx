@@ -13,6 +13,7 @@ export default function NewCourtPage() {
   const { clubId } = useClub();
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
+  const [mapsUrl, setMapsUrl] = useState("");
   const [groups, setGroups] = useState<CourtGroup[]>([
     { surface: "HARD", indoor: false, lighting: false, count: 1 },
   ]);
@@ -28,6 +29,7 @@ export default function NewCourtPage() {
       await api.post(`/clubs/${clubId}/courts`, {
         name,
         address: address || undefined,
+        mapsUrl: mapsUrl.trim() || undefined,
         courtGroups: groups,
       });
       router.push("/courts");
@@ -47,8 +49,11 @@ export default function NewCourtPage() {
           <Field label="Name">
             <Input required value={name} onChange={(e) => setName(e.target.value)} />
           </Field>
-          <Field label="Address">
-            <Input value={address} onChange={(e) => setAddress(e.target.value)} />
+          <Field label="Address / Location">
+            <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Street, area, city" />
+          </Field>
+          <Field label="Google Maps link (optional)">
+            <Input type="url" inputMode="url" placeholder="https://maps.google.com/…" value={mapsUrl} onChange={(e) => setMapsUrl(e.target.value)} />
           </Field>
           <CourtGroupsEditor groups={groups} onChange={setGroups} />
           <Button type="submit" disabled={saving} className="self-start">

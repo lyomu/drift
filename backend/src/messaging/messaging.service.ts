@@ -279,11 +279,7 @@ export class MessagingService {
           select: {
             round: {
               select: {
-                season: {
-                  select: {
-                    league: { select: { id: true, name: true } },
-                  },
-                },
+                league: { select: { id: true, name: true } },
               },
             },
           },
@@ -295,8 +291,8 @@ export class MessagingService {
       matches.map((match) => [
         match.id,
         {
-          leagueId: match.fixture?.round.season.league.id ?? null,
-          leagueName: match.fixture?.round.season.league.name ?? null,
+          leagueId: match.fixture?.round.league.id ?? null,
+          leagueName: match.fixture?.round.league.name ?? null,
         },
       ]),
     );

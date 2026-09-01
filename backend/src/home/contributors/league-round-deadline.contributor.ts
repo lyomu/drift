@@ -38,7 +38,7 @@ export class LeagueRoundDeadlineContributor implements HomeCardContributor {
           select: { state: true, expiresAt: true, confirmedTime: true },
         },
         round: {
-          include: { season: { include: { league: true } } },
+          include: { league: true },
         },
       },
       orderBy: { round: { deadline: 'asc' } },
@@ -56,7 +56,7 @@ export class LeagueRoundDeadlineContributor implements HomeCardContributor {
       }
 
       const { round } = fixture;
-      const { season } = round;
+      const { league } = round;
       const hoursLeft = Math.ceil(
         (round.deadline.getTime() - ctx.now.getTime()) / MS_PER_HOUR,
       );
@@ -68,7 +68,7 @@ export class LeagueRoundDeadlineContributor implements HomeCardContributor {
           priority: HOME_CARD_PRIORITY.LEAGUE_ROUND_DEADLINE,
           title: `Round ${round.index} closes ${this.relative(hoursLeft)}`,
           body: this.body(
-            season.league.name,
+            league.name,
             state === MatchState.SCHEDULED && fixture.match.confirmedTime
               ? 'scheduled'
               : 'unscheduled',
@@ -76,7 +76,7 @@ export class LeagueRoundDeadlineContributor implements HomeCardContributor {
           accent: 'urgent' as const,
           action: {
             label: 'Open fixture',
-            route: `/compete/seasons/${season.id}/rounds/${round.id}`,
+            route: `/compete/leagues/${league.id}/rounds/${round.id}`,
           },
           dismissible: false,
           data: null,

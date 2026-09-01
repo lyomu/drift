@@ -18,7 +18,9 @@ void main() {
   // loading indicators also never settle under fake async, so pump once.
   final overrides = <Override>[
     playerSearchProvider.overrideWith((ref) => Future.value([])),
-    courtSearchProvider.overrideWith((ref) => Future.value(courtSearchResult())),
+    courtSearchProvider.overrideWith(
+      (ref) => Future.value(courtSearchResult()),
+    ),
     clubSearchProvider.overrideWith((ref) => Future.value(clubSearchResult())),
     leaguesProvider.overrideWith((ref) => Future.value([league()])),
     mySeasonsProvider.overrideWith((ref) => Future.value([])),
@@ -32,8 +34,9 @@ void main() {
   for (final entry in screens.entries) {
     group(entry.key, () {
       for (final brightness in Brightness.values) {
-        testWidgets('renders without throwing in ${brightness.name}',
-            (tester) async {
+        testWidgets('renders without throwing in ${brightness.name}', (
+          tester,
+        ) async {
           await pumpScreen(
             tester,
             Scaffold(body: entry.value()),

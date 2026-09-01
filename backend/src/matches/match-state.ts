@@ -23,7 +23,7 @@ export const CHALLENGE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
  */
 const TRANSITIONS: Record<MatchState, MatchState[]> = {
   // WALKOVER is reachable directly from every still-open state — Phase M8's
-  // round/season-close sweep forces an unplayed league fixture to a neutral
+  // round-close sweep forces an unplayed league fixture to a neutral
   // WALKOVER the moment its round's deadline passes, whatever stage the
   // negotiation was stuck at (competitions/competitions.service.ts).
   PROPOSED: [

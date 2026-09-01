@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:drift_tennis/features/home/application/home_feed_provider.dart';
+import 'package:drift_tennis/features/home/application/home_sections.dart';
 import 'package:drift_tennis/features/home/data/home_repository.dart';
 import 'package:drift_tennis/features/home/presentation/home_screen.dart';
+import 'package:drift_tennis/features/home/presentation/sections/players_near_you_rail.dart';
 import 'package:drift_tennis/features/notifications/application/notifications_providers.dart';
+import 'package:drift_tennis/features/users/application/current_user_provider.dart';
 
 import '../../../support/fixtures.dart';
 import '../../../support/pump.dart';
@@ -20,6 +23,10 @@ void main() {
   );
   final notificationsOverride = notificationsListProvider.overrideWith(
     (ref) async => notificationsPage(),
+  );
+  // PlayersNearYouSection filters out the viewer, so it reads the current user.
+  final currentUserOverride = currentUserProvider.overrideWith(
+    (ref) async => userProfile(),
   );
 
   group('HomeScreen', () {
@@ -61,35 +68,37 @@ void main() {
       });
     }
 
-    testWidgets('renders a card action and its payload', (tester) async {
+    testWidgets('buckets a SUGGESTED_OPPONENTS card into the players section', (
+      tester,
+    ) async {
+      // The redesign turned the flat feed into fixed sections: HomeSections
+      // decides which section each card feeds, and each section renders its
+      // own header, not the card's title. Assert that seam directly rather
+      // than scrolling the full Home ListView (whose other sections would
+      // fire real repository calls).
+      final feed = [
+        homeCard(
+          type: 'SUGGESTED_OPPONENTS',
+          data: HomeCardData(
+            kind: 'players',
+            players: [playerSummary(id: 'u9')],
+          ),
+        ),
+      ];
+      final sections = HomeSections(feed);
+
       await pumpScreen(
         tester,
-        screen(),
-        overrides: [
-          homeFeedProvider.overrideWith(
-            (ref) => Future.value([
-              homeCard(
-                type: 'SUGGESTED_OPPONENTS',
-                title: 'Players near your level',
-                dismissible: true,
-                action: const HomeCardAction(
-                  label: 'Find players',
-                  route: '/home?tab=play&play=find',
-                ),
-                data: HomeCardData(
-                  kind: 'players',
-                  players: [playerSummary(id: 'u1')],
-                ),
-              ),
-            ]),
+        Scaffold(
+          body: PlayersNearYouSection(
+            players: sections.players?.data?.players ?? const [],
           ),
-          summaryOverride,
-          notificationsOverride,
-        ],
+        ),
+        overrides: [currentUserOverride],
       );
 
-      expect(find.text('Players near your level'), findsOneWidget);
-      expect(find.text('Find players'), findsWidgets);
+      expect(find.text('Players near you'), findsOneWidget);
+      expect(find.text('Ana D.'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 

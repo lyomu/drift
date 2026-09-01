@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { RowCard, StatBand } from "@/components/dashboard-design";
+import { StatBand } from "@/components/dashboard-design";
 import { api, ApiError } from "@/lib/api-client";
+import { DataTable } from "@/components/DataTable";
 import { Badge, Button, Card, EmptyState, ErrorBanner, Field, Input, PageHeader, Select, statusTone } from "@/components/ui";
 
 interface UserRow {
@@ -116,41 +117,65 @@ export default function UsersPage() {
       {rows?.length === 0 && <EmptyState message="No users match." />}
 
       {rows && rows.length > 0 && (
-        <div className="grid gap-3">
-          {rows.map((user) => {
-            const name = [user.firstName, user.lastName].filter(Boolean).join(" ") || "-";
-            return (
-              <RowCard key={user.id}>
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                  <div className="min-w-0">
-                    <div className="font-bold text-drift-text-primary">{name}</div>
-                    <div className="mt-0.5 text-sm text-drift-text-secondary">{user.email}</div>
-                    <div className="mt-2 text-xs font-semibold text-drift-text-secondary">
-                      Joined {new Date(user.createdAt).toLocaleDateString()} / {user.onboardingStep.replace(/_/g, " ").toLowerCase()}
+        <div>
+          <DataTable
+            rows={rows}
+            rowKey={(user) => user.id}
+            columns={[
+              {
+                header: "Account",
+                cell: (user) => {
+                  const name = [user.firstName, user.lastName].filter(Boolean).join(" ") || "-";
+                  return (
+                    <div className="min-w-0">
+                      <div className="font-bold text-drift-text-primary">{name}</div>
+                      <div className="mt-0.5 text-sm text-drift-text-secondary">{user.email}</div>
                     </div>
-                  </div>
-                  <div className="flex flex-wrap items-center justify-end gap-3">
-                    <Badge tone={statusTone(user.accountStatus)}>{user.accountStatus}</Badge>
-                    {user.accountStatus !== "DELETED" && (
-                      <Button
-                        variant={user.accountStatus === "SUSPENDED" ? "secondary" : "destructive"}
-                        icon={user.accountStatus === "SUSPENDED" ? "restart_alt" : "block"}
-                        disabled={busyId === user.id}
-                        onClick={() =>
-                          setStatusFor(
-                            user,
-                            user.accountStatus === "SUSPENDED" ? "ACTIVE" : "SUSPENDED",
-                          )
-                        }
-                      >
-                        {busyId === user.id ? "Working..." : user.accountStatus === "SUSPENDED" ? "Restore" : "Suspend"}
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </RowCard>
-            );
-          })}
+                  );
+                },
+              },
+              {
+                header: "Status",
+                cell: (user) => (
+                  <Badge tone={statusTone(user.accountStatus)}>{user.accountStatus}</Badge>
+                ),
+              },
+              {
+                header: "Onboarding",
+                cell: (user) => (
+                  <span className="font-semibold capitalize text-drift-text-secondary">
+                    {user.onboardingStep.replace(/_/g, " ").toLowerCase()}
+                  </span>
+                ),
+              },
+              {
+                header: "Joined",
+                cell: (user) => new Date(user.createdAt).toLocaleDateString(),
+              },
+              {
+                header: "Actions",
+                className: "text-right",
+                cell: (user) =>
+                  user.accountStatus !== "DELETED" ? (
+                    <Button
+                      variant={user.accountStatus === "SUSPENDED" ? "secondary" : "destructive"}
+                      icon={user.accountStatus === "SUSPENDED" ? "restart_alt" : "block"}
+                      disabled={busyId === user.id}
+                      onClick={() =>
+                        setStatusFor(
+                          user,
+                          user.accountStatus === "SUSPENDED" ? "ACTIVE" : "SUSPENDED",
+                        )
+                      }
+                    >
+                      {busyId === user.id ? "Working..." : user.accountStatus === "SUSPENDED" ? "Restore" : "Suspend"}
+                    </Button>
+                  ) : (
+                    <span className="text-sm text-drift-text-secondary">-</span>
+                  ),
+              },
+            ]}
+          />
           <div className="px-1 text-xs font-semibold text-drift-text-secondary">Showing {rows.length} of {total}</div>
         </div>
       )}

@@ -35,52 +35,58 @@ export function CourtGroupsEditor({
       {groups.map((g, i) => (
         <div
           key={i}
-          className="grid grid-cols-2 gap-3 rounded-md border border-drift-border p-3 sm:grid-cols-5 sm:items-end"
+          className="flex flex-col gap-3 rounded-md border border-drift-border p-3 sm:flex-row sm:flex-wrap sm:items-end"
         >
-          <Field label="Surface">
-            <Select
-              value={g.surface}
-              onChange={(e) =>
-                update(i, { surface: e.target.value as CourtSurface })
-              }
-            >
-              {SURFACES.map((s) => (
-                <option key={s} value={s}>
-                  {s.replace(/_/g, " ")}
-                </option>
-              ))}
-            </Select>
-          </Field>
-          <Field label="Count">
-            <Input
-              type="number"
-              min={1}
-              max={100}
-              value={g.count}
-              onChange={(e) => update(i, { count: Number(e.target.value) })}
-            />
-          </Field>
-          <label className="flex items-center gap-2 text-sm text-drift-text-primary">
-            <input
-              type="checkbox"
-              checked={g.indoor}
-              onChange={(e) => update(i, { indoor: e.target.checked })}
-            />
-            Indoor
-          </label>
-          <label className="flex items-center gap-2 text-sm text-drift-text-primary">
-            <input
-              type="checkbox"
-              checked={g.lighting}
-              onChange={(e) => update(i, { lighting: e.target.checked })}
-            />
-            Lighting
-          </label>
+          <div className="min-w-[180px] flex-1 sm:max-w-[260px]">
+            <Field label="Surface">
+              <Select
+                value={g.surface}
+                onChange={(e) =>
+                  update(i, { surface: e.target.value as CourtSurface })
+                }
+              >
+                {SURFACES.map((s) => (
+                  <option key={s} value={s}>
+                    {s.replace(/_/g, " ")}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+          <div className="w-24">
+            <Field label="Count">
+              <Input
+                type="number"
+                min={1}
+                max={100}
+                value={g.count}
+                onChange={(e) => update(i, { count: Number(e.target.value) })}
+              />
+            </Field>
+          </div>
+          <div className="flex items-center gap-4 sm:pb-2">
+            <label className="flex items-center gap-2 text-sm text-drift-text-primary">
+              <input
+                type="checkbox"
+                checked={g.indoor}
+                onChange={(e) => update(i, { indoor: e.target.checked })}
+              />
+              Indoor
+            </label>
+            <label className="flex items-center gap-2 text-sm text-drift-text-primary">
+              <input
+                type="checkbox"
+                checked={g.lighting}
+                onChange={(e) => update(i, { lighting: e.target.checked })}
+              />
+              Lighting
+            </label>
+          </div>
           <Button
             type="button"
             variant="ghost"
             onClick={() => remove(i)}
-            className="justify-self-start text-drift-error"
+            className="self-start text-drift-error sm:ml-auto sm:self-end"
           >
             Remove
           </Button>

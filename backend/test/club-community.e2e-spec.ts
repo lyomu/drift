@@ -77,10 +77,19 @@ describe('Club Community (e2e)', () => {
     await signUp(joiner);
     await signUp(outsider);
 
-    const club = await authed(owner.token, 'post', '/clubs').send({
-      name: `Community Club ${stamp}`,
+    // `POST /clubs` was replaced by the club-onboarding request flow; this
+    // suite seeds the provisioned club directly.
+    const club = await prisma.club.create({
+      data: {
+        name: `Community Club ${stamp}`,
+        platformStatus: 'ACTIVE',
+        setupCompletedAt: new Date(),
+      },
     });
-    clubId = club.body.id;
+    clubId = club.id;
+    await prisma.clubMembership.create({
+      data: { clubId, userId: owner.id, role: 'OWNER', status: 'ACTIVE' },
+    });
   });
 
   afterAll(async () => {

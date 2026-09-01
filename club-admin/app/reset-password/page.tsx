@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { IconChip } from "@/components/dashboard-design";
-import { Button, ErrorBanner, Field, Input } from "@/components/ui";
+import { Button, ErrorBanner, Field, Input, PasswordField } from "@/components/ui";
 import { api, ApiError, setToken } from "@/lib/api-client";
 
 type ForgotPasswordResponse = {
@@ -69,7 +69,7 @@ function ResetPasswordForm() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-drift-background px-4 py-10">
-      <div className="w-full max-w-[380px] rounded-[20px] bg-drift-surface p-8 shadow-[0_24px_60px_rgba(17,24,39,0.12)]">
+      <div className="w-full max-w-[380px] rounded-lg bg-drift-surface p-8 shadow-[0_24px_60px_rgba(17,24,39,0.12)]">
         <div className="mb-6 flex flex-col items-center text-center">
           <IconChip
             icon={complete ? "check_circle" : step === "reset" ? "password" : "lock_reset"}
@@ -90,7 +90,7 @@ function ResetPasswordForm() {
 
         <ErrorBanner message={error} />
         {devCode && (
-          <div className="mb-4 rounded-xl border border-drift-warning/25 bg-drift-warning-surface px-3 py-2 text-center text-sm font-bold text-drift-warning">
+          <div className="mb-4 rounded-md border border-drift-warning/25 bg-drift-warning-surface px-3 py-2 text-center text-sm font-bold text-drift-warning">
             Dev reset code: {devCode}
           </div>
         )}
@@ -134,24 +134,20 @@ function ResetPasswordForm() {
                 placeholder="000000"
               />
             </Field>
-            <Field label="New password">
-              <Input
-                type="password"
-                required
-                minLength={8}
-                value={newPassword}
-                onChange={(event) => setNewPassword(event.target.value)}
-              />
-            </Field>
-            <Field label="Confirm password">
-              <Input
-                type="password"
-                required
-                minLength={8}
-                value={confirmPassword}
-                onChange={(event) => setConfirmPassword(event.target.value)}
-              />
-            </Field>
+            <PasswordField
+              label="New password"
+              required
+              minLength={8}
+              value={newPassword}
+              onChange={(event) => setNewPassword(event.target.value)}
+            />
+            <PasswordField
+              label="Confirm password"
+              required
+              minLength={8}
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+            />
             <Button type="submit" disabled={busy} className="w-full">
               {busy ? "Updating..." : "Update password"}
             </Button>

@@ -79,11 +79,20 @@ describe('ClubsAdminService', () => {
   describe('myMemberships', () => {
     it('returns only ACTIVE memberships with the club name and role', async () => {
       prisma.clubMembership.findMany.mockResolvedValue([
-        { clubId: 'club-1', role: 'OWNER', club: { name: 'Test Club' } },
+        {
+          clubId: 'club-1',
+          role: 'OWNER',
+          club: { name: 'Test Club', setupCompletedAt: new Date() },
+        },
       ]);
       const result = await service.myMemberships('user-1');
       expect(result.memberships).toEqual([
-        { clubId: 'club-1', clubName: 'Test Club', role: 'OWNER' },
+        {
+          clubId: 'club-1',
+          clubName: 'Test Club',
+          role: 'OWNER',
+          setupComplete: true,
+        },
       ]);
       expect(prisma.clubMembership.findMany).toHaveBeenCalledWith(
         expect.objectContaining({

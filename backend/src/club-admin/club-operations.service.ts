@@ -216,8 +216,8 @@ export class ClubOperationsService {
       this.prisma.clubEventRegistration.count({
         where: { event: { clubId }, registeredAt: createdAt },
       }),
-      this.prisma.seasonRegistration.count({
-        where: { season: { league: { clubId } }, registeredAt: createdAt },
+      this.prisma.leagueRegistration.count({
+        where: { league: { clubId }, registeredAt: createdAt },
       }),
     ]);
     return {

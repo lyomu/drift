@@ -5,7 +5,7 @@
  * rotate around it each round; an odd player count gets a `null` bye slot
  * padded in so every round divides evenly.
  *
- * A full round-robin only has `n - 1` distinct rounds. If the season is
+ * A full round-robin only has `n - 1` distinct rounds. If the league is
  * configured for more rounds than that, the schedule repeats from the top
  * (a double round-robin, etc.) — side assignment isn't swapped on repeat
  * since there's no tennis "home advantage" to balance for.
@@ -13,6 +13,21 @@
 export interface RoundPairing {
   index: number;
   pairs: Array<[string, string | null]>;
+}
+
+/**
+ * Reorders a level-sorted list so the circle method's round-1 pairing
+ * (position `i` vs position `n-1-i`) lands *adjacent* seeds against each
+ * other — i.e. round 1 becomes (s0 v s1), (s2 v s3), (s4 v s5)… so players
+ * meet their nearest level first (M15). Pass the result straight into
+ * `generateRounds`. First half takes the even-indexed seeds, second half
+ * the odd-indexed seeds reversed. Verified by hand for n = 4 and n = 6.
+ */
+export function foldForNearestSeed<T>(seeded: T[]): T[] {
+  const evens: T[] = [];
+  const odds: T[] = [];
+  seeded.forEach((item, i) => (i % 2 === 0 ? evens : odds).push(item));
+  return [...evens, ...odds.reverse()];
 }
 
 export function generateRounds(

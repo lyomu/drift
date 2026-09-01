@@ -37,10 +37,7 @@ class PlayTabScaffold extends StatelessWidget {
         AsyncData(:final value) => ListView(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
           children: [
-            if (header != null) ...[
-              header!,
-              const SizedBox(height: 10),
-            ],
+            if (header != null) ...[header!, const SizedBox(height: 10)],
             if (value.isEmpty)
               _Empty(icon: emptyIcon, message: emptyMessage)
             else

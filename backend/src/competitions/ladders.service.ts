@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { LadderChallengeState, LadderState } from '@prisma/client';
+import { LadderChallengeState, LadderState, MatchSport } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { MatchesService } from '../matches/matches.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -71,13 +71,20 @@ export class LaddersService {
 
   async create(
     clubId: string,
-    data: { name: string; challengeRange?: number },
+    data: { name: string; challengeRange?: number; sport?: MatchSport },
   ) {
+    const challengeRange = data.challengeRange ?? 2;
+    if (challengeRange < 1 || challengeRange > 10) {
+      throw new BadRequestException(
+        'Challenge range must be between 1 and 10 rungs.',
+      );
+    }
     return this.prisma.ladder.create({
       data: {
         clubId,
         name: data.name,
-        challengeRange: data.challengeRange ?? 2,
+        sport: data.sport ?? MatchSport.TENNIS,
+        challengeRange,
       },
     });
   }

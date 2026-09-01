@@ -29,7 +29,8 @@ class DriftBackHeader extends StatelessWidget {
         children: [
           _SquareButton(
             icon: Icons.chevron_left,
-            onTap: onBack ??
+            onTap:
+                onBack ??
                 () {
                   if (context.canPop()) context.pop();
                 },

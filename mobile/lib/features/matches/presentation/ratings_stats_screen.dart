@@ -147,7 +147,9 @@ class _FormatCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  played == 0 ? 'No matches played' : '${stats.wins}W · ${stats.losses}L',
+                  played == 0
+                      ? 'No matches played'
+                      : '${stats.wins}W · ${stats.losses}L',
                   style: type.caption.copyWith(color: colors.textSecondary),
                 ),
               ],
@@ -211,9 +213,6 @@ class _CardTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final type = Theme.of(context).extension<DriftTypography>()!;
-    return Text(
-      text,
-      style: type.title.copyWith(fontWeight: FontWeight.w700),
-    );
+    return Text(text, style: type.title.copyWith(fontWeight: FontWeight.w700));
   }
 }

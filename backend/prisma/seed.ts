@@ -11,10 +11,8 @@ import {
 } from '@prisma/client';
 
 /**
- * No create/manage-league API exists this phase (Phase M8) — per the
- * decision recorded in PROGRESS.md, leagues/seasons are seeded directly
- * rather than inventing an organizer surface ahead of the Club Admin app
- * (M14+). Registration windows here are deliberately short (minutes, not
+ * The seed league is created directly (Club Admin can also create leagues
+ * since M14). Registration windows here are deliberately short (minutes, not
  * weeks) so the full lazy-progression path — registration closing, Round 1
  * opening, a round's deadline passing, standings updating — can be watched
  * end-to-end in one manual test session. A real deployment would seed
@@ -654,22 +652,11 @@ async function seedNews() {
 async function main() {
   const now = Date.now();
 
-  const league = await prisma.league.upsert({
-    where: { id: 'seed-autumn-singles-league' },
-    update: {},
-    create: {
-      id: 'seed-autumn-singles-league',
-      sport: MatchSport.TENNIS,
-      name: 'Autumn Singles League',
-      description:
-        'A friendly round-robin singles league — register, get paired each round, climb the standings.',
-      rulesText:
-        'Standard singles scoring. Best effort to schedule and play your fixture before the round deadline — an unplayed fixture is recorded as a walkover in favour of neither player.',
-    },
-  });
-
-  const seasonId = 'seed-autumn-singles-season-1';
-  const seasonDates = {
+  const leagueId = 'seed-autumn-singles-league';
+  // Since M15 a league *is* the competition — registration window and round
+  // count live on the league row directly. Windows are deliberately short
+  // (minutes) so the full lazy-progression path runs during a manual test.
+  const competitionDates = {
     registrationOpensAt: new Date(now),
     registrationClosesAt: new Date(now + 2 * MINUTE_MS),
     startsAt: new Date(now + 3 * MINUTE_MS),
@@ -681,24 +668,28 @@ async function main() {
   // manual testing — wipe whatever a previous run already progressed
   // (rounds/fixtures cascade, registrations, standings) so the new dates
   // above aren't racing against stale state computed from the old ones.
-  await prisma.round.deleteMany({ where: { seasonId } });
-  await prisma.standing.deleteMany({ where: { seasonId } });
-  await prisma.seasonRegistration.deleteMany({ where: { seasonId } });
+  await prisma.round.deleteMany({ where: { leagueId } });
+  await prisma.standing.deleteMany({ where: { leagueId } });
+  await prisma.leagueRegistration.deleteMany({ where: { leagueId } });
 
-  const season = await prisma.season.upsert({
-    where: { id: seasonId },
-    update: seasonDates,
+  const league = await prisma.league.upsert({
+    where: { id: leagueId },
+    update: competitionDates,
     create: {
-      id: seasonId,
-      leagueId: league.id,
-      label: 'Season 1',
-      ...seasonDates,
+      id: leagueId,
+      sport: MatchSport.TENNIS,
+      name: 'Autumn Singles League',
+      description:
+        'A friendly round-robin singles league — register, get paired each round, climb the standings.',
+      rulesText:
+        'Standard singles scoring. Best effort to schedule and play your fixture before the round deadline — an unplayed fixture is recorded as a walkover in favour of neither player.',
+      ...competitionDates,
     },
   });
 
-  console.log(`Seeded league "${league.name}" with season "${season.label}".`);
+  console.log(`Seeded league "${league.name}".`);
   console.log(
-    `Registration open now, closes in 2 min, season starts in 3 min, ~3 min per round.`,
+    `Registration open now, closes in 2 min, league starts in 3 min, ~3 min per round.`,
   );
 
   await seedCourtsAndClubs();

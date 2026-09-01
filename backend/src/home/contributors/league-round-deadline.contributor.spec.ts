@@ -21,10 +21,7 @@ function fixtureRow(overrides: Record<string, unknown> = {}) {
       index: 2,
       // 6 hours out.
       deadline: new Date('2026-08-26T16:00:00Z'),
-      season: {
-        id: 'season-1',
-        league: { name: 'Autumn Singles League' },
-      },
+      league: { id: 'league-1', name: 'Autumn Singles League' },
     },
     ...overrides,
   };
@@ -48,7 +45,7 @@ describe('LeagueRoundDeadlineContributor', () => {
     expect(card.type).toBe('LEAGUE_ROUND_DEADLINE');
     expect(card.title).toBe('Round 2 closes in 6 hours');
     expect(card.body).toContain('walkover');
-    expect(card.action?.route).toBe('/compete/seasons/season-1/rounds/round-1');
+    expect(card.action?.route).toBe('/compete/leagues/league-1/rounds/round-1');
   });
 
   it('is urgent and not dismissible — the cost of missing it is a lost fixture', async () => {

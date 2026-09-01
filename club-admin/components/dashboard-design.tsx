@@ -6,12 +6,18 @@ export function MaterialIcon({
   name,
   filled = false,
   className = "",
+  title,
 }: {
   name: string;
   filled?: boolean;
   className?: string;
+  title?: string;
 }) {
-  return <span className={`ms ${filled ? "msf" : ""} ${className}`}>{name}</span>;
+  return (
+    <span aria-hidden={!title} title={title} className={`ms ${filled ? "msf" : ""} ${className}`}>
+      {name}
+    </span>
+  );
 }
 
 export function IconChip({
@@ -32,7 +38,7 @@ export function IconChip({
   };
   return (
     <span
-      className={`flex h-10 w-10 shrink-0 items-center justify-center ${round ? "rounded-full" : "rounded-[10px]"} ${tones[tone]}`}
+      className={`flex h-10 w-10 shrink-0 items-center justify-center ${round ? "rounded-full" : "rounded-md"} ${tones[tone]}`}
     >
       <MaterialIcon name={icon} className="text-xl" />
     </span>
@@ -47,7 +53,7 @@ export function Panel({
   className?: string;
 }) {
   return (
-    <section className={`rounded-2xl border border-drift-border bg-drift-surface p-5 ${className}`}>
+    <section className={`rounded-lg border border-drift-border bg-drift-surface p-5 ${className}`}>
       {children}
     </section>
   );
@@ -76,7 +82,7 @@ export function RowCard({
   className?: string;
 }) {
   return (
-    <div className={`rowcard rounded-xl border border-transparent p-3 transition-colors ${className}`}>
+    <div className={`rowcard rounded-lg border border-drift-border bg-drift-surface px-4 py-3 transition-colors hover:bg-drift-primary-light/35 ${className}`}>
       {children}
     </div>
   );
@@ -169,10 +175,12 @@ export function ModalShell({
   title,
   children,
   onClose,
+  size = "md",
 }: {
   title: string;
   children: React.ReactNode;
   onClose: () => void;
+  size?: "md" | "lg";
 }) {
   return (
     <div
@@ -180,7 +188,7 @@ export function ModalShell({
       onClick={onClose}
     >
       <div
-        className="max-h-[90vh] w-full max-w-[460px] overflow-y-auto rounded-[18px] bg-drift-surface p-6"
+        className={`max-h-[90vh] w-full ${size === "lg" ? "max-w-[640px]" : "max-w-[460px]"} overflow-y-auto rounded-lg bg-drift-surface p-6`}
         onClick={(event) => event.stopPropagation()}
       >
         <div className="mb-5 flex items-center justify-between gap-4">

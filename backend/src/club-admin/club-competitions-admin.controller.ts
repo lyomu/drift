@@ -9,7 +9,7 @@ import { CreateLeagueDto } from './dto/league.dto';
 const OWNER_OR_ADMIN = [ClubRole.OWNER, ClubRole.ADMIN];
 
 /** Routes with a literal `:clubId` param — league list/create and the
- * disputes queue. Resource-nested routes (a league/season/fixture id, not
+ * disputes queue. Resource-nested routes (a league/fixture id, not
  * a club id) live in `competitions-admin.controller.ts` instead. */
 @Controller('clubs/:clubId')
 @UseGuards(JwtAuthGuard, ClubMembershipGuard)
@@ -32,8 +32,8 @@ export class ClubCompetitionsAdminController {
     return this.competitions.listDisputesForClub(clubId);
   }
 
-  @Get('seasons/archive')
+  @Get('leagues/archive')
   listArchive(@Param('clubId') clubId: string) {
-    return this.competitions.listSeasonArchive(clubId);
+    return this.competitions.listLeagueArchive(clubId);
   }
 }

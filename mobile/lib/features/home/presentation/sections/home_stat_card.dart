@@ -60,7 +60,11 @@ class HomeStatCard extends StatelessWidget {
 }
 
 class _Stat extends StatelessWidget {
-  const _Stat({required this.label, required this.value, required this.caption});
+  const _Stat({
+    required this.label,
+    required this.value,
+    required this.caption,
+  });
 
   final String label;
   final String value;

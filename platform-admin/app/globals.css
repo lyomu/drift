@@ -27,6 +27,52 @@
   --color-error-surface: #fdecec;
 }
 
+/*
+ * Dark palette. Applied two ways: the OS preference (unless the user has
+ * explicitly chosen light via the header toggle), and an explicit
+ * `data-theme="dark"` on <html> (set by ThemeToggle + the no-flash script in
+ * layout.tsx). Keep the two blocks below identical.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-primary: #6f9df5;
+    --color-primary-dark: #9db9f8;
+    --color-primary-light: #17264a;
+    --color-background: #0a121f;
+    --color-surface: #111b2c;
+    --color-surface-raised: #162236;
+    --color-neutral-surface: #1c2738;
+    --color-text-primary: #eef2f7;
+    --color-text-secondary: #93a2b7;
+    --color-border: #24324a;
+    --color-success: #34d399;
+    --color-success-surface: #10291f;
+    --color-warning: #fbbf24;
+    --color-warning-surface: #2e2408;
+    --color-error: #f87171;
+    --color-error-surface: #341415;
+  }
+}
+
+:root[data-theme="dark"] {
+  --color-primary: #6f9df5;
+  --color-primary-dark: #9db9f8;
+  --color-primary-light: #17264a;
+  --color-background: #0a121f;
+  --color-surface: #111b2c;
+  --color-surface-raised: #162236;
+  --color-neutral-surface: #1c2738;
+  --color-text-primary: #eef2f7;
+  --color-text-secondary: #93a2b7;
+  --color-border: #24324a;
+  --color-success: #34d399;
+  --color-success-surface: #10291f;
+  --color-warning: #fbbf24;
+  --color-warning-surface: #2e2408;
+  --color-error: #f87171;
+  --color-error-surface: #341415;
+}
+
 @theme inline {
   --color-drift-primary: var(--color-primary);
   --color-drift-primary-dark: var(--color-primary-dark);
@@ -45,8 +91,8 @@
   --color-drift-error: var(--color-error);
   --color-drift-error-surface: var(--color-error-surface);
 
-  --font-body: var(--font-outfit);
-  --font-display: var(--font-display-face);
+  --font-body: var(--font-poppins);
+  --font-display: var(--font-poppins);
 
   --radius-sm: 4px;
   --radius-md: 8px;
@@ -58,7 +104,6 @@ body {
   background: var(--color-background);
   color: var(--color-text-primary);
   font-family: var(--font-body), sans-serif;
-  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
 * {

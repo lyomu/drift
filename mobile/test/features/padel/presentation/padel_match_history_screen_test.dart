@@ -90,8 +90,10 @@ void main() {
         ],
       );
 
-      expect(find.text("Couldn't load your Padel match history."),
-          findsOneWidget);
+      expect(
+        find.text("Couldn't load your Padel match history."),
+        findsOneWidget,
+      );
       expect(tester.takeException(), isNull);
     });
   });

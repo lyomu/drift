@@ -14,8 +14,7 @@ void main() {
     for (final brightness in Brightness.values) {
       final label = brightness.name;
 
-      testWidgets('renders both sports with levels in $label',
-          (tester) async {
+      testWidgets('renders both sports with levels in $label', (tester) async {
         await pumpScreen(
           tester,
           const MySportsHubScreen(),
@@ -37,8 +36,9 @@ void main() {
         expect(find.text('Level 3.0 · 3.0'), findsOneWidget);
       });
 
-      testWidgets("offers Add Padel when there's no profile in $label",
-          (tester) async {
+      testWidgets("offers Add Padel when there's no profile in $label", (
+        tester,
+      ) async {
         await pumpScreen(
           tester,
           const MySportsHubScreen(),
@@ -55,13 +55,16 @@ void main() {
       });
     }
 
-    testWidgets('survives a failed padel load without throwing',
-        (tester) async {
+    testWidgets('survives a failed padel load without throwing', (
+      tester,
+    ) async {
       await pumpScreen(
         tester,
         const MySportsHubScreen(),
         overrides: [
-          ownProfileProvider.overrideWith((ref) => Future.value(playerProfile())),
+          ownProfileProvider.overrideWith(
+            (ref) => Future.value(playerProfile()),
+          ),
           padelProfileProvider.overrideWith((ref) => failing<PadelProfile?>()),
         ],
       );

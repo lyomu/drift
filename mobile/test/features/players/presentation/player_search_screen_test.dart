@@ -48,7 +48,7 @@ void main() {
 
         expect(
           find.text(
-            'No players match these filters — try widening distance or level range',
+            'No players match these filters — try widening distance or level range.',
           ),
           findsOneWidget,
         );
@@ -81,8 +81,10 @@ void main() {
         ],
       );
 
-      expect(find.text("Couldn't load players. Please try again."),
-          findsOneWidget);
+      expect(
+        find.text("Couldn't load players. Pull to retry."),
+        findsOneWidget,
+      );
       expect(tester.takeException(), isNull);
     });
   });

@@ -19,17 +19,27 @@ void main() {
           const LeagueRulesScreen(leagueId: 'league-1'),
           brightness: brightness,
           overrides: [
-            leagueDetailProvider('league-1').overrideWith(
-              (ref) async => league(),
-            ),
+            leagueDetailProvider(
+              'league-1',
+            ).overrideWith((ref) async => league()),
           ],
         );
 
-        expect(find.text('Best of three sets.'), findsOneWidget);
+        // rulesText is sanitised HTML, rendered by HtmlWidget as rich text.
+        expect(
+          find.textContaining('Best of three sets', findRichText: true),
+          findsOneWidget,
+        );
+        expect(find.text('Scoring format'), findsOneWidget);
+        expect(
+          find.text('Best of 3 sets, match tiebreak at one set all.'),
+          findsOneWidget,
+        );
       });
 
-      testWidgets("falls back politely when no rules exist in $label",
-          (tester) async {
+      testWidgets("falls back politely when no rules exist in $label", (
+        tester,
+      ) async {
         await pumpScreen(
           tester,
           const LeagueRulesScreen(leagueId: 'league-1'),
@@ -62,9 +72,9 @@ void main() {
         const LeagueRulesScreen(leagueId: 'league-1'),
         settle: false,
         overrides: [
-          leagueDetailProvider('league-1').overrideWith(
-            (ref) => pending<League>(),
-          ),
+          leagueDetailProvider(
+            'league-1',
+          ).overrideWith((ref) => pending<League>()),
         ],
       );
 
@@ -76,9 +86,9 @@ void main() {
         tester,
         const LeagueRulesScreen(leagueId: 'league-1'),
         overrides: [
-          leagueDetailProvider('league-1').overrideWith(
-            (ref) => failing<League>(),
-          ),
+          leagueDetailProvider(
+            'league-1',
+          ).overrideWith((ref) => failing<League>()),
         ],
       );
 

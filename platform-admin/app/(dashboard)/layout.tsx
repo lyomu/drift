@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { InitialsAvatar, MaterialIcon } from "@/components/dashboard-design";
 import { Button } from "@/components/ui";
+import { SiteHeader } from "@/components/SiteHeader";
 import type { CurrentPlatformAdmin, PlatformPermission } from "@/lib/access-types";
 import { api, hasToken, setToken, setTwoFactorChallenge } from "@/lib/api-client";
 
@@ -28,6 +29,17 @@ const OVERVIEW: NavItem = {
   icon: "home",
   permissions: ["ANALYTICS_READ"],
   exact: true,
+};
+
+/**
+ * Platform Settings is one flat entry rather than a group — its own tab rail at
+ * /settings is the way into the individual sections.
+ */
+const SETTINGS: NavItem = {
+  href: "/settings",
+  label: "Platform Settings",
+  icon: "tune",
+  permissions: ["PLATFORM_CONFIG_MANAGE"],
 };
 
 const NAV_GROUPS: NavGroup[] = [
@@ -66,6 +78,7 @@ const NAV_GROUPS: NavGroup[] = [
     icon: "corporate_fare",
     items: [
       { href: "/organizations", label: "Club List", icon: "apartment", permissions: ["ORGANIZATIONS_MANAGE"], exact: true },
+      { href: "/organizations/club-requests", label: "Club Requests", icon: "add_business", permissions: ["ORGANIZATIONS_MANAGE"] },
       { href: "/organizations/approvals", label: "Admin Approvals", icon: "approval", permissions: ["ORGANIZATIONS_MANAGE"] },
       { href: "/organizations/subscriptions", label: "Subscription Status", icon: "workspace_premium", permissions: ["ORGANIZATIONS_MANAGE"] },
       { href: "/organizations/moderation", label: "Community Moderation", icon: "forum", permissions: ["ORGANIZATIONS_MANAGE"] },
@@ -112,17 +125,6 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: "Platform Config",
-    icon: "tune",
-    items: [
-      { href: "/platform/markets", label: "Countries / Cities", icon: "language", permissions: ["PLATFORM_CONFIG_MANAGE"] },
-      { href: "/platform/feature-flags", label: "Feature Flags", icon: "toggle_on", permissions: ["PLATFORM_CONFIG_MANAGE"] },
-      { href: "/platform/notification-templates", label: "Notification Templates", icon: "notifications", permissions: ["PLATFORM_CONFIG_MANAGE"] },
-      { href: "/platform/system-settings", label: "System Settings", icon: "settings", permissions: ["PLATFORM_CONFIG_MANAGE"] },
-      { href: "/platform/integrations", label: "API / Integration Settings", icon: "hub", permissions: ["PLATFORM_CONFIG_MANAGE"] },
-    ],
-  },
-  {
     label: "Support",
     icon: "support_agent",
     items: [
@@ -135,6 +137,21 @@ const NAV_GROUPS: NavGroup[] = [
 function isActive(pathname: string, item: NavItem) {
   if (item.href === "/" || item.exact) return pathname === item.href;
   return pathname.startsWith(item.href);
+}
+
+/** A sidebar entry that sits outside any group — Overview and Platform Settings. */
+function TopLevelLink({ item, active }: { item: NavItem; active: boolean }) {
+  return (
+    <Link
+      href={item.href}
+      className={`navitem flex min-h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium transition ${
+        active ? "bg-drift-primary-light text-drift-primary-dark" : "text-drift-text-primary"
+      }`}
+    >
+      <MaterialIcon name={item.icon} filled={active} className="text-[20px]" />
+      {item.label}
+    </Link>
+  );
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -156,9 +173,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       .finally(() => setLoading(false));
   }, [router]);
 
-  const overviewVisible = useMemo(() => {
+  const { overviewVisible, settingsVisible } = useMemo(() => {
     const granted = new Set(admin?.role.permissions ?? []);
-    return OVERVIEW.permissions.every((permission) => granted.has(permission));
+    const visible = (item: NavItem) => item.permissions.every((permission) => granted.has(permission));
+    return { overviewVisible: visible(OVERVIEW), settingsVisible: visible(SETTINGS) };
   }, [admin]);
 
   const groups = useMemo(() => {
@@ -182,8 +200,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [groups, pathname]);
 
   const flatItems = useMemo(
-    () => [...(overviewVisible ? [OVERVIEW] : []), ...groups.flatMap((group) => group.items)],
-    [groups, overviewVisible],
+    () => [
+      ...(overviewVisible ? [OVERVIEW] : []),
+      ...groups.flatMap((group) => group.items),
+      ...(settingsVisible ? [SETTINGS] : []),
+    ],
+    [groups, overviewVisible, settingsVisible],
   );
   const currentHref = flatItems.find((item) => isActive(pathname, item))?.href ?? "";
 
@@ -226,17 +248,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
 
         <nav className="mt-7 flex flex-1 flex-col gap-2 overflow-y-auto pr-1">
-          {overviewVisible && (
-            <Link
-              href="/"
-              className={`navitem flex min-h-10 items-center gap-3 rounded-lg px-3 text-sm font-bold transition ${
-                pathname === "/" ? "bg-drift-primary-light text-drift-primary-dark" : "text-drift-text-secondary"
-              }`}
-            >
-              <MaterialIcon name="home" filled={pathname === "/"} className="text-[20px]" />
-              Overview
-            </Link>
-          )}
+          {overviewVisible && <TopLevelLink item={OVERVIEW} active={isActive(pathname, OVERVIEW)} />}
 
           {groups.map((group) => {
             const open = expanded.has(group.label);
@@ -246,8 +258,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <button
                   type="button"
                   onClick={() => toggleGroup(group.label)}
-                  className={`navgroup flex min-h-10 w-full items-center justify-between rounded-lg px-3 text-left text-sm font-bold transition ${
-                    groupActive ? "text-drift-primary-dark" : "text-drift-text-secondary"
+                  className={`navgroup flex min-h-10 w-full items-center justify-between rounded-lg px-3 text-left text-sm font-medium transition ${
+                    groupActive ? "text-drift-primary-dark" : "text-drift-text-primary"
                   }`}
                 >
                   <span className="flex min-w-0 items-center gap-3">
@@ -264,8 +276,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         <Link
                           key={item.href}
                           href={item.href}
-                          className={`navitem flex min-h-9 items-center gap-2 rounded-lg px-3 py-1.5 text-[13px] font-bold leading-tight transition ${
-                            active ? "bg-drift-primary-light text-drift-primary-dark" : "text-drift-text-secondary"
+                          className={`navitem flex min-h-9 items-center gap-2 rounded-lg px-3 py-1.5 text-[13px] font-medium leading-tight transition ${
+                            active ? "bg-drift-primary-light text-drift-primary-dark" : "text-drift-text-primary"
                           }`}
                         >
                           <MaterialIcon name={item.icon} filled={active} className="text-[18px]" />
@@ -278,6 +290,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </div>
             );
           })}
+
+          {settingsVisible && <TopLevelLink item={SETTINGS} active={isActive(pathname, SETTINGS)} />}
         </nav>
 
         <Button variant="ghost" icon="logout" className="mt-5 justify-start" onClick={signOut}>
@@ -286,6 +300,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
+        <SiteHeader admin={admin} onSignOut={signOut} />
         <div className="border-b border-drift-border bg-drift-surface px-4 py-3 lg:hidden">
           <div className="font-display text-lg font-bold text-drift-primary">Drift</div>
           <div className="text-xs font-bold text-drift-text-secondary">Platform Admin / {admin.role.name}</div>
@@ -307,6 +322,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 ))}
               </optgroup>
             ))}
+            {settingsVisible && <option value={SETTINGS.href}>{SETTINGS.label}</option>}
           </select>
           <button
             className="actionbtn rounded-lg px-3 py-2 text-xs font-bold text-drift-error"
@@ -316,7 +332,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </button>
         </div>
         <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 sm:py-8">
-          <div className="mx-auto w-full max-w-[1180px]">{children}</div>
+          {children}
         </main>
       </div>
     </div>

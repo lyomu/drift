@@ -4,9 +4,12 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { api, ApiError } from "@/lib/api-client";
 import { useClub } from "@/lib/club-context";
-import { Button, EmptyState, ErrorBanner, Field, Input, PageHeader, Textarea } from "@/components/ui";
+import { Button, ErrorBanner, Field, Input, PageHeader, Textarea } from "@/components/ui";
 import { StatusBadge } from "@/components/StatusBadge";
 import { IconChip, ModalShell } from "@/components/dashboard-design";
+import { EventImage } from "@/components/EventImage";
+import { EventImageUpload, uploadEventImage } from "@/components/EventImageUpload";
+import { Listing } from "@/components/Listing";
 import type { ClubEvent } from "@/lib/types";
 
 export default function EventsPage() {
@@ -17,6 +20,8 @@ export default function EventsPage() {
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
   const [startsAt, setStartsAt] = useState("");
   const [endsAt, setEndsAt] = useState("");
   const [capacity, setCapacity] = useState("");
@@ -45,10 +50,15 @@ export default function EventsPage() {
     if (!clubId || !name.trim() || !startsAt) return;
     setBusy(true);
     setError(null);
+    setImageError(null);
     try {
+      const imageUrl = imageFile
+        ? await uploadEventImage(clubId, imageFile, `${name.trim()} event image`)
+        : undefined;
       await api.post<{ event: ClubEvent }>(`/clubs/${clubId}/events`, {
         name: name.trim(),
         description: description.trim() || undefined,
+        imageUrl,
         startsAt: new Date(startsAt).toISOString(),
         endsAt: endsAt ? new Date(endsAt).toISOString() : undefined,
         capacity: capacity ? Number(capacity) : undefined,
@@ -56,6 +66,8 @@ export default function EventsPage() {
       });
       setName("");
       setDescription("");
+      setImageFile(null);
+      setImageError(null);
       setStartsAt("");
       setEndsAt("");
       setCapacity("");
@@ -84,31 +96,44 @@ export default function EventsPage() {
           onChange={(e) => setDate(e.target.value)}
         />
       </div>
-      {events === null ? (
-        <EmptyState message="Loading..." />
-      ) : events.length === 0 ? (
-        <EmptyState message="No events scheduled" />
-      ) : (
-        <div className="flex flex-col gap-3">
-          {events.map((event) => (
-            <Link href={`/events/${event.id}`} key={event.id}>
-              <div className="rowcard flex flex-wrap items-center gap-4 rounded-2xl border border-drift-border bg-drift-surface px-5 py-[18px] transition-colors">
+      <Listing
+        title="Events"
+        count={events?.length ?? null}
+        loading={events === null}
+        empty={{
+          icon: "event",
+          title: date ? "No events on this date" : "No events scheduled",
+          description:
+            "Create an event to plan a club session and track turnout in one place.",
+          action: <Button onClick={() => setShowForm(true)}>Create event</Button>,
+        }}
+      >
+        {events?.map((event) => (
+          <Link href={`/events/${event.id}`} key={event.id}>
+            <div className="rowcard flex flex-wrap items-center gap-4 rounded-lg border border-drift-border bg-drift-surface px-5 py-[18px] transition-colors">
+              {event.imageUrl ? (
+                <EventImage
+                  src={event.imageUrl}
+                  alt=""
+                  className="h-10 w-10 shrink-0 rounded-md object-cover"
+                />
+              ) : (
                 <IconChip icon="event" tone="info" />
-                <div className="min-w-0 flex-1">
-                  <div className="text-[14.5px] font-bold text-drift-text-primary">
-                    {event.name}
-                  </div>
-                  <div className="mt-1 text-[12.5px] text-drift-text-secondary">
-                    {new Date(event.startsAt).toLocaleString()} / {event._count?.registrations ?? 0}
-                    {event.capacity ? `/${event.capacity}` : ""} registered
-                  </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <div className="text-[14.5px] font-bold text-drift-text-primary">
+                  {event.name}
                 </div>
-                <StatusBadge status={event.status} />
+                <div className="mt-1 text-[12.5px] text-drift-text-secondary">
+                  {new Date(event.startsAt).toLocaleString()} / {event._count?.registrations ?? 0}
+                  {event.capacity ? `/${event.capacity}` : ""} registered
+                </div>
               </div>
-            </Link>
-          ))}
-        </div>
-      )}
+              <StatusBadge status={event.status} />
+            </div>
+          </Link>
+        ))}
+      </Listing>
 
       {showForm && (
         <ModalShell title="Create event" onClose={() => setShowForm(false)}>
@@ -136,6 +161,17 @@ export default function EventsPage() {
             <Field label="Description">
               <Textarea rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
             </Field>
+            <EventImageUpload
+              file={imageFile}
+              disabled={busy}
+              onFileChange={setImageFile}
+              onError={setImageError}
+            />
+            {imageError && (
+              <p className="text-[13px] font-semibold text-drift-error" role="alert">
+                {imageError}
+              </p>
+            )}
             <div className="mt-2 flex justify-end gap-3">
               <Button
                 type="button"

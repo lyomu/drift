@@ -13,16 +13,15 @@ void main() {
     for (final brightness in Brightness.values) {
       final label = brightness.name;
 
-      testWidgets("renders another player's profile in $label",
-          (tester) async {
+      testWidgets("renders another player's profile in $label", (tester) async {
         await pumpScreen(
           tester,
           const PlayerProfileScreen(playerId: 'u2'),
           brightness: brightness,
           overrides: [
-            playerProfileProvider('u2').overrideWith(
-              (ref) => Future.value(playerProfile()),
-            ),
+            playerProfileProvider(
+              'u2',
+            ).overrideWith((ref) => Future.value(playerProfile())),
           ],
         );
 
@@ -30,17 +29,16 @@ void main() {
         expect(find.text('Ana Diaz'), findsOneWidget);
       });
 
-      testWidgets('hides gated fields from a non-connection in $label',
-          (tester) async {
+      testWidgets('hides gated fields from a non-connection in $label', (
+        tester,
+      ) async {
         await pumpScreen(
           tester,
           const PlayerProfileScreen(playerId: 'u2'),
           brightness: brightness,
           overrides: [
             playerProfileProvider('u2').overrideWith(
-              (ref) => Future.value(
-                playerProfile(skillBreakdown: null),
-              ),
+              (ref) => Future.value(playerProfile(skillBreakdown: null)),
             ),
           ],
         );
@@ -55,9 +53,9 @@ void main() {
         const PlayerProfileScreen(playerId: 'u2'),
         settle: false,
         overrides: [
-          playerProfileProvider('u2').overrideWith(
-            (ref) => pending<PlayerProfile>(),
-          ),
+          playerProfileProvider(
+            'u2',
+          ).overrideWith((ref) => pending<PlayerProfile>()),
         ],
       );
 
@@ -69,9 +67,9 @@ void main() {
         tester,
         const PlayerProfileScreen(playerId: 'u2'),
         overrides: [
-          playerProfileProvider('u2').overrideWith(
-            (ref) => failing<PlayerProfile>(),
-          ),
+          playerProfileProvider(
+            'u2',
+          ).overrideWith((ref) => failing<PlayerProfile>()),
         ],
       );
 

@@ -9,11 +9,20 @@ import { PrismaService } from '../prisma/prisma.service';
 export type EventInput = {
   name: string;
   description?: string;
+  imageUrl?: string | null;
   startsAt: Date;
   endsAt?: Date;
   capacity?: number;
   status: ClubEventStatus;
 };
+
+/** Trim an image reference and fold a blank value to null so "clear the image"
+ * works from the admin form. `undefined` is left untouched (field omitted). */
+function normaliseImageUrl<T extends { imageUrl?: string | null }>(input: T): T {
+  if (input.imageUrl === undefined) return input;
+  const trimmed = (input.imageUrl ?? '').trim();
+  return { ...input, imageUrl: trimmed === '' ? null : trimmed };
+}
 
 @Injectable()
 export class EventsService {
@@ -64,7 +73,7 @@ export class EventsService {
   async create(clubId: string, actorId: string, input: EventInput) {
     this.validateDates(input);
     const event = await this.prisma.clubEvent.create({
-      data: { clubId, createdById: actorId, ...input },
+      data: { clubId, createdById: actorId, ...normaliseImageUrl(input) },
     });
     await this.audit(clubId, actorId, 'event.create', 'ClubEvent', event.id, {
       status: event.status,
@@ -86,7 +95,7 @@ export class EventsService {
       });
     const event = await this.prisma.clubEvent.update({
       where: { id },
-      data: input,
+      data: normaliseImageUrl(input),
     });
     await this.audit(clubId, actorId, 'event.update', 'ClubEvent', id, {
       status: event.status,

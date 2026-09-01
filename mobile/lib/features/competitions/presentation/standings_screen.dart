@@ -50,9 +50,7 @@ class StandingsScreen extends ConsumerWidget {
                       if (season != null) ...[
                         Text(
                           season.label,
-                          style: type.h3.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
+                          style: type.h3.copyWith(fontWeight: FontWeight.w700),
                         ),
                         const SizedBox(height: 2),
                         Text(

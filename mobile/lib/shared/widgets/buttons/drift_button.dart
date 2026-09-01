@@ -85,7 +85,11 @@ class DriftButton extends StatelessWidget {
               horizontal: DriftSpacing.s2,
               vertical: DriftSpacing.s2,
             ),
-            minimumSize: const Size.fromHeight(0),
+            // Size.zero, not Size.fromHeight(0): the latter is
+            // Size(double.infinity, 0), which forces an infinite minWidth and
+            // crashes the text button in any unbounded-width parent (a Row, a
+            // stats header, an empty-state column).
+            minimumSize: Size.zero,
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             textStyle: type.subtitle.copyWith(fontWeight: FontWeight.w600),
           ),

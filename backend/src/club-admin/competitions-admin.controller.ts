@@ -15,12 +15,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ClubAuthService } from './club-auth.service';
 import { CompetitionsService } from '../competitions/competitions.service';
 import { ResultsService } from '../matches/results.service';
-import {
-  UpdateLeagueDto,
-  CreateSeasonDto,
-  UpdateSeasonDto,
-  IssueSeasonAwardDto,
-} from './dto/league.dto';
+import { UpdateLeagueDto, IssueLeagueAwardDto } from './dto/league.dto';
 import {
   ResolveDisputeDto,
   UpdateFixtureDto,
@@ -30,11 +25,11 @@ import {
 const OWNER_OR_ADMIN = [ClubRole.OWNER, ClubRole.ADMIN];
 
 /**
- * League/Season/Fixture/Dispute admin routes keyed by their own resource
- * id, not a club id — each handler resolves the owning club first (via
- * `CompetitionsService`'s `leagueClubId`/`seasonClubId`/`fixtureClubId`
- * helpers) and then checks membership through `ClubAuthService`, since
- * `ClubMembershipGuard` only handles routes with a literal `:clubId` param.
+ * League/Fixture/Dispute admin routes keyed by their own resource id, not a
+ * club id — each handler resolves the owning club first (via
+ * `CompetitionsService`'s `leagueClubId`/`fixtureClubId` helpers) and then
+ * checks membership through `ClubAuthService`, since `ClubMembershipGuard`
+ * only handles routes with a literal `:clubId` param.
  */
 @Controller()
 @UseGuards(JwtAuthGuard)
@@ -56,13 +51,6 @@ export class CompetitionsAdminController {
     await this.clubAuth.assertRole(this.userId(req), clubId, OWNER_OR_ADMIN);
   }
 
-  private async assertSeasonAccess(req: Request, seasonId: string) {
-    const clubId = await this.competitions.seasonClubId(seasonId);
-    if (!clubId)
-      throw new BadRequestException('This season has no owning club.');
-    await this.clubAuth.assertRole(this.userId(req), clubId, OWNER_OR_ADMIN);
-  }
-
   private async assertFixtureAccess(req: Request, fixtureId: string) {
     const clubId = await this.competitions.fixtureClubId(fixtureId);
     if (!clubId)
@@ -80,57 +68,37 @@ export class CompetitionsAdminController {
     return this.competitions.updateLeague(id, dto);
   }
 
-  @Post('leagues/:id/seasons')
-  async createSeason(
-    @Req() req: Request,
-    @Param('id') id: string,
-    @Body() dto: CreateSeasonDto,
-  ) {
-    await this.assertLeagueAccess(req, id);
-    return this.competitions.createSeason(id, dto);
-  }
-
-  @Patch('seasons/:id')
-  async updateSeason(
-    @Req() req: Request,
-    @Param('id') id: string,
-    @Body() dto: UpdateSeasonDto,
-  ) {
-    await this.assertSeasonAccess(req, id);
-    return this.competitions.updateSeason(id, dto);
-  }
-
-  @Patch('seasons/:id/registrations/:registrationId')
+  @Patch('leagues/:id/registrations/:registrationId')
   async updateRegistration(
     @Req() req: Request,
     @Param('id') id: string,
     @Param('registrationId') registrationId: string,
     @Body() dto: UpdateRegistrationDto,
   ) {
-    await this.assertSeasonAccess(req, id);
+    await this.assertLeagueAccess(req, id);
     return this.competitions.updateRegistration(registrationId, dto.status);
   }
 
-  @Post('seasons/:id/generate-fixtures')
+  @Post('leagues/:id/generate-fixtures')
   async generateFixtures(@Req() req: Request, @Param('id') id: string) {
-    await this.assertSeasonAccess(req, id);
+    await this.assertLeagueAccess(req, id);
     return this.competitions.adminGenerateFixtures(id);
   }
 
-  @Post('seasons/:id/complete')
-  async completeSeason(@Req() req: Request, @Param('id') id: string) {
-    await this.assertSeasonAccess(req, id);
-    return this.competitions.completeSeason(id);
+  @Post('leagues/:id/complete')
+  async completeLeague(@Req() req: Request, @Param('id') id: string) {
+    await this.assertLeagueAccess(req, id);
+    return this.competitions.completeLeague(id);
   }
 
-  @Post('seasons/:id/awards')
+  @Post('leagues/:id/awards')
   async issueAward(
     @Req() req: Request,
     @Param('id') id: string,
-    @Body() dto: IssueSeasonAwardDto,
+    @Body() dto: IssueLeagueAwardDto,
   ) {
-    await this.assertSeasonAccess(req, id);
-    return this.competitions.issueSeasonAward(id, this.userId(req), dto);
+    await this.assertLeagueAccess(req, id);
+    return this.competitions.issueLeagueAward(id, this.userId(req), dto);
   }
 
   @Patch('fixtures/:id')

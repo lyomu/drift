@@ -69,11 +69,7 @@ class _PlayerSearchScreenState extends ConsumerState<PlayerSearchScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(
-                        Icons.search,
-                        size: 18,
-                        color: colors.textSecondary,
-                      ),
+                      Icon(Icons.search, size: 18, color: colors.textSecondary),
                       const SizedBox(width: 8),
                       Expanded(
                         child: TextField(
@@ -114,9 +110,7 @@ class _PlayerSearchScreenState extends ConsumerState<PlayerSearchScreen> {
             onRefresh: () => ref.refresh(playerSearchProvider.future),
             child: switch (results) {
               AsyncData(:final value) => _list(_filter(value)),
-              AsyncError() => _message(
-                "Couldn't load players. Pull to retry.",
-              ),
+              AsyncError() => _message("Couldn't load players. Pull to retry."),
               _ => const Center(child: CircularProgressIndicator()),
             },
           ),

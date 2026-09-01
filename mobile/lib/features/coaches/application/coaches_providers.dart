@@ -13,7 +13,7 @@ final coachSearchProvider = FutureProvider.autoDispose<List<CoachSummary>>((
   return ref.watch(coachesRepositoryProvider).search(filters);
 });
 
-final coachProfileProvider =
-    FutureProvider.autoDispose.family<CoachProfile, String>((ref, coachId) {
+final coachProfileProvider = FutureProvider.autoDispose
+    .family<CoachProfile, String>((ref, coachId) {
       return ref.watch(coachesRepositoryProvider).findOne(coachId);
     });

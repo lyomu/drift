@@ -43,8 +43,7 @@ class AchievementsScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 12),
                         TextButton(
-                          onPressed: () =>
-                              ref.invalidate(achievementsProvider),
+                          onPressed: () => ref.invalidate(achievementsProvider),
                           child: const Text('Retry'),
                         ),
                       ],
@@ -209,7 +208,9 @@ class _AchievementCard extends StatelessWidget {
                     minHeight: 4,
                     backgroundColor: colors.border,
                     valueColor: AlwaysStoppedAnimation(
-                      achievement.earned ? colors.primary : colors.textSecondary,
+                      achievement.earned
+                          ? colors.primary
+                          : colors.textSecondary,
                     ),
                   ),
                 ),

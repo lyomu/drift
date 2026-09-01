@@ -42,7 +42,9 @@ void main() {
         );
 
         expect(
-          find.text('No conversations yet — connect with a player to start one'),
+          find.text(
+            'No conversations yet — connect with a player to start one',
+          ),
           findsOneWidget,
         );
       });

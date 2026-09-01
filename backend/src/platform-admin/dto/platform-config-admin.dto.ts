@@ -15,7 +15,6 @@ import {
   PlatformFeatureFlagStatus,
   PlatformIntegrationStatus,
   PlatformMarketStatus,
-  PlatformSystemSettingType,
 } from '@prisma/client';
 
 export class UpsertMarketDto {
@@ -128,28 +127,6 @@ export class UpsertNotificationTemplateDto {
 
   @IsEnum(NotificationTemplateStatus)
   status!: NotificationTemplateStatus;
-}
-
-export class UpsertSystemSettingDto {
-  @IsString()
-  @MinLength(2)
-  @MaxLength(120)
-  key!: string;
-
-  @IsString()
-  @MinLength(1)
-  @MaxLength(160)
-  label!: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(1000)
-  description?: string | null;
-
-  @IsEnum(PlatformSystemSettingType)
-  valueType!: PlatformSystemSettingType;
-
-  value!: unknown;
 }
 
 export class UpsertIntegrationConfigDto {

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -21,7 +21,6 @@ void main() {
   late MockMatchesRepository repo;
   late DriftMatch currentMatch;
 
-
   /// Detail screens put their action buttons well below the default
   /// 800x600 test viewport; a tall surface keeps every tap hittable.
   void useTallSurface(WidgetTester tester) {
@@ -29,17 +28,16 @@ void main() {
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
   }
+
   setUpAll(() {
     registerFallbackValue(<DateTime>[]);
   });
 
   Future<List<Override>> overrides() async => [
-        matchDetailProvider('match-1').overrideWith(
-          (ref) async => currentMatch,
-        ),
-        currentUserProvider.overrideWith((ref) async => userProfile()),
-        matchesRepositoryProvider.overrideWithValue(repo),
-      ];
+    matchDetailProvider('match-1').overrideWith((ref) async => currentMatch),
+    currentUserProvider.overrideWith((ref) async => userProfile()),
+    matchesRepositoryProvider.overrideWithValue(repo),
+  ];
 
   setUp(() {
     repo = MockMatchesRepository();
@@ -47,10 +45,10 @@ void main() {
   });
 
   group('MatchDetailScreen scheduling loop', () {
-    testWidgets('accepts one of the opponent\'s proposed times', (tester) async {
-      currentMatch = match(
-        latestProposal: timeProposal(proposedById: 'u2'),
-      );
+    testWidgets('accepts one of the opponent\'s proposed times', (
+      tester,
+    ) async {
+      currentMatch = match(latestProposal: timeProposal(proposedById: 'u2'));
       when(() => repo.acceptTime('match-1', 'to1')).thenAnswer((_) async {
         // The server confirms the time; the proposal disappears.
         currentMatch = match(latestProposal: null);
@@ -65,21 +63,20 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Pick a time'), findsOneWidget);
+      expect(find.text('PICK A TIME'), findsOneWidget);
       expect(find.byType(OutlinedButton), findsNWidgets(2));
 
       await tester.tap(find.byType(OutlinedButton).first);
       await tester.pumpAndSettle();
 
       verify(() => repo.acceptTime('match-1', 'to1')).called(1);
-      expect(find.text('Pick a time'), findsNothing);
+      expect(find.text('PICK A TIME'), findsNothing);
     });
 
-    testWidgets("keeps my own proposal locked while they choose",
-        (tester) async {
-      currentMatch = match(
-        latestProposal: timeProposal(proposedById: 'u1'),
-      );
+    testWidgets("keeps my own proposal locked while they choose", (
+      tester,
+    ) async {
+      currentMatch = match(latestProposal: timeProposal(proposedById: 'u1'));
 
       await pumpRouted(
         tester,
@@ -88,7 +85,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Your proposed times'), findsOneWidget);
+      expect(find.text('YOUR PROPOSED TIMES'), findsOneWidget);
       expect(find.text('Waiting for them to choose.'), findsOneWidget);
 
       // My own options are disabled â€” tapping must not hit the API.
@@ -168,6 +165,3 @@ void main() {
     });
   });
 }
-
-
-

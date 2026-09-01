@@ -59,10 +59,7 @@ Future<void> pumpRouted(
   await tester.pumpWidget(
     ProviderScope(
       overrides: overrides,
-      child: MaterialApp.router(
-        theme: AppTheme.light(),
-        routerConfig: router,
-      ),
+      child: MaterialApp.router(theme: AppTheme.light(), routerConfig: router),
     ),
   );
   await tester.pumpAndSettle();

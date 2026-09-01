@@ -263,10 +263,7 @@ class _Section extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: type.title.copyWith(fontWeight: FontWeight.w700),
-          ),
+          Text(title, style: type.title.copyWith(fontWeight: FontWeight.w700)),
           const SizedBox(height: 12),
           child,
         ],

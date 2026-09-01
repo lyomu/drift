@@ -53,7 +53,8 @@ class _StatsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final type = Theme.of(context).extension<DriftTypography>()!;
 
-    final played = stats.singles.wins +
+    final played =
+        stats.singles.wins +
         stats.singles.losses +
         stats.doubles.wins +
         stats.doubles.losses;
@@ -138,7 +139,8 @@ class _HistoryRow extends StatelessWidget {
         .where((p) => p.userId == viewerId)
         .map((p) => p.side)
         .firstOrNull;
-    final won = match.result?.winningSide != null &&
+    final won =
+        match.result?.winningSide != null &&
         match.result!.winningSide == viewerSide;
     final settled = match.result?.winningSide != null;
 

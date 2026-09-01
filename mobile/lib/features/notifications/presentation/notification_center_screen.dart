@@ -240,7 +240,8 @@ class _NotificationTile extends ConsumerWidget {
       'MATCH' when id != null => '/matches/$id',
       'CONNECTION' => '/connections/pending',
       'CONVERSATION' when id != null => '/messages/$id',
-      'SEASON' when id != null => '/compete/seasons/$id',
+      'LEAGUE' when id != null => '/compete/leagues/$id',
+      'SEASON' when id != null => '/compete/leagues/$id',
       // Both carry the club id — an announcement deep link opens that
       // club's Announcements list, where the new item sorts to the top.
       'CLUB' when id != null => '/discover/clubs/$id',

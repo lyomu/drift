@@ -20,15 +20,13 @@ void main() {
           const MatchDetailScreen(matchId: 'match-1'),
           brightness: brightness,
           overrides: [
-            matchDetailProvider('match-1').overrideWith(
-              (ref) async => match(),
-            ),
+            matchDetailProvider('match-1').overrideWith((ref) async => match()),
             currentUserProvider.overrideWith((ref) async => userProfile()),
           ],
         );
 
         expect(find.text('Match'), findsOneWidget);
-        expect(find.text('Players'), findsOneWidget);
+        expect(find.text('PLAYERS'), findsOneWidget); // _cardLabel upper-cases
         // Rendered both in the header block and the court section.
         expect(find.text('Riverside Court 2'), findsWidgets);
       });
@@ -40,9 +38,9 @@ void main() {
         const MatchDetailScreen(matchId: 'match-1'),
         settle: false,
         overrides: [
-          matchDetailProvider('match-1').overrideWith(
-            (ref) => pending<DriftMatch>(),
-          ),
+          matchDetailProvider(
+            'match-1',
+          ).overrideWith((ref) => pending<DriftMatch>()),
           currentUserProvider.overrideWith((ref) async => userProfile()),
         ],
       );
@@ -55,9 +53,9 @@ void main() {
         tester,
         const MatchDetailScreen(matchId: 'match-1'),
         overrides: [
-          matchDetailProvider('match-1').overrideWith(
-            (ref) => failing<DriftMatch>(),
-          ),
+          matchDetailProvider(
+            'match-1',
+          ).overrideWith((ref) => failing<DriftMatch>()),
           currentUserProvider.overrideWith((ref) async => userProfile()),
         ],
       );

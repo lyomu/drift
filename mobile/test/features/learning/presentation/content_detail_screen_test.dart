@@ -19,9 +19,9 @@ void main() {
           const ContentDetailScreen(contentId: 'c1'),
           brightness: brightness,
           overrides: [
-            contentDetailProvider('c1').overrideWith(
-              (ref) async => contentDetail(),
-            ),
+            contentDetailProvider(
+              'c1',
+            ).overrideWith((ref) async => contentDetail()),
           ],
         );
 
@@ -40,9 +40,9 @@ void main() {
         const ContentDetailScreen(contentId: 'c1'),
         settle: false,
         overrides: [
-          contentDetailProvider('c1').overrideWith(
-            (ref) => pending<ContentDetail>(),
-          ),
+          contentDetailProvider(
+            'c1',
+          ).overrideWith((ref) => pending<ContentDetail>()),
         ],
       );
 
@@ -54,9 +54,9 @@ void main() {
         tester,
         const ContentDetailScreen(contentId: 'c1'),
         overrides: [
-          contentDetailProvider('c1').overrideWith(
-            (ref) => failing<ContentDetail>(),
-          ),
+          contentDetailProvider(
+            'c1',
+          ).overrideWith((ref) => failing<ContentDetail>()),
         ],
       );
 

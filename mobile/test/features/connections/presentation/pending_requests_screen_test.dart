@@ -13,8 +13,9 @@ void main() {
     for (final brightness in Brightness.values) {
       final label = brightness.name;
 
-      testWidgets('renders incoming and outgoing requests in $label',
-          (tester) async {
+      testWidgets('renders incoming and outgoing requests in $label', (
+        tester,
+      ) async {
         await pumpScreen(
           tester,
           const PendingRequestsScreen(),

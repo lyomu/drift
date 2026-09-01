@@ -82,9 +82,7 @@ class _HomeBody extends StatelessWidget {
           players: sections.players?.data?.players ?? const [],
         ),
         gap,
-        CourtsNearYouSection(
-          courts: sections.courts?.data?.courts ?? const [],
-        ),
+        CourtsNearYouSection(courts: sections.courts?.data?.courts ?? const []),
         gap,
         const ProgressSection(),
         gap,

@@ -55,9 +55,7 @@ void main() {
     }
   });
 
-  testWidgets('keeps submit disabled until a reason is picked', (
-    tester,
-  ) async {
+  testWidgets('keeps submit disabled until a reason is picked', (tester) async {
     await openSheet(tester);
 
     final button = tester.widget<ElevatedButton>(
@@ -136,10 +134,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Report this message'), findsNothing);
-    expect(
-      find.text('Thanks — this message was reported.'),
-      findsOneWidget,
-    );
+    expect(find.text('Thanks — this message was reported.'), findsOneWidget);
   });
 
   // The server rejects reporting your own message; that has to surface in

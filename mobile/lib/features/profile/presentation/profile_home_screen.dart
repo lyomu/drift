@@ -68,10 +68,7 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
         children: [
-          Text(
-            'Profile',
-            style: type.h2.copyWith(fontWeight: FontWeight.w800),
-          ),
+          Text('Profile', style: type.h2.copyWith(fontWeight: FontWeight.w800)),
           const SizedBox(height: 16),
           DriftSoftCard(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -161,7 +158,11 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
 }
 
 class _MenuRow extends StatelessWidget {
-  const _MenuRow({required this.icon, required this.label, required this.onTap});
+  const _MenuRow({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
 
   final IconData icon;
   final String label;

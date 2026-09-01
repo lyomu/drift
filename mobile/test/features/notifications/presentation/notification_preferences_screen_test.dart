@@ -28,8 +28,9 @@ void main() {
         expect(find.text('Notification Preferences'), findsOneWidget);
       });
 
-      testWidgets("survives a failed preferences load in $label",
-          (tester) async {
+      testWidgets("survives a failed preferences load in $label", (
+        tester,
+      ) async {
         await pumpScreen(
           tester,
           const NotificationPreferencesScreen(),

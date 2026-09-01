@@ -1,6 +1,7 @@
 "use client";
 
-import { ButtonHTMLAttributes, InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
+import { useId, useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
+import { MaterialIcon } from "@/components/dashboard-design";
 
 const focusRing =
   "focus:outline-none focus-visible:ring-2 focus-visible:ring-drift-primary focus-visible:ring-offset-1";
@@ -13,7 +14,7 @@ export function Button({
   variant?: "primary" | "secondary" | "destructive" | "ghost";
 }) {
   const base =
-    "inline-flex items-center justify-center gap-2 rounded-[9px] px-[18px] py-2.5 text-[13.5px] font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-50";
+    "inline-flex items-center justify-center gap-2 rounded-md px-[18px] py-2.5 text-[13.5px] font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-50";
   const variants: Record<string, string> = {
     primary: "bg-drift-primary text-white hover:bg-drift-primary-dark",
     secondary:
@@ -33,8 +34,76 @@ export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       {...props}
-      className={`w-full rounded-lg border border-drift-border bg-drift-surface px-3 py-[9px] text-[13.5px] text-drift-text-primary placeholder:text-drift-text-secondary ${focusRing} ${props.className ?? ""}`}
+      className={`w-full rounded-md border border-drift-border bg-drift-surface px-3 py-[9px] text-[13.5px] text-drift-text-primary placeholder:text-drift-text-secondary ${focusRing} ${props.className ?? ""}`}
     />
+  );
+}
+
+export function PasswordField({
+  label,
+  action,
+  className = "",
+  inputClassName = "",
+  labelClassName,
+  toggleVariant = "icon",
+  toggleClassName = "",
+  ...props
+}: InputHTMLAttributes<HTMLInputElement> & {
+  label: string;
+  action?: React.ReactNode;
+  inputClassName?: string;
+  labelClassName?: string;
+  toggleVariant?: "icon" | "text";
+  toggleClassName?: string;
+}) {
+  const generatedId = useId();
+  const id = props.id ?? generatedId;
+  const [visible, setVisible] = useState(false);
+
+  return (
+    <div className={`flex flex-col gap-1.5 ${className}`}>
+      <div className="flex items-center justify-between gap-3">
+        <label
+          htmlFor={id}
+          className={
+            labelClassName ??
+            "text-[13px] font-semibold text-drift-text-secondary"
+          }
+        >
+          {label}
+        </label>
+        {action}
+      </div>
+      <div className="relative">
+        <input
+          {...props}
+          id={id}
+          type={visible ? "text" : "password"}
+          className={`w-full rounded-md border border-drift-border bg-drift-surface px-3 py-[9px] pr-11 text-[13.5px] text-drift-text-primary placeholder:text-drift-text-secondary ${focusRing} ${inputClassName}`}
+        />
+        <button
+          type="button"
+          aria-label={visible ? "Hide password" : "Show password"}
+          aria-pressed={visible}
+          disabled={props.disabled}
+          onClick={() => setVisible((current) => !current)}
+          className={
+            toggleVariant === "text"
+              ? `absolute right-4 top-1/2 -translate-y-1/2 rounded-md px-1.5 py-1 text-[12.5px] font-bold text-drift-text-secondary transition-colors hover:text-drift-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-drift-primary focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 ${toggleClassName}`
+              : `absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-drift-text-secondary transition-colors hover:bg-drift-primary-light hover:text-drift-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-drift-primary focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 ${toggleClassName}`
+          }
+        >
+          {toggleVariant === "text" ? (
+            visible ? "Hide" : "Show"
+          ) : (
+            <MaterialIcon
+              name={visible ? "visibility_off" : "visibility"}
+              className="text-[18px]"
+            />
+          )}
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -42,7 +111,7 @@ export function Textarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
     <textarea
       {...props}
-      className={`w-full rounded-lg border border-drift-border bg-drift-surface px-3 py-[9px] text-[13.5px] text-drift-text-primary placeholder:text-drift-text-secondary ${focusRing} ${props.className ?? ""}`}
+      className={`w-full rounded-md border border-drift-border bg-drift-surface px-3 py-[9px] text-[13.5px] text-drift-text-primary placeholder:text-drift-text-secondary ${focusRing} ${props.className ?? ""}`}
     />
   );
 }
@@ -51,7 +120,7 @@ export function Select(props: SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <select
       {...props}
-      className={`w-full rounded-lg border border-drift-border bg-drift-surface px-3 py-[9px] text-[13.5px] text-drift-text-primary ${focusRing} ${props.className ?? ""}`}
+      className={`w-full rounded-md border border-drift-border bg-drift-surface px-3 py-[9px] text-[13.5px] text-drift-text-primary ${focusRing} ${props.className ?? ""}`}
     />
   );
 }
@@ -82,7 +151,7 @@ export function Card({
 }) {
   return (
     <div
-      className={`rounded-2xl border border-drift-border bg-drift-surface p-5 ${className}`}
+      className={`rounded-lg border border-drift-border bg-drift-surface p-5 ${className}`}
     >
       {children}
     </div>
@@ -124,10 +193,61 @@ export function ErrorBanner({ message }: { message: string | null }) {
   );
 }
 
-export function EmptyState({ message }: { message: string }) {
+/**
+ * Shared empty / loading / zero-data state. `message` is the legacy single-line
+ * API and still works; `title` + `description` + `icon` + `action` give the
+ * fuller designed state. A "Loading…" message renders as a neutral loading
+ * card automatically.
+ */
+export function EmptyState({
+  message,
+  title,
+  description,
+  icon,
+  action,
+  compact = false,
+  bare = false,
+}: {
+  message?: string;
+  title?: string;
+  description?: string;
+  icon?: string;
+  action?: React.ReactNode;
+  /** Tighter vertical padding — for use inside an already-bordered panel. */
+  compact?: boolean;
+  /** Drop the border/background — the parent already provides the frame. */
+  bare?: boolean;
+}) {
+  const heading = title ?? message ?? "Nothing here yet";
+  const loading = /^(loading|loading…|loading\.\.\.)/i.test(heading.trim());
+
   return (
-    <div className="rounded-lg border border-dashed border-drift-border px-6 py-12 text-center text-sm text-drift-text-secondary">
-      {message}
+    <div
+      className={`flex flex-col items-center justify-center text-center ${
+        compact ? "px-6 py-10" : "px-6 py-16"
+      } ${bare ? "" : "rounded-lg border border-drift-border bg-drift-surface"}`}
+    >
+      <span
+        className={`flex h-12 w-12 items-center justify-center rounded-full ${
+          loading
+            ? "bg-drift-neutral-surface text-drift-text-secondary"
+            : "bg-drift-primary-light text-drift-primary"
+        }`}
+      >
+        <MaterialIcon
+          name={loading ? "hourglass_top" : icon ?? "inbox"}
+          className={`text-[22px] ${loading ? "animate-pulse" : ""}`}
+        />
+      </span>
+      <div className="mt-4 text-[15px] font-bold text-drift-text-primary">
+        {heading}
+      </div>
+      {description && (
+        <p className="mt-1.5 max-w-sm text-[13px] leading-5 text-drift-text-secondary">
+          {description}
+        </p>
+      )}
+      {action && <div className="mt-5">{action}</div>}
     </div>
   );
 }

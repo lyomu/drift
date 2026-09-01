@@ -35,10 +35,7 @@ class DriftStandingsTable extends StatelessWidget {
       child: Text(
         label,
         textAlign: TextAlign.center,
-        style: type.caption.copyWith(
-          fontWeight: FontWeight.w700,
-          color: color,
-        ),
+        style: type.caption.copyWith(fontWeight: FontWeight.w700, color: color),
       ),
     );
 

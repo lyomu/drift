@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -30,7 +30,9 @@ void main() {
   }
 
   bool singleSet(List<SetScore> sets, int a, int b) =>
-      sets.length == 1 && sets.first.sideAGames == a && sets.first.sideBGames == b;
+      sets.length == 1 &&
+      sets.first.sideAGames == a &&
+      sets.first.sideBGames == b;
 
   setUpAll(() {
     registerFallbackValue(ResultOutcome.score);
@@ -38,12 +40,10 @@ void main() {
   });
 
   Future<List<Override>> overrides() async => [
-        matchDetailProvider('match-1').overrideWith(
-          (ref) async => currentMatch,
-        ),
-        currentUserProvider.overrideWith((ref) async => userProfile()),
-        matchesRepositoryProvider.overrideWithValue(repo),
-      ];
+    matchDetailProvider('match-1').overrideWith((ref) async => currentMatch),
+    currentUserProvider.overrideWith((ref) async => userProfile()),
+    matchesRepositoryProvider.overrideWithValue(repo),
+  ];
 
   setUp(() {
     repo = MockMatchesRepository();
@@ -52,19 +52,24 @@ void main() {
 
   group('EnterScoreScreen submit', () {
     testWidgets('sends the entered sets from the match action', (tester) async {
-        useTallSurface(tester);
+      useTallSurface(tester);
       var submitCalls = 0;
       List<SetScore>? submittedSets;
-      when(() => repo.submitResult(
-            'match-1',
-            outcome: any(named: 'outcome'),
-            sets: any(named: 'sets'),
-          )).thenAnswer((inv) async {
+      when(
+        () => repo.submitResult(
+          'match-1',
+          outcome: any(named: 'outcome'),
+          sets: any(named: 'sets'),
+        ),
+      ).thenAnswer((inv) async {
         submitCalls++;
         submittedSets = inv.namedArguments[#sets] as List<SetScore>?;
         currentMatch = match(
           state: MatchState.scheduled,
-          result: matchResult(status: 'PENDING_CONFIRMATION', submittedById: 'u1'),
+          result: matchResult(
+            status: 'PENDING_CONFIRMATION',
+            submittedById: 'u1',
+          ),
         );
         return currentMatch;
       });
@@ -76,10 +81,7 @@ void main() {
           GoRoute(
             path: '/matches/match-1/enter-score',
             pageBuilder: (_, __) => NoTransitionPage(
-              child: EnterScoreScreen(
-                match: match(),
-                viewerId: 'u1',
-              ),
+              child: EnterScoreScreen(match: match(), viewerId: 'u1'),
             ),
           ),
         ],
@@ -108,13 +110,15 @@ void main() {
     });
 
     testWidgets('refuses a set with a missing games value', (tester) async {
-        useTallSurface(tester);
+      useTallSurface(tester);
       var submitCalls = 0;
-      when(() => repo.submitResult(
-            'match-1',
-            outcome: any(named: 'outcome'),
-            sets: any(named: 'sets'),
-          )).thenAnswer((inv) async {
+      when(
+        () => repo.submitResult(
+          'match-1',
+          outcome: any(named: 'outcome'),
+          sets: any(named: 'sets'),
+        ),
+      ).thenAnswer((inv) async {
         submitCalls++;
         return currentMatch;
       });
@@ -157,7 +161,10 @@ void main() {
       useTallSurface(tester);
       currentMatch = match(
         state: MatchState.scheduled,
-        result: matchResult(status: 'PENDING_CONFIRMATION', submittedById: 'u2'),
+        result: matchResult(
+          status: 'PENDING_CONFIRMATION',
+          submittedById: 'u2',
+        ),
       );
       var confirmCalls = 0;
       when(() => repo.confirmResult('match-1')).thenAnswer((_) async {
@@ -188,26 +195,35 @@ void main() {
       expect(find.text('Confirm'), findsNothing);
     });
 
-    testWidgets('disputes into the Your Version form and lands back DISPUTED',
-        (tester) async {
+    testWidgets('disputes into the Your Version form and lands back DISPUTED', (
+      tester,
+    ) async {
       useTallSurface(tester);
       currentMatch = match(
         state: MatchState.scheduled,
-        result: matchResult(status: 'PENDING_CONFIRMATION', submittedById: 'u2'),
+        result: matchResult(
+          status: 'PENDING_CONFIRMATION',
+          submittedById: 'u2',
+        ),
       );
       var disputeCalls = 0;
       List<SetScore>? disputedSets;
-      when(() => repo.disputeResult(
-            'match-1',
-            outcome: any(named: 'outcome'),
-            sets: any(named: 'sets'),
-          )).thenAnswer((inv) async {
+      when(
+        () => repo.disputeResult(
+          'match-1',
+          outcome: any(named: 'outcome'),
+          sets: any(named: 'sets'),
+        ),
+      ).thenAnswer((inv) async {
         disputeCalls++;
         disputedSets = inv.namedArguments[#sets] as List<SetScore>?;
         currentMatch = match(
           state: MatchState.disputed,
-          result:
-              matchResult(status: 'DISPUTED', submittedById: 'u2', disputedById: 'u1'),
+          result: matchResult(
+            status: 'DISPUTED',
+            submittedById: 'u2',
+            disputedById: 'u1',
+          ),
         );
         return currentMatch;
       });
@@ -251,8 +267,7 @@ void main() {
       expect(disputeCalls, 1);
       expect(singleSet(disputedSets!, 3, 6), isTrue);
       // Back on the refreshed detail screen in the disputed state.
-      expect(find.text('View Dispute'), findsOneWidget);
+      expect(find.text('View dispute'), findsOneWidget);
     });
   });
 }
-

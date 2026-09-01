@@ -37,6 +37,7 @@ function clubRecord(
         : overrides.longitude,
     phone: null,
     website: null,
+    sports: ['TENNIS'],
     amenities: [],
     openingHoursNote: null,
     photoUrls: [],

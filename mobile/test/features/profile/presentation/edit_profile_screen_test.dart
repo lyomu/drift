@@ -30,10 +30,7 @@ void main() {
 
         expect(find.text('Edit Profile'), findsOneWidget);
         // The bio field starts from the stored value.
-        expect(
-          find.text('Plays weekday evenings.'),
-          findsWidgets,
-        );
+        expect(find.text('Plays weekday evenings.'), findsWidgets);
       });
     }
 
