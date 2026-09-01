@@ -33,4 +33,4 @@ COPY --from=build /app/prisma.config.ts ./prisma.config.ts
 
 USER node
 EXPOSE 3009
-CMD ["node", "dist/main.js"]
+CMD ["node", "dist/src/main.js"]
