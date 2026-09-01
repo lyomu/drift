@@ -38,6 +38,9 @@ const BASE = process.env.DRIFT_API_BASE ?? 'http://localhost:3009';
 const ADMIN_TOKEN = process.env.DRIFT_ADMIN_TOKEN ?? '';
 const DEMO_PASSWORD = 'DriftDemo123!';
 const OWNER = { email: 'owner@drift.test', password: 'Password123!' };
+// Used as the natural key for the reuse checks below.
+const TOURNAMENT_NAME = 'Riverside Autumn Open';
+const LADDER_NAME = 'Riverside Singles Ladder';
 
 const log = (m) => console.log(`[extras] ${m}`);
 const warn = (m) => console.warn(`[extras] ! ${m}`);
@@ -154,9 +157,19 @@ async function seedCourtsAndReports(people, ownerToken, clubId) {
 }
 
 async function seedTournament(people, ownerToken, clubId) {
+  // Re-running must not stack duplicates: these endpoints have no natural
+  // key, so an existing row with the same name is reused instead.
+  const existingT = await api('get', `/clubs/${clubId}/tournaments`, ownerToken)
+    .then((r) => (r.tournaments ?? r).find((t) => t.name === TOURNAMENT_NAME))
+    .catch(() => null);
+  if (existingT) {
+    log(`tournament "${TOURNAMENT_NAME}" already exists — reusing`);
+    return existingT;
+  }
+
   const tournament = await step('create tournament (8-player draw)', () =>
     api('post', `/clubs/${clubId}/tournaments`, ownerToken, {
-      name: 'Riverside Autumn Open',
+      name: TOURNAMENT_NAME,
       description:
         'Single-elimination 8-player draw. Open to club members and guests — winner takes the Riverside Cup.',
       drawSize: 8,
@@ -178,9 +191,17 @@ async function seedTournament(people, ownerToken, clubId) {
 }
 
 async function seedLadder(people, ownerToken, clubId) {
+  const existingL = await api('get', `/ladders?clubId=${clubId}`, ownerToken)
+    .then((r) => (r.ladders ?? r).find((l) => l.name === LADDER_NAME))
+    .catch(() => null);
+  if (existingL) {
+    log(`ladder "${LADDER_NAME}" already exists — reusing`);
+    return existingL;
+  }
+
   const ladder = await step('create ladder', () =>
     api('post', `/clubs/${clubId}/ladders`, ownerToken, {
-      name: 'Riverside Singles Ladder',
+      name: LADDER_NAME,
       challengeRange: 3,
       sport: 'TENNIS',
     }),
@@ -214,6 +235,14 @@ async function seedLadder(people, ownerToken, clubId) {
 }
 
 async function seedEvents(ownerToken, clubId) {
+  const existingE = await api('get', `/clubs/${clubId}/events`, ownerToken)
+    .then((r) => (r.events ?? r).map((e) => e.name))
+    .catch(() => []);
+  if (existingE.length > 0) {
+    log(`${existingE.length} event(s) already exist — skipping event creation`);
+    return null;
+  }
+
   await step('event: published club social', () =>
     api('post', `/clubs/${clubId}/events`, ownerToken, {
       name: 'Autumn Club Social & Round Robin',
@@ -275,8 +304,8 @@ async function seedSafety(people) {
 // ----------------------------------------------------- platform admin half
 
 async function seedCommercial(token) {
-  const plan = await step('payment plan: Club Pro (monthly)', () =>
-    api('post', '/platform-admin/plans', token, {
+  await step('payment plan: Club Pro (monthly)', () =>
+    api('post', '/platform-admin/commercial/plans', token, {
       code: 'CLUB_PRO_MONTHLY',
       name: 'Club Pro',
       description: 'Full club management: unlimited members, leagues, courts and events.',
@@ -285,10 +314,12 @@ async function seedCommercial(token) {
       currency: 'GBP',
       interval: 'MONTHLY',
       entitlements: ['unlimited_members', 'leagues', 'events', 'court_management'],
+      isActive: true,
+      sortOrder: 1,
     }),
   );
   await step('payment plan: Player Plus (yearly)', () =>
-    api('post', '/platform-admin/plans', token, {
+    api('post', '/platform-admin/commercial/plans', token, {
       code: 'PLAYER_PLUS_YEARLY',
       name: 'Player Plus',
       description: 'Advanced stats, unlimited match history and priority matchmaking.',
@@ -297,97 +328,187 @@ async function seedCommercial(token) {
       currency: 'GBP',
       interval: 'YEARLY',
       entitlements: ['advanced_stats', 'priority_matchmaking'],
+      isActive: true,
+      sortOrder: 2,
     }),
   );
-  await step('promotion: launch discount', () =>
-    api('post', '/platform-admin/promotions', token, {
+  await step('promotion: autumn percent discount', () =>
+    api('post', '/platform-admin/commercial/promotions', token, {
       code: 'AUTUMN25',
+      name: 'Autumn launch discount',
       description: '25% off the first three months of any club plan.',
-      discountPercent: 25,
-      expiresAt: daysFromNow(45),
+      audience: 'CLUB',
+      discountType: 'PERCENT',
+      percentOff: 25,
+      startsAt: daysFromNow(-1),
+      endsAt: daysFromNow(45),
+      maxRedemptions: 200,
+      isActive: true,
     }),
   );
-  await step('sponsor: kit partner', () =>
-    api('post', '/platform-admin/sponsors', token, {
-      name: 'Baseline Sportswear',
-      description: 'Official kit partner — club discounts and tournament prizes.',
-      websiteUrl: 'https://example.com/baseline',
+  await step('promotion: fixed amount off (expired)', () =>
+    api('post', '/platform-admin/commercial/promotions', token, {
+      code: 'WELCOME10',
+      name: 'Welcome credit',
+      description: 'GBP 10 off a first Player Plus year.',
+      audience: 'PLAYER',
+      discountType: 'AMOUNT',
+      amountOffMinor: 1000,
+      currency: 'GBP',
+      startsAt: daysFromNow(-30),
+      endsAt: daysFromNow(-2),
+      isActive: false,
     }),
   );
-  return plan;
+  await step('sponsor placement: kit partner (live)', () =>
+    api('post', '/platform-admin/commercial/sponsors', token, {
+      name: 'Home feed banner - Baseline',
+      sponsorName: 'Baseline Sportswear',
+      placementKey: 'home_feed_banner',
+      destinationUrl: 'https://example.com/baseline',
+      startsAt: daysFromNow(-7),
+      endsAt: daysFromNow(60),
+      isActive: true,
+    }),
+  );
+  await step('sponsor placement: expired', () =>
+    api('post', '/platform-admin/commercial/sponsors', token, {
+      name: 'Summer series - Courtside Drinks',
+      sponsorName: 'Courtside Drinks Co.',
+      placementKey: 'competition_header',
+      destinationUrl: 'https://example.com/courtside',
+      startsAt: daysFromNow(-90),
+      endsAt: daysFromNow(-10),
+      isActive: false,
+    }),
+  );
 }
 
 async function seedSupport(token, people) {
   await step('support ticket: billing, urgent', () =>
-    api('post', '/platform-admin/tickets', token, {
+    api('post', '/platform-admin/support/tickets', token, {
       userId: people.ana.id,
-      subject: "Charged twice for this month's club fee",
-      body: 'Two identical charges appeared on my card for the Riverside membership this month — can you refund the duplicate?',
+      subject: 'Charged twice for this club fee',
+      body: 'Two identical charges appeared on my card for the Riverside membership this month - can you refund the duplicate?',
       category: 'BILLING',
       priority: 'URGENT',
     }),
   );
   await step('support ticket: technical, normal', () =>
-    api('post', '/platform-admin/tickets', token, {
+    api('post', '/platform-admin/support/tickets', token, {
       userId: people.ben.id,
       subject: 'Match result will not submit',
-      body: 'Tapping "submit result" spins and then returns me to the match screen with nothing saved.',
+      body: 'Tapping submit result spins and then returns me to the match screen with nothing saved.',
       category: 'TECHNICAL',
       priority: 'NORMAL',
     }),
   );
+  await step('support ticket: clubs, high', () =>
+    api('post', '/platform-admin/support/tickets', token, {
+      userId: people.carla.id,
+      subject: 'Cannot leave a club I never joined',
+      body: 'My profile lists a club membership I did not request, and there is no way to remove it from the app.',
+      category: 'CLUBS',
+      priority: 'HIGH',
+    }),
+  );
+  // EXPORT only. A DELETION request is destructive to process, so it is
+  // deliberately not seeded against a live demo account.
   await step('privacy request: data export', () =>
-    api('post', '/platform-admin/privacy-requests', token, {
+    api('post', '/platform-admin/support/privacy-requests', token, {
       userId: people.carla.id,
       type: 'EXPORT',
+      requestNote: 'Player asked for a copy of their match and message history.',
     }),
   );
 }
 
 async function seedSettings(token) {
-  await step('feature flag: padel rollout', () =>
-    api('post', '/platform-admin/feature-flags', token, {
-      key: 'padel_booking',
-      description: 'Enables padel court booking in the mobile app.',
-      enabled: false,
-    }),
-  );
-  await step('feature flag: coach marketplace', () =>
-    api('post', '/platform-admin/feature-flags', token, {
-      key: 'coach_marketplace',
-      description: 'Public coach directory and booking links.',
-      enabled: true,
-    }),
-  );
-  await step('market: United Kingdom', () =>
-    api('post', '/platform-admin/markets', token, {
-      name: 'United Kingdom',
+  const market = await step('market: London, GB (active)', () =>
+    api('post', '/platform-admin/platform-config/markets', token, {
       countryCode: 'GB',
-      currency: 'GBP',
+      countryName: 'United Kingdom',
+      cityName: 'London',
+      timezone: 'Europe/London',
       status: 'ACTIVE',
+      notes: 'Launch market - all demo clubs and courts sit here.',
     }),
   );
-  await step('market: Kenya (pilot)', () =>
-    api('post', '/platform-admin/markets', token, {
-      name: 'Kenya',
+  await step('market: Nairobi, KE (coming soon)', () =>
+    api('post', '/platform-admin/platform-config/markets', token, {
       countryCode: 'KE',
-      currency: 'KES',
-      status: 'PENDING',
+      countryName: 'Kenya',
+      cityName: 'Nairobi',
+      timezone: 'Africa/Nairobi',
+      status: 'COMING_SOON',
+      notes: 'Second market under evaluation.',
+    }),
+  );
+  await step('feature flag: padel booking (off)', () =>
+    api('post', '/platform-admin/platform-config/feature-flags', token, {
+      key: 'padel_booking',
+      name: 'Padel court booking',
+      description: 'Enables padel court booking in the mobile app.',
+      status: 'OFF',
+      rolloutPercentage: 0,
+    }),
+  );
+  await step('feature flag: coach marketplace (on)', () =>
+    api('post', '/platform-admin/platform-config/feature-flags', token, {
+      key: 'coach_marketplace',
+      name: 'Coach marketplace',
+      description: 'Public coach directory and booking links.',
+      status: 'ON',
+      rolloutPercentage: 100,
+    }),
+  );
+  await step('feature flag: partial rollout (25%)', () =>
+    api('post', '/platform-admin/platform-config/feature-flags', token, {
+      key: 'home_feed_v2',
+      name: 'Home feed v2',
+      description: 'New card ordering and density on the Home feed.',
+      status: 'PARTIAL',
+      rolloutPercentage: 25,
+      ...(market?.id ? { marketId: market.id } : {}),
+      cohort: 'beta_testers',
     }),
   );
 }
 
 async function seedAbuseAndRulesets(token, people) {
-  await step('abuse case', () =>
-    api('post', '/platform-admin/abuse-cases', token, {
+  await step('abuse case: repeat harassment reports', () =>
+    api('post', '/platform-admin/trust-safety/abuse-cases', token, {
       subjectUserId: people.finn.id,
-      summary: 'Multiple harassment reports from separate players within one week.',
+      summary:
+        'Multiple harassment reports from separate players within one week - needs a consolidated review before any suspension.',
+      priority: 'HIGH',
     }),
   );
-  await step('competition ruleset', () =>
-    api('post', '/platform-admin/rulesets', token, {
+  await step('competition ruleset: standard singles (default)', () =>
+    api('post', '/platform-admin/competitions/rulesets', token, {
       name: 'Standard Singles (best of 3)',
-      description: 'Best of three tie-break sets, third set a championship tie-break.',
+      description: 'Default ruleset for club singles competitions.',
+      sport: 'TENNIS',
+      format: 'SINGLES',
+      competitionTypes: ['LEAGUE', 'TOURNAMENT', 'LADDER'],
+      scoringFormat: 'Best of 3 tie-break sets; championship tie-break in the third.',
+      walkoverRule: 'A player who does not appear within 15 minutes of the agreed start forfeits the match.',
+      unfinishedMatchPolicy: 'An unfinished match is replayed unless both players agree the score stands.',
+      isDefault: true,
+      isActive: true,
+    }),
+  );
+  await step('competition ruleset: doubles', () =>
+    api('post', '/platform-admin/competitions/rulesets', token, {
+      name: 'Club Doubles (short sets)',
+      description: 'Faster format for club doubles nights.',
+      sport: 'TENNIS',
+      format: 'DOUBLES',
+      competitionTypes: ['LEAGUE'],
+      scoringFormat: 'Short sets to 4 games, tie-break at 3-3.',
+      walkoverRule: 'A pair missing a player at the agreed start forfeits unless a substitute is agreed.',
+      unfinishedMatchPolicy: 'Score at the point of abandonment stands if at least one set is complete.',
+      isActive: true,
     }),
   );
 }
