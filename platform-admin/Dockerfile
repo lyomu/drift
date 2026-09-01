@@ -1,7 +1,7 @@
 FROM node:24-bookworm-slim AS build
 
 WORKDIR /app
-ENV NODE_ENV=production
+ENV NODE_ENV=development
 ARG NEXT_PUBLIC_API_URL
 ARG NEXT_PUBLIC_BASE_PATH=/platform
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL

@@ -1,7 +1,7 @@
 FROM node:24-bookworm-slim AS build
 
 WORKDIR /app
-ENV NODE_ENV=production
+ENV NODE_ENV=development
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
@@ -25,4 +25,3 @@ COPY --from=build /app/.next/static ./.next/static
 USER node
 EXPOSE 3010
 CMD ["node", "server.js"]
-
