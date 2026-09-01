@@ -10,7 +10,7 @@ domain-based vhost split should replace this once DNS is ready.
 | Route | Service |
 |---|---|
 | `https://135.181.146.130/` | Club Admin |
-| `https://135.181.146.130/platform/` | Platform Admin |
+| `https://135.181.146.130/platform` | Platform Admin |
 | `https://135.181.146.130/api/` | NestJS API |
 | `https://135.181.146.130/socket.io/` | Socket.IO gateway |
 
@@ -130,7 +130,7 @@ The deploy script fast-forwards `master`, builds images on the box, runs
 curl -fsS http://127.0.0.1:3009/health
 curl -fkI https://135.181.146.130/api/health
 curl -fkI -u drift-preview:<password> https://135.181.146.130/
-curl -fkI -u drift-preview:<password> https://135.181.146.130/platform/
+curl -fkI -u drift-preview:<password> https://135.181.146.130/platform
 ```
 
 ## Deferred domain migration
@@ -139,4 +139,3 @@ When the domain is ready, replace this IP-only shape with separate hostnames for
 the API and both consoles. Rebuild both Next.js apps with the final
 `NEXT_PUBLIC_API_URL`, update API `CORS_ALLOWED_ORIGINS`, issue normal 45/90-day
 domain certificates, and update the mobile `DRIFT_API_BASE_URL`.
-
