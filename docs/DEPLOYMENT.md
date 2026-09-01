@@ -112,6 +112,32 @@ htpasswd -c /etc/nginx/.htpasswd-drift drift-preview
 
 Store the password in the team's password manager. Do not commit it.
 
+## Staging test accounts
+
+The deploy only runs `prisma migrate deploy`, so test accounts must be
+bootstrapped separately. `scripts/staging/` (mirrored to
+`/srv/drift/app/scripts/` on the box) holds two idempotent helpers run inside
+the API container:
+
+```bash
+# create/update both accounts
+docker exec -i drift-api node - < /srv/drift/app/scripts/bootstrap-accounts.mjs
+
+# Club Admin — logs in directly
+#   https://135.181.146.130/  →  owner@drift.test / Password123!
+
+# Platform Admin — login always issues a 2FA challenge, and production has no
+# email provider yet (delivery: 'PENDING_PROVIDER'). After submitting the
+# login form, set a known code on the open challenge:
+docker exec -i -e STAGING_2FA_CODE=<6 digits> drift-api node - \
+  < /srv/drift/app/scripts/set-2fa-code.mjs
+# then enter that code on the verify-2fa page (challenge expires in 10 min).
+#   https://135.181.146.130/platform  →  admin@drift.test / DriftPlatform2026!
+```
+
+`set-2fa-code.mjs` is a stopgap until a real 2FA delivery provider exists;
+delete it and its doc row once email delivery lands.
+
 ## Deploy
 
 Run as `drift-deploy` after root provisioning and env setup:
@@ -132,6 +158,33 @@ curl -fkI https://135.181.146.130/api/health
 curl -fkI -u drift-preview:<password> https://135.181.146.130/
 curl -fkI -u drift-preview:<password> https://135.181.146.130/platform
 ```
+
+## Mobile app (APK rebuild)
+
+The Flutter app is not server-deployed — it only needs its API base URL pointed
+at the live deployment. The URL is baked in at build time and defaults to the
+local dev server (`mobile/lib/core/network/dio_client.dart`), so pass it as a
+dart-define:
+
+```bash
+cd mobile
+flutter build apk --release --split-per-abi \
+  --dart-define=DRIFT_API_BASE_URL=https://135.181.146.130/api
+```
+
+Outputs land in `mobile/build/app/outputs/flutter-apk/` —
+`app-arm64-v8a-release.apk` (modern devices) and
+`app-armeabi-v7a-release.apk` (older devices). Install with
+`adb install <apk>` or distribute directly.
+
+Notes:
+
+- The staging API uses a Let's Encrypt **IP certificate**, which is publicly
+  trusted — no special TLS handling is needed on devices.
+- Rebuild only when the API URL changes, i.e. once more at the domain
+  migration below.
+- Signing config is unchanged from the normal release flow; the existing
+  external signing values apply.
 
 ## Deferred domain migration
 
