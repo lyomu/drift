@@ -38,7 +38,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#F7FAFC] px-4 py-4 text-[#111827] sm:px-8 lg:px-10">
+    <main className="theme-light flex min-h-screen items-center justify-center bg-[#F7FAFC] px-4 py-4 text-[#111827] sm:px-8 lg:px-10">
       <section className="flex w-full max-w-[1320px] overflow-hidden rounded-[24px] bg-white shadow-[0_22px_68px_rgba(17,24,39,0.12)] max-lg:max-w-[760px] max-lg:flex-col lg:h-[calc(100vh-48px)] lg:max-h-[760px] lg:min-h-[620px]">
         <aside className="relative min-h-[300px] flex-1 overflow-hidden bg-[#0F1725] p-7 text-white lg:min-h-0">
           <div className="flex items-center gap-2.5">

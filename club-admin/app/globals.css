@@ -30,6 +30,32 @@
 }
 
 /*
+ * Auth pages (login) hardcode a light design instead of using the theme
+ * tokens. Scope the light palette onto them so shared token-based components
+ * (Input, PasswordField, ErrorBanner, ...) match, regardless of the OS dark
+ * preference or the dashboard theme toggle. Keep these values identical to
+ * the :root block above.
+ */
+.theme-light {
+  --color-primary: #1c91d0;
+  --color-primary-dark: #126a9b;
+  --color-primary-light: #e8f5fc;
+  --color-background: #f7fafc;
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-text-primary: #111827;
+  --color-text-secondary: #6b7280;
+  --color-border: #e5e7eb;
+  --color-success: #16a34a;
+  --color-success-surface: #eafbf1;
+  --color-warning: #f59e0b;
+  --color-warning-surface: #fef6e7;
+  --color-error: #dc2626;
+  --color-error-surface: #fdecec;
+  --color-neutral-surface: #f1f3f5;
+}
+
+/*
  * Dark palette. Applied three ways: the OS preference (unless the user has
  * explicitly chosen light via the header toggle), and an explicit
  * `data-theme="dark"` on <html> (set by ThemeToggle + the no-flash script in

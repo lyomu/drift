@@ -5,7 +5,7 @@ import Link from "next/link";
 import { api, ApiError, downloadBlob } from "@/lib/api-client";
 import { useClub } from "@/lib/club-context";
 import { DataTable } from "@/components/DataTable";
-import { Button, Card, EmptyState, ErrorBanner, Field, Input, PageHeader, Select, Textarea } from "@/components/ui";
+import { Button, Card, EmptyState, ErrorBanner, Field, Input, PageHeader, Textarea } from "@/components/ui";
 import { StatusBadge } from "@/components/StatusBadge";
 import { InitialsAvatar, MaterialIcon, ModalShell } from "@/components/dashboard-design";
 import { SelectEditControl } from "@/components/EditFieldModal";
@@ -31,7 +31,6 @@ export default function MembersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<ClubRole>("READ_ONLY");
   const [inviting, setInviting] = useState(false);
   const [showInvite, setShowInvite] = useState(false);
 
@@ -65,10 +64,9 @@ export default function MembersPage() {
     try {
       await api.post(`/clubs/${clubId}/members`, {
         email: inviteEmail,
-        role: inviteRole,
+        role: "READ_ONLY",
       });
       setInviteEmail("");
-      setInviteRole("READ_ONLY");
       setShowInvite(false);
       await loadMembers();
     } catch (err) {
@@ -300,18 +298,10 @@ export default function MembersPage() {
                 placeholder="Must already have a Drift account"
               />
             </Field>
-            <Field label="Role">
-              <Select
-                value={inviteRole}
-                onChange={(e) => setInviteRole(e.target.value as ClubRole)}
-              >
-                {ROLES.map((r) => (
-                  <option key={r} value={r}>
-                    {r.replace(/_/g, " ")}
-                  </option>
-                ))}
-              </Select>
-            </Field>
+            <p className="text-[12.5px] text-drift-text-secondary">
+              They join with read-only access — change it any time from the
+              Role column.
+            </p>
             <div className="mt-1 flex justify-end gap-3">
               <Button
                 type="button"

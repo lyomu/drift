@@ -36,7 +36,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="relative flex min-h-screen flex-col overflow-hidden border-t-[5px] border-[#1F1B16] bg-[#FBF7EE] text-[#111827]">
+    <main className="theme-light relative flex min-h-screen flex-col overflow-hidden border-t-[5px] border-[#1F1B16] bg-[#FBF7EE] text-[#111827]">
       <header className="relative z-10 flex items-start justify-between gap-6 px-6 py-6 sm:px-10 lg:px-[58px]">
         <Link href="/login" className="group inline-flex flex-col gap-2.5">
           <span className="font-display text-[24px] font-extrabold leading-none text-[#111827]">
