@@ -90,7 +90,7 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   autoComplete="email"
                   placeholder="you@driftapp.com"
-                  className="!h-[52px] !rounded-[10px] !border-[#E5E7EB] !px-4 !text-[14px] font-medium !text-[#111827] placeholder:!text-[#6B7280]"
+                  className="!h-[52px] !rounded-[10px] !border-[#E5E7EB] !bg-white !px-4 !text-[14px] font-medium !text-[#111827] placeholder:!text-[#6B7280]"
                 />
               </label>
               <PasswordField
@@ -100,7 +100,7 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
                 labelClassName="text-[14px] font-bold text-[#6B7280]"
-                inputClassName="!h-[52px] !rounded-[10px] !border-[#E5E7EB] !px-4 !pr-12 !text-[14px] font-medium !text-[#111827] placeholder:!text-[#6B7280]"
+                inputClassName="!h-[52px] !rounded-[10px] !border-[#E5E7EB] !bg-white !px-4 !pr-12 !text-[14px] font-medium !text-[#111827] placeholder:!text-[#6B7280]"
               />
 
               <div className="-mt-1 flex items-center justify-between gap-4 text-[14px]">
