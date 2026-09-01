@@ -11,11 +11,14 @@ export function DataTable<T>({
   rows,
   rowKey,
   emptyMessage = "Nothing here yet.",
+  onRowClick,
 }: {
   columns: Column<T>[];
   rows: T[];
   rowKey: (row: T) => string;
   emptyMessage?: string;
+  // Optional so every existing caller keeps its plain, non-interactive table.
+  onRowClick?: (row: T) => void;
 }) {
   if (rows.length === 0) {
     return <EmptyState message={emptyMessage} />;
@@ -40,7 +43,20 @@ export function DataTable<T>({
           {rows.map((row) => (
             <tr
               key={rowKey(row)}
-              className="transition-colors last:[&_td]:border-0 hover:bg-drift-primary-light/45"
+              className={`transition-colors last:[&_td]:border-0 hover:bg-drift-primary-light/45 ${onRowClick ? "cursor-pointer" : ""}`}
+              {...(onRowClick
+                ? {
+                    onClick: () => onRowClick(row),
+                    tabIndex: 0,
+                    role: "button" as const,
+                    onKeyDown: (event: React.KeyboardEvent<HTMLTableRowElement>) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        onRowClick(row);
+                      }
+                    },
+                  }
+                : {})}
             >
               {columns.map((col) => (
                 <td

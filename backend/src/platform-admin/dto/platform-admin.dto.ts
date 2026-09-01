@@ -1,4 +1,5 @@
 import {
+  IsEnum,
   IsIn,
   IsEmail,
   IsOptional,
@@ -8,6 +9,7 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
+import { VerificationStatus } from '@prisma/client';
 
 export class LoginPlatformAdminDto {
   @IsEmail()
@@ -40,6 +42,13 @@ export class ResetPlatformAdminPasswordDto {
 export class UpdateUserStatusDto {
   @IsIn(['ACTIVE', 'SUSPENDED'])
   status!: 'ACTIVE' | 'SUSPENDED';
+}
+
+export class UpdateUserVerificationDto {
+  // Account-level identity verification, not CoachProfile listing
+  // verification — see PlatformAdminService.setUserVerification.
+  @IsEnum(VerificationStatus)
+  status!: VerificationStatus;
 }
 
 export class UpdateReportDto {

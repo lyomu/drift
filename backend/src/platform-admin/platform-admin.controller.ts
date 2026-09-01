@@ -26,6 +26,7 @@ import {
   RuleDisputeDto,
   UpdateReportDto,
   UpdateUserStatusDto,
+  UpdateUserVerificationDto,
   UpsertNewsSourceDto,
 } from './dto/platform-admin.dto';
 import {
@@ -98,15 +99,24 @@ export class PlatformAdminController {
   listUsers(
     @Query('query') query?: string,
     @Query('status') status?: string,
+    @Query('category') category?: string,
     @Query('take') take?: string,
     @Query('skip') skip?: string,
   ) {
     return this.platform.listUsers({
       query,
       status,
+      category,
       take: take ? Number(take) : undefined,
       skip: skip ? Number(skip) : undefined,
     });
+  }
+
+  @UseGuards(PlatformGuard, PlatformPermissionGuard)
+  @RequirePlatformPermission(PlatformPermission.USERS_MANAGE)
+  @Get('users/:id')
+  getUser(@Param('id') id: string) {
+    return this.platform.getUserDetail(id);
   }
 
   @UseGuards(PlatformGuard, PlatformPermissionGuard)
@@ -118,6 +128,28 @@ export class PlatformAdminController {
     @Body() dto: UpdateUserStatusDto,
   ) {
     return this.platform.setUserStatus(req.user.adminId, id, dto.status);
+  }
+
+  @UseGuards(PlatformGuard, PlatformPermissionGuard)
+  @RequirePlatformPermission(PlatformPermission.USERS_MANAGE)
+  @Patch('users/:id/verification')
+  setUserVerification(
+    @Req() req: { user: { adminId: string } },
+    @Param('id') id: string,
+    @Body() dto: UpdateUserVerificationDto,
+  ) {
+    return this.platform.setUserVerification(req.user.adminId, id, dto.status);
+  }
+
+  @UseGuards(PlatformGuard, PlatformPermissionGuard)
+  @RequirePlatformPermission(PlatformPermission.USERS_MANAGE)
+  @HttpCode(HttpStatus.OK)
+  @Post('users/:id/revoke-sessions')
+  revokeUserSessions(
+    @Req() req: { user: { adminId: string } },
+    @Param('id') id: string,
+  ) {
+    return this.platform.revokeUserSessions(req.user.adminId, id);
   }
 
   @UseGuards(PlatformGuard, PlatformPermissionGuard)

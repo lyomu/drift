@@ -328,6 +328,7 @@ export function statusTone(status: string): "neutral" | "success" | "warning" | 
     case "SUSPENDED":
     case "REJECTED":
     case "BLOCKED":
+    case "RESTRICTED":
     case "DOWN":
     case "FAILED":
     case "CANCELLED":

@@ -8,9 +8,11 @@ import '../storage/secure_storage.dart';
 
 /// Build-time API override, for builds that can't reach the host through
 /// the usual loopback aliases — chiefly a debug APK on a physical phone,
-/// which needs the dev machine's LAN address:
+/// which needs the dev machine's LAN address, or any release APK pointed
+/// at the deployed staging API (runbook: `docs/DEPLOYMENT.md`):
 ///
-///   flutter build apk --dart-define=DRIFT_API_BASE_URL=http://192.168.1.x:3009
+///   flutter build apk --dart-define=DRIFT_API_BASE_URL=http://192.168.1.x:3009   # dev, real device
+///   flutter build apk --release --dart-define=DRIFT_API_BASE_URL=https://135.181.146.130/api  # staging
 const _apiBaseUrlOverride = String.fromEnvironment('DRIFT_API_BASE_URL');
 
 /// `10.0.2.2` is the Android emulator's alias for the host machine's

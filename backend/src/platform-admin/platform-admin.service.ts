@@ -4,7 +4,14 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { AccountStatus, NewsModerationStatus } from '@prisma/client';
+import {
+  AccountStatus,
+  ClubMembershipStatus,
+  ClubRole,
+  NewsModerationStatus,
+  Prisma,
+  VerificationStatus,
+} from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
@@ -37,9 +44,57 @@ const USER_SELECT = {
   firstName: true,
   lastName: true,
   accountStatus: true,
+  verificationStatus: true,
   onboardingStep: true,
   createdAt: true,
+  // Category is derived, not stored: `User` has no role column, so a row's
+  // categories come from which profile relations exist. These selects stay
+  // id-only so listing stays cheap — the detail endpoint loads the rest.
+  tennisProfile: { select: { id: true } },
+  padelProfile: { select: { id: true } },
+  coachProfile: { select: { id: true } },
+  clubMemberships: {
+    where: { status: ClubMembershipStatus.ACTIVE },
+    select: { role: true, club: { select: { id: true, name: true } } },
+  },
 };
+
+/**
+ * The category buckets Platform Admin filters on. Deliberately overlapping: a
+ * club owner who also plays and coaches is all three at once, so these are
+ * tags on a user rather than a partition of them, and the per-category counts
+ * sum to more than the user total.
+ */
+export type UserCategory = 'PLAYER' | 'COACH' | 'CLUB_STAFF';
+
+const USER_CATEGORY_WHERE: Record<UserCategory, Prisma.UserWhereInput> = {
+  PLAYER: {
+    OR: [{ tennisProfile: { isNot: null } }, { padelProfile: { isNot: null } }],
+  },
+  COACH: { coachProfile: { isNot: null } },
+  CLUB_STAFF: {
+    clubMemberships: { some: { status: ClubMembershipStatus.ACTIVE } },
+  },
+};
+
+type UserRowWithRelations = {
+  tennisProfile: { id: string } | null;
+  padelProfile: { id: string } | null;
+  coachProfile: { id: string } | null;
+  clubMemberships: { role: ClubRole; club: { id: string; name: string } }[];
+};
+
+/**
+ * Collapse the relation flags into the tag list the console renders, so the
+ * derivation rules live in one place instead of being restated in the UI.
+ */
+function categoriesOf(user: UserRowWithRelations): UserCategory[] {
+  const categories: UserCategory[] = [];
+  if (user.tennisProfile || user.padelProfile) categories.push('PLAYER');
+  if (user.coachProfile) categories.push('COACH');
+  if (user.clubMemberships.length > 0) categories.push('CLUB_STAFF');
+  return categories;
+}
 
 const REPORT_INCLUDES = {
   player: {
@@ -329,10 +384,16 @@ export class PlatformAdminService {
   async listUsers(query: {
     query?: string;
     status?: string;
+    category?: string;
     take?: number;
     skip?: number;
   }) {
-    const where = {
+    const category = query.category as UserCategory | undefined;
+    if (category && !(category in USER_CATEGORY_WHERE)) {
+      throw new BadRequestException('Unknown user category.');
+    }
+
+    const where: Prisma.UserWhereInput = {
       AND: [
         query.query
           ? {
@@ -359,21 +420,57 @@ export class PlatformAdminService {
             }
           : {},
         query.status ? { accountStatus: query.status as AccountStatus } : {},
+        category ? USER_CATEGORY_WHERE[category] : {},
       ],
     };
 
-    const [users, total] = await this.prisma.$transaction([
-      this.prisma.user.findMany({
-        where,
-        select: USER_SELECT,
-        orderBy: { createdAt: 'desc' },
-        take: Math.min(query.take ?? 50, 200),
-        skip: query.skip ?? 0,
-      }),
-      this.prisma.user.count({ where }),
-    ]);
+    // The status/category tallies deliberately ignore `where` and count the
+    // whole platform: they are the "what is out there" band above the table,
+    // not a summary of the current filter. Counting the page instead (what
+    // the console used to do client-side) silently under-reports past the
+    // first page.
+    const [users, total, active, suspended, deleted, players, coaches, clubStaff] =
+      await this.prisma.$transaction([
+        this.prisma.user.findMany({
+          where,
+          select: USER_SELECT,
+          orderBy: { createdAt: 'desc' },
+          take: Math.min(query.take ?? 50, 200),
+          skip: query.skip ?? 0,
+        }),
+        this.prisma.user.count({ where }),
+        this.prisma.user.count({
+          where: { accountStatus: AccountStatus.ACTIVE },
+        }),
+        this.prisma.user.count({
+          where: { accountStatus: AccountStatus.SUSPENDED },
+        }),
+        this.prisma.user.count({
+          where: { accountStatus: AccountStatus.DELETED },
+        }),
+        this.prisma.user.count({ where: USER_CATEGORY_WHERE.PLAYER }),
+        this.prisma.user.count({ where: USER_CATEGORY_WHERE.COACH }),
+        this.prisma.user.count({ where: USER_CATEGORY_WHERE.CLUB_STAFF }),
+      ]);
 
-    return { total, users };
+    return {
+      total,
+      counts: { active, suspended, deleted, players, coaches, clubStaff },
+      users: users.map(({ tennisProfile, padelProfile, coachProfile, clubMemberships, ...user }) => ({
+        ...user,
+        categories: categoriesOf({
+          tennisProfile,
+          padelProfile,
+          coachProfile,
+          clubMemberships,
+        }),
+        clubRoles: clubMemberships.map((membership) => ({
+          role: membership.role,
+          clubId: membership.club.id,
+          clubName: membership.club.name,
+        })),
+      })),
+    };
   }
 
   async setUserStatus(
@@ -412,6 +509,178 @@ export class PlatformAdminService {
     );
 
     return { id: userId, status };
+  }
+
+  /**
+   * Everything an admin needs to judge one account before acting on it. Kept
+   * separate from `listUsers` because it fans out across every profile
+   * relation — fine for one row, far too heavy for a page of them.
+   */
+  async getUserDetail(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        phone: true,
+        firstName: true,
+        lastName: true,
+        bio: true,
+        photoUrl: true,
+        accountStatus: true,
+        verificationStatus: true,
+        emailVerifiedAt: true,
+        phoneVerifiedAt: true,
+        onboardingStep: true,
+        onboardingCompletedAt: true,
+        createdAt: true,
+        tennisProfile: {
+          select: {
+            singlesRating: true,
+            doublesRating: true,
+            dominantHand: true,
+          },
+        },
+        padelProfile: {
+          select: { singlesRating: true, doublesRating: true },
+        },
+        coachProfile: {
+          select: {
+            id: true,
+            yearsExperience: true,
+            qualifications: true,
+            specialisations: true,
+            levels: true,
+            verificationStatus: true,
+            affiliations: {
+              select: { club: { select: { id: true, name: true } } },
+            },
+          },
+        },
+        clubMemberships: {
+          where: { status: ClubMembershipStatus.ACTIVE },
+          select: {
+            role: true,
+            createdAt: true,
+            club: { select: { id: true, name: true } },
+          },
+        },
+        _count: {
+          select: {
+            matchParticipations: true,
+            reportsReceived: true,
+            connectionsRequested: true,
+            connectionsReceived: true,
+          },
+        },
+      },
+    });
+    if (!user) throw new NotFoundException('User not found.');
+
+    // An un-revoked, unexpired refresh token is the closest thing to a
+    // "currently signed in" signal — there is no lastLoginAt column.
+    const activeSessions = await this.prisma.refreshToken.count({
+      where: { userId, revokedAt: null, expiresAt: { gt: new Date() } },
+    });
+
+    const { _count, clubMemberships, coachProfile, ...rest } = user;
+
+    return {
+      user: {
+        ...rest,
+        coachProfile: coachProfile
+          ? {
+              ...coachProfile,
+              affiliations: coachProfile.affiliations.map((a) => a.club),
+            }
+          : null,
+        categories: categoriesOf({
+          tennisProfile: user.tennisProfile ? { id: '' } : null,
+          padelProfile: user.padelProfile ? { id: '' } : null,
+          coachProfile: coachProfile ? { id: coachProfile.id } : null,
+          clubMemberships: clubMemberships.map((m) => ({
+            role: m.role,
+            club: m.club,
+          })),
+        }),
+        clubMemberships: clubMemberships.map((m) => ({
+          role: m.role,
+          joinedAt: m.createdAt,
+          clubId: m.club.id,
+          clubName: m.club.name,
+        })),
+        stats: {
+          matches: _count.matchParticipations,
+          reportsReceived: _count.reportsReceived,
+          connections:
+            _count.connectionsRequested + _count.connectionsReceived,
+          activeSessions,
+        },
+      },
+    };
+  }
+
+  /**
+   * Cut every live session without touching account status — the softer
+   * sibling of suspension, for "sign them out everywhere" support requests.
+   */
+  async revokeUserSessions(actorId: string, userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true },
+    });
+    if (!user) throw new NotFoundException('User not found.');
+
+    const { count } = await this.prisma.refreshToken.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+
+    await this.audit.record(
+      actorId,
+      'user.revoke_sessions',
+      'User',
+      userId,
+      { revokedTokens: count },
+    );
+
+    return { id: userId, revokedTokens: count };
+  }
+
+  /**
+   * Manual identity verification. This is `User.verificationStatus` — the
+   * account-level check — and deliberately does not touch
+   * `CoachProfile.verificationStatus`, which is listing verification owned by
+   * the coach review flow.
+   */
+  async setUserVerification(
+    actorId: string,
+    userId: string,
+    status: VerificationStatus,
+  ) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { verificationStatus: true, accountStatus: true },
+    });
+    if (!user) throw new NotFoundException('User not found.');
+    if (user.accountStatus === AccountStatus.DELETED) {
+      throw new BadRequestException('Deleted accounts cannot be verified.');
+    }
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { verificationStatus: status },
+    });
+
+    await this.audit.record(
+      actorId,
+      'user.verification_change',
+      'User',
+      userId,
+      { previousStatus: user.verificationStatus, status },
+    );
+
+    return { id: userId, verificationStatus: status };
   }
 
   // --------------------------------------------------------------- reports

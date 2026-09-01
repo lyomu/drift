@@ -286,6 +286,114 @@ describe('Platform Admin (e2e)', () => {
     await authed(users.alice.token, 'get', '/users/me').expect(200);
   });
 
+  it('categorises users and filters by category', async () => {
+    // Alice is fully onboarded in beforeAll, so she has a tennis profile and
+    // must land in PLAYER — the category is derived, never stored.
+    const players = await authed(adminToken, 'get', '/platform-admin/users')
+      .query({ query: users.alice.email, category: 'PLAYER' })
+      .expect(200);
+    expect(players.body.total).toBe(1);
+    expect(players.body.users[0].categories).toContain('PLAYER');
+    expect(players.body.users[0].clubRoles).toEqual([]);
+
+    // ...and must not appear under a category she does not belong to.
+    const coaches = await authed(adminToken, 'get', '/platform-admin/users')
+      .query({ query: users.alice.email, category: 'COACH' })
+      .expect(200);
+    expect(coaches.body.total).toBe(0);
+
+    await authed(adminToken, 'get', '/platform-admin/users')
+      .query({ category: 'NOT_A_CATEGORY' })
+      .expect(400);
+
+    // The stat band's counts are platform-wide, so they must not shrink when
+    // the list itself is filtered down to one row.
+    expect(players.body.counts.players).toBeGreaterThanOrEqual(1);
+  });
+
+  it('returns full user detail for one account', async () => {
+    const detail = await authed(
+      adminToken,
+      'get',
+      `/platform-admin/users/${users.alice.id}`,
+    ).expect(200);
+
+    expect(detail.body.user.id).toBe(users.alice.id);
+    expect(detail.body.user.categories).toContain('PLAYER');
+    expect(detail.body.user.tennisProfile).not.toBeNull();
+    // Not asserted non-zero: the suspend/restore test above revoked Alice's
+    // refresh tokens and restoring does not re-issue them. The meaningful
+    // 1 -> 0 transition is covered by the revoke-sessions test below.
+    expect(typeof detail.body.user.stats.activeSessions).toBe('number');
+    expect(detail.body.user.stats.matches).toBeGreaterThanOrEqual(0);
+
+    await authed(
+      adminToken,
+      'get',
+      '/platform-admin/users/00000000-0000-0000-0000-000000000000',
+    ).expect(404);
+  });
+
+  it('revokes sessions without changing account status', async () => {
+    // Bob still holds the session he logged in with during setup.
+    const before = await authed(
+      adminToken,
+      'get',
+      `/platform-admin/users/${users.bob.id}`,
+    ).expect(200);
+    expect(before.body.user.stats.activeSessions).toBeGreaterThanOrEqual(1);
+
+    const revoked = await authed(
+      adminToken,
+      'post',
+      `/platform-admin/users/${users.bob.id}/revoke-sessions`,
+    ).expect(200);
+    expect(revoked.body.revokedTokens).toBeGreaterThanOrEqual(1);
+
+    // Sessions are gone, but the account is still ACTIVE — unlike suspension,
+    // the user can simply log back in.
+    const after = await authed(
+      adminToken,
+      'get',
+      `/platform-admin/users/${users.bob.id}`,
+    ).expect(200);
+    expect(after.body.user.accountStatus).toBe('ACTIVE');
+    expect(after.body.user.stats.activeSessions).toBe(0);
+
+    const relogin = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ email: users.bob.email, password })
+      .expect(200);
+    users.bob.token = relogin.body.accessToken;
+  });
+
+  it('sets identity verification by hand', async () => {
+    const updated = await authed(
+      adminToken,
+      'patch',
+      `/platform-admin/users/${users.alice.id}/verification`,
+    )
+      .send({ status: 'RESTRICTED' })
+      .expect(200);
+    expect(updated.body.verificationStatus).toBe('RESTRICTED');
+
+    await authed(
+      adminToken,
+      'patch',
+      `/platform-admin/users/${users.alice.id}/verification`,
+    )
+      .send({ status: 'NOPE' })
+      .expect(400);
+
+    await authed(
+      adminToken,
+      'patch',
+      `/platform-admin/users/${users.alice.id}/verification`,
+    )
+      .send({ status: 'VERIFIED' })
+      .expect(200);
+  });
+
   it('triages a player report end to end', async () => {
     const created = await authed(users.bob.token, 'post', '/safety/reports')
       .send({
