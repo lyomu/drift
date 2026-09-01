@@ -91,8 +91,8 @@
   --color-drift-error: var(--color-error);
   --color-drift-error-surface: var(--color-error-surface);
 
-  --font-body: var(--font-poppins);
-  --font-display: var(--font-poppins);
+  --font-body: var(--font-lexend);
+  --font-display: var(--font-lexend);
 
   --radius-sm: 4px;
   --radius-md: 8px;

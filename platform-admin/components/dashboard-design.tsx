@@ -52,7 +52,7 @@ export function Panel({
   className?: string;
 }) {
   return (
-    <section className={`rounded-lg border border-drift-border bg-drift-surface ${className}`}>
+    <section className={`rounded-lg border border-drift-border bg-drift-surface shadow-[0_1px_3px_rgba(17,24,39,0.05)] ${className}`}>
       {children}
     </section>
   );
@@ -71,7 +71,7 @@ export function RowCard({
 }) {
   const content = (
     <div
-      className={`rowcard rounded-lg border px-5 py-4 transition-colors ${
+      className={`rowcard rounded-lg border px-5 py-4 shadow-[0_1px_3px_rgba(17,24,39,0.05)] transition-colors ${
         selected ? "border-drift-primary bg-drift-primary-light" : "border-drift-border bg-drift-surface hover:bg-drift-primary-light/35"
       } ${className}`}
     >

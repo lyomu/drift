@@ -159,7 +159,7 @@ export function Card({
 }) {
   return (
     <section
-      className={`rounded-lg border border-drift-border bg-drift-surface p-5 ${className}`}
+      className={`rounded-lg border border-drift-border bg-drift-surface p-5 shadow-[0_1px_3px_rgba(17,24,39,0.05)] ${className}`}
     >
       {children}
     </section>
@@ -247,10 +247,28 @@ export function ErrorBanner({ message }: { message: string | null }) {
   );
 }
 
-export function EmptyState({ message }: { message: string }) {
+export function EmptyState({
+  message,
+  description,
+  icon = "inbox",
+}: {
+  message: string;
+  description?: string;
+  icon?: string;
+}) {
   return (
-    <div className="rounded-lg border border-dashed border-drift-border bg-drift-surface px-6 py-12 text-center text-sm font-semibold text-drift-text-secondary">
-      {message}
+    <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-drift-border bg-drift-surface px-6 py-12 text-center">
+      <span className="flex h-14 w-14 items-center justify-center rounded-full bg-drift-neutral-surface text-drift-text-secondary">
+        <MaterialIcon name={icon} className="text-[26px]" />
+      </span>
+      <div>
+        <div className="text-sm font-bold text-drift-text-primary">{message}</div>
+        {description && (
+          <p className="mx-auto mt-1 max-w-sm text-sm leading-6 text-drift-text-secondary">
+            {description}
+          </p>
+        )}
+      </div>
     </div>
   );
 }
@@ -357,7 +375,7 @@ export function statusTone(status: string): "neutral" | "success" | "warning" | 
 export function Th({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
     <th
-      className={`border-b border-drift-border bg-drift-primary-light px-5 py-4 text-left text-[11px] font-extrabold uppercase text-drift-text-secondary ${className}`}
+      className={`border-b border-drift-border bg-drift-neutral-surface px-5 py-4 text-left text-[11px] font-extrabold uppercase text-drift-text-secondary ${className}`}
     >
       {children}
     </th>

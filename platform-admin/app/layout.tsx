@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
-import { Poppins } from "next/font/google";
+import { Lexend } from "next/font/google";
 import "./globals.css";
 
-// Poppins is not a variable font — Google serves discrete weights, so the
-// cuts the UI actually uses (regular through bold) have to be listed.
-const poppins = Poppins({
+// Lexend ships as a variable font, so every weight the UI uses (regular
+// through extrabold) comes from a single file instead of discrete cuts.
+const lexend = Lexend({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-poppins",
+  variable: "--font-lexend",
   display: "swap",
 });
 
@@ -29,7 +28,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${poppins.variable} h-full antialiased`}
+      className={`${lexend.variable} h-full antialiased`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />

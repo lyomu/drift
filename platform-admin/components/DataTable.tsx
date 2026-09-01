@@ -1,3 +1,5 @@
+import { EmptyState } from "./ui";
+
 export type Column<T> = {
   header: string;
   cell: (row: T) => React.ReactNode;
@@ -16,18 +18,14 @@ export function DataTable<T>({
   emptyMessage?: string;
 }) {
   if (rows.length === 0) {
-    return (
-      <div className="rounded-lg border border-dashed border-drift-border bg-drift-surface px-6 py-12 text-center text-sm font-semibold text-drift-text-secondary">
-        {emptyMessage}
-      </div>
-    );
+    return <EmptyState message={emptyMessage} />;
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-drift-border bg-drift-surface">
+    <div className="overflow-x-auto rounded-lg border border-drift-border bg-drift-surface shadow-[0_1px_3px_rgba(17,24,39,0.05)]">
       <table className="w-full min-w-[720px] border-separate border-spacing-0 text-left text-sm">
         <thead>
-          <tr className="bg-drift-primary-light">
+          <tr className="bg-drift-neutral-surface">
             {columns.map((col) => (
               <th
                 key={col.header}
