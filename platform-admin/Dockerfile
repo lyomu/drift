@@ -10,6 +10,7 @@ ENV NEXT_PUBLIC_BASE_PATH=$NEXT_PUBLIC_BASE_PATH
 COPY package*.json ./
 RUN npm ci
 
+ENV NODE_ENV=production
 COPY . .
 RUN npm run build
 
