@@ -50,6 +50,7 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   headers() {
     return Promise.resolve([{ source: "/:path*", headers: securityHeaders }]);
   },

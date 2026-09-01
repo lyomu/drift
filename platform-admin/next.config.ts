@@ -6,6 +6,7 @@ import type { NextConfig } from "next";
  * this app makes.
  */
 const API_ORIGIN = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3009";
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH?.trim() || "";
 
 /**
  * Baseline security headers — kept identical to `club-admin/next.config.ts`
@@ -52,6 +53,8 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  output: "standalone",
+  ...(BASE_PATH ? { basePath: BASE_PATH } : {}),
   experimental: {
     cpus: 4,
   },

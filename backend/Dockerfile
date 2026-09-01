@@ -1,0 +1,36 @@
+FROM node:24-bookworm-slim AS build
+
+WORKDIR /app
+ENV NODE_ENV=development
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+
+COPY package*.json ./
+RUN npm ci
+
+COPY prisma ./prisma
+RUN npx prisma generate
+
+COPY . .
+RUN npm run build
+
+FROM node:24-bookworm-slim AS runtime
+
+WORKDIR /app
+ENV NODE_ENV=production
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+
+COPY --from=build /app/package*.json ./
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/prisma ./prisma
+
+USER node
+EXPOSE 3009
+CMD ["node", "dist/main.js"]
+

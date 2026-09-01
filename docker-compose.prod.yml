@@ -1,0 +1,110 @@
+services:
+  postgres:
+    image: postgres:16-bookworm
+    container_name: drift-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    mem_limit: 768m
+    cpus: "0.50"
+
+  redis:
+    image: redis:7.4-bookworm
+    container_name: drift-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    mem_limit: 192m
+    cpus: "0.20"
+
+  api:
+    build:
+      context: ./backend
+    container_name: drift-api
+    restart: unless-stopped
+    env_file:
+      - path: ./.env.production
+        required: false
+    environment:
+      NODE_ENV: production
+      PORT: 3009
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:3009:3009"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://127.0.0.1:3009/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\"",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    mem_limit: 1024m
+    cpus: "0.75"
+
+  club-admin:
+    build:
+      context: ./club-admin
+      args:
+        NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL}
+    container_name: drift-club-admin
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3010
+      HOSTNAME: 0.0.0.0
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:3010:3010"
+    mem_limit: 512m
+    cpus: "0.35"
+
+  platform-admin:
+    build:
+      context: ./platform-admin
+      args:
+        NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL}
+        NEXT_PUBLIC_BASE_PATH: /platform
+    container_name: drift-platform-admin
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3011
+      HOSTNAME: 0.0.0.0
+      NEXT_PUBLIC_BASE_PATH: /platform
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:3011:3011"
+    mem_limit: 512m
+    cpus: "0.35"
+
+volumes:
+  postgres_data:
+  redis_data:
