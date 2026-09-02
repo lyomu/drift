@@ -6,7 +6,7 @@ artifact, so a commit or PR can close an item by referencing its ID
 
 **Status key:** `[ ]` to do · `[~]` in progress · `[!]` blocked · `[x]` done
 
-**24 items · 12 closed**
+**27 items · 13 closed**
 
 ---
 
@@ -158,10 +158,30 @@ artifact, so a commit or PR can close an item by referencing its ID
 
 ## Phase 5 — Production hygiene 🟡
 
-- [ ] **5.1 — Android release key decision** 🔴
-  Two keystores exist. Rotate if `release.keystore` ever protected a distributable
-  build. **Unanswerable once a key signs a Play release.**
-  *Deadline:* before any store submission
+- [x] **5.1 — Android release key decision** 🔴
+  **Answered with evidence 2026-09-03, and the answer was rotate.** The question was
+  whether `release.keystore` ever protected a distributable build. It did:
+  `drift-tennis-release.apk` (2026-08-18 16:35, four minutes after the keystore was
+  created) carries SHA-1 `0B:B5:B3:E7:5E:7C:01:7C:74:A0:D8:FB:33:44:3F:03:90:BA:C6:19`,
+  an exact match for that keystore. Two further findings made it unambiguous:
+  commit `378780f` hardcoded `storePassword`/`keyPassword` = `"drifttennis"` into
+  `build.gradle.kts` and that commit is **pushed to GitHub**, and the password is
+  trivially weak regardless (it equals the alias and the product name). The keystore
+  *file* was never committed — checked, no blob in history — so exposure needed both
+  halves, but a published, guessable password cannot be relied on.
+  **Rotated:** new `app/release-2026.keystore` (RSA 4096, SHA384withRSA, valid to
+  2054, alias `drift-release`) with a 32-char random password that was written
+  straight to a `600` file and never printed. Old key renamed
+  `RETIRED-release-compromised-20260818.keystore` so it cannot be selected by
+  accident. New SHA-1 `B1:FF:6E:D1:BE:0F:19:1D:36:CA:18:D5:98:DD:86:5F:3C:46:CE:BF`.
+  Credentials in `key.release.properties`, added to `.gitignore` as an exact-match
+  rule so `key.properties.example` stays tracked.
+  **This was free today and impossible after the first Play release** — which is
+  exactly why it was worth answering before submission rather than after.
+  *Still to do:* register the new SHA-1 on the Google Cloud Android OAuth client (and
+  Firebase) before a release build signs in with Google, and **back up the keystore
+  plus its password** — losing both after a Play release means the app can never be
+  updated again.
 - [ ] **5.2 — Move deployment off the box**
   CI has no deploy job; a human builds images on the production host against 3.7 GB
   of RAM, with no artifact to roll back to.

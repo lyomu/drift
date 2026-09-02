@@ -10,5 +10,8 @@ GeneratedPluginRegistrant.java
 # Remember to never publicly share your keystore.
 # See https://flutter.dev/to/reference-keystore
 key.properties
+# Release signing credentials (Phase 5.1 rotation). Exact-match rules
+# rather than a glob, so key.properties.example stays tracked.
+key.release.properties
 **/*.keystore
 **/*.jks

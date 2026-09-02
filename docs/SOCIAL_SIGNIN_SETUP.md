@@ -20,27 +20,45 @@ that opens, completes, and then fails on the server.
 | iOS bundle ID | `com.drift.tennis.driftTennis` | `ios/Runner.xcodeproj/project.pbxproj` |
 | Debug keystore SHA-1 | `3A:97:43:C1:1F:3E:16:69:32:21:DE:92:53:5A:8C:38:0A:35:29:90` | `~/.android/debug.keystore` |
 | Preview keystore SHA-1 | `EC:3A:1F:1D:1F:F3:CD:D1:6C:75:EF:29:D2:97:CF:52:E5:27:2C:66` | `android/app/preview.keystore`, alias `preview` |
-| Release keystore SHA-1 | **not yet known** | `android/app/release.keystore` — see the warning below |
+| Release keystore SHA-1 | `B1:FF:6E:D1:BE:0F:19:1D:36:CA:18:D5:98:DD:86:5F:3C:46:CE:BF` | `android/app/release-2026.keystore`, alias `drift-release` (rotated 2026-09-03) |
 
 SHA-256 equivalents, if a console asks for them:
 
 - Debug — `B8:1B:6D:D4:E8:FD:25:CE:3B:CC:E4:CF:10:C4:CA:FD:4C:DB:22:FD:70:08:C6:C8:F5:20:FA:39:E2:F6:AE:7B`
 - Preview — `B9:A5:BB:14:C9:6D:01:89:A1:CC:4B:92:57:FB:B5:0D:05:53:67:1E:2D:C7:06:76:39:A2:CC:4B:3B:7D:2E:53`
+- Release — `23:A2:6F:59:0D:19:1C:22:84:83:08:BC:02:B3:DC:8A:0E:A5:60:07:4B:BB:43:C4:05:65:42:9D:8B:81:AD:AF`
 
-> **`release.keystore` does not open with the password in `android/key.properties`.**
-> That file points at `preview.keystore`, and the release store uses a different
-> password which is not in the repo. You need it before a Play release, and this
-> is the same unresolved question as **tracker 5.1**: if `release.keystore` has
-> ever signed a distributable build it must be rotated, and after the first Play
-> submission the signing key can never be changed. Answer 5.1 before registering
-> a release fingerprint, or you may register one you then have to abandon.
+> **The original `release.keystore` was retired on 2026-09-03 — tracker 5.1.**
+> It had signed a real distributable build (`drift-tennis-release.apk`), and its
+> password was hardcoded into `build.gradle.kts` in commit `378780f`, which is
+> pushed to GitHub. The file itself was never committed, but a published and
+> trivially guessable password (`drifttennis`, the same as the alias) cannot be
+> relied on. It now sits as `RETIRED-release-compromised-20260818.keystore` so it
+> cannot be picked by accident. **Do not register its fingerprint anywhere.**
+>
+> The replacement is `app/release-2026.keystore` — RSA 4096, SHA384withRSA, valid
+> to 2054, alias `drift-release`, 32-character random password. Credentials live in
+> `android/key.release.properties` (gitignored, mode 600).
+>
+> **Back up that keystore and its password now.** Once Google holds the signing
+> key for a published app it can never be changed, so losing both means the app
+> can never be updated again. This is the single most unrecoverable artefact in
+> the project.
+>
+> Note `key.properties` still points at **preview**, deliberately — preview builds
+> keep their existing identity. Switch to `key.release.properties` (or the
+> `DRIFT_ANDROID_*` env vars) only for an actual store build.
 
 To re-derive any fingerprint yourself:
 
 ```bash
 keytool -list -v -keystore android/app/preview.keystore -alias preview
+keytool -list -v -keystore android/app/release-2026.keystore -alias drift-release
 keytool -list -v -keystore "$HOME/.android/debug.keystore" -alias androiddebugkey -storepass android
 ```
+
+On a memory-constrained machine add `-J-Xmx96m -J-XX:+UseSerialGC`; the JVM
+otherwise fails to start rather than reporting anything useful.
 
 ---
 
@@ -65,9 +83,9 @@ there is no web app: `google_sign_in` on Android only returns an **ID token**
 configured. Without it, sign-in appears to succeed and hands back nothing usable.
 
 **b. Android** — package name `com.drift.tennis.drift_tennis`, plus the SHA-1
-of every keystore that will produce a build you sign in from. Add the **debug**
-and **preview** fingerprints above now; add release once 5.1 is answered. A
-missing fingerprint fails at the Google sheet with a bare `10:` error.
+of every keystore that will produce a build you sign in from — **debug**,
+**preview** and now **release**, all three listed above. A missing fingerprint
+fails at the Google sheet with a bare `10:` error, which tells you nothing.
 
 **c. iOS** — bundle ID `com.drift.tennis.driftTennis`. Download the
 `GoogleService-Info.plist` it offers and place it at `ios/Runner/`.
@@ -87,10 +105,12 @@ Google's public JWKS, so there is no code exchange. Leave it in the console.
 | Android — preview keystore | `3r6qk5bbvdcm2isoh9u22n8pdcea3vga` |
 | iOS | `621pq70ca20pj5b7tafr3r1nequael5f` |
 
-> **No release-keystore client yet.** That is deliberate and blocked on tracker
-> 5.1 — `release.keystore` does not open with the password in `key.properties`,
-> and if it ever signed a distributable build it must be rotated. Registering a
-> fingerprint you then have to abandon is the thing to avoid.
+> **A release-keystore client is still to be created.** 5.1 is now answered and
+> the key rotated, so the blocker is gone — add a fourth Android OAuth client
+> for SHA-1 `B1:FF:6E:D1:BE:0F:19:1D:36:CA:18:D5:98:DD:86:5F:3C:46:CE:BF` before
+> any release build needs to sign in with Google, and add that ID to
+> `GOOGLE_OAUTH_CLIENT_IDS`. Register the **new** fingerprint only; the retired
+> key's must never be added anywhere.
 
 ### Where the IDs go
 
