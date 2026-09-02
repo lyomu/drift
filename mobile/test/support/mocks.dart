@@ -6,6 +6,7 @@ import 'package:drift_tennis/features/auth/data/auth_repository.dart';
 import 'package:drift_tennis/features/auth/data/social_auth_service.dart';
 import 'package:drift_tennis/features/clubs/data/clubs_repository.dart';
 import 'package:drift_tennis/features/matches/data/matches_repository.dart';
+import 'package:drift_tennis/features/notifications/data/push_service.dart';
 import 'package:drift_tennis/features/messaging/data/messaging_repository.dart';
 import 'package:drift_tennis/features/safety/data/safety_repository.dart';
 import 'package:drift_tennis/features/users/data/users_repository.dart';
@@ -16,6 +17,10 @@ class MockAuthRepository extends Mock implements AuthRepository {}
 /// test doesn't have. Everything above [SocialAuthService] deals only in
 /// [SocialCredential], so mocking here covers the whole flow.
 class MockSocialAuthService extends Mock implements SocialAuthService {}
+
+/// Push registration talks to Firebase through a platform channel, which
+/// widget tests have no host for.
+class MockPushService extends Mock implements PushService {}
 
 class MockUsersRepository extends Mock implements UsersRepository {}
 

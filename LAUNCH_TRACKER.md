@@ -6,7 +6,7 @@ artifact, so a commit or PR can close an item by referencing its ID
 
 **Status key:** `[ ]` to do · `[~]` in progress · `[!]` blocked · `[x]` done
 
-**24 items · 11 closed**
+**24 items · 12 closed**
 
 ---
 
@@ -176,10 +176,26 @@ artifact, so a commit or PR can close an item by referencing its ID
 
 ## Phase 6 — Push notifications 🟡
 
-- [ ] **6.1 — FCM and APNs delivery**
-  Nothing reaches a user without the app open, removing the core loop: challenge
-  received, result awaiting confirmation, round deadline.
-  *Sequence:* directly after Phase 4 — shares the Apple account and signing setup.
+- [x] **6.1 — FCM and APNs delivery**
+  Turned out far cheaper than scoped: `NotificationsService.create()` was already
+  *"the one entry point every other module calls"* — verified across **16 call
+  sites** — so push hooks into one function with no call-site changes, and the
+  existing preference check gates push for free (a muted category can't be pushed,
+  pinned by a test). One `DeviceToken` model, migration diff-verified. FCM fans out
+  to both APNs and Android, so this is one integration rather than two.
+  `PushService` copies the `MailerService` idiom: env-configured, **disabled when
+  `FIREBASE_SERVICE_ACCOUNT` is absent**, sends never throw — a push outage cannot
+  fail the match confirmation that triggered it. Retired tokens are pruned on FCM's
+  `registration-token-not-registered`, the only reliable signal one is dead.
+  Mobile registers on the shared post-auth path (so every route in is covered),
+  deregisters on logout, and handles foreground / background / **terminated**.
+  The deep-link map is now shared, so a push tap and an in-app tap cannot disagree.
+  *Two bugs caught by the new tests rather than by users:* logout awaited
+  deregistration unguarded, which would have trapped someone in a session they
+  asked to leave; and `firebase-admin@14` has no `admin.*` namespace, which the
+  unit suite happily mocked and only `tsc` caught.
+  *Verified:* backend `tsc` clean · **43 suites / 535 tests** · mobile analyze clean
+  · **561 tests**. *Remaining:* Firebase console work — `docs/PUSH_NOTIFICATIONS_PLAN.md` §6.
 
 ## Phase 7 — Payments ⚪
 

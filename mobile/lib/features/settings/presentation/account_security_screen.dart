@@ -11,6 +11,7 @@ import '../../../shared/widgets/drift_card.dart';
 import '../../../shared/widgets/drift_scaffold.dart';
 import '../../../shared/widgets/drift_text_field.dart';
 import '../../auth/data/auth_repository.dart';
+import '../../notifications/data/push_service.dart';
 
 /// Account & Security — `foundation/04-screen-inventory.md` §A.10.
 /// Change password is new this phase; the logout endpoint has existed on
@@ -73,6 +74,19 @@ class _AccountSecurityScreenState extends ConsumerState<AccountSecurityScreen> {
   Future<void> _logout() async {
     setState(() => _isLoggingOut = true);
     final storage = ref.read(secureStorageProvider);
+    // Before the session is cleared, while the call can still authenticate.
+    // Leaving the device token behind would deliver this account's
+    // notifications to whoever signs in on this handset next.
+    //
+    // Guarded because signing out must never depend on it: a Firebase or
+    // network failure here would otherwise trap someone in a session they
+    // asked to leave. The token then lingers until it is reclaimed by the
+    // next sign-in on this device, or pruned when FCM reports it retired.
+    try {
+      await ref.read(pushServiceProvider).unregister();
+    } catch (_) {
+      // Deliberately swallowed — see above.
+    }
     final refreshToken = await storage.readRefreshToken();
     if (refreshToken != null) {
       await ref.read(authRepositoryProvider).logout(refreshToken);

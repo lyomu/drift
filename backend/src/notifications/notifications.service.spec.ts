@@ -1,6 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { PushService } from '../push/push.service';
 
 type MockPrisma = {
   notification: Record<string, jest.Mock>;
@@ -41,10 +42,15 @@ function createMockPrisma(): MockPrisma {
 describe('NotificationsService', () => {
   let service: NotificationsService;
   let prisma: MockPrisma;
+  let push: { sendToUser: jest.Mock };
 
   beforeEach(() => {
     prisma = createMockPrisma();
-    service = new NotificationsService(prisma as unknown as PrismaService);
+    push = { sendToUser: jest.fn().mockResolvedValue(undefined) };
+    service = new NotificationsService(
+      prisma as unknown as PrismaService,
+      push as unknown as PushService,
+    );
   });
 
   describe('create', () => {
@@ -68,6 +74,33 @@ describe('NotificationsService', () => {
       );
       await service.create('user-1', 'NEWS', 'Title', 'Body');
       expect(prisma.notification.create).not.toHaveBeenCalled();
+    });
+
+    it('pushes the same notification it just wrote', async () => {
+      await service.create(
+        'user-1',
+        'MATCHES',
+        'Title',
+        'Body',
+        'MATCH',
+        'match-1',
+      );
+      expect(push.sendToUser).toHaveBeenCalledWith('user-1', 'Title', 'Body', {
+        category: 'MATCHES',
+        relatedEntityType: 'MATCH',
+        relatedEntityId: 'match-1',
+      });
+    });
+
+    it('does not push a category the recipient opted out of', async () => {
+      prisma.notificationPreference.findUnique.mockResolvedValue(
+        defaultPreference({ messages: false }),
+      );
+      await service.create('user-1', 'MESSAGES', 'Title', 'Body');
+      // The preference check guards the push for free precisely because it
+      // sits above the write — if push ever moves above it, someone who
+      // muted a category starts getting it on their lock screen.
+      expect(push.sendToUser).not.toHaveBeenCalled();
     });
 
     it('respects an explicit opt-out on an otherwise-default-on category', async () => {

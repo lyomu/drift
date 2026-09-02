@@ -10,6 +10,7 @@ import '../../../shared/widgets/drift_back_header.dart';
 import '../../../shared/widgets/drift_scaffold.dart';
 import '../../auth/data/auth_repository.dart';
 import '../application/notifications_providers.dart';
+import '../domain/notification_deep_link.dart';
 import '../data/notifications_repository.dart';
 
 /// Notification Center — `foundation/04-screen-inventory.md` §A.11. Delivery
@@ -218,7 +219,10 @@ class _NotificationTile extends ConsumerWidget {
     }
     if (!context.mounted) return;
 
-    final path = _deepLinkFor(notification);
+    final path = notificationDeepLink(
+      relatedEntityType: notification.relatedEntityType,
+      relatedEntityId: notification.relatedEntityId,
+    );
     if (path != null) {
       context.push(path);
       return;
@@ -232,22 +236,5 @@ class _NotificationTile extends ConsumerWidget {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Nothing further to open for this update.')),
     );
-  }
-
-  String? _deepLinkFor(DriftNotification notification) {
-    final id = notification.relatedEntityId;
-    return switch (notification.relatedEntityType) {
-      'MATCH' when id != null => '/matches/$id',
-      'CONNECTION' => '/connections/pending',
-      'CONVERSATION' when id != null => '/messages/$id',
-      'LEAGUE' when id != null => '/compete/leagues/$id',
-      'SEASON' when id != null => '/compete/leagues/$id',
-      // Both carry the club id — an announcement deep link opens that
-      // club's Announcements list, where the new item sorts to the top.
-      'CLUB' when id != null => '/discover/clubs/$id',
-      'CLUB_ANNOUNCEMENT' when id != null =>
-        '/discover/clubs/$id/announcements',
-      _ => null,
-    };
   }
 }

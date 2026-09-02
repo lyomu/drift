@@ -402,6 +402,12 @@ enum NotificationCategory {
   CLUBS
 }
 
+// Which push transport a device token belongs to (Phase 6).
+enum DevicePlatform {
+  ANDROID
+  IOS
+}
+
 // Doc 4 §A.10's Privacy Settings — replaces the hardcoded connections-only
 // gate M5's player.mapper.ts shipped with, per that phase's documented
 // "until Privacy Settings makes it configurable in M12" plan.
@@ -638,6 +644,7 @@ model User {
 
   notifications          Notification[]
   notificationPreference NotificationPreference?
+  deviceTokens           DeviceToken[]
 
   clubPosts         ClubPost[]         @relation("ClubPostAuthor")
   clubPostsDeleted  ClubPost[]         @relation("ClubPostModerator")
@@ -2131,6 +2138,28 @@ model NotificationPreference {
   clubs        Boolean @default(true)
 
   @@map("notification_preferences")
+}
+
+// One row per app installation that has accepted push (Phase 6).
+//
+// `token` is unique on its own rather than paired with userId: an FCM token
+// identifies an *installation*, not a person. If someone else signs in on the
+// same handset the row must MOVE to them, which an upsert on `token` does in
+// one statement — pairing it with userId would instead leave the previous
+// owner's row behind, and their notifications would keep arriving on a device
+// they no longer use.
+model DeviceToken {
+  id         String         @id @default(cuid())
+  token      String         @unique
+  userId     String
+  platform   DevicePlatform
+  createdAt  DateTime       @default(now())
+  lastSeenAt DateTime       @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("device_tokens")
 }
 
 // Message-level reporting — Chat Thread's "Report/Block" secondary action

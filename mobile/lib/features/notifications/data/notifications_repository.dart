@@ -150,6 +150,30 @@ class NotificationsRepository {
   Future<void> markAllRead() =>
       _send(() => _dio.patch('/notifications/read-all'));
 
+  /// Claims this installation's FCM token for the signed-in user. Idempotent:
+  /// called on every launch and on token refresh.
+  Future<void> registerDevice({
+    required String token,
+    required String platform,
+  }) => _send(
+    () => _dio.post(
+      '/notifications/devices',
+      data: {'token': token, 'platform': platform},
+    ),
+  );
+
+  /// Called on logout. The token goes in the body, not the path, because a URL
+  /// would land in the server's access log.
+  Future<void> removeDevice({
+    required String token,
+    required String platform,
+  }) => _send(
+    () => _dio.delete(
+      '/notifications/devices',
+      data: {'token': token, 'platform': platform},
+    ),
+  );
+
   Future<NotificationPreferences> getPreferences() async {
     final data = await _get('/notifications/preferences');
     return NotificationPreferences.fromJson(data);

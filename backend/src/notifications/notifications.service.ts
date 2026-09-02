@@ -1,8 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { NotificationCategory } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { PushService } from '../push/push.service';
 import { toNotificationDto, toPreferencesDto } from './notifications.mapper';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
+import { RegisterDeviceDto } from './dto/register-device.dto';
 
 const DEFAULT_TAKE = 30;
 
@@ -30,7 +32,10 @@ const PREFERENCE_FIELD: Record<
 
 @Injectable()
 export class NotificationsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly push: PushService,
+  ) {}
 
   // ---------------------------------------------------------------- writes
 
@@ -63,6 +68,33 @@ export class NotificationsService {
         relatedEntityId,
       },
     });
+
+    // The single place push is sent from — every module already funnels
+    // through this method, so no call site needs to know push exists, and the
+    // preference check above gates push for free.
+    //
+    // Deliberately not awaited: the caller is finishing a match confirmation
+    // or a message send and must not wait on Google. `sendToUser` never
+    // throws, so this cannot become an unhandled rejection.
+    void this.push.sendToUser(userId, title, body, {
+      category,
+      relatedEntityType,
+      relatedEntityId,
+    });
+  }
+
+  // ------------------------------------------------------------- devices
+
+  registerDevice(userId: string, dto: RegisterDeviceDto) {
+    return this.push
+      .registerDevice(userId, dto.token, dto.platform)
+      .then(() => ({ registered: true }));
+  }
+
+  removeDevice(userId: string, token: string) {
+    return this.push
+      .removeDevice(userId, token)
+      .then(() => ({ removed: true }));
   }
 
   // ---------------------------------------------------------------- reads

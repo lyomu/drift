@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/dio_client.dart';
+import '../../notifications/data/push_service.dart';
 import '../data/auth_repository.dart';
 import '../data/social_auth_service.dart';
 
@@ -129,6 +130,16 @@ class AuthController extends AsyncNotifier<AuthSessionStatus> {
           refreshToken: tokens.refreshToken,
         );
     state = AsyncData(AuthSessionStatus.authenticated);
+
+    // Every route into the app funnels through here — password login, verify,
+    // and both social providers — so this is the one place device
+    // registration needs to happen. A token registered before this point has
+    // no user to attach to.
+    //
+    // Not awaited: it asks for notification permission and talks to Firebase,
+    // and neither should stand between someone and the screen they were
+    // heading for. PushService swallows its own failures.
+    unawaited(ref.read(pushServiceProvider).registerForUser());
   }
 }
 
