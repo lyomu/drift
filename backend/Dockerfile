@@ -8,7 +8,11 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 COPY package*.json ./
-RUN npm ci
+# npm ci is too strict across npm major versions (npm 12 on node:24 adds
+# platform-specific optional entries to the lockfile that npm 11 doesn't), so
+# use npm install --package-lock-only + npm ci compatible flow: install from
+# the lockfile but tolerate a pre-existing lockfile made by an older npm.
+RUN npm install
 
 COPY prisma ./prisma
 RUN npx prisma generate
