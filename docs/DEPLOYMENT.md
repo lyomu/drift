@@ -61,6 +61,14 @@ CLUB_ADMIN_URL=https://135.181.146.130
 CORS_ALLOWED_ORIGINS=https://135.181.146.130
 
 NEWS_FEED_ALLOWED_HOSTS=feeds.bbci.co.uk,www.atptour.com
+
+# Transactional email (see "Email / SMTP" below). Leave SMTP_HOST unset to keep
+# the pre-mailer behaviour (dev console codes / PENDING_PROVIDER in production).
+SMTP_HOST=mail.einsbrand.com
+SMTP_PORT=465
+SMTP_USER=drift@einsbrand.com
+SMTP_PASS=
+MAIL_FROM=Drift Tennis <drift@einsbrand.com>
 ```
 
 `PUBLIC_API_URL` is baked into both Next.js builds and their CSP headers, so it
@@ -141,12 +149,9 @@ docker exec -i drift-api node - < /srv/drift/app/scripts/bootstrap-accounts.mjs
 # Club Admin — logs in directly
 #   https://135.181.146.130/  →  owner@drift.test / Password123!
 
-# Platform Admin — login always issues a 2FA challenge, and production has no
-# email provider yet (delivery: 'PENDING_PROVIDER'). After submitting the
-# login form, set a known code on the open challenge:
-docker exec -i -e STAGING_2FA_CODE=<6 digits> drift-api node - \
-  < /srv/drift/app/scripts/set-2fa-code.mjs
-# then enter that code on the verify-2fa page (challenge expires in 10 min).
+# Platform Admin — login always issues a 2FA challenge. The code is delivered by
+# email in production (delivery: "EMAIL"); SMTP_PASS must be set in
+# .env.production or the challenge reports 'PENDING_PROVIDER'.
 #   https://135.181.146.130/platform  →  admin@drift.test / DriftPlatform2026!
 ```
 

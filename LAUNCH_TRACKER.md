@@ -6,7 +6,7 @@ artifact, so a commit or PR can close an item by referencing its ID
 
 **Status key:** `[ ]` to do · `[~]` in progress · `[!]` blocked · `[x]` done
 
-**24 items · 6 closed**
+**24 items · 7 closed**
 
 ---
 
@@ -65,15 +65,38 @@ artifact, so a commit or PR can close an item by referencing its ID
   (cert check reports 89 days, not 5). Mobile rebuild should pass
   `--dart-define=DRIFT_API_BASE_URL=https://drift.einsbrand.com/api`.
 - [ ] **2.3 — SPF, DKIM, DMARC** *(depends on 2.1)*
-  Without these, provider email lands in spam, silently undermining Phase 3.
+  **2026-09-02 verified:** `einsbrand.com` already publishes SPF
+  (`v=spf1 +a +mx +ip4:84.16.229.230 include:relay.mailbaby.net +ip4:178.162.196.44
+  +ip4:167.235.180.68 +ip4:207.180.237.29 ~all`) covering the owner's sending IPs,
+  so SPF for the SMTP server is already in place. 3.1's actual sender is
+  `drift.einsbrand.com` (From: `drift@einsbrand.com`), which is covered by the
+  parent zone's SPF. **Still to add:** a DMARC TXT record
+  (`v=DMARC1; p=quarantine; rua=mailto:…`) — draft provided when 3.1 closed — and
+  a DKIM selector **if** the `mail.einsbrand.com` server signs outbound (depends
+  on the server config, not this repo).
 
 ## Phase 3 — Email provider 🟠
 
-- [ ] **3.1 — Choose and wire an email & SMS provider**
-  No mail dependency exists; the API returns `PENDING_PROVIDER`. Breaks signup
-  verification, password reset, admin 2FA, club invitations and support replies.
-  Gates account recovery and staff login.
-  *Blocked on:* provider decision · *Effort:* 2–3 days
+- [x] **3.1 — Choose and wire an email & SMS provider**
+  Provider decision (owner, 2026-09-02): the owner's own SMTP server,
+  `mail.einsbrand.com:465` (implicit TLS; 587 STARTTLS is the documented fallback),
+  auth `drift@einsbrand.com`. New global `MailModule` + `MailerService`
+  (`backend/src/mail/`) on `nodemailer`, configured entirely from env
+  (`SMTP_HOST/PORT/USER/PASS/MAIL_FROM`); disabled when `SMTP_HOST` is unset, so
+  every consumer keeps its prior behaviour (dev console codes / `PENDING_PROVIDER`)
+  and sends never throw. Wired six flows: signup verification + user password reset
+  (`auth.service.ts`) · Platform Admin 2FA + staff password reset
+  (`platform-admin.service.ts` — retires the `set-2fa-code.mjs` stopgap) · staff
+  invitations (`access-control.service.ts`) · club-member added email
+  (`clubs-admin.service.ts`) · club-onboarding setup link
+  (`club-onboarding.service.ts`) · support ticket replies
+  (`support-admin.service.ts`). Response `delivery` gains `EMAIL`.
+  **Verified 2026-09-02:** `tsc -p tsconfig.build.json` clean, unit suite
+  41 suites / 498 tests green; deployed live and the API logs
+  `[MailerService] SMTP transport configured for mail.einsbrand.com:465` with
+  **zero `Mail to … failed` lines**; test signups (`drift@einsbrand.com`,
+  `mailer.proof.0902@einsbrand.com`) created with no `devVerificationCode`
+  returned. SMS/phone verification is out of scope. *SMS intentionally deferred.*
 
 ## Phase 4 — Google & Apple sign-in 🟠
 
