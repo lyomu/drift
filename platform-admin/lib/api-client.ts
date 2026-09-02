@@ -32,7 +32,7 @@ export type TwoFactorChallenge = {
   challengeToken: string;
   expiresAt: string;
   maskedDestination: string;
-  delivery: "DEV_CONSOLE" | "PENDING_PROVIDER";
+  delivery: "DEV_CONSOLE" | "PENDING_PROVIDER" | "EMAIL";
   devVerificationCode?: string;
 };
 

@@ -16,6 +16,7 @@ import {
   VerificationStatus,
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { MailerService } from '../mail/mailer.service';
 import {
   CompleteClubSetupDto,
   ReviewClubRequestDto,
@@ -46,6 +47,7 @@ export class ClubOnboardingService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
+    private readonly mailer: MailerService,
   ) {
     this.isDev = this.config.get<string>('NODE_ENV') !== 'production';
   }
@@ -247,11 +249,20 @@ export class ClubOnboardingService {
     });
 
     const setupUrl = `${this.clubAdminUrl()}/setup?token=${rawToken}`;
-    // No email delivery exists in this app yet (same gap as auth OTP) — log
-    // the link and return it in non-production, mirroring AuthService.devCode.
-    console.log(
-      `[club-onboarding] setup link for ${request.requesterEmail}: ${setupUrl}`,
-    );
+    // Email the setup link when SMTP is configured (no-op otherwise) — in
+    // production this replaces the operator copying the link out of logs;
+    // non-production additionally returns it as devSetupUrl, mirroring
+    // AuthService.devCode.
+    await this.mailer.sendClubSetupLink(request.requesterEmail, setupUrl);
+    if (!this.isDev) {
+      console.log(
+        `[club-onboarding] setup link for ${request.requesterEmail} sent=${this.mailer.enabled}`,
+      );
+    } else {
+      console.log(
+        `[club-onboarding] setup link for ${request.requesterEmail}: ${setupUrl}`,
+      );
+    }
     await this.audit(adminId, 'club_request.approve', id, {
       requesterEmail: request.requesterEmail,
     });

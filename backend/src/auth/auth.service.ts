@@ -16,6 +16,7 @@ import {
   VerificationStatus,
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { MailerService } from '../mail/mailer.service';
 import { SignUpDto } from './dto/sign-up.dto';
 import { LoginDto } from './dto/login.dto';
 import { VerifyDto } from './dto/verify.dto';
@@ -43,6 +44,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
+    private readonly mailer: MailerService,
   ) {
     this.isDev = this.config.get<string>('NODE_ENV') !== 'production';
   }
@@ -85,6 +87,9 @@ export class AuthService {
     });
 
     this.logCode(user.email!, code);
+    // No-op when SMTP is not configured (dev + pre-wire production); a send
+    // failure never fails signup — the user can hit resend on the verify screen.
+    await this.mailer.sendVerificationCode(user.email!, code, 'signup');
 
     return { userId: user.id, ...this.devCode(code) };
   }
@@ -193,6 +198,7 @@ export class AuthService {
     }
 
     this.logCode(user.email!, code);
+    await this.mailer.sendVerificationCode(user.email!, code, 'signup');
     return this.devCode(code);
   }
 
@@ -318,6 +324,7 @@ export class AuthService {
     }
 
     this.logCode(user.email!, code);
+    await this.mailer.sendVerificationCode(user.email!, code, 'password-reset');
     return this.devCode(code);
   }
 

@@ -8,6 +8,7 @@ import {
 import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { MailerService } from '../mail/mailer.service';
 
 type MockPrisma = {
   user: Record<string, jest.Mock>;
@@ -68,7 +69,17 @@ describe('AuthService', () => {
       }),
     } as unknown as ConfigService;
 
-    service = new AuthService(prisma as unknown as PrismaService, jwt, config);
+    const mailer = {
+      enabled: false,
+      sendVerificationCode: jest.fn().mockResolvedValue(false),
+    } as unknown as MailerService;
+
+    service = new AuthService(
+      prisma as unknown as PrismaService,
+      jwt,
+      config,
+      mailer,
+    );
   });
 
   describe('signUp', () => {

@@ -11,6 +11,7 @@ import {
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { MailerService } from '../mail/mailer.service';
 import { clubInclude, toClubProfile } from '../clubs/club.mapper';
 import { CreateClubDto, UpdateClubDto } from './dto/club.dto';
 import { InviteMemberDto, UpdateMembershipDto } from './dto/membership.dto';
@@ -20,6 +21,7 @@ export class ClubsAdminService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationsService,
+    private readonly mailer: MailerService,
   ) {}
 
   /**
@@ -224,6 +226,20 @@ export class ClubsAdminService {
       await this.audit(clubId, actorId, 'team.invite', membership.id, {
         role: membership.role,
       });
+    // Best-effort heads-up email (no-op when SMTP is not configured). The
+    // member lands ACTIVE immediately, so this is a notification, not an
+    // invite they must accept.
+    if (this.mailer.enabled && user.email) {
+      const club = await this.prisma.club.findUnique({
+        where: { id: clubId },
+        select: { name: true },
+      });
+      await this.mailer.sendClubWelcome(
+        user.email,
+        club?.name ?? 'a club',
+        membership.role,
+      );
+    }
     return { membershipId: membership.id, role: membership.role };
   }
 

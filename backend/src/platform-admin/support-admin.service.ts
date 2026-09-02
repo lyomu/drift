@@ -14,6 +14,7 @@ import {
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from './audit.service';
+import { MailerService } from '../mail/mailer.service';
 import {
   AssignSupportTicketDto,
   CloseSupportTicketDto,
@@ -59,6 +60,7 @@ export class SupportAdminService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly mailer: MailerService,
   ) {}
 
   async listTickets(query: {
@@ -209,6 +211,21 @@ export class SupportAdminService {
         responseLength: dto.body.trim().length,
       },
     );
+    // Best-effort delivery of the reply to the ticket's user (no-op when SMTP
+    // is not configured). The reply is already stored either way.
+    if (existing.userId) {
+      const user = await this.prisma.user.findUnique({
+        where: { id: existing.userId },
+        select: { email: true },
+      });
+      if (user?.email) {
+        await this.mailer.sendSupportReply(
+          user.email,
+          existing.subject,
+          dto.body.trim(),
+        );
+      }
+    }
     return { ticket: this.ticketDto(ticket) };
   }
 

@@ -17,6 +17,7 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { ResultsService } from '../matches/results.service';
 import { AuditService } from './audit.service';
+import { MailerService } from '../mail/mailer.service';
 import { assertFeedUrlAllowed, FeedUrlError } from '../news/feed-fetch';
 import { randomInt } from 'crypto';
 
@@ -139,6 +140,7 @@ export class PlatformAdminService {
     private readonly audit: AuditService,
     private readonly results: ResultsService,
     private readonly jwt: JwtService,
+    private readonly mailer: MailerService,
   ) {}
 
   // ------------------------------------------------------------------ auth
@@ -279,9 +281,15 @@ export class PlatformAdminService {
     if (process.env.NODE_ENV !== 'production') {
       console.info(`[platform-admin] Password reset code for ${email}: ${code}`);
     }
+    const sent = await this.mailer.sendVerificationCode(
+      email,
+      code,
+      'platform-password-reset',
+    );
     return {
-      delivery:
-        process.env.NODE_ENV === 'production'
+      delivery: sent
+        ? 'EMAIL'
+        : process.env.NODE_ENV === 'production'
           ? 'PENDING_PROVIDER'
           : 'DEV_CONSOLE',
       ...(process.env.NODE_ENV !== 'production'
@@ -352,13 +360,19 @@ export class PlatformAdminService {
     if (process.env.NODE_ENV !== 'production') {
       console.info(`[platform-admin] 2FA code for ${email}: ${code}`);
     }
+    const sent = await this.mailer.sendVerificationCode(
+      email,
+      code,
+      'platform-2fa',
+    );
     return {
       requiresTwoFactor: true,
       challengeToken,
       expiresAt,
       maskedDestination: this.maskEmail(email),
-      delivery:
-        process.env.NODE_ENV === 'production'
+      delivery: sent
+        ? 'EMAIL'
+        : process.env.NODE_ENV === 'production'
           ? 'PENDING_PROVIDER'
           : 'DEV_CONSOLE',
       ...(process.env.NODE_ENV !== 'production'

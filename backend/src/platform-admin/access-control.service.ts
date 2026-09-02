@@ -8,6 +8,7 @@ import * as bcrypt from 'bcrypt';
 import { createHash, randomBytes } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from './audit.service';
+import { MailerService } from '../mail/mailer.service';
 
 export const PLATFORM_PERMISSION_CATALOG: {
   permission: PlatformPermission;
@@ -83,6 +84,7 @@ export class AccessControlService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly mailer: MailerService,
   ) {}
 
   permissionCatalog() {
@@ -275,12 +277,18 @@ export class AccessControlService {
     if (process.env.NODE_ENV !== 'production') {
       console.info(`[platform-admin] Invite for ${email}: ${inviteUrl}`);
     }
+    const sent = await this.mailer.sendPlatformInvitation(
+      email,
+      inviteUrl,
+      expiresAt,
+    );
     return {
       invited: true,
       email,
       expiresAt,
-      delivery:
-        process.env.NODE_ENV === 'production'
+      delivery: sent
+        ? 'EMAIL'
+        : process.env.NODE_ENV === 'production'
           ? 'PENDING_PROVIDER'
           : 'DEV_CONSOLE',
       ...(process.env.NODE_ENV !== 'production'
