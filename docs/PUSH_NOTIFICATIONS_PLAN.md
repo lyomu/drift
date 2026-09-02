@@ -260,5 +260,10 @@ app log and silence from the server are the **expected** states, not faults.
 - FCM quota and delivery are best-effort by design. Push is a **re-engagement**
   path, never the only route to information: everything pushed is already in the
   Notification Centre, which stays the source of truth.
-- A device token is personal data tied to a user, so `onDelete: Cascade` on the
-  relation matters for the GDPR erasure item (P.3) that is still open.
+- A device token is personal data tied to a user. **Correction (2026-09-03,
+  while doing P.3):** this originally claimed `onDelete: Cascade` on the
+  relation "matters for the GDPR erasure item". It does not. Erasure in this
+  product is an `UPDATE` — the user row is anonymised in place and
+  deliberately kept, so no cascade ever fires. Device tokens are now deleted
+  explicitly by `ErasureService`, without which an erased account would have
+  gone on receiving notifications.

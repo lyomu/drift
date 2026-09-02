@@ -197,11 +197,25 @@ Service and Privacy Policy must be real and reviewed before public launch.
 COPPA/GDPR-K obligations, guardian consent, and whether under-18 accounts may appear
 in player discovery at all. **Product/legal decision, not an engineering one.**
 
-### 18. GDPR deletion is soft-delete only
-**[doc]** `AccountStatus.DELETED` marks the row; it does not cascade-delete or
-anonymise. A real erasure request cannot currently be honoured. Platform Admin can
-raise an EXPORT privacy request today; DELETION is present in the schema but the
-destructive path is unbuilt.
+### 18. GDPR deletion — ~~soft-delete only~~ RESOLVED 2026-09-03
+**Partly wrong when written, and worth recording why.** This said the destructive
+path was "unbuilt". It was not: `SupportAdminService.processPrivacyRequest` already
+performed a real anonymisation for a `DELETION` request. What was true is that the
+*user-facing* `POST /users/me/delete` only set a flag, and that the admin erasure
+missed most of what it should have reached — five of `User`'s 58 relations.
+
+**Done:** a single `ErasureService` now defines erasure once and both paths call it.
+It additionally clears social identities and device tokens (either of which would
+have let an "erased" account still be signed into, or still receive push), coach
+contact details, padel profile text, message bodies, match reflections, support
+tickets, reports the person wrote, and their notification and behavioural history.
+Tapping Delete Account now files a `DELETION` request that a daily job carries out
+after a **30-day** window, so the request is recorded and a mis-tap is recoverable.
+
+Anonymisation is deliberately **terminal** — a hard delete would corrupt the match
+history and conversations of players who never asked to be erased. A coverage test
+enumerates `User`'s relations from the schema and fails when a new one appears
+without an explicit decision, because exactly that was missed twice in one day.
 
 ### 19. No support mailbox
 **[doc]** Help/Contact content is placeholder and there is no monitored address behind

@@ -1,0 +1,112 @@
+# P.3 — GDPR Erasure: Implementation Plan
+
+Status: **approved 2026-09-03, implementing** · Companion: `LAUNCH_TRACKER.md` P.3
+
+---
+
+## 0. The readiness report is wrong about this, and it matters
+
+`LAUNCH_READINESS.md` §18 says *"`AccountStatus.DELETED` marks the row; it does not
+cascade-delete or anonymise… the destructive path is unbuilt."*
+
+Half of that is stale. There are **two** paths, and they do very different things:
+
+| Path | What it actually does |
+|---|---|
+| **User-initiated** — `POST /users/me/delete` (`UsersService.deleteAccount`) | Sets `accountStatus = DELETED`, revokes refresh tokens. **No PII removal at all.** |
+| **Admin-fulfilled** — `PrivacyRequest` type `DELETION` (`SupportAdminService.processPrivacyRequest`) | Real anonymisation: nulls email, phone, names, photo, bio; redacts `passwordHash`; clears tennis-profile location; deletes availability slots and verification codes; revokes tokens; stores an export snapshot; writes an audit entry. |
+
+So the destructive path **is** built, and its design is deliberate — the audit
+record it writes says `historicalRelationsPreserved: true`. That is the correct
+shape for a multi-party product: erasing a player outright would corrupt the match
+history, standings and conversations of people who did **not** ask to be erased.
+
+This changes the job from "build erasure" to **"close the gaps in an erasure that
+already exists, and give users a way to reach it."** Much smaller, and the plan
+below is scoped accordingly.
+
+---
+
+## 1. What survives erasure today that should not
+
+`User` has **58 relations**. The erasure transaction touches five. Auditing the
+rest, these carry the erased person's own identifiers or their own free text:
+
+| # | Where | What leaks | Severity |
+|---|---|---|---|
+| 1 | `SocialIdentity.email`, `.name`, `.providerAccountId` | Direct identifiers, and `providerAccountId` is a **stable Google/Apple subject** — it re-identifies the person forever | 🔴 |
+| 2 | `DeviceToken.token` | A live push address. Not just privacy: **an erased account keeps receiving notifications** | 🔴 |
+| 3 | `CoachProfile.publicEmail`, `.publicPhone`, `.bio`, `.availabilityNote` | Direct contact details, publicly visible | 🔴 |
+| 4 | `SupportTicket.subject`, `.body` | Free text people routinely put contact details into | 🟠 |
+| 5 | `MatchReflection.notes` | Free text the user authored | 🟠 |
+| 6 | `PlayerReport.notes` (where they are the reporter) | Free text they authored | 🟠 |
+| 7 | `PadelProfile.partnerPreference`, `.goals` | Free text; tennis profile is cleared but padel is not — an inconsistency, not a judgement | 🟠 |
+| 8 | `savedStories`, `dismissedHomeCards`, `clubPostReactions` | Behavioural history tied to the identity | 🟡 |
+| 9 | `notifications` (`title`, `body`) | Often embed the person's own name | 🟡 |
+
+**Items 1 and 2 were introduced by this session's own work** (Phase 4 social
+sign-in, Phase 6 push). Worth stating plainly rather than quietly fixing.
+
+### The cascade assumption was wrong
+
+`docs/PUSH_NOTIFICATIONS_PLAN.md` §5 claimed `onDelete: Cascade` on `DeviceToken`
+"matters for the GDPR erasure item". It does not. **Erasure is an `UPDATE`, not a
+`DELETE`** — the user row is anonymised in place and deliberately kept, so no
+cascade ever fires. Cascade only helps a true row deletion, which this product
+does not do. The plan doc will be corrected.
+
+---
+
+## 2. Decisions needed before implementation
+
+| # | Decision | Recommendation |
+|---|---|---|
+| P.3a | Should `POST /users/me/delete` file a `DELETION` privacy request automatically? | **Yes, and data is kept for 30 days before erasure** (owner, 2026-09-03). The account deactivates immediately; the request is filed `PENDING`; a daily job erases once 30 days have elapsed. Staff may fulfil sooner from the console. The window is a real safety net — erasure is irreversible, and a mis-tap otherwise destroys an account instantly. |
+| P.3b | Redact message bodies? | **Approved.** Redact `Message.body`, keep the row, so the other participant's conversation keeps its shape. |
+| P.3c | Is anonymisation terminal? | **Approved — terminal.** A hard delete would break other users' match history. GDPR permits this where erasure would prejudice others' rights; recorded here so it is a written decision rather than an accident. |
+
+> **The 30-day window is staff-recoverable, not self-service.** `AuthService.login`
+> already refuses a `DELETED` account, so the person cannot sign back in to cancel.
+> Restoring within the window means staff clearing `accountStatus` and the pending
+> request. A self-service "reactivate by signing in" flow is a reasonable follow-up
+> but is deliberately **not** in this change.
+
+---
+
+## 3. Implementation
+
+**One shared `ErasureService`** (`backend/src/privacy/`), because the redaction set
+must not be defined twice — that is exactly how a field gets added to one path and
+forgotten in the other.
+
+- `eraseUser(tx, userId, requestId)` — the complete redaction, run inside the
+  caller's transaction.
+- `processPrivacyRequest` calls it instead of its inline block.
+- `UsersService.deleteAccount` files a `PENDING` `DELETION` request (P.3a) and
+  keeps its immediate deactivation.
+
+**Coverage** — items 1–9 above. Provider identities and device tokens are
+**deleted outright** rather than nulled: a social login must stop working, and a
+push address has no anonymised form. Everything else is nulled or replaced with a
+stable redaction marker so row counts and relations survive.
+
+**Tests** are the substance of this item, not an afterthought. The one that matters
+most: a test that walks `User`'s relations and **fails when a new PII-bearing
+relation is added without a redaction rule**. Without it this regresses the next
+time someone adds a table — which is precisely what happened twice today.
+
+Plus: erasure clears every field in the table above; another user's match history
+and standings are untouched; the erased user cannot log in by password or by
+Google; no device token survives; the operation is idempotent.
+
+---
+
+## 4. Out of scope
+
+Article 20 portability (`exportSnapshot` already exists and is a separate item),
+retention schedules, backup expiry — the nightly dumps still contain pre-erasure
+data until they age out at 14 days, which is a **documented limitation**, not
+something code can fix. Erasure also cannot reach the support mailbox until P.4
+exists, so today a request has no channel to arrive through.
+
+**Estimated: ~1 day** including the guard test.

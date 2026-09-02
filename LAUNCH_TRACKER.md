@@ -6,7 +6,7 @@ artifact, so a commit or PR can close an item by referencing its ID
 
 **Status key:** `[ ]` to do · `[~]` in progress · `[!]` blocked · `[x]` done
 
-**27 items · 13 closed**
+**27 items · 14 closed**
 
 ---
 
@@ -233,9 +233,33 @@ artifact, so a commit or PR can close an item by referencing its ID
 - [ ] **P.2 — Minors / age-gating policy**
   No age gate. A tennis product attracts under-18s → COPPA / GDPR-K, guardian consent,
   and whether minors appear in discovery. *Owner:* product + legal
-- [ ] **P.3 — GDPR erasure**
-  Deletion is a soft flag; it does not cascade or anonymise, so a real erasure request
-  cannot be honoured.
+- [x] **P.3 — GDPR erasure**
+  **The premise was half wrong, and finding that out shrank the job.** A real
+  anonymisation already existed for admin-fulfilled `DELETION` requests; what was
+  missing was reach and a user-facing route. It touched **5 of `User`'s 58
+  relations**. Now one `ErasureService` defines erasure once and both paths call it —
+  defining it twice is how a field gets added to one and forgotten in the other.
+  **Newly covered:** social identities and device tokens (deleted outright — either
+  would have left an "erased" account still signable-into, or still receiving push),
+  coach public contact details, padel free text, message bodies, match reflections,
+  support tickets, reports the person authored, and their notification and
+  behavioural history. **Both gaps that mattered most were self-inflicted on
+  2026-09-02** by Phase 4 and Phase 6.
+  **Correction to `PUSH_NOTIFICATIONS_PLAN.md`:** `onDelete: Cascade` does *nothing*
+  here — erasure is an `UPDATE`, so the row is kept and no cascade fires. Anything
+  that must go has to be listed explicitly.
+  **Owner decisions:** deleting in-app now files a `DELETION` request carried out by
+  a daily job after **30 days** (P.3a) — recoverable by staff, since login already
+  refuses a `DELETED` account; message bodies redacted with rows kept so the other
+  participant's thread survives (P.3b); anonymisation is **terminal** (P.3c), because
+  a hard delete would corrupt the history of players who never asked to be erased.
+  The app's delete screen said data was kept unless you contacted support — untrue
+  now, so the copy was rewritten.
+  *Verified:* `tsc` clean · **46 suites / 559 tests** (was 43/535) · mobile **561** ·
+  platform-admin/auth/onboarding e2e green. The test that matters most walks `User`'s
+  relations straight from `schema.prisma` and **fails when a new PII-bearing table
+  appears with no decision recorded** — proven to bite by removing `DeviceToken` and
+  watching it name the omission. *Reference:* `docs/GDPR_ERASURE_PLAN.md`
 - [ ] **P.4 — Support mailbox**
   Help and Contact are placeholder with no monitored address behind them.
 - [ ] **P.5 — Load testing**

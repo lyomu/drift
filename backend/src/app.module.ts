@@ -7,6 +7,7 @@ import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { MailModule } from './mail/mail.module';
 import { PushModule } from './push/push.module';
+import { PrivacyModule } from './privacy/privacy.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { AssessmentModule } from './assessment/assessment.module';
@@ -60,6 +61,7 @@ import { validateEnvironment } from './config/environment';
     PrismaModule,
     MailModule,
     PushModule,
+    PrivacyModule,
     CompetitionHooksModule,
     ScheduleModule.forRoot(),
     AuthModule,

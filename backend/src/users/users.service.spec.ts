@@ -6,6 +6,7 @@ type MockPrisma = {
   user: Record<string, jest.Mock>;
   tennisProfile: Record<string, jest.Mock>;
   refreshToken: Record<string, jest.Mock>;
+  privacyRequest: Record<string, jest.Mock>;
   $transaction: jest.Mock;
 };
 
@@ -32,6 +33,12 @@ function createMockPrisma(): MockPrisma {
       }),
     },
     refreshToken: { updateMany: jest.fn().mockResolvedValue({}) },
+    privacyRequest: {
+      findFirst: jest.fn().mockResolvedValue(null),
+      create: jest
+        .fn()
+        .mockResolvedValue({ id: 'req-1', createdAt: new Date() }),
+    },
     $transaction: jest.fn(),
   };
 
@@ -113,6 +120,38 @@ describe('UsersService', () => {
         where: { userId: 'user-1', revokedAt: null },
         data: { revokedAt: expect.any(Date) },
       });
+    });
+
+    it('files a pending deletion request so the erasure is actually recorded', async () => {
+      // Before this, tapping Delete Account set a flag and nothing else — the
+      // request existed only in the person's head, with no clock running.
+      const result = await service.deleteAccount('user-1');
+
+      expect(prisma.privacyRequest.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            userId: 'user-1',
+            type: 'DELETION',
+            status: 'PENDING',
+          }),
+        }),
+      );
+      expect(result.retentionDays).toBe(30);
+      expect(result.erasureScheduledFor).toEqual(expect.any(String));
+    });
+
+    it('reuses an existing pending request instead of restarting the clock', async () => {
+      const filedAt = new Date('2026-09-01T00:00:00.000Z');
+      prisma.privacyRequest.findFirst.mockResolvedValue({
+        id: 'req-existing',
+        createdAt: filedAt,
+      });
+
+      const result = await service.deleteAccount('user-1');
+
+      // A second tap must not push the erasure date 30 days further out.
+      expect(prisma.privacyRequest.create).not.toHaveBeenCalled();
+      expect(result.erasureScheduledFor).toBe('2026-10-01T00:00:00.000Z');
     });
   });
 });

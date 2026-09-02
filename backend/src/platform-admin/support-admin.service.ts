@@ -15,6 +15,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from './audit.service';
 import { MailerService } from '../mail/mailer.service';
+import { ErasureService } from '../privacy/erasure.service';
 import {
   AssignSupportTicketDto,
   CloseSupportTicketDto,
@@ -61,6 +62,7 @@ export class SupportAdminService {
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     private readonly mailer: MailerService,
+    private readonly erasure: ErasureService,
   ) {}
 
   async listTickets(query: {
@@ -353,42 +355,10 @@ export class SupportAdminService {
 
     if (request.type === PrivacyRequestType.DELETION) {
       await this.prisma.$transaction(async (tx) => {
-        await tx.user.update({
-          where: { id: request.userId },
-          data: {
-            email: null,
-            phone: null,
-            passwordHash: `privacy-request-redacted:${request.id}`,
-            firstName: null,
-            lastName: null,
-            photoUrl: null,
-            bio: null,
-            accountStatus: AccountStatus.DELETED,
-            emailVerifiedAt: null,
-            phoneVerifiedAt: null,
-          },
-        });
-        await tx.tennisProfile.updateMany({
-          where: { userId: request.userId },
-          data: {
-            generalLocation: null,
-            latitude: null,
-            longitude: null,
-            locationSource: null,
-            preferredClubName: null,
-            preferredCourtNames: [],
-          },
-        });
-        await tx.availabilitySlot.deleteMany({
-          where: { tennisProfile: { is: { userId: request.userId } } },
-        });
-        await tx.verificationCode.deleteMany({
-          where: { userId: request.userId },
-        });
-        await tx.refreshToken.updateMany({
-          where: { userId: request.userId, revokedAt: null },
-          data: { revokedAt: fulfilledAt },
-        });
+        // One shared definition of erasure — see ErasureService. Defining the
+        // redaction set here as well is how a field gets added to one path and
+        // forgotten in the other.
+        await this.erasure.eraseUser(tx, request.userId, requestId);
         await tx.privacyRequest.update({
           where: { id: requestId },
           data: {

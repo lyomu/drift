@@ -1,8 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { AccountStatus } from '@prisma/client';
+import {
+  AccountStatus,
+  PrivacyRequestStatus,
+  PrivacyRequestType,
+} from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UpdatePrivacySettingsDto } from './dto/update-privacy-settings.dto';
+import {
+  ERASURE_RETENTION_DAYS,
+  ErasureService,
+} from '../privacy/erasure.service';
 
 @Injectable()
 export class UsersService {
@@ -76,17 +84,56 @@ export class UsersService {
    * effect immediately. No cascading data purge this phase (a genuinely
    * separate GDPR-shaped project, documented in PROGRESS.md).
    */
+  /**
+   * Deactivates immediately and files a DELETION privacy request, which the
+   * scheduled job carries out after the retention window (owner decision
+   * P.3a). Previously this set a flag and nothing else — the person's erasure
+   * request existed only in their head, with no record, no audit trail and no
+   * clock running.
+   *
+   * The window is staff-recoverable, not self-service: `AuthService.login`
+   * refuses a DELETED account, so cancelling means staff clearing the status
+   * and the pending request.
+   *
+   * Idempotent — a second call reuses the pending request rather than filing
+   * a duplicate and silently restarting the 30-day clock.
+   */
   async deleteAccount(userId: string) {
-    await this.prisma.$transaction([
-      this.prisma.user.update({
+    const existing = await this.prisma.privacyRequest.findFirst({
+      where: {
+        userId,
+        type: PrivacyRequestType.DELETION,
+        status: PrivacyRequestStatus.PENDING,
+      },
+      select: { id: true, createdAt: true },
+    });
+
+    const request = await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
         where: { id: userId },
         data: { accountStatus: AccountStatus.DELETED },
-      }),
-      this.prisma.refreshToken.updateMany({
+      });
+      await tx.refreshToken.updateMany({
         where: { userId, revokedAt: null },
         data: { revokedAt: new Date() },
-      }),
-    ]);
-    return { deleted: true };
+      });
+      if (existing) return existing;
+      return tx.privacyRequest.create({
+        data: {
+          userId,
+          type: PrivacyRequestType.DELETION,
+          status: PrivacyRequestStatus.PENDING,
+          requestNote:
+            'Account deletion requested by the account holder in the app.',
+        },
+        select: { id: true, createdAt: true },
+      });
+    });
+
+    return {
+      deleted: true,
+      erasureScheduledFor: ErasureService.dueAt(request.createdAt).toISOString(),
+      retentionDays: ERASURE_RETENTION_DAYS,
+    };
   }
 }

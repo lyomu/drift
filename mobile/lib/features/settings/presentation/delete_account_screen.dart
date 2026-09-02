@@ -57,14 +57,20 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('This will deactivate your account', style: type.h3),
+            Text('This will delete your account', style: type.h3),
             const SizedBox(height: DriftSpacing.s3),
+            // Copy corrected 2026-09-03: this previously said data was kept
+            // unless you contacted support. It is now erased automatically
+            // after 30 days, and saying otherwise would be untrue as well as
+            // a transparency failure.
             Text(
-              "You'll be signed out on every device immediately, and "
-              "other players will no longer be able to find or contact "
-              "you. Your account data is kept, deactivated, rather than "
-              "immediately erased — contact support if you'd like it "
-              "fully removed.",
+              "You'll be signed out on every device immediately and other "
+              "players will no longer be able to find or contact you.\n\n"
+              "Your personal information is then permanently erased after "
+              "30 days. Until then, contact support if you change your "
+              "mind — after that it cannot be undone.\n\n"
+              "Matches you played stay on record for the other players "
+              "involved, but they will no longer be linked to you.",
               style: type.body.copyWith(color: colors.textSecondary),
             ),
             const SizedBox(height: DriftSpacing.s5),
