@@ -5,6 +5,10 @@ plugins {
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+    // Firebase (Phase 6, push notifications). The FlutterFire packages pull in
+    // the firebase-messaging AAR themselves, so no manual dependency block is
+    // needed here — this plugin only processes app/google-services.json.
+    id("com.google.gms.google-services")
 }
 
 val releaseSigningProperties = Properties()
