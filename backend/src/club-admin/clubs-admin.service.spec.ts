@@ -1,5 +1,6 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { ClubsAdminService } from './clubs-admin.service';
+import { MailerService } from '../mail/mailer.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 
@@ -51,6 +52,10 @@ describe('ClubsAdminService', () => {
     service = new ClubsAdminService(
       prisma as unknown as PrismaService,
       notifications as unknown as NotificationsService,
+      {
+        enabled: false,
+        sendClubWelcome: jest.fn().mockResolvedValue(false),
+      } as unknown as MailerService,
     );
   });
 
