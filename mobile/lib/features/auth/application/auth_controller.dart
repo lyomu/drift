@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/dio_client.dart';
 import '../data/auth_repository.dart';
+import '../data/social_auth_service.dart';
 
 enum AuthSessionStatus { unauthenticated, authenticated }
 
@@ -61,6 +62,62 @@ class AuthController extends AsyncNotifier<AuthSessionStatus> {
     final tokens = await ref
         .read(authRepositoryProvider)
         .login(email: email, password: password);
+    await _persistAndSetAuthenticated(tokens);
+  }
+
+  /// Opens the provider's own sheet. Kept separate from [socialSignIn] on
+  /// purpose: the exchange below can fail with `EMAIL_LINK_REQUIRED`, and the
+  /// caller must still hold this credential to finish the link — re-opening
+  /// the sheet mid-flow would be both jarring and a second authorization.
+  ///
+  /// Throws [SocialSignInCancelled] when the person backs out.
+  Future<SocialCredential> acquireSocialCredential(SocialProvider provider) {
+    final service = ref.read(socialAuthServiceProvider);
+    return switch (provider) {
+      SocialProvider.google => service.google(),
+      SocialProvider.apple => service.apple(),
+    };
+  }
+
+  /// Exchanges a verified provider credential for our own tokens.
+  ///
+  /// Rethrows [EmailLinkRequiredException] — the caller prompts for the
+  /// existing password and finishes with [linkWithPassword].
+  Future<void> socialSignIn(SocialCredential credential) async {
+    final repo = ref.read(authRepositoryProvider);
+    final tokens = switch (credential.provider) {
+      SocialProvider.google => await repo.oauthGoogle(
+        idToken: credential.idToken,
+        nonce: credential.nonce,
+      ),
+      SocialProvider.apple => await repo.oauthApple(
+        identityToken: credential.idToken,
+        nonce: credential.nonce,
+        firstName: credential.firstName,
+        lastName: credential.lastName,
+      ),
+    };
+    await _persistAndSetAuthenticated(tokens);
+  }
+
+  /// Finishes the 409 path once the person has proved the existing account's
+  /// password. Succeeding here revokes their other sessions server-side.
+  Future<void> linkWithPassword({
+    required SocialCredential credential,
+    required String email,
+    required String password,
+  }) async {
+    final tokens = await ref
+        .read(authRepositoryProvider)
+        .oauthLink(
+          provider: credential.provider.wire,
+          idToken: credential.idToken,
+          email: email,
+          password: password,
+          nonce: credential.nonce,
+          firstName: credential.firstName,
+          lastName: credential.lastName,
+        );
     await _persistAndSetAuthenticated(tokens);
   }
 

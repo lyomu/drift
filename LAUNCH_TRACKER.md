@@ -6,7 +6,7 @@ artifact, so a commit or PR can close an item by referencing its ID
 
 **Status key:** `[ ]` to do · `[~]` in progress · `[!]` blocked · `[x]` done
 
-**24 items · 10 closed**
+**24 items · 11 closed**
 
 ---
 
@@ -134,10 +134,24 @@ artifact, so a commit or PR can close an item by referencing its ID
   `oauth.e2e-spec.ts` drives 409 `EMAIL_LINK_REQUIRED` → link → straight-through.
   *Remaining before real use:* Google OAuth client IDs in `GOOGLE_OAUTH_CLIENT_IDS`
   (Apple can wait — see 4.5).
-- [ ] **4.4 — Mobile: wire the existing buttons**
-  Buttons already render on login, sign-up and welcome; all six call `_notYet()`.
-  Route new social users to `BASIC_PROFILE`, not an empty home feed.
-  *Blocked on:* Apple Developer account · *Effort:* 2–3 days
+- [x] **4.4 — Mobile: wire the existing buttons**
+  All six `_notYet()` call sites replaced by one `SocialAuthButtons` widget owning
+  the whole flow, so Welcome, Login and Sign-up cannot drift apart. `SocialAuthService`
+  wraps `google_sign_in@7` and `sign_in_with_apple@7`; nothing above it imports a
+  provider package, which is why the flow is testable without a device.
+  Handles: cancel (silent — announcing a failure after a deliberate back-out is the
+  usual way this feels broken), the `409` linking prompt, an unconfigured build
+  (`503`/missing client ID reported plainly, not as a crash), and routing a fresh
+  social user to `BASIC_PROFILE`. **Nonce:** proper per-attempt for Apple — the raw
+  value is sent, `sha256` goes to Apple, and the backend now compares the hash, so a
+  stolen token alone won't pass. Google is per-app-launch only: `google_sign_in@7`
+  takes the nonce in `initialize()`, which its own docs say runs exactly once per
+  process. That is the API's ceiling, and it is recorded rather than papered over.
+  *Verified:* `flutter analyze` clean · **555 tests** (5 new covering link-prompt,
+  cancel, dismissal and unconfigured builds).
+  *Remaining before it does anything real:* `GOOGLE_OAUTH_CLIENT_IDS` +
+  `--dart-define` client IDs — see `docs/SOCIAL_SIGNIN_SETUP.md`. Apple stays gated
+  on 4.5; its button reports "not available" on Android until configured.
 - [ ] **4.5 — Apple Guideline 4.8 constraint** 🔴
   Offering Google makes Sign in with Apple **mandatory** on iOS. They ship together or
   neither ships. Pulls the Apple Developer membership onto the critical path.

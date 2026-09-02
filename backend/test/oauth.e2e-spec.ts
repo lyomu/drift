@@ -168,6 +168,9 @@ describe('Social sign-in (e2e)', () => {
     // The mobile client branches on this code to raise the password prompt,
     // so the exact string is part of the contract.
     expect(conflict.body.code).toBe('EMAIL_LINK_REQUIRED');
+    // And on this address to complete the link — Apple withholds the email
+    // after the first authorization, so the client cannot always supply it.
+    expect(conflict.body.email).toBe(unverifiedEmail);
 
     await request(app.getHttpServer())
       .post('/auth/oauth/link')

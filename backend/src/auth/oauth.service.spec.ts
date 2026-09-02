@@ -3,6 +3,7 @@ import {
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { createHash } from 'node:crypto';
 import { OAuthService } from './oauth.service';
 
 // The `mock` prefix is required: jest hoists these factories above the
@@ -196,6 +197,34 @@ describe('OAuthService', () => {
 
       await expect(
         service.verifyAppleIdentityToken('tok', 'this-attempt'),
+      ).rejects.toThrow('Apple identity token nonce mismatch.');
+    });
+
+    it('accepts the token when the claim is SHA-256 of the raw nonce', async () => {
+      // Apple is handed sha256(raw) and embeds it verbatim; the client sends
+      // us the raw value, so holding the token alone is not enough to pass.
+      const raw = 'this-attempt';
+      mockJwtVerify.mockResolvedValue({
+        payload: {
+          sub: 'apple-sub-1',
+          nonce: createHash('sha256').update(raw).digest('hex'),
+        },
+      });
+      const service = makeService(CONFIGURED);
+
+      const claims = await service.verifyAppleIdentityToken('tok', raw);
+      expect(claims.providerAccountId).toBe('apple-sub-1');
+    });
+
+    it('rejects the raw nonce echoed back unhashed', async () => {
+      const raw = 'this-attempt';
+      mockJwtVerify.mockResolvedValue({
+        payload: { sub: 'apple-sub-1', nonce: raw },
+      });
+      const service = makeService(CONFIGURED);
+
+      await expect(
+        service.verifyAppleIdentityToken('tok', raw),
       ).rejects.toThrow('Apple identity token nonce mismatch.');
     });
   });

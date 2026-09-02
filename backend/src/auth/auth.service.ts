@@ -319,29 +319,34 @@ export class AuthService {
     }
 
     const email = claims.email?.trim().toLowerCase() ?? null;
-    const existingUser = email
-      ? await this.prisma.user.findUnique({ where: { email } })
-      : null;
 
-    if (existingUser) {
-      this.assertUsable(existingUser.accountStatus);
-      // 4.2: auto-link is safe only when the provider asserts the address AND
-      // this account proved the same address itself. Either half missing and
-      // an attacker holding an unverified address at the provider could walk
-      // into someone else's account, so fall back to proving the password.
-      if (!claims.emailVerified || !existingUser.emailVerifiedAt) {
-        throw new EmailLinkRequiredException();
-      }
-      await this.prisma.socialIdentity.create({
-        data: {
-          provider: claims.provider,
-          providerAccountId: claims.providerAccountId,
-          userId: existingUser.id,
-          email,
-          name: this.displayName(claims),
-        },
+    // Nested rather than a ternary so the non-null `email` narrowing carries
+    // into the branch — the 409 has to name the address it matched.
+    if (email) {
+      const existingUser = await this.prisma.user.findUnique({
+        where: { email },
       });
-      return this.issueTokens(existingUser.id);
+      if (existingUser) {
+        this.assertUsable(existingUser.accountStatus);
+        // 4.2: auto-link is safe only when the provider asserts the address
+        // AND this account proved the same address itself. Either half
+        // missing and an attacker holding an unverified address at the
+        // provider could walk into someone else's account, so fall back to
+        // proving the password.
+        if (!claims.emailVerified || !existingUser.emailVerifiedAt) {
+          throw new EmailLinkRequiredException(email);
+        }
+        await this.prisma.socialIdentity.create({
+          data: {
+            provider: claims.provider,
+            providerAccountId: claims.providerAccountId,
+            userId: existingUser.id,
+            email,
+            name: this.displayName(claims),
+          },
+        });
+        return this.issueTokens(existingUser.id);
+      }
     }
 
     // Apple's private relay can withhold the address entirely; email is

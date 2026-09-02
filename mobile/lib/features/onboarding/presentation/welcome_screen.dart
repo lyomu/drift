@@ -6,21 +6,14 @@ import '../../../core/theme/drift_typography.dart';
 import '../../auth/presentation/widgets/auth_form_widgets.dart';
 import '../../auth/presentation/widgets/auth_page_scaffold.dart';
 import '../../auth/presentation/widgets/racket_illustration.dart';
+import '../../auth/presentation/widgets/social_auth_buttons.dart';
 
 /// Join the Court — the post-intro entry point to auth
 /// (`foundation/03-user-journeys.md` §2, redesign 2026-08). "Continue with
-/// Email" starts sign-up; the social buttons are placeholders until OAuth
-/// is wired.
+/// Email" starts sign-up; the social buttons sign in through
+/// [SocialAuthButtons], which owns that flow for all three auth screens.
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
-
-  void _notYet(BuildContext context, String provider) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(content: Text('$provider sign-in isn\'t available yet.')),
-      );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,17 +52,7 @@ class WelcomeScreen extends StatelessWidget {
             onPressed: () => context.push('/sign-up'),
           ),
           const SizedBox(height: 10),
-          AuthSocialButton(
-            label: 'Continue with Google',
-            icon: const GoogleGlyph(),
-            onPressed: () => _notYet(context, 'Google'),
-          ),
-          const SizedBox(height: 10),
-          AuthSocialButton(
-            label: 'Continue with Apple',
-            icon: const Icon(Icons.apple, size: 20, color: Color(0xFF1A1A1A)),
-            onPressed: () => _notYet(context, 'Apple'),
-          ),
+          const SocialAuthButtons(),
           const SizedBox(height: 24),
           AuthFooterPrompt(
             lead: 'Already have an account? ',

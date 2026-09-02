@@ -8,6 +8,7 @@ import '../application/auth_controller.dart';
 import '../data/auth_repository.dart';
 import 'widgets/auth_form_widgets.dart';
 import 'widgets/auth_page_scaffold.dart';
+import 'widgets/social_auth_buttons.dart';
 
 /// Sign Up — `foundation/04-screen-inventory.md` A.1 (redesign 2026-08).
 /// Email-only for this checkpoint; phone signup is deferred until a real SMS
@@ -51,14 +52,6 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
-  }
-
-  void _notYet(String provider) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(content: Text('$provider sign-in isn\'t available yet.')),
-      );
   }
 
   @override
@@ -124,17 +117,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             onPressed: _isSubmitting ? null : _submit,
           ),
           const SizedBox(height: 18),
-          AuthSocialButton(
-            label: 'Continue with Google',
-            icon: const GoogleGlyph(),
-            onPressed: () => _notYet('Google'),
-          ),
-          const SizedBox(height: 10),
-          AuthSocialButton(
-            label: 'Continue with Apple',
-            icon: const Icon(Icons.apple, size: 20, color: Color(0xFF1A1A1A)),
-            onPressed: () => _notYet('Apple'),
-          ),
+          const SocialAuthButtons(),
           const SizedBox(height: 24),
           AuthFooterPrompt(
             lead: 'Already have an account? ',

@@ -92,41 +92,65 @@ class AuthSocialButton extends StatelessWidget {
     required this.label,
     required this.icon,
     required this.onPressed,
+    this.loading = false,
   });
 
   final String label;
   final Widget icon;
-  final VoidCallback onPressed;
+
+  /// Null disables the button — used while the other provider's sheet is
+  /// open, so two sign-ins can't race each other.
+  final VoidCallback? onPressed;
+
+  /// Swaps the leading glyph for a spinner. The provider sheet takes a moment
+  /// to appear, and without this the button looks unresponsive.
+  final bool loading;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: const Color(0xFFF4F4F4),
-      borderRadius: BorderRadius.circular(999),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onPressed,
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: const Color(0xFFE8E8E8), width: 1.5),
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SizedBox(width: 20, height: 20, child: Center(child: icon)),
-              const SizedBox(width: 10),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontFamily: 'DMSans',
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF1A1A1A),
+    final enabled = onPressed != null && !loading;
+    return Opacity(
+      opacity: enabled || loading ? 1 : 0.5,
+      child: Material(
+        color: const Color(0xFFF4F4F4),
+        borderRadius: BorderRadius.circular(999),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: enabled ? onPressed : null,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: const Color(0xFFE8E8E8), width: 1.5),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: Center(
+                    child: loading
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : icon,
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 10),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontFamily: 'DMSans',
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1A1A1A),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

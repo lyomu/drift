@@ -1,7 +1,11 @@
 # Phase 4 — Google & Apple Sign-In: Implementation Plan
 
-Status: **4.1–4.3 built and verified 2026-09-02; 4.4–4.5 outstanding** · Companion:
-`LAUNCH_PLAN.md` Phase 4, `LAUNCH_TRACKER.md` items 4.1–4.5
+Status: **4.1–4.4 built and verified 2026-09-02. Only 4.5 remains, and it is
+paperwork, not code** — see `docs/SOCIAL_SIGNIN_SETUP.md` for the owner-side
+steps. Companion: `LAUNCH_PLAN.md` Phase 4, `LAUNCH_TRACKER.md` items 4.1–4.5.
+
+Two things below were written before the packages were installed and turned out
+differently in practice; both are corrected in the code and noted in §3.
 
 This document is the written plan required for multi-edit approval before any code
 is written. It exists because three screens currently render "Continue with
@@ -116,7 +120,29 @@ drive the full flow over HTTP.
 
 ## 3. 4.4 — Mobile wiring
 
-**Deps:** `google_sign_in`, `sign_in_with_apple`, `crypto` (nonce).
+**Deps:** `google_sign_in@7`, `sign_in_with_apple@7`, `crypto` (nonce).
+
+> **Two corrections from the installed packages.** Both were assumptions in the
+> draft above that the real APIs do not support:
+>
+> 1. **The Google nonce cannot rotate per attempt.** `google_sign_in@7` takes it
+>    in `initialize()`, which its own docs say must be called *exactly once* per
+>    process. One nonce is generated per app launch, which binds a token to the
+>    launch rather than to a single tap. That is the API's ceiling; Apple's
+>    per-request nonce is unaffected and remains the strong path.
+> 2. **Apple embeds `sha256(nonce)`, not the raw value.** The client hands Apple
+>    the hash and sends us the raw string, and `verifyAppleIdentityToken` hashes
+>    before comparing. The plain string comparison in the first backend commit
+>    would have rejected every real Apple sign-in.
+>
+> Also: `sign_in_with_apple` **requires** `webAuthenticationOptions` off Apple
+> platforms, so Android needs `DRIFT_APPLE_SERVICES_ID` and
+> `DRIFT_APPLE_REDIRECT_URI`, and reports "not available" without them rather
+> than throwing.
+
+**Structure note:** the three screens share one `SocialAuthButtons` widget that
+owns the entire flow, rather than each screen wiring its own handlers as the
+draft implied. Three copies of the cancel/link/route logic would have drifted.
 
 - `auth_repository.dart` — `googleSignIn()` / `appleSignIn()` acquire the provider
   id-token (with a generated nonce) → `POST /auth/oauth/*` → `AuthTokens`; on

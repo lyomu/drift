@@ -10,6 +10,7 @@ import '../application/auth_controller.dart';
 import '../data/auth_repository.dart';
 import 'widgets/auth_form_widgets.dart';
 import 'widgets/auth_page_scaffold.dart';
+import 'widgets/social_auth_buttons.dart';
 
 /// Login — `foundation/04-screen-inventory.md` A.1 (redesign 2026-08).
 class LoginScreen extends ConsumerStatefulWidget {
@@ -54,14 +55,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
-  }
-
-  void _notYet(String provider) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(content: Text('$provider sign-in isn\'t available yet.')),
-      );
   }
 
   @override
@@ -133,17 +126,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             onPressed: _isSubmitting ? null : _submit,
           ),
           const SizedBox(height: 18),
-          AuthSocialButton(
-            label: 'Continue with Google',
-            icon: const GoogleGlyph(),
-            onPressed: () => _notYet('Google'),
-          ),
-          const SizedBox(height: 10),
-          AuthSocialButton(
-            label: 'Continue with Apple',
-            icon: const Icon(Icons.apple, size: 20, color: Color(0xFF1A1A1A)),
-            onPressed: () => _notYet('Apple'),
-          ),
+          const SocialAuthButtons(),
           const SizedBox(height: 24),
           AuthFooterPrompt(
             lead: 'Need an account? ',

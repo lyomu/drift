@@ -25,6 +25,24 @@ class AuthException implements Exception {
   String toString() => message;
 }
 
+/// The backend's `409 EMAIL_LINK_REQUIRED`: this provider account's address
+/// already belongs to a password account that could not be auto-linked, so
+/// the person must prove the password before the two are joined. Carries the
+/// credential forward so the link call doesn't re-open the provider sheet.
+class EmailLinkRequiredException implements Exception {
+  const EmailLinkRequiredException(this.message, this.email);
+
+  final String message;
+
+  /// The address the server matched. Authoritative — Apple withholds the
+  /// email after the first authorization, so the client cannot always
+  /// reconstruct it from the credential.
+  final String? email;
+
+  @override
+  String toString() => message;
+}
+
 class AuthRepository {
   AuthRepository(this._dio, this._authedDio);
 
@@ -73,6 +91,84 @@ class AuthRepository {
       'password': password,
     });
     return AuthTokens.fromJson(data);
+  }
+
+  /// Posts the provider's identity token for server-side verification. The
+  /// token is all the server trusts — no email or user id is sent, because
+  /// anything this client asserts about identity is worthless.
+  ///
+  /// Throws [EmailLinkRequiredException] on the 409, which the caller turns
+  /// into a password prompt and finishes with [oauthLink].
+  Future<AuthTokens> oauthGoogle({
+    required String idToken,
+    String? nonce,
+  }) async {
+    return _oauth('/auth/oauth/google', {
+      'idToken': idToken,
+      if (nonce != null) 'nonce': nonce,
+    });
+  }
+
+  Future<AuthTokens> oauthApple({
+    required String identityToken,
+    String? nonce,
+    String? firstName,
+    String? lastName,
+  }) async {
+    return _oauth('/auth/oauth/apple', {
+      'identityToken': identityToken,
+      if (nonce != null) 'nonce': nonce,
+      // Apple sends this once and never again; dropping it here loses the
+      // name permanently.
+      if (firstName != null || lastName != null)
+        'name': {
+          if (firstName != null) 'firstName': firstName,
+          if (lastName != null) 'lastName': lastName,
+        },
+    });
+  }
+
+  /// Completes the 409 path. The identity token is re-sent rather than the
+  /// server holding pending state between the two calls.
+  Future<AuthTokens> oauthLink({
+    required String provider,
+    required String idToken,
+    required String email,
+    required String password,
+    String? nonce,
+    String? firstName,
+    String? lastName,
+  }) async {
+    return _oauth('/auth/oauth/link', {
+      'provider': provider,
+      'idToken': idToken,
+      'email': email,
+      'password': password,
+      if (nonce != null) 'nonce': nonce,
+      if (firstName != null || lastName != null)
+        'name': {
+          if (firstName != null) 'firstName': firstName,
+          if (lastName != null) 'lastName': lastName,
+        },
+    });
+  }
+
+  Future<AuthTokens> _oauth(String path, Map<String, dynamic> body) async {
+    try {
+      final response = await _dio.post(path, data: body);
+      return AuthTokens.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      final data = e.response?.data;
+      if (e.response?.statusCode == 409 &&
+          data is Map &&
+          data['code'] == 'EMAIL_LINK_REQUIRED') {
+        throw EmailLinkRequiredException(
+          _messageFrom(e),
+          data['email'] as String?,
+        );
+      }
+      throw AuthException(_messageFrom(e));
+    }
   }
 
   Future<void> logout(String refreshToken) async {

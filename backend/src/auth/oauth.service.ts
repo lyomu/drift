@@ -6,6 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { createHash } from 'node:crypto';
 import { OAuth2Client } from 'google-auth-library';
 // jose is pinned to the 4.x line deliberately: 5.x onward is ESM-only, and
 // ts-jest in this repo cannot load an ESM-only package — importing it here
@@ -19,10 +20,18 @@ import { AuthProvider } from '@prisma/client';
  * cannot be auto-linked (the 4.2 fallback). The client shows a password prompt
  * and completes via POST /auth/oauth/link. */
 export class EmailLinkRequiredException extends ConflictException {
-  constructor() {
+  /**
+   * `email` is echoed back so the client can complete the link without asking
+   * for it again. This leaks nothing: it is the address on the provider
+   * account whose ownership was just verified — the caller's own — and Apple
+   * only returns the address on the *first* authorization, so a client that
+   * had to infer it would break on every subsequent attempt.
+   */
+  constructor(email: string) {
     super({
       statusCode: HttpStatus.CONFLICT,
       code: 'EMAIL_LINK_REQUIRED',
+      email,
       message:
         'An account with this email already exists. Sign in with your password to link it.',
     });
@@ -152,8 +161,17 @@ export class OAuthService {
     if (!payload.sub) {
       throw new UnauthorizedException('Invalid Apple identity token.');
     }
-    if (nonce && payload.nonce && payload.nonce !== nonce) {
-      throw new UnauthorizedException('Apple identity token nonce mismatch.');
+    // Apple embeds the nonce it was *given*, and the client is required to
+    // give it SHA-256(raw) while sending us the raw value. Comparing the hash
+    // rather than the string is what makes the check worth having: an
+    // attacker replaying a stolen token cannot produce the preimage.
+    // (Google differs — it embeds the nonce verbatim, so that path compares
+    // the strings directly.)
+    if (nonce && payload.nonce) {
+      const expected = createHash('sha256').update(nonce).digest('hex');
+      if (payload.nonce !== expected) {
+        throw new UnauthorizedException('Apple identity token nonce mismatch.');
+      }
     }
     return {
       provider: AuthProvider.APPLE,
