@@ -92,7 +92,7 @@ export default function SettingsOverviewPage() {
             <p className="mt-1 flex-1 text-sm leading-6 text-drift-text-secondary">
               {section.description}
             </p>
-            <div className="mt-4 text-[12px] font-bold uppercase tracking-[0.08em] text-drift-text-secondary tabular">
+            <div className="mt-4 text-[12px] font-bold uppercase text-drift-text-secondary tabular">
               {summaries[section.href] ?? "—"}
             </div>
           </Link>

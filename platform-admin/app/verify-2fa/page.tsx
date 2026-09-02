@@ -117,7 +117,7 @@ export default function VerifyTwoFactorPage() {
               required
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-              className="text-center text-2xl font-bold tracking-[0.25em]"
+              className="text-center text-2xl font-bold"
             />
           </Field>
           <Button type="submit" icon="verified_user" disabled={busy || code.length !== 6}>

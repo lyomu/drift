@@ -55,12 +55,7 @@ class _PlayHubScreenState extends ConsumerState<PlayHubScreen> {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
             child: Row(
               children: [
-                Expanded(
-                  child: Text(
-                    'Play',
-                    style: type.h2.copyWith(fontWeight: FontWeight.w800),
-                  ),
-                ),
+                Expanded(child: Text('Play', style: type.h2)),
                 DriftHeaderSquareButton(
                   icon: Icons.tune,
                   onTap: () => showPlayerFiltersSheet(context, ref),

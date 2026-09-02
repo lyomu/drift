@@ -117,8 +117,8 @@
   --color-drift-error: var(--color-error);
   --color-drift-error-surface: var(--color-error-surface);
 
-  --font-body: var(--font-lexend);
-  --font-display: var(--font-lexend);
+  --font-body: var(--font-dm-sans);
+  --font-display: var(--font-outfit);
 
   --radius-sm: 4px;
   --radius-md: 8px;
@@ -130,6 +130,16 @@ body {
   background: var(--color-background);
   color: var(--color-text-primary);
   font-family: var(--font-body), sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 100 !important;
 }
 
 * {
@@ -146,7 +156,6 @@ body {
   font-size: 20px;
   font-style: normal;
   font-weight: normal;
-  letter-spacing: 0;
   line-height: 1;
   overflow-wrap: normal;
   text-transform: none;

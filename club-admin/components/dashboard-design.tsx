@@ -161,7 +161,7 @@ export function SmallActionLink({
 export function DateChip({ value }: { value: Date }) {
   return (
     <div className="w-[46px] shrink-0 text-center">
-      <div className="text-[11px] font-bold uppercase tracking-[0.4px] text-drift-text-secondary">
+      <div className="text-[11px] font-bold uppercase text-drift-text-secondary">
         {value.toLocaleDateString(undefined, { month: "short" })}
       </div>
       <div className="text-lg font-extrabold leading-6 text-drift-text-primary tabular">
@@ -192,7 +192,7 @@ export function ModalShell({
         onClick={(event) => event.stopPropagation()}
       >
         <div className="mb-5 flex items-center justify-between gap-4">
-          <h2 className="text-lg font-extrabold tracking-[-0.2px] text-drift-text-primary">
+          <h2 className="text-lg font-extrabold text-drift-text-primary">
             {title}
           </h2>
           <button type="button" onClick={onClose} aria-label="Close">

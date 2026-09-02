@@ -137,7 +137,7 @@ export default function EditCoachPage() {
               </div>
               {contact.length > 0 && (
                 <div className="text-right text-[12.5px] text-drift-text-secondary">
-                  <div className="font-bold uppercase tracking-wide">
+                  <div className="font-bold uppercase">
                     Public contact
                   </div>
                   {contact.map((line) => (

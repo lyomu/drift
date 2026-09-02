@@ -212,7 +212,7 @@ export default function SupportTicketsPage() {
               {selected.status !== "RESOLVED" && <div className="flex items-end"><Button variant="destructive" icon="task_alt" disabled={busy} onClick={() => void close(selected)}>Close</Button></div>}
             </div>
             <div className="mt-5">
-              <h3 className="text-[12px] font-bold uppercase tracking-[0.08em] text-drift-text-secondary">Responses</h3>
+              <h3 className="text-[12px] font-bold uppercase text-drift-text-secondary">Responses</h3>
               {selected.messages.length === 0 && <div className="mt-2 rounded-xl border border-dashed border-drift-border px-4 py-6 text-sm text-drift-text-secondary">No responses yet.</div>}
               <div className="mt-2 space-y-3">
                 {selected.messages.map((message) => (

@@ -268,7 +268,7 @@ function PageTitle({ action }: { action?: React.ReactNode }) {
   return (
     <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
       <div>
-        <h1 className="font-display text-[26px] font-extrabold leading-8 tracking-[-0.3px] text-drift-text-primary">
+        <h1 className="font-display text-[26px] font-extrabold leading-8 text-drift-text-primary">
           Leagues
         </h1>
         <p className="mt-1 max-w-[560px] text-sm text-drift-text-secondary">

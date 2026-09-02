@@ -94,11 +94,21 @@ flutter:
   # https://flutter.dev/to/asset-from-package
 
   fonts:
-    # Static weight cuts (instanced from Outfit[wght].ttf). The variable
-    # file's default master is Thin, and Impeller on Android ignores the
-    # `wght` axis — so the variable file rendered every weight as Thin.
+    # Body/UI family. Static cuts keep Android text weights predictable.
+    - family: DMSans
+      fonts:
+        - asset: assets/fonts/DMSans-400.ttf
+          weight: 400
+        - asset: assets/fonts/DMSans-500.ttf
+          weight: 500
+        - asset: assets/fonts/DMSans-700.ttf
+          weight: 700
+    # Heading/display family. The variable file's default master is Thin,
+    # which is the intended heading weight for the current platform pass.
     - family: Outfit
       fonts:
+        - asset: assets/fonts/Outfit-Variable.ttf
+          weight: 100
         - asset: assets/fonts/Outfit-400.ttf
           weight: 400
         - asset: assets/fonts/Outfit-500.ttf
@@ -109,16 +119,3 @@ flutter:
           weight: 700
         - asset: assets/fonts/Outfit-800.ttf
           weight: 800
-    # Athletic display face for the pre-auth intro carousel hero titles only
-    # (see features/onboarding/presentation/intro_carousel_screen.dart).
-    # Not part of the core type scale — body/UI text stays Outfit. Static
-    # cuts (not the variable file) because Impeller on Android renders
-    # variable-font weight axes at their default instance.
-    - family: Montserrat
-      fonts:
-        - asset: assets/fonts/Montserrat-Bold.ttf
-          weight: 700
-        - asset: assets/fonts/Montserrat-ExtraBold.ttf
-          weight: 800
-        - asset: assets/fonts/Montserrat-Black.ttf
-          weight: 900

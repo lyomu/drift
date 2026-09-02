@@ -4,10 +4,8 @@
  * Design tokens - mirrors foundation/05-design-system.md and
  * mobile/lib/core/theme/drift_colors.dart's DriftColors values exactly,
  * so the same vocabulary (color.primary, radius.lg, ...) holds across
- * Flutter and this Next.js admin app. Sharp Sans Display isn't licensed
- * for production yet (see design system doc section 3), so --font-display uses
- * the same Space Grotesk fallback the Flutter app uses - swap the
- * @font-face source, not the variable name, once licensed.
+ * Flutter and this Next.js admin app. Body/UI text uses DM Sans; headings
+ * and display roles use Outfit Thin.
  */
 
 :root {
@@ -119,8 +117,8 @@
   --color-drift-error-surface: var(--color-error-surface);
   --color-drift-neutral-surface: var(--color-neutral-surface);
 
-  --font-body: var(--font-outfit);
-  --font-display: var(--font-display-face);
+  --font-body: var(--font-dm-sans);
+  --font-display: var(--font-outfit);
 
   --radius-sm: 4px;
   --radius-md: 6px;
@@ -132,6 +130,16 @@ body {
   background: var(--color-background);
   color: var(--color-text-primary);
   font-family: var(--font-body), sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 100 !important;
 }
 
 * {

@@ -79,7 +79,6 @@ class _FormatCard extends StatelessWidget {
             style: type.caption.copyWith(
               fontWeight: FontWeight.w700,
               color: colors.textSecondary,
-              letterSpacing: 1.2,
             ),
           ),
           const SizedBox(height: 10),

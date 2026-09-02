@@ -32,7 +32,7 @@ export function Listing({
     <div className="overflow-hidden rounded-lg border border-drift-border bg-drift-surface">
       <div className="flex items-center justify-between gap-3 border-b border-drift-border bg-drift-primary-light/40 px-5 py-3">
         <div className="flex items-center gap-2">
-          <span className="text-[11px] font-extrabold uppercase tracking-wide text-drift-text-secondary">
+          <span className="text-[11px] font-extrabold uppercase text-drift-text-secondary">
             {title}
           </span>
           {count != null && (

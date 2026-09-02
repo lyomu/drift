@@ -49,10 +49,7 @@ class _DiscoverHubScreenState extends State<DiscoverHubScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-            child: Text(
-              'Discover',
-              style: type.h2.copyWith(fontWeight: FontWeight.w800),
-            ),
+            child: Text('Discover', style: type.h2),
           ),
           DriftPillTabs(
             labels: _labels,

@@ -32,10 +32,7 @@ class ClubListScreen extends ConsumerWidget {
         if (!embedded)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-            child: Text(
-              'Clubs',
-              style: type.h2.copyWith(fontWeight: FontWeight.w800),
-            ),
+            child: Text('Clubs', style: type.h2),
           ),
         Expanded(
           child: RefreshIndicator(

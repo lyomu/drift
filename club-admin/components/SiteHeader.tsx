@@ -77,7 +77,7 @@ export function SiteHeader() {
                   {clubName ?? "Drift"}
                 </div>
                 {role && (
-                  <div className="mt-0.5 text-[11px] font-bold uppercase tracking-[0.3px] text-drift-text-secondary">
+                  <div className="mt-0.5 text-[11px] font-bold uppercase text-drift-text-secondary">
                     {role.replace(/_/g, " ")}
                   </div>
                 )}

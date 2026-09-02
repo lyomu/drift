@@ -105,7 +105,6 @@ Text _cardLabel(BuildContext context, String text) {
     style: type.caption.copyWith(
       color: colors.textSecondary,
       fontWeight: FontWeight.w700,
-      letterSpacing: 1,
     ),
   );
 }

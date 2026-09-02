@@ -106,10 +106,7 @@ class _AchievementList extends StatelessWidget {
                   ),
                   Text(
                     '${response.earnedCount}/${response.totalCount}',
-                    style: type.h3.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: colors.primary,
-                    ),
+                    style: type.h3.copyWith(color: colors.primary),
                   ),
                 ],
               ),

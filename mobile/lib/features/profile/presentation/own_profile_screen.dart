@@ -109,7 +109,6 @@ class _ProfileBody extends StatelessWidget {
                       style: type.caption.copyWith(
                         fontWeight: FontWeight.w700,
                         color: colors.textSecondary,
-                        letterSpacing: 1.2,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -275,10 +274,7 @@ class _GradientHeader extends StatelessWidget {
                 ),
                 child: Text(
                   initials,
-                  style: type.h3.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: type.h3.copyWith(color: Colors.white),
                 ),
               ),
               const SizedBox(width: 16),
@@ -286,13 +282,7 @@ class _GradientHeader extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      name,
-                      style: type.h2.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                    Text(name, style: type.h2.copyWith(color: Colors.white)),
                     if (location != null) ...[
                       const SizedBox(height: 4),
                       Text(

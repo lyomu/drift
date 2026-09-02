@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 
 /// Type scale for Drift Tennis. Mirrors `DESIGN_SPEC.md` §2.
 ///
-/// Single family — `Outfit` for everything (the 2026-08 redesign dropped
-/// the Sharp Sans Display / Space Grotesk pairing; see `DESIGN_SPEC.md`
-/// "Font family: Outfit"). Static weight cuts are bundled 400–800 because
-/// Impeller on Android ignores a variable font's weight axis.
+/// DM Sans carries body/UI text. Outfit is kept for display and heading roles
+/// only, set thin per the current cross-platform typography direction.
 class DriftTypography extends ThemeExtension<DriftTypography> {
   const DriftTypography({
     required this.display,
@@ -40,7 +38,7 @@ class DriftTypography extends ThemeExtension<DriftTypography> {
   final TextStyle statistics;
 
   static const _displayFamily = 'Outfit';
-  static const _bodyFamily = 'Outfit';
+  static const _bodyFamily = 'DMSans';
 
   factory DriftTypography.from(Color textPrimary, Color textSecondary) {
     return DriftTypography(
@@ -48,37 +46,35 @@ class DriftTypography extends ThemeExtension<DriftTypography> {
         fontFamily: _displayFamily,
         fontSize: 34,
         height: 40 / 34,
-        fontWeight: FontWeight.w700,
-        letterSpacing: -0.4,
+        fontWeight: FontWeight.w100,
         color: textPrimary,
       ),
       h1: TextStyle(
         fontFamily: _displayFamily,
         fontSize: 28,
         height: 34 / 28,
-        fontWeight: FontWeight.w700,
-        letterSpacing: -0.3,
+        fontWeight: FontWeight.w100,
         color: textPrimary,
       ),
       h2: TextStyle(
         fontFamily: _displayFamily,
         fontSize: 24,
         height: 30 / 24,
-        fontWeight: FontWeight.w700,
+        fontWeight: FontWeight.w100,
         color: textPrimary,
       ),
       h3: TextStyle(
         fontFamily: _displayFamily,
         fontSize: 20,
         height: 26 / 20,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w100,
         color: textPrimary,
       ),
       h4: TextStyle(
-        fontFamily: _bodyFamily,
+        fontFamily: _displayFamily,
         fontSize: 18,
         height: 24 / 18,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w100,
         color: textPrimary,
       ),
       title: TextStyle(
@@ -141,8 +137,7 @@ class DriftTypography extends ThemeExtension<DriftTypography> {
         fontFamily: _displayFamily,
         fontSize: 34,
         height: 1.1,
-        fontWeight: FontWeight.w800,
-        letterSpacing: -0.4,
+        fontWeight: FontWeight.w100,
         color: textPrimary,
         fontFeatures: const [FontFeature.tabularFigures()],
       ),

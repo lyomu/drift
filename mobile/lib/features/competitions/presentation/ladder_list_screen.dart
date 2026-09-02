@@ -79,10 +79,7 @@ class LadderListScreen extends ConsumerWidget {
         children: [
           Padding(
             padding: const EdgeInsets.all(16),
-            child: Text(
-              'Ladders',
-              style: type.h2.copyWith(fontWeight: FontWeight.w800),
-            ),
+            child: Text('Ladders', style: type.h2),
           ),
           Expanded(child: content),
         ],

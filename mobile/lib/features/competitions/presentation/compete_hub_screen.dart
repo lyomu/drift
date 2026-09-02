@@ -36,12 +36,7 @@ class _CompeteHubScreenState extends State<CompeteHubScreen> {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
             child: Row(
               children: [
-                Expanded(
-                  child: Text(
-                    'Compete',
-                    style: type.h2.copyWith(fontWeight: FontWeight.w800),
-                  ),
-                ),
+                Expanded(child: Text('Compete', style: type.h2)),
                 DriftHeaderSquareButton(
                   icon: Icons.event_note_outlined,
                   onTap: () => context.push('/compete/my-leagues'),
@@ -100,10 +95,7 @@ class _EventsComingSoon extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 14),
-            Text(
-              'Events coming soon',
-              style: type.h4.copyWith(fontWeight: FontWeight.w700),
-            ),
+            Text('Events coming soon', style: type.h4),
             const SizedBox(height: 6),
             Text(
               'Club events and tournaments will appear here once available '

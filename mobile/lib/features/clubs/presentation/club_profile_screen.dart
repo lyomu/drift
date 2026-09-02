@@ -96,12 +96,7 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: Text(
-                summary.name,
-                style: type.h2.copyWith(fontWeight: FontWeight.w700),
-              ),
-            ),
+            Expanded(child: Text(summary.name, style: type.h2)),
             if (summary.verificationStatus ==
                 ListingVerificationStatus.verified) ...[
               const SizedBox(width: 8),
@@ -185,7 +180,7 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
         ],
 
         const SizedBox(height: 18),
-        Text('Courts', style: type.h4.copyWith(fontWeight: FontWeight.w700)),
+        Text('Courts', style: type.h4),
         const SizedBox(height: 10),
         if (profile.courts.isEmpty)
           Text(

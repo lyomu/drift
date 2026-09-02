@@ -103,7 +103,7 @@ export default function ResetPasswordPage() {
                 required
                 value={code}
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-                className="text-center text-2xl font-bold tracking-[0.25em]"
+                className="text-center text-2xl font-bold"
               />
             </Field>
             <PasswordField

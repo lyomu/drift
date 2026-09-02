@@ -48,10 +48,7 @@ class StandingsScreen extends ConsumerWidget {
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                     children: [
                       if (season != null) ...[
-                        Text(
-                          season.label,
-                          style: type.h3.copyWith(fontWeight: FontWeight.w700),
-                        ),
+                        Text(season.label, style: type.h3),
                         const SizedBox(height: 2),
                         Text(
                           season.leagueName,

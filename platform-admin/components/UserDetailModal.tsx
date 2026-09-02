@@ -145,7 +145,7 @@ export function UserDetailModal({
           {!deleted && (
             <div className="flex items-end gap-2">
               <div className="flex-1">
-                <label className="mb-1 block text-xs font-bold uppercase tracking-[0.08em] text-drift-text-secondary">
+                <label className="mb-1 block text-xs font-bold uppercase text-drift-text-secondary">
                   Identity verification
                 </label>
                 <Select
@@ -187,7 +187,7 @@ export function UserDetailModal({
 
           {(user.tennisProfile || user.padelProfile) && (
             <section>
-              <h3 className="mb-2 font-display text-sm font-bold uppercase tracking-[0.08em] text-drift-text-secondary">
+              <h3 className="mb-2 font-display text-sm font-bold uppercase text-drift-text-secondary">
                 Play
               </h3>
               <DefinitionList
@@ -215,7 +215,7 @@ export function UserDetailModal({
 
           {user.coachProfile && (
             <section>
-              <h3 className="mb-2 font-display text-sm font-bold uppercase tracking-[0.08em] text-drift-text-secondary">
+              <h3 className="mb-2 font-display text-sm font-bold uppercase text-drift-text-secondary">
                 Coaching
               </h3>
               <DefinitionList
@@ -257,7 +257,7 @@ export function UserDetailModal({
 
           {user.clubMemberships.length > 0 && (
             <section>
-              <h3 className="mb-2 font-display text-sm font-bold uppercase tracking-[0.08em] text-drift-text-secondary">
+              <h3 className="mb-2 font-display text-sm font-bold uppercase text-drift-text-secondary">
                 Club roles
               </h3>
               <DefinitionList

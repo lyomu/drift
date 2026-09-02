@@ -70,7 +70,7 @@ export function FilterBar({
           <div className="min-w-0 flex-1">
             <label
               htmlFor={searchId}
-              className="mb-1.5 block text-[12px] font-bold uppercase tracking-[0.08em] text-drift-text-secondary"
+              className="mb-1.5 block text-[12px] font-bold uppercase text-drift-text-secondary"
             >
               {search.label ?? "Search"}
             </label>
@@ -104,7 +104,7 @@ export function FilterBar({
         {filters.map((filter) => (
           <div key={filter.id} className="lg:w-[190px]">
             <label className="flex flex-col gap-1.5">
-              <span className="text-[12px] font-bold uppercase tracking-[0.08em] text-drift-text-secondary">
+              <span className="text-[12px] font-bold uppercase text-drift-text-secondary">
                 {filter.label}
               </span>
               <Select

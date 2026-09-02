@@ -71,10 +71,7 @@ class _CourtFinderHubScreenState extends ConsumerState<CourtFinderHubScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-            child: Text(
-              'Courts',
-              style: type.h2.copyWith(fontWeight: FontWeight.w800),
-            ),
+            child: Text('Courts', style: type.h2),
           ),
           Expanded(child: body),
         ],

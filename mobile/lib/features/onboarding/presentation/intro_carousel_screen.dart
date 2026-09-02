@@ -190,10 +190,10 @@ class _SlideView extends StatelessWidget {
                     slide.title,
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontFamily: 'Montserrat',
+                      fontFamily: 'Outfit',
                       fontSize: slide.titleSize,
                       height: 1.05,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w100,
                       color: Colors.white,
                     ),
                   ),
@@ -202,7 +202,7 @@ class _SlideView extends StatelessWidget {
                     slide.body,
                     textAlign: TextAlign.center,
                     style: const TextStyle(
-                      fontFamily: 'Outfit',
+                      fontFamily: 'DMSans',
                       fontSize: 13.5,
                       height: 1.55,
                       fontWeight: FontWeight.w400,
@@ -280,10 +280,9 @@ class _GetStartedButton extends StatelessWidget {
               child: Text(
                 'Get Started',
                 style: TextStyle(
-                  fontFamily: 'Outfit',
+                  fontFamily: 'DMSans',
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  letterSpacing: 0.32,
                   color: Colors.white,
                 ),
               ),
@@ -350,7 +349,7 @@ class _NextButton extends StatelessWidget {
             Text(
               'Next',
               style: TextStyle(
-                fontFamily: 'Outfit',
+                fontFamily: 'DMSans',
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: tint,

@@ -109,14 +109,14 @@ export function Sidebar({
   return (
     <aside className="sticky top-0 hidden h-screen w-[264px] shrink-0 flex-col border-r border-drift-border bg-drift-surface px-4 py-6 sm:flex">
       <div className="flex flex-col px-2 pb-5">
-        <div className="font-display text-[19px] font-extrabold tracking-[-0.2px] text-drift-text-primary">
+        <div className="font-display text-[19px] font-extrabold text-drift-text-primary">
           Drift
         </div>
         <div className="mt-2.5 truncate text-sm font-bold text-drift-text-primary">
           {clubName ?? "-"}
         </div>
         {role && (
-          <div className="mt-1 inline-flex self-start rounded-full bg-drift-primary-light px-[9px] py-0.5 text-[11px] font-bold uppercase tracking-[0.3px] text-drift-primary-dark">
+          <div className="mt-1 inline-flex self-start rounded-full bg-drift-primary-light px-[9px] py-0.5 text-[11px] font-bold uppercase text-drift-primary-dark">
             {role.replace(/_/g, " ")}
           </div>
         )}

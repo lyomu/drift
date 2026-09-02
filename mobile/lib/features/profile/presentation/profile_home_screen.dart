@@ -68,7 +68,7 @@ class _ProfileHomeScreenState extends ConsumerState<ProfileHomeScreen> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
         children: [
-          Text('Profile', style: type.h2.copyWith(fontWeight: FontWeight.w800)),
+          Text('Profile', style: type.h2),
           const SizedBox(height: 16),
           DriftSoftCard(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),

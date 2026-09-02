@@ -185,7 +185,7 @@ function DetailTile({
 }) {
   return (
     <Card>
-      <dt className="text-[11.5px] font-bold uppercase tracking-wide text-drift-text-secondary">
+      <dt className="text-[11.5px] font-bold uppercase text-drift-text-secondary">
         {label}
       </dt>
       <dd

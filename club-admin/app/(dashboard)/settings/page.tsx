@@ -300,7 +300,7 @@ export default function SettingsPage() {
           <Card>
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
-                <div className="text-xs font-bold uppercase tracking-[0.4px] text-drift-text-secondary">
+                <div className="text-xs font-bold uppercase text-drift-text-secondary">
                   Verification
                 </div>
                 <div className="mt-2">

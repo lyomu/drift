@@ -100,7 +100,7 @@ export default function OverviewPage() {
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {revenue.map((item) => (
                   <div key={item.currency} className="rounded-xl border border-drift-border bg-drift-background p-4">
-                    <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.08em] text-drift-text-secondary">
+                    <div className="flex items-center gap-2 text-xs font-bold uppercase text-drift-text-secondary">
                       <MaterialIcon name="payments" className="text-[17px] text-drift-primary" />
                       {item.currency}
                     </div>

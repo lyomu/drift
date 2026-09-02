@@ -113,7 +113,7 @@ export default function RolesPage() {
               <Textarea rows={3} disabled={selected?.isSystem} value={description} onChange={(e) => setDescription(e.target.value)} />
             </Field>
             <fieldset disabled={selected?.isSystem}>
-              <legend className="mb-3 text-[12px] font-bold uppercase tracking-[0.08em] text-drift-text-secondary">Module permissions</legend>
+              <legend className="mb-3 text-[12px] font-bold uppercase text-drift-text-secondary">Module permissions</legend>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {catalog.map((item) => (
                   <label key={item.permission} className="rowcard flex cursor-pointer items-start gap-3 rounded-xl border border-drift-border px-3 py-3 transition">

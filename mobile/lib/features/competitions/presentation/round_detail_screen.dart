@@ -50,10 +50,7 @@ class RoundDetailScreen extends ConsumerWidget {
           AsyncData(:final value) => ListView(
             padding: const EdgeInsets.all(DriftSpacing.s5),
             children: [
-              Text(
-                'Round ${value.index}',
-                style: type.h2.copyWith(fontWeight: FontWeight.w700),
-              ),
+              Text('Round ${value.index}', style: type.h2),
               const SizedBox(height: DriftSpacing.s1),
               Text(
                 'Deadline: ${_formatDeadline(value.deadline)}',

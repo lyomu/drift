@@ -39,7 +39,7 @@ class DriftBackHeader extends StatelessWidget {
           Expanded(
             child: Text(
               title,
-              style: type.h3.copyWith(fontWeight: FontWeight.w700),
+              style: type.h3,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),

@@ -91,7 +91,7 @@ export function SiteHeader({
                 <div className="truncate text-[13px] font-bold text-drift-text-primary">
                   {admin.name || admin.email}
                 </div>
-                <div className="mt-0.5 truncate text-[11px] font-bold uppercase tracking-[0.3px] text-drift-text-secondary">
+                <div className="mt-0.5 truncate text-[11px] font-bold uppercase text-drift-text-secondary">
                   {admin.role.name}
                 </div>
               </div>

@@ -93,7 +93,7 @@ export default function DisputesPage() {
               </div>
               <div className="mb-4 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
                 <div className="rounded-md border border-drift-border bg-drift-background px-4 py-3">
-                  <div className="text-xs font-bold uppercase tracking-[0.3px] text-drift-text-secondary">
+                  <div className="text-xs font-bold uppercase text-drift-text-secondary">
                     Original submission
                   </div>
                   <div className="mt-1 text-drift-text-primary">
@@ -101,7 +101,7 @@ export default function DisputesPage() {
                   </div>
                 </div>
                 <div className="rounded-md border border-drift-warning/20 bg-drift-warning-surface px-4 py-3">
-                  <div className="text-xs font-bold uppercase tracking-[0.3px] text-drift-warning">
+                  <div className="text-xs font-bold uppercase text-drift-warning">
                     Disputant claims
                   </div>
                   <div className="mt-1 text-drift-text-primary">

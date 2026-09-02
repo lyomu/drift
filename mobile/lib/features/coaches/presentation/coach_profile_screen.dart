@@ -97,10 +97,7 @@ class _ProfileBody extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    coach.displayName,
-                    style: type.h2.copyWith(fontWeight: FontWeight.w700),
-                  ),
+                  Text(coach.displayName, style: type.h2),
                   if (coach.yearsExperience != null) ...[
                     const SizedBox(height: 3),
                     Text(

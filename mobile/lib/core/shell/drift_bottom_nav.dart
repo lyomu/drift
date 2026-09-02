@@ -95,7 +95,7 @@ class _Tab extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                fontFamily: 'Outfit',
+                fontFamily: 'DMSans',
                 fontSize: 10,
                 height: 1.2,
                 fontWeight: active ? FontWeight.w700 : FontWeight.w500,

@@ -69,7 +69,7 @@ class AuthPrimaryButton extends StatelessWidget {
                       Text(
                         label,
                         style: const TextStyle(
-                          fontFamily: 'Outfit',
+                          fontFamily: 'DMSans',
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
                           color: Colors.white,
@@ -120,7 +120,7 @@ class AuthSocialButton extends StatelessWidget {
               Text(
                 label,
                 style: const TextStyle(
-                  fontFamily: 'Outfit',
+                  fontFamily: 'DMSans',
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
                   color: Color(0xFF1A1A1A),
@@ -178,7 +178,7 @@ class AuthInputField extends StatelessWidget {
               onSubmitted: onSubmitted,
               cursorColor: colors.primary,
               style: const TextStyle(
-                fontFamily: 'Outfit',
+                fontFamily: 'DMSans',
                 fontSize: 15,
                 fontWeight: FontWeight.w400,
               ),
@@ -194,7 +194,7 @@ class AuthInputField extends StatelessWidget {
                 focusedErrorBorder: InputBorder.none,
                 hintText: hintText,
                 hintStyle: TextStyle(
-                  fontFamily: 'Outfit',
+                  fontFamily: 'DMSans',
                   fontSize: 15,
                   color: colors.textSecondary,
                 ),

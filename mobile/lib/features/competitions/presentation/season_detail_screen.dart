@@ -71,10 +71,7 @@ class _SeasonDetailScreenState extends ConsumerState<SeasonDetailScreen> {
                   AsyncData(:final value) => ListView(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
                     children: [
-                      Text(
-                        value.leagueName,
-                        style: type.h2.copyWith(fontWeight: FontWeight.w700),
-                      ),
+                      Text(value.leagueName, style: type.h2),
                       const SizedBox(height: 12),
                       DriftPill(
                         label: value.state.label,

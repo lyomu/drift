@@ -74,7 +74,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           Text(
             'Create account',
             textAlign: TextAlign.center,
-            style: type.h1.copyWith(fontSize: 30, fontWeight: FontWeight.w800),
+            style: type.h1.copyWith(fontSize: 30),
           ),
           const SizedBox(height: 32),
           AuthInputField(

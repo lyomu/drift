@@ -40,7 +40,7 @@ export function MobileNav({ clubName }: { clubName: string | null }) {
   return (
     <div className="flex items-center justify-between gap-3 border-b border-drift-border bg-drift-surface px-4 py-3 sm:hidden">
       <div className="min-w-0">
-        <div className="font-display text-sm font-extrabold tracking-[-0.2px] text-drift-text-primary">
+        <div className="font-display text-sm font-extrabold text-drift-text-primary">
           Drift
         </div>
         <div className="truncate text-xs font-medium text-drift-text-secondary">

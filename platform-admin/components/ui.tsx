@@ -142,7 +142,7 @@ export function Field({
 }) {
   return (
     <label className="flex flex-col gap-1.5">
-      <span className="text-[12px] font-bold uppercase tracking-[0.08em] text-drift-text-secondary">
+      <span className="text-[12px] font-bold uppercase text-drift-text-secondary">
         {label}
       </span>
       {children}
@@ -289,7 +289,7 @@ export function Badge({
   };
   return (
     <span
-      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.04em] ${tones[tone]}`}
+      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-bold uppercase ${tones[tone]}`}
     >
       {children}
     </span>

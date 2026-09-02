@@ -83,7 +83,6 @@ class _Stat extends StatelessWidget {
             color: dim,
             fontSize: 10,
             fontWeight: FontWeight.w600,
-            letterSpacing: 0.8,
           ),
         ),
         const SizedBox(height: 4),

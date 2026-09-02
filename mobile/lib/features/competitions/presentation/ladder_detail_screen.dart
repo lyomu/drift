@@ -36,10 +36,7 @@ class LadderDetailScreen extends ConsumerWidget {
                 AsyncData(:final value) => ListView(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
                   children: [
-                    Text(
-                      value.ladder.name,
-                      style: type.h2.copyWith(fontWeight: FontWeight.w700),
-                    ),
+                    Text(value.ladder.name, style: type.h2),
                     const SizedBox(height: 4),
                     Text(
                       '${value.ladder.clubName} · Active',

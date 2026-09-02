@@ -252,7 +252,7 @@ class _ChallengeButton extends StatelessWidget {
           child: Text(
             'Challenge',
             style: TextStyle(
-              fontFamily: 'Outfit',
+              fontFamily: 'DMSans',
               fontSize: 13,
               fontWeight: FontWeight.w700,
               color: Colors.white,

@@ -138,10 +138,7 @@ class _ProfileBody extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    summary.displayName,
-                    style: type.h2.copyWith(fontWeight: FontWeight.w700),
-                  ),
+                  Text(summary.displayName, style: type.h2),
                   const SizedBox(height: 3),
                   Text(
                     summary.distanceBand ?? 'Distance unknown',
@@ -190,7 +187,6 @@ class _ProfileBody extends ConsumerWidget {
                 style: type.caption.copyWith(
                   fontWeight: FontWeight.w700,
                   color: colors.textSecondary,
-                  letterSpacing: 1.2,
                 ),
               ),
               const SizedBox(height: 8),

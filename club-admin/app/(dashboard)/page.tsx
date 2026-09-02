@@ -162,7 +162,7 @@ export default function OverviewPage() {
     <div>
       <div className="flex items-start justify-between gap-6">
         <div>
-          <h1 className="font-display text-[28px] font-extrabold leading-[34px] tracking-[-0.3px] text-drift-text-primary">
+          <h1 className="font-display text-[28px] font-extrabold leading-[34px] text-drift-text-primary">
             {greeting()}, {activeMembers[0]?.firstName ?? "Admin"}
           </h1>
           <p className="mt-1 text-sm text-drift-text-secondary">

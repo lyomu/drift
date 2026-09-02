@@ -66,13 +66,7 @@ class HomeHeader extends ConsumerWidget {
                     style: type.caption.copyWith(color: colors.textSecondary),
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    greeting,
-                    style: type.h2.copyWith(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
+                  Text(greeting, style: type.h2.copyWith(fontSize: 26)),
                 ],
               ),
             ),

@@ -50,10 +50,7 @@ class _PlayerSearchScreenState extends ConsumerState<PlayerSearchScreen> {
         if (!widget.embedded)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-            child: Text(
-              'Players',
-              style: type.h2.copyWith(fontWeight: FontWeight.w800),
-            ),
+            child: Text('Players', style: type.h2),
           ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),

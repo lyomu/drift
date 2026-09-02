@@ -103,7 +103,7 @@ export function MetricCard({
     <Panel className="p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-[12px] font-bold uppercase tracking-[0.08em] text-drift-text-secondary">{label}</div>
+          <div className="text-[12px] font-bold uppercase text-drift-text-secondary">{label}</div>
           <div className="mt-1 font-display text-3xl font-bold leading-tight text-drift-text-primary tabular">{value}</div>
           {note && <div className="mt-1 text-xs leading-5 text-drift-text-secondary">{note}</div>}
         </div>
@@ -174,7 +174,7 @@ export function DetailRail({
     <Panel className={`p-5 ${className}`}>
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="min-w-0">
-          {eyebrow && <div className="text-[11px] font-bold uppercase tracking-[0.1em] text-drift-text-secondary">{eyebrow}</div>}
+          {eyebrow && <div className="text-[11px] font-bold uppercase text-drift-text-secondary">{eyebrow}</div>}
           <h2 className="mt-1 font-display text-xl font-bold leading-6 text-drift-text-primary">{title}</h2>
         </div>
         {actions}

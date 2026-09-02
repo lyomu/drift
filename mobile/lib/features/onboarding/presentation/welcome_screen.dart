@@ -38,7 +38,7 @@ class WelcomeScreen extends StatelessWidget {
           Text(
             'Join the Court',
             textAlign: TextAlign.center,
-            style: type.h1.copyWith(fontSize: 26, fontWeight: FontWeight.w800),
+            style: type.h1.copyWith(fontSize: 26),
           ),
           const SizedBox(height: 10),
           Text(

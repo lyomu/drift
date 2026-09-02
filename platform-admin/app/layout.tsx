@@ -1,12 +1,18 @@
 import type { Metadata } from "next";
-import { Lexend } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-// Lexend ships as a variable font, so every weight the UI uses (regular
-// through extrabold) comes from a single file instead of discrete cuts.
-const lexend = Lexend({
-  subsets: ["latin"],
-  variable: "--font-lexend",
+const dmSans = localFont({
+  src: "./fonts/DMSans-Variable.ttf",
+  variable: "--font-dm-sans",
+  weight: "100 1000",
+  display: "swap",
+});
+
+const outfit = localFont({
+  src: "./fonts/Outfit-Variable.ttf",
+  variable: "--font-outfit",
+  weight: "100 900",
   display: "swap",
 });
 
@@ -28,7 +34,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${lexend.variable} h-full antialiased`}
+      className={`${dmSans.variable} ${outfit.variable} h-full antialiased`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />

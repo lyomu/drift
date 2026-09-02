@@ -3,19 +3,17 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { ClubProvider } from "@/lib/club-context";
 
-const outfit = localFont({
-  src: "./fonts/Outfit-Variable.ttf",
-  variable: "--font-outfit",
-  weight: "400 700",
+const dmSans = localFont({
+  src: "./fonts/DMSans-Variable.ttf",
+  variable: "--font-dm-sans",
+  weight: "100 1000",
   display: "swap",
 });
 
-// Display fallback until the Sharp Sans Display licence is purchased.
-// See foundation/05-design-system.md section 3 and mobile's pubspec.yaml.
-const displayFace = localFont({
-  src: "./fonts/SpaceGrotesk-Variable.ttf",
-  variable: "--font-display-face",
-  weight: "600 700",
+const outfit = localFont({
+  src: "./fonts/Outfit-Variable.ttf",
+  variable: "--font-outfit",
+  weight: "100 900",
   display: "swap",
 });
 
@@ -33,7 +31,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${outfit.variable} ${displayFace.variable} h-full antialiased`}
+      className={`${dmSans.variable} ${outfit.variable} h-full antialiased`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />

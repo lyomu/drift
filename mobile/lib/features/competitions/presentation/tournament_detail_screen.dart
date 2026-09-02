@@ -41,10 +41,7 @@ class TournamentDetailScreen extends ConsumerWidget {
             return ListView(
               padding: const EdgeInsets.all(DriftSpacing.s5),
               children: [
-                Text(
-                  t.name,
-                  style: type.h2.copyWith(fontWeight: FontWeight.w700),
-                ),
+                Text(t.name, style: type.h2),
                 const SizedBox(height: DriftSpacing.s1),
                 Text(
                   '${t.clubName} · ${t.entryCount}/${t.drawSize} slots · ${t.state}',

@@ -170,7 +170,7 @@ export function PageHeader({
   return (
     <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
       <div>
-        <h1 className="font-display text-[26px] font-extrabold leading-[32px] tracking-[-0.3px] text-drift-text-primary">
+        <h1 className="font-display text-[26px] font-extrabold leading-[32px] text-drift-text-primary">
           {title}
         </h1>
         {description && (
@@ -372,7 +372,7 @@ export function statusTone(status: string): "neutral" | "success" | "warning" | 
 export function Th({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
     <th
-      className={`border-b border-drift-border px-3 py-2 text-left text-xs font-bold uppercase tracking-wide text-drift-text-secondary ${className}`}
+      className={`border-b border-drift-border px-3 py-2 text-left text-xs font-bold uppercase text-drift-text-secondary ${className}`}
     >
       {children}
     </th>

@@ -211,7 +211,7 @@ export default function BillingPage() {
             <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <div className="flex flex-wrap items-center gap-3">
-                  <h2 className="text-2xl font-extrabold tracking-[-0.2px] text-drift-text-primary">
+                  <h2 className="text-2xl font-extrabold text-drift-text-primary">
                     {billing.subscription.plan.name}
                   </h2>
                   <StatusBadge status={billing.subscription.status} />
@@ -427,7 +427,7 @@ function PlanEntitlements({
 function InvoiceFact({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-md bg-drift-neutral-surface p-3">
-      <dt className="text-xs font-bold uppercase tracking-[0.4px] text-drift-text-secondary">{label}</dt>
+      <dt className="text-xs font-bold uppercase text-drift-text-secondary">{label}</dt>
       <dd className="mt-1 font-semibold text-drift-text-primary">{value}</dd>
     </div>
   );

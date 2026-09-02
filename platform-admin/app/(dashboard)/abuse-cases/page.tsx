@@ -173,7 +173,7 @@ export default function AbuseCasesPage() {
             )}
 
             <div className="mt-6 border-t border-drift-border pt-4">
-              <h3 className="mb-2 text-[12px] font-bold uppercase tracking-[0.08em] text-drift-text-secondary">Case history</h3>
+              <h3 className="mb-2 text-[12px] font-bold uppercase text-drift-text-secondary">Case history</h3>
               <div className="flex flex-col gap-3">
                 {detail.case.notes.map((note) => (
                   <div key={note.id} className="rounded-xl border border-drift-border p-3 text-sm">
@@ -186,7 +186,7 @@ export default function AbuseCasesPage() {
             </div>
 
             <div className="mt-6 border-t border-drift-border pt-4">
-              <h3 className="mb-2 text-[12px] font-bold uppercase tracking-[0.08em] text-drift-text-secondary">Evidence</h3>
+              <h3 className="mb-2 text-[12px] font-bold uppercase text-drift-text-secondary">Evidence</h3>
               <div className="grid gap-2 text-sm text-drift-text-secondary">
                 <div>{detail.evidence.playerReports.length} player reports</div>
                 <div>{detail.evidence.messageReports.length} message reports</div>

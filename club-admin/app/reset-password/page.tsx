@@ -76,7 +76,7 @@ function ResetPasswordForm() {
             tone={complete ? "success" : "info"}
             round
           />
-          <h1 className="mt-4 text-[24px] font-extrabold tracking-[-0.3px] text-drift-text-primary">
+          <h1 className="mt-4 text-[24px] font-extrabold text-drift-text-primary">
             {complete ? "Password updated" : step === "reset" ? "Enter reset code" : "Reset your password"}
           </h1>
           <p className="mt-2 text-[13.5px] leading-6 text-drift-text-secondary">
