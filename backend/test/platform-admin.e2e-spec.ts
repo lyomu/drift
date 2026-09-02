@@ -235,17 +235,9 @@ describe('Platform Admin (e2e)', () => {
       .post('/platform-admin/auth/login')
       .send({ email: adminEmail, password: adminPassword })
       .expect(200);
-    expect(login.body.challengeToken).toBeDefined();
-    expect(login.body.devVerificationCode).toBeDefined();
-    const verified = await request(app.getHttpServer())
-      .post('/platform-admin/auth/verify-2fa')
-      .send({
-        challengeToken: login.body.challengeToken,
-        code: login.body.devVerificationCode,
-      })
-      .expect(200);
-    expect(verified.body.accessToken).toBeDefined();
-    adminToken = verified.body.accessToken;
+    expect(login.body.requiresTwoFactor).toBe(false);
+    expect(login.body.accessToken).toBeDefined();
+    adminToken = login.body.accessToken;
 
     // A player token can never open a platform route...
     await authed(users.alice.token, 'get', '/platform-admin/users').expect(401);

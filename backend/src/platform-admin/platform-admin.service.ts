@@ -130,6 +130,7 @@ const REPORT_INCLUDES = {
 const RESET_CODE_TTL_MS = 30 * 60 * 1000;
 const RESET_CODE_COOLDOWN_MS = 60 * 1000;
 const MAX_RESET_ATTEMPTS = 5;
+const PLATFORM_ADMIN_2FA_TEMPORARILY_DISABLED = true;
 
 @Injectable()
 export class PlatformAdminService {
@@ -154,7 +155,7 @@ export class PlatformAdminService {
       throw new UnauthorizedException('Invalid credentials.');
     }
 
-    if (this.skipTwoFactorForTesting()) {
+    if (PLATFORM_ADMIN_2FA_TEMPORARILY_DISABLED) {
       await this.prisma.platformAdmin.update({
         where: { id: admin.id },
         data: { lastLoginAt: new Date() },
@@ -385,10 +386,6 @@ export class PlatformAdminService {
 
   private issueAccessToken(adminId: string) {
     return this.jwt.signAsync({ sub: adminId, scope: 'platform' });
-  }
-
-  private skipTwoFactorForTesting() {
-    return process.env.PLATFORM_ADMIN_SKIP_2FA === 'true';
   }
 
   private maskEmail(email: string) {
