@@ -6,7 +6,7 @@ artifact, so a commit or PR can close an item by referencing its ID
 
 **Status key:** `[ ]` to do · `[~]` in progress · `[!]` blocked · `[x]` done
 
-**24 items · 2 closed**
+**24 items · 3 closed**
 
 ---
 
@@ -32,9 +32,12 @@ artifact, so a commit or PR can close an item by referencing its ID
   Nothing watches API health, error rate, container restarts or cert expiry. The disk
   guard already reports to `ci.einsbrand.com` — hang alerts off that path.
   *Effort:* 1 day
-- [ ] **1.3 — Secrets off the filesystem**
-  `JWT_SECRET` / `DATABASE_URL` in `.env.production`, no rotation, no read audit.
-  *Reference:* SECURITY_REVIEW A02 · *Effort:* 1 day
+- [x] **1.3 — Secrets off the filesystem**
+  `.env.production` was already `600`, drift-deploy-owned, single-SSH-key access —
+  no real secret ever found in git history or CI logs. The open gap was proving a
+  rotation actually works: `JWT_SECRET` rotated live 2026-09-02, verified — the
+  pre-rotation token now 401s, a fresh login issues a working token, API stayed
+  healthy through the container recreate. *Reference:* SECURITY_REVIEW A02
 
 ## Phase 2 — The domain 🔴
 
