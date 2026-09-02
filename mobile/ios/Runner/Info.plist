@@ -47,5 +47,21 @@
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Drift uses your location to suggest nearby courts, clubs, and players during onboarding.</string>
+	<!-- Google Sign-In callback. This is the REVERSED_CLIENT_ID of the iOS
+	     OAuth client, and without it the Google sheet completes but never
+	     returns to the app. A client ID is public by design — it ships inside
+	     every build — so it is committed rather than passed at build time,
+	     unlike the secrets in .env. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.921637855690-621pq70ca20pj5b7tafr3r1nequael5f</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

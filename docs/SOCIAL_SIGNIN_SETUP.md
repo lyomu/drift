@@ -72,30 +72,64 @@ missing fingerprint fails at the Google sheet with a bare `10:` error.
 **c. iOS** — bundle ID `com.drift.tennis.driftTennis`. Download the
 `GoogleService-Info.plist` it offers and place it at `ios/Runner/`.
 
+### The clients — created 2026-09-02
+
+All four exist in project `921637855690`. **Client IDs are public by design** —
+they ship inside every build and can be read out of any APK — so they are
+recorded here and committed. The Web client's *secret* is a different thing and
+**is not used anywhere in this architecture**: tokens are verified against
+Google's public JWKS, so there is no code exchange. Leave it in the console.
+
+| Client | ID (prefix `921637855690-`) |
+|---|---|
+| Web (server) | `mpmeootgo8lnh4qh2k8eggfjfcr5q7ks` |
+| Android — debug keystore | `0ljoaisejhja0bfdgkpu0d0sdegdu7sm` |
+| Android — preview keystore | `3r6qk5bbvdcm2isoh9u22n8pdcea3vga` |
+| iOS | `621pq70ca20pj5b7tafr3r1nequael5f` |
+
+> **No release-keystore client yet.** That is deliberate and blocked on tracker
+> 5.1 — `release.keystore` does not open with the password in `key.properties`,
+> and if it ever signed a distributable build it must be rotated. Registering a
+> fingerprint you then have to abandon is the thing to avoid.
+
 ### Where the IDs go
 
-**Backend** — every client ID that may present a token, comma-separated, in
-`.env.production` on the box (and your local `.env`):
+**Backend** — every client that may present a token, comma-separated, in
+`.env.production` on the box (and the local `.env`, already set):
 
 ```
-GOOGLE_OAUTH_CLIENT_IDS=<web>.apps.googleusercontent.com,<android>.apps.googleusercontent.com,<ios>.apps.googleusercontent.com
+GOOGLE_OAUTH_CLIENT_IDS=921637855690-mpmeootgo8lnh4qh2k8eggfjfcr5q7ks.apps.googleusercontent.com,921637855690-0ljoaisejhja0bfdgkpu0d0sdegdu7sm.apps.googleusercontent.com,921637855690-3r6qk5bbvdcm2isoh9u22n8pdcea3vga.apps.googleusercontent.com,921637855690-621pq70ca20pj5b7tafr3r1nequael5f.apps.googleusercontent.com
 ```
 
-This list is the **audience check** — it is what stops a token minted for
-someone else's Google client from signing in here. List all three; the token's
-`aud` is whichever client produced it.
+This list is the **audience check** — what stops a token minted for someone
+else's Google client from signing in here. Both Android IDs are listed because
+a debug and a preview build present different ones. Restart the API after
+editing; the list is read once at construction.
 
-**Mobile** — build-time, never committed:
+**Mobile** — build-time:
 
 ```bash
 flutter build apk --release \
   --dart-define=DRIFT_API_BASE_URL=https://drift.einsbrand.com/api \
-  --dart-define=DRIFT_GOOGLE_SERVER_CLIENT_ID=<web>.apps.googleusercontent.com \
-  --dart-define=DRIFT_GOOGLE_IOS_CLIENT_ID=<ios>.apps.googleusercontent.com
+  --dart-define=DRIFT_GOOGLE_SERVER_CLIENT_ID=921637855690-mpmeootgo8lnh4qh2k8eggfjfcr5q7ks.apps.googleusercontent.com \
+  --dart-define=DRIFT_GOOGLE_IOS_CLIENT_ID=921637855690-621pq70ca20pj5b7tafr3r1nequael5f.apps.googleusercontent.com
 ```
 
-Android needs only the **server** (web) ID; iOS needs both. Restart the API
-after editing `.env.production` — client IDs are read once at construction.
+Android needs only the **server** (Web) ID — that is what makes Google return
+an ID token at all. iOS needs both.
+
+**iOS URL scheme** — already committed to `ios/Runner/Info.plist` as
+`CFBundleURLTypes`. It is the iOS client's `REVERSED_CLIENT_ID`, and without it
+the Google sheet completes but never returns to the app.
+
+> **The `.plist` downloaded from an iOS *OAuth client* is not
+> `GoogleService-Info.plist`.** It carries only `CLIENT_ID`,
+> `REVERSED_CLIENT_ID`, `PLIST_VERSION` and `BUNDLE_ID`. The Firebase file adds
+> `API_KEY`, `GCM_SENDER_ID`, `GOOGLE_APP_ID` and `PROJECT_ID`, and comes from
+> the Firebase console instead. Renaming the OAuth one makes
+> `Firebase.initializeApp()` fail on the missing keys, which reads like a code
+> bug. Nothing needs the OAuth plist — its one useful value is already in
+> `Info.plist` above.
 
 ---
 
