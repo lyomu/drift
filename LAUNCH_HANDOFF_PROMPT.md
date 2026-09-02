@@ -30,7 +30,7 @@ launch**. Nothing since has overturned that.
 
 ## 2. Current state — verified 2026-09-02
 
-**4 of 24 items closed:** `0.1`, `0.2`, `1.2`, `1.3`.
+**6 of 24 items closed:** `0.1`, `0.2`, `1.2`, `1.3`, `2.1`, `2.2`.
 
 | Item | State |
 |---|---|
@@ -40,16 +40,24 @@ launch**. Nothing since has overturned that.
 | `1.2` Monitoring and alerting | Done. `scripts/ops/drift-health-guard.sh` (on the box at `/usr/local/sbin/`, cron'd every 15 min) checks API health, TLS expiry, container state/restarts — forced-failure-tested, so detection is real. Its alert channel (`alert.sh` → Jenkins `ops-alert` job → email) had never actually delivered — the token in `/root/.jenkins_ops_token` 401'd against `ci.einsbrand.com` — but the owner re-issued it 2026-09-02 and delivery was proven end-to-end in one pass: crumb issuer 200, POST to `buildWithParameters` HTTP 201, Jenkins build #14 SUCCESS (the job's `mail` step fails the build on SMTP rejection, so SUCCESS = accepted), test email received at the job's configured recipient `hello@lyomu.com`. Root cause of the dead token: Jenkins revokes a user's API tokens when their password changes — a future 401 after a password change means re-issue, not debugging. |
 | `1.3` Secrets off the filesystem | Done. `.env.production` was already `600`, single-owner, single-SSH-key-access — that already satisfied the security review's "root-only env files" bar; no real secret was ever found in git history or CI logs. `JWT_SECRET` rotated live and verified three ways: pre-rotation access token now 401s, fresh login issues a working token, API stayed healthy through the `--force-recreate`. **Correction to the original finding:** rotating it is lower-risk than it looks — refresh tokens are opaque and DB-hashed, not JWT-signed, so only short-lived access tokens die; an active client recovers silently via its own refresh flow, not a hard logout. |
 
-**Everything else — items `2.1` through `P.6`, 21 of 24 — is genuinely untouched.**
+**Everything else — items `2.3` and `3.1` through `P.6`, 18 of 24 — is genuinely
+untouched, except:** the domain settled on 2026-09-02 is **`drift.einsbrand.com`**
+(a subdomain of the owner's own zone, DNS at `ns1.noc254.com`), pointed at the box
+with TLS reissued the same day — see the tracker's `2.1`/`2.2` entries for evidence.
+The IP vhost remains as a fallback until the mobile APK is rebuilt against the
+domain, and the box's `.env.production` URL variables still reference the IP
+(next full rebuild should move them; see the note in `docs/DEPLOYMENT.md`).
 
 ## 3. What to do next, in order
 
 Follow `LAUNCH_PLAN.md`'s phase order; it exists precisely so each phase unblocks
 the next rather than picking items at random.
 
-1. **Phase 2 (`2.1`–`2.3`) is the highest-leverage next move and is blocked on
-   the product owner, not engineering.** Get the domain. Everything in Phase 3
-   and Phase 4 sits behind it.
+1. **Phase 2 (`2.1`–`2.3`) is `2.1`/`2.2` done (2026-09-02, domain `drift.einsbrand.com`
+   + 90-day TLS) and `2.3` (SPF/DKIM/DMARC) remaining.** `2.3`'s DKIM keys must come
+   from whatever provider is chosen in Phase 3, so the pragmatic order is now
+   provider decision → send the DKIM/SPF records. Phase 3 and Phase 4 are unblocked
+   on the naming/TLS side.
 2. **Phase 3 (`3.1`) — email/SMS provider.** The single largest functional gap:
    no signup verification, no password reset, no club invitations, no support
    replies in production. Needs a provider decision before any code.

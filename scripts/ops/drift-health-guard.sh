@@ -16,8 +16,8 @@ ALERT="$(dirname "$0")/alert.sh"
 # cron entry sets this explicitly; match it here so a bare invocation still
 # reaches the real Jenkins instead of failing silently with HTTP 000.
 export JENKINS_URL="${JENKINS_URL:-https://ci.einsbrand.com}"
-API_URL="${API_URL:-https://135.181.146.130/api/health}"
-CERT_NAME="${CERT_NAME:-135.181.146.130}"
+API_URL="${API_URL:-https://drift.einsbrand.com/api/health}"
+CERT_NAME="${CERT_NAME:-drift.einsbrand.com}"
 CERT_WARN_DAYS="${CERT_WARN_DAYS:-2}"
 HOST_LABEL="${HOST_LABEL:-Drift-Tennis-135.181.146.130}"
 CONTAINERS="drift-api drift-club-admin drift-platform-admin drift-postgres drift-redis"

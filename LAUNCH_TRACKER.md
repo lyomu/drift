@@ -6,7 +6,7 @@ artifact, so a commit or PR can close an item by referencing its ID
 
 **Status key:** `[ ]` to do · `[~]` in progress · `[!]` blocked · `[x]` done
 
-**24 items · 4 closed**
+**24 items · 6 closed**
 
 ---
 
@@ -49,11 +49,21 @@ artifact, so a commit or PR can close an item by referencing its ID
 
 ## Phase 2 — The domain 🔴
 
-- [ ] **2.1 — Acquire and point the domain**
-  The handoff calls this "the one open blocker". Highest-leverage single action —
-  unblocks 2.2, 2.3, all of Phase 3 and Phase 4. *Blocked on:* owner
-- [ ] **2.2 — Reissue TLS against real names** *(depends on 2.1)*
-  Replaces the seven-day short-lived IP certificate with a normal 90-day one.
+- [x] **2.1 — Acquire and point the domain**
+  Settled on `drift.einsbrand.com` — a subdomain of the zone the owner already controls
+  (`ns1.noc254.com`), so this became a record change, not a purchase. DNS set 2026-09-02:
+  `A → 135.181.146.130`, `AAAA → 2a01:4f9:c013:fb24::1`, TTL 300, verified from the
+  authoritative server and public resolvers. No wildcard on the zone (probe confirmed),
+  so the pre-existing `drift` record pointing at the apex host was edited in place.
+- [x] **2.2 — Reissue TLS against real names** *(depends on 2.1)*
+  90-day Let's Encrypt cert for `drift.einsbrand.com` issued 2026-09-02 (expires
+  2026-12-01) via `certbot certonly --nginx`; `renew_hook = systemctl reload nginx`
+  inherited into its renewal config; `certbot renew --dry-run` passes (EXIT 0). Nginx
+  split into a name vhost (`/etc/nginx/conf.d/drift-name.conf`) plus the IP vhost kept
+  as 443 `default_server` so preview APKs compiled with the old IP URL keep working —
+  the short-lived IP cert still renews for it. Health guard now watches the domain
+  (cert check reports 89 days, not 5). Mobile rebuild should pass
+  `--dart-define=DRIFT_API_BASE_URL=https://drift.einsbrand.com/api`.
 - [ ] **2.3 — SPF, DKIM, DMARC** *(depends on 2.1)*
   Without these, provider email lands in spam, silently undermining Phase 3.
 

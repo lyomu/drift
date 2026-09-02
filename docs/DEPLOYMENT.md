@@ -1,22 +1,25 @@
-# Drift Tennis IP-only staging deployment
+# Drift Tennis staging deployment
 
-Target server: `135.181.146.130`
+Target server: `135.181.146.130` · primary name: `drift.einsbrand.com` (since 2026-09-02)
 
-This is an internal staging/preview deployment until a real domain exists. The
-domain-based vhost split should replace this once DNS is ready.
+The deployment is reachable under its real domain with a normal 90-day Let's Encrypt
+certificate. The original bare-IP vhost is kept as `default_server` alongside it so
+preview APKs compiled with the old IP URL keep working until the next mobile rebuild
+— the IP certificate still renews on its own timer.
 
 ## Public routes
 
 | Route | Service |
 |---|---|
-| `https://135.181.146.130/` | Club Admin |
-| `https://135.181.146.130/platform` | Platform Admin |
-| `https://135.181.146.130/api/` | NestJS API |
-| `https://135.181.146.130/socket.io/` | Socket.IO gateway |
+| `https://drift.einsbrand.com/` | Club Admin |
+| `https://drift.einsbrand.com/platform` | Platform Admin |
+| `https://drift.einsbrand.com/api/` | NestJS API |
+| `https://drift.einsbrand.com/socket.io/` | Socket.IO gateway |
+| `https://135.181.146.130/…` | same services, IP vhost (legacy fallback) |
 
 Both admin surfaces are protected with HTTP basic auth at Nginx. The API and
 Socket.IO routes are not basic-auth protected so browser/mobile clients can call
-them normally.
+them normally. Plain HTTP 80 redirects to HTTPS on both vhosts.
 
 ## Server setup
 
@@ -63,6 +66,12 @@ NEWS_FEED_ALLOWED_HOSTS=feeds.bbci.co.uk,www.atptour.com
 `PUBLIC_API_URL` is baked into both Next.js builds and their CSP headers, so it
 must be correct before `docker compose build` runs.
 
+**Domain migration note (2026-09-02):** the box's `.env.production` still carries
+the `135.181.146.130` URLs above. nginx now terminates both the domain and the IP
+vhost, so nothing is broken, but the next full rebuild should move these four URL
+variables to `drift.einsbrand.com` (and add it to `CORS_ALLOWED_ORIGINS`) so
+CSPs, links, and email-bound URLs use the real identity.
+
 ## Nginx and IP certificate
 
 Bootstrap HTTP-only first:
@@ -101,6 +110,12 @@ certbot renew --dry-run --no-random-sleep
 certbot reconfigure --cert-name 135.181.146.130 \
   --deploy-hook "systemctl reload nginx"
 ```
+
+Since 2026-09-02 the primary certificate is a normal 90-day one for
+`drift.einsbrand.com` (`certbot certonly --nginx -d drift.einsbrand.com`), with
+the same `renew_hook = systemctl reload nginx` in its renewal config — verify
+with `certbot renew --dry-run --cert-name drift.einsbrand.com --no-random-sleep`.
+The short-lived IP cert remains for the fallback vhost.
 
 ## Basic auth
 
@@ -169,7 +184,7 @@ dart-define:
 ```bash
 cd mobile
 flutter build apk --release --split-per-abi \
-  --dart-define=DRIFT_API_BASE_URL=https://135.181.146.130/api
+  --dart-define=DRIFT_API_BASE_URL=https://drift.einsbrand.com/api
 ```
 
 Outputs land in `mobile/build/app/outputs/flutter-apk/` —
