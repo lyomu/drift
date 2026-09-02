@@ -45,6 +45,7 @@ services:
       PORT: 3009
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       REDIS_URL: redis://redis:6379
+      PLATFORM_ADMIN_SKIP_2FA: "true"
     depends_on:
       postgres:
         condition: service_healthy

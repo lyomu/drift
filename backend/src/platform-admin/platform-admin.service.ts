@@ -154,6 +154,19 @@ export class PlatformAdminService {
       throw new UnauthorizedException('Invalid credentials.');
     }
 
+    if (this.skipTwoFactorForTesting()) {
+      await this.prisma.platformAdmin.update({
+        where: { id: admin.id },
+        data: { lastLoginAt: new Date() },
+      });
+      return {
+        requiresTwoFactor: false,
+        accessToken: await this.issueAccessToken(admin.id),
+        adminId: admin.id,
+        name: admin.name,
+      };
+    }
+
     return this.createTwoFactorChallenge(admin.id, admin.email);
   }
 
@@ -372,6 +385,10 @@ export class PlatformAdminService {
 
   private issueAccessToken(adminId: string) {
     return this.jwt.signAsync({ sub: adminId, scope: 'platform' });
+  }
+
+  private skipTwoFactorForTesting() {
+    return process.env.PLATFORM_ADMIN_SKIP_2FA === 'true';
   }
 
   private maskEmail(email: string) {

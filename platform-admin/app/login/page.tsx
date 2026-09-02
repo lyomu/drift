@@ -5,7 +5,39 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { MaterialIcon } from "@/components/dashboard-design";
 import { Button, ErrorBanner, Input, PasswordField } from "@/components/ui";
-import { api, ApiError, setTwoFactorChallenge, type TwoFactorChallenge } from "@/lib/api-client";
+import type { CurrentPlatformAdmin, PlatformPermission } from "@/lib/access-types";
+import {
+  api,
+  ApiError,
+  setToken,
+  setTwoFactorChallenge,
+  type TwoFactorChallenge,
+} from "@/lib/api-client";
+
+const LANDINGS: { permission: PlatformPermission; href: string }[] = [
+  { permission: "ANALYTICS_READ", href: "/" },
+  { permission: "VENUES_MANAGE", href: "/venues" },
+  { permission: "ORGANIZATIONS_MANAGE", href: "/organizations" },
+  { permission: "ACCESS_MANAGE", href: "/access/team" },
+  { permission: "CONTENT_MANAGE", href: "/content" },
+  { permission: "COMMERCIAL_MANAGE", href: "/commercial/plans" },
+  { permission: "TRUST_SAFETY_MANAGE", href: "/reports" },
+  { permission: "PLATFORM_CONFIG_MANAGE", href: "/settings" },
+  { permission: "SUPPORT_MANAGE", href: "/support/tickets" },
+  { permission: "USERS_MANAGE", href: "/users" },
+  { permission: "COMPETITIONS_MANAGE", href: "/competitions" },
+  { permission: "AUDIT_READ", href: "/audit-logs" },
+];
+
+type PlatformLoginResponse =
+  | (TwoFactorChallenge & { requiresTwoFactor: true })
+  | { requiresTwoFactor: false; accessToken: string };
+
+function landingFor(admin: CurrentPlatformAdmin) {
+  return admin.role.permissions.includes("ANALYTICS_READ")
+    ? "/"
+    : (LANDINGS.find((item) => admin.role.permissions.includes(item.permission))?.href ?? "/");
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -20,10 +52,17 @@ export default function LoginPage() {
     setError(null);
     setSubmitting(true);
     try {
-      const res = await api.post<TwoFactorChallenge & { requiresTwoFactor: true }>("/auth/login", {
+      const res = await api.post<PlatformLoginResponse>("/auth/login", {
         email,
         password,
       });
+      if (!res.requiresTwoFactor) {
+        setToken(res.accessToken);
+        setTwoFactorChallenge(null);
+        const admin = await api.get<CurrentPlatformAdmin>("/auth/me");
+        router.replace(landingFor(admin));
+        return;
+      }
       setTwoFactorChallenge(res);
       router.push("/verify-2fa");
     } catch (err) {
