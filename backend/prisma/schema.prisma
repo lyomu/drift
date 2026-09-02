@@ -37,6 +37,12 @@ enum AccountStatus {
   DELETED
 }
 
+// Third-party identity providers for social sign-in (Phase 4).
+enum AuthProvider {
+  GOOGLE
+  APPLE
+}
+
 enum DominantHand {
   LEFT
   RIGHT
@@ -554,11 +560,35 @@ enum CourtReportReason {
 
 // Identity, credentials, account state. Sport-specific data never lives
 // here — see foundation/06-domain-technical-architecture.md §1.
+
+// One row per (provider, providerAccountId) owned by a user. A single account
+// can hold several identities (e.g. Google + Apple + password) without
+// duplicating the user. `@@unique([provider, providerAccountId])` is what
+// makes provider sign-in idempotent.
+model SocialIdentity {
+  id                String      @id @default(cuid())
+  provider          AuthProvider
+  providerAccountId String
+  userId            String
+  email             String?
+  // Apple returns the name ONLY on the very first authorization — persist it
+  // here the first time or it is gone forever.
+  name              String?
+  createdAt         DateTime    @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("social_identities")
+}
+
 model User {
   id           String  @id @default(uuid())
   email        String? @unique
   phone        String? @unique
-  passwordHash String
+  // Nullable since Phase 4: a Google/Apple-only user has no password.
+  passwordHash String?
 
   firstName String?
   lastName  String?
@@ -585,6 +615,7 @@ model User {
   billingAccount    BillingAccount?
   verificationCodes VerificationCode[]
   refreshTokens     RefreshToken[]
+  socialIdentities  SocialIdentity[]
 
   tournamentEntries TournamentEntry[] @relation("TournamentEntries")
   ladderEntries     LadderEntry[]    @relation("LadderEntries")

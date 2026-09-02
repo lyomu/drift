@@ -20,6 +20,11 @@ import { RefreshDto } from './dto/refresh.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import {
+  OAuthAppleDto,
+  OAuthGoogleDto,
+  OAuthLinkDto,
+} from './dto/oauth.dto';
 
 /**
  * Strict per-route limits for the endpoints an attacker would hammer:
@@ -94,6 +99,36 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   logout(@Body() dto: RefreshDto) {
     return this.authService.logout(dto.refreshToken);
+  }
+
+  /**
+   * Social sign-in shares the credential-guessing throttle with login: the
+   * id-token is verified against the provider, but the linking path below
+   * accepts a password, and all three are worth rate-limiting as one family.
+   */
+  @Throttle({ default: AUTH_SENSITIVE })
+  @Post('oauth/google')
+  @HttpCode(HttpStatus.OK)
+  oauthGoogle(@Body() dto: OAuthGoogleDto) {
+    return this.authService.oauthGoogle(dto);
+  }
+
+  @Throttle({ default: AUTH_SENSITIVE })
+  @Post('oauth/apple')
+  @HttpCode(HttpStatus.OK)
+  oauthApple(@Body() dto: OAuthAppleDto) {
+    return this.authService.oauthApple(dto);
+  }
+
+  /**
+   * Completes a 409 EMAIL_LINK_REQUIRED from either route above — the client
+   * re-sends the identity token together with the existing account's password.
+   */
+  @Throttle({ default: AUTH_SENSITIVE })
+  @Post('oauth/link')
+  @HttpCode(HttpStatus.OK)
+  oauthLink(@Body() dto: OAuthLinkDto) {
+    return this.authService.oauthLink(dto);
   }
 
   @Patch('change-password')

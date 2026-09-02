@@ -1,7 +1,7 @@
 # Phase 4 — Google & Apple Sign-In: Implementation Plan
 
-Status: **draft for approval** · Date: 2026-09-02 · Companion: `LAUNCH_PLAN.md`
-Phase 4, `LAUNCH_TRACKER.md` items 4.1–4.5
+Status: **4.1–4.3 built and verified 2026-09-02; 4.4–4.5 outstanding** · Companion:
+`LAUNCH_PLAN.md` Phase 4, `LAUNCH_TRACKER.md` items 4.1–4.5
 
 This document is the written plan required for multi-edit approval before any code
 is written. It exists because three screens currently render "Continue with
@@ -15,14 +15,14 @@ capability then fails on the same screens people must finish onboarding through.
 | # | Decision | Who | Blocks |
 |---|---|---|---|
 | 4.2 | Account-linking policy when a Google/Apple email matches an existing password account | Product owner | Backend linking path |
+| 4.2 · **decided 2026-09-02** | **Auto-link — but only when both sides are verified** (provider asserts `email_verified` **∧** the existing account has `emailVerifiedAt`). Fallback when the condition is unmet: **prompt-to-link** (the app asks for the existing password, then links). Owner rejected bare auto-link and bare reject. | — | — |
 | — | Google Cloud OAuth client IDs (Android SHA-1/SHA-256 of *both* keystores, iOS, web) | Product owner (reuse the existing GCP project that owns `GOOGLE_PLACES_API_KEY`) | 4.3/4.4 Google wiring |
 | — | Apple Developer Program membership ($99/yr) + App ID with "Sign in with Apple" + Services ID + key | Product owner, paperwork lead-time | 4.4/4.5 Apple |
 | — | Apple private-relay note: Apple returns the name **only on the first authorization** | — | persist it on that first callback |
 
 **4.2 is the only decision that changes backend behavior handed to users.** It cannot
-be retrofitted safely after shipping. Recommended: **prompt-to-link** (option 3),
-with auto-link (option 1) only when the provider asserts a verified email *and* the
-existing account's email is itself verified.
+be retrofitted safely after shipping. **Decided 2026-09-02: auto-link when both sides
+are verified, with prompt-to-link as the fallback** (see §0).
 
 ---
 
@@ -67,8 +67,15 @@ Migration: new enum + table + `ALTER COLUMN "passwordHash" DROP NOT NULL`. `npx 
 
 ## 2. 4.3 — Backend endpoints
 
-**New dependencies:** `google-auth-library` (Google ID-token verification), `jose`
-(Apple JWKS via `createRemoteJWKSet` against `https://appleid.apple.com/auth/keys`).
+**New dependencies:** `google-auth-library@11` (Google ID-token verification) and
+**`jose@4`** (Apple JWKS via `createRemoteJWKSet` against
+`https://appleid.apple.com/auth/keys`).
+
+> **Do not upgrade `jose` past 4.x.** From 5.0 the package is `"type": "module"` —
+> ESM-only — and ts-jest in this repo cannot load an ESM-only dependency. Because
+> `oauth.service.ts` is imported by `auth.service.ts`, that failure would take out
+> *every* auth spec, not just this module's. The `createRemoteJWKSet`/`jwtVerify`
+> API used here is identical across those versions, so the upgrade buys nothing.
 
 **New `backend/src/auth/oauth/` module:**
 - `oauth.service.ts` — `verifyGoogleIdToken(idToken, nonce)` (signature, `aud` ∈
@@ -88,10 +95,10 @@ Migration: new enum + table + `ALTER COLUMN "passwordHash" DROP NOT NULL`. `npx 
        + identity row (persist the Apple name *now*) → issue tokens. New users skip the
        email-verification screen entirely.
      - exists → apply the **4.2 policy**:
-       - prompt-to-link (recommended) → `409` `{ code: 'EMAIL_LINK_REQUIRED' }`; the app
-         prompts for the password, then calls the link endpoint.
-       - auto-link (only if provider `email_verified` ∧ `user.emailVerifiedAt`) → attach
+       - provider `email_verified` **∧** `user.emailVerifiedAt` → **auto-link**: attach
          identity, issue tokens.
+       - otherwise → `409` `{ code: 'EMAIL_LINK_REQUIRED' }` (the fallback); the app
+         prompts for the existing password, then calls the link endpoint.
 - `linkSocialIdentity(provider, claims, email, password)` — verify the password, attach
   the identity, revoke other sessions, return tokens.
 

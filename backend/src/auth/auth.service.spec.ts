@@ -9,11 +9,13 @@ import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailerService } from '../mail/mailer.service';
+import { OAuthService } from './oauth.service';
 
 type MockPrisma = {
   user: Record<string, jest.Mock>;
   verificationCode: Record<string, jest.Mock>;
   refreshToken: Record<string, jest.Mock>;
+  socialIdentity: Record<string, jest.Mock>;
   $transaction: jest.Mock;
 };
 
@@ -35,6 +37,11 @@ function createMockPrisma(): MockPrisma {
       update: jest.fn(),
       updateMany: jest.fn(),
     },
+    socialIdentity: {
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      upsert: jest.fn(),
+    },
     $transaction: jest.fn(),
   };
 
@@ -51,6 +58,10 @@ function createMockPrisma(): MockPrisma {
 describe('AuthService', () => {
   let service: AuthService;
   let prisma: MockPrisma;
+  let oauth: {
+    verifyGoogleIdToken: jest.Mock;
+    verifyAppleIdentityToken: jest.Mock;
+  };
 
   beforeEach(() => {
     prisma = createMockPrisma();
@@ -74,11 +85,21 @@ describe('AuthService', () => {
       sendVerificationCode: jest.fn().mockResolvedValue(false),
     } as unknown as MailerService;
 
+    // Token verification is OAuthService's job and is tested there against
+    // real signature/audience/nonce failures. Stubbing it here lets these
+    // tests state the *verified claims* directly, which is the only input
+    // the linking policy actually reasons about.
+    oauth = {
+      verifyGoogleIdToken: jest.fn(),
+      verifyAppleIdentityToken: jest.fn(),
+    };
+
     service = new AuthService(
       prisma as unknown as PrismaService,
       jwt,
       config,
       mailer,
+      oauth as unknown as OAuthService,
     );
   });
 
@@ -547,6 +568,208 @@ describe('AuthService', () => {
           newPassword: 'brand-new-password',
         }),
       ).rejects.toThrow('Invalid or expired code.');
+    });
+  });
+
+  describe('social sign-in', () => {
+    const googleClaims = {
+      provider: 'GOOGLE',
+      providerAccountId: 'google-sub-1',
+      email: 'social@test.com',
+      emailVerified: true,
+      givenName: 'Ada',
+      familyName: 'Lovelace',
+    };
+
+    beforeEach(() => {
+      oauth.verifyGoogleIdToken.mockResolvedValue(googleClaims);
+      prisma.refreshToken.create.mockResolvedValue({});
+    });
+
+    it('signs a returning user in on the provider sub, not the email', async () => {
+      prisma.socialIdentity.findUnique.mockResolvedValue({
+        userId: 'user-1',
+        user: { id: 'user-1', accountStatus: 'ACTIVE' },
+      });
+
+      const tokens = await service.oauthGoogle({ idToken: 'tok' });
+
+      expect(tokens.accessToken).toBe('access-token');
+      // Matching on `sub` alone is the point: no email lookup should happen,
+      // so a user who changes their Google address keeps this account.
+      expect(prisma.user.findUnique).not.toHaveBeenCalled();
+    });
+
+    it('refuses a suspended account the same way login does', async () => {
+      prisma.socialIdentity.findUnique.mockResolvedValue({
+        userId: 'user-1',
+        user: { id: 'user-1', accountStatus: 'SUSPENDED' },
+      });
+
+      await expect(service.oauthGoogle({ idToken: 'tok' })).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('creates a verified user straight into BASIC_PROFILE for a new email', async () => {
+      prisma.socialIdentity.findUnique.mockResolvedValue(null);
+      prisma.user.findUnique.mockResolvedValue(null);
+      prisma.user.create.mockResolvedValue({ id: 'user-new' });
+      prisma.socialIdentity.create.mockResolvedValue({});
+
+      await service.oauthGoogle({ idToken: 'tok' });
+
+      const data = prisma.user.create.mock.calls[0][0].data;
+      expect(data.passwordHash).toBeNull();
+      expect(data.emailVerifiedAt).toBeInstanceOf(Date);
+      expect(data.verificationStatus).toBe('VERIFIED');
+      // The provider already proved the address, so this user must skip the
+      // verification screen — landing on VERIFY would be a dead end for them.
+      expect(data.onboardingStep).toBe('BASIC_PROFILE');
+      expect(data.tennisProfile).toEqual({ create: {} });
+    });
+
+    it('persists the name on the creating write — Apple never sends it twice', async () => {
+      oauth.verifyAppleIdentityToken.mockResolvedValue({
+        ...googleClaims,
+        provider: 'APPLE',
+        providerAccountId: 'apple-sub-1',
+      });
+      prisma.socialIdentity.findUnique.mockResolvedValue(null);
+      prisma.user.findUnique.mockResolvedValue(null);
+      prisma.user.create.mockResolvedValue({ id: 'user-new' });
+      prisma.socialIdentity.create.mockResolvedValue({});
+
+      await service.oauthApple({ identityToken: 'tok' });
+
+      expect(prisma.socialIdentity.create.mock.calls[0][0].data.name).toBe(
+        'Ada Lovelace',
+      );
+    });
+
+    it('auto-links only when both sides are verified', async () => {
+      prisma.socialIdentity.findUnique.mockResolvedValue(null);
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        accountStatus: 'ACTIVE',
+        emailVerifiedAt: new Date(),
+      });
+      prisma.socialIdentity.create.mockResolvedValue({});
+
+      await service.oauthGoogle({ idToken: 'tok' });
+
+      expect(prisma.socialIdentity.create).toHaveBeenCalled();
+      expect(prisma.user.create).not.toHaveBeenCalled();
+    });
+
+    it('demands the password when the existing account is unverified', async () => {
+      prisma.socialIdentity.findUnique.mockResolvedValue(null);
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        accountStatus: 'ACTIVE',
+        emailVerifiedAt: null,
+      });
+
+      await expect(service.oauthGoogle({ idToken: 'tok' })).rejects.toThrow(
+        ConflictException,
+      );
+      expect(prisma.socialIdentity.create).not.toHaveBeenCalled();
+    });
+
+    it('demands the password when the provider has not verified the address', async () => {
+      oauth.verifyGoogleIdToken.mockResolvedValue({
+        ...googleClaims,
+        emailVerified: false,
+      });
+      prisma.socialIdentity.findUnique.mockResolvedValue(null);
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        accountStatus: 'ACTIVE',
+        emailVerifiedAt: new Date(),
+      });
+
+      await expect(service.oauthGoogle({ idToken: 'tok' })).rejects.toThrow(
+        ConflictException,
+      );
+    });
+  });
+
+  describe('oauthLink', () => {
+    const linkDto = {
+      provider: 'GOOGLE' as never,
+      idToken: 'tok',
+      email: 'social@test.com',
+      password: 'correct-password',
+    };
+
+    beforeEach(() => {
+      oauth.verifyGoogleIdToken.mockResolvedValue({
+        provider: 'GOOGLE',
+        providerAccountId: 'google-sub-1',
+        email: 'social@test.com',
+        emailVerified: true,
+        givenName: null,
+        familyName: null,
+      });
+      prisma.refreshToken.create.mockResolvedValue({});
+    });
+
+    it('links the identity and revokes other sessions once the password checks out', async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        accountStatus: 'ACTIVE',
+        emailVerifiedAt: null,
+        passwordHash: await bcrypt.hash('correct-password', 4),
+      });
+      prisma.socialIdentity.findUnique.mockResolvedValue(null);
+
+      await service.oauthLink(linkDto);
+
+      expect(prisma.socialIdentity.upsert).toHaveBeenCalled();
+      // A new way into the account is a credential change — other devices go.
+      expect(prisma.refreshToken.updateMany).toHaveBeenCalledWith({
+        where: { userId: 'user-1', revokedAt: null },
+        data: { revokedAt: expect.any(Date) },
+      });
+    });
+
+    it('rejects a wrong password without touching the identity table', async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        accountStatus: 'ACTIVE',
+        emailVerifiedAt: null,
+        passwordHash: await bcrypt.hash('correct-password', 4),
+      });
+
+      await expect(
+        service.oauthLink({ ...linkDto, password: 'wrong-password' }),
+      ).rejects.toThrow(UnauthorizedException);
+      expect(prisma.socialIdentity.upsert).not.toHaveBeenCalled();
+    });
+
+    it('refuses to link a token minted for a different address', async () => {
+      // Without this check, anyone holding account B's password could attach
+      // their own Google identity to it using a token issued for account A.
+      await expect(
+        service.oauthLink({ ...linkDto, email: 'someone.else@test.com' }),
+      ).rejects.toThrow(UnauthorizedException);
+      expect(prisma.user.findUnique).not.toHaveBeenCalled();
+    });
+
+    it('refuses when the identity already belongs to someone else', async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        accountStatus: 'ACTIVE',
+        emailVerifiedAt: null,
+        passwordHash: await bcrypt.hash('correct-password', 4),
+      });
+      prisma.socialIdentity.findUnique.mockResolvedValue({
+        userId: 'another-user',
+      });
+
+      await expect(service.oauthLink(linkDto)).rejects.toThrow(
+        ConflictException,
+      );
     });
   });
 });

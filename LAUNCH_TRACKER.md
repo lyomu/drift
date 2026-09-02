@@ -6,7 +6,7 @@ artifact, so a commit or PR can close an item by referencing its ID
 
 **Status key:** `[ ]` to do · `[~]` in progress · `[!]` blocked · `[x]` done
 
-**24 items · 7 closed**
+**24 items · 10 closed**
 
 ---
 
@@ -100,17 +100,40 @@ artifact, so a commit or PR can close an item by referencing its ID
 
 ## Phase 4 — Google & Apple sign-in 🟠
 
-- [ ] **4.1 — Schema: optional password + identity table**
-  `passwordHash` is non-nullable, so a social-only user cannot exist. No table for
-  `(provider, providerAccountId, userId)`. *Effort:* ~1 day incl. migration
-- [ ] **4.2 — Decide the account-linking policy** *(decision, not code)*
+- [x] **4.1 — Schema: optional password + identity table**
+  Migration `20260902200000_social_signin` applied 2026-09-02: `AuthProvider` enum,
+  `social_identities` table (unique on `(provider, providerAccountId)`, `userId`
+  indexed, `ON DELETE CASCADE`), and `users."passwordHash"` dropped to nullable.
+  Hand-written SQL verified against the datamodel — `prisma migrate diff
+  --from-config-datasource --to-schema` reports **"No difference detected"**.
+  Every password read path audited: `login` and `changePassword` now guard the null
+  and return the same generic rejection a wrong password gets, so a social-only
+  account cannot be distinguished by probing. `users.service.ts` redaction and the
+  platform-admin paths use a different model and are unaffected.
+- [x] **4.2 — Decide the account-linking policy** *(decision, not code)*
   `User.email` is unique. Google sign-in against an existing password account must
-  auto-link, reject, or prompt-to-link. **Recommend prompt-to-link.** Cannot be
-  retrofitted safely.
-- [ ] **4.3 — Backend: token verification endpoints**
-  `POST /auth/oauth/google` and `/apple`, verified server-side, returning the existing
-  access/refresh pair. Never trust a client-supplied id or email.
-  *Libraries:* `google-auth-library`, `jose` · *Effort:* 2–3 days
+  auto-link, reject, or prompt-to-link. **Decided 2026-09-02:** **auto-link when both
+  sides are verified** (provider asserts `email_verified` AND the existing account has
+  `emailVerifiedAt`); otherwise **fall back to prompt-to-link**. Implemented as: verified
+  both sides → attach identity silently; not both → `409 EMAIL_LINK_REQUIRED` → app
+  asks for the existing password → `/auth/oauth/link`. Reference: `docs/SOCIAL_SIGNIN_PLAN.md` §0.
+- [x] **4.3 — Backend: token verification endpoints**
+  `POST /auth/oauth/google`, `/auth/oauth/apple` and `/auth/oauth/link`, all under the
+  existing `AUTH_SENSITIVE` throttle, returning the same access/refresh pair the
+  password path issues. `OAuthService` verifies signature, issuer, audience, expiry
+  and nonce server-side; only verified claims are trusted, never a client-supplied id
+  or email. An unconfigured provider answers **503**, never a trusted guess.
+  Returning users are matched on the provider's `sub`, so changing a Google address
+  keeps the account. Suspended and deleted accounts are refused exactly as `login`
+  refuses them. `oauth/link` additionally requires the token's address to equal the
+  account being linked, or a token for account A could be attached to account B by
+  anyone holding B's password; a successful link revokes other sessions.
+  *Libraries:* `google-auth-library@11`, **`jose@4`** — 5.x onward is ESM-only and
+  ts-jest cannot load it, which would break every auth spec, not just this one.
+  *Verified:* `tsc` clean · unit **42 suites / 520 tests** (was 41/498) · new
+  `oauth.e2e-spec.ts` drives 409 `EMAIL_LINK_REQUIRED` → link → straight-through.
+  *Remaining before real use:* Google OAuth client IDs in `GOOGLE_OAUTH_CLIENT_IDS`
+  (Apple can wait — see 4.5).
 - [ ] **4.4 — Mobile: wire the existing buttons**
   Buttons already render on login, sign-up and welcome; all six call `_notYet()`.
   Route new social users to `BASIC_PROFILE`, not an empty home feed.
