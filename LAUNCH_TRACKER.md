@@ -6,7 +6,7 @@ artifact, so a commit or PR can close an item by referencing its ID
 
 **Status key:** `[ ]` to do · `[~]` in progress · `[!]` blocked · `[x]` done
 
-**24 items · 3 closed**
+**24 items · 4 closed**
 
 ---
 
@@ -28,10 +28,18 @@ artifact, so a commit or PR can close an item by referencing its ID
   Backups share a disk with the database, so they do not survive the disk loss they
   exist for. Both candidate commands are at the foot of `scripts/ops/drift-backup.sh`.
   *Blocked on:* destination + credentials · *Effort:* ~30 min
-- [ ] **1.2 — Monitoring and alerting**
-  Nothing watches API health, error rate, container restarts or cert expiry. The disk
-  guard already reports to `ci.einsbrand.com` — hang alerts off that path.
-  *Effort:* 1 day
+- [x] **1.2 — Monitoring and alerting**
+  `scripts/ops/drift-health-guard.sh` runs on the box (`/usr/local/sbin/`, cron'd every
+  15 min) — API health, TLS expiry, container state/restarts — and was forced-failure-tested,
+  so detection is real. The alert channel it reuses (`alert.sh` → Jenkins `ops-alert` job →
+  email) turned out to have never actually delivered: `/root/.jenkins_ops_token` 401'd
+  against `ci.einsbrand.com`. Token re-issued by the owner 2026-09-02 and delivery proven
+  end-to-end: crumb issuer 200, `alert.sh` POST → HTTP 201, Jenkins build
+  `einsbrand/ops-alert` #14 SUCCESS (the job's `mail` step fails the build on SMTP
+  rejection, so SUCCESS means the message was accepted), test email received at the job's
+  configured recipient `hello@lyomu.com`. Note: changing the `nebulaRet` Jenkins password
+  revokes its API tokens — a future 401 after a password change means re-issue, not
+  debugging.
 - [x] **1.3 — Secrets off the filesystem**
   `.env.production` was already `600`, drift-deploy-owned, single-SSH-key access —
   no real secret ever found in git history or CI logs. The open gap was proving a
