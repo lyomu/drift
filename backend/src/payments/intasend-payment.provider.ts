@@ -35,6 +35,22 @@ const INTERVAL_UNIT: Record<HostedPlanInput['interval'], string> = {
 };
 
 /**
+ * How many times IntaSend should bill a subscriber.
+ *
+ * This was originally left unset, on the assumption that an absent
+ * `billing_cycles` meant "renew until cancelled". **It does not.** A live plan
+ * created without it came back from the API with `billing_cycles: 11`, so a
+ * club would simply have stopped being billed after eleven months, with no
+ * error anywhere — the kind of thing found in a revenue report a year later.
+ *
+ * Set explicitly instead. 240 monthly cycles is twenty years, which is past any
+ * horizon this pricing will survive, and unlike `0` it cannot be misread by the
+ * provider as "bill zero times". Cancellation is what ends a subscription here,
+ * via `cancelSubscription`, not the cycle count running out.
+ */
+const BILLING_CYCLES = 240;
+
+/**
  * Club billing through IntaSend (M-Pesa, card and bank, KES/USD/EUR/GBP).
  *
  * Configured entirely from env and **disabled when `INTASEND_SECRET_KEY` is
@@ -102,9 +118,7 @@ export class IntasendPaymentProvider implements HostedPaymentProvider {
         amount: majorUnits(input.amountMinor),
         frequency: 1,
         frequency_unit: INTERVAL_UNIT[input.interval],
-        // Omitted deliberately: with no billing_cycles the plan renews until
-        // cancelled, which is what a subscription means here. A fixed count
-        // would silently stop billing an active club after N periods.
+        billing_cycles: BILLING_CYCLES,
       },
     );
     return body.plan_id;
@@ -123,6 +137,10 @@ export class IntasendPaymentProvider implements HostedPaymentProvider {
         amount: majorUnits(input.amountMinor),
         frequency: 1,
         frequency_unit: INTERVAL_UNIT[input.interval],
+        // Sent on the update too: this is a PUT, and omitting the field would
+        // let the provider re-apply its own default — quietly capping an
+        // existing plan's remaining cycles every time staff edit a price.
+        billing_cycles: BILLING_CYCLES,
       },
     );
   }

@@ -117,6 +117,29 @@ and a fixed-amount promotion in a different currency to the plan is refused
 rather than subtracted — a KES discount against a USD price would change the bill
 by two orders of magnitude, silently.
 
+## Subscription plans can only be priced in African currencies
+
+Verified 2026-09-03 against three IntaSend API references — plan list, plan
+retrieve and plan update — which all give the same `PlanSer` enum:
+
+```
+"KES", "GHS", "NGN", "UGX", "TZS", "XAF", "XOF"
+```
+
+**No USD, EUR or GBP.** The prose "Create a Plan" page advertises
+`KES, USD, EUR, GBP`, but that describes the checkout/collections product, not
+subscription plans. Club billing is built on subscriptions, so the schema binds
+and the prose page is misleading.
+
+This is a product constraint, not an implementation detail: it decides what a
+club can be charged in. It surfaced when the seeded plans were checked against a
+live key — `CLUB_PRO_MONTHLY` was **GBP 49.00**, which would have failed at plan
+creation rather than at reprice, and two further plans carried **XTS**, the ISO
+test currency, which IntaSend rejects outright.
+
+Anything priced outside that enum needs either a different processor for those
+regions or prices denominated in one of the seven.
+
 ## What is still not built, and is not a gap
 
 - **No stored payment methods for hosted providers.** `addMethod` returns a 400
@@ -146,3 +169,21 @@ by two orders of magnitude, silently.
 4. Seed real club plans with real prices and a real currency. IntaSend supports
    KES, USD, EUR and GBP; the seeded sandbox plans use a test currency.
 5. Only then put a live key on the production box.
+
+## `billing_cycles` is not optional in the way it looks
+
+Verified against the live API on 2026-09-03. A plan created **without**
+`billing_cycles` comes back with **`billing_cycles: 11`** — not "renew until
+cancelled". A club would simply have stopped being billed after eleven months,
+with no error raised anywhere, discovered in a revenue report a year later.
+
+It is now sent explicitly as **240** (twenty years of monthly cycles) on both
+create *and* update. It goes on the update too because that endpoint is a `PUT`:
+omitting the field would let the provider re-apply its own default, quietly
+capping a live plan's remaining cycles every time staff edited its price.
+
+**One repair this does not do for you.** `resolve()` only pushes an update when
+the amount or currency has moved, so a plan minted before this fix keeps its old
+cycle count. Either edit the plan once in Platform Admin — `syncPlan` calls
+update unconditionally — or `PUT` the plan directly. The one plan that existed
+(`EYRJJ09`, CLUB_PRO_MONTHLY) was repaired by hand on 2026-09-03.
