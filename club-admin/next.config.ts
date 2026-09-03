@@ -5,7 +5,20 @@ import type { NextConfig } from "next";
  * `connect-src` explicitly; a bare 'self' policy would block every request
  * this app makes.
  */
-const API_ORIGIN = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3009";
+// Only the *origin* belongs in a CSP source. NEXT_PUBLIC_API_URL carries a
+// path ("https://host/api"), and a CSP source whose path does not end in "/"
+// must match exactly — so passing it through would permit a request to /api
+// and block /api/auth/login. That went unnoticed while the console and the API
+// shared an origin, because 'self' covered every call; it only surfaced once
+// they differed.
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3009";
+const API_ORIGIN = (() => {
+  try {
+    return new URL(API_URL).origin;
+  } catch {
+    return API_URL;
+  }
+})();
 
 /**
  * Baseline security headers.
