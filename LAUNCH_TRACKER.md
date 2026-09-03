@@ -6,7 +6,7 @@ artifact, so a commit or PR can close an item by referencing its ID
 
 **Status key:** `[ ]` to do · `[~]` in progress · `[!]` blocked · `[x]` done
 
-**27 items · 16 closed**
+**28 items · 16 closed**
 
 ---
 
@@ -246,6 +246,24 @@ artifact, so a commit or PR can close an item by referencing its ID
   `@prisma/client` at 7.9.1 — a skew that would have shipped through `npm ci`.
   Both are now aligned at 7.10.0, which is what a clean install of the existing
   `^7.9.1` ranges produces anyway.
+- [ ] **5.6 — `onboarding.e2e-spec` depends on ambient users** ✨ *new 2026-09-03*
+  **Found by CI once CI could actually run.** The spec asserts the home feed opens
+  with `SUGGESTED_OPPONENTS, DEVELOPMENT_RECOMMENDATION, NEWS_HIGHLIGHT`, and its own
+  comment claims the first two are *"always reachable for a fully-onboarded user."*
+  That is false. `SuggestedOpponentsContributor` returns `[]` when the player search
+  finds nobody, and **`prisma/seed.ts` seeds no users at all** — courts, clubs,
+  stories and learning content, but zero players. On a clean database the test's own
+  account is the only one in the system, so there is no one to suggest.
+  **It was passing locally by accident**, on the seven accumulated users in the dev
+  database. This is precisely the class of thing a per-run clean database exists to
+  catch, and it surfaced the moment one existed.
+  *Options, in preference order:* **(a)** register and onboard a second player in the
+  spec's `beforeAll` and extend its `afterAll` cleanup — makes the assertion true by
+  construction, keeps coverage of what the code calls the highest-value discovery
+  card, ~40–50 lines; **(b)** seed player users, which fixes it globally but perturbs
+  every suite that counts or ranks players; **(c)** correct the assertion to treat the
+  card as conditional — smallest, but drops that coverage.
+  *Effort:* under an hour. *Currently:* the only red step in an otherwise green CI.
 - [ ] **5.5 — Password policy · egress · CSP**
   Bare 8-char minimum, no breach screening; ingestion egress restriction; confirm
   nginx does not strip the consoles' headers.
