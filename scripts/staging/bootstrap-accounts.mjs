@@ -42,6 +42,36 @@ try {
     },
   });
 
+  // Signup creates `tennisProfile: { create: {} }` (auth.service.ts); this
+  // script writes the User row directly and so used to skip it. The account
+  // then looked complete — onboardingStep COMPLETE — while every player-facing
+  // endpoint answered 404 "Tennis profile not found": /home/feed, /home/summary
+  // and /players all failed for it. Found on 2026-09-03 by the load-test smoke,
+  // which is exactly the class of thing a smoke profile exists to catch.
+  //
+  // Upserted rather than created so a re-run heals an account already in that
+  // state, which is the only way to fix one from outside the box: every
+  // onboarding endpoint `update`s this row and 404s when it is missing.
+  await prisma.tennisProfile.upsert({
+    where: { userId: user.id },
+    update: {},
+    create: {
+      userId: user.id,
+      // Enough for the account to behave like a real player rather than merely
+      // exist: a level so it is rankable, and a location so it is reachable by
+      // the distance-filtered player search.
+      userSelectedLevel: 3.5,
+      overallRating: 3.5,
+      generalLocation: 'Nairobi',
+      latitude: -1.2921,
+      longitude: 36.8219,
+      locationSource: 'MANUAL',
+      formatPreference: 'EITHER',
+      preferredTimeSlots: ['EVENING'],
+      onboardingGoals: ['PLAY_MORE'],
+    },
+  });
+
   let club = await prisma.club.findFirst({ where: { name: CLUB_NAME } });
   if (!club) {
     club = await prisma.club.create({
