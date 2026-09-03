@@ -335,12 +335,25 @@ artifact, so a commit or PR can close an item by referencing its ID
   passwords keep working until changed. Verified: `npx tsc -p tsconfig.build.json
   --noEmit`, targeted policy/auth specs, and full backend unit suite
   **47 suites / 579 tests**.
-  **Still blocked:** CSP live proof needs the staging basic-auth credentials. An
-  unauthenticated `curl -I https://drift.einsbrand.com/platform/` on 2026-09-03
-  returns nginx's own 401 with no app headers, as expected. Egress restriction needs
-  SSH/production infrastructure access. Live tracker artifact
-  `33d72505-3973-4cd6-b8a9-6184ed259972` could not be read/republished from this
-  environment because the Claude artifact URL is restricted here.
+  **CSP proven live 2026-09-03 — this half is closed.** The blocker was never the
+  headers, it was reaching them: nginx answers an unauthenticated request with its
+  own 401 and no app headers at all. Curling the consoles *from inside the box*
+  goes straight to the Next servers on `127.0.0.1:3010` and `:3011` and skips the
+  auth wall entirely, so no basic-auth password was needed after all. Both consoles
+  return the full policy:
+  `default-src 'self'` · `script-src 'self' 'unsafe-inline'` (no `unsafe-eval` in
+  production) · `frame-ancestors 'none'` · `base-uri 'self'` · `form-action 'self'`
+  · `object-src 'none'`, plus `X-Content-Type-Options`, `Referrer-Policy`,
+  `X-Frame-Options: DENY` and `Permissions-Policy`.
+  Critically, `connect-src` now reads **`'self' https://drift.einsbrand.com/api`**
+  rather than the bare IP. That value is baked in at *image build* time, so proving
+  it also required the domain migration: all four URL variables in
+  `.env.production` were moved off `135.181.146.130` and both consoles rebuilt.
+  A restart alone would not have changed it.
+  **Still blocked:** the ingestion **egress restriction** only. `NEWS_FEED_ALLOWED_HOSTS`
+  pins the application-level allowlist, but nothing constrains outbound traffic at
+  the host, so a compromised dependency could still reach anywhere. That is
+  firewall work on the box, not repository work.
 
 ## Phase 6 — Push notifications 🟡
 
