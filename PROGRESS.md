@@ -102,7 +102,7 @@ The APK needs the backend (`npm run start:dev`) reachable at the baked-in addres
 
 ## Open Dependencies
 
-- **Sharp Sans Display font license** (commercial, Sharp Type) — not yet purchased. Trial files exist locally but are not usable (64-glyph subset, missing em dash/curly apostrophe/ellipsis/middot used in 802 places). Space Grotesk is the shipped placeholder. See `foundation/07-mvp-roadmap.md` §4.5.
+- ~~**Sharp Sans Display font license**~~ — **struck 2026-09-03: no longer a dependency.** The redesign dropped the typeface entirely, so there is nothing to purchase and no placeholder to replace. What actually ships is **Outfit** for display and **DMSans** for body — both SIL OFL, both bundled as static cuts in `mobile/pubspec.yaml` and set in `drift_typography.dart`. Space Grotesk is gone too. *Note:* `foundation/05-design-system.md` still specifies Sharp Sans Display throughout and is now the only place this claim survives; it describes the pre-redesign design system, not the build.
 - **Minors / age-gating policy** — legal/compliance decision needed before onboarding ships in a real release.
 - **SMS provider** — ~~Email/SMS provider~~ **email closed 2026-09-02 (tracker 3.1):** the owner's own SMTP server (`mail.einsbrand.com:465`) is wired through `MailerService` and six flows deliver live. **SMS remains deferred** — out of scope by decision, not by omission; phone verification still has no production path.
 - **FCM/APNs push delivery** — **code closed 2026-09-02 (tracker 6.1):** `PushService` fans out to both platforms through FCM and is disabled when `FIREBASE_SERVICE_ACCOUNT` is absent. What remains is **Firebase console work, not engineering** — `docs/PUSH_NOTIFICATIONS_PLAN.md` §6.
