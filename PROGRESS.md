@@ -104,14 +104,14 @@ The APK needs the backend (`npm run start:dev`) reachable at the baked-in addres
 
 - **Sharp Sans Display font license** (commercial, Sharp Type) — not yet purchased. Trial files exist locally but are not usable (64-glyph subset, missing em dash/curly apostrophe/ellipsis/middot used in 802 places). Space Grotesk is the shipped placeholder. See `foundation/07-mvp-roadmap.md` §4.5.
 - **Minors / age-gating policy** — legal/compliance decision needed before onboarding ships in a real release.
-- **Email/SMS provider** — dev-only OTP path active; production delivery needs a provider decision.
-- **FCM/APNs push delivery** — in-app Notification Center works; real push needs a Firebase project + credentials.
+- **SMS provider** — ~~Email/SMS provider~~ **email closed 2026-09-02 (tracker 3.1):** the owner's own SMTP server (`mail.einsbrand.com:465`) is wired through `MailerService` and six flows deliver live. **SMS remains deferred** — out of scope by decision, not by omission; phone verification still has no production path.
+- **FCM/APNs push delivery** — **code closed 2026-09-02 (tracker 6.1):** `PushService` fans out to both platforms through FCM and is disabled when `FIREBASE_SERVICE_ACCOUNT` is absent. What remains is **Firebase console work, not engineering** — `docs/PUSH_NOTIFICATIONS_PLAN.md` §6.
 - **Payments provider** — schema and service are provider-neutral; a real provider (Stripe, etc.) must be chosen and wired.
 - **Google Places API key** — enrichment pipeline exists but is owner-blocked on a billed API key. Until configured, the sync workspace records a specific Failed state.
 - **Real court/club data at scale** — OSM import + seed data exist; the table is small enough that no search-radius bound is needed server-side yet.
 - **Match Reflection skill dimension** — M7 stores confidence/notes but the model has no skill-dimension field, so it can't feed the skill-score blend. Needs a schema change.
 - **Achievement expansion** — the first derived rule catalogue exists (Pending screens Phase 6); richer seasonal, coach, event, and Padel-specific badges need their own product rules.
-- **Full account-data deletion (GDPR)** — soft delete works; a genuine cascading-delete/anonymization pass is a separate project.
+- ~~**Full account-data deletion (GDPR)**~~ — **struck: closed 2026-09-03 (tracker P.3).** This entry was wrong twice over. A real anonymisation already existed for admin-fulfilled `DELETION` requests, and "cascading delete" was never the right shape — erasure is an `UPDATE` that anonymises the row in place and deliberately keeps it, because hard-deleting a player would corrupt the match history of people who never asked to be erased. One `ErasureService` now defines the redaction set once; both the admin path and the user-facing delete call it, and a daily job carries out the 30-day window. *Reference:* `docs/GDPR_ERASURE_PLAN.md`.
 - **Help/Contact/Legal content** — placeholder copy; needs legal review and a support mailbox before public release.
 - **Double-elimination brackets** — single-elim shipped (Wave 6); double-elim documented as deferred.
 - **Events/prize handling** — events module exists (Pending Screens Phase 4); prize handling unbuilt.

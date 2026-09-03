@@ -19,6 +19,10 @@ artifact, so a commit or PR can close an item by referencing its ID
 - [x] **0.2 — Nightly backups + rehearsed restore**
   `scripts/ops/drift-backup.sh`, 14-day retention, weekly restore rehearsal. First
   verify matched live exactly: 94 tables, 7 users, live database untouched.
+  *Interaction with P.3:* the dumps hold **pre-erasure data for up to 14 days** until
+  they age out — a documented limitation, not something code can fix. The erasure job
+  runs 03:40 UTC, after the 03:15 backup, so this is deliberate rather than accidental.
+  It belongs in the P.1 privacy copy.
 
 ---
 
@@ -230,6 +234,13 @@ artifact, so a commit or PR can close an item by referencing its ID
 - [ ] **P.1 — Terms & Privacy Policy**
   `legal_screen.dart:13,22` reads *"This is placeholder copy pending a full legal
   review."* *Owner:* legal
+  **Constrained by P.3 as of 2026-09-03.** This is no longer open-ended copy — it must
+  now *describe shipped behaviour*: the **30-day** window before erasure, that
+  anonymisation is **terminal**, which records are deliberately kept and why
+  (Art. 17(3) — erasure would prejudice other players' rights), and that nightly
+  backups retain pre-erasure data for up to **14 days** until they age out. A policy
+  that contradicts the code is worse than no policy.
+  *Reference:* `docs/GDPR_ERASURE_PLAN.md` §5
 - [ ] **P.2 — Minors / age-gating policy**
   No age gate. A tennis product attracts under-18s → COPPA / GDPR-K, guardian consent,
   and whether minors appear in discovery. *Owner:* product + legal
@@ -262,6 +273,10 @@ artifact, so a commit or PR can close an item by referencing its ID
   watching it name the omission. *Reference:* `docs/GDPR_ERASURE_PLAN.md`
 - [ ] **P.4 — Support mailbox**
   Help and Contact are placeholder with no monitored address behind them.
+  **Raised in importance by P.3.** It is the **only inbound route** for an Article 17
+  request, and the only way to reach the 30-day recovery window — `login` refuses a
+  `DELETED` account, so someone inside the window cannot ask from within the app.
+  Until this exists, an erasure request has no channel to arrive through.
 - [ ] **P.5 — Load testing**
   Never performed. One 3.7 GB host runs Postgres, Redis, the API and two Next apps.
 - [ ] **P.6 — Apple & Google developer accounts**

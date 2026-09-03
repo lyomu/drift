@@ -1,12 +1,21 @@
-# P.3 — GDPR Erasure: Implementation Plan
+# P.3 — GDPR Erasure: Plan and outcome
 
-Status: **approved 2026-09-03, implementing** · Companion: `LAUNCH_TRACKER.md` P.3
+Status: **shipped 2026-09-03** (commit `a995af7`) · Companion: `LAUNCH_TRACKER.md` P.3
+
+The plan is kept below as written, because the reasoning is the point: researching
+the problem first is what shrank it, and a plan edited to match its outcome cannot
+show that. §3 records what was actually built; §5 records what erasure now obliges
+of other items.
 
 ---
 
-## 0. The readiness report is wrong about this, and it matters
+## 0. The readiness report was wrong about this, and it mattered
 
-`LAUNCH_READINESS.md` §18 says *"`AccountStatus.DELETED` marks the row; it does not
+> **Since corrected.** `LAUNCH_READINESS.md` §18 now reads *"RESOLVED 2026-09-03"*
+> and states the correction in place. The original text is quoted here so the
+> record of what was believed, and why it was wrong, survives.
+
+`LAUNCH_READINESS.md` §18 said *"`AccountStatus.DELETED` marks the row; it does not
 cascade-delete or anonymise… the destructive path is unbuilt."*
 
 Half of that is stale. There are **two** paths, and they do very different things:
@@ -72,32 +81,52 @@ does not do. The plan doc will be corrected.
 > but is deliberately **not** in this change.
 
 ---
+## 3. Implementation — as built
 
-## 3. Implementation
-
-**One shared `ErasureService`** (`backend/src/privacy/`), because the redaction set
-must not be defined twice — that is exactly how a field gets added to one path and
-forgotten in the other.
+**One shared `ErasureService`** (`backend/src/privacy/erasure.service.ts`), because
+the redaction set must not be defined twice — that is exactly how a field gets added
+to one path and forgotten in the other.
 
 - `eraseUser(tx, userId, requestId)` — the complete redaction, run inside the
   caller's transaction.
-- `processPrivacyRequest` calls it instead of its inline block.
-- `UsersService.deleteAccount` files a `PENDING` `DELETION` request (P.3a) and
-  keeps its immediate deactivation.
+- `SupportAdminService.processPrivacyRequest` calls it instead of its inline block.
+- `UsersService.deleteAccount` files a `PENDING` `DELETION` request (P.3a) and keeps
+  its immediate deactivation. Filing is **idempotent** — a second tap cannot restart
+  the 30-day clock.
+- `ErasureScheduler` (`erasure.scheduler.ts`) runs the window at **03:40 UTC daily**,
+  after the 03:15 backup, so the night's dump still holds the pre-erasure state.
+  Each request gets **its own transaction**: one failure must not roll back erasures
+  that already succeeded, and a failed row stays `PENDING` so the next day retries it.
+- `PrivacyModule` is `@Global()` and registered in `app.module.ts` alongside
+  `ScheduleModule.forRoot()` — without the latter the cron is a decorator nobody runs.
 
-**Coverage** — items 1–9 above. Provider identities and device tokens are
-**deleted outright** rather than nulled: a social login must stop working, and a
+**Coverage** — items 1–9 above, all shipped. Provider identities and device tokens
+are **deleted outright** rather than nulled: a social login must stop working, and a
 push address has no anonymised form. Everything else is nulled or replaced with a
-stable redaction marker so row counts and relations survive.
+stable marker, `privacy-request-redacted:<requestId>`, so a redacted row stays
+distinguishable from one that was simply always empty, and row counts and relations
+survive. `passwordHash` takes the marker rather than `null`, which also guarantees no
+bcrypt compare can match.
 
-**Tests** are the substance of this item, not an afterthought. The one that matters
-most: a test that walks `User`'s relations and **fails when a new PII-bearing
-relation is added without a redaction rule**. Without it this regresses the next
-time someone adds a table — which is precisely what happened twice today.
+**Reports about the person are deliberately untouched.** Only reports they *wrote*
+are redacted; a report filed against them belongs to its author and to the safety
+record, and is not the erased person's to remove.
 
-Plus: erasure clears every field in the table above; another user's match history
-and standings are untouched; the erased user cannot log in by password or by
-Google; no device token survives; the operation is idempotent.
+**Tests** were the substance of this item, not an afterthought. The one that matters
+most — `erasure-coverage.spec.ts` — reads `prisma/schema.prisma` **from disk**,
+enumerates every model related to `User`, and fails when one appears in neither the
+erased set nor the deliberately-kept map, where each kept entry carries a written
+reason. It cannot judge whether the handling is *right*, only that somebody decided;
+silence is the failure mode worth automating, not disagreement. It was **proven to
+bite rather than assumed**: removing `DeviceToken` made it fail and name the omission.
+
+Plus: erasure clears every field in the table above; another user's match history and
+standings are untouched; the erased user cannot log in by password or by Google; no
+device token survives; the operation is idempotent.
+
+**Verified 2026-09-03:** `tsc` clean · backend **46 suites / 559 tests** (from 43/535)
+· mobile **561 tests**, analyze clean · platform-admin, auth and onboarding e2e green.
+Re-confirmed against `a995af7`: 46/559 passing.
 
 ---
 
@@ -109,4 +138,22 @@ data until they age out at 14 days, which is a **documented limitation**, not
 something code can fix. Erasure also cannot reach the support mailbox until P.4
 exists, so today a request has no channel to arrive through.
 
-**Estimated: ~1 day** including the guard test.
+**Estimated ~1 day including the guard test; that held.**
+
+---
+
+## 5. What erasure now obliges of other tracker items
+
+Shipping this did not only close P.3. It turned three other items from open-ended
+into constrained, and that is worth stating where a reader of the tracker will see it
+rather than leaving it in this document's prose.
+
+| Item | What erasure now requires of it |
+|---|---|
+| **P.1 — Terms & Privacy Policy** | The policy is no longer free text: it must **describe shipped behaviour**. Specifically the 30-day window, that anonymisation is **terminal**, and which records are deliberately kept and why (Art. 17(3) — erasure would prejudice other players' rights). A policy that contradicts the code is worse than no policy. |
+| **P.4 — Support mailbox** | The **only inbound route** for an Art. 17 request, and the only way to reach the staff-recoverable window — `login` refuses a `DELETED` account, so a person inside the window cannot ask from within the app. Until P.4 exists, a request has no channel to arrive through. |
+| **0.2 — Nightly backups** | The dumps retain **pre-erasure data for up to 14 days** until they age out. A documented limitation, not something code can fix; it belongs in the P.1 copy. |
+
+**Deliberately not built:** self-service reactivation inside the window. It is a
+reasonable follow-up, and it is an omission rather than an oversight — recorded so
+the next reader does not treat it as a bug.
