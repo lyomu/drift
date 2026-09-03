@@ -6,7 +6,7 @@ artifact, so a commit or PR can close an item by referencing its ID
 
 **Status key:** `[ ]` to do · `[~]` in progress · `[!]` blocked · `[x]` done
 
-**28 items · 18 closed**
+**29 items · 19 closed**
 
 ---
 
@@ -28,7 +28,7 @@ artifact, so a commit or PR can close an item by referencing its ID
 
 ## Phase 1 — Stop the bleeding 🔴
 
-- [ ] **1.1 — Offsite backup copy**
+- [!] **1.1 — Offsite backup copy**
   Backups share a disk with the database, so they do not survive the disk loss they
   exist for. Both candidate commands are at the foot of `scripts/ops/drift-backup.sh`.
   *Blocked on:* destination + credentials · *Effort:* ~30 min
@@ -74,10 +74,29 @@ artifact, so a commit or PR can close an item by referencing its ID
   +ip4:167.235.180.68 +ip4:207.180.237.29 ~all`) covering the owner's sending IPs,
   so SPF for the SMTP server is already in place. 3.1's actual sender is
   `drift.einsbrand.com` (From: `drift@einsbrand.com`), which is covered by the
-  parent zone's SPF. **Still to add:** a DMARC TXT record
-  (`v=DMARC1; p=quarantine; rua=mailto:…`) — draft provided when 3.1 closed — and
-  a DKIM selector **if** the `mail.einsbrand.com` server signs outbound (depends
-  on the server config, not this repo).
+  parent zone's SPF.
+  **2026-09-03:** the "draft provided when 3.1 closed" turned out to be the elided
+  sketch above and nothing more — no record text, no `rua` address. Written out
+  properly now, and `_dmarc.einsbrand.com` re-checked against 8.8.8.8: **NXDOMAIN,
+  so no DMARC policy is in force at all.** The record to publish, decided with the
+  owner 2026-09-03:
+
+  ```
+  _dmarc  TXT  3600  v=DMARC1; p=none; rua=mailto:drift@einsbrand.com
+  ```
+
+  `p=none` rather than the sketch's `p=quarantine` **by decision, not oversight**:
+  DMARC passes on SPF *or* DKIM, SPF alignment holds (`MAIL_FROM` is
+  `drift@einsbrand.com`, the org domain SPF covers), but DKIM signing on
+  `mail.einsbrand.com` is unconfirmed — and an enforcing policy over an unverified
+  setup silently spams signup-verification and password-reset mail, which is found
+  out from users rather than logs. Publish `none`, read two weeks of reports, then
+  raise to `quarantine`. One org-domain record also covers `drift.einsbrand.com`.
+  **Remaining:** owner publishes the record in the DNS panel, then
+  `nslookup -type=TXT _dmarc.einsbrand.com 8.8.8.8` confirms it. DKIM is a separate
+  check — read a `DKIM-Signature:` header off any mail Drift has sent; the selector
+  is in `s=`, and if the header is absent the server is not signing.
+  *Full detail:* `docs/DEPLOYMENT.md` § DNS records for email deliverability.
 
 ## Phase 3 — Email provider 🟠
 
@@ -156,9 +175,16 @@ artifact, so a commit or PR can close an item by referencing its ID
   *Remaining before it does anything real:* `GOOGLE_OAUTH_CLIENT_IDS` +
   `--dart-define` client IDs — see `docs/SOCIAL_SIGNIN_SETUP.md`. Apple stays gated
   on 4.5; its button reports "not available" on Android until configured.
-- [ ] **4.5 — Apple Guideline 4.8 constraint** 🔴
+- [!] **4.5 — Apple Guideline 4.8 constraint**
   Offering Google makes Sign in with Apple **mandatory** on iOS. They ship together or
-  neither ships. Pulls the Apple Developer membership onto the critical path.
+  neither ships.
+  **Rescoped 2026-09-03 by the owner's launch-sequence decision: Android first, iOS
+  follows.** Android has no equivalent rule, and its Google client IDs already exist,
+  so this **no longer blocks the launch — it blocks only the iOS leg.** That is the
+  sequence `docs/SOCIAL_SIGNIN_SETUP.md` §3 already recommended, and taking it means
+  Apple's enrolment queue stops holding a finished Android build hostage.
+  *Blocked on:* Apple Developer Program enrolment (P.6) — $99/yr, days rather than
+  minutes, and an organisation account needs a D-U-N-S number.
 
 ## Phase 5 — Production hygiene 🟡
 
@@ -186,9 +212,44 @@ artifact, so a commit or PR can close an item by referencing its ID
   Firebase) before a release build signs in with Google, and **back up the keystore
   plus its password** — losing both after a Play release means the app can never be
   updated again.
-- [ ] **5.2 — Move deployment off the box**
-  CI has no deploy job; a human builds images on the production host against 3.7 GB
-  of RAM, with no artifact to roll back to.
+  **Addendum 2026-09-03 — rotating the key was not enough, and the gap was live.**
+  `build.gradle.kts` hardcoded `rootProject.file("key.properties")`, and that file
+  points at the **preview** keystore by design. So nothing could select
+  `key.release.properties` short of setting all four `DRIFT_ANDROID_*` variables, and a
+  plain `flutter build appbundle --release` would have signed with the *preview* key
+  and, on upload, bound the app to it permanently — the same unrecoverable outcome
+  this item was raised to prevent. Closed: the properties file is now selectable
+  (`-Pdrift.signing=release`, or `DRIFT_ANDROID_KEY_PROPERTIES`), every release task
+  prints the resolved keystore and alias (never the passwords), and a release signed
+  with alias `preview` is **refused** unless `-Pdrift.allowPreviewSigning` is passed.
+  *Verified three ways:* default → refuses with the explanation; `-Pdrift.signing=release`
+  → `key.release.properties -> app/release-2026.keystore (alias drift-release)`;
+  env-var path → the same. `mobile/tool/build_release.sh` uses the env-var path and
+  also refuses to build with the `DRIFT_DEV_ACCESS`/`DRIFT_DEV_REFRESH` session-seeding
+  defines set, which in a store build would be a shipped authentication bypass.
+- [~] **5.2 — Move deployment off the box**
+  **Repo half complete 2026-09-03; closes on the workflow's first green run.**
+  `.github/workflows/release.yml` builds all three images on a CI runner and pushes
+  them to GHCR on any `v*` tag, tagged both with the release tag and an immutable
+  `sha-<12>`. `docker-compose.prod.yml` now names an `image:` **and** a `build:` per
+  app service, so one file serves both a box that builds for itself
+  (`DRIFT_IMAGE_TAG` unset → `:local`, today's behaviour, unchanged) and one that
+  pulls what CI already built. Rolling back becomes re-running with the previous
+  `sha-` tag — the artifact the entry said did not exist.
+  **No third-party actions were added**, keeping 5.3's promise: `docker login`,
+  `buildx` and the `GITHUB_TOKEN` are all already on the runner, so the supply-chain
+  surface stays at the four SHA-pinned actions 5.3 left it at.
+  Also committed the production **`deploy/nginx/drift-name.conf`**, which had lived
+  only on the box since 2026-09-02 — config on exactly one host is config nobody can
+  review or restore. It is marked as reconstructed and must be diffed against the box.
+  *Verified:* `docker compose config` parses · the workflow's shell logic was run
+  locally for all three matrix entries and produces the intended `buildx` commands.
+  *Not verified, and this is why the item is not closed:* **the workflow has never
+  run.** Its first tag push is the proof.
+  **Deploying is deliberately not automated.** A CI job holding an SSH key to
+  production is a decision with its own blast radius and it is the owner's to make;
+  the runbook it would automate is in `docs/DEPLOYMENT.md` § Deploying a published
+  image.
 - [x] **5.3 — Pin CI actions to commit SHAs**
   **Closed 2026-09-03.** All **8** `uses:` lines across the 4 jobs in
   `.github/workflows/ci.yml` now name an immutable commit instead of a moving tag.
@@ -304,11 +365,47 @@ artifact, so a commit or PR can close an item by referencing its ID
   *Verified:* backend `tsc` clean · **43 suites / 535 tests** · mobile analyze clean
   · **561 tests**. *Remaining:* Firebase console work — `docs/PUSH_NOTIFICATIONS_PLAN.md` §6.
 
-## Phase 7 — Payments ⚪
+## Phase 7 — Payments 🟠
 
-- [ ] **7.1 — Wire a payments provider**
-  Schema and services are provider-neutral and admin plans are seeded, but no money
-  can move. *Condition:* only if the launch tier is paid.
+- [!] **7.1 — Wire a payments provider**
+  **Built 2026-09-03 for clubs; blocked on sandbox credentials.** The launch model was
+  decided by the owner: **app users are free at launch** (any later mobile subscription
+  must go through Play Billing / StoreKit, because in-app digital goods leave no
+  choice), while **clubs pay via IntaSend** in the web console — a business buying
+  software outside the app, which neither store's rules reach. Two rails, and they are
+  not interchangeable; `docs/PAYMENTS_PLAN.md` records why.
+  **The existing seam did not fit and was reshaped rather than bent.** IntaSend is
+  *hosted*: it owns the payment interaction and the recurring cycle, we never see card
+  details, and outcomes arrive by webhook, not as a return value. The old
+  `PaymentProvider` assumed the opposite — that we hold a token and charge it on our
+  own schedule — so it became a discriminated union of `DirectPaymentProvider`
+  (`mode: 'direct'`, the unchanged sandbox) and `HostedPaymentProvider`
+  (`mode: 'hosted'`), with `PaymentsService` branching on `mode` and the compiler
+  enforcing that it does. A deployment with no IntaSend key — every dev machine, and
+  CI — runs the whole billing surface exactly as before.
+  **The subscription is not activated on the redirect**, only when the webhook
+  confirms payment. A redirect the payer can abandon is not a payment, and granting
+  entitlements on one is how a product gives itself away.
+  **Two safety rails, both deliberate:** the API host is *derived from the key prefix*
+  (`_test_` → sandbox, `_live_` → live) rather than configured beside it, because two
+  settings that must agree is how a test key ends up pointed at the live gateway; and
+  the app **refuses to boot with a live key under `NODE_ENV=test`**, because a suite
+  that can move real money is not worth the convenience.
+  **Stated plainly:** IntaSend authenticates webhooks with a shared `challenge` string
+  in the POST body, not a signature over the payload. That is weaker than an HMAC and
+  it is the ceiling of what the provider offers. It is compared in constant time,
+  never logged, and production refuses to start without it whenever a key is present.
+  **Both consoles connected 2026-09-03.** Platform Admin previously had no provider dependency at all, which made three of its actions quietly untrue once real money moved: creating and repricing a plan never reached the provider, "Record refund" only marked our row, and overriding a subscription to CANCELLED left the mandate billing. All three now go through the same `ProviderPlanService` seam Club Admin uses. **Promotions are real and are discounted plans** — a hosted provider bills a fixed amount against a mandate, so a percentage cannot be applied per cycle; applying a promo resolves a second provider plan at the discounted price, mapped once per (plan, promotion) in `provider_plans`. Discounts round down so rounding never favours us over the payer, and a fixed-amount promo in another currency is refused rather than subtracted.
+  *Caught by the compiler:* the first cut made `provider_plans` unique on a nullable `promotionId` — Postgres treats NULLs in a unique index as distinct, so it would not have stopped the undiscounted plan being minted twice. A non-null discriminator replaced it.
+  *Verified:* backend unit **50 suites / 623 tests** (was 47/579) · e2e **17/95** ·
+  `tsc` clean · club-admin builds · `prisma migrate diff` reports **"No difference
+  detected"** for migration `20260903200000_intasend_provider_ids`.
+  *Caught by its own test:* the provider logged upstream error text verbatim, so a
+  gateway echoing the request would have written the secret key into the application
+  log. Now redacted, with a test that fails if it regresses.
+  **Blocked on:** the live keys pasted into a session transcript on 2026-09-03 must be
+  **rotated**, and a *sandbox* key supplied. Closes when one payment completes end to
+  end against `sandbox.intasend.com`. No real payment has been made yet.
 
 ---
 
@@ -321,10 +418,21 @@ artifact, so a commit or PR can close an item by referencing its ID
   anonymisation, the records deliberately kept in redacted form because they also
   belong to other players or platform integrity, and nightly backups retaining
   pre-erasure data for up to **14 days** until they age out. Still not a lawyer's
-  final policy. *Owner:* legal. *Reference:* `docs/GDPR_ERASURE_PLAN.md` §5
+  final policy. **Also in scope:** the 18+ posture closed under P.2 was a product
+  decision with no legal review behind it — this review is where it gets one.
+  **2026-09-03 — this is not only a launch item, it is a Play submission blocker.**
+  Play Console → App content requires a privacy policy at a **publicly reachable URL,
+  outside the app**, that a reviewer can open in a browser without installing
+  anything. Drift ships its policy only as an in-app `LegalScreen`, which satisfies
+  none of that. So P.1 has to produce not just reviewed copy but *hosted* copy, and
+  until it does the Android listing cannot be completed at all. That moves it from
+  "before launch" onto the critical path the Android-first decision just created.
+  *Owner:* legal. *Reference:* `docs/GDPR_ERASURE_PLAN.md` §5,
+  `docs/AGE_POLICY_DECISION.md`, `docs/PLAY_SUBMISSION.md` §1.1
 - [x] **P.2 — Minors / age-gating policy**
-  **Accepted 18+ at launch 2026-09-03; product + legal sign-off complete.** Drift
-  Tennis is treated as **18+ at launch** until a reviewed guardian-consent flow
+  **Accepted 18+ at launch 2026-09-03 — product decision by the owner. No legal
+  review was obtained, and none is claimed.** Drift Tennis is treated as
+  **18+ at launch** until a reviewed guardian-consent flow
   exists. Password signup requires `acceptedAgePolicy: true`; fresh Google/Apple
   account creation requires the same before a `User` row is created;
   returning/social-link users are not locked out. The database stores
@@ -334,10 +442,12 @@ artifact, so a commit or PR can close an item by referencing its ID
   `20260903180000_add_age_policy_acceptance` records the consent timestamp on the
   `users` table (column `agePolicyAcceptedAt`); fixed table name from `"User"` to
   `"users"` to match `@@map("users")`, failed local migration resolved, deployed
-  clean — 42 migrations, schema up to date. *Owner:* product + legal.
-  *Legal basis checked:* FTC COPPA rule for under-13 child data collection; GDPR
-  Article 8 child-consent rules for information-society services.
-  *Decision record:* `docs/AGE_POLICY_DECISION.md`.
+  clean — 42 migrations, schema up to date. *Owner:* product.
+  *Legal basis consulted in-house (background reading, not advice and not a
+  sign-off):* FTC COPPA rule for under-13 child data collection; GDPR Article 8
+  child-consent rules for information-society services. A lawyer's review of this
+  posture belongs in P.1's scope, and this item is closed as a product decision
+  without waiting for it. *Decision record:* `docs/AGE_POLICY_DECISION.md`.
 - [x] **P.3 — GDPR erasure**
   **The premise was half wrong, and finding that out shrank the job.** A real
   anonymisation already existed for admin-fulfilled `DELETION` requests; what was
@@ -365,8 +475,8 @@ artifact, so a commit or PR can close an item by referencing its ID
   relations straight from `schema.prisma` and **fails when a new PII-bearing table
   appears with no decision recorded** — proven to bite by removing `DeviceToken` and
   watching it name the omission. *Reference:* `docs/GDPR_ERASURE_PLAN.md`
-- [!] **P.4 — Support mailbox**
-  **App route wired 2026-09-03; blocked on monitored-mailbox proof.** Contact Support
+- [x] **P.4 — Support mailbox** ✨ *closed 2026-09-03*
+  **App route wired and mailbox proven 2026-09-03 — closed.** Contact Support
   now uses `DRIFT_SUPPORT_EMAIL`, defaulting to `drift@einsbrand.com`, and the Help /
   Legal copy names it as the route for account recovery, privacy requests, billing,
   safety, and technical issues. **Raised in importance by P.3:** this is still the
@@ -375,17 +485,135 @@ artifact, so a commit or PR can close an item by referencing its ID
   window cannot ask from within the app. The remaining proof is operational: owner
   must confirm the mailbox exists and is monitored or forwarded to whoever works the
   platform-admin support queue.
-- [ ] **P.5 — Load testing**
-  Never performed. One 3.7 GB host runs Postgres, Redis, the API and two Next apps.
-- [ ] **P.6 — Apple & Google developer accounts**
+  **2026-09-03 — the mailbox does more than the entry said.** `MAIL_FROM` is
+  `Drift Tennis <drift@einsbrand.com>` (`docs/DEPLOYMENT.md`), the same address Help
+  and Contact name. So this is not only the inbound support route: it is the
+  **reply-to for all six transactional flows** — signup verification, password
+  reset, Platform Admin 2FA, staff reset, staff invitations, club setup. Anyone who
+  hits reply on a verification mail writes here. Unmonitored, those replies are lost
+  in silence, on top of the Article 17 problem.
+  **What "confirmed" has to mean** — three checks, not one:
+  1. *It receives.* Send a mail from an address outside the domain to
+     `drift@einsbrand.com`; confirm it lands in a mailbox a person opens (not a
+     discard alias, not an unread catch-all).
+  2. *A human is behind it.* Name who reads it and how often. "It forwards
+     somewhere" is not an answer unless the somewhere is monitored.
+  3. *It reaches the queue.* That person knows an emailed erasure or recovery
+     request becomes a ticket via Platform Admin → Support → create ticket
+     (`SupportAdminService.createTicket`), which is the only path from an email
+     into the tracked queue. Nothing ingests this mailbox automatically.
+  **Closed 2026-09-03 — owner ran all three checks and confirmed.** The mailbox
+  receives from outside the domain into a box a person opens, a human is behind it,
+  and that person knows an emailed erasure or recovery request has to be filed into
+  the queue by hand. That was the whole of what this item was blocked on: the code
+  side shipped earlier the same day, and no test could ever have proven the
+  operational half. *What is deliberately not claimed:* nothing automated watches
+  this mailbox, so the guarantee is a human one and it is only as good as that
+  person's attention — if the support load grows, ingesting the mailbox into the
+  ticket queue is the follow-up, not a re-open of this item.
+  **Split out 2026-09-03:** a fourth requirement was recorded here earlier the same
+  day — Play also wants a *web* page where deletion can be requested. That is a real
+  and still-open Play blocker, and leaving it inside a closed item would hide it
+  behind a green tick, so it now stands on its own as **P.7**.
+- [!] **P.5 — Load testing**
+  **Harness written 2026-09-03; closes when a run is recorded.** `scripts/load/` holds
+  a k6 smoke profile (1 VU, zero error tolerance — run it first, so a ramp failure is
+  known to be about capacity rather than a broken endpoint) and a ramp to 50 VUs whose
+  thresholds are a pass/fail statement rather than decoration: p95 < 1.5 s, errors
+  < 1%, non-zero exit on breach.
+  **The measurement that matters is not requests per second** but the concurrency at
+  which p95 leaves the band, because that is what says whether the launch cohort fits
+  on one 3.7 GB host running Postgres, Redis, the API and two Next apps together.
+  **Two throttles will skew the result and both are handled or written down.** Login is
+  **10/min per IP** (`AUTH_SENSITIVE`), so both scripts log in exactly once in k6's
+  `setup()` and share the token — a per-VU login measures the rate limiter and looks
+  like total collapse at 11 VUs. Everything else is 300/min per IP, which a
+  single-machine ramp reaches before the server's real ceiling; `docs/LOAD_TESTING.md`
+  says to either raise it, run from several IPs, or record which limit was actually
+  found. A capacity number that silently measured a limiter is worse than none.
+  **Run 1 performed 2026-09-03 against `drift.einsbrand.com`** — k6 v2.2.0, one
+  client IP. The "never performed" half of this entry is answered; the capacity
+  question is not, and the run is what proved why.
+  **The smoke failed, and was worth more than the ramp.** Three of five endpoints
+  returned **404 "Tennis profile not found"** for `owner@drift.test`: `/home/feed`,
+  `/home/summary`, `/players`. The cause is a defect in
+  `scripts/staging/bootstrap-accounts.mjs`, not in the test — signup creates
+  `tennisProfile: { create: {} }`, but the bootstrap writes the `User` row directly
+  and never created one, so the account read as `onboardingStep: COMPLETE` while
+  every player-facing endpoint 404'd. It cannot be healed from outside the box:
+  every onboarding endpoint `update`s that row rather than upserting it. **Fixed in
+  the script** (now an upsert, so a re-run heals an account already in that state),
+  but only a re-run on the box makes it true there. *This is exactly the class of
+  thing a smoke profile exists to catch, and it ran first by design.*
+  **The ramp measured the limiter, not the server.** 1 → 10 → 25 → 50 VUs over
+  3m15s: 6,231 requests, **80.59% failed and every failure was a `429`**. Confirmed
+  directly: `X-RateLimit-Limit: 300`, 60-second window — the documented
+  `THROTTLE_LIMIT` default. About 368 req/min got through; the rest were shed.
+  **What it does prove:** the limiter works — a 50-VU flood from one IP was shed
+  without the app breaking a sweat, and **latency never degraded at any point**,
+  p95 flat at ~216 ms from 1 VU to 50. An authenticated Postgres read costs only
+  **~6 ms more** than an endpoint touching no database (`/players/me` p95 220.77 ms
+  vs `/health` 214.58 ms), so nearly all of that 216 ms is client-to-Hetzner round
+  trip, not server time. Postgres in 768 MB is not the bottleneck at this level.
+  **What it does not prove — and why this stays open:** the limiter shed the load
+  before it reached the application, so the box was never stressed, **no p95
+  crossing exists to report**, and this entry's own closing criterion cannot be
+  met. Real users arrive from many IPs and are not bounded this way. Worse, the
+  home feed — the expensive fan-out endpoint, and the one capacity actually turns
+  on — was never exercised at all, because staging has no onboarded player.
+  *Blocked on, both needing the box:* re-run the account bootstrap so the feed
+  becomes measurable, and temporarily raise `THROTTLE_LIMIT` (or run from several
+  source IPs) and re-run `ramp.js` rather than `ramp-core.js`. Exact commands in
+  `docs/LOAD_TESTING.md` § Run 1.
+- [~] **P.6 — Apple & Google developer accounts**
   Prerequisites for Phases 4 and 6. Long lead time — start the paperwork early.
-  *Blocks:* 4.4, 4.5, 6.1
+  **Google side is largely done:** four OAuth clients exist in project `921637855690`
+  (web/server, Android debug, Android preview, iOS) — IDs recorded in
+  `docs/SOCIAL_SIGNIN_SETUP.md`. **Still needed for Android launch:** a fifth client
+  for the *release* keystore SHA-1 `B1:FF:6E:D1:BE:0F:19:1D:36:CA:18:D5:98:DD:86:5F:3C:46:CE:BF`
+  added to `GOOGLE_OAUTH_CLIENT_IDS`, the consent screen moved from Testing to
+  Published, and a Play Console developer account.
+  **Apple side is untouched** and is the whole of the iOS lead time.
+  *Blocks:* the Android release client blocks Google sign-in in a store build;
+  Apple enrolment blocks 4.5 and therefore all of iOS.
+- [ ] **P.7 — Web account-deletion request page** 🔴 *Play submission blocker*
+  **Split out of P.4 on 2026-09-03, when P.4 closed.** Play's account-deletion policy
+  asks for **two** routes once an app lets people create accounts: in-app deletion,
+  which P.3 shipped, and a **web URL where deletion can be requested without
+  installing the app**. Only the first exists.
+  It is not paperwork. It is the route for exactly the people who cannot use the
+  in-app one: someone who has already uninstalled, and — the case P.3 created —
+  someone inside the 30-day recovery window, because `login` refuses a `DELETED`
+  account and they therefore cannot ask from inside the app at all.
+  **What closes it:** a public page, sensibly at the same host as the P.1 privacy
+  policy, naming `drift@einsbrand.com`, saying what happens over the following 30
+  days and what is kept in redacted form afterwards, and linked from the Play
+  listing. It does not need to be a form — an address and an accurate description of
+  the process is enough.
+  *Cannot be built from this repository:* it needs hosting, and its copy should match
+  whatever P.1's legal review settles on, so the two are best done together.
+  *Reference:* `docs/PLAY_SUBMISSION.md` §1.2 · *Owner:* legal + hosting
 
 ---
 
 ## Critical path
 
-**2.1 domain → 3.1 email → 4.1–4.5 social sign-in → store submission**
+Rewritten 2026-09-03, when the owner chose **Android first, iOS follows**. The old
+path routed everything through Apple; it no longer does.
 
-Most likely to be underestimated: **4.5** (Google alone means iOS rejection) and
-**5.1** (unanswerable after first release).
+**Android (the launch):**
+`P.1 hosted privacy policy` + `P.7 web deletion-request page` → Play listing
+→ release-keystore OAuth client → `tool/build_release.sh` → submission
+
+Everything engineering-side for Android is done. **The binding constraint is now
+legal and hosting, not code** — Play will not accept a listing without a publicly
+reachable privacy policy (P.1) and a web route to request account deletion (P.7),
+and neither can be produced from this repository. Both want the same host and their
+copy has to agree, so they are one errand rather than two.
+
+**iOS (after):**
+`P.6 Apple enrolment` → `4.5 Sign in with Apple` → App Store submission
+
+**Most likely to be underestimated:** P.1 — it reads like paperwork, but it is the
+single item standing between a finished Android build and the store. Second, the
+IntaSend keys for **7.1**, which have to be rotated before anything can be tested.

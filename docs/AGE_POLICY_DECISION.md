@@ -1,8 +1,11 @@
 # Age Policy — Launch Decision Record
 
-**Status:** Accepted
+**Status:** Accepted as a product decision by the repo owner
 **Effective:** 2026-09-03 (launch)
-**Owner:** product + legal
+**Owner:** product
+**Legal review:** **not obtained.** No lawyer has reviewed this posture or the
+copy that states it. See *Legal basis consulted* below for what that section is
+and is not.
 **Closes:** tracker P.2
 
 ## Decision
@@ -23,7 +26,12 @@ review replaces it.
   **not** store date of birth. The gate is therefore deliberately designed to
   avoid collecting extra PII.
 
-## Legal basis checked
+## Legal basis consulted
+
+**This is background reading, not legal advice and not a legal sign-off.** The
+statutes below were read in-house to pick a defensible default; no qualified
+adviser has confirmed that reading, and nothing here should be relied on as
+though one had.
 
 - **FTC COPPA** (Children's Online Privacy Protection Rule): parental consent
   is required for services directed to under-13s, or with actual knowledge of
@@ -49,6 +57,9 @@ requires its own product + legal review before it can be added:
 
 This decision should be revisited when:
 
+- The legal review of the launch legal copy (tracker P.1) happens — this posture
+  belongs in its scope, and that review is where the "not obtained" above gets
+  closed out.
 - A guardian-consent flow is proposed.
 - The product targets or knowingly acquires users below 18.
 - The applicable legal basis changes.
