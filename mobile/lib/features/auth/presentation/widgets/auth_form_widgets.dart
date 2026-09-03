@@ -269,6 +269,56 @@ class AuthFooterPrompt extends StatelessWidget {
   }
 }
 
+class AgePolicyAcceptance extends StatelessWidget {
+  const AgePolicyAcceptance({
+    super.key,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<DriftColors>()!;
+    final type = Theme.of(context).extension<DriftTypography>()!;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () => onChanged(!value),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 24,
+              height: 24,
+              child: Checkbox(
+                value: value,
+                activeColor: colors.primary,
+                onChanged: (checked) => onChanged(checked ?? false),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'I confirm I am 18 or older and agree to the Terms & '
+                'Privacy Policy.',
+                style: type.caption.copyWith(
+                  color: colors.textSecondary,
+                  height: 1.35,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// Google's four-colour "G", copied from the prototype's inline SVG.
 class GoogleGlyph extends StatelessWidget {
   const GoogleGlyph({super.key, this.size = 18});

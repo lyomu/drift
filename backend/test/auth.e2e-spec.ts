@@ -39,7 +39,7 @@ describe('Auth (e2e)', () => {
   it('completes the signup -> verify -> login -> /users/me -> refresh -> logout round trip', async () => {
     const signUpRes = await request(app.getHttpServer())
       .post('/auth/signup')
-      .send({ email, password })
+      .send({ email, password, acceptedAgePolicy: true })
       .expect(201);
 
     expect(signUpRes.body.userId).toBeDefined();
@@ -79,6 +79,13 @@ describe('Auth (e2e)', () => {
       .post('/auth/logout')
       .send({ refreshToken: refreshRes.body.refreshToken })
       .expect(200);
+  });
+
+  it('rejects signup without accepting the 18+ account policy', async () => {
+    await request(app.getHttpServer())
+      .post('/auth/signup')
+      .send({ email: `minor-gate-${Date.now()}@test.com`, password })
+      .expect(400);
   });
 
   it('rejects login with the wrong password', async () => {

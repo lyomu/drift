@@ -608,6 +608,9 @@ model User {
   accountStatus      AccountStatus      @default(ACTIVE)
   emailVerifiedAt    DateTime?
   phoneVerifiedAt    DateTime?
+  // Launch policy P.2: Drift Tennis is 18+ until a guardian-consent flow exists.
+  // Store the consent timestamp, not date of birth, to avoid collecting extra PII.
+  agePolicyAcceptedAt DateTime?
 
   onboardingStep        OnboardingStep @default(SIGN_UP)
   onboardingCompletedAt DateTime?

@@ -171,7 +171,11 @@ describe('password DTO boundaries', () => {
     {
       name: 'signup',
       make: (password) =>
-        Object.assign(new SignUpDto(), { email: 'a@test.com', password }),
+        Object.assign(new SignUpDto(), {
+          email: 'a@test.com',
+          password,
+          acceptedAgePolicy: true,
+        }),
     },
     {
       name: 'change password',

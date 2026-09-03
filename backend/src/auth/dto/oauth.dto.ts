@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
 import {
+  Equals,
   IsEmail,
   IsIn,
   IsNotEmpty,
@@ -8,8 +9,15 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { AuthProvider } from '@prisma/client';
+import { AGE_POLICY_ERROR_MESSAGE } from '../age-policy';
 
-export class OAuthGoogleDto {
+class NewSocialAccountPolicyDto {
+  @IsOptional()
+  @Equals(true, { message: AGE_POLICY_ERROR_MESSAGE })
+  acceptedAgePolicy?: true;
+}
+
+export class OAuthGoogleDto extends NewSocialAccountPolicyDto {
   @IsString()
   @IsNotEmpty()
   idToken!: string;
@@ -29,7 +37,7 @@ export class AppleNameDto {
   lastName?: string;
 }
 
-export class OAuthAppleDto {
+export class OAuthAppleDto extends NewSocialAccountPolicyDto {
   @IsString()
   @IsNotEmpty()
   identityToken!: string;

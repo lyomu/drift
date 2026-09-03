@@ -12,8 +12,15 @@ import '../../auth/presentation/widgets/social_auth_buttons.dart';
 /// (`foundation/03-user-journeys.md` §2, redesign 2026-08). "Continue with
 /// Email" starts sign-up; the social buttons sign in through
 /// [SocialAuthButtons], which owns that flow for all three auth screens.
-class WelcomeScreen extends StatelessWidget {
+class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
+
+  @override
+  State<WelcomeScreen> createState() => _WelcomeScreenState();
+}
+
+class _WelcomeScreenState extends State<WelcomeScreen> {
+  bool _acceptedAgePolicy = false;
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +59,15 @@ class WelcomeScreen extends StatelessWidget {
             onPressed: () => context.push('/sign-up'),
           ),
           const SizedBox(height: 10),
-          const SocialAuthButtons(),
+          AgePolicyAcceptance(
+            value: _acceptedAgePolicy,
+            onChanged: (value) => setState(() => _acceptedAgePolicy = value),
+          ),
+          const SizedBox(height: 10),
+          SocialAuthButtons(
+            enabled: _acceptedAgePolicy,
+            acceptedAgePolicy: _acceptedAgePolicy,
+          ),
           const SizedBox(height: 24),
           AuthFooterPrompt(
             lead: 'Already have an account? ',

@@ -17,7 +17,14 @@ import 'auth_form_widgets.dart';
 /// the account-linking prompt — and three copies of it would drift apart.
 /// Screens stay stateless; the busy and error state lives here.
 class SocialAuthButtons extends ConsumerStatefulWidget {
-  const SocialAuthButtons({super.key});
+  const SocialAuthButtons({
+    super.key,
+    this.enabled = true,
+    this.acceptedAgePolicy = false,
+  });
+
+  final bool enabled;
+  final bool acceptedAgePolicy;
 
   @override
   ConsumerState<SocialAuthButtons> createState() => _SocialAuthButtonsState();
@@ -38,7 +45,10 @@ class _SocialAuthButtonsState extends ConsumerState<SocialAuthButtons> {
       final credential = await controller.acquireSocialCredential(provider);
 
       try {
-        await controller.socialSignIn(credential);
+        await controller.socialSignIn(
+          credential,
+          acceptedAgePolicy: widget.acceptedAgePolicy,
+        );
       } on EmailLinkRequiredException catch (e) {
         // The address already has a password account that couldn't be
         // auto-linked. Prefer the server's address over the credential's:
@@ -97,6 +107,7 @@ class _SocialAuthButtonsState extends ConsumerState<SocialAuthButtons> {
     final colors = Theme.of(context).extension<DriftColors>()!;
     final type = Theme.of(context).extension<DriftTypography>()!;
     final anyBusy = _busy != null;
+    final enabled = widget.enabled && !anyBusy;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -105,14 +116,14 @@ class _SocialAuthButtonsState extends ConsumerState<SocialAuthButtons> {
           label: 'Continue with Google',
           icon: const GoogleGlyph(),
           loading: _busy == SocialProvider.google,
-          onPressed: anyBusy ? null : () => _start(SocialProvider.google),
+          onPressed: enabled ? () => _start(SocialProvider.google) : null,
         ),
         const SizedBox(height: 10),
         AuthSocialButton(
           label: 'Continue with Apple',
           icon: const Icon(Icons.apple, size: 20, color: Color(0xFF1A1A1A)),
           loading: _busy == SocialProvider.apple,
-          onPressed: anyBusy ? null : () => _start(SocialProvider.apple),
+          onPressed: enabled ? () => _start(SocialProvider.apple) : null,
         ),
         if (_error != null) ...[
           const SizedBox(height: 12),

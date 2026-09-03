@@ -120,11 +120,15 @@ describe('AuthService', () => {
       const result = await service.signUp({
         email: 'a@test.com',
         password: 'password123',
+        acceptedAgePolicy: true,
       });
 
       expect(prisma.user.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ email: 'a@test.com' }),
+          data: expect.objectContaining({
+            email: 'a@test.com',
+            agePolicyAcceptedAt: expect.any(Date),
+          }),
         }),
       );
       expect(prisma.verificationCode.create).toHaveBeenCalled();
@@ -136,8 +140,25 @@ describe('AuthService', () => {
       prisma.user.findUnique.mockResolvedValue({ id: 'existing' });
 
       await expect(
-        service.signUp({ email: 'a@test.com', password: 'password123' }),
+        service.signUp({
+          email: 'a@test.com',
+          password: 'password123',
+          acceptedAgePolicy: true,
+        }),
       ).rejects.toBeInstanceOf(ConflictException);
+    });
+
+    it('requires the launch 18+ account policy acceptance', async () => {
+      prisma.user.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.signUp({
+          email: 'a@test.com',
+          password: 'password123',
+          acceptedAgePolicy: false as true,
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(prisma.user.create).not.toHaveBeenCalled();
     });
   });
 
@@ -622,11 +643,12 @@ describe('AuthService', () => {
       prisma.user.create.mockResolvedValue({ id: 'user-new' });
       prisma.socialIdentity.create.mockResolvedValue({});
 
-      await service.oauthGoogle({ idToken: 'tok' });
+      await service.oauthGoogle({ idToken: 'tok', acceptedAgePolicy: true });
 
       const data = prisma.user.create.mock.calls[0][0].data;
       expect(data.passwordHash).toBeNull();
       expect(data.emailVerifiedAt).toBeInstanceOf(Date);
+      expect(data.agePolicyAcceptedAt).toBeInstanceOf(Date);
       expect(data.verificationStatus).toBe('VERIFIED');
       // The provider already proved the address, so this user must skip the
       // verification screen — landing on VERIFY would be a dead end for them.
@@ -645,7 +667,10 @@ describe('AuthService', () => {
       prisma.user.create.mockResolvedValue({ id: 'user-new' });
       prisma.socialIdentity.create.mockResolvedValue({});
 
-      await service.oauthApple({ identityToken: 'tok' });
+      await service.oauthApple({
+        identityToken: 'tok',
+        acceptedAgePolicy: true,
+      });
 
       expect(prisma.socialIdentity.create.mock.calls[0][0].data.name).toBe(
         'Ada Lovelace',
@@ -696,6 +721,17 @@ describe('AuthService', () => {
       await expect(service.oauthGoogle({ idToken: 'tok' })).rejects.toThrow(
         ConflictException,
       );
+    });
+
+    it('requires age-policy acceptance only before creating a fresh social account', async () => {
+      prisma.socialIdentity.findUnique.mockResolvedValue(null);
+      prisma.user.findUnique.mockResolvedValue(null);
+
+      await expect(service.oauthGoogle({ idToken: 'tok' })).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(prisma.user.create).not.toHaveBeenCalled();
+      expect(oauth.verifyGoogleIdToken).toHaveBeenCalled();
     });
   });
 

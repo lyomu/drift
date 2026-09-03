@@ -33,6 +33,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { OAuthGoogleDto, OAuthAppleDto, OAuthLinkDto } from './dto/oauth.dto';
 import { parseDurationMs } from './util/duration.util';
 import { PasswordPolicyService } from './password-policy';
+import { assertAgePolicyAccepted } from './age-policy';
 
 const BCRYPT_ROUNDS = 10;
 const CODE_TTL_MS = 10 * 60 * 1000;
@@ -69,6 +70,7 @@ export class AuthService {
       );
     }
 
+    assertAgePolicyAccepted(dto.acceptedAgePolicy);
     await this.passwordPolicy.assertAcceptable(dto.password);
     const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
     const code = this.generateCode();
@@ -79,6 +81,7 @@ export class AuthService {
         data: {
           email: dto.email,
           passwordHash,
+          agePolicyAcceptedAt: new Date(),
           onboardingStep: OnboardingStep.VERIFY,
           tennisProfile: { create: {} },
         },
@@ -249,7 +252,7 @@ export class AuthService {
    * link the account. Never trusts a client-supplied email or id. */
   async oauthGoogle(dto: OAuthGoogleDto): Promise<AuthTokens> {
     const claims = await this.oauth.verifyGoogleIdToken(dto.idToken, dto.nonce);
-    return this.socialSignIn(claims);
+    return this.socialSignIn(claims, dto.acceptedAgePolicy);
   }
 
   async oauthApple(dto: OAuthAppleDto): Promise<AuthTokens> {
@@ -258,7 +261,7 @@ export class AuthService {
       dto.nonce,
       dto.name,
     );
-    return this.socialSignIn(claims);
+    return this.socialSignIn(claims, dto.acceptedAgePolicy);
   }
 
   /** 4.2 fallback: the email already has a password account that can't be
@@ -310,7 +313,10 @@ export class AuthService {
    *    auto-link only when *both* sides are verified, otherwise 409 and let
    *    the client prove the password via oauthLink().
    */
-  private async socialSignIn(claims: SocialLoginClaims): Promise<AuthTokens> {
+  private async socialSignIn(
+    claims: SocialLoginClaims,
+    acceptedAgePolicy?: boolean,
+  ): Promise<AuthTokens> {
     const existingIdentity = await this.prisma.socialIdentity.findUnique({
       where: {
         provider_providerAccountId: {
@@ -359,6 +365,7 @@ export class AuthService {
     // Apple's private relay can withhold the address entirely; email is
     // nullable on User, so such an account is created without one and picks
     // it up during onboarding rather than being refused at the door.
+    assertAgePolicyAccepted(acceptedAgePolicy);
     const verifiedNow = claims.emailVerified ? new Date() : null;
     const user = await this.prisma.$transaction(async (tx) => {
       const created = await tx.user.create({
@@ -368,6 +375,7 @@ export class AuthService {
           firstName: claims.givenName ?? null,
           lastName: claims.familyName ?? null,
           emailVerifiedAt: verifiedNow,
+          agePolicyAcceptedAt: new Date(),
           verificationStatus: verifiedNow
             ? VerificationStatus.VERIFIED
             : VerificationStatus.UNVERIFIED,

@@ -30,7 +30,14 @@ const _faqs = [
   (
     'What happens when I delete my account?',
     "Your account is deactivated immediately and you're signed out "
-        'everywhere. Contact support if you want your data fully removed.',
+        'everywhere. A deletion request is filed automatically and runs '
+        'after a 30-day recovery window. Contact support before then if the '
+        'deletion was a mistake.',
+  ),
+  (
+    'Can minors use Drift Tennis?',
+    'Not at launch. Drift Tennis accounts are limited to people who are 18 '
+        'or older until a reviewed guardian-consent flow exists.',
   ),
 ];
 

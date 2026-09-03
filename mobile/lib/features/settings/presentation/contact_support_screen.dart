@@ -7,7 +7,10 @@ import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
 import '../../../shared/widgets/drift_scaffold.dart';
 
-const _supportEmail = 'support@drifttennis.app';
+const _supportEmail = String.fromEnvironment(
+  'DRIFT_SUPPORT_EMAIL',
+  defaultValue: 'drift@einsbrand.com',
+);
 
 /// Contact Support — `foundation/04-screen-inventory.md` §A.11. A `mailto:`
 /// link via the existing `url_launcher` dependency, not a ticketing
@@ -45,7 +48,8 @@ class ContactSupportScreen extends StatelessWidget {
             const SizedBox(height: DriftSpacing.s2),
             Text(
               "Send us an email and we'll get back to you as soon as we "
-              'can.',
+              'can. Use this address for account recovery, erasure requests, '
+              'billing questions, reports, and technical issues.',
               style: type.body.copyWith(color: colors.textSecondary),
             ),
             const SizedBox(height: DriftSpacing.s5),

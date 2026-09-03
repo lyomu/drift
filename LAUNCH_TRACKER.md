@@ -314,19 +314,29 @@ artifact, so a commit or PR can close an item by referencing its ID
 
 ## Parallel — decision, lawyer or purchase
 
-- [ ] **P.1 — Terms & Privacy Policy**
-  `legal_screen.dart:13,22` reads *"This is placeholder copy pending a full legal
-  review."* *Owner:* legal
-  **Constrained by P.3 as of 2026-09-03.** This is no longer open-ended copy — it must
-  now *describe shipped behaviour*: the **30-day** window before erasure, that
-  anonymisation is **terminal**, which records are deliberately kept and why
-  (Art. 17(3) — erasure would prejudice other players' rights), and that nightly
-  backups retain pre-erasure data for up to **14 days** until they age out. A policy
-  that contradicts the code is worse than no policy.
-  *Reference:* `docs/GDPR_ERASURE_PLAN.md` §5
-- [ ] **P.2 — Minors / age-gating policy**
-  No age gate. A tennis product attracts under-18s → COPPA / GDPR-K, guardian consent,
-  and whether minors appear in discovery. *Owner:* product + legal
+- [!] **P.1 — Terms & Privacy Policy**
+  **Code copy updated 2026-09-03; blocked on legal sign-off.** The app no longer ships
+  "placeholder copy pending review" as its public legal screen. The launch notice now
+  describes shipped behaviour from P.3: the **30-day** recovery window, terminal
+  anonymisation, the records deliberately kept in redacted form because they also
+  belong to other players or platform integrity, and nightly backups retaining
+  pre-erasure data for up to **14 days** until they age out. Still not a lawyer's
+  final policy. *Owner:* legal. *Reference:* `docs/GDPR_ERASURE_PLAN.md` §5
+- [!] **P.2 — Minors / age-gating policy**
+  **Code gate added 2026-09-03; blocked on product/legal acceptance of the launch
+  policy.** Drift Tennis is now treated as **18+ at launch** until a reviewed
+  guardian-consent flow exists. Password signup requires `acceptedAgePolicy: true`;
+  fresh Google/Apple account creation requires the same before a `User` row is
+  created; returning/social-link users are not locked out. The database stores
+  `agePolicyAcceptedAt`, not date of birth, so the gate avoids collecting extra PII.
+  Under-18s therefore should not appear in discovery because they cannot create
+  launch accounts through supported account-creation paths. Migration
+  `20260903180000_add_age_policy_acceptance` records the consent timestamp on the
+  `users` table (column `agePolicyAcceptedAt`); fixed table name from `"User"` to
+  `"users"` to match `@@map("users")`, failed local migration resolved, deployed
+  clean — 42 migrations, schema up to date. *Owner:* product + legal.
+  *Legal basis checked:* FTC COPPA rule for under-13 child data collection; GDPR
+  Article 8 child-consent rules for information-society services.
 - [x] **P.3 — GDPR erasure**
   **The premise was half wrong, and finding that out shrank the job.** A real
   anonymisation already existed for admin-fulfilled `DELETION` requests; what was
@@ -354,12 +364,16 @@ artifact, so a commit or PR can close an item by referencing its ID
   relations straight from `schema.prisma` and **fails when a new PII-bearing table
   appears with no decision recorded** — proven to bite by removing `DeviceToken` and
   watching it name the omission. *Reference:* `docs/GDPR_ERASURE_PLAN.md`
-- [ ] **P.4 — Support mailbox**
-  Help and Contact are placeholder with no monitored address behind them.
-  **Raised in importance by P.3.** It is the **only inbound route** for an Article 17
-  request, and the only way to reach the 30-day recovery window — `login` refuses a
-  `DELETED` account, so someone inside the window cannot ask from within the app.
-  Until this exists, an erasure request has no channel to arrive through.
+- [!] **P.4 — Support mailbox**
+  **App route wired 2026-09-03; blocked on monitored-mailbox proof.** Contact Support
+  now uses `DRIFT_SUPPORT_EMAIL`, defaulting to `drift@einsbrand.com`, and the Help /
+  Legal copy names it as the route for account recovery, privacy requests, billing,
+  safety, and technical issues. **Raised in importance by P.3:** this is still the
+  only inbound route for an Article 17 request, and the only way to reach the 30-day
+  recovery window — `login` refuses a `DELETED` account, so someone inside the
+  window cannot ask from within the app. The remaining proof is operational: owner
+  must confirm the mailbox exists and is monitored or forwarded to whoever works the
+  platform-admin support queue.
 - [ ] **P.5 — Load testing**
   Never performed. One 3.7 GB host runs Postgres, Redis, the API and two Next apps.
 - [ ] **P.6 — Apple & Google developer accounts**

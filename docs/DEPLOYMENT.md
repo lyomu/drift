@@ -189,13 +189,19 @@ dart-define:
 ```bash
 cd mobile
 flutter build apk --release --split-per-abi \
-  --dart-define=DRIFT_API_BASE_URL=https://drift.einsbrand.com/api
+  --dart-define=DRIFT_API_BASE_URL=https://drift.einsbrand.com/api \
+  --dart-define=DRIFT_SUPPORT_EMAIL=drift@einsbrand.com
 ```
 
 Outputs land in `mobile/build/app/outputs/flutter-apk/` —
 `app-arm64-v8a-release.apk` (modern devices) and
 `app-armeabi-v7a-release.apk` (older devices). Install with
 `adb install <apk>` or distribute directly.
+
+`DRIFT_SUPPORT_EMAIL` is the public Contact Support mailbox used for account
+recovery, erasure requests, billing, safety, and technical issues. The default
+in code is `drift@einsbrand.com`; production readiness still requires confirming
+that this mailbox is monitored or forwards into the support queue.
 
 Notes:
 

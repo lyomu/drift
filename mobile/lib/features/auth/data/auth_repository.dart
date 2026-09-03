@@ -58,10 +58,12 @@ class AuthRepository {
   Future<({String userId, String? devVerificationCode})> signUp({
     required String email,
     required String password,
+    required bool acceptedAgePolicy,
   }) async {
     final data = await _post('/auth/signup', {
       'email': email,
       'password': password,
+      'acceptedAgePolicy': acceptedAgePolicy,
     });
     return (
       userId: data['userId'] as String,
@@ -102,10 +104,12 @@ class AuthRepository {
   Future<AuthTokens> oauthGoogle({
     required String idToken,
     String? nonce,
+    bool acceptedAgePolicy = false,
   }) async {
     return _oauth('/auth/oauth/google', {
       'idToken': idToken,
       if (nonce != null) 'nonce': nonce,
+      if (acceptedAgePolicy) 'acceptedAgePolicy': true,
     });
   }
 
@@ -114,10 +118,12 @@ class AuthRepository {
     String? nonce,
     String? firstName,
     String? lastName,
+    bool acceptedAgePolicy = false,
   }) async {
     return _oauth('/auth/oauth/apple', {
       'identityToken': identityToken,
       if (nonce != null) 'nonce': nonce,
+      if (acceptedAgePolicy) 'acceptedAgePolicy': true,
       // Apple sends this once and never again; dropping it here loses the
       // name permanently.
       if (firstName != null || lastName != null)

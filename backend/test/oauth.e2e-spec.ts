@@ -66,7 +66,7 @@ describe('Social sign-in (e2e)', () => {
   async function createPasswordAccount(email: string, verify: boolean) {
     const res = await request(app.getHttpServer())
       .post('/auth/signup')
-      .send({ email, password })
+      .send({ email, password, acceptedAgePolicy: true })
       .expect(201);
 
     if (verify) {
@@ -87,9 +87,14 @@ describe('Social sign-in (e2e)', () => {
       familyName: 'Lovelace',
     } as SocialLoginClaims;
 
-    const res = await request(app.getHttpServer())
+    await request(app.getHttpServer())
       .post('/auth/oauth/google')
       .send({ idToken: 'stub' })
+      .expect(400);
+
+    const res = await request(app.getHttpServer())
+      .post('/auth/oauth/google')
+      .send({ idToken: 'stub', acceptedAgePolicy: true })
       .expect(200);
 
     expect(res.body.accessToken).toBeDefined();
@@ -105,6 +110,9 @@ describe('Social sign-in (e2e)', () => {
     expect(me.body.onboardingStep).toBe('BASIC_PROFILE');
     expect(me.body.verificationStatus).toBe('VERIFIED');
     expect(me.body.passwordHash).toBeUndefined();
+    // Fresh social account creation now requires acceptedAgePolicy and records
+    // the consent timestamp (P.2), so this user must have it set.
+    expect(me.body.agePolicyAcceptedAt).toBeDefined();
   });
 
   it('returns the same account on a second sign-in rather than duplicating it', async () => {

@@ -25,6 +25,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final _passwordController = TextEditingController();
   bool _isSubmitting = false;
   bool _obscure = true;
+  bool _acceptedAgePolicy = false;
   String? _errorText;
 
   @override
@@ -44,7 +45,11 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       final email = _emailController.text.trim();
       await ref
           .read(authControllerProvider.notifier)
-          .signUp(email: email, password: _passwordController.text);
+          .signUp(
+            email: email,
+            password: _passwordController.text,
+            acceptedAgePolicy: _acceptedAgePolicy,
+          );
       if (!mounted) return;
       context.push('/verify', extra: email);
     } on AuthException catch (e) {
@@ -98,9 +103,14 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           Padding(
             padding: const EdgeInsets.only(left: 4),
             child: Text(
-              'Use at least 8 characters.',
+              'Use 8 to 72 characters.',
               style: type.caption.copyWith(color: colors.textSecondary),
             ),
+          ),
+          const SizedBox(height: 12),
+          AgePolicyAcceptance(
+            value: _acceptedAgePolicy,
+            onChanged: (value) => setState(() => _acceptedAgePolicy = value),
           ),
           if (_errorText != null) ...[
             const SizedBox(height: 12),
@@ -114,10 +124,13 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           AuthPrimaryButton(
             label: 'Create account',
             loading: _isSubmitting,
-            onPressed: _isSubmitting ? null : _submit,
+            onPressed: _isSubmitting || !_acceptedAgePolicy ? null : _submit,
           ),
           const SizedBox(height: 18),
-          const SocialAuthButtons(),
+          SocialAuthButtons(
+            enabled: _acceptedAgePolicy,
+            acceptedAgePolicy: _acceptedAgePolicy,
+          ),
           const SizedBox(height: 24),
           AuthFooterPrompt(
             lead: 'Already have an account? ',

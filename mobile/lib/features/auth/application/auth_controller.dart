@@ -25,10 +25,15 @@ class AuthController extends AsyncNotifier<AuthSessionStatus> {
   Future<({String userId, String? devVerificationCode})> signUp({
     required String email,
     required String password,
+    required bool acceptedAgePolicy,
   }) {
     return ref
         .read(authRepositoryProvider)
-        .signUp(email: email, password: password);
+        .signUp(
+          email: email,
+          password: password,
+          acceptedAgePolicy: acceptedAgePolicy,
+        );
   }
 
   Future<void> verify({required String email, required String code}) async {
@@ -84,18 +89,23 @@ class AuthController extends AsyncNotifier<AuthSessionStatus> {
   ///
   /// Rethrows [EmailLinkRequiredException] — the caller prompts for the
   /// existing password and finishes with [linkWithPassword].
-  Future<void> socialSignIn(SocialCredential credential) async {
+  Future<void> socialSignIn(
+    SocialCredential credential, {
+    bool acceptedAgePolicy = false,
+  }) async {
     final repo = ref.read(authRepositoryProvider);
     final tokens = switch (credential.provider) {
       SocialProvider.google => await repo.oauthGoogle(
         idToken: credential.idToken,
         nonce: credential.nonce,
+        acceptedAgePolicy: acceptedAgePolicy,
       ),
       SocialProvider.apple => await repo.oauthApple(
         identityToken: credential.idToken,
         nonce: credential.nonce,
         firstName: credential.firstName,
         lastName: credential.lastName,
+        acceptedAgePolicy: acceptedAgePolicy,
       ),
     };
     await _persistAndSetAuthenticated(tokens);

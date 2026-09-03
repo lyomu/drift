@@ -29,10 +29,7 @@ void main() {
     email: 'ada@test.com',
   );
 
-  const tokens = AuthTokens(
-    accessToken: 'access',
-    refreshToken: 'refresh',
-  );
+  const tokens = AuthTokens(accessToken: 'access', refreshToken: 'refresh');
 
   const freshUser = UserProfile(
     id: 'user-1',
@@ -86,6 +83,7 @@ void main() {
       () => auth.oauthGoogle(
         idToken: any(named: 'idToken'),
         nonce: any(named: 'nonce'),
+        acceptedAgePolicy: any(named: 'acceptedAgePolicy'),
       ),
     ).thenAnswer((_) async => tokens);
 
@@ -113,6 +111,7 @@ void main() {
       () => auth.oauthGoogle(
         idToken: any(named: 'idToken'),
         nonce: any(named: 'nonce'),
+        acceptedAgePolicy: any(named: 'acceptedAgePolicy'),
       ),
     );
   });
@@ -124,6 +123,7 @@ void main() {
       () => auth.oauthGoogle(
         idToken: any(named: 'idToken'),
         nonce: any(named: 'nonce'),
+        acceptedAgePolicy: any(named: 'acceptedAgePolicy'),
       ),
     ).thenThrow(
       const EmailLinkRequiredException('already exists', 'ada@test.com'),
@@ -174,6 +174,7 @@ void main() {
       () => auth.oauthGoogle(
         idToken: any(named: 'idToken'),
         nonce: any(named: 'nonce'),
+        acceptedAgePolicy: any(named: 'acceptedAgePolicy'),
       ),
     ).thenThrow(
       const EmailLinkRequiredException('already exists', 'ada@test.com'),

@@ -37,7 +37,7 @@ describe('Courts & Clubs (e2e)', () => {
   async function onboard(user: { email: string; token: string; id: string }) {
     const signUp = await request(app.getHttpServer())
       .post('/auth/signup')
-      .send({ email: user.email, password })
+      .send({ email: user.email, password, acceptedAgePolicy: true })
       .expect(201);
 
     const verify = await request(app.getHttpServer())
