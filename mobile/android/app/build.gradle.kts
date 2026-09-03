@@ -11,8 +11,25 @@ plugins {
     id("com.google.gms.google-services")
 }
 
+// Which credentials file to sign with. `-Pdrift.signing=release` resolves to
+// `key.release.properties`; passing nothing resolves to `key.properties`, so
+// debug and preview builds behave exactly as they did before. The environment
+// variable names a file outright and wins over the profile, for a CI runner
+// that mounts its own. Before this existed the filename was hardcoded, which
+// meant the rotated release key could only be reached by setting all four
+// DRIFT_ANDROID_* variables — and a plain `--release` build silently used
+// preview instead.
+val signingProfile = (project.findProperty("drift.signing") as String?)?.takeIf { it.isNotBlank() }
+val releaseSigningFileName =
+    System.getenv("DRIFT_ANDROID_KEY_PROPERTIES")?.takeIf { it.isNotBlank() }
+        ?: if (signingProfile == null || signingProfile == "default") {
+            "key.properties"
+        } else {
+            "key.$signingProfile.properties"
+        }
+
 val releaseSigningProperties = Properties()
-val releaseSigningPropertiesFile = rootProject.file("key.properties")
+val releaseSigningPropertiesFile = rootProject.file(releaseSigningFileName)
 if (releaseSigningPropertiesFile.exists()) {
     releaseSigningPropertiesFile.inputStream().use(releaseSigningProperties::load)
 }
@@ -38,8 +55,32 @@ val releaseTaskRequested = gradle.startParameter.taskNames.any {
 if (releaseTaskRequested && !hasReleaseSigning) {
     throw GradleException(
         "Release signing is not configured. Copy key.properties.example to " +
-            "key.properties or set the DRIFT_ANDROID_* environment variables.",
+            "$releaseSigningFileName or set the DRIFT_ANDROID_* environment variables.",
     )
+}
+
+// Google Play binds an app to its signing key on the first upload and that
+// binding can never be changed. `key.properties` still points at the preview
+// key deliberately — preview builds keep their own identity — so the failure
+// this guards against is quiet and permanent: run `--release` without choosing
+// a profile and the store would take preview as the app's real key forever.
+// Naming the keystore and alias out loud is the other half; a signing config
+// nobody can see is one nobody checks. Passwords are never printed, which is
+// the same care tracker 5.1 took when the key was rotated.
+if (releaseTaskRequested && hasReleaseSigning) {
+    logger.lifecycle(
+        "Drift release signing: $releaseSigningFileName -> $releaseStoreFile (alias $releaseKeyAlias)",
+    )
+    if (releaseKeyAlias == "preview" && !project.hasProperty("drift.allowPreviewSigning")) {
+        throw GradleException(
+            "Refusing to sign a release build with the preview key (alias 'preview', " +
+                "from $releaseSigningFileName). Play binds an app to its signing key on " +
+                "first upload and it can never be changed afterwards. Use " +
+                "-Pdrift.signing=release for a store build, or pass " +
+                "-Pdrift.allowPreviewSigning if a preview-signed release artifact is " +
+                "genuinely what you want.",
+        )
+    }
 }
 
 android {

@@ -16,6 +16,13 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
+#
+# Versioning policy (docs/PLAY_SUBMISSION.md). 1.0.0+1 is the deliberate first
+# public release, not a leftover default. The part that bites later is the build
+# number: it becomes Android's versionCode, Play permanently refuses a code it
+# has already accepted, and a rejected or abandoned upload still burns one. So
+# increment the +N on every build handed to Play — even a replacement for a
+# submission that failed review — and never reuse or decrement it.
 version: 1.0.0+1
 
 environment:
