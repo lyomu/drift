@@ -1,0 +1,128 @@
+name: Release images
+
+# Builds the three deployable images and publishes them to GHCR.
+#
+# Why this exists (tracker 5.2): today a human SSHes to the production box and
+# runs `docker compose build` there, against 3.7 GB of RAM shared with Postgres,
+# Redis, the API and two Next apps. That is slow, it competes with the running
+# service for memory, and — the part that actually matters — it leaves **no
+# artifact to roll back to**. A failed deploy can only be fixed by building
+# again on the same box. Publishing tagged images moves the build to a CI runner
+# and makes the previous release a thing you can point at.
+#
+# Deploying these images is deliberately NOT automated here; see
+# docs/DEPLOYMENT.md § Deploying a published image.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      api_url:
+        description: "Public API URL baked into both consoles"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  images:
+    name: Build and publish ${{ matrix.image }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: drift-api
+            context: backend
+            build_args: ""
+          - image: drift-club-admin
+            context: club-admin
+            build_args: "api_url"
+          - image: drift-platform-admin
+            context: platform-admin
+            build_args: "api_url_and_base_path"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      # No third-party actions here on purpose. 5.3 pinned every action to a
+      # commit SHA because a moving tag is a pointer its owner can repoint; the
+      # cheapest way to keep that promise is to add no new action at all. Docker
+      # and buildx are preinstalled on ubuntu-latest, and `docker login` against
+      # GHCR needs nothing but the token this job already has.
+      - name: Log in to GHCR
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" \
+            | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Resolve tags
+        id: meta
+        run: |
+          set -euo pipefail
+          # GHCR rejects an uppercase path, and a GitHub owner may contain any case.
+          owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          repo="ghcr.io/${owner}/${{ matrix.image }}"
+          short="${GITHUB_SHA::12}"
+
+          # Always publish an immutable sha- tag. A release tag is what a human
+          # asks for; the sha- tag is what makes "roll back to exactly what was
+          # running" answerable months later, when a moved tag would not be.
+          tags="-t ${repo}:sha-${short}"
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            tags="${tags} -t ${repo}:${GITHUB_REF_NAME}"
+          fi
+
+          echo "repo=${repo}" >> "$GITHUB_OUTPUT"
+          echo "short=${short}" >> "$GITHUB_OUTPUT"
+          echo "tags=${tags}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push
+        env:
+          # Both consoles bake the API origin into the bundle AND into their CSP
+          # connect-src at build time (see club-admin/next.config.ts), so this is
+          # not a runtime setting — an image built with the wrong value has to be
+          # rebuilt, not reconfigured.
+          API_URL: ${{ inputs.api_url || vars.PUBLIC_API_URL || 'https://drift.einsbrand.com/api' }}
+        run: |
+          set -euo pipefail
+          args=""
+          case "${{ matrix.build_args }}" in
+            api_url)
+              args="--build-arg NEXT_PUBLIC_API_URL=${API_URL}"
+              ;;
+            api_url_and_base_path)
+              args="--build-arg NEXT_PUBLIC_API_URL=${API_URL} --build-arg NEXT_PUBLIC_BASE_PATH=/platform"
+              ;;
+          esac
+
+          echo "Building ${{ matrix.image }} from ${{ matrix.context }}"
+          # `[ … ] && echo` would exit the step under `set -e` whenever the
+          # test is false, which is exactly the api image's case.
+          if [ -n "${args}" ]; then
+            echo "  API URL baked in: ${API_URL}"
+          fi
+
+          docker buildx build \
+            --file "${{ matrix.context }}/Dockerfile" \
+            ${args} \
+            ${{ steps.meta.outputs.tags }} \
+            --push \
+            "${{ matrix.context }}"
+
+      - name: Summarise
+        run: |
+          {
+            echo "### ${{ matrix.image }}"
+            echo ""
+            echo '```'
+            echo "${{ steps.meta.outputs.repo }}:sha-${{ steps.meta.outputs.short }}"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

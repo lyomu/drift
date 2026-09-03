@@ -1,3 +1,17 @@
+# Runs the Drift Tennis production stack.
+#
+# Each app service names both an `image:` and a `build:`. With both present,
+# `docker compose up` uses the image when one is available and `docker compose
+# build` builds and tags it locally — so the same file serves a box that builds
+# for itself and a box that pulls what CI already built (tracker 5.2).
+#
+#   DRIFT_IMAGE_TAG unset  -> :local, built on this machine, today's behaviour
+#   DRIFT_IMAGE_TAG=sha-…  -> pulls that exact image from GHCR, and rolling back
+#                             is re-running with the previous sha- tag
+#
+# The console images bake the API origin in at build time, so a pulled image is
+# already bound to one environment. Do not expect PUBLIC_API_URL to re-point one.
+
 services:
   postgres:
     image: postgres:16-bookworm
@@ -36,6 +50,7 @@ services:
     build:
       context: ./backend
     container_name: drift-api
+    image: ghcr.io/${DRIFT_IMAGE_OWNER:-lyomu}/drift-api:${DRIFT_IMAGE_TAG:-local}
     restart: unless-stopped
     env_file:
       - path: ./.env.production
@@ -71,6 +86,7 @@ services:
       args:
         NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL}
     container_name: drift-club-admin
+    image: ghcr.io/${DRIFT_IMAGE_OWNER:-lyomu}/drift-club-admin:${DRIFT_IMAGE_TAG:-local}
     restart: unless-stopped
     environment:
       NODE_ENV: production
@@ -91,6 +107,7 @@ services:
         NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL}
         NEXT_PUBLIC_BASE_PATH: /platform
     container_name: drift-platform-admin
+    image: ghcr.io/${DRIFT_IMAGE_OWNER:-lyomu}/drift-platform-admin:${DRIFT_IMAGE_TAG:-local}
     restart: unless-stopped
     environment:
       NODE_ENV: production

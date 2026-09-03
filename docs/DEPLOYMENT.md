@@ -80,6 +80,56 @@ vhost, so nothing is broken, but the next full rebuild should move these four UR
 variables to `drift.einsbrand.com` (and add it to `CORS_ALLOWED_ORIGINS`) so
 CSPs, links, and email-bound URLs use the real identity.
 
+## DNS records for email deliverability
+
+These live in the `einsbrand.com` zone, not in this repo. They are recorded here
+because a record that exists only in someone's memory is a record that gets lost.
+
+**SPF — already published, no action.** Verified 2026-09-02 and again 2026-09-03:
+
+```
+einsbrand.com  TXT  "v=spf1 +a +mx +ip4:84.16.229.230 include:relay.mailbaby.net +ip4:178.162.196.44 +ip4:167.235.180.68 +ip4:207.180.237.29 ~all"
+```
+
+`MAIL_FROM` sends as `drift@einsbrand.com`, so the From domain is the org domain
+the SPF record covers and relaxed alignment holds. No separate SPF record is
+needed for `drift.einsbrand.com` — nothing sends as a subdomain address.
+
+**DMARC — publish this.** As of 2026-09-03 `_dmarc.einsbrand.com` does not
+resolve, so no DMARC policy is in force at all:
+
+| Field | Value |
+|---|---|
+| Type | `TXT` |
+| Host / name | `_dmarc` (FQDN `_dmarc.einsbrand.com`) |
+| TTL | `3600` |
+| Value | `v=DMARC1; p=none; rua=mailto:drift@einsbrand.com` |
+
+`p=none` is deliberate for the first pass. DMARC passes when SPF **or** DKIM
+aligns; SPF alignment looks correct but DKIM signing on `mail.einsbrand.com` is
+unconfirmed, and publishing an enforcing policy against an unverified setup sends
+signup-verification and password-reset mail to spam with no error anywhere. `none`
+puts the record in place and starts the reports; tighten once the reports prove
+alignment. One DMARC record on the org domain also covers subdomains, so
+`drift.einsbrand.com` needs nothing of its own.
+
+Verify after publishing (allow for the TTL):
+
+```bash
+nslookup -type=TXT _dmarc.einsbrand.com 8.8.8.8
+```
+
+Then, after ~2 weeks of aggregate reports showing SPF/DKIM aligned on every
+legitimate source, raise the policy — `p=quarantine`, and later `p=reject`.
+
+**DKIM — check, then act.** Whether `mail.einsbrand.com` signs outbound is a
+mail-server question, not a repo one. To find out, open any mail Drift sent and
+read its headers: a `DKIM-Signature:` line names the selector in `s=`. If it is
+there, publish the matching `<selector>._domainkey.einsbrand.com` record the mail
+server generated. If there is no such header, the server is not signing and DMARC
+rests on SPF alone — survivable, but it means forwarded mail (which breaks SPF)
+will fail DMARC once the policy is enforcing.
+
 ## Nginx and IP certificate
 
 Bootstrap HTTP-only first:
@@ -167,6 +217,51 @@ cd /srv/drift/app
 bash scripts/deploy.sh
 ```
 
+The deploy script fast-forwards `master`, builds images on the box, runs
+`prisma migrate deploy`, starts the stack, and prints container status.
+
+## Deploying a published image
+
+Building on the box is the default and still works, but it competes for RAM with
+the running stack and leaves nothing to roll back to — the whole of tracker 5.2.
+`.github/workflows/release.yml` publishes the three images to GHCR on every `v*`
+tag and on manual dispatch, tagged both with the release tag and with an
+immutable `sha-<12>` tag.
+
+To run a published build instead of building locally, set the tag before the
+compose commands:
+
+```bash
+cd /srv/drift/app
+export DRIFT_IMAGE_TAG=sha-0123456789ab      # from the workflow run summary
+docker compose -f docker-compose.prod.yml --env-file .env.production pull
+docker compose -f docker-compose.prod.yml --env-file .env.production \
+  run --rm api npx prisma migrate deploy
+docker compose -f docker-compose.prod.yml --env-file .env.production up -d
+```
+
+GHCR needs a login on the box once, with a personal access token carrying
+`read:packages`:
+
+```bash
+echo "$GHCR_TOKEN" | docker login ghcr.io -u <github-username> --password-stdin
+```
+
+**Rolling back** is the point of all this: re-run the same three commands with
+the previous `sha-` tag. Note that a rollback does **not** undo a migration —
+`prisma migrate deploy` only rolls forward, so a release that changed the schema
+needs its down-path thought about before it ships, not after.
+
+**The console images are environment-specific.** Both bake `NEXT_PUBLIC_API_URL`
+into the bundle *and* into their CSP `connect-src` at build time, so an image
+built for one origin cannot be re-pointed at another with an env var. The
+workflow reads the value from the `PUBLIC_API_URL` repository variable, falling
+back to `https://drift.einsbrand.com/api`. This is also why the domain migration
+below needs a rebuild rather than a config change.
+
+Deployment itself is deliberately not automated from CI. Wiring a job that holds
+an SSH key to production is a decision with its own blast radius, and it is the
+owner's to make; the runbook above is what it would automate.
 The deploy script fast-forwards `master`, builds images on the box, runs
 `prisma migrate deploy`, starts the stack, and prints container status.
 
