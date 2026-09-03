@@ -25,6 +25,7 @@ import type {
   BillingInvoice,
   BillingPaymentMethod,
   BillingPlan,
+  ChangeSubscriptionResult,
   ClubBilling,
 } from "@/lib/types";
 
@@ -56,6 +57,7 @@ export default function BillingPage() {
   const [methodType, setMethodType] = useState<"CARD" | "MOBILE_MONEY">("CARD");
   const [brand, setBrand] = useState("Card");
   const [last4, setLast4] = useState("");
+  const [promoCode, setPromoCode] = useState("");
   const [selectedInvoice, setSelectedInvoice] = useState<BillingInvoice | null>(null);
   const [loadingInvoiceId, setLoadingInvoiceId] = useState<string | null>(null);
 
@@ -90,7 +92,13 @@ export default function BillingPage() {
 
   async function changePlan(plan: BillingPlan) {
     if (!clubId || !billing) return;
-    if (plan.priceMinor > 0 && billing.paymentMethods.length === 0) {
+    // With hosted checkout there is no stored method to require — the payer
+    // authorises at the provider as part of this very flow.
+    if (
+      plan.priceMinor > 0 &&
+      !billing.hostedCheckout &&
+      billing.paymentMethods.length === 0
+    ) {
       setError("Add a payment method before selecting a paid plan.");
       return;
     }
@@ -98,7 +106,21 @@ export default function BillingPage() {
     setError(null);
     setSuccess(null);
     try {
-      await api.post(`/clubs/${clubId}/billing/subscription`, { planId: plan.id });
+      const response = await api.post<ChangeSubscriptionResult>(
+        `/clubs/${clubId}/billing/subscription`,
+        {
+          planId: plan.id,
+          ...(promoCode.trim() ? { promoCode: promoCode.trim() } : {}),
+        },
+      );
+      if (response?.checkout?.url) {
+        // Nothing is paid and nothing is granted yet. Leaving the page for the
+        // provider is the whole point; the plan only becomes active when their
+        // webhook confirms, which is why this does not announce success.
+        setSuccess("Taking you to the payment page…");
+        window.location.assign(response.checkout.url);
+        return;
+      }
       await refreshBilling();
       setSuccess(`${plan.name} is now the club's active plan.`);
     } catch (reason) {
@@ -299,6 +321,39 @@ export default function BillingPage() {
                 )}
               </Panel>
 
+              {billing.hostedCheckout ? (
+                <Panel>
+                  <div className="flex flex-col gap-4">
+                    <div className="flex items-start gap-3">
+                      <IconChip icon="lock" tone="neutral" />
+                      <div>
+                        <h3 className="text-base font-extrabold text-drift-text-primary">
+                          Payment details are collected at checkout
+                        </h3>
+                        <p className="mt-1 text-xs leading-5 text-drift-text-secondary">
+                          Choose a plan and you&apos;ll be taken to the payment
+                          provider to pay by card or mobile money. Drift never
+                          sees or stores your card details, so there is nothing
+                          to add here.
+                        </p>
+                      </div>
+                    </div>
+                    <Field label="Promotion code (optional)">
+                      <Input
+                        value={promoCode}
+                        onChange={(event) =>
+                          setPromoCode(event.target.value.toUpperCase())
+                        }
+                        placeholder="e.g. LAUNCH20"
+                      />
+                    </Field>
+                    <p className="text-xs leading-5 text-drift-text-secondary">
+                      Applied when you choose a plan. The discounted amount is
+                      what the provider charges, every cycle.
+                    </p>
+                  </div>
+                </Panel>
+              ) : (
               <Panel>
                 <form onSubmit={addMethod} className="flex flex-col gap-4">
                   <div>
@@ -337,6 +392,7 @@ export default function BillingPage() {
                   </Button>
                 </form>
               </Panel>
+              )}
             </div>
           </section>
 

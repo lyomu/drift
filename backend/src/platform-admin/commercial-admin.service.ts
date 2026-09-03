@@ -10,6 +10,7 @@ import {
   PromotionDiscountType,
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { ProviderPlanService } from '../payments/provider-plan.service';
 import { AuditService } from './audit.service';
 import {
   DeactivatePromotionDto,
@@ -44,6 +45,7 @@ export class CommercialAdminService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly providerPlans: ProviderPlanService,
   ) {}
 
   async listPlans(query: { audience?: string; status?: string }) {
@@ -78,6 +80,22 @@ export class CommercialAdminService {
     const plan = await this.prisma.paymentPlan.create({
       data: this.planData(dto),
     });
+
+    // Mint the provider plan now rather than at the first checkout, so staff
+    // find out here whether the provider accepted these terms instead of a club
+    // discovering it mid-payment. A free plan never reaches the provider at
+    // all, and a provider outage must not lose a plan that is already saved —
+    // `resolve` mints it on first use if this did not.
+    let providerPlanId: string | null = null;
+    let providerError: string | null = null;
+    if (plan.priceMinor > 0) {
+      try {
+        providerPlanId = await this.providerPlans.resolve(plan, null);
+      } catch (error) {
+        providerError = (error as Error).message;
+      }
+    }
+
     await this.audit.record(
       actorId,
       'commercial.plan.create',
@@ -88,9 +106,12 @@ export class CommercialAdminService {
         audience: plan.audience,
         priceMinor: plan.priceMinor,
         currency: plan.currency,
+        providerCall: plan.priceMinor > 0 && this.providerPlans.hosted,
+        providerPlanId,
+        providerError,
       },
     );
-    return { plan };
+    return { plan, providerPlanId, providerError };
   }
 
   async updatePlan(actorId: string, planId: string, dto: UpsertPaymentPlanDto) {
@@ -114,6 +135,16 @@ export class CommercialAdminService {
       where: { id: planId },
       data: this.planData(dto),
     });
+
+    // Push the edited terms to the provider, covering both the undiscounted
+    // plan and every promotional variant derived from it. Without this the row
+    // says one price while the provider keeps billing the old one — silent,
+    // and about money.
+    //
+    // Whether mandates already authorised against the plan reprice is the
+    // provider's behaviour, not something this code decides, so the audit
+    // entry records what was pushed rather than asserting an outcome.
+    const providerSync = await this.providerPlans.syncPlan(plan);
     await this.audit.record(
       actorId,
       'commercial.plan.update',
@@ -134,9 +165,15 @@ export class CommercialAdminService {
           currency: plan.currency,
           isActive: plan.isActive,
         },
+        // What we told the provider, not what it did with already-authorised
+        // mandates — that part is the provider's behaviour, and claiming it
+        // here would put a guess in the audit trail.
+        providerCall: providerSync.attempted,
+        providerPlansSynced: providerSync.synced,
+        providerPlansFailed: providerSync.failed,
       },
     );
-    return { plan };
+    return { plan, providerSync };
   }
 
   async listPayments(query: {
@@ -275,6 +312,21 @@ export class CommercialAdminService {
         'Only succeeded transactions can be marked refunded.',
       );
     }
+    // Move the money first. Marking our row refunded and then failing to reach
+    // the provider is the worse order: the ledger would say the club had been
+    // refunded while its account was never credited, and nothing downstream
+    // would ever retry.
+    //
+    // `refund` is inert on a direct provider, and returns null when no
+    // per-charge id was captured — a transaction that predates the webhook
+    // carrying one can still only be marked refunded in our own ledger, which
+    // is what the audit entry then records.
+    const refunded = await this.providerPlans.refund({
+      providerInvoiceId: existing.providerInvoiceId,
+      amountMinor: existing.amountMinor,
+      reason: dto.reason.trim(),
+    });
+
     const transaction = await this.prisma.paymentTransaction.update({
       where: { id: transactionId },
       data: { status: PaymentTransactionStatus.REFUNDED, failureReason: null },
@@ -292,7 +344,9 @@ export class CommercialAdminService {
         invoiceId: existing.invoiceId,
         invoiceNumber: existing.invoice.number,
         providerReference: existing.providerReference,
-        providerCall: false,
+        providerCall: refunded !== null,
+        providerRefundReference: refunded?.reference ?? null,
+        providerInvoiceId: existing.providerInvoiceId,
       },
     );
     return { transaction: this.transactionDto(transaction) };

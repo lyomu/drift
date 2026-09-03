@@ -15,6 +15,7 @@ import {
   Prisma,
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { ProviderPlanService } from '../payments/provider-plan.service';
 import { AuditService } from './audit.service';
 import {
   OverrideClubSubscriptionDto,
@@ -50,6 +51,7 @@ export class OrganizationAdminService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly providerPlans: ProviderPlanService,
   ) {}
 
   async list(query: {
@@ -481,6 +483,18 @@ export class OrganizationAdminService {
       create: { clubId },
       update: {},
     });
+    // Cancelling here has to stop the mandate at the provider, not just set a
+    // status. Otherwise Platform Admin shows CANCELLED while the club's money
+    // keeps leaving its account every cycle — and nobody finds out from a log.
+    const existingReference =
+      club.billingAccount?.subscription?.providerReference ?? null;
+    let providerCancelled = false;
+    if (dto.status === BillingSubscriptionStatus.CANCELLED) {
+      // Deliberately not swallowed: a cancellation the provider did not accept
+      // must not be recorded as one.
+      providerCancelled = await this.providerPlans.cancel(existingReference);
+    }
+
     const subscription = await this.prisma.billingSubscription.upsert({
       where: { billingAccountId: account.id },
       create: {
@@ -497,6 +511,9 @@ export class OrganizationAdminService {
           club.billingAccount?.subscription?.status ??
           BillingSubscriptionStatus.ACTIVE,
         currentPeriodEnd: periodEnd,
+        // The mandate is gone, so the reference no longer points at anything
+        // billable; keeping it would invite a second cancel later.
+        ...(providerCancelled ? { providerReference: null } : {}),
       },
       include: { plan: true },
     });
@@ -512,6 +529,10 @@ export class OrganizationAdminService {
         nextPlanId: subscription.planId,
         nextStatus: subscription.status,
         reason: dto.reason.trim(),
+        // Whether the mandate was actually stopped at the provider, not merely
+        // whether the status field was set.
+        providerCall: providerCancelled,
+        providerReference: existingReference,
       },
     );
     return { subscription: toSubscriptionDto(subscription) };

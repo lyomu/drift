@@ -1,5 +1,6 @@
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { ClubMembershipStatus, ClubRole } from '@prisma/client';
+import { ConfigService } from '@nestjs/config';
 import { PaymentsService } from './payments.service';
 import { PrismaService } from '../prisma/prisma.service';
 import type { PaymentProvider } from './payment-provider';
@@ -48,9 +49,16 @@ function createMockPrisma(): MockPrisma {
 }
 
 const provider: PaymentProvider = {
+  mode: 'direct',
+  name: 'SANDBOX',
   createPaymentMethod: jest.fn(),
   charge: jest.fn(),
 };
+
+// Only CLUB_ADMIN_URL is read, and only on the hosted checkout path
+// these specs do not exercise; a stub keeps the constructor honest
+// without pulling in the whole config module.
+const config = { get: jest.fn().mockReturnValue(undefined) };
 
 describe('PaymentsService', () => {
   let prisma: MockPrisma;
@@ -58,7 +66,11 @@ describe('PaymentsService', () => {
 
   beforeEach(() => {
     prisma = createMockPrisma();
-    service = new PaymentsService(prisma as unknown as PrismaService, provider);
+    service = new PaymentsService(
+      prisma as unknown as PrismaService,
+      provider,
+      config as unknown as ConfigService,
+    );
   });
 
   describe('removePlayerMethod', () => {

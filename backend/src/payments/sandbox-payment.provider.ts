@@ -2,14 +2,17 @@ import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { PaymentMethodType } from '@prisma/client';
 import {
-  PaymentProvider,
+  DirectPaymentProvider,
   ProviderChargeResult,
   ProviderPaymentMethod,
   ProviderPaymentMethodInput,
 } from './payment-provider';
 
 @Injectable()
-export class SandboxPaymentProvider implements PaymentProvider {
+export class SandboxPaymentProvider implements DirectPaymentProvider {
+  readonly mode = 'direct' as const;
+  readonly name = 'SANDBOX';
+
   createPaymentMethod(
     input: ProviderPaymentMethodInput,
   ): Promise<ProviderPaymentMethod> {

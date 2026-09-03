@@ -3,6 +3,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MatchesModule } from '../matches/matches.module';
+import { PaymentsModule } from '../payments/payments.module';
 import { PasswordPolicyService } from '../auth/password-policy';
 import { PlatformAdminController } from './platform-admin.controller';
 import { PlatformAdminService } from './platform-admin.service';
@@ -51,6 +52,10 @@ import { SupportAdminService } from './support-admin.service';
       }),
     }),
     MatchesModule,
+    // Repricing a plan, refunding a charge and cancelling a mandate are all
+    // provider calls. Reusing the payments module's seam is what keeps the two
+    // consoles from drifting into two different ideas of what is live.
+    PaymentsModule,
   ],
   controllers: [
     PlatformAdminController,

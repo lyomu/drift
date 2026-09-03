@@ -371,4 +371,17 @@ export type ClubBilling = {
   plans: BillingPlan[];
   invoices: BillingInvoice[];
   sandbox: boolean;
+  /** The provider collects payment itself; we never hold card details. */
+  hostedCheckout?: boolean;
+};
+
+/** Returned by a plan change when the payer has to finish at the provider. */
+export type BillingCheckout = {
+  url: string;
+  invoiceNumber: string;
+  provider: string;
+};
+
+export type ChangeSubscriptionResult = ClubBilling & {
+  checkout?: BillingCheckout;
 };

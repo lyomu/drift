@@ -2376,6 +2376,7 @@ model PaymentPlan {
 
   subscriptions BillingSubscription[]
   invoices      BillingInvoice[]
+  providerPlans ProviderPlan[]
 
   @@index([audience, isActive, sortOrder])
   @@map("payment_plans")
@@ -2387,6 +2388,10 @@ model BillingAccount {
   user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
   clubId String? @unique
   club   Club?   @relation(fields: [clubId], references: [id], onDelete: Cascade)
+
+  // The hosted provider's customer id for this account. Nullable because
+  // free accounts never reach the provider at all.
+  providerCustomerId String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2473,6 +2478,10 @@ model PaymentTransaction {
   currency         String
   status           PaymentTransactionStatus
   failureReason    String?
+  // The provider's own per-charge invoice id, captured from the webhook.
+  // Refunds are filed against this, not against our invoice number, so a
+  // transaction without it can only ever be marked refunded in our ledger.
+  providerInvoiceId String?
   createdAt        DateTime                 @default(now())
 
   @@index([billingAccountId, createdAt])
@@ -2496,6 +2505,8 @@ model Promotion {
   isActive       Boolean               @default(true)
   createdAt      DateTime              @default(now())
   updatedAt      DateTime              @updatedAt
+
+  providerPlans ProviderPlan[]
 
   @@index([isActive, startsAt, endsAt])
   @@index([audience, isActive])
@@ -2948,4 +2959,44 @@ model DismissedHomeCard {
   @@unique([userId, cardId])
   @@index([userId])
   @@map("dismissed_home_cards")
+}
+
+/// Maps one of our plans — optionally combined with a promotion — to the plan
+/// the hosted payment provider minted for it.
+///
+/// A hosted provider bills a fixed amount against a mandate, so a discount
+/// cannot be applied per cycle from our side. A promotion is therefore a
+/// *different provider plan* at the discounted price, and this table is what
+/// stops one being minted afresh on every checkout. `promotionId` is null for
+/// the undiscounted plan, which is why the uniqueness is on the triple.
+model ProviderPlan {
+  id String @id @default(uuid())
+
+  planId String
+  plan   PaymentPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  promotionId String?
+  promotion   Promotion? @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+
+  /// `promotionId` with nulls collapsed to an empty string. Postgres treats
+  /// NULLs in a unique index as distinct, so a nullable column could not stop
+  /// the undiscounted plan being minted twice — and Prisma will not accept a
+  /// null in a compound unique lookup either. One non-null discriminator
+  /// fixes both.
+  promotionKey String
+
+  provider       String
+  providerPlanId String
+
+  /// What the provider plan was created with, so a later terms change can be
+  /// detected without asking the provider.
+  amountMinor Int
+  currency    String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([planId, promotionKey, provider])
+  @@index([provider, providerPlanId])
+  @@map("provider_plans")
 }
