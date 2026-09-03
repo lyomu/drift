@@ -53,6 +53,12 @@ jobs:
         run: npx prisma generate
       - name: Apply database migrations
         run: npx prisma migrate deploy
+      - name: Seed the test database
+        # The e2e suites assert against named fixtures (seed-story-serve-clinic,
+        # seed-court-highbury-club). Without this the database is empty and they
+        # fail on [] rather than on anything real. Safe to re-run: the script is
+        # upserts and deleteMany, no bare creates, so each run starts identical.
+        run: npm run seed
       - name: Build backend
         run: npm run build
       - name: Run backend unit tests
