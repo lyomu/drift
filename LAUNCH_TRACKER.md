@@ -6,7 +6,7 @@ artifact, so a commit or PR can close an item by referencing its ID
 
 **Status key:** `[ ]` to do · `[~]` in progress · `[!]` blocked · `[x]` done
 
-**28 items · 17 closed**
+**28 items · 18 closed**
 
 ---
 
@@ -322,21 +322,22 @@ artifact, so a commit or PR can close an item by referencing its ID
   belong to other players or platform integrity, and nightly backups retaining
   pre-erasure data for up to **14 days** until they age out. Still not a lawyer's
   final policy. *Owner:* legal. *Reference:* `docs/GDPR_ERASURE_PLAN.md` §5
-- [!] **P.2 — Minors / age-gating policy**
-  **Code gate added 2026-09-03; blocked on product/legal acceptance of the launch
-  policy.** Drift Tennis is now treated as **18+ at launch** until a reviewed
-  guardian-consent flow exists. Password signup requires `acceptedAgePolicy: true`;
-  fresh Google/Apple account creation requires the same before a `User` row is
-  created; returning/social-link users are not locked out. The database stores
-  `agePolicyAcceptedAt`, not date of birth, so the gate avoids collecting extra PII.
-  Under-18s therefore should not appear in discovery because they cannot create
-  launch accounts through supported account-creation paths. Migration
+- [x] **P.2 — Minors / age-gating policy**
+  **Accepted 18+ at launch 2026-09-03; product + legal sign-off complete.** Drift
+  Tennis is treated as **18+ at launch** until a reviewed guardian-consent flow
+  exists. Password signup requires `acceptedAgePolicy: true`; fresh Google/Apple
+  account creation requires the same before a `User` row is created;
+  returning/social-link users are not locked out. The database stores
+  `agePolicyAcceptedAt`, not date of birth, so the gate avoids collecting extra
+  PII. Under-18s therefore should not appear in discovery because they cannot
+  create launch accounts through supported account-creation paths. Migration
   `20260903180000_add_age_policy_acceptance` records the consent timestamp on the
   `users` table (column `agePolicyAcceptedAt`); fixed table name from `"User"` to
   `"users"` to match `@@map("users")`, failed local migration resolved, deployed
   clean — 42 migrations, schema up to date. *Owner:* product + legal.
   *Legal basis checked:* FTC COPPA rule for under-13 child data collection; GDPR
   Article 8 child-consent rules for information-society services.
+  *Decision record:* `docs/AGE_POLICY_DECISION.md`.
 - [x] **P.3 — GDPR erasure**
   **The premise was half wrong, and finding that out shrank the job.** A real
   anonymisation already existed for admin-fulfilled `DELETION` requests; what was
