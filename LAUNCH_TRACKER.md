@@ -6,7 +6,7 @@ artifact, so a commit or PR can close an item by referencing its ID
 
 **Status key:** `[ ]` to do · `[~]` in progress · `[!]` blocked · `[x]` done
 
-**27 items · 15 closed**
+**27 items · 16 closed**
 
 ---
 
@@ -189,8 +189,26 @@ artifact, so a commit or PR can close an item by referencing its ID
 - [ ] **5.2 — Move deployment off the box**
   CI has no deploy job; a human builds images on the production host against 3.7 GB
   of RAM, with no artifact to roll back to.
-- [ ] **5.3 — Pin CI actions to commit SHAs**
-  `checkout@v6`, `setup-node@v6`, `flutter-action@v2`.
+- [x] **5.3 — Pin CI actions to commit SHAs**
+  **Closed 2026-09-03.** All **8** `uses:` lines across the 4 jobs in
+  `.github/workflows/ci.yml` now name an immutable commit instead of a moving tag.
+  A major tag like `v6` is a *branch pointer the action's owner can move*; anyone
+  who can retag — or who compromises that account — silently changes code running
+  with this repository's checkout and a `GITHUB_TOKEN`. A SHA cannot be moved.
+  | Action | Was | Pinned to | Release |
+  |---|---|---|---|
+  | `actions/checkout` (×4) | `@v6` | `d23441a48e516b6c34aea4fa41551a30e30af803` | v6.1.0 |
+  | `actions/setup-node` (×3) | `@v6` | `249970729cb0ef3589644e2896645e5dc5ba9c38` | v6.5.0 |
+  | `subosito/flutter-action` (×1) | `@v2` | `1a449444c387b1966244ae4d4f8c696479add0b2` | v2.23.0 |
+  Each SHA was resolved from the tag through the GitHub API and then **mapped back
+  to a precise release tag**, which is why the trailing comment can say `v6.1.0`
+  rather than `v6` — a pin nobody can read is a pin nobody will ever update.
+  *Verified:* the workflow still parses and all 8 steps resolve to the intended SHAs.
+  **The trade this makes, stated plainly:** pinning stops the actions updating *at
+  all*, including security fixes, and nothing here will notice. A
+  `.github/dependabot.yml` for the `github-actions` ecosystem is the standard
+  counterweight — it raises PRs that bump both the SHA and the comment together.
+  **Not added**, since it introduces automated PRs and that is the owner's call.
 - [x] **5.4 — Dependency advisories**
   **Closed 2026-09-03. The entry had drifted badly and the shape had changed** — it
   said "four high via Prisma", implying everything was an unfixable transitive. By
