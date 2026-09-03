@@ -6,7 +6,7 @@ artifact, so a commit or PR can close an item by referencing its ID
 
 **Status key:** `[ ]` to do · `[~]` in progress · `[!]` blocked · `[x]` done
 
-**27 items · 14 closed**
+**27 items · 15 closed**
 
 ---
 
@@ -191,9 +191,43 @@ artifact, so a commit or PR can close an item by referencing its ID
   of RAM, with no artifact to roll back to.
 - [ ] **5.3 — Pin CI actions to commit SHAs**
   `checkout@v6`, `setup-node@v6`, `flutter-action@v2`.
-- [ ] **5.4 — Dependency advisories**
-  Four high findings via Prisma (`deepmerge-ts`, `mysql2`). **Do not run
-  `npm audit fix --force`** — it downgrades to Prisma 6.19.3. Was three, now four.
+- [x] **5.4 — Dependency advisories**
+  **Closed 2026-09-03. The entry had drifted badly and the shape had changed** — it
+  said "four high via Prisma", implying everything was an unfixable transitive. By
+  today it was **13 (6 high, 7 moderate)**, and three of them were ours to fix.
+  **Fixed — now 10 (4 high, 6 moderate):**
+  · **`nodemailer` 6.10.1 → 9.1.1**, the one that mattered. A *direct* dependency on
+  the auth path shipped in 3.1 (signup verification, password reset, staff 2FA),
+  carrying 8 advisories. Reachability was checked rather than counted: 6 of the 8
+  need APIs we never touch — `raw`, `envelope`, `List-*` headers, `jsonTransport`,
+  OAuth2, a transport `name`. The **two that were reachable** both go through
+  address parsing (addressparser DoS, and delivery to an unintended domain), and
+  `to` derives from user-supplied signup addresses. All three major bumps miss us:
+  7.0 dropped the old SES SDK (we use SMTP), 8.0 renamed error code `NoAuth` →
+  `ENOAUTH` (we never branch on codes), 9.0 added TLS validation when *fetching
+  remote content* — attachments, OAuth2 endpoints, proxies — none of which we use.
+  Engines are `>=6.0.0`; we run Node 24 everywhere.
+  · **`fast-uri`** (4 high, SSRF/host-confusion) — **devDependencies only**, via
+  `@nestjs/cli`'s ajv/webpack. Never in the production runtime.
+  · **`qs`** (2 moderate) — transitive through `express@5`, and this one *is* in the
+  request path.
+  **The remaining 10 have no upstream fix, and that is the point of recording them:**
+  both clusters sit inside vendors we are already on the newest release of —
+  **Prisma 7.10.0** (latest stable; `latest` currently points at an 8.0 RC) and
+  **firebase-admin 14.3.0** (latest). npm's suggested "fixes" are `prisma@6.19.3`
+  and `firebase-admin@10.3.0` — **both downgrades**, both flagged semver-major. That
+  is why **`npm audit fix --force` must not be run**: it is not a fix, it is a
+  rollback. Also worth knowing: `mysql2` arrives via Prisma and this product runs
+  Postgres, so it is unreachable regardless.
+  *Watch for:* a Prisma 7.x patch or firebase-admin release that clears these. Until
+  then there is no action, and the item is closed rather than left open to generate
+  phantom work.
+  *Verified:* `tsc` clean · **46 suites / 559 tests**. *Not covered by tests:* live
+  SMTP delivery — confirm after deploy by the absence of `Mail to … failed` lines.
+  *Incidental:* `npm audit fix` bumped the `prisma` CLI to 7.10.0 while leaving
+  `@prisma/client` at 7.9.1 — a skew that would have shipped through `npm ci`.
+  Both are now aligned at 7.10.0, which is what a clean install of the existing
+  `^7.9.1` ranges produces anyway.
 - [ ] **5.5 — Password policy · egress · CSP**
   Bare 8-char minimum, no breach screening; ingestion egress restriction; confirm
   nginx does not strip the consoles' headers.
