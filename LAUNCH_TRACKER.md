@@ -6,7 +6,7 @@ artifact, so a commit or PR can close an item by referencing its ID
 
 **Status key:** `[ ]` to do · `[~]` in progress · `[!]` blocked · `[x]` done
 
-**28 items · 16 closed**
+**28 items · 17 closed**
 
 ---
 
@@ -246,7 +246,7 @@ artifact, so a commit or PR can close an item by referencing its ID
   `@prisma/client` at 7.9.1 — a skew that would have shipped through `npm ci`.
   Both are now aligned at 7.10.0, which is what a clean install of the existing
   `^7.9.1` ranges produces anyway.
-- [ ] **5.6 — `onboarding.e2e-spec` depends on ambient users** ✨ *new 2026-09-03*
+- [x] **5.6 — `onboarding.e2e-spec` depends on ambient users** ✨ *closed 2026-09-03*
   **Found by CI once CI could actually run.** The spec asserts the home feed opens
   with `SUGGESTED_OPPONENTS, DEVELOPMENT_RECOMMENDATION, NEWS_HIGHLIGHT`, and its own
   comment claims the first two are *"always reachable for a fully-onboarded user."*
@@ -257,13 +257,12 @@ artifact, so a commit or PR can close an item by referencing its ID
   **It was passing locally by accident**, on the seven accumulated users in the dev
   database. This is precisely the class of thing a per-run clean database exists to
   catch, and it surfaced the moment one existed.
-  *Options, in preference order:* **(a)** register and onboard a second player in the
-  spec's `beforeAll` and extend its `afterAll` cleanup — makes the assertion true by
-  construction, keeps coverage of what the code calls the highest-value discovery
-  card, ~40–50 lines; **(b)** seed player users, which fixes it globally but perturbs
-  every suite that counts or ranks players; **(c)** correct the assertion to treat the
-  card as conditional — smallest, but drops that coverage.
-  *Effort:* under an hour. *Currently:* the only red step in an otherwise green CI.
+  **Fixed:** the spec now signs up and completes a second player in `beforeAll`, then
+  removes both accounts in `afterAll`. That makes the `SUGGESTED_OPPONENTS` assertion
+  true by construction on a clean CI database without perturbing global seed data or
+  weakening the home-card coverage. *Verified:* isolated onboarding e2e green, full
+  backend e2e **17 suites / 94 tests**, backend unit **47 suites / 579 tests**, and
+  `npx tsc -p tsconfig.build.json --noEmit` clean.
 - [!] **5.5 — Password policy · egress · CSP**
   **Password policy code complete 2026-09-03.** One shared
   `PasswordPolicyService` now enforces the owner-approved set/change policy everywhere

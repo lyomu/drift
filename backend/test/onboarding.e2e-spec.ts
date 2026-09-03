@@ -9,8 +9,85 @@ describe('Onboarding (e2e)', () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
   const email = `e2e-onboarding-${Date.now()}@test.com`;
+  const opponentEmail = `e2e-onboarding-opponent-${Date.now()}@test.com`;
   const password = 'password123';
   let accessToken: string;
+
+  const bearer = (
+    token: string,
+    method: 'get' | 'post' | 'patch',
+    path: string,
+  ) =>
+    request(app.getHttpServer())
+      [method](path)
+      .set('Authorization', `Bearer ${token}`);
+
+  async function signUp(emailAddress: string): Promise<string> {
+    const signUpRes = await request(app.getHttpServer())
+      .post('/auth/signup')
+      .send({ email: emailAddress, password })
+      .expect(201);
+
+    const verifyRes = await request(app.getHttpServer())
+      .post('/auth/verify')
+      .send({
+        email: emailAddress,
+        code: signUpRes.body.devVerificationCode,
+      })
+      .expect(200);
+
+    return verifyRes.body.accessToken;
+  }
+
+  async function createSuggestedOpponent() {
+    const token = await signUp(opponentEmail);
+    await bearer(token, 'patch', '/users/me/basic-profile')
+      .send({
+        firstName: 'Casey',
+        lastName: 'Opponent',
+        dominantHand: 'RIGHT',
+      })
+      .expect(200);
+    await bearer(token, 'patch', '/users/me/tennis-experience')
+      .send({
+        experienceSignal: 'NEW',
+      })
+      .expect(200);
+    await bearer(token, 'patch', '/users/me/level')
+      .send({
+        userSelectedLevel: 7.0,
+      })
+      .expect(200);
+    await bearer(token, 'patch', '/users/me/goals')
+      .send({
+        goals: ['play_more'],
+      })
+      .expect(200);
+    await bearer(token, 'patch', '/users/me/preferences')
+      .send({
+        formatPreference: 'EITHER',
+        stylePreference: 'SOCIAL',
+        preferredTimeSlots: ['EVENING'],
+      })
+      .expect(200);
+    await bearer(token, 'patch', '/users/me/location')
+      .send({
+        generalLocation: 'Brooklyn, NY',
+        locationSource: 'MANUAL',
+      })
+      .expect(200);
+    await bearer(token, 'patch', '/users/me/club-courts').send({}).expect(200);
+    await bearer(token, 'patch', '/users/me/availability')
+      .send({
+        slots: [{ dayOfWeek: 6, timeBlock: 'MORNING' }],
+      })
+      .expect(200);
+    await bearer(token, 'patch', '/users/me/padel-interest')
+      .send({
+        padelInterest: 'NO',
+      })
+      .expect(200);
+  }
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -24,22 +101,21 @@ describe('Onboarding (e2e)', () => {
     await app.init();
 
     prisma = moduleFixture.get(PrismaService);
-
-    const signUpRes = await request(app.getHttpServer())
-      .post('/auth/signup')
-      .send({ email, password })
-      .expect(201);
-
-    const verifyRes = await request(app.getHttpServer())
-      .post('/auth/verify')
-      .send({ email, code: signUpRes.body.devVerificationCode })
-      .expect(200);
-
-    accessToken = verifyRes.body.accessToken;
+    accessToken = await signUp(email);
+    await createSuggestedOpponent();
   });
 
   afterAll(async () => {
-    const user = await prisma.user.findUnique({ where: { email } });
+    for (const emailAddress of [email, opponentEmail]) {
+      await deleteUser(emailAddress);
+    }
+    await app.close();
+  });
+
+  async function deleteUser(emailAddress: string) {
+    const user = await prisma.user.findUnique({
+      where: { email: emailAddress },
+    });
     if (user) {
       const profile = await prisma.tennisProfile.findUnique({
         where: { userId: user.id },
@@ -60,13 +136,10 @@ describe('Onboarding (e2e)', () => {
       await prisma.tennisProfile.deleteMany({ where: { userId: user.id } });
       await prisma.user.delete({ where: { id: user.id } });
     }
-    await app.close();
-  });
+  }
 
   const authed = (method: 'get' | 'post' | 'patch', path: string) =>
-    request(app.getHttpServer())
-      [method](path)
-      .set('Authorization', `Bearer ${accessToken}`);
+    bearer(accessToken, method, path);
 
   it('walks the full onboarding journey to COMPLETE', async () => {
     let res = await authed('patch', '/users/me/basic-profile').send({
@@ -160,12 +233,12 @@ describe('Onboarding (e2e)', () => {
     expect(feed.status).toBe(200);
     // A fresh, matchless/competitionless account has nothing in Tier 1
     // (urgent), so the feed falls through to Tier 2 (discovery) cards.
-    // SUGGESTED_OPPONENTS and DEVELOPMENT_RECOMMENDATION are always
-    // reachable for a fully-onboarded user; NEARBY_COURTS, CLUB_ANNOUNCEMENT
-    // and ACHIEVEMENT_PROGRESS depend on seed data this spec doesn't set up
-    // (no club, no achievements yet), so they're absent here rather than
-    // asserted on. NEWS_HIGHLIGHT is the next card that's always reachable,
-    // so it's what actually follows in this environment.
+    // This spec creates a second complete player in beforeAll so the
+    // suggested-opponents card is reachable even on CI's clean database.
+    // NEARBY_COURTS, CLUB_ANNOUNCEMENT and ACHIEVEMENT_PROGRESS depend on
+    // seed data this spec doesn't set up (no club, no achievements yet), so
+    // they're absent here rather than asserted on. NEWS_HIGHLIGHT is the next
+    // card that's always reachable, so it's what follows in this environment.
     expect(
       feed.body.cards.slice(0, 3).map((c: { type: string }) => c.type),
     ).toEqual([
