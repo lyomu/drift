@@ -18,7 +18,11 @@ import {
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailerService } from '../mail/mailer.service';
-import { EmailLinkRequiredException, OAuthService, SocialLoginClaims } from './oauth.service';
+import {
+  EmailLinkRequiredException,
+  OAuthService,
+  SocialLoginClaims,
+} from './oauth.service';
 import { SignUpDto } from './dto/sign-up.dto';
 import { LoginDto } from './dto/login.dto';
 import { VerifyDto } from './dto/verify.dto';
@@ -28,6 +32,7 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { OAuthGoogleDto, OAuthAppleDto, OAuthLinkDto } from './dto/oauth.dto';
 import { parseDurationMs } from './util/duration.util';
+import { PasswordPolicyService } from './password-policy';
 
 const BCRYPT_ROUNDS = 10;
 const CODE_TTL_MS = 10 * 60 * 1000;
@@ -49,6 +54,7 @@ export class AuthService {
     private readonly config: ConfigService,
     private readonly mailer: MailerService,
     private readonly oauth: OAuthService,
+    private readonly passwordPolicy: PasswordPolicyService,
   ) {
     this.isDev = this.config.get<string>('NODE_ENV') !== 'production';
   }
@@ -63,6 +69,7 @@ export class AuthService {
       );
     }
 
+    await this.passwordPolicy.assertAcceptable(dto.password);
     const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
     const code = this.generateCode();
     const codeHash = await bcrypt.hash(code, BCRYPT_ROUNDS);
@@ -481,6 +488,7 @@ export class AuthService {
       throw new UnauthorizedException('Current password is incorrect.');
     }
 
+    await this.passwordPolicy.assertAcceptable(dto.newPassword);
     const passwordHash = await bcrypt.hash(dto.newPassword, BCRYPT_ROUNDS);
     await this.prisma.$transaction([
       this.prisma.user.update({
@@ -615,6 +623,7 @@ export class AuthService {
       throw new BadRequestException('Invalid or expired code.');
     }
 
+    await this.passwordPolicy.assertAcceptable(dto.newPassword);
     const passwordHash = await bcrypt.hash(dto.newPassword, BCRYPT_ROUNDS);
 
     await this.prisma.$transaction([

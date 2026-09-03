@@ -17,6 +17,7 @@ import {
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailerService } from '../mail/mailer.service';
+import { PasswordPolicyService } from '../auth/password-policy';
 import {
   CompleteClubSetupDto,
   ReviewClubRequestDto,
@@ -48,6 +49,7 @@ export class ClubOnboardingService {
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
     private readonly mailer: MailerService,
+    private readonly passwordPolicy: PasswordPolicyService,
   ) {
     this.isDev = this.config.get<string>('NODE_ENV') !== 'production';
   }
@@ -140,6 +142,7 @@ export class ClubOnboardingService {
           'Choose a password to create your login.',
         );
       }
+      await this.passwordPolicy.assertAcceptable(dto.password);
       const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
       const { firstName, lastName } = splitName(
         dto.requesterName ?? request.requesterName,

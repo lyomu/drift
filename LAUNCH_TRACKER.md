@@ -264,9 +264,23 @@ artifact, so a commit or PR can close an item by referencing its ID
   every suite that counts or ranks players; **(c)** correct the assertion to treat the
   card as conditional — smallest, but drops that coverage.
   *Effort:* under an hour. *Currently:* the only red step in an otherwise green CI.
-- [ ] **5.5 — Password policy · egress · CSP**
-  Bare 8-char minimum, no breach screening; ingestion egress restriction; confirm
-  nginx does not strip the consoles' headers.
+- [!] **5.5 — Password policy · egress · CSP**
+  **Password policy code complete 2026-09-03.** One shared
+  `PasswordPolicyService` now enforces the owner-approved set/change policy everywhere
+  a password is hashed: minimum length stays **8** by explicit decision, no
+  composition rules, HIBP breached-password screening via k-anonymity, fail-open on
+  timeout/network/non-200, disabled under `NODE_ENV=test` and via
+  `PASSWORD_BREACH_CHECK_DISABLED` for offline dev. All set/change DTOs cap new
+  passwords at **72 bytes/chars** before bcrypt can silently truncate; existing
+  passwords keep working until changed. Verified: `npx tsc -p tsconfig.build.json
+  --noEmit`, targeted policy/auth specs, and full backend unit suite
+  **47 suites / 579 tests**.
+  **Still blocked:** CSP live proof needs the staging basic-auth credentials. An
+  unauthenticated `curl -I https://drift.einsbrand.com/platform/` on 2026-09-03
+  returns nginx's own 401 with no app headers, as expected. Egress restriction needs
+  SSH/production infrastructure access. Live tracker artifact
+  `33d72505-3973-4cd6-b8a9-6184ed259972` could not be read/republished from this
+  environment because the Claude artifact URL is restricted here.
 
 ## Phase 6 — Push notifications 🟡
 

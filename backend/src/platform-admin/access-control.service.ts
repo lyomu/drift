@@ -9,6 +9,7 @@ import { createHash, randomBytes } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from './audit.service';
 import { MailerService } from '../mail/mailer.service';
+import { PasswordPolicyService } from '../auth/password-policy';
 
 export const PLATFORM_PERMISSION_CATALOG: {
   permission: PlatformPermission;
@@ -85,6 +86,7 @@ export class AccessControlService {
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     private readonly mailer: MailerService,
+    private readonly passwordPolicy: PasswordPolicyService,
   ) {}
 
   permissionCatalog() {
@@ -310,6 +312,7 @@ export class AccessControlService {
         'This invitation is invalid or has expired.',
       );
     }
+    await this.passwordPolicy.assertAcceptable(password);
     const passwordHash = await bcrypt.hash(password, 10);
     const admin = await this.prisma.$transaction(async (tx) => {
       const created = await tx.platformAdmin.create({

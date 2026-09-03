@@ -10,6 +10,7 @@ import { AuthService } from './auth.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailerService } from '../mail/mailer.service';
 import { OAuthService } from './oauth.service';
+import { PasswordPolicyService } from './password-policy';
 
 type MockPrisma = {
   user: Record<string, jest.Mock>;
@@ -93,6 +94,9 @@ describe('AuthService', () => {
       verifyGoogleIdToken: jest.fn(),
       verifyAppleIdentityToken: jest.fn(),
     };
+    const passwordPolicy = {
+      assertAcceptable: jest.fn().mockResolvedValue(undefined),
+    } as unknown as PasswordPolicyService;
 
     service = new AuthService(
       prisma as unknown as PrismaService,
@@ -100,6 +104,7 @@ describe('AuthService', () => {
       config,
       mailer,
       oauth as unknown as OAuthService,
+      passwordPolicy,
     );
   });
 

@@ -18,6 +18,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { ResultsService } from '../matches/results.service';
 import { AuditService } from './audit.service';
 import { MailerService } from '../mail/mailer.service';
+import { PasswordPolicyService } from '../auth/password-policy';
 import { assertFeedUrlAllowed, FeedUrlError } from '../news/feed-fetch';
 import { randomInt } from 'crypto';
 
@@ -141,6 +142,7 @@ export class PlatformAdminService {
     private readonly results: ResultsService,
     private readonly jwt: JwtService,
     private readonly mailer: MailerService,
+    private readonly passwordPolicy: PasswordPolicyService,
   ) {}
 
   // ------------------------------------------------------------------ auth
@@ -326,6 +328,7 @@ export class PlatformAdminService {
       throw new BadRequestException('Invalid or expired reset code.');
     }
 
+    await this.passwordPolicy.assertAcceptable(newPassword);
     const passwordHash = await bcrypt.hash(newPassword, 10);
     await this.prisma.$transaction([
       this.prisma.platformAdmin.update({

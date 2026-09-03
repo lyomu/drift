@@ -3,6 +3,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MatchesModule } from '../matches/matches.module';
+import { PasswordPolicyService } from '../auth/password-policy';
 import { PlatformAdminController } from './platform-admin.controller';
 import { PlatformAdminService } from './platform-admin.service';
 import { AuditService } from './audit.service';
@@ -80,6 +81,7 @@ import { SupportAdminService } from './support-admin.service';
     AuditService,
     PlatformJwtStrategy,
     PlatformPermissionGuard,
+    PasswordPolicyService,
     { provide: APP_INTERCEPTOR, useExisting: PlatformTelemetryService },
   ],
 })

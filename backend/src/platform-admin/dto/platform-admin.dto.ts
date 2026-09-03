@@ -10,13 +10,17 @@ import {
   MinLength,
 } from 'class-validator';
 import { VerificationStatus } from '@prisma/client';
+import {
+  PASSWORD_MAX_LENGTH,
+  PASSWORD_MIN_LENGTH,
+} from '../../auth/password-policy';
 
 export class LoginPlatformAdminDto {
   @IsEmail()
   email!: string;
 
   @IsString()
-  @MinLength(8)
+  @MinLength(PASSWORD_MIN_LENGTH)
   password!: string;
 }
 
@@ -35,7 +39,8 @@ export class ResetPlatformAdminPasswordDto {
   code!: string;
 
   @IsString()
-  @MinLength(12)
+  @MinLength(PASSWORD_MIN_LENGTH)
+  @MaxLength(PASSWORD_MAX_LENGTH)
   newPassword!: string;
 }
 

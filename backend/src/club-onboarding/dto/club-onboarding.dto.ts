@@ -6,6 +6,10 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
+import {
+  PASSWORD_MAX_LENGTH,
+  PASSWORD_MIN_LENGTH,
+} from '../../auth/password-policy';
 
 export class SubmitClubRequestDto {
   @IsString()
@@ -31,8 +35,8 @@ export class CompleteClubSetupDto {
   // completion (authenticated) can omit it.
   @IsOptional()
   @IsString()
-  @MinLength(8)
-  @MaxLength(200)
+  @MinLength(PASSWORD_MIN_LENGTH)
+  @MaxLength(PASSWORD_MAX_LENGTH)
   password?: string;
 
   @IsOptional()

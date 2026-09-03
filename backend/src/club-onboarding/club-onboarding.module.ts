@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { PasswordPolicyService } from '../auth/password-policy';
 import { PlatformPermissionGuard } from '../platform-admin/guards/platform-permission.guard';
 import { ClubOnboardingController } from './club-onboarding.controller';
 import { ClubOnboardingAdminController } from './club-onboarding-admin.controller';
@@ -13,6 +14,10 @@ import { ClubOnboardingService } from './club-onboarding.service';
  */
 @Module({
   controllers: [ClubOnboardingController, ClubOnboardingAdminController],
-  providers: [ClubOnboardingService, PlatformPermissionGuard],
+  providers: [
+    ClubOnboardingService,
+    PlatformPermissionGuard,
+    PasswordPolicyService,
+  ],
 })
 export class ClubOnboardingModule {}
