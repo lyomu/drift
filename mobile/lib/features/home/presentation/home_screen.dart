@@ -36,18 +36,17 @@ class HomeScreen extends ConsumerWidget {
       return ref.refresh(homeFeedProvider.future);
     }
 
-    return SafeArea(
-      bottom: false,
-      child: RefreshIndicator(
-        onRefresh: refresh,
-        child: switch (feed) {
-          AsyncData(:final value) => _HomeBody(sections: HomeSections(value)),
-          AsyncError() => _HomeError(
-            onRetry: () => ref.invalidate(homeFeedProvider),
-          ),
-          _ => const _HomeLoading(),
-        },
-      ),
+    // No SafeArea: the shell's `DriftAppHeader` sits above this and already
+    // consumes the top inset (2026-09 redesign).
+    return RefreshIndicator(
+      onRefresh: refresh,
+      child: switch (feed) {
+        AsyncData(:final value) => _HomeBody(sections: HomeSections(value)),
+        AsyncError() => _HomeError(
+          onRetry: () => ref.invalidate(homeFeedProvider),
+        ),
+        _ => const _HomeLoading(),
+      },
     );
   }
 }

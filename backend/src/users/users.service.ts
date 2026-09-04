@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   AccountStatus,
   PrivacyRequestStatus,
@@ -11,6 +15,11 @@ import {
   ERASURE_RETENTION_DAYS,
   ErasureService,
 } from '../privacy/erasure.service';
+
+/** Public read route for uploaded profile photos. Stored on `User.photoUrl`
+ * as a relative path so it survives an API origin change; clients resolve it
+ * against whichever origin they call. Kept in step with `MediaController`. */
+export const USER_PHOTO_PATH = '/media/user-photos';
 
 @Injectable()
 export class UsersService {
@@ -53,6 +62,65 @@ export class UsersService {
       }
     });
     return this.findById(userId);
+  }
+
+  /**
+   * Replaces the person's profile photo. Bytes live in Postgres and are read
+   * back by opaque asset id, mirroring `ClubOperationsService.uploadMedia` —
+   * addressing by asset rather than by user id keeps the public read endpoint
+   * from being enumerable across the member list.
+   */
+  async uploadPhoto(userId: string, file: Express.Multer.File) {
+    if (!file.mimetype.startsWith('image/')) {
+      throw new BadRequestException('Only image uploads are supported.');
+    }
+    const bytes = new Uint8Array(file.buffer);
+    const data = {
+      filename: file.originalname,
+      mimeType: file.mimetype,
+      bytes,
+    };
+
+    await this.prisma.$transaction(async (tx) => {
+      const asset = await tx.userPhotoAsset.upsert({
+        where: { userId },
+        create: { userId, ...data },
+        update: data,
+        select: { id: true, updatedAt: true },
+      });
+      // Re-uploading replaces the bytes under the same asset id, so the URL
+      // carries the write time: without it a client that cached the previous
+      // photo (Flutter's image cache keys on the URL) would keep showing it.
+      const version = asset.updatedAt.getTime();
+      await tx.user.update({
+        where: { id: userId },
+        data: { photoUrl: `${USER_PHOTO_PATH}/${asset.id}?v=${version}` },
+      });
+    });
+
+    return this.findById(userId);
+  }
+
+  async deletePhoto(userId: string) {
+    await this.prisma.$transaction(async (tx) => {
+      await tx.userPhotoAsset.deleteMany({ where: { userId } });
+      await tx.user.update({
+        where: { id: userId },
+        data: { photoUrl: null },
+      });
+    });
+    return this.findById(userId);
+  }
+
+  /** Bytes for the public read endpoint. No auth: the id is an unguessable
+   * UUID and a profile photo is shown to anyone who can see the player. */
+  async photoContent(assetId: string) {
+    const asset = await this.prisma.userPhotoAsset.findUnique({
+      where: { id: assetId },
+      select: { bytes: true, mimeType: true, filename: true },
+    });
+    if (!asset) throw new NotFoundException('Photo not found.');
+    return asset;
   }
 
   async getPrivacySettings(userId: string) {

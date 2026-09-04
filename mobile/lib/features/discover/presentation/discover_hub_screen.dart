@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/drift_pill_tabs.dart';
 import '../../clubs/presentation/club_list_screen.dart';
 import '../../coaches/presentation/coach_list_screen.dart';
@@ -41,25 +40,20 @@ class _DiscoverHubScreenState extends State<DiscoverHubScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final type = Theme.of(context).extension<DriftTypography>()!;
-
-    return SafeArea(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-            child: Text('Discover', style: type.h2),
-          ),
-          DriftPillTabs(
-            labels: _labels,
-            selected: _segment,
-            onChanged: (i) => setState(() => _segment = i),
-          ),
-          const SizedBox(height: 12),
-          Expanded(child: _body()),
-        ],
-      ),
+    // Title lives in the shell's `DriftAppHeader` now (2026-09 redesign), so
+    // this starts straight at the pill tabs.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 4),
+        DriftPillTabs(
+          labels: _labels,
+          selected: _segment,
+          onChanged: (i) => setState(() => _segment = i),
+        ),
+        const SizedBox(height: 12),
+        Expanded(child: _body()),
+      ],
     );
   }
 

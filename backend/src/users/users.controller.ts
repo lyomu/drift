@@ -1,13 +1,18 @@
 import {
+  BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Patch,
   Post,
   Req,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import type { Request } from 'express';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UsersService } from './users.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -30,6 +35,22 @@ export class UsersController {
   @Patch('me/profile')
   updateProfile(@Req() req: Request, @Body() dto: UpdateProfileDto) {
     return this.usersService.updateProfile(this.userId(req), dto);
+  }
+
+  /** Profile photo upload. Same 5MB ceiling and image-only rule as club
+   * media (`ClubOperationsController.uploadMedia`). */
+  @Post('me/photo')
+  @UseInterceptors(
+    FileInterceptor('file', { limits: { fileSize: 5 * 1024 * 1024 } }),
+  )
+  uploadPhoto(@Req() req: Request, @UploadedFile() file: Express.Multer.File) {
+    if (!file) throw new BadRequestException('An image file is required.');
+    return this.usersService.uploadPhoto(this.userId(req), file);
+  }
+
+  @Delete('me/photo')
+  deletePhoto(@Req() req: Request) {
+    return this.usersService.deletePhoto(this.userId(req));
   }
 
   @Get('me/privacy-settings')

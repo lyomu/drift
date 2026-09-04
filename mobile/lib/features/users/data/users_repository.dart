@@ -171,6 +171,31 @@ class UsersRepository {
     return UserProfile.fromJson(data);
   }
 
+  /// Uploads a new profile photo, replacing any existing one. [filePath] is
+  /// what `image_picker` hands back. The returned profile carries the fresh
+  /// `photoUrl` — version-stamped by the backend, so the image cache picks
+  /// the new photo up instead of the replaced one.
+  Future<UserProfile> uploadPhoto(String filePath) async {
+    try {
+      final form = FormData.fromMap({
+        'file': await MultipartFile.fromFile(filePath),
+      });
+      final response = await _dio.post('/users/me/photo', data: form);
+      return UserProfile.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw AuthException(_messageFrom(e));
+    }
+  }
+
+  Future<UserProfile> deletePhoto() async {
+    try {
+      final response = await _dio.delete('/users/me/photo');
+      return UserProfile.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw AuthException(_messageFrom(e));
+    }
+  }
+
   Future<PrivacySettings> getPrivacySettings() async {
     final data = await _get('/users/me/privacy-settings');
     return PrivacySettings.fromJson(data);

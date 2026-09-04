@@ -63,6 +63,9 @@ dependencies:
   crypto: ^3.0.7
   firebase_core: ^4.14.0
   firebase_messaging: ^16.6.0
+  # Profile photo picking. Uses the Android 13+ system photo picker and the
+  # iOS PHPicker, so neither needs a runtime gallery permission.
+  image_picker: ^1.1.2
 
 dev_dependencies:
   flutter_test:
@@ -106,7 +109,9 @@ flutter:
   # https://flutter.dev/to/asset-from-package
 
   fonts:
-    # Body/UI family. Static cuts keep Android text weights predictable.
+    # The single app family — display, heading, body and UI all sit on DM
+    # Sans since the 2026-09 shell redesign (Outfit was dropped). Static cuts
+    # keep Android text weights predictable.
     - family: DMSans
       fonts:
         - asset: assets/fonts/DMSans-400.ttf
@@ -115,19 +120,3 @@ flutter:
           weight: 500
         - asset: assets/fonts/DMSans-700.ttf
           weight: 700
-    # Heading/display family. The variable file's default master is Thin,
-    # which is the intended heading weight for the current platform pass.
-    - family: Outfit
-      fonts:
-        - asset: assets/fonts/Outfit-Variable.ttf
-          weight: 100
-        - asset: assets/fonts/Outfit-400.ttf
-          weight: 400
-        - asset: assets/fonts/Outfit-500.ttf
-          weight: 500
-        - asset: assets/fonts/Outfit-600.ttf
-          weight: 600
-        - asset: assets/fonts/Outfit-700.ttf
-          weight: 700
-        - asset: assets/fonts/Outfit-800.ttf
-          weight: 800

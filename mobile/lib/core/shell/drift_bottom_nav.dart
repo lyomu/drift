@@ -25,7 +25,9 @@ class DriftBottomNav extends StatelessWidget {
     (label: 'Play', svg: _playSvg),
     (label: 'Compete', svg: _competeSvg),
     (label: 'Discover', svg: _discoverSvg),
-    (label: 'Profile', svg: _profileSvg),
+    // Learn took this slot from Profile in the 2026-09 redesign — profile
+    // navigation moved into the app drawer (`DriftAppDrawer`).
+    (label: 'Learn', svg: _learnSvg),
   ];
 
   @override
@@ -135,8 +137,14 @@ const _discoverSvg =
     '<path d="M14.5 7.5l-2.5 5L7.5 14.5l2.5-5 4.5-2z" stroke="currentColor" '
     'stroke-width="1.7" stroke-linejoin="round"/></svg>';
 
-const _profileSvg =
+/// Graduation cap — the mortarboard plus its tassel, drawn in the same 22px
+/// 1.7-stroke outline style as the other four tabs.
+const _learnSvg =
     '<svg width="22" height="22" viewBox="0 0 22 22" fill="none">'
-    '<circle cx="11" cy="7" r="4" stroke="currentColor" stroke-width="1.7"/>'
-    '<path d="M3 19c0-4.418 3.582-8 8-8s8 3.582 8 8" stroke="currentColor" '
-    'stroke-width="1.7" stroke-linecap="round"/></svg>';
+    '<path d="M11 3.5L20 8l-9 4.5L2 8l9-4.5z" stroke="currentColor" '
+    'stroke-width="1.7" stroke-linejoin="round"/>'
+    '<path d="M5.5 10v4.6c0 .5.3 1 .8 1.2 1.3.7 3 1.2 4.7 1.2s3.4-.5 4.7-1.2c'
+    '.5-.2.8-.7.8-1.2V10" stroke="currentColor" stroke-width="1.7" '
+    'stroke-linecap="round" stroke-linejoin="round"/>'
+    '<path d="M20 8v4.5" stroke="currentColor" stroke-width="1.7" '
+    'stroke-linecap="round"/></svg>';

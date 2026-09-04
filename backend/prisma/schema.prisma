@@ -598,10 +598,11 @@ model User {
 
   firstName String?
   lastName  String?
+  // Set by the photo upload flow (`POST /users/me/photo`) to the public
+  // read path of the person's `UserPhotoAsset` — a relative
+  // `/media/user-photos/<assetId>` that clients resolve against the API
+  // origin. Onboarding may also set an absolute URL from a social provider.
   photoUrl  String?
-  // Edit Profile (Doc 4 §A.10) — no upload flow exists for photoUrl either,
-  // but bio is free text a player can type directly, so it's real this
-  // phase while photo stays out of scope.
   bio       String?
 
   verificationStatus VerificationStatus @default(UNVERIFIED)
@@ -618,6 +619,7 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  photoAsset        UserPhotoAsset?
   tennisProfile     TennisProfile?
   padelProfile      PadelProfile?
   coachProfile      CoachProfile?
@@ -1765,6 +1767,22 @@ model ClubMediaAsset {
 
   @@index([clubId, createdAt])
   @@map("club_media_assets")
+}
+
+/// A player's profile photo, stored the same way club media is — bytes in
+/// Postgres, served back by opaque asset id. One per user: uploading again
+/// replaces the row rather than accumulating orphans.
+model UserPhotoAsset {
+  id        String @id @default(uuid())
+  userId    String @unique
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  filename  String
+  mimeType  String
+  bytes     Bytes
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("user_photo_assets")
 }
 
 model ClubNotificationSettings {

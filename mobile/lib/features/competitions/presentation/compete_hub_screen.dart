@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_typography.dart';
-import '../../../shared/widgets/drift_back_header.dart';
 import '../../../shared/widgets/drift_pill_tabs.dart';
 import 'ladder_list_screen.dart';
 import 'league_list_screen.dart';
@@ -25,44 +23,32 @@ class _CompeteHubScreenState extends State<CompeteHubScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final type = Theme.of(context).extension<DriftTypography>()!;
     final colors = Theme.of(context).extension<DriftColors>()!;
 
-    return SafeArea(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-            child: Row(
-              children: [
-                Expanded(child: Text('Compete', style: type.h2)),
-                DriftHeaderSquareButton(
-                  icon: Icons.event_note_outlined,
-                  onTap: () => context.push('/compete/my-leagues'),
-                ),
-              ],
-            ),
+    // Title and the my-leagues button live in the shell's `DriftAppHeader`
+    // now (2026-09 redesign), so this starts straight at the pill tabs.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 4),
+        DriftPillTabs(
+          labels: _labels,
+          selected: _segment,
+          onChanged: (i) => setState(() => _segment = i),
+        ),
+        const SizedBox(height: 12),
+        Expanded(
+          child: Container(
+            color: colors.background,
+            child: switch (_segment) {
+              0 => const LeagueListScreen(embedded: true),
+              1 => const LadderListScreen(embedded: true),
+              2 => const TournamentListScreen(embedded: true),
+              _ => const _EventsComingSoon(),
+            },
           ),
-          DriftPillTabs(
-            labels: _labels,
-            selected: _segment,
-            onChanged: (i) => setState(() => _segment = i),
-          ),
-          const SizedBox(height: 12),
-          Expanded(
-            child: Container(
-              color: colors.background,
-              child: switch (_segment) {
-                0 => const LeagueListScreen(embedded: true),
-                1 => const LadderListScreen(embedded: true),
-                2 => const TournamentListScreen(embedded: true),
-                _ => const _EventsComingSoon(),
-              },
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

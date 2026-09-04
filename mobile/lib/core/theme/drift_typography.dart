@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 
 /// Type scale for Drift Tennis. Mirrors `DESIGN_SPEC.md` §2.
 ///
-/// DM Sans carries body/UI text. Outfit is kept for display and heading roles
-/// only, set thin per the current cross-platform typography direction.
+/// DM Sans is the single app family — display, heading, body and UI. Outfit
+/// was dropped in the 2026-09 header/shell redesign: headings there are heavy,
+/// and DM Sans has no thin cut to carry the old `w100` display look.
 class DriftTypography extends ThemeExtension<DriftTypography> {
   const DriftTypography({
     required this.display,
@@ -37,7 +38,7 @@ class DriftTypography extends ThemeExtension<DriftTypography> {
   final TextStyle button;
   final TextStyle statistics;
 
-  static const _displayFamily = 'Outfit';
+  static const _displayFamily = 'DMSans';
   static const _bodyFamily = 'DMSans';
 
   factory DriftTypography.from(Color textPrimary, Color textSecondary) {
@@ -46,35 +47,35 @@ class DriftTypography extends ThemeExtension<DriftTypography> {
         fontFamily: _displayFamily,
         fontSize: 34,
         height: 40 / 34,
-        fontWeight: FontWeight.w100,
+        fontWeight: FontWeight.w700,
         color: textPrimary,
       ),
       h1: TextStyle(
         fontFamily: _displayFamily,
         fontSize: 28,
         height: 34 / 28,
-        fontWeight: FontWeight.w100,
+        fontWeight: FontWeight.w700,
         color: textPrimary,
       ),
       h2: TextStyle(
         fontFamily: _displayFamily,
         fontSize: 24,
         height: 30 / 24,
-        fontWeight: FontWeight.w100,
+        fontWeight: FontWeight.w700,
         color: textPrimary,
       ),
       h3: TextStyle(
         fontFamily: _displayFamily,
         fontSize: 20,
         height: 26 / 20,
-        fontWeight: FontWeight.w100,
+        fontWeight: FontWeight.w700,
         color: textPrimary,
       ),
       h4: TextStyle(
         fontFamily: _displayFamily,
         fontSize: 18,
         height: 24 / 18,
-        fontWeight: FontWeight.w100,
+        fontWeight: FontWeight.w700,
         color: textPrimary,
       ),
       title: TextStyle(
@@ -137,7 +138,7 @@ class DriftTypography extends ThemeExtension<DriftTypography> {
         fontFamily: _displayFamily,
         fontSize: 34,
         height: 1.1,
-        fontWeight: FontWeight.w100,
+        fontWeight: FontWeight.w700,
         color: textPrimary,
         fontFeatures: const [FontFeature.tabularFigures()],
       ),

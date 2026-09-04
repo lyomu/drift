@@ -531,11 +531,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   );
 });
 
+/// `?tab=` on `/home`. `profile` is kept as an alias: the 2026-09 redesign
+/// moved profile navigation into the app drawer and gave the fifth tab to
+/// Learn, but push payloads and older deep links still say `profile`, and
+/// landing on Home (drawer one tap away) beats a broken link.
 int _tabIndex(String? tab) => switch (tab) {
   'play' => 1,
   'compete' => 2,
   'discover' => 3,
-  'profile' => 4,
+  'learn' => 4,
   _ => 0,
 };
 

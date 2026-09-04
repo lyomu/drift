@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/network/media_url.dart';
 import '../../core/theme/drift_colors.dart';
 import '../../core/theme/drift_spacing.dart';
 import '../../core/theme/drift_typography.dart';
@@ -87,7 +88,11 @@ class DriftPlayerAvatar extends StatelessWidget {
         .take(2)
         .join();
 
-    if (player.photoUrl != null && player.photoUrl!.isNotEmpty) {
+    // Uploaded photos are stored as a path relative to the API origin, so
+    // they go through `driftMediaUrl` before they can be fetched.
+    final photoUrl = driftMediaUrl(player.photoUrl);
+
+    if (photoUrl != null) {
       // `foregroundImage` (not `backgroundImage`) so the initials below stay
       // visible if the photo fails: a dead or malformed URL previously threw
       // on every rebuild and left a blank circle with no fallback. The error
@@ -96,7 +101,7 @@ class DriftPlayerAvatar extends StatelessWidget {
       return CircleAvatar(
         radius: radius,
         backgroundColor: colors.primaryLight,
-        foregroundImage: NetworkImage(player.photoUrl!),
+        foregroundImage: NetworkImage(photoUrl),
         onForegroundImageError: (_, _) {},
         child: Text(
           initials.isEmpty ? '?' : initials,

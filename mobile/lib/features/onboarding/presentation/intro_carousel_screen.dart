@@ -190,10 +190,10 @@ class _SlideView extends StatelessWidget {
                     slide.title,
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontFamily: 'Outfit',
+                      fontFamily: 'DMSans',
                       fontSize: slide.titleSize,
                       height: 1.05,
-                      fontWeight: FontWeight.w100,
+                      fontWeight: FontWeight.w700,
                       color: Colors.white,
                     ),
                   ),
