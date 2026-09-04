@@ -17,7 +17,11 @@
         <!-- Desktop / iOS simulator -->
         <domain includeSubdomains="false">localhost</domain>
         <domain includeSubdomains="false">127.0.0.1</domain>
-        <!-- Dev machine on the LAN, for preview APKs on a real device -->
+        <!-- Dev machine on the LAN, for preview APKs on a real device.
+             One per network the laptop has been on; a stale entry is inert,
+             but the address in the build's DRIFT_API_BASE_URL must be here or
+             the request fails as a cleartext violation, not a timeout. -->
         <domain includeSubdomains="false">192.168.100.21</domain>
+        <domain includeSubdomains="false">192.168.12.68</domain>
     </domain-config>
 </network-security-config>
