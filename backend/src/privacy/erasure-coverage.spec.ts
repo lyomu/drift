@@ -29,6 +29,7 @@ const ERASED = new Set([
   'RefreshToken',
   'SocialIdentity',
   'DeviceToken',
+  'UserPhotoAsset',
   'Message',
   'MatchReflection',
   'SupportTicket',

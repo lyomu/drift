@@ -11,6 +11,7 @@ function createTx(): Tx {
   });
   return {
     user: model(),
+    userPhotoAsset: model(),
     socialIdentity: model(),
     deviceToken: model(),
     verificationCode: model(),
@@ -61,6 +62,14 @@ describe('ErasureService', () => {
     // A marker rather than null: it cannot be a valid bcrypt hash, so
     // bcrypt.compare fails for every input.
     expect(tx.user.update.mock.calls[0][0].data.passwordHash).toBe(marker);
+  });
+
+  it('deletes the stored profile photo, not just the reference to it', () => {
+    // Nulling `photoUrl` leaves the bytes in `user_photo_assets`, and that
+    // table's cascade never fires because erasure is an UPDATE, not a DELETE.
+    expect(tx.userPhotoAsset.deleteMany).toHaveBeenCalledWith({
+      where: { userId: USER },
+    });
   });
 
   it('deletes social identities outright rather than anonymising them', () => {

@@ -60,6 +60,13 @@ export class ErasureService {
       },
     });
 
+    // The avatar bytes, not just the reference to them. `photoUrl` is nulled
+    // on the row above, but the image lives in `user_photo_assets`, and that
+    // table's `onDelete: Cascade` never fires because erasure is an UPDATE —
+    // exactly the case the header comment warns about. A face is as personal
+    // as the data here gets.
+    await tx.userPhotoAsset.deleteMany({ where: { userId } });
+
     // ---- credentials and reachability ------------------------------------
     // Deleted outright, not anonymised: a social login must stop working, and
     // a push token has no anonymised form — it is an address. Leaving either
