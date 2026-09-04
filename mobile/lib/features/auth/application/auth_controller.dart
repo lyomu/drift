@@ -26,6 +26,8 @@ class AuthController extends AsyncNotifier<AuthSessionStatus> {
     required String email,
     required String password,
     required bool acceptedAgePolicy,
+    String? phone,
+    bool phoneOnWhatsApp = false,
   }) {
     return ref
         .read(authRepositoryProvider)
@@ -33,6 +35,8 @@ class AuthController extends AsyncNotifier<AuthSessionStatus> {
           email: email,
           password: password,
           acceptedAgePolicy: acceptedAgePolicy,
+          phone: phone,
+          phoneOnWhatsApp: phoneOnWhatsApp,
         );
   }
 

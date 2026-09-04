@@ -13,6 +13,8 @@ class UserProfile {
     required this.lastName,
     required this.photoUrl,
     required this.bio,
+    required this.phone,
+    required this.phoneOnWhatsApp,
     required this.onboardingStep,
   });
 
@@ -22,6 +24,12 @@ class UserProfile {
   final String? lastName;
   final String? photoUrl;
   final String? bio;
+
+  /// Optional and unverified — see `User.phone` on the backend. Present so
+  /// Basic Profile can prefill a number already given at signup.
+  final String? phone;
+  final bool phoneOnWhatsApp;
+
   final OnboardingStep onboardingStep;
 
   String get displayName {
@@ -39,6 +47,8 @@ class UserProfile {
     lastName: json['lastName'] as String?,
     photoUrl: json['photoUrl'] as String?,
     bio: json['bio'] as String?,
+    phone: json['phone'] as String?,
+    phoneOnWhatsApp: json['phoneOnWhatsApp'] as bool? ?? false,
     onboardingStep: OnboardingStep.fromJson(json['onboardingStep'] as String),
   );
 }
@@ -88,15 +98,23 @@ class UsersRepository {
     return UserProfile.fromJson(data);
   }
 
+  /// [phone] is omitted from the body when null so a number given at signup
+  /// survives a submit that leaves the field blank.
   Future<OnboardingStep> updateBasicProfile({
     required String firstName,
     required String lastName,
     String? photoUrl,
+    String? phone,
+    bool? phoneOnWhatsApp,
     required String dominantHand,
   }) => _patchStep('/users/me/basic-profile', {
     'firstName': firstName,
     'lastName': lastName,
     if (photoUrl != null) 'photoUrl': photoUrl,
+    if (phone != null && phone.isNotEmpty) ...{
+      'phone': phone,
+      'phoneOnWhatsApp': phoneOnWhatsApp ?? false,
+    },
     'dominantHand': dominantHand,
   });
 

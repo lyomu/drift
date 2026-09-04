@@ -11,6 +11,7 @@ import * as bcrypt from 'bcrypt';
 import {
   AccountStatus,
   AuthProvider,
+  Prisma,
   OnboardingStep,
   VerificationChannel,
   VerificationPurpose,
@@ -76,11 +77,20 @@ export class AuthService {
     const code = this.generateCode();
     const codeHash = await bcrypt.hash(code, BCRYPT_ROUNDS);
 
-    const user = await this.prisma.$transaction(async (tx) => {
+    const user = await this.withUniqueContactGuard(() =>
+      this.prisma.$transaction(async (tx) => {
       const created = await tx.user.create({
         data: {
           email: dto.email,
           passwordHash,
+          // Optional and unverified: `phoneVerifiedAt` stays null. The flag is
+          // only meaningful with a number, so it is written alongside one.
+          ...(dto.phone
+            ? {
+                phone: dto.phone,
+                phoneOnWhatsApp: dto.phoneOnWhatsApp ?? false,
+              }
+            : {}),
           agePolicyAcceptedAt: new Date(),
           onboardingStep: OnboardingStep.VERIFY,
           tennisProfile: { create: {} },
@@ -98,7 +108,8 @@ export class AuthService {
       });
 
       return created;
-    });
+      }),
+    );
 
     this.logCode(user.email!, code);
     // No-op when SMTP is not configured (dev + pre-wire production); a send
@@ -707,6 +718,32 @@ export class AuthService {
 
   private hashRefreshToken(token: string): string {
     return createHash('sha256').update(token).digest('hex');
+  }
+
+  /**
+   * Turns a unique-constraint violation on a contact field into the same
+   * deliberately vague conflict `signUp` already raises for a taken email.
+   *
+   * The vagueness is the point. `phone` is unique so it can carry a future
+   * phone login, but the number is unverified — telling a caller "that number
+   * is already registered" would hand anyone a way to test whether a given
+   * person has an account here, which is exactly the enumeration the email
+   * path refuses. One message for both fields leaks neither.
+   */
+  private async withUniqueContactGuard<T>(run: () => Promise<T>): Promise<T> {
+    try {
+      return await run();
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException(
+          'Unable to create account with these details.',
+        );
+      }
+      throw error;
+    }
   }
 
   private generateCode(): string {

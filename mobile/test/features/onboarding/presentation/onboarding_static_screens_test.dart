@@ -14,6 +14,8 @@ import 'package:drift_tennis/features/onboarding/presentation/suggested_level_re
 import 'package:drift_tennis/features/onboarding/presentation/tennis_experience_screen.dart';
 import 'package:drift_tennis/features/onboarding/presentation/welcome_screen.dart';
 
+import 'package:drift_tennis/features/users/application/current_user_provider.dart';
+
 import '../../../support/fixtures.dart';
 import '../../../support/pump.dart';
 
@@ -47,6 +49,12 @@ void main() {
             tester,
             Scaffold(body: entry.value()),
             brightness: brightness,
+            // Only BasicProfileScreen reads this — it prefills its fields
+            // from the signed-in user — but the override is inert for the
+            // rest, which keeps this loop uniform.
+            overrides: [
+              currentUserProvider.overrideWith((ref) async => userProfile()),
+            ],
           );
 
           expect(tester.takeException(), isNull);

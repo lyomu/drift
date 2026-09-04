@@ -8,11 +8,14 @@ import '../application/auth_controller.dart';
 import '../data/auth_repository.dart';
 import 'widgets/auth_form_widgets.dart';
 import 'widgets/auth_page_scaffold.dart';
+import 'widgets/phone_field.dart';
 import 'widgets/social_auth_buttons.dart';
 
 /// Sign Up — `foundation/04-screen-inventory.md` A.1 (redesign 2026-08).
-/// Email-only for this checkpoint; phone signup is deferred until a real SMS
-/// provider exists.
+///
+/// Email is the credential. A phone number is collected too, but purely as a
+/// contact detail — optional, and stored unverified, since signing *up* by
+/// phone still waits on a real SMS provider.
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
 
@@ -23,6 +26,8 @@ class SignUpScreen extends ConsumerStatefulWidget {
 class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _phoneController = TextEditingController();
+  bool _phoneOnWhatsApp = false;
   bool _isSubmitting = false;
   bool _obscure = true;
   bool _acceptedAgePolicy = false;
@@ -32,6 +37,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
@@ -49,6 +55,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             email: email,
             password: _passwordController.text,
             acceptedAgePolicy: _acceptedAgePolicy,
+            phone: _phoneController.text.trim(),
+            phoneOnWhatsApp: _phoneOnWhatsApp,
           );
       if (!mounted) return;
       context.push('/verify', extra: email);
@@ -108,6 +116,13 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             ),
           ),
           const SizedBox(height: 12),
+          PhoneField(
+            controller: _phoneController,
+            variant: PhoneFieldVariant.auth,
+            onWhatsApp: _phoneOnWhatsApp,
+            onWhatsAppChanged: (v) => setState(() => _phoneOnWhatsApp = v),
+          ),
+          const SizedBox(height: 4),
           AgePolicyAcceptance(
             value: _acceptedAgePolicy,
             onChanged: (value) => setState(() => _acceptedAgePolicy = value),
