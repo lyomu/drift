@@ -5,6 +5,10 @@ import 'package:flutter/material.dart';
 /// DM Sans is the single app family — display, heading, body and UI. Outfit
 /// was dropped in the 2026-09 header/shell redesign: headings there are heavy,
 /// and DM Sans has no thin cut to carry the old `w100` display look.
+///
+/// Every style pins `letterSpacing: 0`. Without it the null field lets
+/// Material's own text theme merge its default tracking back in (0.1-0.5 on
+/// the body and label slots); Drift's scale is set at zero tracking.
 class DriftTypography extends ThemeExtension<DriftTypography> {
   const DriftTypography({
     required this.display,
@@ -48,6 +52,7 @@ class DriftTypography extends ThemeExtension<DriftTypography> {
         fontSize: 34,
         height: 40 / 34,
         fontWeight: FontWeight.w700,
+        letterSpacing: 0,
         color: textPrimary,
       ),
       h1: TextStyle(
@@ -55,6 +60,7 @@ class DriftTypography extends ThemeExtension<DriftTypography> {
         fontSize: 28,
         height: 34 / 28,
         fontWeight: FontWeight.w700,
+        letterSpacing: 0,
         color: textPrimary,
       ),
       h2: TextStyle(
@@ -62,6 +68,7 @@ class DriftTypography extends ThemeExtension<DriftTypography> {
         fontSize: 24,
         height: 30 / 24,
         fontWeight: FontWeight.w700,
+        letterSpacing: 0,
         color: textPrimary,
       ),
       h3: TextStyle(
@@ -69,6 +76,7 @@ class DriftTypography extends ThemeExtension<DriftTypography> {
         fontSize: 20,
         height: 26 / 20,
         fontWeight: FontWeight.w700,
+        letterSpacing: 0,
         color: textPrimary,
       ),
       h4: TextStyle(
@@ -76,6 +84,7 @@ class DriftTypography extends ThemeExtension<DriftTypography> {
         fontSize: 18,
         height: 24 / 18,
         fontWeight: FontWeight.w700,
+        letterSpacing: 0,
         color: textPrimary,
       ),
       title: TextStyle(
@@ -83,6 +92,7 @@ class DriftTypography extends ThemeExtension<DriftTypography> {
         fontSize: 16,
         height: 22 / 16,
         fontWeight: FontWeight.w600,
+        letterSpacing: 0,
         color: textPrimary,
       ),
       subtitle: TextStyle(
@@ -90,6 +100,7 @@ class DriftTypography extends ThemeExtension<DriftTypography> {
         fontSize: 14,
         height: 20 / 14,
         fontWeight: FontWeight.w500,
+        letterSpacing: 0,
         color: textSecondary,
       ),
       bodyLarge: TextStyle(
@@ -97,6 +108,7 @@ class DriftTypography extends ThemeExtension<DriftTypography> {
         fontSize: 16,
         height: 24 / 16,
         fontWeight: FontWeight.w400,
+        letterSpacing: 0,
         color: textPrimary,
       ),
       body: TextStyle(
@@ -104,6 +116,7 @@ class DriftTypography extends ThemeExtension<DriftTypography> {
         fontSize: 14,
         height: 20 / 14,
         fontWeight: FontWeight.w400,
+        letterSpacing: 0,
         color: textPrimary,
       ),
       bodySmall: TextStyle(
@@ -111,6 +124,7 @@ class DriftTypography extends ThemeExtension<DriftTypography> {
         fontSize: 13,
         height: 18 / 13,
         fontWeight: FontWeight.w400,
+        letterSpacing: 0,
         color: textSecondary,
       ),
       label: TextStyle(
@@ -118,6 +132,7 @@ class DriftTypography extends ThemeExtension<DriftTypography> {
         fontSize: 13,
         height: 16 / 13,
         fontWeight: FontWeight.w600,
+        letterSpacing: 0,
         color: textPrimary,
       ),
       caption: TextStyle(
@@ -125,6 +140,7 @@ class DriftTypography extends ThemeExtension<DriftTypography> {
         fontSize: 12,
         height: 16 / 12,
         fontWeight: FontWeight.w400,
+        letterSpacing: 0,
         color: textSecondary,
       ),
       button: TextStyle(
@@ -132,6 +148,7 @@ class DriftTypography extends ThemeExtension<DriftTypography> {
         fontSize: 15,
         height: 20 / 15,
         fontWeight: FontWeight.w600,
+        letterSpacing: 0,
         color: textPrimary,
       ),
       statistics: TextStyle(
@@ -139,6 +156,7 @@ class DriftTypography extends ThemeExtension<DriftTypography> {
         fontSize: 34,
         height: 1.1,
         fontWeight: FontWeight.w700,
+        letterSpacing: 0,
         color: textPrimary,
         fontFeatures: const [FontFeature.tabularFigures()],
       ),

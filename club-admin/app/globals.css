@@ -120,6 +120,15 @@
   --font-body: var(--font-dm-sans);
   --font-display: var(--font-outfit);
 
+  /* Every tracking token is zero, so a stray `tracking-*` utility cannot
+     reintroduce letter-spacing. */
+  --tracking-tighter: 0em;
+  --tracking-tight: 0em;
+  --tracking-normal: 0em;
+  --tracking-wide: 0em;
+  --tracking-wider: 0em;
+  --tracking-widest: 0em;
+
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 8px;
@@ -139,11 +148,18 @@ h4,
 h5,
 h6 {
   font-family: var(--font-display), sans-serif;
-  font-weight: 100 !important;
+  /* Default heading weight from the type scale (foundation/05-design-system.md
+     §3). Deliberately not `!important`: the old `font-weight: 100 !important`
+     outranked every per-heading `font-bold`/`font-semibold` utility, so all
+     headings rendered in Outfit Thin regardless of what the component asked
+     for. */
+  font-weight: 700;
 }
 
 * {
   border-color: var(--color-border);
+  /* Zero tracking everywhere -- the type scale carries no letter-spacing. */
+  letter-spacing: 0;
 }
 
 .ms {
