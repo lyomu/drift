@@ -16,8 +16,9 @@ void main() {
   // The screen has no Scaffold of its own — it lives inside the shell tab.
   Widget screen() => const Scaffold(body: HomeScreen());
 
-  // The header is a sibling of the feed and fetches independently, so every
-  // case has to stub it too — otherwise it reaches for the real repository.
+  // The stat card is a sibling of the feed and fetches independently, so
+  // every case has to stub it too — otherwise it reaches for the real
+  // repository.
   final summaryOverride = homeSummaryProvider.overrideWith(
     (ref) async => homeSummary(),
   );
@@ -45,8 +46,10 @@ void main() {
           ],
         );
 
-        // The identity header replaced the old static "Home" title.
-        expect(find.text('Hi, Ana'), findsOneWidget);
+        // The greeting lives in the shell's `DriftAppHeader` now (2026-09
+        // redesign) — see `drift_app_header_test.dart`. Home starts at the
+        // stat card, then the feed.
+        expect(find.text('Hi, Ana'), findsNothing);
         expect(find.text('Confirm a result'), findsOneWidget);
       });
 

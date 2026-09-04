@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/network/media_url.dart';
 import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/drift_back_header.dart';
@@ -183,6 +184,7 @@ class _CoachCard extends StatelessWidget {
         .take(2)
         .map((p) => p[0].toUpperCase())
         .join();
+    final photoUrl = driftMediaUrl(coach.photoUrl);
 
     return DriftSoftCard(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -196,12 +198,10 @@ class _CoachCard extends StatelessWidget {
               CircleAvatar(
                 radius: 24,
                 backgroundColor: colors.primary,
-                foregroundImage: coach.photoUrl == null
+                foregroundImage: photoUrl == null
                     ? null
-                    : NetworkImage(coach.photoUrl!),
-                onForegroundImageError: coach.photoUrl == null
-                    ? null
-                    : (_, _) {},
+                    : NetworkImage(photoUrl),
+                onForegroundImageError: photoUrl == null ? null : (_, _) {},
                 child: Text(
                   initials.isEmpty ? 'C' : initials,
                   style: type.label.copyWith(color: Colors.white),

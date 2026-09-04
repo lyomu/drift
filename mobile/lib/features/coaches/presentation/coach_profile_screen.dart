@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/network/media_url.dart';
 import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/buttons/drift_primary_button.dart';
@@ -74,6 +75,7 @@ class _ProfileBody extends StatelessWidget {
         .take(2)
         .map((p) => p[0].toUpperCase())
         .join();
+    final photoUrl = driftMediaUrl(coach.photoUrl);
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
@@ -83,10 +85,8 @@ class _ProfileBody extends StatelessWidget {
             CircleAvatar(
               radius: 32,
               backgroundColor: colors.primary,
-              foregroundImage: coach.photoUrl == null
-                  ? null
-                  : NetworkImage(coach.photoUrl!),
-              onForegroundImageError: coach.photoUrl == null ? null : (_, _) {},
+              foregroundImage: photoUrl == null ? null : NetworkImage(photoUrl),
+              onForegroundImageError: photoUrl == null ? null : (_, _) {},
               child: Text(
                 initials.isEmpty ? 'C' : initials,
                 style: type.h4.copyWith(color: Colors.white),

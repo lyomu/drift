@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -7,6 +7,7 @@ type MockPrisma = {
   tennisProfile: Record<string, jest.Mock>;
   refreshToken: Record<string, jest.Mock>;
   privacyRequest: Record<string, jest.Mock>;
+  userPhotoAsset: Record<string, jest.Mock>;
   $transaction: jest.Mock;
 };
 
@@ -38,6 +39,13 @@ function createMockPrisma(): MockPrisma {
       create: jest
         .fn()
         .mockResolvedValue({ id: 'req-1', createdAt: new Date() }),
+    },
+    userPhotoAsset: {
+      upsert: jest
+        .fn()
+        .mockResolvedValue({ id: 'asset-1', updatedAt: new Date(1_700_000) }),
+      deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
+      findUnique: jest.fn().mockResolvedValue(null),
     },
     $transaction: jest.fn(),
   };
@@ -106,6 +114,56 @@ describe('UsersService', () => {
         }),
       );
       expect(result.skillBreakdownVisibility).toBe('EVERYONE');
+    });
+  });
+
+  describe('profile photo', () => {
+    const file = {
+      originalname: 'me.jpg',
+      mimetype: 'image/jpeg',
+      buffer: Buffer.from([1, 2, 3]),
+    } as Express.Multer.File;
+
+    it('rejects a non-image upload', async () => {
+      await expect(
+        service.uploadPhoto('user-1', {
+          ...file,
+          mimetype: 'application/pdf',
+        } as Express.Multer.File),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(prisma.userPhotoAsset.upsert).not.toHaveBeenCalled();
+    });
+
+    it('replaces the existing asset rather than adding a second one', async () => {
+      await service.uploadPhoto('user-1', file);
+      expect(prisma.userPhotoAsset.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { userId: 'user-1' } }),
+      );
+    });
+
+    it('stamps photoUrl with the write time so clients drop the cached photo', async () => {
+      await service.uploadPhoto('user-1', file);
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: { photoUrl: '/media/user-photos/asset-1?v=1700000' },
+      });
+    });
+
+    it('clears photoUrl and the bytes on delete', async () => {
+      await service.deletePhoto('user-1');
+      expect(prisma.userPhotoAsset.deleteMany).toHaveBeenCalledWith({
+        where: { userId: 'user-1' },
+      });
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: { photoUrl: null },
+      });
+    });
+
+    it('404s on an unknown asset id rather than serving an empty body', async () => {
+      await expect(service.photoContent('nope')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
     });
   });
 

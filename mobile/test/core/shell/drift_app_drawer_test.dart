@@ -1,20 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:drift_tennis/core/shell/drift_app_drawer.dart';
 import 'package:drift_tennis/features/players/data/players_repository.dart';
 import 'package:drift_tennis/features/profile/application/profile_providers.dart';
-import 'package:drift_tennis/features/profile/presentation/profile_home_screen.dart';
 import 'package:drift_tennis/features/users/application/current_user_provider.dart';
 import 'package:drift_tennis/features/users/data/users_repository.dart';
 
-import '../../../support/fixtures.dart';
-import '../../../support/pump.dart';
+import '../../support/fixtures.dart';
+import '../../support/pump.dart';
 
 void main() {
-  // The screen has no Scaffold of its own — it lives inside a shell tab.
-  Widget screen() => const Scaffold(body: ProfileHomeScreen());
+  // Successor to the old `ProfileHomeScreen` test — the 2026-09 redesign moved
+  // that navigation surface into the app drawer. Rendered directly rather than
+  // opened through a Scaffold: a `Drawer` is an ordinary widget, and the
+  // opening gesture is Material's business, not ours.
+  Widget screen() => const Scaffold(body: DriftAppDrawer());
 
-  group('ProfileHomeScreen', () {
+  group('DriftAppDrawer', () {
     for (final brightness in Brightness.values) {
       final label = brightness.name;
 
@@ -31,9 +34,12 @@ void main() {
           ],
         );
 
-        expect(find.text('Profile'), findsOneWidget);
+        expect(find.text('My Profile'), findsOneWidget);
         expect(find.text('My Sports Hub'), findsOneWidget);
         expect(find.text('Settings'), findsOneWidget);
+        expect(find.text('Log out'), findsOneWidget);
+        // Learn is a bottom-nav tab now, not a drawer row.
+        expect(find.text('Learn'), findsNothing);
       });
 
       testWidgets("survives failed profiles without throwing in $label", (
@@ -49,8 +55,8 @@ void main() {
           ],
         );
 
-        // Falls back to a placeholder name rather than crashing.
-        expect(find.text('My Profile'), findsOneWidget);
+        // Falls back to placeholder identity text rather than crashing.
+        expect(find.text('View your profile'), findsOneWidget);
         expect(tester.takeException(), isNull);
       });
     }

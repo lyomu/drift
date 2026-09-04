@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/network/media_url.dart';
 import '../../core/theme/drift_colors.dart';
 import '../../core/theme/drift_spacing.dart';
 import '../../core/theme/drift_typography.dart';
@@ -18,6 +19,7 @@ class DriftCoachCard extends StatelessWidget {
     final type = Theme.of(context).extension<DriftTypography>()!;
     final colors = Theme.of(context).extension<DriftColors>()!;
     final clubNames = coach.clubs.map((club) => club.name).join(' · ');
+    final photoUrl = driftMediaUrl(coach.photoUrl);
 
     return DriftCard(
       onTap: onTap,
@@ -26,10 +28,8 @@ class DriftCoachCard extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 26,
-            backgroundImage: coach.photoUrl == null
-                ? null
-                : NetworkImage(coach.photoUrl!),
-            child: coach.photoUrl == null
+            backgroundImage: photoUrl == null ? null : NetworkImage(photoUrl),
+            child: photoUrl == null
                 ? const Icon(Icons.sports_tennis_outlined)
                 : null,
           ),

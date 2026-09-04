@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/network/media_url.dart';
 import '../../../../core/theme/drift_colors.dart';
 import '../../../../core/theme/drift_spacing.dart';
 import '../../../../core/theme/drift_typography.dart';
@@ -102,15 +103,15 @@ class _Avatar extends StatelessWidget {
         .map((p) => p[0].toUpperCase())
         .join();
 
+    final photoUrl = driftMediaUrl(player.photoUrl);
+
     return CircleAvatar(
       radius: 24,
       backgroundColor: colors.primaryLight,
-      foregroundImage: player.photoUrl == null
-          ? null
-          : NetworkImage(player.photoUrl!),
+      foregroundImage: photoUrl == null ? null : NetworkImage(photoUrl),
       // Without this a dead URL throws on every rebuild and leaves a blank
       // circle; falling through to initials keeps the row readable.
-      onForegroundImageError: player.photoUrl == null ? null : (_, _) {},
+      onForegroundImageError: photoUrl == null ? null : (_, _) {},
       child: Text(
         initials.isEmpty ? '?' : initials,
         style: type.label.copyWith(color: colors.primaryDark),
