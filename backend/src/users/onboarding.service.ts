@@ -1,5 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { OnboardingStep } from '@prisma/client';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { OnboardingStep, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { BasicProfileDto } from './dto/basic-profile.dto';
 import { TennisExperienceDto } from './dto/tennis-experience.dto';
@@ -27,21 +31,43 @@ export class OnboardingService {
 
   async updateBasicProfile(userId: string, dto: BasicProfileDto) {
     await this.requireTennisProfile(userId);
-    await this.prisma.$transaction([
-      this.prisma.user.update({
-        where: { id: userId },
-        data: {
-          firstName: dto.firstName,
-          lastName: dto.lastName,
-          photoUrl: dto.photoUrl,
-          onboardingStep: OnboardingStep.TENNIS_EXPERIENCE,
-        },
-      }),
-      this.prisma.tennisProfile.update({
-        where: { userId },
-        data: { dominantHand: dto.dominantHand },
-      }),
-    ]);
+    try {
+      await this.prisma.$transaction([
+        this.prisma.user.update({
+          where: { id: userId },
+          data: {
+            firstName: dto.firstName,
+            lastName: dto.lastName,
+            photoUrl: dto.photoUrl,
+            // Written only when supplied, so re-submitting this step without a
+            // number does not wipe one given at signup. The flag rides along
+            // with the number it describes.
+            ...(dto.phone
+              ? {
+                  phone: dto.phone,
+                  phoneOnWhatsApp: dto.phoneOnWhatsApp ?? false,
+                }
+              : {}),
+            onboardingStep: OnboardingStep.TENNIS_EXPERIENCE,
+          },
+        }),
+        this.prisma.tennisProfile.update({
+          where: { userId },
+          data: { dominantHand: dto.dominantHand },
+        }),
+      ]);
+    } catch (error) {
+      // `phone` is unique. Stay as vague as signup's email conflict: a
+      // specific "that number is taken" would let anyone test whether a given
+      // person has an account here.
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException('Unable to save these details.');
+      }
+      throw error;
+    }
     return { onboardingStep: OnboardingStep.TENNIS_EXPERIENCE };
   }
 

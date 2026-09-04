@@ -38,6 +38,8 @@ void main() {
     lastName: null,
     photoUrl: null,
     bio: null,
+    phone: null,
+    phoneOnWhatsApp: false,
     onboardingStep: OnboardingStep.basicProfile,
   );
 

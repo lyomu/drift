@@ -55,15 +55,24 @@ class AuthRepository {
 
   /// Returns the created user id. In dev, the response also carries a
   /// `devVerificationCode` since no real email provider is wired up yet.
+  /// [phone] is optional and stored unverified — see `User.phone` on the
+  /// backend. Omitted from the body entirely when blank, along with the flag
+  /// that describes it.
   Future<({String userId, String? devVerificationCode})> signUp({
     required String email,
     required String password,
     required bool acceptedAgePolicy,
+    String? phone,
+    bool phoneOnWhatsApp = false,
   }) async {
     final data = await _post('/auth/signup', {
       'email': email,
       'password': password,
       'acceptedAgePolicy': acceptedAgePolicy,
+      if (phone != null && phone.isNotEmpty) ...{
+        'phone': phone,
+        'phoneOnWhatsApp': phoneOnWhatsApp,
+      },
     });
     return (
       userId: data['userId'] as String,

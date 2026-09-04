@@ -4,55 +4,28 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/home/application/home_feed_provider.dart';
 import '../../features/notifications/application/notifications_providers.dart';
-import '../../features/profile/application/profile_providers.dart';
-import '../../shared/widgets/drift_player_card.dart';
 import '../theme/drift_colors.dart';
 import '../theme/drift_typography.dart';
-
-const _weekdays = [
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-  'Sunday',
-];
-const _months = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-];
 
 /// The app's persistent chrome (2026-09 redesign): a drawer button, the
 /// salutation or tab name, and the trailing actions.
 ///
-///     [≡]  Hi, Gideon                        [🔔]  [avatar]
-///          Thursday, 4 Sep
+///     [≡]  Hi, Gideon                                       [🔔]
 ///
 /// Mounted once in [AppShell] above the tab stack, so it stays put while tab
 /// content scrolls under it — the five hub screens no longer draw their own
 /// title rows. Pass [title] for a named tab; leave it null (Home) and the
-/// header shows the date + greeting instead.
+/// header shows the greeting instead.
 ///
 /// Degrades quietly: the greeting falls back to "Welcome back" while
 /// `/home/summary` is loading or has failed.
 class DriftAppHeader extends ConsumerWidget {
   const DriftAppHeader({super.key, this.title, this.actions = const []});
 
-  /// Tab name, or null on Home to show the date + greeting.
+  /// Tab name, or null on Home to show the greeting.
   final String? title;
 
-  /// Tab-specific actions, placed before the bell and avatar.
+  /// Tab-specific actions, placed before the bell.
   final List<Widget> actions;
 
   @override
@@ -81,8 +54,6 @@ class DriftAppHeader extends ConsumerWidget {
                 const SizedBox(width: 8),
               ],
               const _NotificationBell(),
-              const SizedBox(width: 8),
-              const _AvatarButton(),
             ],
           ),
         ),
@@ -96,32 +67,18 @@ class _Greeting extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colors = Theme.of(context).extension<DriftColors>()!;
     final type = Theme.of(context).extension<DriftTypography>()!;
     final summary = ref.watch(homeSummaryProvider).valueOrNull;
 
-    final now = DateTime.now();
-    final dateLine =
-        '${_weekdays[now.weekday - 1]}, ${now.day} ${_months[now.month - 1]}';
     final greeting = summary?.firstName == null
         ? 'Welcome back'
         : 'Hi, ${summary!.firstName}';
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          greeting,
-          style: type.h2.copyWith(fontSize: 22),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        Text(
-          dateLine,
-          style: type.caption.copyWith(color: colors.textSecondary),
-        ),
-      ],
+    return Text(
+      greeting,
+      style: type.h2.copyWith(fontSize: 22),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
     );
   }
 }
@@ -202,30 +159,6 @@ class _NotificationBell extends ConsumerWidget {
             ),
           ),
       ],
-    );
-  }
-}
-
-/// The player's own photo, straight to their profile. Falls back to initials
-/// through [DriftPlayerAvatar] when no photo has been uploaded.
-class _AvatarButton extends ConsumerWidget {
-  const _AvatarButton();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final colors = Theme.of(context).extension<DriftColors>()!;
-    final ownProfile = ref.watch(ownProfileProvider);
-
-    return InkWell(
-      onTap: () => context.push('/profile/own'),
-      customBorder: const CircleBorder(),
-      child: switch (ownProfile) {
-        AsyncData(:final value) => DriftPlayerAvatar(
-          player: value.summary,
-          radius: 20,
-        ),
-        _ => CircleAvatar(radius: 20, backgroundColor: colors.primaryLight),
-      },
     );
   }
 }

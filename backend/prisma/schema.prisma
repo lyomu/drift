@@ -592,7 +592,13 @@ model SocialIdentity {
 model User {
   id           String  @id @default(uuid())
   email        String? @unique
+  // Collected at signup and on Basic Profile, always optional, and stored
+  // UNVERIFIED — no SMS provider exists, so `phoneVerifiedAt` stays null and
+  // nothing may treat this as proof of anything. It is a contact detail.
   phone        String? @unique
+  // Whether the person says `phone` is reachable on WhatsApp. Meaningless
+  // without a number, so writers only set it alongside one.
+  phoneOnWhatsApp Boolean @default(false)
   // Nullable since Phase 4: a Google/Apple-only user has no password.
   passwordHash String?
 

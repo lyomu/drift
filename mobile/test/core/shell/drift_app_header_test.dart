@@ -5,7 +5,6 @@ import 'package:drift_tennis/core/shell/drift_app_header.dart';
 import 'package:drift_tennis/features/home/application/home_feed_provider.dart';
 import 'package:drift_tennis/features/home/data/home_repository.dart';
 import 'package:drift_tennis/features/notifications/application/notifications_providers.dart';
-import 'package:drift_tennis/features/profile/application/profile_providers.dart';
 
 import '../../support/fixtures.dart';
 import '../../support/pump.dart';
@@ -21,10 +20,6 @@ void main() {
   final notificationsOverride = notificationsListProvider.overrideWith(
     (ref) async => notificationsPage(),
   );
-  final ownProfileOverride = ownProfileProvider.overrideWith(
-    (ref) => Future.value(playerProfile()),
-  );
-
   group('DriftAppHeader', () {
     for (final brightness in Brightness.values) {
       final label = brightness.name;
@@ -39,13 +34,15 @@ void main() {
           overrides: [
             homeSummaryProvider.overrideWith((ref) async => homeSummary()),
             notificationsOverride,
-            ownProfileOverride,
           ],
         );
 
         expect(find.text('Hi, Ana'), findsOneWidget);
         expect(find.byIcon(Icons.menu), findsOneWidget);
         expect(find.byIcon(Icons.notifications_outlined), findsOneWidget);
+        // The avatar was removed from the header — profile is reached through
+        // the drawer now.
+        expect(find.text('AM'), findsNothing);
       });
 
       testWidgets('shows the tab name when a title is given in $label', (
@@ -55,7 +52,7 @@ void main() {
           tester,
           screen(title: 'Compete'),
           brightness: brightness,
-          overrides: [notificationsOverride, ownProfileOverride],
+          overrides: [notificationsOverride],
         );
 
         expect(find.text('Compete'), findsOneWidget);
@@ -72,7 +69,6 @@ void main() {
         overrides: [
           homeSummaryProvider.overrideWith((ref) => failing<HomeSummary>()),
           notificationsOverride,
-          ownProfileOverride,
         ],
       );
 
@@ -87,7 +83,6 @@ void main() {
         overrides: [
           homeSummaryProvider.overrideWith((ref) async => homeSummary()),
           notificationsOverride,
-          ownProfileOverride,
         ],
       );
 

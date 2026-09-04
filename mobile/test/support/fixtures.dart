@@ -211,13 +211,19 @@ AssessmentResult assessmentResult({double level = 4.0}) => AssessmentResult(
 UserProfile userProfile({
   String id = 'u1',
   OnboardingStep step = OnboardingStep.complete,
+  String? firstName = 'Ana',
+  String? lastName = 'Diaz',
+  String? phone,
+  bool phoneOnWhatsApp = false,
 }) => UserProfile(
   id: id,
   email: 'ana@test.com',
-  firstName: 'Ana',
-  lastName: 'Diaz',
+  firstName: firstName,
+  lastName: lastName,
   photoUrl: null,
   bio: 'Plays weekday evenings.',
+  phone: phone,
+  phoneOnWhatsApp: phoneOnWhatsApp,
   onboardingStep: step,
 );
 
