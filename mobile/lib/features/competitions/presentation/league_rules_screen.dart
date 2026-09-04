@@ -73,7 +73,10 @@ class _RulesBody extends StatelessWidget {
         children: [
           Text(
             'No rules have been published for this league yet.',
-            style: type.body.copyWith(height: 1.65, color: colors.textSecondary),
+            style: type.body.copyWith(
+              height: 1.65,
+              color: colors.textSecondary,
+            ),
           ),
         ],
       );
@@ -94,10 +97,7 @@ class _RulesBody extends StatelessWidget {
           ),
         for (final (label, value) in policies) ...[
           const SizedBox(height: 20),
-          Text(
-            label,
-            style: type.title.copyWith(fontWeight: FontWeight.w700),
-          ),
+          Text(label, style: type.title.copyWith(fontWeight: FontWeight.w700)),
           const SizedBox(height: 6),
           Text(value!, style: type.body.copyWith(height: 1.6)),
         ],

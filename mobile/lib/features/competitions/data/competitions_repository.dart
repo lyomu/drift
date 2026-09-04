@@ -205,8 +205,7 @@ class MySeasonSummary {
 
   factory MySeasonSummary.fromJson(Map<String, dynamic> json) {
     final leagueId = json['leagueId'] as String;
-    final name =
-        (json['leagueName'] ?? json['name']) as String;
+    final name = (json['leagueName'] ?? json['name']) as String;
     return MySeasonSummary(
       seasonId: leagueId,
       leagueId: leagueId,
