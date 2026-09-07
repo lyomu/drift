@@ -18,6 +18,7 @@ export function toPlanDto(plan: PaymentPlan) {
     interval: plan.interval,
     entitlements: plan.entitlements,
     isTest: plan.isTest,
+    groupCode: plan.groupCode,
   };
 }
 

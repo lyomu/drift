@@ -96,8 +96,14 @@ export interface HostedPaymentProvider {
    *
    * Whether mandates already authorised against it reprice is the provider's
    * behaviour, not ours — callers should record that rather than assert it.
+   *
+   * @returns the plan id to bill against going forward. For a provider that
+   * edits a plan in place (IntaSend) this is always `providerPlanId` back
+   * unchanged. For one where a price is effectively immutable once created
+   * (Paddle), repricing mints a new plan/price and archives the old one, so
+   * the id can change — the caller persists whatever comes back.
    */
-  updatePlan(providerPlanId: string, input: HostedPlanInput): Promise<void>;
+  updatePlan(providerPlanId: string, input: HostedPlanInput): Promise<string>;
   /** Move money back. Distinct from marking a row refunded in our own ledger. */
   refund(input: HostedRefundInput): Promise<{ reference: string }>;
   /** @returns the provider's customer id, to be stored on our `BillingAccount`. */

@@ -106,7 +106,8 @@ export class CommercialAdminService {
         audience: plan.audience,
         priceMinor: plan.priceMinor,
         currency: plan.currency,
-        providerCall: plan.priceMinor > 0 && this.providerPlans.hosted,
+        providerCall:
+          plan.priceMinor > 0 && this.providerPlans.isBillable(plan.currency),
         providerPlanId,
         providerError,
       },
@@ -322,6 +323,7 @@ export class CommercialAdminService {
     // carrying one can still only be marked refunded in our own ledger, which
     // is what the audit entry then records.
     const refunded = await this.providerPlans.refund({
+      providerName: existing.provider,
       providerInvoiceId: existing.providerInvoiceId,
       amountMinor: existing.amountMinor,
       reason: dto.reason.trim(),
@@ -581,6 +583,7 @@ export class CommercialAdminService {
       isActive: dto.isActive,
       isTest: dto.isTest ?? false,
       sortOrder: dto.sortOrder ?? 0,
+      groupCode: dto.groupCode?.trim() || null,
     };
   }
 

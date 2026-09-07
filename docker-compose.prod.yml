@@ -122,6 +122,21 @@ services:
     mem_limit: 512m
     cpus: "0.35"
 
+  website:
+    build:
+      context: ./website
+    container_name: drift-website
+    image: ghcr.io/${DRIFT_IMAGE_OWNER:-lyomu}/drift-website:${DRIFT_IMAGE_TAG:-local}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3012
+      HOSTNAME: 0.0.0.0
+    ports:
+      - "127.0.0.1:3012:3012"
+    mem_limit: 512m
+    cpus: "0.35"
+
 volumes:
   postgres_data:
   redis_data:

@@ -492,7 +492,10 @@ export class OrganizationAdminService {
     if (dto.status === BillingSubscriptionStatus.CANCELLED) {
       // Deliberately not swallowed: a cancellation the provider did not accept
       // must not be recorded as one.
-      providerCancelled = await this.providerPlans.cancel(existingReference);
+      providerCancelled = await this.providerPlans.cancel({
+        providerName: club.billingAccount?.subscription?.provider ?? null,
+        providerReference: existingReference,
+      });
     }
 
     const subscription = await this.prisma.billingSubscription.upsert({

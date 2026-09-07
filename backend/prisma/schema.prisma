@@ -2395,6 +2395,11 @@ model PaymentPlan {
   isActive     Boolean         @default(true)
   isTest       Boolean         @default(false)
   sortOrder    Int             @default(0)
+  // Groups currency variants of the same tier for display — e.g. CLUB_PRO_USD
+  // and CLUB_PRO_KES both carry groupCode "CLUB_PRO" so the console can offer
+  // one card with a currency choice instead of two separate plans. Cosmetic
+  // only: billing logic keys off the plan row a club actually picked.
+  groupCode    String?
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
 
@@ -2438,6 +2443,11 @@ model BillingSubscription {
   currentPeriodStart DateTime
   currentPeriodEnd   DateTime
   providerReference  String?
+  // Which hosted provider issued providerReference — INTASEND or PADDLE.
+  // Needed once more than one hosted provider can be active at a time:
+  // cancelling a mandate has to call the provider that actually holds it,
+  // not whichever one the plan's current currency happens to route to.
+  provider           String?
   createdAt          DateTime                  @default(now())
   updatedAt          DateTime                  @updatedAt
 

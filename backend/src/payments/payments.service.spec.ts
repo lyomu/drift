@@ -3,6 +3,8 @@ import { ClubMembershipStatus, ClubRole } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
 import { PaymentsService } from './payments.service';
 import { PrismaService } from '../prisma/prisma.service';
+import type { PaymentProviderResolver } from './payment-provider.resolver';
+import type { ProviderPlanService } from './provider-plan.service';
 import type { PaymentProvider } from './payment-provider';
 
 /**
@@ -48,17 +50,33 @@ function createMockPrisma(): MockPrisma {
   };
 }
 
-const provider: PaymentProvider = {
+const directProvider: PaymentProvider = {
   mode: 'direct',
   name: 'SANDBOX',
   createPaymentMethod: jest.fn(),
   charge: jest.fn(),
 };
 
+// A resolver stub that always hands back the sandbox/direct provider — none
+// of these specs exercise currency-specific routing, only access control that
+// throws before any provider call would happen.
+const providers = {
+  resolve: jest.fn().mockReturnValue(directProvider),
+  require: jest.fn().mockReturnValue(directProvider),
+  isHosted: jest.fn().mockReturnValue(false),
+  byName: jest.fn().mockReturnValue(null),
+  liveConfigured: false,
+  directFallback: jest.fn().mockReturnValue(directProvider),
+} as unknown as PaymentProviderResolver;
+
 // Only CLUB_ADMIN_URL is read, and only on the hosted checkout path
 // these specs do not exercise; a stub keeps the constructor honest
 // without pulling in the whole config module.
 const config = { get: jest.fn().mockReturnValue(undefined) };
+
+// Never called: every spec here throws on access control before reaching
+// anything that would reach ProviderPlanService.
+const providerPlans = {} as ProviderPlanService;
 
 describe('PaymentsService', () => {
   let prisma: MockPrisma;
@@ -68,8 +86,9 @@ describe('PaymentsService', () => {
     prisma = createMockPrisma();
     service = new PaymentsService(
       prisma as unknown as PrismaService,
-      provider,
+      providers,
       config as unknown as ConfigService,
+      providerPlans,
     );
   });
 

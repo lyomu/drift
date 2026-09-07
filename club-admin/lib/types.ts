@@ -323,6 +323,10 @@ export type BillingPlan = {
   interval: "MONTHLY" | "YEARLY";
   entitlements: string[];
   isTest: boolean;
+  /** Groups currency variants of the same tier — e.g. "CLUB_PRO_USD" and
+   * "CLUB_PRO_KES" both carry groupCode "CLUB_PRO" so the console can offer
+   * one card with a currency choice instead of two separate plans. */
+  groupCode: string | null;
 };
 
 export type BillingPaymentMethod = {

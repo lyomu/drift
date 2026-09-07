@@ -1,0 +1,228 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens — mirror foundation/05-design-system.md and
+ * mobile/lib/core/theme/drift_colors.dart's DriftColors.light exactly, the
+ * same vocabulary the admin consoles carry (see club-admin globals.css).
+ * The public site is committed light: it is read on phones, outdoors, by
+ * people deciding whether to download.
+ */
+@theme inline {
+  --color-primary: #1c91d0;
+  --color-primary-dark: #126a9b;
+  --color-primary-light: #e8f5fc;
+  --color-background: #f7fafc;
+  --color-surface: #ffffff;
+  --color-text-primary: #111827;
+  --color-text-secondary: #6b7280;
+  --color-border: #e5e7eb;
+  --color-success: #16a34a;
+  --color-success-surface: #eafbf1;
+  --color-warning: #f59e0b;
+  --color-warning-surface: #fef6e7;
+  --color-error: #dc2626;
+  --color-error-surface: #fdecec;
+  --color-neutral-surface: #f1f3f5;
+
+  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/*
+ * Anchored sections need clearance below the sticky header. On phones the
+ * header carries the scrollable rounds rail (taller); from lg it is one row.
+ */
+:where([id]) {
+  scroll-margin-top: 8.5rem;
+}
+
+@media (min-width: 64rem) {
+  :where([id]) {
+    scroll-margin-top: 5.5rem;
+  }
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-text-primary);
+  /* Drift's scale pins zero tracking everywhere (drift_typography.dart). */
+  letter-spacing: 0;
+}
+
+::selection {
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* DriftSoftCard: white, 16px radius, one soft shadow, no border. */
+.drift-card {
+  background: var(--color-surface);
+  border-radius: 16px;
+  box-shadow:
+    0 1px 2px rgb(17 24 39 / 0.04),
+    0 8px 24px rgb(17 24 39 / 0.06);
+}
+
+.drift-card-interactive {
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.drift-card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 2px 4px rgb(17 24 39 / 0.05),
+    0 12px 32px rgb(17 24 39 / 0.1);
+}
+
+/* Fixture and standings numerals: the app's `statistics` style pins
+   tabular figures so scorelines align. */
+.tabular {
+  font-feature-settings: "tnum";
+  font-variant-numeric: tabular-nums;
+}
+
+/* Round rail chip: DriftFilterChip grammar — pill, tinted, quiet until
+   the hovered/active state. */
+.rail-chip {
+  border-radius: 999px;
+  padding: 0.375rem 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  transition:
+    color 120ms ease,
+    background-color 120ms ease,
+    border-color 120ms ease;
+}
+
+.rail-chip:hover {
+  color: var(--color-primary-dark);
+  background: var(--color-primary-light);
+  border-color: transparent;
+}
+
+/* The primary CTA: brand fill, 12px radius (DriftPrimaryButton). The fill
+   uses primary-dark rather than #1c91d0 — white on #1c91d0 is ~3.5:1, which
+   fails AA for 15px text; #126a9b gives ~5.9:1 and still reads as the
+   brand blue. */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 12px;
+  background: var(--color-primary-dark);
+  color: #ffffff;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  padding: 0.8125rem 1.5rem;
+  transition: background-color 120ms ease, transform 120ms ease;
+}
+
+.btn-primary:hover {
+  background: #0e5380;
+}
+
+.btn-primary:active {
+  transform: translateY(1px);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 12px;
+  background: var(--color-surface);
+  color: var(--color-primary-dark);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  padding: 0.8125rem 1.5rem;
+  border: 1px solid var(--color-border);
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+
+.btn-secondary:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+/* Status badges: tinted surface + coloured text (StatusBadge grammar).
+   Text tones sit one step darker than the app's status colours so every
+   badge clears AA at its 12px size on the tinted surface. */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 999px;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badge-success {
+  background: var(--color-success-surface);
+  color: #15803d;
+}
+
+.badge-warning {
+  background: var(--color-warning-surface);
+  color: #b45309;
+}
+
+.badge-primary {
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+}
+
+.badge-neutral {
+  background: var(--color-neutral-surface);
+  color: #4b5563;
+}
+
+/* Focus rings disappear against the brand fields — the two sections that
+   sit on primary fills opt in to white outlines. */
+[data-on-primary] :focus-visible {
+  outline-color: #ffffff;
+}
+
+/* The court-line motif: a single hairline baseline that runs behind each
+   round heading, echoing a baseline's service mark without becoming
+   illustration. */
+.court-rule {
+  position: relative;
+}
+
+.court-rule::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -0.75rem;
+  height: 1px;
+  background: var(--color-border);
+}
+
+.court-rule::before {
+  content: "";
+  position: absolute;
+  bottom: calc(-0.75rem - 3px);
+  left: 0;
+  width: 4rem;
+  height: 7px;
+  background: var(--color-primary);
+  border-radius: 999px;
+}

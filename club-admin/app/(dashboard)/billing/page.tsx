@@ -30,7 +30,33 @@ import type {
 } from "@/lib/types";
 
 function money(amountMinor: number, currency: string) {
-  return amountMinor === 0 ? "Free" : `${currency} ${(amountMinor / 100).toFixed(2)}`;
+  if (amountMinor === 0) return "Free";
+  const amount = amountMinor / 100;
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency,
+      minimumFractionDigits: Number.isInteger(amount) ? 0 : 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  } catch {
+    // Intl.NumberFormat throws on a currency code it doesn't recognise — XTS,
+    // the ISO 4217 test currency used by the sandbox plans — so fall back to
+    // the raw code rather than crash the billing page.
+    return `${currency} ${amount.toFixed(2)}`;
+  }
+}
+
+/** Groups currency variants of the same tier (same groupCode) so the console
+ * can offer one card with a currency choice instead of two separate plans.
+ * A plan with no groupCode is its own singleton group. */
+function groupPlans(plans: BillingPlan[]): { key: string; variants: BillingPlan[] }[] {
+  const groups = new Map<string, BillingPlan[]>();
+  for (const plan of plans) {
+    const key = plan.groupCode ?? plan.id;
+    groups.set(key, [...(groups.get(key) ?? []), plan]);
+  }
+  return Array.from(groups.entries()).map(([key, variants]) => ({ key, variants }));
 }
 
 function date(value: string) {
@@ -60,6 +86,27 @@ export default function BillingPage() {
   const [promoCode, setPromoCode] = useState("");
   const [selectedInvoice, setSelectedInvoice] = useState<BillingInvoice | null>(null);
   const [loadingInvoiceId, setLoadingInvoiceId] = useState<string | null>(null);
+  // Which currency variant is showing for each grouped tier. Empty until the
+  // owner taps a toggle — until then a group defaults to whichever currency
+  // the club is actually subscribed in (so "Current plan" reads correctly),
+  // or USD otherwise, since the platform is global-first.
+  const [currencyChoice, setCurrencyChoice] = useState<Record<string, string>>({});
+
+  function selectedVariant(
+    group: { key: string; variants: BillingPlan[] },
+    activePlanId: string,
+  ): BillingPlan {
+    const chosen = currencyChoice[group.key];
+    const chosenMatch = group.variants.find((variant) => variant.currency === chosen);
+    if (chosenMatch) return chosenMatch;
+
+    const active = group.variants.find((variant) => variant.id === activePlanId);
+    if (active) return active;
+
+    return (
+      group.variants.find((variant) => variant.currency === "USD") ?? group.variants[0]
+    );
+  }
 
   useEffect(() => {
     if (!clubId || !isOwner) return;
@@ -223,7 +270,7 @@ export default function BillingPage() {
               <div className="flex items-start gap-3 text-sm text-drift-text-primary">
                 <IconChip icon="science" tone="warning" />
                 <p className="leading-6">
-                  Sandbox billing uses XTS test currency and provider tokens. No real payment will be taken.
+                  This is a test plan — no real payment method or provider token is involved.
                 </p>
               </div>
             </Panel>
@@ -254,10 +301,11 @@ export default function BillingPage() {
           <section>
             <SectionTitle title="Available plans" />
             <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
-              {billing.plans.map((plan) => {
+              {groupPlans(billing.plans).map((group) => {
+                const plan = selectedVariant(group, billing.subscription.plan.id);
                 const current = plan.id === billing.subscription.plan.id;
                 return (
-                  <Panel key={plan.id} className="flex flex-col">
+                  <Panel key={group.key} className="flex flex-col">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <h3 className="text-lg font-extrabold text-drift-text-primary">{plan.name}</h3>
@@ -268,6 +316,29 @@ export default function BillingPage() {
                       </div>
                       {current && <StatusBadge status="ACTIVE" />}
                     </div>
+                    {group.variants.length > 1 && (
+                      <div className="mt-3 flex w-fit gap-1 rounded-md bg-drift-neutral-surface p-1">
+                        {group.variants.map((variant) => (
+                          <button
+                            key={variant.currency}
+                            type="button"
+                            onClick={() =>
+                              setCurrencyChoice((prev) => ({
+                                ...prev,
+                                [group.key]: variant.currency,
+                              }))
+                            }
+                            className={`rounded px-2.5 py-1 text-xs font-bold transition-colors ${
+                              plan.currency === variant.currency
+                                ? "bg-drift-primary text-white"
+                                : "text-drift-text-secondary hover:text-drift-text-primary"
+                            }`}
+                          >
+                            {variant.currency}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                     {plan.description && (
                       <p className="mt-3 text-sm leading-6 text-drift-text-secondary">{plan.description}</p>
                     )}
