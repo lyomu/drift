@@ -1,57 +1,66 @@
 /**
- * The Final: the download CTA. Sits on the deepest brand field — the page's
- * close, and the anchor of the season metaphor.
+ * The Final: the page's close and its one real conversion action.
  *
- * Store links do not exist yet (Play submission in progress, iOS follows),
- * so the store buttons state that honestly rather than pointing at a dead
- * link; the one live action is the notify-by-email link. This section is on
- * the replacement list: swap the notes for real badges at launch.
+ * This section used to render two non-functional store buttons — a `<span>`
+ * reading "Get it on Google Play — soon" and another for iOS — because the
+ * listings do not exist yet (Play submission in progress). Honest, but it
+ * left the page with nothing to actually do. The waitlist replaces them: the
+ * store note stays as context, the CTA is now live.
+ *
+ * Still no counts, no countdown, no "spots remaining" — DESIGN.md rule 4.
  */
+import Image from "next/image";
+import Link from "next/link";
+
+import { images } from "@/lib/images";
 
 export function TheFinal() {
+  const photo = images.final;
+
   return (
     <section
       id="get-the-app"
       data-on-primary
-      className="bg-[var(--color-primary-dark)] py-16 text-white lg:py-24"
+      className="scrim-band reveal relative isolate overflow-hidden text-white"
       aria-labelledby="final-heading"
     >
-      <div className="mx-auto max-w-6xl px-4 text-center sm:px-6">
-        <p className="badge !bg-white/10 text-white">The final</p>
-        <h2 id="final-heading" className="mt-4 text-3xl font-bold lg:text-5xl">
+      <Image
+        src={photo.src}
+        alt={photo.alt}
+        fill
+        sizes="100vw"
+        className="-z-10 object-cover"
+        style={{ objectPosition: photo.focal }}
+      />
+
+      {/* `relative z-10` is load-bearing: `.scrim-band` is an absolutely-
+          positioned ::after and the last child, so it wins on DOM order
+          against z-index:auto. Without it the heading sits under the wash. */}
+      <div className="relative z-10 mx-auto max-w-6xl px-4 py-20 text-center sm:px-6 lg:py-28">
+        <p className="badge bg-white/15 text-white backdrop-blur-sm">
+          The final
+        </p>
+        <h2 id="final-heading" className="display-lg mt-4">
           Your season starts with one match
         </h2>
-        <p className="mx-auto mt-4 max-w-xl leading-relaxed text-white">
-          Sign up, take the assessment, and Drift does the rest — opponents at
+        <p className="mx-auto mt-4 max-w-xl text-lg leading-relaxed text-white/90">
+          Sign up, take the assessment, and Drift does the rest: opponents at
           your level, the fixture on your calendar, and a rating that moves
           only when results are confirmed.
         </p>
 
         <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-          <span
-            className="btn-primary !bg-white !text-[var(--color-primary-dark)] cursor-default"
-            aria-disabled="true"
-            title="Google Play listing in progress"
+          <Link
+            href="/waitlist"
+            className="btn-primary !bg-white !text-[var(--color-primary-dark)] hover:!bg-[var(--color-primary-light)]"
           >
-            Get it on Google Play — soon
-          </span>
-          <span
-            className="btn-secondary !border-white/40 !bg-transparent !text-white cursor-default"
-            aria-disabled="true"
-            title="iOS follows Android"
-          >
-            App Store — later
-          </span>
+            Join the waitlist
+          </Link>
         </div>
+
         <p className="mt-6 text-sm text-white/90">
-          Android first, iOS follows. 18+ at launch. Want to know the moment
-          it&apos;s live?{" "}
-          <a
-            href="mailto:drift@einsbrand.com?subject=Notify%20me%20at%20launch"
-            className="font-semibold text-white underline decoration-white/50 underline-offset-4 hover:decoration-white"
-          >
-            Email us and we&apos;ll tell you.
-          </a>
+          Free to join while we get going. Android first, iOS follows. The app
+          stores are not live yet, so the waitlist is how you hear about it first.
         </p>
       </div>
     </section>

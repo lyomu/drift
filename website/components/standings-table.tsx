@@ -29,22 +29,19 @@ export function StandingsTable() {
     <section
       id="standings"
       data-on-primary
-      className="bg-[var(--color-primary-dark)] py-16 text-white lg:py-20"
+      className="reveal bg-[var(--color-primary-dark)] py-16 text-white lg:py-20"
       aria-labelledby="standings-heading"
     >
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="grid gap-10 min-w-0 lg:grid-cols-[1fr_1.4fr] lg:items-center lg:gap-16">
           <div className="min-w-0">
             <p className="badge !bg-white/10 text-white">Full time</p>
-            <h2
-              id="standings-heading"
-              className="mt-4 text-3xl font-bold lg:text-4xl"
-            >
+            <h2 id="standings-heading" className="display-lg mt-4">
               {standings.title}
             </h2>
             <p className="mt-4 max-w-md leading-relaxed text-white/90">
-              Five rounds in, this is what a season builds: every result feeds
-              a rating on the same 1.0–7.0 scale as your profile — one
+              Six rounds in, this is what a season builds: every result feeds
+              a rating on the same 1.0–7.0 scale as your profile, one
               comparable unit for your level, everywhere in the app. Fixtures,
               waitlists and dispute handling included; the WhatsApp-score
               spreadsheet retired.
@@ -97,7 +94,7 @@ export function StandingsTable() {
                 </table>
               </div>
             </div>
-            <p className="mt-3 text-right text-xs text-white/75">
+            <p className="mt-3 text-right text-xs text-white/90">
               {standings.note}
             </p>
           </div>

@@ -1,3 +1,9 @@
+/**
+ * Footer links are absolute (`/#clubs`, not `#clubs`) so they still resolve
+ * from the waitlist route, where those sections do not exist.
+ */
+import Link from "next/link";
+
 import { footer } from "@/lib/content";
 
 export function SiteFooter() {
@@ -14,14 +20,43 @@ export function SiteFooter() {
         <nav aria-label="Footer">
           <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-[var(--color-text-secondary)]">
             <li>
-              <a className="hover:text-[var(--color-primary-dark)]" href="#round-1">
+              <Link
+                className="hover:text-[var(--color-primary-dark)]"
+                href="/#discover"
+              >
                 The loop
-              </a>
+              </Link>
             </li>
             <li>
-              <a className="hover:text-[var(--color-primary-dark)]" href="#clubs">
+              <Link
+                className="hover:text-[var(--color-primary-dark)]"
+                href="/#clubs"
+              >
                 For clubs
-              </a>
+              </Link>
+            </li>
+            <li>
+              <Link
+                className="font-semibold text-[var(--color-primary-dark)]"
+                href="/waitlist"
+              >
+                Join the waitlist
+              </Link>
+            </li>
+            <li>
+              <Link className="hover:text-[var(--color-primary-dark)]" href="/terms">
+                Terms
+              </Link>
+            </li>
+            <li>
+              <Link className="hover:text-[var(--color-primary-dark)]" href="/privacy-policy">
+                Privacy
+              </Link>
+            </li>
+            <li>
+              <Link className="hover:text-[var(--color-primary-dark)]" href="/data-privacy">
+                Data privacy
+              </Link>
             </li>
             <li>
               <a

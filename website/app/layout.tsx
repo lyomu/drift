@@ -15,9 +15,9 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Drift Tennis — Find your match. Play your season.",
+  title: "Drift Tennis · Find your match. Play your season.",
   description:
-    "Drift Tennis turns “I should play more tennis” into an actual match, an actual improvement plan, and an actual community — opponents at your level, verified results, real leagues, and a rating you can trust. Tennis first; padel when you're ready.",
+    "Drift Tennis turns “I should play more tennis” into an actual match, an actual improvement plan, and an actual community: opponents at your level, verified results, real leagues, and a rating you can trust. Tennis leads and padel runs on the same rails. Free to join while we get going.",
   keywords: [
     "tennis",
     "padel",

@@ -4,10 +4,7 @@ import * as nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
 
 export type MailPurpose =
-  | 'signup'
-  | 'password-reset'
-  | 'platform-2fa'
-  | 'platform-password-reset';
+  'signup' | 'password-reset' | 'platform-2fa' | 'platform-password-reset';
 
 const CODE_SUBJECTS: Record<MailPurpose, string> = {
   signup: 'Your Drift Tennis verification code',
@@ -18,8 +15,7 @@ const CODE_SUBJECTS: Record<MailPurpose, string> = {
 
 const CODE_LEAD: Record<MailPurpose, string> = {
   signup: 'Welcome to Drift Tennis. Your email verification code is:',
-  'password-reset':
-    'Use the code below to reset your Drift Tennis password:',
+  'password-reset': 'Use the code below to reset your Drift Tennis password:',
   'platform-2fa': 'Your Drift Tennis staff sign-in code is:',
   'platform-password-reset':
     'Use the code below to reset your Drift Tennis staff password:',
@@ -156,6 +152,41 @@ export class MailerService {
         'Open the Drift Tennis app to see your club.',
         '',
         '— Drift Tennis',
+      ].join('\n'),
+    );
+  }
+
+  /**
+   * Waitlist confirmation for the public site. Not a `MailPurpose` — that
+   * union is for verification-code mails, and this carries no code.
+   *
+   * The promise here has to match the public privacy copy: launch news first,
+   * followed only by occasional internal Drift Tennis updates or offers.
+   */
+  async sendWaitlistConfirmation(
+    to: string,
+    firstName?: string,
+  ): Promise<boolean> {
+    const greeting = firstName?.trim()
+      ? `You're on the list for Drift Tennis, ${firstName.trim()}.`
+      : "You're on the list for Drift Tennis.";
+
+    return this.send(
+      to,
+      "You're on the Drift Tennis waitlist",
+      [
+        greeting,
+        '',
+        'We will send launch news and occasional Drift Tennis product updates',
+        'or offers. To stop non-essential emails, contact drift@einsbrand.com',
+        'with "Unsubscribe" in the subject line.',
+        'It is free to join and free to play while we get going.',
+        'Android first, iOS follows.',
+        '',
+        'If you did not sign up, ignore this email and contact us if you would',
+        'like the address removed.',
+        '',
+        'Drift Tennis',
       ].join('\n'),
     );
   }

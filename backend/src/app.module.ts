@@ -34,6 +34,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { PaymentsModule } from './payments/payments.module';
 import { AchievementsModule } from './achievements/achievements.module';
 import { GlobalSearchModule } from './global-search/global-search.module';
+import { WaitlistModule } from './waitlist/waitlist.module';
 import { validateEnvironment } from './config/environment';
 
 @Module({
@@ -88,6 +89,7 @@ import { validateEnvironment } from './config/environment';
     PaymentsModule,
     AchievementsModule,
     GlobalSearchModule,
+    WaitlistModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

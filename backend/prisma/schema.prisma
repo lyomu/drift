@@ -3034,3 +3034,52 @@ model ProviderPlan {
   @@index([provider, providerPlanId])
   @@map("provider_plans")
 }
+
+/// Who a waitlist signup says they are. Routing only — a CLUB signup gets a
+/// different follow-up, it grants nothing.
+enum WaitlistAudience {
+  PLAYER
+  CLUB
+}
+
+/// Launch waitlist collected by the public website (`website/app/waitlist`).
+///
+/// Deliberately NOT related to `User`: these people have no account, and most
+/// never will have one under this address. It is a marketing list with a
+/// launch news and occasional internal Drift Tennis product updates or offers.
+/// It stays structurally separate from identity so it can be exported and
+/// deleted without touching the product's own data.
+model WaitlistSignup {
+  id String @id @default(uuid())
+
+  /// Lower-cased and trimmed by the service before it reaches here, so the
+  /// unique index actually means "one person, one row". Postgres unique
+  /// indexes are case-sensitive; normalising at write time is what stops
+  /// `A@b.com` and `a@b.com` both landing.
+  email String @unique
+
+  /// Asked for so launch email can address someone by name. First name only:
+  /// a marketing list has no reason to hold a full legal name.
+  firstName String?
+
+  audience WaitlistAudience @default(PLAYER)
+
+  /// Optional launch-market context. Country comes from a closed dropdown;
+  /// city remains free text because it is never a verified location.
+  country String?
+  /// `level` holds a band from the app's real
+  /// 1.0–7.0 scale (e.g. "2.5-3.5"), never a computed rating — nobody has
+  /// taken the assessment at this point.
+  city  String?
+  level String?
+
+  /// Where the signup came from, so a later campaign can be told apart from
+  /// the launch page without guessing by date.
+  source String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdAt])
+  @@map("waitlist_signups")
+}
