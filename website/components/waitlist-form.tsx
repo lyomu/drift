@@ -188,8 +188,8 @@ export function WaitlistForm() {
         </div>
       </fieldset>
 
-      <div className="mt-5 grid gap-5 md:grid-cols-3">
-        <div>
+      <div className="mt-5 grid gap-5 md:grid-cols-2">
+        <div className="md:col-span-2">
           <label className="field-label" htmlFor={countryId}>
             Country <span className="font-normal">(optional)</span>
           </label>

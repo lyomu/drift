@@ -1,3 +1,5 @@
+import { countryOptions } from "@/lib/countries";
+
 /**
  * All landing-page copy in one place.
  *
@@ -246,23 +248,7 @@ export const waitlist = {
     { value: "PLAYER", label: "A player", hint: "I want to play more tennis or padel" },
     { value: "CLUB", label: "A club or coach", hint: "I run competitions or teach" },
   ],
-  /** Launch markets lead the list, with a clear catch-all for everyone else. */
-  countries: [
-    { value: "", label: "Select country" },
-    { value: "Kenya", label: "Kenya" },
-    { value: "Uganda", label: "Uganda" },
-    { value: "Tanzania", label: "Tanzania" },
-    { value: "Rwanda", label: "Rwanda" },
-    { value: "Ethiopia", label: "Ethiopia" },
-    { value: "Nigeria", label: "Nigeria" },
-    { value: "Ghana", label: "Ghana" },
-    { value: "South Africa", label: "South Africa" },
-    { value: "Zambia", label: "Zambia" },
-    { value: "Zimbabwe", label: "Zimbabwe" },
-    { value: "United Kingdom", label: "United Kingdom" },
-    { value: "United States", label: "United States" },
-    { value: "Other", label: "Other" },
-  ],
+  countries: countryOptions,
   /** Mirrors the app's real 1.0–7.0 assessment scale — no invented tiers. */
   levels: [
     { value: "", label: "Prefer not to say" },
