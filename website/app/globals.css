@@ -137,6 +137,52 @@ body {
   }
 }
 
+.nav-disclosure {
+  position: relative;
+}
+
+.nav-disclosure > summary {
+  list-style: none;
+}
+
+.nav-disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+
+.nav-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.75rem);
+  z-index: 50;
+  display: grid;
+  min-width: 13.75rem;
+  gap: 0.25rem;
+  border-radius: 16px;
+  background: var(--color-surface);
+  padding: 0.5rem;
+  box-shadow:
+    0 1px 2px rgb(17 24 39 / 0.04),
+    0 12px 32px rgb(17 24 39 / 0.12);
+}
+
+.nav-menu a {
+  border-radius: 12px;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.nav-menu a:hover,
+.nav-menu a:focus-visible {
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+}
+
+.nav-disclosure:not([open]) .nav-menu {
+  display: none;
+}
+
 /* The primary CTA: brand fill, 12px radius (DriftPrimaryButton). The fill
    uses primary-dark rather than #1c91d0 — white on #1c91d0 is ~3.5:1, which
    fails AA for 15px text; #126a9b gives ~5.9:1 and still reads as the

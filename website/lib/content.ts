@@ -281,3 +281,9 @@ export const waitlist = {
 export const footer = {
   supportEmail: "drift@einsbrand.com",
 };
+
+export const legalLinks = [
+  { href: "/terms", label: "Terms and Conditions", shortLabel: "Terms" },
+  { href: "/privacy-policy", label: "Privacy Policy", shortLabel: "Privacy" },
+  { href: "/data-privacy", label: "Data Privacy Notice", shortLabel: "Data Privacy" },
+] as const;

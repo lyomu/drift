@@ -11,7 +11,7 @@
  */
 import Link from "next/link";
 
-import { chapters } from "@/lib/content";
+import { chapters, legalLinks } from "@/lib/content";
 
 export function SiteHeader({ minimal = false }: { minimal?: boolean }) {
   if (minimal) {
@@ -68,6 +68,18 @@ export function SiteHeader({ minimal = false }: { minimal?: boolean }) {
                 For clubs
               </a>
             </li>
+            <li>
+              <details className="nav-disclosure">
+                <summary className="nav-link cursor-pointer">Legal</summary>
+                <div className="nav-menu">
+                  {legalLinks.map((link) => (
+                    <Link key={link.href} href={link.href}>
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
+              </details>
+            </li>
           </ul>
         </nav>
 
@@ -103,6 +115,13 @@ export function SiteHeader({ minimal = false }: { minimal?: boolean }) {
               For clubs
             </a>
           </li>
+          {legalLinks.map((link) => (
+            <li key={link.href} className="shrink-0">
+              <Link className="nav-link" href={link.href}>
+                {link.shortLabel}
+              </Link>
+            </li>
+          ))}
         </ul>
       </nav>
     </header>

@@ -4,7 +4,7 @@
  */
 import Link from "next/link";
 
-import { footer } from "@/lib/content";
+import { footer, legalLinks } from "@/lib/content";
 
 export function SiteFooter() {
   return (
@@ -43,21 +43,16 @@ export function SiteFooter() {
                 Join the waitlist
               </Link>
             </li>
-            <li>
-              <Link className="hover:text-[var(--color-primary-dark)]" href="/terms">
-                Terms
-              </Link>
-            </li>
-            <li>
-              <Link className="hover:text-[var(--color-primary-dark)]" href="/privacy-policy">
-                Privacy
-              </Link>
-            </li>
-            <li>
-              <Link className="hover:text-[var(--color-primary-dark)]" href="/data-privacy">
-                Data privacy
-              </Link>
-            </li>
+            {legalLinks.map((link) => (
+              <li key={link.href}>
+                <Link
+                  className="hover:text-[var(--color-primary-dark)]"
+                  href={link.href}
+                >
+                  {link.label}
+                </Link>
+              </li>
+            ))}
             <li>
               <a
                 className="hover:text-[var(--color-primary-dark)]"
