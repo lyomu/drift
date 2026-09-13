@@ -36,15 +36,15 @@ export default function WaitlistPage() {
         <div className="lg:grid lg:min-h-[calc(100vh-4rem)] lg:grid-cols-[minmax(0,1fr)_minmax(0,38%)]">
           <div className="mx-auto w-full max-w-3xl px-4 py-14 sm:px-6 lg:max-w-none lg:px-10 lg:py-20 xl:px-16">
             <div className="mx-auto max-w-3xl">
-              <p className="badge badge-primary">{waitlist.eyebrow}</p>
-              <h1 className="court-rule display-lg mt-4 pb-1">
+              <p className="badge badge-primary enter enter-1">{waitlist.eyebrow}</p>
+              <h1 className="court-rule display-lg enter enter-2 mt-4 pb-1">
                 {waitlist.title}
               </h1>
-              <p className="mt-8 max-w-2xl text-lg leading-relaxed text-[var(--color-text-secondary)]">
+              <p className="enter enter-3 mt-8 max-w-2xl text-lg leading-relaxed text-[var(--color-text-secondary)]">
                 {waitlist.body}
               </p>
 
-              <div className="mt-8">
+              <div className="enter enter-4 mt-8">
                 <WaitlistForm />
               </div>
             </div>
@@ -63,7 +63,7 @@ export default function WaitlistPage() {
               fill
               priority
               sizes="38vw"
-              className="object-cover"
+              className="hero-photo object-cover"
               style={{ objectPosition: photo.focal }}
             />
           </div>

@@ -41,23 +41,34 @@ export function Hero() {
 
       <div className="mx-auto grid max-w-6xl gap-10 px-4 pb-16 pt-12 sm:px-6 lg:grid-cols-[1.35fr_0.85fr] lg:items-center lg:gap-14 lg:pb-20 lg:pt-16">
         <div>
-          <p className="badge enter enter-1 bg-white/15 text-white backdrop-blur-sm">
-            Tennis first · Padel too
-          </p>
-
-          <h1 className="display-xl enter enter-2 mt-5 max-w-4xl text-white">
-            <span className="block text-white/70 line-through decoration-[#ff8a8a] decoration-2">
-              &ldquo;I should play more tennis.&rdquo;
+          <h1 className="display-xl enter enter-1 max-w-4xl text-white">
+            <span
+              className="block text-white/70 line-through decoration-[#ff8a8a] decoration-2"
+              aria-label="I should play more tennis or padel."
+            >
+              <span aria-hidden="true">
+                &ldquo;I should play more{" "}
+                <span className="hero-sport-cycle">
+                  <span className="hero-sport-word hero-sport-word-tennis">
+                    tennis.
+                  </span>
+                  <span className="hero-sport-word hero-sport-word-padel">
+                    padel.
+                  </span>
+                </span>
+                &rdquo;
+              </span>
             </span>
             <span className="mt-1 block">You have a match on Saturday.</span>
           </h1>
 
           <p className="enter enter-3 mt-5 max-w-2xl text-lg leading-relaxed text-white/90">
-            Drift Tennis finds you opponents at your level, schedules the match,
-            records the result both players confirm, and turns your season into
-            a rating you can trust. Tennis leads, padel runs on the same rails,
-            and both live in one app instead of a booking site, three WhatsApp
-            groups and a spreadsheet ladder.
+            Built for racket sports, Drift Tennis finds you opponents at your
+            level, schedules the match, records the result both players
+            confirm, and turns your season into a rating you can trust.
+            Tennis leads, padel runs on the same rails, and both live in one
+            app instead of a booking site, three WhatsApp groups and a
+            spreadsheet ladder.
           </p>
 
           <div className="enter enter-4 mt-8 flex flex-wrap gap-3">
@@ -82,14 +93,19 @@ export function Hero() {
 
         {/* The product, shown rather than described. Two cards from the two
             ends of the loop: a settled fixture and an incoming challenge. */}
-        <div className="enter enter-5 lg:pl-6">
+        <div className="lg:pl-6">
           <div className="mx-auto w-full max-w-sm space-y-4">
-            <FixtureCard />
-            <div className="px-4 sm:px-8">
+            <div className="enter enter-5">
+              <FixtureCard />
+            </div>
+            <div className="enter enter-6 px-4 sm:px-8">
               <ChallengeCard />
             </div>
           </div>
-          <IllustrativeLabel tone="on-primary" className="mt-4 text-center" />
+          <IllustrativeLabel
+            tone="on-primary"
+            className="enter enter-6 mt-4 text-center"
+          />
         </div>
       </div>
     </section>

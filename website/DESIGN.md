@@ -29,14 +29,21 @@ token block in `club-admin/src/app/globals.css`.
   (~5.9:1 vs ~3.5:1); pill chips at 999px; status badges tinted surface with
   text one step darker than the app's status colours (`#15803d`,
   `#b45309`, `#4b5563`) so 12px badge labels clear AA on the tint.
-- **Motion:** CSS-only, no animation library. Four things move: a staggered
+- **Motion:** CSS-only, no animation library. The vocabulary: a staggered
   entrance in the first viewport (`.enter` + `.enter-1..5`) with a single slow
-  settle on the hero photograph (`.hero-settle`, a one-off scale on load, not
-  parallax); scroll-driven fade-ups on section entry (`.reveal`) and on card
-  grids in sequence (`.reveal-stagger`); the loop strip's rule drawing left to
-  right (`.draw-line`); and hover/press lifts on buttons, cards and the nav
-  underline. Still no parallax, no autoplay carousels, nothing that loops
-  forever. **Every motion block sits inside
+  settle on the hero photograph (`.hero-photo`, a one-off scale on load, not
+  parallax — also reused on the waitlist page's side photograph); a one-off
+  drop-in on the header (`.header-enter`); scroll-driven fade-ups on section
+  entry (`.reveal`) and on headings, grids, table rows and checklist items in
+  sequence (`.reveal-stagger`); the loop strip's rule drawing left to right
+  (`.draw-line`); photographs settling from 1.05× as they enter
+  (`.photo-drift` — one-off, like the hero, but scroll-driven); the
+  skill-profile meters drawing from their left edge (`.meter-fill`); the
+  standings form dots popping in (`.form-dot`); and hover/press lifts on
+  buttons, cards and the nav underline, plus a small tilt on the brand ball
+  (`.brand-link`/`.brand-mark`). Still no parallax, no autoplay carousels,
+  nothing that loops forever (the hero's sport-word cycle predates the rule
+  and is the one sanctioned exception). **Every motion block sits inside
   `prefers-reduced-motion: no-preference`**, and the scroll-driven ones inside
   `@supports (animation-timeline: view())` as well, so motion is purely
   additive: where either check fails the element renders in its final state

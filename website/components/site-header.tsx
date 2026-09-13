@@ -16,11 +16,11 @@ import { chapters, legalLinks } from "@/lib/content";
 export function SiteHeader({ minimal = false }: { minimal?: boolean }) {
   if (minimal) {
     return (
-      <header className="border-b border-[var(--color-border)] bg-[var(--color-surface)]">
+      <header className="header-enter border-b border-[var(--color-border)] bg-[var(--color-surface)]">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
           <Link
             href="/"
-            className="flex shrink-0 items-center gap-2 text-lg font-bold text-[var(--color-text-primary)]"
+            className="brand-link flex shrink-0 items-center gap-2 text-lg font-bold text-[var(--color-text-primary)]"
             aria-label="Drift Tennis, home"
           >
             <BallMark />
@@ -38,11 +38,11 @@ export function SiteHeader({ minimal = false }: { minimal?: boolean }) {
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-[var(--color-border)] bg-[var(--color-surface)]/90 backdrop-blur-sm">
+    <header className="header-enter sticky top-0 z-40 border-b border-[var(--color-border)] bg-[var(--color-surface)]/90 backdrop-blur-sm">
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4 sm:px-6">
         <a
           href="#top"
-          className="flex shrink-0 items-center gap-2 text-lg font-bold text-[var(--color-text-primary)]"
+          className="brand-link flex shrink-0 items-center gap-2 text-lg font-bold text-[var(--color-text-primary)]"
           aria-label="Drift Tennis, home"
         >
           <BallMark />
@@ -137,6 +137,7 @@ export function BallMark({ size = 28 }: { size?: number }) {
       viewBox="0 0 28 28"
       fill="none"
       aria-hidden="true"
+      className="brand-mark"
     >
       <circle cx="14" cy="14" r="13" fill="var(--color-primary)" />
       <path

@@ -29,14 +29,14 @@ export function TheFinal() {
         alt={photo.alt}
         fill
         sizes="100vw"
-        className="-z-10 object-cover"
+        className="-z-10 photo-drift object-cover"
         style={{ objectPosition: photo.focal }}
       />
 
       {/* `relative z-10` is load-bearing: `.scrim-band` is an absolutely-
           positioned ::after and the last child, so it wins on DOM order
           against z-index:auto. Without it the heading sits under the wash. */}
-      <div className="relative z-10 mx-auto max-w-6xl px-4 py-20 text-center sm:px-6 lg:py-28">
+      <div className="reveal-stagger relative z-10 mx-auto max-w-6xl px-4 py-20 text-center sm:px-6 lg:py-28">
         <p className="badge bg-white/15 text-white backdrop-blur-sm">
           The final
         </p>

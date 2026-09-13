@@ -18,7 +18,7 @@ export function LoopStrip() {
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:py-14">
         <h2
           id="loop-heading"
-          className="text-sm font-semibold text-[var(--color-text-secondary)]"
+          className="reveal text-sm font-semibold text-[var(--color-text-secondary)]"
         >
           One loop, five stages, and you re-enter it every week
         </h2>

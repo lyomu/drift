@@ -31,7 +31,7 @@ class _IntroCarouselScreenState extends State<IntroCarouselScreen> {
       // objectPosition: center top
       alignment: Alignment(0, -1),
       title: 'The Game\nNever Stops',
-      titleSize: 52,
+      titleSize: 46,
       body:
           'Match schedules, player stats and tournament updates in real time.',
     ),
@@ -40,7 +40,7 @@ class _IntroCarouselScreenState extends State<IntroCarouselScreen> {
       // objectPosition: center 30%
       alignment: Alignment(0, -0.4),
       title: 'Advance\nYour Game',
-      titleSize: 52,
+      titleSize: 46,
       body:
           'Analyze your progress, set new goals, and improve your skills with '
           'smart coaching tools.',
@@ -50,7 +50,7 @@ class _IntroCarouselScreenState extends State<IntroCarouselScreen> {
       // objectPosition: center 20%
       alignment: Alignment(0, -0.6),
       title: 'Start Your\nTennis Journey',
-      titleSize: 44,
+      titleSize: 39,
       body: 'Join ladders, tournaments and communities. Your court awaits.',
     ),
   ];

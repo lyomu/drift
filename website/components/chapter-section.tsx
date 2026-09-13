@@ -112,7 +112,7 @@ export function ChapterSection({
             alt={photo.alt}
             fill
             sizes="100vw"
-            className="-z-10 object-cover"
+            className="-z-10 photo-drift object-cover"
             style={{ objectPosition: photo.focal }}
           />
           {/* `relative z-10` is load-bearing: the scrim is an
@@ -120,7 +120,7 @@ export function ChapterSection({
               on DOM order against z-index:auto. Without the explicit level
               here the copy renders *under* the wash. */}
           <div className="relative z-10 mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:py-28">
-            <div className="max-w-xl">
+            <div className="max-w-xl reveal-stagger">
               <p className="text-sm font-semibold text-white/90">
                 {chapter.title}
               </p>
@@ -150,7 +150,7 @@ export function ChapterSection({
       >
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="grid gap-12 lg:grid-cols-[1fr_minmax(0,20rem)] lg:items-center lg:gap-16">
-            <div>{heading}</div>
+            <div className="reveal-stagger">{heading}</div>
             <div>
               <div className="device-frame mx-auto max-w-xs">
                 <div className="device-screen p-3">
@@ -174,7 +174,7 @@ export function ChapterSection({
                 alt={photo.alt}
                 fill
                 sizes="(min-width: 1280px) 72rem, 100vw"
-                className="object-cover"
+                className="photo-drift object-cover"
                 style={{ objectPosition: photo.focal }}
               />
             </div>
@@ -191,14 +191,14 @@ export function ChapterSection({
     <section id={chapter.id} className="reveal py-16 lg:py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="grid gap-12 lg:grid-cols-[1fr_minmax(0,24rem)] lg:items-center lg:gap-16">
-          <div>{heading}</div>
+          <div className="reveal-stagger">{heading}</div>
           <div className="photo-frame scrim-soft aspect-[4/5] w-full">
             <Image
               src={photo.src}
               alt={photo.alt}
               fill
               sizes="(min-width: 1024px) 24rem, 100vw"
-              className="object-cover"
+              className="photo-drift object-cover"
               style={{ objectPosition: photo.focal }}
             />
           </div>

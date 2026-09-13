@@ -52,7 +52,7 @@ export function FixtureCard() {
         <div className="flex items-center gap-3">
           <Avatar name="Sarah W." tone="light" />
           <div>
-            <p className="text-sm font-semibold">Sarah &amp; Brian</p>
+            <p className="text-sm font-semibold">Sarah &amp; Grace</p>
             <p className="text-xs text-[var(--color-text-secondary)]">
               Rating 4.2
             </p>
@@ -64,7 +64,7 @@ export function FixtureCard() {
         <div className="flex flex-row-reverse items-center gap-3">
           <Avatar name="Kevin M." tone="raised" />
           <div className="text-right">
-            <p className="text-sm font-semibold">Kevin &amp; Grace</p>
+            <p className="text-sm font-semibold">Kevin &amp; Brian</p>
             <p className="text-xs text-[var(--color-text-secondary)]">
               Rating 3.8
             </p>
@@ -148,7 +148,7 @@ export function SkillProfileCard() {
                 className="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--color-neutral-surface)]"
               >
                 <span
-                  className="block h-full rounded-full"
+                  className="meter-fill block h-full rounded-full"
                   style={{
                     width: `${pillar.value}%`,
                     background: weakest

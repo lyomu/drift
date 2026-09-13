@@ -13,7 +13,7 @@ function FormDots({ form }: { form: string }) {
         <span
           key={i}
           aria-hidden="true"
-          className={`h-2.5 w-2.5 rounded-full ${
+          className={`form-dot h-2.5 w-2.5 rounded-full ${
             result === "W"
               ? "bg-[var(--color-success)]"
               : "bg-[var(--color-error)]"
@@ -34,7 +34,7 @@ export function StandingsTable() {
     >
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="grid gap-10 min-w-0 lg:grid-cols-[1fr_1.4fr] lg:items-center lg:gap-16">
-          <div className="min-w-0">
+          <div className="reveal-stagger min-w-0">
             <p className="badge !bg-white/10 text-white">Full time</p>
             <h2 id="standings-heading" className="display-lg mt-4">
               {standings.title}
@@ -73,7 +73,7 @@ export function StandingsTable() {
                     ))}
                   </tr>
                 </thead>
-                <tbody className="tabular">
+                <tbody className="reveal-stagger tabular">
                   {standings.rows.map((row) => (
                     <tr
                       key={row.pos}

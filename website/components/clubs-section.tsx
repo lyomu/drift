@@ -35,7 +35,7 @@ export function ClubsSection() {
               {clubs.body}
             </p>
 
-            <ul className="mt-8 grid gap-3 sm:grid-cols-2" role="list">
+            <ul className="reveal-stagger mt-8 grid gap-3 sm:grid-cols-2" role="list">
               {clubs.points.map((point) => (
                 <li
                   key={point}
@@ -82,7 +82,7 @@ export function ClubsSection() {
               alt={photo.alt}
               fill
               sizes="(min-width: 1024px) 26rem, 100vw"
-              className="object-cover"
+              className="photo-drift object-cover"
               style={{ objectPosition: photo.focal }}
             />
           </div>

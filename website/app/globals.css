@@ -677,6 +677,108 @@ body {
   }
 }
 
+@keyframes hero-sport-tennis {
+  0%,
+  42% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+  50%,
+  92% {
+    opacity: 0;
+    transform: translateY(-0.28em);
+    filter: blur(3px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes hero-sport-padel {
+  0%,
+  42% {
+    opacity: 0;
+    transform: translateY(0.28em);
+    filter: blur(3px);
+  }
+  50%,
+  92% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(0.28em);
+    filter: blur(3px);
+  }
+}
+
+/* Added 2026-09-13 — motion for the sections that shipped static. Same
+   grammar as the existing blocks: one-off or scroll-driven, never looping,
+   always rendering the finished state where a check fails. */
+@keyframes settle {
+  from {
+    transform: scale(1.05);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+/* Skill-profile meters: the bar draws from its left edge as the frame
+   enters, so the profile reads as measured rather than painted. */
+@keyframes grow-x {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* Standings form dots: a small pop, not a slide — they are status marks,
+   and a 10px dot sliding in would read as movement rather than arrival. */
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes header-down {
+  from {
+    opacity: 0;
+    transform: translateY(-0.75rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.hero-sport-cycle {
+  display: inline-grid;
+  min-width: 3.42em;
+  vertical-align: baseline;
+}
+
+.hero-sport-word {
+  grid-area: 1 / 1;
+  display: inline-block;
+}
+
+.hero-sport-word-padel {
+  display: none;
+}
+
 /* Everything below is additive. Each block is inside
    `prefers-reduced-motion: no-preference`, and the scroll-driven ones are
    additionally inside `@supports (animation-timeline: view())`, so a browser
@@ -695,9 +797,41 @@ body {
   .enter-3 { animation-delay: 220ms; }
   .enter-4 { animation-delay: 310ms; }
   .enter-5 { animation-delay: 400ms; }
+  .enter-6 { animation-delay: 490ms; }
 
   .hero-photo {
     animation: hero-settle 1800ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .hero-sport-word {
+    will-change: opacity, transform, filter;
+  }
+
+  .hero-sport-word-tennis {
+    animation: hero-sport-tennis 5.6s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  }
+
+  .hero-sport-word-padel {
+    display: inline-block;
+    animation: hero-sport-padel 5.6s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  }
+
+  /* --- Header ----------------------------------------------------------- */
+  /* A one-off drop-in on load. The fill ends at `transform: none`, so the
+     sticky positioning is unaffected after the animation completes. */
+  .header-enter {
+    animation: header-down 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  /* The brand ball gives a small tilt when the wordmark is hovered — the
+     only decorative hover on the page's chrome. */
+  .brand-mark {
+    transition: transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .brand-link:hover .brand-mark,
+  .brand-link:focus-visible .brand-mark {
+    transform: rotate(16deg);
   }
 
   /* --- Press feedback ------------------------------------------------- */
@@ -782,6 +916,35 @@ body {
       animation-timeline: view();
       animation-range-start: entry 10%;
       animation-range-end: entry 90%;
+    }
+
+    /* Photographs come to rest like the hero's does, but driven by scroll
+       rather than load: a one-off 1.05→1 settle across the entry phase. The
+       frames keep `overflow: hidden`, so the scale never spills. */
+    .photo-drift {
+      animation: settle linear both;
+      animation-timeline: view();
+      animation-range-start: entry 0%;
+      animation-range-end: entry 70%;
+      will-change: transform;
+    }
+
+    /* Skill-profile meters draw from their left edge inside the device
+       frame; without this support the bars simply render at full width. */
+    .meter-fill {
+      transform-origin: left;
+      animation: grow-x linear both;
+      animation-timeline: view();
+      animation-range-start: entry 12%;
+      animation-range-end: entry 65%;
+    }
+
+    /* Standings form dots pop in once the row they belong to is arriving. */
+    .form-dot {
+      animation: pop-in linear both;
+      animation-timeline: view();
+      animation-range-start: entry 25%;
+      animation-range-end: entry 80%;
     }
   }
 }
