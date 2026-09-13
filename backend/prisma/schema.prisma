@@ -2245,6 +2245,7 @@ model PlatformAdmin {
   resolvedSupportTickets SupportTicket[] @relation("SupportTicketResolver")
   supportMessages SupportTicketMessage[]
   processedPrivacyRequests PrivacyRequest[] @relation("PrivacyRequestProcessor")
+  waitlistBroadcasts       WaitlistBroadcast[]
 
   @@index([roleId, deactivatedAt])
   @@map("platform_admins")
@@ -3077,9 +3078,44 @@ model WaitlistSignup {
   /// the launch page without guessing by date.
   source String?
 
+  /// Set when a platform-admin broadcast was actually delivered to this
+  /// address. Failed and skipped addresses keep it null, so "who still needs
+  /// the launch email" is one null check and a broadcast is never assumed
+  /// delivered that was not.
+  lastEmailedAt DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([createdAt])
   @@map("waitlist_signups")
+}
+
+/// One bulk send from platform admin to the launch waitlist.
+///
+/// Aggregate counts only, not per-recipient rows: a marketing list of a few
+/// hundred launch signups does not justify a delivery ledger, and the per-
+/// address truth lives on `WaitlistSignup.lastEmailedAt`. The subject and
+/// body are kept verbatim so any send can be reconstructed exactly — which
+/// is also what stops a launch email from being written twice by accident.
+model WaitlistBroadcast {
+  id      String @id @default(uuid())
+  subject String
+  body    String
+
+  /// The audience the send was scoped to; null means the whole list.
+  audience WaitlistAudience?
+
+  recipientCount Int
+  deliveredCount Int
+  failedCount    Int
+
+  sentById String
+  sentBy   PlatformAdmin @relation(fields: [sentById], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([sentById])
+  @@map("waitlist_broadcasts")
 }

@@ -236,6 +236,7 @@ const titleIconMap: Record<string, string> = {
   "Block / Abuse Cases": "block",
   "Support Tickets": "support_agent",
   "Privacy Requests": "privacy_tip",
+  "Launch Waitlist": "mark_email_read",
 };
 
 export function ErrorBanner({ message }: { message: string | null }) {

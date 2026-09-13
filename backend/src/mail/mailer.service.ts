@@ -210,4 +210,25 @@ export class MailerService {
       ].join('\n'),
     );
   }
+
+  /**
+   * One recipient of a platform-admin broadcast to the launch waitlist.
+   * Not a `MailPurpose` — that union is for verification-code mails. The
+   * subject and body come verbatim from the admin; only the greeting is
+   * personalised, and only when the signup gave a first name.
+   */
+  async sendWaitlistBroadcast(
+    to: string,
+    firstName: string | null | undefined,
+    subject: string,
+    body: string,
+  ): Promise<boolean> {
+    const greeting = firstName?.trim() ? `Hi ${firstName.trim()},` : 'Hi,';
+
+    return this.send(
+      to,
+      subject,
+      [greeting, '', body.trim(), '', '— Drift Tennis'].join('\n'),
+    );
+  }
 }

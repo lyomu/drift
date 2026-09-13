@@ -130,6 +130,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/support/tickets", label: "Support Tickets", icon: "confirmation_number", permissions: ["SUPPORT_MANAGE"] },
       { href: "/support/privacy-requests", label: "Privacy Requests", icon: "privacy_tip", permissions: ["SUPPORT_MANAGE"] },
+      { href: "/waitlist", label: "Launch Waitlist", icon: "mark_email_read", permissions: ["SUPPORT_MANAGE"] },
     ],
   },
 ];

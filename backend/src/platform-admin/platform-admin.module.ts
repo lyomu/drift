@@ -32,6 +32,8 @@ import { PlatformConfigAdminController } from './platform-config-admin.controlle
 import { PlatformConfigAdminService } from './platform-config-admin.service';
 import { SupportAdminController } from './support-admin.controller';
 import { SupportAdminService } from './support-admin.service';
+import { WaitlistAdminController } from './waitlist-admin.controller';
+import { WaitlistAdminService } from './waitlist-admin.service';
 
 @Module({
   imports: [
@@ -69,6 +71,7 @@ import { SupportAdminService } from './support-admin.service';
     TrustSafetyAdminController,
     PlatformConfigAdminController,
     SupportAdminController,
+    WaitlistAdminController,
   ],
   providers: [
     PlatformAdminService,
@@ -83,6 +86,7 @@ import { SupportAdminService } from './support-admin.service';
     TrustSafetyAdminService,
     PlatformConfigAdminService,
     SupportAdminService,
+    WaitlistAdminService,
     AuditService,
     PlatformJwtStrategy,
     PlatformPermissionGuard,
