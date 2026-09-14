@@ -1,5 +1,28 @@
 # DESIGN.md — Drift Tennis public website
 
+## Language (added 2026-09)
+
+- **Locales:** `en` (default, canonical at `/`), `fr` (`/fr`), `es` (`/es`).
+  All copy lives in three dictionaries under `lib/content/{en,fr,es}.ts`,
+  keyed by a single `Dictionary` type so a missing key fails the build.
+- **Detection:** `proxy.ts` reads `Accept-Language` on first visit (no
+  cookie), redirects `fr` → `/fr` and `es` → `/es`, and pins the choice in a
+  `drift-locale` cookie (1 year, lax). Explicit `/fr` or `/es` visits pin the
+  cookie too. English is served at the root via a rewrite, never at `/en`;
+  `/en/...` redirects to the unprefixed URL, so each locale has one canonical
+  URL and search engines see three, not six.
+- **The switcher is mandatory, not optional:** auto-detection is a first
+  guess, and the header's `LocaleSwitcher` (in both the full and minimal
+  header) is the visible correction. `hrefLang` and `aria-current` mark the
+  current language.
+- **Not translated:** the legal documents stay English-only and live at
+  exactly one URL each (`/terms`, `/privacy-policy`, `/data-privacy`), so
+  they are excluded from the proxy matcher. Country names in the waitlist
+  select stay English proper nouns because the value is stored as submitted.
+- **The house voice rules apply to every locale:** no em dashes, nothing
+  claimed that the product does not do. Translations are drafted, not yet
+  human-reviewed; a native-speaker pass belongs on the launch checklist.
+
 The public landing surface inherits the established Drift design system; it does
 not invent a new one. Sources of truth: `foundation/05-design-system.md`,
 `mobile/lib/core/theme/drift_colors.dart` / `drift_typography.dart`, and the

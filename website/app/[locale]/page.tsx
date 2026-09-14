@@ -1,5 +1,5 @@
 /**
- * Drift Tennis — public landing page.
+ * Drift Tennis — public landing page, one instance per locale.
  *
  * DIRECTION CONTRACT (revised 2026-09)
  * THESIS: the page is a season told in three chapters, not five equal
@@ -25,7 +25,12 @@
  * different treatment again for its coda.
  * HONESTY: no testimonials, counts, prices or store links — none exist. App
  * UI is built from divs and labelled illustrative everywhere it appears.
+ *
+ * All copy comes from the locale's dictionary; chapter ids stay untranslated
+ * because they double as section anchors and header link targets.
  */
+import type { Metadata } from "next";
+
 import { ChapterSection, PadelSection } from "@/components/chapter-section";
 import { ClubsSection } from "@/components/clubs-section";
 import { Hero } from "@/components/hero";
@@ -34,12 +39,31 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { StandingsTable } from "@/components/standings-table";
 import { TheFinal } from "@/components/the-final";
-import { chapters, padel } from "@/lib/content";
+import { getDictionary, resolveLocale } from "@/lib/content";
 import { images } from "@/lib/images";
+
+type PageProps = { params: Promise<{ locale: string }> };
+
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  const { locale } = await params;
+  const current = resolveLocale(locale);
+  const t = getDictionary(current);
+  return {
+    title: t.meta.title,
+    description: t.meta.description,
+    alternates: {
+      // English is canonical at the root; the others carry their prefix.
+      canonical: current === "en" ? "/" : `/${current}`,
+      languages: { en: "/", fr: "/fr", es: "/es", "x-default": "/" },
+    },
+  };
+}
 
 /**
  * Each chapter's opening treatment, pinned here rather than in the content
- * layer: this is a layout decision, and `content.ts` stays about words.
+ * layer: this is a layout decision, and the dictionaries stay about words.
  */
 const CHAPTER_LAYOUT = [
   { photo: images.discover, variant: "photo-side" },
@@ -47,32 +71,37 @@ const CHAPTER_LAYOUT = [
   { photo: images.improve, variant: "photo-band" },
 ] as const;
 
-export default function HomePage() {
+export default async function HomePage({ params }: PageProps) {
+  const { locale } = await params;
+  const current = resolveLocale(locale);
+  const t = getDictionary(current);
+
   return (
     <>
-      <SiteHeader />
+      <SiteHeader locale={current} />
       <main>
-        <Hero />
-        <LoopStrip />
+        <Hero locale={current} />
+        <LoopStrip locale={current} />
 
-        {chapters.map((chapter, index) => (
+        {t.chapters.map((chapter, index) => (
           <ChapterSection
             key={chapter.id}
             chapter={chapter}
             photo={CHAPTER_LAYOUT[index].photo}
             variant={CHAPTER_LAYOUT[index].variant}
+            locale={current}
           />
         ))}
 
         {/* Standings closes the competing half of the story: the payoff for
             everything chapters 1 and 2 set up. */}
-        <StandingsTable />
+        <StandingsTable locale={current} />
 
-        <PadelSection content={padel} />
-        <ClubsSection />
-        <TheFinal />
+        <PadelSection content={t.padel} />
+        <ClubsSection locale={current} />
+        <TheFinal locale={current} />
       </main>
-      <SiteFooter />
+      <SiteFooter locale={current} />
     </>
   );
 }

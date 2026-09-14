@@ -3,7 +3,7 @@
  * product's spine, so the features speak in a real standings shape.
  * Rows are illustrative and labelled.
  */
-import { standings } from "@/lib/content";
+import { getDictionary, standingsRows, type Locale } from "@/lib/content";
 
 function FormDots({ form }: { form: string }) {
   const results = form.split(" ");
@@ -24,7 +24,8 @@ function FormDots({ form }: { form: string }) {
   );
 }
 
-export function StandingsTable() {
+export function StandingsTable({ locale }: { locale: Locale }) {
+  const t = getDictionary(locale);
   return (
     <section
       id="standings"
@@ -35,38 +36,31 @@ export function StandingsTable() {
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="grid gap-10 min-w-0 lg:grid-cols-[1fr_1.4fr] lg:items-center lg:gap-16">
           <div className="reveal-stagger min-w-0">
-            <p className="badge !bg-white/10 text-white">Full time</p>
+            <p className="badge !bg-white/10 text-white">{t.standings.badge}</p>
             <h2 id="standings-heading" className="display-lg mt-4">
-              {standings.title}
+              {t.standings.title}
             </h2>
-            <p className="mt-4 max-w-md leading-relaxed text-white/90">
-              Six rounds in, this is what a season builds: every result feeds
-              a rating on the same 1.0–7.0 scale as your profile, one
-              comparable unit for your level, everywhere in the app. Fixtures,
-              waitlists and dispute handling included; the WhatsApp-score
-              spreadsheet retired.
-            </p>
             <ul className="mt-6 flex flex-col gap-2 text-sm text-white/90">
-              <li>· Automatic round-robin fixtures per season</li>
-              <li>· Opponent-confirmed results, disputes kept until settled</li>
-              <li>· Standings snapshots with movement week to week</li>
+              {t.standings.bullets.map((bullet) => (
+                <li key={bullet}>{bullet}</li>
+              ))}
             </ul>
           </div>
 
           <div className="min-w-0">
             <div className="drift-card overflow-hidden !text-[var(--color-text-primary)]">
               <div className="flex items-center justify-between border-b border-[var(--color-border)] px-5 py-3">
-                <p className="text-sm font-bold">Saturday League · Standings</p>
-                <span className="badge badge-primary">After Round 6</span>
+                <p className="text-sm font-bold">{t.standings.cardTitle}</p>
+                <span className="badge badge-primary">{t.standings.cardBadge}</span>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                 <caption className="sr-only">
-                  Illustrative league standings table
+                  {t.standings.note}
                 </caption>
                 <thead>
                   <tr className="text-left text-xs text-[var(--color-text-secondary)]">
-                    {standings.columns.map((column) => (
+                    {t.standings.columns.map((column) => (
                       <th key={column} scope="col" className="px-4 py-2 font-semibold">
                         {column}
                       </th>
@@ -74,7 +68,7 @@ export function StandingsTable() {
                   </tr>
                 </thead>
                 <tbody className="reveal-stagger tabular">
-                  {standings.rows.map((row) => (
+                  {standingsRows.map((row) => (
                     <tr
                       key={row.pos}
                       className="border-t border-[var(--color-border)]"
@@ -95,7 +89,7 @@ export function StandingsTable() {
               </div>
             </div>
             <p className="mt-3 text-right text-xs text-white/90">
-              {standings.note}
+              {t.standings.note}
             </p>
           </div>
         </div>

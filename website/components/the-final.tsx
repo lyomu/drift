@@ -12,9 +12,12 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { getDictionary, type Locale } from "@/lib/content";
+import { localeHref } from "@/lib/locales";
 import { images } from "@/lib/images";
 
-export function TheFinal() {
+export function TheFinal({ locale }: { locale: Locale }) {
+  const t = getDictionary(locale);
   const photo = images.final;
 
   return (
@@ -38,29 +41,26 @@ export function TheFinal() {
           against z-index:auto. Without it the heading sits under the wash. */}
       <div className="reveal-stagger relative z-10 mx-auto max-w-6xl px-4 py-20 text-center sm:px-6 lg:py-28">
         <p className="badge bg-white/15 text-white backdrop-blur-sm">
-          The final
+          {t.final.badge}
         </p>
         <h2 id="final-heading" className="display-lg mt-4">
-          Your season starts with one match
+          {t.final.title}
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-lg leading-relaxed text-white/90">
-          Sign up, take the assessment, and Drift does the rest: opponents at
-          your level, the fixture on your calendar, and a rating that moves
-          only when results are confirmed.
+          {t.final.body}
         </p>
 
         <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
           <Link
-            href="/waitlist"
+            href={localeHref(locale, "/waitlist")}
             className="btn-primary !bg-white !text-[var(--color-primary-dark)] hover:!bg-[var(--color-primary-light)]"
           >
-            Join the waitlist
+            {t.final.cta}
           </Link>
         </div>
 
         <p className="mt-6 text-sm text-white/90">
-          Free to join while we get going. Android first, iOS follows. The app
-          stores are not live yet, so the waitlist is how you hear about it first.
+          {t.final.note}
         </p>
       </div>
     </section>

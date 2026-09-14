@@ -12,7 +12,7 @@
 import Image from "next/image";
 
 import { IllustrativeLabel, SkillProfileCard } from "./app-screens";
-import type { Chapter } from "@/lib/content";
+import { getDictionary, type Chapter, type Locale } from "@/lib/content";
 import type { SiteImage } from "@/lib/images";
 
 type Variant = "photo-side" | "screens" | "photo-band";
@@ -76,18 +76,21 @@ export function ChapterSection({
   chapter,
   photo,
   variant,
+  locale,
 }: {
   chapter: Chapter;
   photo: SiteImage;
   variant: Variant;
+  locale: Locale;
 }) {
+  const t = getDictionary(locale);
   const heading = (
     <>
       {/* The ordinal alone, no "Chapter N" label: the numbering is a visual
           rhythm, and spelling it out in a pill made every section open with
           the same piece of chrome. */}
       <span aria-hidden="true" className="chapter-numeral block">
-        {chapter.label.replace("Chapter ", "")}
+        {chapter.numeral}
       </span>
       <h2 className="court-rule display-lg mt-2 max-w-xl pb-1">
         {chapter.tagline}
@@ -154,10 +157,13 @@ export function ChapterSection({
             <div>
               <div className="device-frame mx-auto max-w-xs">
                 <div className="device-screen p-3">
-                  <SkillProfileCard />
+                  <SkillProfileCard t={t.appScreens} />
                 </div>
               </div>
-              <IllustrativeLabel className="mt-4 text-center" />
+              <IllustrativeLabel
+                label={t.appScreens.illustrative}
+                className="mt-4 text-center"
+              />
             </div>
           </div>
 

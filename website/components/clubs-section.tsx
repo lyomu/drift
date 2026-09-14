@@ -9,10 +9,11 @@
  */
 import Image from "next/image";
 
-import { clubs } from "@/lib/content";
+import { getDictionary, type Locale } from "@/lib/content";
 import { images } from "@/lib/images";
 
-export function ClubsSection() {
+export function ClubsSection({ locale }: { locale: Locale }) {
+  const t = getDictionary(locale);
   const photo = images.clubs;
 
   return (
@@ -24,19 +25,19 @@ export function ClubsSection() {
       <div className="drift-card overflow-hidden">
         <div className="grid lg:grid-cols-[1fr_minmax(0,26rem)]">
           <div className="p-8 lg:p-12">
-            <p className="badge badge-primary">For clubs &amp; academies</p>
+            <p className="badge badge-primary">{t.clubs.badge}</p>
             <h2
               id="clubs-heading"
               className="court-rule display-lg mt-4 pb-1"
             >
-              {clubs.title}
+              {t.clubs.title}
             </h2>
             <p className="mt-8 leading-relaxed text-[var(--color-text-secondary)]">
-              {clubs.body}
+              {t.clubs.body}
             </p>
 
             <ul className="reveal-stagger mt-8 grid gap-3 sm:grid-cols-2" role="list">
-              {clubs.points.map((point) => (
+              {t.clubs.points.map((point) => (
                 <li
                   key={point}
                   className="flex items-start gap-3 rounded-xl bg-[var(--color-background)] p-4"
@@ -68,8 +69,11 @@ export function ClubsSection() {
               ))}
             </ul>
 
-            <a href={clubs.cta.href} className="btn-primary mt-8">
-              {clubs.cta.text}
+            <a
+              href="mailto:drift@einsbrand.com"
+              className="btn-primary mt-8"
+            >
+              {t.clubs.cta}
             </a>
           </div>
 

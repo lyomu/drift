@@ -7,9 +7,10 @@
  * hero, so nothing is hidden by the merge. It is wayfinding, not a feature
  * list: one line each, no cards, no icons.
  */
-import { loopStages } from "@/lib/content";
+import { getDictionary, type Locale } from "@/lib/content";
 
-export function LoopStrip() {
+export function LoopStrip({ locale }: { locale: Locale }) {
+  const t = getDictionary(locale);
   return (
     <section
       aria-labelledby="loop-heading"
@@ -20,7 +21,7 @@ export function LoopStrip() {
           id="loop-heading"
           className="reveal text-sm font-semibold text-[var(--color-text-secondary)]"
         >
-          One loop, five stages, and you re-enter it every week
+          {t.loopStrip.heading}
         </h2>
 
         {/* The rule lives in a positioned wrapper rather than inside the list.
@@ -34,7 +35,7 @@ export function LoopStrip() {
           />
 
           <ol className="reveal-stagger grid gap-8 sm:grid-cols-2 lg:grid-cols-5 lg:gap-6">
-            {loopStages.map((stage) => (
+            {t.loopStrip.stages.map((stage) => (
               <li key={stage.name} className="loop-node relative">
                 <p className="text-sm font-bold text-[var(--color-primary-dark)]">
                   {stage.name}

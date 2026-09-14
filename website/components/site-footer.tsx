@@ -1,18 +1,23 @@
 /**
- * Footer links are absolute (`/#clubs`, not `#clubs`) so they still resolve
- * from the waitlist and legal routes, where those sections do not exist.
+ * Footer links are absolute where they must survive other routes: the legal
+ * links point at the English-only legal documents, so they stay
+ * route-prefixed (`/terms`), while the product links carry the locale prefix
+ * so they resolve back into the right language from any page.
  */
 import Link from "next/link";
 
-import { footer, legalLinks } from "@/lib/content";
+import { getDictionary, legalLinks } from "@/lib/content";
+import { localeHref, type Locale } from "@/lib/locales";
 
-const productLinks = [
-  { href: "/#discover", label: "The loop" },
-  { href: "/#clubs", label: "For clubs" },
-  { href: "/waitlist", label: "Join the waitlist", featured: true },
-] as const;
+export function SiteFooter({ locale = "en" }: { locale?: Locale }) {
+  const t = getDictionary(locale);
 
-export function SiteFooter() {
+  const productLinks = [
+    { href: localeHref(locale, "/#discover"), label: t.footer.theLoop },
+    { href: localeHref(locale, "/#clubs"), label: t.footer.forClubs },
+    { href: localeHref(locale, "/waitlist"), label: t.footer.join, featured: true },
+  ] as const;
+
   return (
     <footer className="border-t border-[var(--color-border)] bg-[var(--color-surface)]">
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
@@ -20,11 +25,11 @@ export function SiteFooter() {
           <div>
             <p className="font-bold">Drift Tennis</p>
             <p className="mt-1 max-w-xs text-sm leading-relaxed text-[var(--color-text-secondary)]">
-              Find your match. Play your season.
+              {t.footer.tagline}
             </p>
           </div>
 
-          <FooterGroup title="Product" ariaLabel="Footer product links">
+          <FooterGroup title={t.footer.product} ariaLabel={t.footer.productAria}>
             {productLinks.map((link) => (
               <li key={link.href}>
                 <Link
@@ -41,7 +46,7 @@ export function SiteFooter() {
             ))}
           </FooterGroup>
 
-          <FooterGroup title="Legal" ariaLabel="Footer legal links">
+          <FooterGroup title={t.footer.legal} ariaLabel={t.footer.legalAria}>
             {legalLinks.map((link) => (
               <li key={link.href}>
                 <Link
@@ -56,20 +61,20 @@ export function SiteFooter() {
 
           <div>
             <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-              Contact
+              {t.footer.contact}
             </p>
             <a
               className="mt-3 inline-block text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-primary-dark)]"
-              href={`mailto:${footer.supportEmail}`}
+              href="mailto:drift@einsbrand.com"
             >
-              {footer.supportEmail}
+              drift@einsbrand.com
             </a>
           </div>
         </div>
 
         <div className="mt-10 border-t border-[var(--color-border)] pt-6">
           <p className="text-xs text-[var(--color-text-secondary)]">
-            Copyright {new Date().getFullYear()} Drift Tennis. Proprietary.
+            {t.footer.copyright.replace("{year}", String(new Date().getFullYear()))}
           </p>
         </div>
       </div>

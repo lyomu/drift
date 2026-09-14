@@ -38,13 +38,17 @@ export function Avatar({
   );
 }
 
-export function FixtureCard() {
+import type { Dictionary } from "@/lib/content";
+
+type ScreensCopy = Dictionary["appScreens"];
+
+export function FixtureCard({ t }: { t: ScreensCopy }) {
   return (
     <div className="drift-card w-full p-5">
       <div className="flex items-center justify-between">
-        <span className="badge badge-primary">Up next · Round 3</span>
+        <span className="badge badge-primary">{t.fixture.badge}</span>
         <span className="text-xs text-[var(--color-text-secondary)]">
-          Doubles
+          {t.fixture.format}
         </span>
       </div>
 
@@ -54,7 +58,7 @@ export function FixtureCard() {
           <div>
             <p className="text-sm font-semibold">Sarah &amp; Grace</p>
             <p className="text-xs text-[var(--color-text-secondary)]">
-              Rating 4.2
+              {t.fixture.rating} 4.2
             </p>
           </div>
         </div>
@@ -66,7 +70,7 @@ export function FixtureCard() {
           <div className="text-right">
             <p className="text-sm font-semibold">Kevin &amp; Brian</p>
             <p className="text-xs text-[var(--color-text-secondary)]">
-              Rating 3.8
+              {t.fixture.rating} 3.8
             </p>
           </div>
         </div>
@@ -74,39 +78,41 @@ export function FixtureCard() {
 
       <div className="mt-4 border-t border-[var(--color-border)] pt-3">
         <div className="flex items-center justify-between">
-          <p className="tabular text-sm font-semibold">Sat · 16:00</p>
-          <span className="badge badge-success">✓ Time accepted</span>
+          <p className="tabular text-sm font-semibold">{t.fixture.date}</p>
+          <span className="badge badge-success">{t.fixture.accepted}</span>
         </div>
         <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
-          Club court suggested · 2 of 3 proposals settled
+          {t.fixture.footnote}
         </p>
       </div>
     </div>
   );
 }
 
-export function ChallengeCard() {
+export function ChallengeCard({ t }: { t: ScreensCopy }) {
   return (
     <div className="drift-card w-full p-4">
       <div className="flex items-center justify-between">
-        <span className="badge badge-warning">Incoming challenge</span>
+        <span className="badge badge-warning">{t.challenge.badge}</span>
         <span className="text-xs text-[var(--color-text-secondary)]">2h</span>
       </div>
       <div className="mt-3 flex items-center gap-3">
         <Avatar name="Daniel K." tone="raised" />
         <div>
-          <p className="text-sm font-semibold">Daniel challenged you</p>
+          <p className="text-sm font-semibold">
+            {t.challenge.line.replace("{name}", "Daniel")}
+          </p>
           <p className="text-xs text-[var(--color-text-secondary)]">
-            Proposed: Sun 10:00 or 17:00
+            {t.challenge.proposed}
           </p>
         </div>
       </div>
       <div className="mt-3 flex gap-2">
         <span className="btn-primary !flex-1 !px-3 !py-1.5 text-xs">
-          Accept
+          {t.challenge.accept}
         </span>
         <span className="btn-secondary !flex-1 !px-3 !py-1.5 text-xs">
-          Propose time
+          {t.challenge.proposeTime}
         </span>
       </div>
     </div>
@@ -118,30 +124,30 @@ export function ChallengeCard() {
  * and logged practice. The percentages are illustrative.
  */
 const PILLARS = [
-  { name: "Serve", value: 46 },
-  { name: "Forehand", value: 72 },
-  { name: "Backhand", value: 38 },
-  { name: "Return", value: 61 },
-  { name: "Net", value: 44 },
-  { name: "Movement", value: 68 },
-  { name: "Match play", value: 55 },
+  { key: "serve", value: 46 },
+  { key: "forehand", value: 72 },
+  { key: "backhand", value: 38 },
+  { key: "return", value: 61 },
+  { key: "net", value: 44 },
+  { key: "movement", value: 68 },
+  { key: "matchPlay", value: 55 },
 ] as const;
 
-export function SkillProfileCard() {
+export function SkillProfileCard({ t }: { t: ScreensCopy }) {
   return (
     <div className="drift-card w-full p-5">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold">Skill profile</p>
-        <span className="badge badge-primary tabular">Rating 3.5</span>
+        <p className="text-sm font-semibold">{t.skill.title}</p>
+        <span className="badge badge-primary tabular">{t.skill.ratingBadge}</span>
       </div>
 
       <ul className="mt-4 space-y-2.5">
         {PILLARS.map((pillar) => {
-          const weakest = pillar.name === "Backhand";
+          const weakest = pillar.key === "backhand";
           return (
-            <li key={pillar.name} className="flex items-center gap-3">
+            <li key={pillar.key} className="flex items-center gap-3">
               <span className="w-20 shrink-0 text-xs text-[var(--color-text-secondary)]">
-                {pillar.name}
+                {t.skill.pillars[pillar.key]}
               </span>
               <span
                 aria-hidden="true"
@@ -167,10 +173,10 @@ export function SkillProfileCard() {
 
       <div className="mt-4 rounded-xl bg-[var(--color-warning-surface)] p-3">
         <p className="text-xs font-semibold text-[#b45309]">
-          Practise next: backhand
+          {t.skill.practiseTitle}
         </p>
         <p className="mt-0.5 text-xs text-[var(--color-text-secondary)]">
-          3 drills matched to your level
+          {t.skill.practiseBody}
         </p>
       </div>
     </div>
@@ -179,12 +185,15 @@ export function SkillProfileCard() {
 
 /**
  * Small caption used wherever illustrative UI appears. Keeping it one
- * component means the label can never drift out of sync between sections.
+ * component means the label can never drift out of sync between sections
+ * (or between locales).
  */
 export function IllustrativeLabel({
+  label,
   className = "",
   tone = "muted",
 }: {
+  label: string;
   className?: string;
   tone?: "muted" | "on-primary";
 }) {
@@ -196,7 +205,7 @@ export function IllustrativeLabel({
           : "text-[var(--color-text-secondary)]"
       } ${className}`}
     >
-      Illustrative app screens, not real player data.
+      {label}
     </p>
   );
 }

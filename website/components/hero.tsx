@@ -17,9 +17,12 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { ChallengeCard, FixtureCard, IllustrativeLabel } from "./app-screens";
+import { getDictionary } from "@/lib/content";
+import { localeHref, type Locale } from "@/lib/locales";
 import { images } from "@/lib/images";
 
-export function Hero() {
+export function Hero({ locale }: { locale: Locale }) {
+  const t = getDictionary(locale);
   const photo = images.hero;
 
   return (
@@ -44,50 +47,45 @@ export function Hero() {
           <h1 className="display-xl enter enter-1 max-w-4xl text-white">
             <span
               className="block text-white/70 line-through decoration-[#ff8a8a] decoration-2"
-              aria-label="I should play more tennis or padel."
+              aria-label={t.hero.strikeAria}
             >
               <span aria-hidden="true">
-                &ldquo;I should play more{" "}
+                {t.hero.quotePrefix}{" "}
                 <span className="hero-sport-cycle">
                   <span className="hero-sport-word hero-sport-word-tennis">
-                    tennis.
+                    {t.hero.wordTennis}
                   </span>
                   <span className="hero-sport-word hero-sport-word-padel">
-                    padel.
+                    {t.hero.wordPadel}
                   </span>
                 </span>
-                &rdquo;
+                {t.hero.quoteSuffix}
               </span>
             </span>
-            <span className="mt-1 block">You have a match on Saturday.</span>
+            <span className="mt-1 block">{t.hero.resolve}</span>
           </h1>
 
           <p className="enter enter-3 mt-5 max-w-2xl text-lg leading-relaxed text-white/90">
-            Built for racket sports, Drift Tennis finds you opponents at your
-            level, schedules the match, records the result both players
-            confirm, and turns your season into a rating you can trust.
-            Tennis leads, padel runs on the same rails, and both live in one
-            app instead of a booking site, three WhatsApp groups and a
-            spreadsheet ladder.
+            {t.hero.body}
           </p>
 
           <div className="enter enter-4 mt-8 flex flex-wrap gap-3">
             <Link
-              href="/waitlist"
+              href={localeHref(locale, "/waitlist")}
               className="btn-primary !bg-white !text-[var(--color-primary-dark)] hover:!bg-[var(--color-primary-light)]"
             >
-              Join the waitlist
+              {t.hero.ctaPrimary}
             </Link>
             <a
               href="#discover"
               className="btn-secondary !border-white/45 !bg-white/10 !text-white backdrop-blur-sm hover:!border-white hover:!bg-white/20"
             >
-              How a season works ↓
+              {t.hero.ctaSecondary}
             </a>
           </div>
 
           <p className="enter enter-4 mt-4 text-sm text-white/80">
-            Free to join while we get going. Android first, iOS follows.
+            {t.hero.freeNote}
           </p>
         </div>
 
@@ -96,13 +94,14 @@ export function Hero() {
         <div className="lg:pl-6">
           <div className="mx-auto w-full max-w-sm space-y-4">
             <div className="enter enter-5">
-              <FixtureCard />
+              <FixtureCard t={t.appScreens} />
             </div>
             <div className="enter enter-6 px-4 sm:px-8">
-              <ChallengeCard />
+              <ChallengeCard t={t.appScreens} />
             </div>
           </div>
           <IllustrativeLabel
+            label={t.appScreens.illustrative}
             tone="on-primary"
             className="enter enter-6 mt-4 text-center"
           />
