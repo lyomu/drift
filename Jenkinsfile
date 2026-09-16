@@ -54,7 +54,17 @@ pipeline {
                     docker image prune -af || true
                     docker builder prune -af || true
                 """
-                script { env.IMAGE_TAG = "sha-${env.GIT_COMMIT.take(12)}" }
+                script {
+                    env.IMAGE_TAG = "sha-${env.GIT_COMMIT.take(12)}"
+                    // Docker image tags and container/network names reject
+                    // '/', which every feature/fix branch in this repo's own
+                    // naming convention contains (confirmed the hard way:
+                    // "invalid reference format" building
+                    // drift-api-ci:fix/jenkins-lint-soft-gate-1). Only used
+                    // for these throwaway CI-local resource names -- the
+                    // real pushed image tag above is IMAGE_TAG, unaffected.
+                    env.SAFE_BRANCH_NAME = env.BRANCH_NAME.replaceAll('[^a-zA-Z0-9_.-]', '-')
+                }
             }
         }
 
@@ -67,10 +77,10 @@ pipeline {
             // secret.
             steps {
                 script {
-                    env.API_CI_IMAGE = "drift-api-ci:${env.BRANCH_NAME}-${env.BUILD_NUMBER}"
-                    env.CLUB_ADMIN_CI_IMAGE = "drift-club-admin-ci:${env.BRANCH_NAME}-${env.BUILD_NUMBER}"
-                    env.PLATFORM_ADMIN_CI_IMAGE = "drift-platform-admin-ci:${env.BRANCH_NAME}-${env.BUILD_NUMBER}"
-                    env.WEBSITE_CI_IMAGE = "drift-website-ci:${env.BRANCH_NAME}-${env.BUILD_NUMBER}"
+                    env.API_CI_IMAGE = "drift-api-ci:${env.SAFE_BRANCH_NAME}-${env.BUILD_NUMBER}"
+                    env.CLUB_ADMIN_CI_IMAGE = "drift-club-admin-ci:${env.SAFE_BRANCH_NAME}-${env.BUILD_NUMBER}"
+                    env.PLATFORM_ADMIN_CI_IMAGE = "drift-platform-admin-ci:${env.SAFE_BRANCH_NAME}-${env.BUILD_NUMBER}"
+                    env.WEBSITE_CI_IMAGE = "drift-website-ci:${env.SAFE_BRANCH_NAME}-${env.BUILD_NUMBER}"
                     docker.build(env.API_CI_IMAGE, '--target build -f backend/Dockerfile backend')
                     docker.build(
                         env.CLUB_ADMIN_CI_IMAGE,
@@ -142,9 +152,9 @@ pipeline {
         stage('Test') {
             steps {
                 script {
-                    env.CI_NET = "drift-ci-net-${env.BRANCH_NAME}-${env.BUILD_NUMBER}"
-                    env.CI_PG = "drift-ci-postgres-${env.BRANCH_NAME}-${env.BUILD_NUMBER}"
-                    env.CI_REDIS = "drift-ci-redis-${env.BRANCH_NAME}-${env.BUILD_NUMBER}"
+                    env.CI_NET = "drift-ci-net-${env.SAFE_BRANCH_NAME}-${env.BUILD_NUMBER}"
+                    env.CI_PG = "drift-ci-postgres-${env.SAFE_BRANCH_NAME}-${env.BUILD_NUMBER}"
+                    env.CI_REDIS = "drift-ci-redis-${env.SAFE_BRANCH_NAME}-${env.BUILD_NUMBER}"
                 }
                 sh """
                     set -e
