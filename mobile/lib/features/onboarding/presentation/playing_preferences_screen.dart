@@ -84,9 +84,10 @@ class _PlayingPreferencesScreenState
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(title, style: type.label),
-        const SizedBox(height: DriftSpacing.s2),
+        const SizedBox(height: DriftSpacing.s3),
         Wrap(
-          spacing: DriftSpacing.s2,
+          spacing: DriftSpacing.s3,
+          runSpacing: DriftSpacing.s3,
           children: options
               .map(
                 (o) => DriftFilterChip(
@@ -97,7 +98,7 @@ class _PlayingPreferencesScreenState
               )
               .toList(),
         ),
-        const SizedBox(height: DriftSpacing.s5),
+        const SizedBox(height: DriftSpacing.s6),
       ],
     );
   }
