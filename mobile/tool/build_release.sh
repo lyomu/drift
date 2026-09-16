@@ -17,7 +17,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 API_BASE_URL="${DRIFT_API_BASE_URL:-https://drift.einsbrand.com/api}"
-SUPPORT_EMAIL="${DRIFT_SUPPORT_EMAIL:-drift@einsbrand.com}"
+SUPPORT_EMAIL="${DRIFT_SUPPORT_EMAIL:-court@driftsports.app}"
 # Public by design — it ships inside every build and can be read out of any APK.
 # The Web ("server") client is what makes google_sign_in return an ID token on
 # Android; the backend can verify nothing without it. docs/SOCIAL_SIGNIN_SETUP.md
