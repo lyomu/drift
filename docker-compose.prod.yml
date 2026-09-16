@@ -11,6 +11,17 @@
 #
 # The console images bake the API origin in at build time, so a pulled image is
 # already bound to one environment. Do not expect PUBLIC_API_URL to re-point one.
+#
+# Runs on the shared box (46.225.106.43) alongside RetailFlow and harusi-ke.
+# `name:` is set explicitly below so Compose's project name (and therefore its
+# default network name) doesn't collide with harusi-ke, whose containers on
+# this same box already come from an unnamed project in a directory also
+# called "prod" (prod-postgres-1, etc.) — an unnamed project here would clash
+# with or silently reuse that network. mem_limit values are sized to the
+# runbook's shared-box budget (SHARED_BOX_CAPACITY.md §4), not to this box's
+# full headroom.
+
+name: drift-prod
 
 services:
   postgres:
@@ -28,8 +39,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-    mem_limit: 768m
-    cpus: "0.50"
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+    mem_limit: 384m
+    cpus: "0.30"
 
   redis:
     image: redis:7.4-bookworm
@@ -43,8 +57,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-    mem_limit: 192m
-    cpus: "0.20"
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+    mem_limit: 128m
+    cpus: "0.15"
 
   api:
     build:
@@ -66,7 +83,7 @@ services:
       redis:
         condition: service_healthy
     ports:
-      - "127.0.0.1:3009:3009"
+      - "127.0.0.1:3005:3009"
     healthcheck:
       test:
         [
@@ -77,8 +94,11 @@ services:
       timeout: 5s
       retries: 10
       start_period: 30s
-    mem_limit: 1024m
-    cpus: "0.75"
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+    mem_limit: 448m
+    cpus: "0.40"
 
   club-admin:
     build:
@@ -96,16 +116,30 @@ services:
       api:
         condition: service_healthy
     ports:
-      - "127.0.0.1:3010:3010"
-    mem_limit: 512m
-    cpus: "0.35"
+      - "127.0.0.1:3006:3010"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://127.0.0.1:3010/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\"",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+    mem_limit: 256m
+    cpus: "0.25"
 
+  # Routed at its own subdomain (platform.<domain>) rather than a /platform
+  # path prefix, so no NEXT_PUBLIC_BASE_PATH build arg is needed.
   platform-admin:
     build:
       context: ./platform-admin
       args:
         NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL}
-        NEXT_PUBLIC_BASE_PATH: /platform
     container_name: drift-platform-admin
     image: ghcr.io/${DRIFT_IMAGE_OWNER:-lyomu}/drift-platform-admin:${DRIFT_IMAGE_TAG:-local}
     restart: unless-stopped
@@ -113,14 +147,26 @@ services:
       NODE_ENV: production
       PORT: 3011
       HOSTNAME: 0.0.0.0
-      NEXT_PUBLIC_BASE_PATH: /platform
     depends_on:
       api:
         condition: service_healthy
     ports:
-      - "127.0.0.1:3011:3011"
-    mem_limit: 512m
-    cpus: "0.35"
+      - "127.0.0.1:3007:3011"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://127.0.0.1:3011/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\"",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+    mem_limit: 192m
+    cpus: "0.20"
 
   website:
     build:
@@ -133,9 +179,22 @@ services:
       PORT: 3012
       HOSTNAME: 0.0.0.0
     ports:
-      - "127.0.0.1:3012:3012"
-    mem_limit: 512m
-    cpus: "0.35"
+      - "127.0.0.1:3008:3012"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://127.0.0.1:3012/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\"",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+    mem_limit: 256m
+    cpus: "0.25"
 
 volumes:
   postgres_data:
