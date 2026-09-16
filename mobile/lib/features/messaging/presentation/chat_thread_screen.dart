@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
+import '../../../shared/widgets/drift_icon.dart';
 import '../../../shared/widgets/drift_scaffold.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../users/application/current_user_provider.dart';
@@ -80,11 +81,20 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
     final messages = ref.watch(threadProvider(widget.conversationId));
     final viewerId = ref.watch(currentUserProvider).valueOrNull?.id ?? '';
 
+    // There's no single-conversation endpoint, so the title is looked up in
+    // the already-fetched conversation list rather than a fresh request. It
+    // falls back to the generic 'Chat' while that list is still loading (or
+    // for a conversation that fell out of it) — same as `Conversation.title`
+    // does with zero participants.
+    final conversations = ref.watch(conversationsProvider).valueOrNull;
+    final match = conversations?.where((c) => c.id == widget.conversationId);
+    final title = (match == null || match.isEmpty) ? 'Chat' : match.first.title;
+
     // Scroll down as live messages land.
     ref.listen(threadProvider(widget.conversationId), (_, _) => _scrollToEnd());
 
     return DriftScaffold(
-      title: 'Chat',
+      title: title,
       body: Column(
         children: [
           Expanded(
@@ -286,7 +296,7 @@ class _SystemLink extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: DriftSpacing.s2),
         child: Row(
           children: [
-            Icon(icon, color: colors.primary),
+            DriftIcon(icon, color: colors.primary),
             const SizedBox(width: DriftSpacing.s3),
             Expanded(child: Text(label, style: type.title)),
             Icon(Icons.chevron_right, color: colors.textSecondary),
