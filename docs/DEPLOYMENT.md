@@ -19,11 +19,11 @@ product's `mem_limit`s were sized against.
 |---|---|---|
 | `https://driftsports.app/` (and `www.`) | Website (landing page) | `127.0.0.1:3008` |
 | `https://admin.driftsports.app/` | Club Admin | `127.0.0.1:3006` |
-| `https://platform.driftsports.app/` | Platform Admin | `127.0.0.1:3007` |
+| `https://console.driftsports.app/` | Platform Admin | `127.0.0.1:3007` |
 | `https://api.driftsports.app/` | NestJS API | `127.0.0.1:3005` |
 | `https://api.driftsports.app/socket.io/` | Socket.IO gateway | `127.0.0.1:3005` |
 
-`admin.` and `platform.` are protected with HTTP basic auth at nginx — the
+`admin.` and `console.` are protected with HTTP basic auth at nginx — the
 security review (`SECURITY_REVIEW.md`) is still a conditional NO-GO on a few
 open items (Android key rotation, an endpoint-by-endpoint authz matrix), so
 staff-facing surfaces keep this extra layer even though the product itself
@@ -72,9 +72,9 @@ JWT_SECRET=<openssl rand -hex 32>
 JWT_ACCESS_TTL=15m
 JWT_REFRESH_TTL=30d
 PLATFORM_ADMIN_JWT_TTL=2h
-PLATFORM_ADMIN_WEB_URL=https://platform.driftsports.app
+PLATFORM_ADMIN_WEB_URL=https://console.driftsports.app
 CLUB_ADMIN_URL=https://admin.driftsports.app
-CORS_ALLOWED_ORIGINS=https://admin.driftsports.app,https://platform.driftsports.app
+CORS_ALLOWED_ORIGINS=https://admin.driftsports.app,https://console.driftsports.app
 
 NEWS_FEED_ALLOWED_HOSTS=feeds.bbci.co.uk,www.atptour.com
 
@@ -99,34 +99,27 @@ config.
 
 ## DNS records
 
-All A records 600s TTL, all pointed at `46.225.106.43`:
+All A records 600s TTL, all pointed at `46.225.106.43`. Verified 2026-09-16:
+all five already resolve here — nothing left to add.
 
 | Host | Type | Value |
 |---|---|---|
 | `driftsports.app` | A | `46.225.106.43` |
 | `www.driftsports.app` | A | `46.225.106.43` |
 | `admin.driftsports.app` | A | `46.225.106.43` |
-| `platform.driftsports.app` | A | `46.225.106.43` |
+| `console.driftsports.app` | A | `46.225.106.43` |
 | `api.driftsports.app` | A | `46.225.106.43` |
 
-Plus two records that publish **no mail sender** for this domain (email
-keeps riding on `einsbrand.com` — see above), so `driftsports.app` can't be
-spoofed as a From address just because it's otherwise undefended:
-
-| Host | Type | Value |
-|---|---|---|
-| `driftsports.app` | TXT | `v=spf1 -all` |
-| `_dmarc.driftsports.app` | TXT | `v=DMARC1; p=reject; rua=mailto:drift@einsbrand.com` |
-
-`p=reject` is safe here immediately (unlike `einsbrand.com`'s `p=none`
-staging period) because this domain has zero legitimate senders to
-accidentally break. No DKIM record — nothing signs mail as
-`@driftsports.app`. Verify after publishing:
-
-```bash
-nslookup -type=TXT driftsports.app 8.8.8.8
-nslookup -type=TXT _dmarc.driftsports.app 8.8.8.8
-```
+**SPF/DMARC: deliberately left alone.** The domain already carries a real
+SPF record (`v=spf1 a mx ip4:23.106.59.129 include:relay.mailbaby.net
+ip6:... ~all`) — the same `relay.mailbaby.net` pattern `einsbrand.com`
+uses — so mail may already be live on this domain through the registrar's
+bundled hosting, even though `MAIL_FROM` for the app itself stays
+`drift@einsbrand.com`. Owner decision 2026-09-16: don't touch the existing
+SPF record, and don't add DMARC yet, until it's confirmed what (if
+anything) is actually sending through that relay. Revisit once that's
+known — an unconfirmed sender is exactly the situation `einsbrand.com`'s
+own `p=none` staging period exists to protect against.
 
 ## Nginx and TLS
 
@@ -146,7 +139,7 @@ Issue one certificate covering all five names:
 ```bash
 certbot certonly --webroot -w /var/www/certbot \
   -d driftsports.app -d www.driftsports.app -d admin.driftsports.app \
-  -d platform.driftsports.app -d api.driftsports.app
+  -d console.driftsports.app -d api.driftsports.app
 ```
 
 Restore the commented-out `443` blocks, then:
@@ -243,7 +236,7 @@ curl -fsS http://127.0.0.1:3005/health
 curl -fkI https://api.driftsports.app/health
 curl -fkI https://driftsports.app/
 curl -fkI -u <user>:<password> https://admin.driftsports.app/
-curl -fkI -u <user>:<password> https://platform.driftsports.app/
+curl -fkI -u <user>:<password> https://console.driftsports.app/
 ```
 
 ## Mobile app (APK rebuild)

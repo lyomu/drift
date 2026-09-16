@@ -250,7 +250,7 @@ Review and approve (Jenkins login required):
                         curl -sf https://api.driftsports.app/health
                         curl -sf -o /dev/null https://driftsports.app/
                         curl -sf -o /dev/null -u "\$BASIC_USER:\$BASIC_PASS" https://admin.driftsports.app/
-                        curl -sf -o /dev/null -u "\$BASIC_USER:\$BASIC_PASS" https://platform.driftsports.app/
+                        curl -sf -o /dev/null -u "\$BASIC_USER:\$BASIC_PASS" https://console.driftsports.app/
                         echo "Smoke tests passed."
                     """
                 }
