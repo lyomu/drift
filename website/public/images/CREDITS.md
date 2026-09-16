@@ -14,6 +14,15 @@ Already licensed for the product; reused here from
 | `hero-court.jpg` | `intro_advance_your_game.jpg` | Landing hero |
 | `ball-on-line.jpg` | `intro_tennis_journey.jpg` | "The final" waitlist CTA band |
 
+## Brand mark
+
+`logo.png` is the official Drift Sports mark (icon + wordmark), supplied
+2026-09-16 and used as-is (transparent background, resized only). It replaced
+`site-header.tsx`'s placeholder inline-SVG `BallMark` + "Drift Tennis" text in
+both header variants. The icon-only crop is reused in `club-admin` and
+`platform-admin` as `public/images/drift-icon.png` — same source, no
+resizing/effects applied here beyond scale.
+
 ## From Unsplash
 
 Licensed under the [Unsplash License](https://unsplash.com/license): free to

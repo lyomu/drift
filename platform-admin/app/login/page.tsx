@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -81,8 +82,7 @@ export default function LoginPage() {
       <section className="flex w-full max-w-[1320px] overflow-hidden rounded-[24px] bg-white shadow-[0_22px_68px_rgba(17,24,39,0.12)] max-lg:max-w-[760px] max-lg:flex-col lg:h-[calc(100vh-48px)] lg:max-h-[760px] lg:min-h-[620px]">
         <aside className="relative min-h-[300px] flex-1 overflow-hidden bg-[#0F1725] p-7 text-white lg:min-h-0">
           <div className="flex items-center gap-2.5">
-            <MaterialIcon name="sports_tennis" className="text-[24px]" />
-            <span className="font-display text-[17px] font-extrabold">Drift</span>
+            <Image src="/images/drift-icon.png" alt="Drift" width={192} height={178} className="h-6 w-auto" />
           </div>
 
           <div className="absolute inset-x-7 top-1/2 hidden -translate-y-1/2 flex-col items-center justify-center text-center text-[#C7D2E5]/20 lg:flex">

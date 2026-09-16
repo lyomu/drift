@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useClub } from "@/lib/club-context";
@@ -109,9 +110,7 @@ export function Sidebar({
   return (
     <aside className="sticky top-0 hidden h-screen w-[264px] shrink-0 flex-col border-r border-drift-border bg-drift-surface px-4 py-6 sm:flex">
       <div className="flex flex-col px-2 pb-5">
-        <div className="font-display text-[19px] font-extrabold text-drift-text-primary">
-          Drift
-        </div>
+        <Image src="/images/drift-icon.png" alt="Drift" width={192} height={178} className="h-6 w-auto" />
         <div className="mt-2.5 truncate text-sm font-bold text-drift-text-primary">
           {clubName ?? "-"}
         </div>
