@@ -3,7 +3,7 @@ FROM node:24-bookworm-slim AS build
 WORKDIR /app
 ENV NODE_ENV=development
 ARG NEXT_PUBLIC_API_URL
-ARG NEXT_PUBLIC_BASE_PATH=/platform
+ARG NEXT_PUBLIC_BASE_PATH=
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_BASE_PATH=$NEXT_PUBLIC_BASE_PATH
 
@@ -20,7 +20,6 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3011
 ENV HOSTNAME=0.0.0.0
-ENV NEXT_PUBLIC_BASE_PATH=/platform
 
 COPY --from=build /app/.next/standalone ./
 COPY --from=build /app/.next/static ./.next/static
