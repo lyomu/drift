@@ -1,6 +1,6 @@
 name: Release images
 
-# Builds the three deployable images and publishes them to GHCR.
+# Builds the four deployable images and publishes them to GHCR.
 #
 # Why this exists (tracker 5.2): today a human SSHes to the production box and
 # runs `docker compose build` there, against 3.7 GB of RAM shared with Postgres,
@@ -48,7 +48,10 @@ jobs:
             build_args: "api_url"
           - image: drift-platform-admin
             context: platform-admin
-            build_args: "api_url_and_base_path"
+            build_args: "api_url"
+          - image: drift-website
+            context: website
+            build_args: ""
     steps:
       - name: Check out repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
@@ -90,16 +93,13 @@ jobs:
           # connect-src at build time (see club-admin/next.config.ts), so this is
           # not a runtime setting — an image built with the wrong value has to be
           # rebuilt, not reconfigured.
-          API_URL: ${{ inputs.api_url || vars.PUBLIC_API_URL || 'https://drift.einsbrand.com/api' }}
+          API_URL: ${{ inputs.api_url || vars.PUBLIC_API_URL || 'https://api.driftsports.app' }}
         run: |
           set -euo pipefail
           args=""
           case "${{ matrix.build_args }}" in
             api_url)
               args="--build-arg NEXT_PUBLIC_API_URL=${API_URL}"
-              ;;
-            api_url_and_base_path)
-              args="--build-arg NEXT_PUBLIC_API_URL=${API_URL} --build-arg NEXT_PUBLIC_BASE_PATH=/platform"
               ;;
           esac
 
