@@ -7,6 +7,7 @@ import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/drift_back_header.dart';
 import '../../../shared/widgets/drift_pill.dart';
+import '../../../shared/widgets/drift_racket_icon.dart';
 import '../../../shared/widgets/drift_soft_card.dart';
 import '../application/coaches_providers.dart';
 import '../data/coaches_repository.dart';
@@ -116,11 +117,7 @@ class _CoachListScreenState extends ConsumerState<CoachListScreen> {
           padding: const EdgeInsets.fromLTRB(24, 64, 24, 24),
           child: Column(
             children: [
-              Icon(
-                Icons.sports_tennis_outlined,
-                size: 40,
-                color: colors.textSecondary,
-              ),
+              DriftRacketIcon(size: 40, color: colors.textSecondary),
               const SizedBox(height: 12),
               Text(
                 text,

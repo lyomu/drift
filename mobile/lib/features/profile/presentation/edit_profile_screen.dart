@@ -131,9 +131,10 @@ class _EditFormState extends ConsumerState<_EditForm> {
           ),
           const SizedBox(height: DriftSpacing.s6),
           Text('Playing hand', style: Theme.of(context).textTheme.labelLarge),
-          const SizedBox(height: DriftSpacing.s2),
+          const SizedBox(height: DriftSpacing.s3),
           Wrap(
-            spacing: DriftSpacing.s2,
+            spacing: DriftSpacing.s3,
+            runSpacing: DriftSpacing.s3,
             children: _dominantHands
                 .map(
                   (hand) => DriftFilterChip(

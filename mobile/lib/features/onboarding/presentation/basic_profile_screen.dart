@@ -22,16 +22,17 @@ const _dominantHands = [
 /// Basic Profile — `foundation/04-screen-inventory.md` A.2.
 ///
 /// Every field here is prefilled from `/users/me` when the account already
-/// knows it. That matters most for a Google or Apple sign-up: the provider's
-/// verified `given_name`/`family_name` are persisted at account creation
-/// (`AuthService.socialLogin`), so asking for the name again would be asking
-/// for something already on file. Prefilled rather than skipped — the fields
-/// stay editable, since the name on a Google account is not always the name
-/// someone plays under, and this step is needed for the playing hand
-/// regardless.
+/// knows it. Name comes from wherever the account was created: a Google/Apple
+/// sign-up's verified `given_name`/`family_name` (`AuthService.socialLogin`),
+/// or what was typed on the Sign Up screen for an email account
+/// (`AuthService.signUp`) — so asking again would be asking for something
+/// already on file either way. Prefilled rather than skipped — the fields
+/// stay editable, since the name given isn't always the name someone plays
+/// under, and this step is needed for the playing hand regardless.
 ///
-/// An email signup arrives with nothing known, so the fields simply start
-/// empty. One code path, no branching on provider.
+/// Phone is the one field that can still arrive empty — Sign Up leaves it
+/// optional, and a social sign-up never passes through Sign Up at all. One
+/// code path, no branching on provider.
 class BasicProfileScreen extends ConsumerWidget {
   const BasicProfileScreen({super.key});
 
@@ -165,9 +166,10 @@ class _BasicProfileFormState extends ConsumerState<_BasicProfileForm> {
           ),
           const SizedBox(height: DriftSpacing.s6),
           Text('Playing hand', style: Theme.of(context).textTheme.labelLarge),
-          const SizedBox(height: DriftSpacing.s2),
+          const SizedBox(height: DriftSpacing.s3),
           Wrap(
-            spacing: DriftSpacing.s2,
+            spacing: DriftSpacing.s3,
+            runSpacing: DriftSpacing.s3,
             children: _dominantHands
                 .map(
                   (hand) => DriftFilterChip(

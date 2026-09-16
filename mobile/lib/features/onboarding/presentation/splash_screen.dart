@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/network/dio_client.dart';
 import '../../../core/onboarding/onboarding_step_route.dart';
-import '../../../core/theme/drift_colors.dart';
 import '../../users/data/users_repository.dart';
 
 /// Brand moment + session check (`foundation/04-screen-inventory.md` A.1) —
@@ -67,12 +66,16 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<DriftColors>()!;
-
-    return Scaffold(
-      backgroundColor: colors.primary,
-      body: const Center(
-        child: Icon(Icons.sports_tennis_rounded, color: Colors.white, size: 56),
+    // White rather than the theme background: the mark is drawn for a light
+    // surface (a black shape sits on it) and doesn't hold up on colors.primary
+    // or a dark background.
+    return const Scaffold(
+      backgroundColor: Colors.white,
+      body: Center(
+        child: Image(
+          image: AssetImage('assets/images/branding/drift_logo.png'),
+          width: 160,
+        ),
       ),
     );
   }

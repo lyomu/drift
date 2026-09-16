@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useClub } from "@/lib/club-context";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -40,9 +41,7 @@ export function MobileNav({ clubName }: { clubName: string | null }) {
   return (
     <div className="flex items-center justify-between gap-3 border-b border-drift-border bg-drift-surface px-4 py-3 sm:hidden">
       <div className="min-w-0">
-        <div className="font-display text-sm font-extrabold text-drift-text-primary">
-          Drift
-        </div>
+        <Image src="/images/drift-icon.png" alt="Drift" width={192} height={178} className="h-5 w-auto" />
         <div className="truncate text-xs font-medium text-drift-text-secondary">
           {clubName ?? "-"}
         </div>

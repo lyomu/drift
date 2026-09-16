@@ -83,6 +83,8 @@ export class AuthService {
         data: {
           email: dto.email,
           passwordHash,
+          firstName: dto.firstName,
+          lastName: dto.lastName,
           // Optional and unverified: `phoneVerifiedAt` stays null. The flag is
           // only meaningful with a number, so it is written alongside one.
           ...(dto.phone

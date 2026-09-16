@@ -49,10 +49,6 @@ class _SubscriptionBody extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(DriftSpacing.s5),
       children: [
-        if (summary.sandbox) ...[
-          const BillingSandboxBanner(),
-          const SizedBox(height: DriftSpacing.s5),
-        ],
         DriftCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

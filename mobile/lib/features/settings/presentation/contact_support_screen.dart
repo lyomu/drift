@@ -9,7 +9,7 @@ import '../../../shared/widgets/drift_scaffold.dart';
 
 const _supportEmail = String.fromEnvironment(
   'DRIFT_SUPPORT_EMAIL',
-  defaultValue: 'drift@einsbrand.com',
+  defaultValue: 'court@driftsports.app',
 );
 
 /// Contact Support — `foundation/04-screen-inventory.md` §A.11. A `mailto:`

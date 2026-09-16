@@ -145,9 +145,10 @@ class _AddPracticeSessionScreenState
             ),
             const SizedBox(height: DriftSpacing.s4),
             Text('How did it feel?', style: type.label),
-            const SizedBox(height: DriftSpacing.s2),
+            const SizedBox(height: DriftSpacing.s3),
             Wrap(
-              spacing: DriftSpacing.s2,
+              spacing: DriftSpacing.s3,
+              runSpacing: DriftSpacing.s3,
               children: [
                 for (var i = 1; i <= 5; i++)
                   DriftFilterChip(

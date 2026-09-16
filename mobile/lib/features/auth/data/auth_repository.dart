@@ -61,6 +61,8 @@ class AuthRepository {
   Future<({String userId, String? devVerificationCode})> signUp({
     required String email,
     required String password,
+    required String firstName,
+    required String lastName,
     required bool acceptedAgePolicy,
     String? phone,
     bool phoneOnWhatsApp = false,
@@ -68,6 +70,8 @@ class AuthRepository {
     final data = await _post('/auth/signup', {
       'email': email,
       'password': password,
+      'firstName': firstName,
+      'lastName': lastName,
       'acceptedAgePolicy': acceptedAgePolicy,
       if (phone != null && phone.isNotEmpty) ...{
         'phone': phone,

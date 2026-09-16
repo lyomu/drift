@@ -147,15 +147,13 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
               DriftSpacing.s16,
             ),
             children: [
-              const BillingSandboxBanner(),
               if (_paymentError != null) ...[
-                const SizedBox(height: DriftSpacing.s4),
                 _PaymentFailure(
                   message: _paymentError!,
                   retry: _retryMethodId == null ? null : _retryPayment,
                 ),
+                const SizedBox(height: DriftSpacing.s5),
               ],
-              const SizedBox(height: DriftSpacing.s5),
               if (value.isEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(

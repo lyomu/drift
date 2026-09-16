@@ -6,6 +6,7 @@ import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/drift_card.dart';
+import '../../../shared/widgets/drift_icon.dart';
 import '../../../shared/widgets/drift_pill_tabs.dart';
 import '../../../shared/widgets/drift_scaffold.dart';
 import '../application/global_search_providers.dart';
@@ -115,7 +116,7 @@ class _SearchResultCard extends StatelessWidget {
         children: [
           CircleAvatar(
             backgroundColor: colors.primaryLight,
-            child: Icon(_iconFor(result.type), color: colors.primaryDark),
+            child: DriftIcon(_iconFor(result.type), color: colors.primaryDark),
           ),
           const SizedBox(width: DriftSpacing.s3),
           Expanded(

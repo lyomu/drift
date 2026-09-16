@@ -15,6 +15,7 @@
  * `locale` defaults to English because the legal routes (English-only, no
  * locale segment) render this header without knowing a locale.
  */
+import Image from "next/image";
 import Link from "next/link";
 
 import { LocaleSwitcher } from "./locale-switcher";
@@ -36,11 +37,10 @@ export function SiteHeader({
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
           <Link
             href={localeHref(locale, "/")}
-            className="brand-link flex shrink-0 items-center gap-2 text-lg font-bold text-[var(--color-text-primary)]"
+            className="brand-link flex shrink-0 items-center"
             aria-label="Drift Tennis, home"
           >
-            <BallMark />
-            Drift&nbsp;Tennis
+            <Image src="/images/logo.png" alt="" width={640} height={321} className="brand-mark h-8 w-auto" priority />
           </Link>
           <div className="flex shrink-0 items-center gap-5">
             <LocaleSwitcher current={locale} />
@@ -59,13 +59,8 @@ export function SiteHeader({
   return (
     <header className="header-enter sticky top-0 z-40 border-b border-[var(--color-border)] bg-[var(--color-surface)]/90 backdrop-blur-sm">
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4 sm:px-6">
-        <a
-          href="#top"
-          className="brand-link flex shrink-0 items-center gap-2 text-lg font-bold text-[var(--color-text-primary)]"
-          aria-label="Drift Tennis, home"
-        >
-          <BallMark />
-          Drift&nbsp;Tennis
+        <a href="#top" className="brand-link flex shrink-0 items-center" aria-label="Drift Tennis, home">
+          <Image src="/images/logo.png" alt="" width={640} height={321} className="brand-mark h-8 w-auto" priority />
         </a>
 
         <nav aria-label={t.header.sectionsAria} className="ml-auto hidden lg:block">
@@ -147,27 +142,5 @@ export function SiteHeader({
         </ul>
       </nav>
     </header>
-  );
-}
-
-/** A small tennis-ball mark: brand-light disc, primary seam curves. */
-export function BallMark({ size = 28 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 28 28"
-      fill="none"
-      aria-hidden="true"
-      className="brand-mark"
-    >
-      <circle cx="14" cy="14" r="13" fill="var(--color-primary)" />
-      <path
-        d="M4.5 6.5c5 3 5 12 0 15M23.5 6.5c-5 3-5 12 0 15"
-        stroke="#ffffff"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-    </svg>
   );
 }

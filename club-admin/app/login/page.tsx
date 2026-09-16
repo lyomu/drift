@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { MaterialIcon } from "@/components/dashboard-design";
@@ -39,9 +40,7 @@ export default function LoginPage() {
     <main className="theme-light relative flex min-h-screen flex-col overflow-hidden border-t-[5px] border-[#1F1B16] bg-[#FBF7EE] text-[#111827]">
       <header className="relative z-10 flex items-start justify-between gap-6 px-6 py-6 sm:px-10 lg:px-[58px]">
         <Link href="/login" className="group inline-flex flex-col gap-2.5">
-          <span className="font-display text-[24px] font-extrabold leading-none text-[#111827]">
-            Drift
-          </span>
+          <Image src="/images/drift-icon.png" alt="Drift" width={192} height={178} className="h-7 w-auto" />
           <span className="h-[2px] w-[72px] bg-[#111827] transition group-hover:w-full" />
         </Link>
         <p className="hidden text-[14px] text-[#6B7280] sm:block">

@@ -6,6 +6,7 @@ import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/drift_card.dart';
+import '../../../shared/widgets/drift_racket_icon.dart';
 import '../../../shared/widgets/drift_scaffold.dart';
 import '../application/messaging_providers.dart';
 import '../data/messaging_repository.dart';
@@ -69,11 +70,7 @@ class _ConversationTile extends StatelessWidget {
                       child: Text(conversation.title, style: type.title),
                     ),
                     if (conversation.matchId != null)
-                      Icon(
-                        Icons.sports_tennis,
-                        size: 15,
-                        color: colors.textSecondary,
-                      ),
+                      DriftRacketIcon(size: 15, color: colors.textSecondary),
                   ],
                 ),
                 if (preview != null) ...[

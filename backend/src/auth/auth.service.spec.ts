@@ -120,6 +120,8 @@ describe('AuthService', () => {
       const result = await service.signUp({
         email: 'a@test.com',
         password: 'password123',
+        firstName: 'Ana',
+        lastName: 'Ricci',
         acceptedAgePolicy: true,
       });
 
@@ -127,6 +129,8 @@ describe('AuthService', () => {
         expect.objectContaining({
           data: expect.objectContaining({
             email: 'a@test.com',
+            firstName: 'Ana',
+            lastName: 'Ricci',
             agePolicyAcceptedAt: expect.any(Date),
           }),
         }),
@@ -143,6 +147,8 @@ describe('AuthService', () => {
         service.signUp({
           email: 'a@test.com',
           password: 'password123',
+          firstName: 'Ana',
+          lastName: 'Ricci',
           acceptedAgePolicy: true,
         }),
       ).rejects.toBeInstanceOf(ConflictException);
@@ -155,6 +161,8 @@ describe('AuthService', () => {
         service.signUp({
           email: 'a@test.com',
           password: 'password123',
+          firstName: 'Ana',
+          lastName: 'Ricci',
           acceptedAgePolicy: false as true,
         }),
       ).rejects.toBeInstanceOf(BadRequestException);

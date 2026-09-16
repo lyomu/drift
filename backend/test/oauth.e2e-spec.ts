@@ -66,7 +66,7 @@ describe('Social sign-in (e2e)', () => {
   async function createPasswordAccount(email: string, verify: boolean) {
     const res = await request(app.getHttpServer())
       .post('/auth/signup')
-      .send({ email, password, acceptedAgePolicy: true })
+      .send({ email, password, firstName: 'Test', lastName: 'User', acceptedAgePolicy: true })
       .expect(201);
 
     if (verify) {

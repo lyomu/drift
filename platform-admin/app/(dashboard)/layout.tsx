@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -237,7 +238,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="flex min-h-screen bg-drift-background">
       <aside className="hidden w-[264px] shrink-0 flex-col border-r border-drift-border bg-drift-surface px-4 py-6 lg:flex">
         <div className="px-2">
-          <div className="font-display text-[22px] font-bold leading-7 text-drift-primary">Drift</div>
+          <Image src="/images/drift-icon.png" alt="Drift" width={192} height={178} className="h-7 w-auto" />
           <div className="mt-1 text-sm font-bold text-drift-text-primary">Platform Admin</div>
           <div className="mt-4 flex items-center gap-3 rounded-xl border border-drift-border bg-drift-background p-2">
             <InitialsAvatar label={admin.name || admin.email} />
@@ -303,7 +304,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="flex min-w-0 flex-1 flex-col">
         <SiteHeader admin={admin} onSignOut={signOut} />
         <div className="border-b border-drift-border bg-drift-surface px-4 py-3 lg:hidden">
-          <div className="font-display text-lg font-bold text-drift-primary">Drift</div>
+          <Image src="/images/drift-icon.png" alt="Drift" width={192} height={178} className="h-6 w-auto" />
           <div className="text-xs font-bold text-drift-text-secondary">Platform Admin / {admin.role.name}</div>
         </div>
         <div className="flex items-center gap-2 border-b border-drift-border bg-drift-surface px-3 py-2 lg:hidden">
