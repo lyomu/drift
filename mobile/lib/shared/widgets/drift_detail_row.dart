@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/drift_colors.dart';
 import '../../core/theme/drift_spacing.dart';
 import '../../core/theme/drift_typography.dart';
+import 'drift_icon.dart';
 
 /// An icon-prefixed detail line — time, place, phone, etc. Promoted out of
 /// `DriftMatchCard`'s private `_Detail` widget in Phase M9, since Court
@@ -22,7 +23,7 @@ class DriftDetailRow extends StatelessWidget {
       padding: const EdgeInsets.only(top: DriftSpacing.s1),
       child: Row(
         children: [
-          Icon(icon, size: 15, color: colors.textSecondary),
+          DriftIcon(icon, size: 15, color: colors.textSecondary),
           const SizedBox(width: DriftSpacing.s2),
           Expanded(
             child: Text(

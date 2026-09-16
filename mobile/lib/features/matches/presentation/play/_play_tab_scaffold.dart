@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/drift_colors.dart';
 import '../../../../core/theme/drift_typography.dart';
+import '../../../../shared/widgets/drift_icon.dart';
 import '../../data/matches_repository.dart';
 
 /// Shared list body for the Play → Challenges / Active / History tabs:
@@ -68,7 +69,7 @@ class _Empty extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(8, 64, 8, 24),
       child: Column(
         children: [
-          Icon(icon, size: 40, color: colors.textSecondary),
+          DriftIcon(icon, size: 40, color: colors.textSecondary),
           const SizedBox(height: 12),
           Text(
             message,

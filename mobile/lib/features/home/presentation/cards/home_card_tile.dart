@@ -6,6 +6,7 @@ import '../../../../core/theme/drift_spacing.dart';
 import '../../../../core/theme/drift_typography.dart';
 import '../../../../shared/widgets/buttons/drift_button.dart';
 import '../../../../shared/widgets/drift_card.dart';
+import '../../../../shared/widgets/drift_icon.dart';
 import '../../data/home_repository.dart';
 import 'home_card_payloads.dart';
 
@@ -67,7 +68,7 @@ class HomeCardTile extends StatelessWidget {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(_iconFor(card.type), size: 18, color: accent),
+                        DriftIcon(_iconFor(card.type), size: 18, color: accent),
                         const SizedBox(width: DriftSpacing.s2),
                         Expanded(
                           child: Text(

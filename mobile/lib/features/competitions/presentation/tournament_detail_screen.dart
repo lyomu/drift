@@ -6,6 +6,7 @@ import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
+import '../../../shared/widgets/drift_racket_icon.dart';
 import '../../../shared/widgets/drift_scaffold.dart';
 import '../data/expansion_repository.dart';
 
@@ -81,8 +82,7 @@ class TournamentDetailScreen extends ConsumerWidget {
                             ),
                           ),
                           if (f.matchId != null)
-                            Icon(
-                              Icons.sports_tennis,
+                            DriftRacketIcon(
                               size: 16,
                               color: colors.textSecondary,
                             ),

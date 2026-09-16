@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/drift_colors.dart';
+import 'drift_icon.dart';
 import 'drift_pill.dart';
 
 /// Rounded-square tinted icon container — the redesign's recurring "list row"
@@ -44,7 +45,7 @@ class DriftIconTile extends StatelessWidget {
         color: bg,
         borderRadius: BorderRadius.circular(radius),
       ),
-      child: Icon(icon, size: size * 0.52, color: fg),
+      child: DriftIcon(icon, size: size * 0.52, color: fg),
     );
   }
 }

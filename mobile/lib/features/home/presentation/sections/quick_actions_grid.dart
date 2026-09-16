@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/drift_colors.dart';
 import '../../../../core/theme/drift_typography.dart';
+import '../../../../shared/widgets/drift_icon.dart';
 import '../../../../shared/widgets/drift_section_header.dart';
 import '../../../../shared/widgets/drift_soft_card.dart';
 
@@ -100,7 +101,7 @@ class _QuickActionTile extends StatelessWidget {
               color: action.color,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(action.icon, color: Colors.white, size: 22),
+            child: DriftIcon(action.icon, color: Colors.white, size: 22),
           ),
           Text(
             action.label,

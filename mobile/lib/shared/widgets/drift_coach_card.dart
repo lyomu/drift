@@ -6,6 +6,7 @@ import '../../core/theme/drift_spacing.dart';
 import '../../core/theme/drift_typography.dart';
 import '../../features/coaches/data/coaches_repository.dart';
 import 'drift_card.dart';
+import 'drift_racket_icon.dart';
 import 'drift_status_badge.dart';
 
 class DriftCoachCard extends StatelessWidget {
@@ -30,7 +31,7 @@ class DriftCoachCard extends StatelessWidget {
             radius: 26,
             backgroundImage: photoUrl == null ? null : NetworkImage(photoUrl),
             child: photoUrl == null
-                ? const Icon(Icons.sports_tennis_outlined)
+                ? const DriftRacketIcon()
                 : null,
           ),
           const SizedBox(width: DriftSpacing.s3),

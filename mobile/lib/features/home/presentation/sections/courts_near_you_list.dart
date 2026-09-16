@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/drift_colors.dart';
 import '../../../../core/theme/drift_typography.dart';
 import '../../../../shared/widgets/drift_pill.dart';
+import '../../../../shared/widgets/drift_racket_icon.dart';
 import '../../../../shared/widgets/drift_section_header.dart';
 import '../../../../shared/widgets/drift_soft_card.dart';
 import '../../../courts/data/courts_repository.dart';
@@ -56,11 +57,7 @@ class CourtsNearYouSection extends StatelessWidget {
                         color: colors.primaryLight,
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Icon(
-                        Icons.sports_tennis,
-                        size: 18,
-                        color: colors.primary,
-                      ),
+                      child: DriftRacketIcon(size: 18, color: colors.primary),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
