@@ -66,6 +66,14 @@ export class UpsertPaymentPlanDto {
   @IsInt()
   @Min(0)
   sortOrder?: number;
+
+  // Groups currency variants of the same tier for display in Club Admin —
+  // e.g. "CLUB_PRO_USD" and "CLUB_PRO_KES" both carry groupCode "CLUB_PRO" so
+  // the console offers one card with a currency choice. Purely cosmetic.
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  groupCode?: string | null;
 }
 
 export class RefundTransactionDto {

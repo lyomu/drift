@@ -1,9 +1,4 @@
-import {
-  BadRequestException,
-  Inject,
-  Injectable,
-  Logger,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import {
   BillingInterval,
   PaymentPlan,
@@ -11,8 +6,7 @@ import {
   PromotionDiscountType,
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { PAYMENT_PROVIDER } from './payment-provider';
-import type { PaymentProvider } from './payment-provider';
+import { PaymentProviderResolver } from './payment-provider.resolver';
 
 /**
  * Keeps our plans and the hosted provider's plans in step.
@@ -23,7 +17,8 @@ import type { PaymentProvider } from './payment-provider';
  * service is what mints each one at most once and reuses it afterwards.
  *
  * Every method is inert on a direct provider (the sandbox), so a deployment
- * with no IntaSend key behaves exactly as it did before.
+ * with no real provider key configured for a plan's currency behaves exactly
+ * as it did before either hosted provider existed.
  */
 @Injectable()
 export class ProviderPlanService {
@@ -31,11 +26,12 @@ export class ProviderPlanService {
 
   constructor(
     private readonly prisma: PrismaService,
-    @Inject(PAYMENT_PROVIDER) private readonly provider: PaymentProvider,
+    private readonly providers: PaymentProviderResolver,
   ) {}
 
-  get hosted(): boolean {
-    return this.provider.mode === 'hosted';
+  /** Whether this currency currently routes to a real, configured provider. */
+  isBillable(currency: string): boolean {
+    return this.providers.resolve(currency) !== null;
   }
 
   /**
@@ -98,8 +94,8 @@ export class ProviderPlanService {
     plan: PaymentPlan,
     promotion: Promotion | null,
   ): Promise<string | null> {
-    if (this.provider.mode !== 'hosted') return null;
-    const provider = this.provider;
+    const provider = this.providers.resolve(plan.currency);
+    if (!provider || provider.mode !== 'hosted') return null;
 
     const amountMinor = this.discountedAmountMinor(plan, promotion);
     const existing = await this.prisma.providerPlan.findUnique({
@@ -117,16 +113,23 @@ export class ProviderPlanService {
         existing.amountMinor !== amountMinor ||
         existing.currency !== plan.currency
       ) {
-        await provider.updatePlan(existing.providerPlanId, {
-          name: this.providerPlanName(plan, promotion),
-          amountMinor,
-          currency: plan.currency,
-          interval: this.interval(plan.interval),
-        });
+        // May come back a different id than existing.providerPlanId — Paddle
+        // mints a new price rather than editing amount in place. Whatever
+        // comes back is what gets billed against from here on.
+        const providerPlanId = await provider.updatePlan(
+          existing.providerPlanId,
+          {
+            name: this.providerPlanName(plan, promotion),
+            amountMinor,
+            currency: plan.currency,
+            interval: this.interval(plan.interval),
+          },
+        );
         await this.prisma.providerPlan.update({
           where: { id: existing.id },
-          data: { amountMinor, currency: plan.currency },
+          data: { providerPlanId, amountMinor, currency: plan.currency },
         });
+        return providerPlanId;
       }
       return existing.providerPlanId;
     }
@@ -163,11 +166,15 @@ export class ProviderPlanService {
   async syncPlan(
     plan: PaymentPlan,
   ): Promise<{ synced: number; failed: number; attempted: boolean }> {
-    if (this.provider.mode !== 'hosted') {
+    const provider = this.providers.resolve(plan.currency);
+    if (!provider || provider.mode !== 'hosted') {
       return { synced: 0, failed: 0, attempted: false };
     }
-    const provider = this.provider;
 
+    // Scoped to this plan's current provider: a plan repriced into a
+    // different currency after an earlier reprice may have left rows behind
+    // for a provider it no longer routes to, and those are no longer this
+    // plan's business to sync.
     const rows = await this.prisma.providerPlan.findMany({
       where: { planId: plan.id, provider: provider.name },
       include: { promotion: true },
@@ -178,7 +185,7 @@ export class ProviderPlanService {
     for (const row of rows) {
       try {
         const amountMinor = this.discountedAmountMinor(plan, row.promotion);
-        await provider.updatePlan(row.providerPlanId, {
+        const providerPlanId = await provider.updatePlan(row.providerPlanId, {
           name: this.providerPlanName(plan, row.promotion),
           amountMinor,
           currency: plan.currency,
@@ -186,7 +193,7 @@ export class ProviderPlanService {
         });
         await this.prisma.providerPlan.update({
           where: { id: row.id },
-          data: { amountMinor, currency: plan.currency },
+          data: { providerPlanId, amountMinor, currency: plan.currency },
         });
         synced += 1;
       } catch (error) {
@@ -199,24 +206,33 @@ export class ProviderPlanService {
     return { synced, failed, attempted: true };
   }
 
-  /** Stop a mandate at the provider. Inert when nothing is hosted. */
-  async cancel(providerReference: string | null): Promise<boolean> {
-    if (this.provider.mode !== 'hosted' || !providerReference) return false;
-    await this.provider.cancelSubscription(providerReference);
+  /** Stop a mandate at the provider that actually issued it. Inert when the
+   * mandate was never hosted, or the provider that held it isn't configured. */
+  async cancel(input: {
+    providerName: string | null;
+    providerReference: string | null;
+  }): Promise<boolean> {
+    if (!input.providerReference) return false;
+    const provider = this.providers.byName(input.providerName);
+    if (!provider || provider.mode !== 'hosted') return false;
+    await provider.cancelSubscription(input.providerReference);
     return true;
   }
 
-  /** Move money back. Inert when nothing is hosted or no charge id was captured. */
+  /** Move money back through the provider that took it. Inert when the charge
+   * was never hosted, its provider isn't configured, or no per-charge id was
+   * ever captured. */
   async refund(input: {
+    providerName: string | null;
     providerInvoiceId: string | null;
     amountMinor: number;
     reason: string;
     reasonDetails?: string | null;
   }): Promise<{ reference: string } | null> {
-    if (this.provider.mode !== 'hosted' || !input.providerInvoiceId) {
-      return null;
-    }
-    return this.provider.refund({
+    if (!input.providerInvoiceId) return null;
+    const provider = this.providers.byName(input.providerName);
+    if (!provider || provider.mode !== 'hosted') return null;
+    return provider.refund({
       providerInvoiceId: input.providerInvoiceId,
       amountMinor: input.amountMinor,
       reason: input.reason,

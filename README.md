@@ -13,6 +13,7 @@ backend API, and the product/design foundation docs.
 | `backend/`       | NestJS + Prisma + PostgreSQL | REST API, auth, payments, home feed, competitions, admin services. |
 | `club-admin/`    | Next.js (App Router)         | Club-level admin console (members, courts, events, billing, etc.). |
 | `platform-admin/`| Next.js (App Router)         | Platform operator console (tenant/club management, moderation).    |
+| `website/`       | Next.js (App Router)         | Public marketing/landing site (player-first, clubs secondary).     |
 | `foundation/`    | Markdown                     | Product strategy, IA, user journeys, screen inventory, design system, architecture, roadmap. |
 
 Additional working notes live in `PROGRESS.md`, `HANDOVER.md`, `PENDING-SCREENS.md`,

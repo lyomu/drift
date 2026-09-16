@@ -20,6 +20,9 @@ export type CommercialPlan = {
   isActive: boolean;
   isTest: boolean;
   sortOrder: number;
+  /** Groups currency variants of the same tier for display in Club Admin —
+   * e.g. "CLUB_PRO_USD" and "CLUB_PRO_KES" both carry groupCode "CLUB_PRO". */
+  groupCode: string | null;
   subscriptionCounts: Partial<Record<BillingSubscriptionStatus, number>>;
 };
 

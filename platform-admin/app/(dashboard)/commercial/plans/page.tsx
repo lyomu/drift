@@ -27,6 +27,7 @@ type PlanForm = {
   isActive: boolean;
   isTest: boolean;
   sortOrder: string;
+  groupCode: string;
 };
 
 const EMPTY_FORM: PlanForm = {
@@ -41,6 +42,7 @@ const EMPTY_FORM: PlanForm = {
   isActive: true,
   isTest: false,
   sortOrder: "0",
+  groupCode: "",
 };
 
 function formFromPlan(plan: CommercialPlan): PlanForm {
@@ -56,6 +58,7 @@ function formFromPlan(plan: CommercialPlan): PlanForm {
     isActive: plan.isActive,
     isTest: plan.isTest,
     sortOrder: String(plan.sortOrder),
+    groupCode: plan.groupCode ?? "",
   };
 }
 
@@ -163,6 +166,7 @@ export default function CommercialPlansPage() {
       isActive: form.isActive,
       isTest: form.isTest,
       sortOrder: Number(form.sortOrder || 0),
+      groupCode: form.groupCode.trim() || null,
     };
     if (editing?.isActive && !payload.isActive && (editing.subscriptionCounts.ACTIVE ?? 0) > 0) {
       const confirmed = window.confirm(`Deactivate ${editing.name} while ${editing.subscriptionCounts.ACTIVE} active subscriptions still reference it? Existing subscription history will remain attached to this plan.`);
@@ -270,7 +274,7 @@ export default function CommercialPlansPage() {
             <tbody>
               {visiblePlans.map((plan) => (
                 <tr key={plan.id}>
-                  <Td><div className="font-semibold">{plan.name}</div><div className="text-xs text-drift-text-secondary">{plan.code}</div></Td>
+                  <Td><div className="font-semibold">{plan.name}</div><div className="text-xs text-drift-text-secondary">{plan.code}{plan.groupCode ? ` · group: ${plan.groupCode}` : ""}</div></Td>
                   <Td>{label(plan.audience)}</Td>
                   <Td>{money(plan.priceMinor, plan.currency)}<div className="text-xs text-drift-text-secondary">{label(plan.interval).toLowerCase()}</div></Td>
                   <Td><div className="flex flex-wrap gap-1.5"><Badge tone={statusTone(plan.isActive ? "ACTIVE" : "INACTIVE")}>{plan.isActive ? "Active" : "Inactive"}</Badge>{plan.isTest && <Badge tone="info">Test</Badge>}</div></Td>
@@ -316,7 +320,20 @@ export default function CommercialPlansPage() {
               <Field label="Amount, minor units"><Input required type="number" min={0} value={form.priceMinor} onChange={(event) => setForm((current) => ({ ...current, priceMinor: event.target.value }))} /></Field>
             </div>
             <Field label="Entitlements"><Textarea rows={4} value={form.entitlementsText} onChange={(event) => setForm((current) => ({ ...current, entitlementsText: event.target.value }))} placeholder="One entitlement per line" /></Field>
-            <Field label="Sort order"><Input type="number" min={0} value={form.sortOrder} onChange={(event) => setForm((current) => ({ ...current, sortOrder: event.target.value }))} /></Field>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Sort order"><Input type="number" min={0} value={form.sortOrder} onChange={(event) => setForm((current) => ({ ...current, sortOrder: event.target.value }))} /></Field>
+              <Field label="Group code (optional)">
+                <Input
+                  value={form.groupCode}
+                  onChange={(event) => setForm((current) => ({ ...current, groupCode: event.target.value }))}
+                  placeholder="e.g. CLUB_PRO"
+                />
+              </Field>
+            </div>
+            <p className="-mt-2 text-xs text-drift-text-secondary">
+              Plans sharing a group code render as one card with a currency
+              choice in Club Admin, instead of two separate plans.
+            </p>
             <label className="flex items-center gap-2 text-sm font-semibold text-drift-text-primary"><input type="checkbox" checked={form.isActive} onChange={(event) => setForm((current) => ({ ...current, isActive: event.target.checked }))} /> Active</label>
             <label className="flex items-center gap-2 text-sm font-semibold text-drift-text-primary"><input type="checkbox" checked={form.isTest} onChange={(event) => setForm((current) => ({ ...current, isTest: event.target.checked }))} /> Test plan</label>
             <div className="flex justify-end gap-2">

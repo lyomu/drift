@@ -22,6 +22,18 @@ export function validateEnvironment(
     );
   }
 
+  // Paddle keys don't self-identify sandbox vs production the way IntaSend's
+  // key prefix does — that's an explicit switch instead, so the same "live
+  // key under the test runner" mistake is checked against it directly.
+  if (
+    environment.PADDLE_ENVIRONMENT === 'production' &&
+    environment.NODE_ENV === 'test'
+  ) {
+    throw new Error(
+      'PADDLE_ENVIRONMENT=production and NODE_ENV=test. Leave PADDLE_ENVIRONMENT unset (defaults to sandbox) for tests.',
+    );
+  }
+
   if (environment.NODE_ENV !== 'production') {
     return environment;
   }
@@ -36,6 +48,18 @@ export function validateEnvironment(
   ) {
     throw new Error(
       'INTASEND_SECRET_KEY is set but INTASEND_WEBHOOK_CHALLENGE is missing; payment confirmations could not be verified.',
+    );
+  }
+
+  // Same reasoning, same failure mode, for Paddle's signed webhook.
+  const paddleKey = environment.PADDLE_API_KEY;
+  if (
+    typeof paddleKey === 'string' &&
+    paddleKey.length > 0 &&
+    typeof environment.PADDLE_WEBHOOK_SECRET !== 'string'
+  ) {
+    throw new Error(
+      'PADDLE_API_KEY is set but PADDLE_WEBHOOK_SECRET is missing; payment confirmations could not be verified.',
     );
   }
 

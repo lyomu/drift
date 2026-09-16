@@ -1,69 +1,86 @@
-# Drift Tennis staging deployment
+# Drift Tennis production deployment
 
-Target server: `135.181.146.130` · primary name: `drift.einsbrand.com` (since 2026-09-02)
+Target: the shared box `46.225.106.43` (Hetzner, Nuremberg — also hosts
+RetailFlow and harusi-ke prod). Primary domain: `driftsports.app`.
 
-The deployment is reachable under its real domain with a normal 90-day Let's Encrypt
-certificate. The original bare-IP vhost is kept as `default_server` alongside it so
-preview APKs compiled with the old IP URL keep working until the next mobile rebuild
-— the IP certificate still renews on its own timer.
+This replaces an earlier trial deployment on a now-deleted dedicated box
+(`135.181.146.130` / `drift.einsbrand.com`). Nothing from that deployment
+carries over — different host, different domain, different routing shape
+(subdomains instead of path prefixes).
+
+See `devops-infra/docs/SHARED_BOX_ADD_PRODUCT_RUNBOOK.md` for the general
+shared-box onboarding process this deployment follows, and
+`devops-infra/docs/SHARED_BOX_CAPACITY.md` for the memory budget this
+product's `mem_limit`s were sized against.
 
 ## Public routes
 
-| Route | Service |
-|---|---|
-| `https://drift.einsbrand.com/` | Club Admin |
-| `https://drift.einsbrand.com/platform` | Platform Admin |
-| `https://drift.einsbrand.com/api/` | NestJS API |
-| `https://drift.einsbrand.com/socket.io/` | Socket.IO gateway |
-| `https://135.181.146.130/…` | same services, IP vhost (legacy fallback) |
+| Route | Service | Port |
+|---|---|---|
+| `https://driftsports.app/` (and `www.`) | Website (landing page) | `127.0.0.1:3008` |
+| `https://admin.driftsports.app/` | Club Admin | `127.0.0.1:3006` |
+| `https://platform.driftsports.app/` | Platform Admin | `127.0.0.1:3007` |
+| `https://api.driftsports.app/` | NestJS API | `127.0.0.1:3005` |
+| `https://api.driftsports.app/socket.io/` | Socket.IO gateway | `127.0.0.1:3005` |
 
-Both admin surfaces are protected with HTTP basic auth at Nginx. The API and
-Socket.IO routes are not basic-auth protected so browser/mobile clients can call
-them normally. Plain HTTP 80 redirects to HTTPS on both vhosts.
+`admin.` and `platform.` are protected with HTTP basic auth at nginx — the
+security review (`SECURITY_REVIEW.md`) is still a conditional NO-GO on a few
+open items (Android key rotation, an endpoint-by-endpoint authz matrix), so
+staff-facing surfaces keep this extra layer even though the product itself
+is now public. The website and API are not basic-auth protected: the
+website is public marketing content and the API serves the mobile app and
+browser clients directly, neither of which can answer a credential prompt.
 
-## Server setup
+## Server-side isolation
 
-Initial root provisioning:
+Provisioned per `SHARED_BOX_ADD_PRODUCT_RUNBOOK.md` §4 — a `drift-deploy`
+user confined to `/srv/drift`, unable to read or write RetailFlow's or
+harusi-ke's files, with sudo limited to exactly `nginx -t` and
+`nginx -s reload`. Run once, as root:
 
 ```bash
-cd /srv/drift/app
+cd /srv/drift/prod
 bash scripts/provision-server.sh
 ```
 
-The provisioner creates:
+This creates `drift-deploy`, `/srv/drift/prod`, and the scoped sudoers
+entry. It does **not** install Docker/nginx/certbot/UFW or create swap —
+those are already provisioned box-wide for RetailFlow and harusi-ke, and
+re-bootstrapping them here would touch a shared, live setup. Swap and the
+Drift-specific Postgres backup cron are provisioned separately, once, by
+root — see the runbook's §1.1/§1.4.
 
-- a 4 GB swapfile;
-- Docker CE with the Compose plugin;
-- Nginx, Certbot, UFW, unattended upgrades, and `apache2-utils`;
-- `/srv/drift`, owned by `drift-deploy`;
-- a narrow sudoers file allowing `drift-deploy` to run only `nginx -t` and
-  `nginx -s reload`;
-- UFW rules for only `22`, `80`, and `443`.
+Verify isolation before trusting it:
+
+```bash
+sudo -u deploy ls /srv/drift            # must fail: Permission denied
+sudo -u drift-deploy ls /srv/harusi-ke  # must fail: Permission denied
+```
 
 ## Environment file
 
-Create `/srv/drift/app/.env.production` on the server. Keep it server-local and
-mode `600`.
+Create `/srv/drift/prod/.env.production` on the box (mode `600`):
 
 ```bash
 POSTGRES_DB=drift_tennis
 POSTGRES_USER=drift
 POSTGRES_PASSWORD=<generate-a-strong-password>
 
-PUBLIC_API_URL=https://135.181.146.130/api
+PUBLIC_API_URL=https://api.driftsports.app
 
 JWT_SECRET=<openssl rand -hex 32>
 JWT_ACCESS_TTL=15m
 JWT_REFRESH_TTL=30d
 PLATFORM_ADMIN_JWT_TTL=2h
-PLATFORM_ADMIN_WEB_URL=https://135.181.146.130/platform
-CLUB_ADMIN_URL=https://135.181.146.130
-CORS_ALLOWED_ORIGINS=https://135.181.146.130
+PLATFORM_ADMIN_WEB_URL=https://platform.driftsports.app
+CLUB_ADMIN_URL=https://admin.driftsports.app
+CORS_ALLOWED_ORIGINS=https://admin.driftsports.app,https://platform.driftsports.app
 
 NEWS_FEED_ALLOWED_HOSTS=feeds.bbci.co.uk,www.atptour.com
 
-# Transactional email (see "Email / SMTP" below). Leave SMTP_HOST unset to keep
-# the pre-mailer behaviour (dev console codes / PENDING_PROVIDER in production).
+# Transactional email keeps sending from the already-verified einsbrand.com
+# relay — driftsports.app publishes only a sender-less SPF/DMARC (see below),
+# it does not send its own mail.
 SMTP_HOST=mail.einsbrand.com
 SMTP_PORT=465
 SMTP_USER=drift@einsbrand.com
@@ -71,245 +88,202 @@ SMTP_PASS=
 MAIL_FROM=Drift Tennis <drift@einsbrand.com>
 ```
 
-`PUBLIC_API_URL` is baked into both Next.js builds and their CSP headers, so it
-must be correct before `docker compose build` runs.
+`PUBLIC_API_URL` is baked into both consoles' Next.js builds and their CSP
+headers at **build time**, not read at runtime — the image build stage
+(local or Jenkins) needs it, not just this file. The website takes no build
+args; it makes no API calls.
 
-**Domain migration note (2026-09-02):** the box's `.env.production` still carries
-the `135.181.146.130` URLs above. nginx now terminates both the domain and the IP
-vhost, so nothing is broken, but the next full rebuild should move these four URL
-variables to `drift.einsbrand.com` (and add it to `CORS_ALLOWED_ORIGINS`) so
-CSPs, links, and email-bound URLs use the real identity.
+The same values also go into the `drift-prod-env-file` Jenkins credential
+(see below) so a Jenkins-driven deploy and a manual one use identical
+config.
 
-## DNS records for email deliverability
+## DNS records
 
-These live in the `einsbrand.com` zone, not in this repo. They are recorded here
-because a record that exists only in someone's memory is a record that gets lost.
+All A records 600s TTL, all pointed at `46.225.106.43`:
 
-**SPF — already published, no action.** Verified 2026-09-02 and again 2026-09-03:
+| Host | Type | Value |
+|---|---|---|
+| `driftsports.app` | A | `46.225.106.43` |
+| `www.driftsports.app` | A | `46.225.106.43` |
+| `admin.driftsports.app` | A | `46.225.106.43` |
+| `platform.driftsports.app` | A | `46.225.106.43` |
+| `api.driftsports.app` | A | `46.225.106.43` |
 
-```
-einsbrand.com  TXT  "v=spf1 +a +mx +ip4:84.16.229.230 include:relay.mailbaby.net +ip4:178.162.196.44 +ip4:167.235.180.68 +ip4:207.180.237.29 ~all"
-```
+Plus two records that publish **no mail sender** for this domain (email
+keeps riding on `einsbrand.com` — see above), so `driftsports.app` can't be
+spoofed as a From address just because it's otherwise undefended:
 
-`MAIL_FROM` sends as `drift@einsbrand.com`, so the From domain is the org domain
-the SPF record covers and relaxed alignment holds. No separate SPF record is
-needed for `drift.einsbrand.com` — nothing sends as a subdomain address.
+| Host | Type | Value |
+|---|---|---|
+| `driftsports.app` | TXT | `v=spf1 -all` |
+| `_dmarc.driftsports.app` | TXT | `v=DMARC1; p=reject; rua=mailto:drift@einsbrand.com` |
 
-**DMARC — publish this.** As of 2026-09-03 `_dmarc.einsbrand.com` does not
-resolve, so no DMARC policy is in force at all:
-
-| Field | Value |
-|---|---|
-| Type | `TXT` |
-| Host / name | `_dmarc` (FQDN `_dmarc.einsbrand.com`) |
-| TTL | `3600` |
-| Value | `v=DMARC1; p=none; rua=mailto:drift@einsbrand.com` |
-
-`p=none` is deliberate for the first pass. DMARC passes when SPF **or** DKIM
-aligns; SPF alignment looks correct but DKIM signing on `mail.einsbrand.com` is
-unconfirmed, and publishing an enforcing policy against an unverified setup sends
-signup-verification and password-reset mail to spam with no error anywhere. `none`
-puts the record in place and starts the reports; tighten once the reports prove
-alignment. One DMARC record on the org domain also covers subdomains, so
-`drift.einsbrand.com` needs nothing of its own.
-
-Verify after publishing (allow for the TTL):
+`p=reject` is safe here immediately (unlike `einsbrand.com`'s `p=none`
+staging period) because this domain has zero legitimate senders to
+accidentally break. No DKIM record — nothing signs mail as
+`@driftsports.app`. Verify after publishing:
 
 ```bash
-nslookup -type=TXT _dmarc.einsbrand.com 8.8.8.8
+nslookup -type=TXT driftsports.app 8.8.8.8
+nslookup -type=TXT _dmarc.driftsports.app 8.8.8.8
 ```
 
-Then, after ~2 weeks of aggregate reports showing SPF/DKIM aligned on every
-legitimate source, raise the policy — `p=quarantine`, and later `p=reject`.
+## Nginx and TLS
 
-**DKIM — check, then act.** Whether `mail.einsbrand.com` signs outbound is a
-mail-server question, not a repo one. To find out, open any mail Drift sent and
-read its headers: a `DKIM-Signature:` line names the selector in `s=`. If it is
-there, publish the matching `<selector>._domainkey.einsbrand.com` record the mail
-server generated. If there is no such header, the server is not signing and DMARC
-rests on SPF alone — survivable, but it means forwarded mail (which breaks SPF)
-will fail DMARC once the policy is enforcing.
-
-## Nginx and IP certificate
-
-Bootstrap HTTP-only first:
+Bootstrap HTTP-only first, same two-phase pattern as every other vhost on
+this box:
 
 ```bash
-cp deploy/nginx/drift-ip-http.conf /etc/nginx/conf.d/drift-ip.conf
+cp deploy/nginx/driftsports.app.conf /etc/nginx/sites-available/driftsports.app
+# comment out every `listen 443` server block first — see the file's own header
+ln -s /etc/nginx/sites-available/driftsports.app /etc/nginx/sites-enabled/driftsports.app
 nginx -t
 systemctl reload nginx
 ```
 
-Issue a Let's Encrypt IP certificate. Certbot must be new enough to support
-`--ip-address` and `--preferred-profile shortlived`.
+Issue one certificate covering all five names:
 
 ```bash
-certbot certonly \
-  --preferred-profile shortlived \
-  --webroot \
-  --webroot-path /var/www/certbot \
-  --ip-address 135.181.146.130
+certbot certonly --webroot -w /var/www/certbot \
+  -d driftsports.app -d www.driftsports.app -d admin.driftsports.app \
+  -d platform.driftsports.app -d api.driftsports.app
 ```
 
-Then install the HTTPS vhost:
+Restore the commented-out `443` blocks, then:
 
 ```bash
-cp deploy/nginx/drift-ip-https.conf /etc/nginx/conf.d/drift-ip.conf
-chown drift-deploy:drift-deploy /etc/nginx/conf.d/drift-ip.conf
 nginx -t
 systemctl reload nginx
+chown drift-deploy:drift-deploy /etc/nginx/sites-available/driftsports.app
 ```
 
-IP certificates are short-lived, so verify renewal and add a deploy hook that
-reloads Nginx:
+Verify renewal (root's systemd certbot timer handles this; `drift-deploy`
+has no certbot sudo grant, deliberately — see the runbook's note on
+harusi-ke's TLS stage silently failing for a month):
 
 ```bash
-certbot renew --dry-run --no-random-sleep
-certbot reconfigure --cert-name 135.181.146.130 \
-  --deploy-hook "systemctl reload nginx"
+certbot renew --dry-run --cert-name driftsports.app --no-random-sleep
 ```
-
-Since 2026-09-02 the primary certificate is a normal 90-day one for
-`drift.einsbrand.com` (`certbot certonly --nginx -d drift.einsbrand.com`), with
-the same `renew_hook = systemctl reload nginx` in its renewal config — verify
-with `certbot renew --dry-run --cert-name drift.einsbrand.com --no-random-sleep`.
-The short-lived IP cert remains for the fallback vhost.
 
 ## Basic auth
 
-Create `/etc/nginx/.htpasswd-drift`:
-
 ```bash
-htpasswd -c /etc/nginx/.htpasswd-drift drift-preview
+htpasswd -c /etc/nginx/.htpasswd-drift <username>
 ```
 
-Store the password in the team's password manager. Do not commit it.
-
-## Staging test accounts
-
-The deploy only runs `prisma migrate deploy`, so test accounts must be
-bootstrapped separately. `scripts/staging/` (mirrored to
-`/srv/drift/app/scripts/` on the box) holds two idempotent helpers run inside
-the API container:
-
-```bash
-# create/update both accounts
-docker exec -i drift-api node - < /srv/drift/app/scripts/bootstrap-accounts.mjs
-
-# Club Admin — logs in directly
-#   https://135.181.146.130/  →  owner@drift.test / Password123!
-
-# Platform Admin — login always issues a 2FA challenge. The code is delivered by
-# email in production (delivery: "EMAIL"); SMTP_PASS must be set in
-# .env.production or the challenge reports 'PENDING_PROVIDER'.
-#   https://135.181.146.130/platform  →  admin@drift.test / DriftPlatform2026!
-```
-
-`set-2fa-code.mjs` is a stopgap until a real 2FA delivery provider exists;
-delete it and its doc row once email delivery lands.
-
-## Deploy
-
-Run as `drift-deploy` after root provisioning and env setup:
-
-```bash
-cd /srv/drift/app
-bash scripts/deploy.sh
-```
-
-The deploy script fast-forwards `master`, builds images on the box, runs
-`prisma migrate deploy`, starts the stack, and prints container status.
+Store the password in the team's password manager, and put the same
+username/password into the `drift-basic-auth` Jenkins credential (used by
+the pipeline's smoke tests). Do not commit either.
 
 ## Deploying a published image
 
-Building on the box is the default and still works, but it competes for RAM with
-the running stack and leaves nothing to roll back to — the whole of tracker 5.2.
-`.github/workflows/release.yml` publishes the three images to GHCR on every `v*`
-tag and on manual dispatch, tagged both with the release tag and with an
-immutable `sha-<12>` tag.
+This box **only ever runs a pinned, published image** — never builds on the
+box. Building here would compete for CPU/RAM with RetailFlow's and
+harusi-ke's live traffic and add to this box's disk churn from image layers,
+which is exactly what `SHARED_BOX_ADD_PRODUCT_RUNBOOK.md` §3 warns a shared
+host is vulnerable to.
 
-To run a published build instead of building locally, set the tag before the
-compose commands:
-
-```bash
-cd /srv/drift/app
-export DRIFT_IMAGE_TAG=sha-0123456789ab      # from the workflow run summary
-docker compose -f docker-compose.prod.yml --env-file .env.production pull
-docker compose -f docker-compose.prod.yml --env-file .env.production \
-  run --rm api npx prisma migrate deploy
-docker compose -f docker-compose.prod.yml --env-file .env.production up -d
-```
-
-GHCR needs a login on the box once, with a personal access token carrying
-`read:packages`:
+The Jenkins pipeline (`Jenkinsfile`) builds and pushes all four images to
+GHCR on every push, then — on `master`, after manual approval — deploys via
+SSH by running `scripts/deploy.sh` on the box. A manual break-glass deploy
+uses the exact same script:
 
 ```bash
-echo "$GHCR_TOKEN" | docker login ghcr.io -u <github-username> --password-stdin
+# on the box, as drift-deploy
+cd /srv/drift/prod
+export DRIFT_IMAGE_TAG=sha-0123456789ab   # from the Jenkins build or a GitHub Actions run summary
+bash scripts/deploy.sh
 ```
 
-**Rolling back** is the point of all this: re-run the same three commands with
-the previous `sha-` tag. Note that a rollback does **not** undo a migration —
-`prisma migrate deploy` only rolls forward, so a release that changed the schema
-needs its down-path thought about before it ships, not after.
+The script fetches `master`, pulls the pinned images, runs
+`prisma migrate deploy`, brings the stack up, and prints container status.
+`DRIFT_IMAGE_TAG` is required — there is no `:local` fallback on this box.
 
-**The console images are environment-specific.** Both bake `NEXT_PUBLIC_API_URL`
-into the bundle *and* into their CSP `connect-src` at build time, so an image
-built for one origin cannot be re-pointed at another with an env var. The
-workflow reads the value from the `PUBLIC_API_URL` repository variable, falling
-back to `https://drift.einsbrand.com/api`. This is also why the domain migration
-below needs a rebuild rather than a config change.
+**Rolling back** is re-running the same command with the previous `sha-`
+tag. This does **not** undo a migration — `prisma migrate deploy` only rolls
+forward, so a release that changes the schema needs its down-path thought
+about before it ships, not after.
 
-Deployment itself is deliberately not automated from CI. Wiring a job that holds
-an SSH key to production is a decision with its own blast radius, and it is the
-owner's to make; the runbook above is what it would automate.
-The deploy script fast-forwards `master`, builds images on the box, runs
-`prisma migrate deploy`, starts the stack, and prints container status.
+**The console images are environment-specific.** Both bake
+`NEXT_PUBLIC_API_URL` into the bundle and the CSP `connect-src` at build
+time, so a rollback to an older image tag also rolls back to whatever origin
+that image was built against.
+
+## Jenkins pipeline
+
+`ci.einsbrand.com`, folder `einsbrand/drift`, multibranch, polling GitHub
+(`lyomu/drift`) with the Multibranch Scan Webhook Trigger for near-instant
+rescans. Stages: `Checkout → Build CI images → Lint → Typecheck (backend) →
+Test → Docker Build & Push (GHCR) → Approval (master only) → Deploy Prod →
+Smoke Tests`.
+
+Job-scoped credentials (isolated from RetailFlow/harusi-ke):
+
+| Credential ID | Type | Purpose |
+|---|---|---|
+| `drift-deploy-ssh-key` | SSH private key | `drift-deploy` on the shared box |
+| `drift-ghcr-token` | Username/password | GitHub PAT (`write:packages`), pushes to `ghcr.io` |
+| `drift-prod-env-file` | Secret file | `.env.production` content |
+| `drift-basic-auth` | Username/password | Smoke-tests the two basic-auth-protected consoles |
+
+Global env var (`Manage Jenkins → System`): `DRIFT_PROD_HOST =
+46.225.106.43` — never hardcoded in the Jenkinsfile, matching the
+convention the other two pipelines already use after harusi-ke's old
+hardcoded-IP incident.
+
+Smoke Tests is a **hard gate** — a failing curl fails the build. Verify any
+change to this pipeline by reading a real build's console log directly, not
+by trusting a green checkmark (`DEVOPS.md` records a stage on harusi-ke's
+pipeline reporting SUCCESS while silently no-op'ing for a month).
 
 ## Smoke tests
 
 ```bash
-curl -fsS http://127.0.0.1:3009/health
-curl -fkI https://135.181.146.130/api/health
-curl -fkI -u drift-preview:<password> https://135.181.146.130/
-curl -fkI -u drift-preview:<password> https://135.181.146.130/platform
+curl -fsS http://127.0.0.1:3005/health
+curl -fkI https://api.driftsports.app/health
+curl -fkI https://driftsports.app/
+curl -fkI -u <user>:<password> https://admin.driftsports.app/
+curl -fkI -u <user>:<password> https://platform.driftsports.app/
 ```
 
 ## Mobile app (APK rebuild)
 
-The Flutter app is not server-deployed — it only needs its API base URL pointed
-at the live deployment. The URL is baked in at build time and defaults to the
-local dev server (`mobile/lib/core/network/dio_client.dart`), so pass it as a
-dart-define:
+The Flutter app is not server-deployed — it only needs its API base URL
+pointed at the live deployment, baked in at build time. Only rebuild once
+`https://api.driftsports.app/health` is actually reachable:
 
 ```bash
 cd mobile
 flutter build apk --release --split-per-abi \
-  --dart-define=DRIFT_API_BASE_URL=https://drift.einsbrand.com/api \
+  --dart-define=DRIFT_API_BASE_URL=https://api.driftsports.app \
   --dart-define=DRIFT_SUPPORT_EMAIL=drift@einsbrand.com
 ```
 
-Outputs land in `mobile/build/app/outputs/flutter-apk/` —
-`app-arm64-v8a-release.apk` (modern devices) and
-`app-armeabi-v7a-release.apk` (older devices). Install with
-`adb install <apk>` or distribute directly.
+Outputs land in `mobile/build/app/outputs/flutter-apk/`
+(`app-arm64-v8a-release.apk`, `app-armeabi-v7a-release.apk`). Verify with a
+real install (`adb install <apk>`) rather than trusting the build output
+alone. Signing config is unchanged from the existing release flow.
 
-`DRIFT_SUPPORT_EMAIL` is the public Contact Support mailbox used for account
-recovery, erasure requests, billing, safety, and technical issues. The default
-in code is `drift@einsbrand.com`; production readiness still requires confirming
-that this mailbox is monitored or forwards into the support queue.
+## Backups
 
-Notes:
+`/root/backup-drift.sh` on the box, daily cron, mirrors the runbook's
+minimum viable shape:
 
-- The staging API uses a Let's Encrypt **IP certificate**, which is publicly
-  trusted — no special TLS handling is needed on devices.
-- Rebuild only when the API URL changes, i.e. once more at the domain
-  migration below.
-- Signing config is unchanged from the normal release flow; the existing
-  external signing values apply.
+```bash
+docker exec drift-postgres pg_dump -U drift drift_tennis | gzip \
+  > /srv/backups/drift-db-$(date +%Y%m%d-%H%M%S).sql.gz
+```
 
-## Deferred domain migration
+7-day local rotation. **Off-box copy and a drilled restore are not yet
+done** — this is on-box-only today, which the runbook treats as incomplete;
+a Storage Box (or equivalent) and a real restore drill are a near-term
+follow-up, not part of this deployment.
 
-When the domain is ready, replace this IP-only shape with separate hostnames for
-the API and both consoles. Rebuild both Next.js apps with the final
-`NEXT_PUBLIC_API_URL`, update API `CORS_ALLOWED_ORIGINS`, issue normal 45/90-day
-domain certificates, and update the mobile `DRIFT_API_BASE_URL`.
+## Deferred / not part of this deployment
+
+- Observability agent (needs a private Prometheus/Loki path — see
+  `devops-infra/docs/LOGGING.md` §4).
+- Off-box backup copy and a full disaster-recovery restore drill.
+- HSTS (add once the domain is confirmed permanent).
+- Payment/push/social-login provider credentials — the app already degrades
+  gracefully with all of them unset (`backend/.env.example`).

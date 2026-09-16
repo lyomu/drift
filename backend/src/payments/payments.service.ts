@@ -3,7 +3,6 @@ import {
   ForbiddenException,
   HttpException,
   HttpStatus,
-  Inject,
   Injectable,
   NotFoundException,
   ServiceUnavailableException,
@@ -25,9 +24,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { ChangeSubscriptionDto } from './dto/change-subscription.dto';
 import { AddPaymentMethodDto } from './dto/payment-method.dto';
 import { ConfigService } from '@nestjs/config';
-import { PAYMENT_PROVIDER } from './payment-provider';
+import { PaymentProviderResolver } from './payment-provider.resolver';
 import { ProviderPlanService } from './provider-plan.service';
-import type { PaymentProvider } from './payment-provider';
 import {
   toInvoiceDto,
   toPaymentMethodDto,
@@ -44,7 +42,7 @@ const invoiceInclude = {
 export class PaymentsService {
   constructor(
     private readonly prisma: PrismaService,
-    @Inject(PAYMENT_PROVIDER) private readonly provider: PaymentProvider,
+    private readonly providers: PaymentProviderResolver,
     private readonly config: ConfigService,
     private readonly providerPlans: ProviderPlanService,
   ) {}
@@ -174,7 +172,14 @@ export class PaymentsService {
       where: { audience, isActive: true },
       orderBy: [{ sortOrder: 'asc' }, { priceMinor: 'asc' }],
     });
-    return { plans: plans.map(toPlanDto) };
+    // A free plan never reaches a provider, so it always shows. A paid one
+    // only shows where its currency actually routes somewhere — otherwise a
+    // club could pick it and hit exactly the dead checkout page this filter
+    // exists to prevent.
+    const billable = plans.filter(
+      (plan) => plan.priceMinor === 0 || this.providers.resolve(plan.currency),
+    );
+    return { plans: billable.map(toPlanDto) };
   }
 
   private async ensureAccount(
@@ -240,8 +245,12 @@ export class PaymentsService {
       sandbox: subscription.plan.isTest,
       // Lets the console stop offering to store a card on a deployment where
       // the provider collects payment itself. Without it the UI shows a form
-      // whose every submission is rejected.
-      hostedCheckout: this.provider.mode === 'hosted',
+      // whose every submission is rejected. A free plan's currency is
+      // meaningless here (no provider is ever involved), so it reads as
+      // hosted only once there is actually a paid plan to check.
+      hostedCheckout:
+        subscription.plan.priceMinor > 0 &&
+        this.providers.isHosted(subscription.plan.currency),
     };
   }
 
@@ -257,13 +266,17 @@ export class PaymentsService {
     // A hosted provider never lets us hold card details, so "add a payment
     // method" has no meaning there: the payer authorises during checkout and
     // the provider keeps the instrument. Saying so plainly beats accepting a
-    // brand and last4 that would go nowhere.
-    if (this.provider.mode !== 'direct') {
+    // brand and last4 that would go nowhere. Once any real provider is
+    // configured, every paid plan on this deployment resolves to a hosted
+    // one — the direct/stored-card path only ever applies to the sandbox.
+    if (this.providers.liveConfigured) {
       throw new BadRequestException(
         'This deployment collects payment details during checkout. Choose a plan to continue.',
       );
     }
-    const tokenised = await this.provider.createPaymentMethod(dto);
+    const tokenised = await this.providers
+      .directFallback()
+      .createPaymentMethod(dto);
     const method = await this.prisma.$transaction(async (tx) => {
       await tx.paymentMethod.updateMany({
         where: { billingAccountId, removedAt: null, isDefault: true },
@@ -341,9 +354,13 @@ export class PaymentsService {
     if (plan.priceMinor === 0) {
       // Downgrading to free has to stop the recurring mandate at the provider,
       // not just in our own tables. Skipping this is how a club that "moved to
-      // the free plan" keeps getting charged every month.
-      if (this.provider.mode === 'hosted' && current?.providerReference) {
-        await this.provider.cancelSubscription(current.providerReference);
+      // the free plan" keeps getting charged every month. Resolved by the name
+      // stored on the mandate, not the plan being switched to — a free plan
+      // has no currency of its own to route by, and the mandate being
+      // cancelled may have been billed through either hosted provider.
+      const heldBy = this.providers.byName(current?.provider);
+      if (heldBy?.mode === 'hosted' && current?.providerReference) {
+        await heldBy.cancelSubscription(current.providerReference);
       }
       await this.prisma.billingSubscription.upsert({
         where: { billingAccountId },
@@ -359,12 +376,15 @@ export class PaymentsService {
           currentPeriodStart: now,
           currentPeriodEnd: periodEnd,
           providerReference: null,
+          provider: null,
         },
       });
       return this.summary(billingAccountId);
     }
 
-    if (this.provider.mode === 'hosted') {
+    const provider = this.providers.resolve(plan.currency);
+
+    if (provider?.mode === 'hosted') {
       // Resolved here rather than inside the checkout so an unusable code is a
       // 400 before anything is created at the provider or in our ledger.
       let promotion: Promotion | null = null;
@@ -387,6 +407,12 @@ export class PaymentsService {
       );
     }
 
+    if (!provider || provider.mode !== 'direct') {
+      throw new ServiceUnavailableException(
+        `This plan's currency (${plan.currency}) is not billable on this deployment.`,
+      );
+    }
+
     const method = dto.paymentMethodId
       ? await this.prisma.paymentMethod.findFirst({
           where: {
@@ -405,7 +431,7 @@ export class PaymentsService {
     }
 
     const description = `${plan.name} subscription`;
-    const charge = await this.provider.charge({
+    const charge = await provider.charge({
       providerToken: method.providerToken,
       amountMinor: plan.priceMinor,
       currency: plan.currency,
@@ -454,6 +480,7 @@ export class PaymentsService {
             currentPeriodStart: now,
             currentPeriodEnd: periodEnd,
             providerReference: `sandbox_sub_${randomUUID()}`,
+            provider: provider.name,
           },
           update: {
             planId: plan.id,
@@ -461,6 +488,7 @@ export class PaymentsService {
             currentPeriodStart: now,
             currentPeriodEnd: periodEnd,
             providerReference: `sandbox_sub_${randomUUID()}`,
+            provider: provider.name,
           },
         });
       }
@@ -490,10 +518,10 @@ export class PaymentsService {
     periodEnd: Date,
     promotion: Promotion | null,
   ) {
-    if (this.provider.mode !== 'hosted') {
+    const provider = this.providers.require(plan.currency);
+    if (provider.mode !== 'hosted') {
       throw new ServiceUnavailableException('Payments are not configured.');
     }
-    const provider = this.provider;
 
     const user = await this.prisma.user.findUnique({
       where: { id: payer.userId },
@@ -597,13 +625,16 @@ export class PaymentsService {
    * Idempotent: providers retry, and a retry of an event we already applied has
    * to be a no-op rather than a second charge record or a second period.
    */
-  async applyProviderPaymentEvent(event: {
-    state?: string | null;
-    invoiceId?: string | null;
-    reference?: string | null;
-    subscriptionId?: string | null;
-    failureReason?: string | null;
-  }): Promise<{ applied: boolean; reason?: string }> {
+  async applyProviderPaymentEvent(
+    providerName: string,
+    event: {
+      state?: string | null;
+      invoiceId?: string | null;
+      reference?: string | null;
+      subscriptionId?: string | null;
+      failureReason?: string | null;
+    },
+  ): Promise<{ applied: boolean; reason?: string }> {
     const state = (event.state ?? '').toUpperCase();
 
     // Find our invoice: by the reference we handed the provider if it came
@@ -675,6 +706,7 @@ export class PaymentsService {
             currentPeriodStart: invoice.periodStart,
             currentPeriodEnd: invoice.periodEnd,
             providerReference: event.subscriptionId ?? null,
+            provider: providerName,
           },
           update: {
             planId: invoice.planId,
@@ -682,6 +714,7 @@ export class PaymentsService {
             currentPeriodStart: invoice.periodStart,
             currentPeriodEnd: invoice.periodEnd,
             providerReference: event.subscriptionId ?? null,
+            provider: providerName,
           },
         });
       } else {

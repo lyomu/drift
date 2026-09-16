@@ -2245,6 +2245,7 @@ model PlatformAdmin {
   resolvedSupportTickets SupportTicket[] @relation("SupportTicketResolver")
   supportMessages SupportTicketMessage[]
   processedPrivacyRequests PrivacyRequest[] @relation("PrivacyRequestProcessor")
+  waitlistBroadcasts       WaitlistBroadcast[]
 
   @@index([roleId, deactivatedAt])
   @@map("platform_admins")
@@ -2395,6 +2396,11 @@ model PaymentPlan {
   isActive     Boolean         @default(true)
   isTest       Boolean         @default(false)
   sortOrder    Int             @default(0)
+  // Groups currency variants of the same tier for display — e.g. CLUB_PRO_USD
+  // and CLUB_PRO_KES both carry groupCode "CLUB_PRO" so the console can offer
+  // one card with a currency choice instead of two separate plans. Cosmetic
+  // only: billing logic keys off the plan row a club actually picked.
+  groupCode    String?
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
 
@@ -2438,6 +2444,11 @@ model BillingSubscription {
   currentPeriodStart DateTime
   currentPeriodEnd   DateTime
   providerReference  String?
+  // Which hosted provider issued providerReference — INTASEND or PADDLE.
+  // Needed once more than one hosted provider can be active at a time:
+  // cancelling a mandate has to call the provider that actually holds it,
+  // not whichever one the plan's current currency happens to route to.
+  provider           String?
   createdAt          DateTime                  @default(now())
   updatedAt          DateTime                  @updatedAt
 
@@ -3023,4 +3034,88 @@ model ProviderPlan {
   @@unique([planId, promotionKey, provider])
   @@index([provider, providerPlanId])
   @@map("provider_plans")
+}
+
+/// Who a waitlist signup says they are. Routing only — a CLUB signup gets a
+/// different follow-up, it grants nothing.
+enum WaitlistAudience {
+  PLAYER
+  CLUB
+}
+
+/// Launch waitlist collected by the public website (`website/app/waitlist`).
+///
+/// Deliberately NOT related to `User`: these people have no account, and most
+/// never will have one under this address. It is a marketing list with a
+/// launch news and occasional internal Drift Tennis product updates or offers.
+/// It stays structurally separate from identity so it can be exported and
+/// deleted without touching the product's own data.
+model WaitlistSignup {
+  id String @id @default(uuid())
+
+  /// Lower-cased and trimmed by the service before it reaches here, so the
+  /// unique index actually means "one person, one row". Postgres unique
+  /// indexes are case-sensitive; normalising at write time is what stops
+  /// `A@b.com` and `a@b.com` both landing.
+  email String @unique
+
+  /// Asked for so launch email can address someone by name. First name only:
+  /// a marketing list has no reason to hold a full legal name.
+  firstName String?
+
+  audience WaitlistAudience @default(PLAYER)
+
+  /// Optional launch-market context. Country comes from a closed dropdown;
+  /// city remains free text because it is never a verified location.
+  country String?
+  /// `level` holds a band from the app's real
+  /// 1.0–7.0 scale (e.g. "2.5-3.5"), never a computed rating — nobody has
+  /// taken the assessment at this point.
+  city  String?
+  level String?
+
+  /// Where the signup came from, so a later campaign can be told apart from
+  /// the launch page without guessing by date.
+  source String?
+
+  /// Set when a platform-admin broadcast was actually delivered to this
+  /// address. Failed and skipped addresses keep it null, so "who still needs
+  /// the launch email" is one null check and a broadcast is never assumed
+  /// delivered that was not.
+  lastEmailedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdAt])
+  @@map("waitlist_signups")
+}
+
+/// One bulk send from platform admin to the launch waitlist.
+///
+/// Aggregate counts only, not per-recipient rows: a marketing list of a few
+/// hundred launch signups does not justify a delivery ledger, and the per-
+/// address truth lives on `WaitlistSignup.lastEmailedAt`. The subject and
+/// body are kept verbatim so any send can be reconstructed exactly — which
+/// is also what stops a launch email from being written twice by accident.
+model WaitlistBroadcast {
+  id      String @id @default(uuid())
+  subject String
+  body    String
+
+  /// The audience the send was scoped to; null means the whole list.
+  audience WaitlistAudience?
+
+  recipientCount Int
+  deliveredCount Int
+  failedCount    Int
+
+  sentById String
+  sentBy   PlatformAdmin @relation(fields: [sentById], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([sentById])
+  @@map("waitlist_broadcasts")
 }

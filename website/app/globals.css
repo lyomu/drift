@@ -1,0 +1,950 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens — mirror foundation/05-design-system.md and
+ * mobile/lib/core/theme/drift_colors.dart's DriftColors.light exactly, the
+ * same vocabulary the admin consoles carry (see club-admin globals.css).
+ * The public site is committed light: it is read on phones, outdoors, by
+ * people deciding whether to download.
+ */
+@theme inline {
+  --color-primary: #1c91d0;
+  --color-primary-dark: #126a9b;
+  --color-primary-light: #e8f5fc;
+  --color-background: #f7fafc;
+  --color-surface: #ffffff;
+  --color-text-primary: #111827;
+  --color-text-secondary: #6b7280;
+  --color-border: #e5e7eb;
+  --color-success: #16a34a;
+  --color-success-surface: #eafbf1;
+  --color-warning: #f59e0b;
+  --color-warning-surface: #fef6e7;
+  --color-error: #dc2626;
+  --color-error-surface: #fdecec;
+  --color-neutral-surface: #f1f3f5;
+
+  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/*
+ * Anchored sections need clearance below the sticky header. On phones the
+ * header carries the scrollable chapter rail (taller); from lg it is one row.
+ */
+:where([id]) {
+  scroll-margin-top: 8.5rem;
+}
+
+@media (min-width: 64rem) {
+  :where([id]) {
+    scroll-margin-top: 5.5rem;
+  }
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-text-primary);
+  /* Drift's scale pins zero tracking everywhere (drift_typography.dart). */
+  letter-spacing: 0;
+}
+
+::selection {
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* DriftSoftCard: white, 16px radius, one soft shadow, no border. */
+.drift-card {
+  background: var(--color-surface);
+  border-radius: 16px;
+  box-shadow:
+    0 1px 2px rgb(17 24 39 / 0.04),
+    0 8px 24px rgb(17 24 39 / 0.06);
+}
+
+.drift-card-interactive {
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.drift-card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 2px 4px rgb(17 24 39 / 0.05),
+    0 12px 32px rgb(17 24 39 / 0.1);
+}
+
+/* Fixture and standings numerals: the app's `statistics` style pins
+   tabular figures so scorelines align. */
+.tabular {
+  font-feature-settings: "tnum";
+  font-variant-numeric: tabular-nums;
+}
+
+/* Header navigation. Plain text links, not pills: a pill reads as a
+   filter or a status in this design system (that is what `.badge` and the
+   old rail chip meant), so using the same shape for navigation made the
+   header look like a toolbar of chips. The underline grows from the left
+   on hover instead. */
+.nav-link {
+  position: relative;
+  display: inline-block;
+  padding: 0.25rem 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  transition: color 140ms ease;
+}
+
+.nav-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--color-primary);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.nav-link:hover {
+  color: var(--color-primary-dark);
+}
+
+.nav-link:hover::after,
+.nav-link:focus-visible::after {
+  transform: scaleX(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-link::after {
+    transition: none;
+  }
+}
+
+.nav-disclosure {
+  position: relative;
+}
+
+.nav-disclosure > summary {
+  list-style: none;
+}
+
+.nav-disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+
+.nav-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.75rem);
+  z-index: 50;
+  display: grid;
+  min-width: 13.75rem;
+  gap: 0.25rem;
+  border-radius: 16px;
+  background: var(--color-surface);
+  padding: 0.5rem;
+  box-shadow:
+    0 1px 2px rgb(17 24 39 / 0.04),
+    0 12px 32px rgb(17 24 39 / 0.12);
+}
+
+.nav-menu a {
+  border-radius: 12px;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.nav-menu a:hover,
+.nav-menu a:focus-visible {
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+}
+
+.nav-disclosure:not([open]) .nav-menu {
+  display: none;
+}
+
+/* The primary CTA: brand fill, 12px radius (DriftPrimaryButton). The fill
+   uses primary-dark rather than #1c91d0 — white on #1c91d0 is ~3.5:1, which
+   fails AA for 15px text; #126a9b gives ~5.9:1 and still reads as the
+   brand blue. */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 12px;
+  background: var(--color-primary-dark);
+  color: #ffffff;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  padding: 0.8125rem 1.5rem;
+  transition: background-color 120ms ease, transform 120ms ease;
+}
+
+.btn-primary:hover {
+  background: #0e5380;
+}
+
+.btn-primary:active {
+  transform: translateY(1px);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 12px;
+  background: var(--color-surface);
+  color: var(--color-primary-dark);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  padding: 0.8125rem 1.5rem;
+  border: 1px solid var(--color-border);
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+
+.btn-secondary:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+/* Status badges: tinted surface + coloured text (StatusBadge grammar).
+   Text tones sit one step darker than the app's status colours so every
+   badge clears AA at its 12px size on the tinted surface. */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 999px;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badge-success {
+  background: var(--color-success-surface);
+  color: #15803d;
+}
+
+.badge-warning {
+  background: var(--color-warning-surface);
+  color: #b45309;
+}
+
+.badge-primary {
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+}
+
+.badge-neutral {
+  background: var(--color-neutral-surface);
+  color: #4b5563;
+}
+
+/* Focus rings disappear against the brand fields — the two sections that
+   sit on primary fills opt in to white outlines. */
+[data-on-primary] :focus-visible {
+  outline-color: #ffffff;
+}
+
+/* The court-line motif: a single hairline baseline that runs behind each
+   round heading, echoing a baseline's service mark without becoming
+   illustration. */
+.court-rule {
+  position: relative;
+}
+
+.court-rule::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -0.75rem;
+  height: 1px;
+  background: var(--color-border);
+}
+
+.court-rule::before {
+  content: "";
+  position: absolute;
+  bottom: calc(-0.75rem - 3px);
+  left: 0;
+  width: 4rem;
+  height: 7px;
+  background: var(--color-primary);
+  border-radius: 999px;
+}
+
+/* ==========================================================================
+   Photography
+   Added 2026-09 with the chapter redesign. The site previously carried no
+   images at all; these classes are the whole contract for putting type over
+   a photograph without losing AA contrast.
+   ========================================================================== */
+
+/* Every photo sits in a fixed-ratio frame so `next/image` can use `fill`
+   and the layout never shifts as it loads. Ratios live on the utility, not
+   on the image, so swapping the file changes nothing. */
+.photo-frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--color-neutral-surface);
+}
+
+.photo-frame > img {
+  object-fit: cover;
+}
+
+/* Scrims. Text over a photograph only clears AA if the photograph is
+   guaranteed dark under it — these wash the image in primary-dark rather
+   than neutral black, so the brand still carries the region. `-hero` is
+   weighted to the bottom-left where the headline sits; `-band` is even,
+   for centred copy. Both are ::after layers, so they never affect the
+   image element itself.
+
+   ⚠ THE SCRIM PAINTS ABOVE THE COPY UNLESS THE COPY IS RAISED. It is an
+   absolutely-positioned ::after and it is the last child, so it wins on DOM
+   order against anything at `z-index: auto` — `position: relative` alone is
+   NOT enough, which is the trap. Copy inside a scrimmed element needs an
+   explicit stacking level.
+   The rule is: scrimmed element → `relative isolate`, image at `-z-10`,
+   copy wrapper `relative z-10`. Get it wrong and the heading renders as a
+   barely-visible smudge rather than failing loudly. */
+.scrim-hero::after,
+.scrim-band::after,
+.scrim-soft::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.scrim-hero::after {
+  background:
+    linear-gradient(
+      to top,
+      rgb(9 58 86 / 0.94) 0%,
+      rgb(11 74 109 / 0.82) 34%,
+      rgb(18 106 155 / 0.46) 66%,
+      rgb(18 106 155 / 0.24) 100%
+    ),
+    linear-gradient(to right, rgb(9 58 86 / 0.6) 0%, rgb(9 58 86 / 0) 62%);
+}
+
+.scrim-band::after {
+  background: linear-gradient(
+    to right,
+    rgb(9 58 86 / 0.93) 0%,
+    rgb(11 74 109 / 0.86) 45%,
+    rgb(18 106 155 / 0.62) 100%
+  );
+}
+
+/* For images that carry no type — just knocks the saturation back so a
+   photograph never out-shouts the copy beside it. */
+.scrim-soft::after {
+  background: linear-gradient(
+    to top,
+    rgb(9 58 86 / 0.22) 0%,
+    rgb(9 58 86 / 0) 55%
+  );
+}
+
+/* ==========================================================================
+   Display type
+   ========================================================================== */
+
+/* The hero is the one place the scale may exceed the app's 34px (DESIGN.md).
+   The weight axis does not change: 700, zero tracking, as everywhere else. */
+.display-xl {
+  font-size: clamp(2.25rem, 1.1rem + 5.1vw, 4.25rem);
+  font-weight: 700;
+  line-height: 1.06;
+}
+
+.display-lg {
+  font-size: clamp(1.75rem, 1.1rem + 2.6vw, 2.75rem);
+  font-weight: 700;
+  line-height: 1.12;
+}
+
+/* The chapter's ordinal, set oversized and quiet behind its heading —
+   the season vocabulary made visual instead of repeated in a rail. */
+.chapter-numeral {
+  font-size: clamp(3.5rem, 2rem + 6vw, 6.5rem);
+  font-weight: 700;
+  line-height: 0.82;
+  color: var(--color-primary);
+  opacity: 0.16;
+  font-feature-settings: "tnum";
+  font-variant-numeric: tabular-nums;
+}
+
+/* ==========================================================================
+   The loop strip
+   ========================================================================== */
+
+.loop-node {
+  position: relative;
+  padding-top: 1.5rem;
+}
+
+/* The dot on the line. The connecting rule is drawn by the container so it
+   never overshoots the first and last nodes. */
+.loop-node::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 999px;
+  background: var(--color-primary);
+  box-shadow: 0 0 0 4px var(--color-primary-light);
+}
+
+/* ==========================================================================
+   Device frame — illustrative app UI
+   The screens inside are built from divs and are labelled as illustrative
+   on the page (DESIGN.md rule 1): no real marketing screenshots exist yet.
+   ========================================================================== */
+
+.device-frame {
+  border-radius: 2.25rem;
+  background: #0f172a;
+  padding: 0.5rem;
+  box-shadow:
+    0 2px 6px rgb(9 58 86 / 0.18),
+    0 24px 56px rgb(9 58 86 / 0.28);
+}
+
+.device-screen {
+  border-radius: 1.85rem;
+  overflow: hidden;
+  background: var(--color-background);
+}
+
+/* ==========================================================================
+   Form controls — first forms on this surface (waitlist, 2026-09)
+   ========================================================================== */
+
+.field-label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 0.375rem;
+}
+
+.field-hint {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
+.input,
+.select {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: 0.9375rem;
+  padding: 0.75rem 0.875rem;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.input::placeholder {
+  color: #9ca3af;
+}
+
+.input:hover,
+.select:hover {
+  border-color: #cbd5e1;
+}
+
+.input:focus,
+.select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+/* Invalid state is announced, not only coloured — the form pairs this with
+   an id-linked error message and aria-invalid. */
+.input[aria-invalid="true"] {
+  border-color: var(--color-error);
+}
+
+.input[aria-invalid="true"]:focus {
+  box-shadow: 0 0 0 3px var(--color-error-surface);
+}
+
+/* Radio cards: the whole tile is the label, so the hit target is the card
+   rather than a 16px dot. The native input stays in the DOM (visually
+   hidden, not display:none) so it keeps keyboard and screen-reader
+   behaviour for free. */
+.radio-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  padding: 0.75rem 0.875rem;
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    background-color 120ms ease;
+}
+
+.radio-card:hover {
+  border-color: #cbd5e1;
+}
+
+.radio-card:has(input:checked) {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+.radio-card:has(input:focus-visible) {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.radio-card input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+/* A native select leaves the chevron glued to the edge on some browsers.
+   Drift owns the arrow instead, keeping a generous clear space to its right
+   and enough text clearance to its left. */
+.select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='m4 6 4 4 4-4' stroke='%23111827' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-position: right 1.25rem center;
+  background-repeat: no-repeat;
+  padding-right: 4rem;
+}
+
+/* Legal pages are long by necessity. Keep their rhythm calm and their measure
+   comfortably readable rather than turning policy text into a card grid. */
+.legal-copy {
+  max-width: 46rem;
+  color: var(--color-text-secondary);
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.legal-copy section + section { margin-top: 3.5rem; }
+
+.legal-copy h2 {
+  margin-bottom: 1rem;
+  color: var(--color-text-primary);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.25;
+  scroll-margin-top: 2rem;
+}
+
+.legal-copy p + p,
+.legal-copy p + ul,
+.legal-copy ul + p,
+.legal-copy .legal-table-wrap + p { margin-top: 1rem; }
+
+.legal-copy ul { list-style: disc; padding-left: 1.4rem; }
+.legal-copy li + li { margin-top: 0.5rem; }
+.legal-copy strong,
+.legal-copy a { color: var(--color-text-primary); }
+
+.legal-copy a {
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: var(--color-primary);
+  text-underline-offset: 0.18em;
+}
+
+.legal-copy a:hover { color: var(--color-primary-dark); }
+
+.legal-highlight {
+  margin-top: 1.25rem;
+  border-radius: 16px;
+  background: var(--color-primary-light);
+  padding: 1.5rem;
+  color: #145578;
+}
+
+.legal-highlight p + p { margin-top: 1rem; }
+.legal-highlight strong { color: #0c4e74; }
+
+.legal-table-wrap {
+  margin-top: 1.25rem;
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+}
+
+.legal-table-wrap table {
+  width: 100%;
+  min-width: 42rem;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+.legal-table-wrap th,
+.legal-table-wrap td { padding: 0.875rem 1rem; text-align: left; vertical-align: top; }
+
+.legal-table-wrap th { background: var(--color-neutral-surface); color: var(--color-text-primary); font-weight: 700; }
+.legal-table-wrap td { border-top: 1px solid var(--color-border); }
+
+/* ==========================================================================
+   Motion
+   CSS-only and restrained, per DESIGN.md — no parallax, no carousels, no
+   animation library. This is a scroll-driven fade that runs on the
+   compositor; where `animation-timeline` is unsupported the element simply
+   renders in its final state, so nothing is ever hidden behind a feature
+   check.
+   ========================================================================== */
+
+@keyframes reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes enter-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes draw-line {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* A very slow settle on the hero photograph. Not parallax: the image does
+   not move against the scroll, it just comes to rest once, on load. */
+@keyframes hero-settle {
+  from {
+    transform: scale(1.06);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes hero-sport-tennis {
+  0%,
+  42% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+  50%,
+  92% {
+    opacity: 0;
+    transform: translateY(-0.28em);
+    filter: blur(3px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes hero-sport-padel {
+  0%,
+  42% {
+    opacity: 0;
+    transform: translateY(0.28em);
+    filter: blur(3px);
+  }
+  50%,
+  92% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(0.28em);
+    filter: blur(3px);
+  }
+}
+
+/* Added 2026-09-13 — motion for the sections that shipped static. Same
+   grammar as the existing blocks: one-off or scroll-driven, never looping,
+   always rendering the finished state where a check fails. */
+@keyframes settle {
+  from {
+    transform: scale(1.05);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+/* Skill-profile meters: the bar draws from its left edge as the frame
+   enters, so the profile reads as measured rather than painted. */
+@keyframes grow-x {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* Standings form dots: a small pop, not a slide — they are status marks,
+   and a 10px dot sliding in would read as movement rather than arrival. */
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes header-down {
+  from {
+    opacity: 0;
+    transform: translateY(-0.75rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.hero-sport-cycle {
+  display: inline-grid;
+  min-width: 3.42em;
+  vertical-align: baseline;
+}
+
+.hero-sport-word {
+  grid-area: 1 / 1;
+  display: inline-block;
+}
+
+.hero-sport-word-padel {
+  display: none;
+}
+
+/* Everything below is additive. Each block is inside
+   `prefers-reduced-motion: no-preference`, and the scroll-driven ones are
+   additionally inside `@supports (animation-timeline: view())`, so a browser
+   that honours neither renders the finished state. Nothing is ever hidden
+   behind a feature check. */
+@media (prefers-reduced-motion: no-preference) {
+  /* --- On load: the first viewport assembles itself ------------------- */
+  .enter {
+    animation: enter-up 620ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  /* Staggered so the eye is led badge → headline → copy → buttons rather
+     than the whole block arriving as one slab. */
+  .enter-1 { animation-delay: 40ms; }
+  .enter-2 { animation-delay: 130ms; }
+  .enter-3 { animation-delay: 220ms; }
+  .enter-4 { animation-delay: 310ms; }
+  .enter-5 { animation-delay: 400ms; }
+  .enter-6 { animation-delay: 490ms; }
+
+  .hero-photo {
+    animation: hero-settle 1800ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .hero-sport-word {
+    will-change: opacity, transform, filter;
+  }
+
+  .hero-sport-word-tennis {
+    animation: hero-sport-tennis 5.6s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  }
+
+  .hero-sport-word-padel {
+    display: inline-block;
+    animation: hero-sport-padel 5.6s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  }
+
+  /* --- Header ----------------------------------------------------------- */
+  /* A one-off drop-in on load. The fill ends at `transform: none`, so the
+     sticky positioning is unaffected after the animation completes. */
+  .header-enter {
+    animation: header-down 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  /* The brand ball gives a small tilt when the wordmark is hovered — the
+     only decorative hover on the page's chrome. */
+  .brand-mark {
+    transition: transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .brand-link:hover .brand-mark,
+  .brand-link:focus-visible .brand-mark {
+    transform: rotate(16deg);
+  }
+
+  /* --- Press feedback ------------------------------------------------- */
+  .btn-primary,
+  .btn-secondary {
+    transition:
+      background-color 120ms ease,
+      border-color 120ms ease,
+      transform 140ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      box-shadow 140ms ease;
+  }
+
+  .btn-primary:hover,
+  .btn-secondary:hover {
+    transform: translateY(-1px);
+  }
+
+  .btn-primary:active,
+  .btn-secondary:active {
+    transform: translateY(1px);
+  }
+
+  /* --- On scroll ------------------------------------------------------ */
+  @supports (animation-timeline: view()) {
+    /* Ranges are pinned to the ENTRY phase, never to `cover`. `cover` is
+       measured across the element's whole pass through the viewport, so on
+       a tall section (a chapter runs well over 1000px) the fade would still
+       be finishing long after the heading was on screen and being read.
+       Ending inside `entry` means every element is fully opaque by the time
+       it is properly in view, whatever its height.
+
+       ⚠ Written as the `animation-range-start` / `animation-range-end`
+       longhands on purpose. The `animation-range: entry 0% entry 60%`
+       shorthand — the same range name twice — hard-crashes the CSS parser
+       Tailwind v4 runs under PostCSS: the build dies with a Node subprocess
+       exit 0xc0000409 (stack overrun) pointing at this file, with nothing
+       naming the real culprit. The mixed form (`entry 8% cover 30%`) parses
+       fine, which is what makes it look like the percentages are at fault.
+       Do not "tidy" these back into the shorthand. */
+    .reveal {
+      animation: reveal-up linear both;
+      animation-timeline: view();
+      animation-range-start: entry 0%;
+      animation-range-end: entry 60%;
+    }
+
+    /* Children arrive in sequence by starting and finishing progressively
+       later within the same entry phase, which reads as a stagger while
+       staying tied to scroll position rather than to a timer. */
+    .reveal-stagger > * {
+      animation: reveal-up linear both;
+      animation-timeline: view();
+      animation-range-start: entry 0%;
+      animation-range-end: entry 55%;
+    }
+
+    .reveal-stagger > *:nth-child(2) {
+      animation-range-start: entry 8%;
+      animation-range-end: entry 70%;
+    }
+
+    .reveal-stagger > *:nth-child(3) {
+      animation-range-start: entry 16%;
+      animation-range-end: entry 85%;
+    }
+
+    .reveal-stagger > *:nth-child(4) {
+      animation-range-start: entry 24%;
+      animation-range-end: entry 92%;
+    }
+
+    .reveal-stagger > *:nth-child(5) {
+      animation-range-start: entry 30%;
+      animation-range-end: entry 92%;
+    }
+
+    /* The loop strip's connecting rule draws left to right as the strip
+       enters, which is the one place the page states a sequence. */
+    .draw-line {
+      transform-origin: left;
+      animation: draw-line linear both;
+      animation-timeline: view();
+      animation-range-start: entry 10%;
+      animation-range-end: entry 90%;
+    }
+
+    /* Photographs come to rest like the hero's does, but driven by scroll
+       rather than load: a one-off 1.05→1 settle across the entry phase. The
+       frames keep `overflow: hidden`, so the scale never spills. */
+    .photo-drift {
+      animation: settle linear both;
+      animation-timeline: view();
+      animation-range-start: entry 0%;
+      animation-range-end: entry 70%;
+      will-change: transform;
+    }
+
+    /* Skill-profile meters draw from their left edge inside the device
+       frame; without this support the bars simply render at full width. */
+    .meter-fill {
+      transform-origin: left;
+      animation: grow-x linear both;
+      animation-timeline: view();
+      animation-range-start: entry 12%;
+      animation-range-end: entry 65%;
+    }
+
+    /* Standings form dots pop in once the row they belong to is arriving. */
+    .form-dot {
+      animation: pop-in linear both;
+      animation-timeline: view();
+      animation-range-start: entry 25%;
+      animation-range-end: entry 80%;
+    }
+  }
+}

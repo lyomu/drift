@@ -8,6 +8,7 @@ import {
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import type { PaymentProvider } from './payment-provider';
+import type { PaymentProviderResolver } from './payment-provider.resolver';
 import { ProviderPlanService } from './provider-plan.service';
 
 function plan(overrides: Partial<PaymentPlan> = {}): PaymentPlan {
@@ -48,7 +49,7 @@ function promo(overrides: Partial<Promotion> = {}): Promotion {
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,
-  } as Promotion;
+  };
 }
 
 function hostedProvider() {
@@ -56,7 +57,12 @@ function hostedProvider() {
     mode: 'hosted' as const,
     name: 'INTASEND',
     createPlan: jest.fn().mockResolvedValue('PLAN_REMOTE'),
-    updatePlan: jest.fn().mockResolvedValue(undefined),
+    // IntaSend edits a plan in place — the id it's given is the id it hands
+    // back, unless a test overrides this to exercise a provider (Paddle) that
+    // mints a new one instead.
+    updatePlan: jest
+      .fn()
+      .mockImplementation((id: string) => Promise.resolve(id)),
     createCustomer: jest.fn(),
     startSubscription: jest.fn(),
     cancelSubscription: jest.fn().mockResolvedValue(undefined),
@@ -75,13 +81,22 @@ function mockPrisma() {
   };
 }
 
+/** A resolver stub that always hands back the given provider, for any
+ * currency, and finds it again by name — good enough for a service that
+ * never inspects the currency itself, only whatever the resolver returns. */
 function build(provider: PaymentProvider) {
   const prisma = mockPrisma();
+  const providers = {
+    resolve: jest.fn().mockReturnValue(provider),
+    byName: jest.fn((name: string | null | undefined) =>
+      name === provider.name ? provider : null,
+    ),
+  } as unknown as PaymentProviderResolver;
   const service = new ProviderPlanService(
     prisma as unknown as PrismaService,
-    provider,
+    providers,
   );
-  return { prisma, service };
+  return { prisma, service, providers };
 }
 
 describe('ProviderPlanService', () => {
@@ -159,15 +174,18 @@ describe('ProviderPlanService', () => {
 
     it.each(cases)('rejects a promotion that is %s', (_label, overrides) => {
       const { service } = build(hostedProvider());
-      expect(() =>
-        service.assertRedeemable(plan(), promo(overrides)),
-      ).toThrow(BadRequestException);
+      expect(() => service.assertRedeemable(plan(), promo(overrides))).toThrow(
+        BadRequestException,
+      );
     });
 
     it('accepts a live promotion for the right audience', () => {
       const { service } = build(hostedProvider());
       expect(() =>
-        service.assertRedeemable(plan(), promo({ audience: BillingAudience.CLUB })),
+        service.assertRedeemable(
+          plan(),
+          promo({ audience: BillingAudience.CLUB }),
+        ),
       ).not.toThrow();
     });
   });
@@ -200,7 +218,10 @@ describe('ProviderPlanService', () => {
 
       expect(prisma.providerPlan.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ promotionKey: '', promotionId: null }),
+          data: expect.objectContaining({
+            promotionKey: '',
+            promotionId: null,
+          }),
         }),
       );
     });
@@ -293,11 +314,12 @@ describe('ProviderPlanService', () => {
   });
 
   describe('refund', () => {
-    it('calls the provider when a charge id was captured', async () => {
+    it('calls the provider that took the charge when a charge id was captured', async () => {
       const provider = hostedProvider();
       const { service } = build(provider);
 
       const result = await service.refund({
+        providerName: 'INTASEND',
         providerInvoiceId: 'BRZKGPR',
         amountMinor: 250_000,
         reason: 'Duplicate charge',
@@ -317,7 +339,23 @@ describe('ProviderPlanService', () => {
 
       await expect(
         service.refund({
+          providerName: 'INTASEND',
           providerInvoiceId: null,
+          amountMinor: 100,
+          reason: 'x',
+        }),
+      ).resolves.toBeNull();
+      expect(provider.refund).not.toHaveBeenCalled();
+    });
+
+    it('returns null when the provider that took the charge is no longer configured', async () => {
+      const provider = hostedProvider();
+      const { service } = build(provider);
+
+      await expect(
+        service.refund({
+          providerName: 'PADDLE',
+          providerInvoiceId: 'BRZKGPR',
           amountMinor: 100,
           reason: 'x',
         }),
@@ -327,11 +365,13 @@ describe('ProviderPlanService', () => {
   });
 
   describe('cancel', () => {
-    it('stops the mandate and reports that it did', async () => {
+    it('stops the mandate at the provider that holds it and reports that it did', async () => {
       const provider = hostedProvider();
       const { service } = build(provider);
 
-      await expect(service.cancel('SUB1')).resolves.toBe(true);
+      await expect(
+        service.cancel({ providerName: 'INTASEND', providerReference: 'SUB1' }),
+      ).resolves.toBe(true);
       expect(provider.cancelSubscription).toHaveBeenCalledWith('SUB1');
     });
 
@@ -339,7 +379,19 @@ describe('ProviderPlanService', () => {
       const provider = hostedProvider();
       const { service } = build(provider);
 
-      await expect(service.cancel(null)).resolves.toBe(false);
+      await expect(
+        service.cancel({ providerName: 'INTASEND', providerReference: null }),
+      ).resolves.toBe(false);
+      expect(provider.cancelSubscription).not.toHaveBeenCalled();
+    });
+
+    it('reports false when the provider that held the mandate is no longer configured', async () => {
+      const provider = hostedProvider();
+      const { service } = build(provider);
+
+      await expect(
+        service.cancel({ providerName: 'PADDLE', providerReference: 'SUB1' }),
+      ).resolves.toBe(false);
       expect(provider.cancelSubscription).not.toHaveBeenCalled();
     });
   });

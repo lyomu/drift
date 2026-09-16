@@ -8,22 +8,93 @@ Companion: `LAUNCH_TRACKER.md` for the reasoning behind each.
 
 ---
 
-## 0. Rotate the IntaSend keys — do this first
+## 0. Rotate the IntaSend keys — BEFORE the app is published
 
-A live secret key and publishable key were pasted into a session transcript on
-2026-09-03. Treat both as compromised.
+A live secret key and its publishable key were pasted into a session transcript
+on 2026-09-03. Both are compromised.
 
-1. IntaSend dashboard → API keys → revoke and re-issue.
-2. Take a **sandbox** key (`ISSecretKey_test_…`) for development.
-3. Put it in `backend/.env` (gitignored, verified):
+**The owner decided on 2026-09-03 to keep using that live key for now and rotate
+it before publishing the app.** That decision is recorded here rather than
+argued with — but it is a debt with a deadline, and this is the deadline.
+
+Until it is rotated, anyone with access to that conversation's logs can charge,
+refund or move money on the IntaSend account.
+
+1. IntaSend dashboard → API keys → revoke **both** the live secret and
+   publishable keys, and re-issue.
+2. Install the new secret key on the box:
    ```
-   INTASEND_SECRET_KEY=ISSecretKey_test_…
-   INTASEND_WEBHOOK_CHALLENGE=<a long random string you also enter in the dashboard>
+   # /srv/drift/app/.env.production
+   INTASEND_SECRET_KEY=ISSecretKey_live_…
    ```
+   ```bash
+   docker compose -f docker-compose.prod.yml --env-file .env.production up -d --force-recreate api
+   ```
+3. Confirm the old key is dead:
+   ```bash
+   curl -s -o /dev/null -w "%{http_code}\n" \
+     -H "Authorization: Bearer <OLD KEY>" \
+     https://payment.intasend.com/api/v1/subscriptions-plans/
+   ```
+   **401 means revoked. 200 means it still works and the debt is unpaid.**
 
-**Done when:** the old keys are revoked and a sandbox key is in `backend/.env`.
-Do not put a live key anywhere but the production box — the app refuses to boot
-with one under `NODE_ENV=test`, on purpose.
+**Done when:** the old key returns 401 and the API logs
+`IntaSend configured against https://payment.intasend.com (LIVE key)` after the
+restart.
+
+A sandbox key (`ISSecretKey_test_…`) is still worth having for `backend/.env`
+locally — the app refuses to boot with a live key under `NODE_ENV=test`, on
+purpose, so tests cannot move real money.
+
+---
+
+## 0b. Configure Paddle — blocks USD club billing
+
+Club billing now has two rails: IntaSend for KES (and five other African
+currencies) and Paddle for USD, routed automatically by a plan's currency —
+see `docs/PAYMENTS_PLAN.md`. The code is wired end to end; nothing charges
+real money until this is done, because `PADDLE_API_KEY` unset means USD plans
+have no provider to route to at all.
+
+1. Sign up at paddle.com and, from the **Sandbox** dashboard, generate an API
+   key (Developer Tools → Authentication) and a Notification Destination
+   (Developer Tools → Notifications) scoped to at least
+   `transaction.completed` and `transaction.payment_failed`. Note the
+   destination's signing secret.
+2. Point that Notification Destination's URL at
+   `https://drift.einsbrand.com/api/payments/webhooks/paddle`.
+3. Set, in `backend/.env` first:
+   ```
+   PADDLE_API_KEY=<sandbox key>
+   PADDLE_WEBHOOK_SECRET=<notification destination secret>
+   ```
+   (`PADDLE_ENVIRONMENT` stays unset — sandbox is the default.)
+4. In the Paddle dashboard under Checkout settings, set the **default payment
+   link** / post-checkout destination to `https://drift.einsbrand.com/billing`.
+   Unlike IntaSend, Paddle has no per-request return URL — this account-wide
+   setting is the only place it's configured.
+5. Run a club through the USD checkout end to end against
+   `sandbox-api.paddle.com` and confirm the webhook marks the invoice PAID.
+6. Only then repeat steps 1–2 against Paddle's **live** dashboard, and put
+   those credentials plus `PADDLE_ENVIRONMENT=production` on the production
+   box.
+
+**Done when:** a club can subscribe to a USD plan in the sandbox, land back on
+`/billing`, and see the plan go ACTIVE — then the same in production with a
+live key.
+
+## 0c. Replace the placeholder club plan prices — blocks real revenue
+
+`CLUB_PRO_USD` / `CLUB_PRO_KES` and `CLUB_ELITE_USD` / `CLUB_ELITE_KES` were
+seeded with placeholder prices and entitlement copy so the hybrid billing flow
+had something real to check out against (`docs/PAYMENTS_PLAN.md` → "Plan
+data"). Nobody has priced these yet.
+
+**Done when:** Platform Admin → Commercial → Plans shows real prices and
+entitlement bullets for all four rows, and both currency variants of each
+tier were repriced together — Platform Admin's "edit a plan's price" pushes
+the change to whichever provider that row belongs to, but the USD and KES
+rows are separate rows and each needs its own edit.
 
 ---
 

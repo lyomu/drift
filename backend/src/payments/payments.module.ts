@@ -1,9 +1,8 @@
 import { Module } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { ClubBillingController } from './club-billing.controller';
 import { IntasendPaymentProvider } from './intasend-payment.provider';
-import { PAYMENT_PROVIDER } from './payment-provider';
-import type { PaymentProvider } from './payment-provider';
+import { PaddlePaymentProvider } from './paddle-payment.provider';
+import { PaymentProviderResolver } from './payment-provider.resolver';
 import { PaymentWebhooksController } from './payment-webhooks.controller';
 import { PaymentsController } from './payments.controller';
 import { PaymentsService } from './payments.service';
@@ -21,24 +20,18 @@ import { SandboxPaymentProvider } from './sandbox-payment.provider';
     ProviderPlanService,
     SandboxPaymentProvider,
     IntasendPaymentProvider,
-    {
-      // Which provider is live is an environment question, not a code one: a
-      // deployment without an IntaSend key keeps the sandbox behaviour it has
-      // today rather than failing, which is what lets dev machines and CI run
-      // the whole billing surface with no credentials at all.
-      provide: PAYMENT_PROVIDER,
-      inject: [ConfigService, IntasendPaymentProvider, SandboxPaymentProvider],
-      useFactory: (
-        config: ConfigService,
-        intasend: IntasendPaymentProvider,
-        sandbox: SandboxPaymentProvider,
-      ): PaymentProvider =>
-        config.get<string>('INTASEND_SECRET_KEY') ? intasend : sandbox,
-    },
+    PaddlePaymentProvider,
+    // Which provider bills a given plan is a currency question now that two
+    // hosted providers can be configured at once — resolved per checkout by
+    // `PaymentProviderResolver` rather than picked once at boot. A deployment
+    // with no real keys at all keeps routing everything to the sandbox, which
+    // is what lets dev machines and CI run the whole billing surface with no
+    // credentials.
+    PaymentProviderResolver,
   ],
   // Platform Admin needs the same provider seam: repricing a plan, refunding a
   // charge and cancelling a mandate are all provider calls, and doing them
   // against a second copy of the wiring is how the two consoles drift apart.
-  exports: [PaymentsService, ProviderPlanService, PAYMENT_PROVIDER],
+  exports: [PaymentsService, ProviderPlanService, PaymentProviderResolver],
 })
 export class PaymentsModule {}

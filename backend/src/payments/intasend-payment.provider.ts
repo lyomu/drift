@@ -127,7 +127,7 @@ export class IntasendPaymentProvider implements HostedPaymentProvider {
   async updatePlan(
     providerPlanId: string,
     input: HostedPlanInput,
-  ): Promise<void> {
+  ): Promise<string> {
     await this.request(
       'PUT',
       `/api/v1/subscriptions-plans/${encodeURIComponent(providerPlanId)}/`,
@@ -143,6 +143,10 @@ export class IntasendPaymentProvider implements HostedPaymentProvider {
         billing_cycles: BILLING_CYCLES,
       },
     );
+    // IntaSend edits the plan in place — the id never changes. Returned
+    // anyway to satisfy the shared interface, which a provider with
+    // effectively-immutable prices (Paddle) cannot promise the same of.
+    return providerPlanId;
   }
 
   async refund(input: HostedRefundInput): Promise<{ reference: string }> {
@@ -158,9 +162,7 @@ export class IntasendPaymentProvider implements HostedPaymentProvider {
         invoice_id: input.providerInvoiceId,
         amount: majorUnits(input.amountMinor),
         reason: input.reason,
-        ...(input.reasonDetails
-          ? { reason_details: input.reasonDetails }
-          : {}),
+        ...(input.reasonDetails ? { reason_details: input.reasonDetails } : {}),
       },
     );
     return { reference: body.invoice_id ?? input.providerInvoiceId };
