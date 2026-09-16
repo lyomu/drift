@@ -25,6 +25,8 @@ class AuthController extends AsyncNotifier<AuthSessionStatus> {
   Future<({String userId, String? devVerificationCode})> signUp({
     required String email,
     required String password,
+    required String firstName,
+    required String lastName,
     required bool acceptedAgePolicy,
     String? phone,
     bool phoneOnWhatsApp = false,
@@ -34,6 +36,8 @@ class AuthController extends AsyncNotifier<AuthSessionStatus> {
         .signUp(
           email: email,
           password: password,
+          firstName: firstName,
+          lastName: lastName,
           acceptedAgePolicy: acceptedAgePolicy,
           phone: phone,
           phoneOnWhatsApp: phoneOnWhatsApp,

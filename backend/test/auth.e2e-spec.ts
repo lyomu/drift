@@ -39,7 +39,7 @@ describe('Auth (e2e)', () => {
   it('completes the signup -> verify -> login -> /users/me -> refresh -> logout round trip', async () => {
     const signUpRes = await request(app.getHttpServer())
       .post('/auth/signup')
-      .send({ email, password, acceptedAgePolicy: true })
+      .send({ email, password, firstName: 'Test', lastName: 'User', acceptedAgePolicy: true })
       .expect(201);
 
     expect(signUpRes.body.userId).toBeDefined();

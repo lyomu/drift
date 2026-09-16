@@ -13,9 +13,12 @@ import 'widgets/social_auth_buttons.dart';
 
 /// Sign Up — `foundation/04-screen-inventory.md` A.1 (redesign 2026-08).
 ///
-/// Email is the credential. A phone number is collected too, but purely as a
-/// contact detail — optional, and stored unverified, since signing *up* by
-/// phone still waits on a real SMS provider.
+/// Email is the credential. Name is collected here too, so Basic Profile
+/// (which already prefills a Google/Apple name from `/users/me`) doesn't have
+/// to ask an email sign-up to retype something just given. A phone number is
+/// also collected, but purely as a contact detail — optional, and stored
+/// unverified, since signing *up* by phone still waits on a real SMS
+/// provider.
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
 
@@ -24,6 +27,8 @@ class SignUpScreen extends ConsumerStatefulWidget {
 }
 
 class _SignUpScreenState extends ConsumerState<SignUpScreen> {
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _phoneController = TextEditingController();
@@ -35,6 +40,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
   @override
   void dispose() {
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _phoneController.dispose();
@@ -54,6 +61,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           .signUp(
             email: email,
             password: _passwordController.text,
+            firstName: _firstNameController.text.trim(),
+            lastName: _lastNameController.text.trim(),
             acceptedAgePolicy: _acceptedAgePolicy,
             phone: _phoneController.text.trim(),
             phoneOnWhatsApp: _phoneOnWhatsApp,
@@ -83,6 +92,26 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             style: type.h1.copyWith(fontSize: 30),
           ),
           const SizedBox(height: 32),
+          Row(
+            children: [
+              Expanded(
+                child: AuthInputField(
+                  controller: _firstNameController,
+                  hintText: 'First name',
+                  icon: Icons.person_outline,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: AuthInputField(
+                  controller: _lastNameController,
+                  hintText: 'Last name',
+                  icon: Icons.person_outline,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
           AuthInputField(
             controller: _emailController,
             hintText: 'Email',

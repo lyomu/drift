@@ -42,7 +42,7 @@ describe('News (e2e)', () => {
 
     const signUp = await request(app.getHttpServer())
       .post('/auth/signup')
-      .send({ email: alice.email, password, acceptedAgePolicy: true })
+      .send({ email: alice.email, password, firstName: 'Test', lastName: 'User', acceptedAgePolicy: true })
       .expect(201);
     const verify = await request(app.getHttpServer())
       .post('/auth/verify')

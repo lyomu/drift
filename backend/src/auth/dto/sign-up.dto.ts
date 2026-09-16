@@ -4,6 +4,7 @@ import {
   IsEmail,
   IsOptional,
   IsPhoneNumber,
+  IsString,
   MaxLength,
   MinLength,
 } from 'class-validator';
@@ -17,6 +18,17 @@ export class SignUpDto {
   @MinLength(PASSWORD_MIN_LENGTH)
   @MaxLength(PASSWORD_MAX_LENGTH)
   password: string;
+
+  /** Collected here now instead of deferred to Basic Profile — see
+   * `BasicProfileDto.firstName`/`lastName`, which stay required so a Google/
+   * Apple sign-up (never touches this DTO) still can't skip past them. */
+  @IsString()
+  @MinLength(1)
+  firstName: string;
+
+  @IsString()
+  @MinLength(1)
+  lastName: string;
 
   /** Optional contact detail, stored unverified — see `User.phone`.
    * `IsPhoneNumber()` with no region requires E.164 (`+254…`), which is what
