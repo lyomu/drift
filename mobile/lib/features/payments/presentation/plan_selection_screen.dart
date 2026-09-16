@@ -68,10 +68,6 @@ class _PlanSelectionScreenState extends ConsumerState<PlanSelectionScreen> {
             child: ListView(
               padding: const EdgeInsets.all(DriftSpacing.s5),
               children: [
-                if (planList.any((plan) => plan.isTest)) ...[
-                  const BillingSandboxBanner(),
-                  const SizedBox(height: DriftSpacing.s5),
-                ],
                 if (_error != null) ...[
                   _PaymentError(
                     message: _error!,

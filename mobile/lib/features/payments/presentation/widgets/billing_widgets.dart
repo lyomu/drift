@@ -8,36 +8,6 @@ import '../../../../shared/widgets/drift_card.dart';
 import '../../../../shared/widgets/drift_status_badge.dart';
 import '../../data/payments_repository.dart';
 
-class BillingSandboxBanner extends StatelessWidget {
-  const BillingSandboxBanner({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<DriftColors>()!;
-    final type = Theme.of(context).extension<DriftTypography>()!;
-    return Container(
-      padding: const EdgeInsets.all(DriftSpacing.s4),
-      decoration: BoxDecoration(
-        color: colors.warningSurface,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.science_outlined, color: colors.warning),
-          const SizedBox(width: DriftSpacing.s3),
-          Expanded(
-            child: Text(
-              'Sandbox billing uses test currency and provider tokens. No real payment will be taken.',
-              style: type.bodySmall.copyWith(color: colors.textPrimary),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class PaymentPlanCard extends StatelessWidget {
   const PaymentPlanCard({
     super.key,
