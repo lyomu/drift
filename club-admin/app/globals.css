@@ -9,8 +9,8 @@
  */
 
 :root {
-  --color-primary: #1c91d0;
-  --color-primary-dark: #126a9b;
+  --color-primary: #3399cc;
+  --color-primary-dark: #126d9b;
   --color-primary-light: #e8f5fc;
   --color-background: #f7fafc;
   --color-surface: #ffffff;
@@ -35,8 +35,8 @@
  * the :root block above.
  */
 .theme-light {
-  --color-primary: #1c91d0;
-  --color-primary-dark: #126a9b;
+  --color-primary: #3399cc;
+  --color-primary-dark: #126d9b;
   --color-primary-light: #e8f5fc;
   --color-background: #f7fafc;
   --color-surface: #ffffff;

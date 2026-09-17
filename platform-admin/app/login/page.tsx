@@ -3,8 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { MaterialIcon } from "@/components/dashboard-design";
+import { useEffect, useState } from "react";
 import { Button, ErrorBanner, Input, PasswordField } from "@/components/ui";
 import type { CurrentPlatformAdmin, PlatformPermission } from "@/lib/access-types";
 import {
@@ -30,6 +29,16 @@ const LANDINGS: { permission: PlatformPermission; href: string }[] = [
   { permission: "AUDIT_READ", href: "/audit-logs" },
 ];
 
+// Real photos, not stock-placeholder gray boxes — courts and matches, since
+// this panel is what staff see every time they sign in. Sourced from
+// Unsplash (free tier, no attribution required under the Unsplash License).
+const SLIDER_IMAGES = [
+  "https://images.unsplash.com/photo-1620742820748-87c09249a72a?auto=format&fit=crop&w=1200&q=70",
+  "https://images.unsplash.com/photo-1499510318569-1a3d67dc3976?auto=format&fit=crop&w=1200&q=70",
+  "https://images.unsplash.com/photo-1635873021329-c0af04695c9d?auto=format&fit=crop&w=1200&q=70",
+  "https://images.unsplash.com/photo-1689942963385-f5bd03f3b270?auto=format&fit=crop&w=1200&q=70",
+];
+
 type PlatformLoginResponse =
   | (TwoFactorChallenge & { requiresTwoFactor: true })
   | { requiresTwoFactor: false; accessToken: string };
@@ -47,6 +56,14 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [activeSlide, setActiveSlide] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setActiveSlide((i) => (i + 1) % SLIDER_IMAGES.length);
+    }, 6000);
+    return () => clearInterval(id);
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -81,29 +98,36 @@ export default function LoginPage() {
     <main className="theme-light flex min-h-screen items-center justify-center bg-[#F7FAFC] px-4 py-4 text-[#111827] sm:px-8 lg:px-10">
       <section className="flex w-full max-w-[1320px] overflow-hidden rounded-[24px] bg-white shadow-[0_22px_68px_rgba(17,24,39,0.12)] max-lg:max-w-[760px] max-lg:flex-col lg:h-[calc(100vh-48px)] lg:max-h-[760px] lg:min-h-[620px]">
         <aside className="relative min-h-[300px] flex-1 overflow-hidden bg-[#0F1725] p-7 text-white lg:min-h-0">
-          <div className="flex items-center gap-2.5">
-            <Image src="/images/drift-icon.png" alt="Drift" width={192} height={178} className="h-6 w-auto" />
+          {/* Auto-rotating court/match photos, crossfaded. The gradient
+              overlay is what keeps the logo and quote readable regardless
+              of which photo is showing — without it, a bright sky-colored
+              frame washes out the white text. */}
+          <div className="absolute inset-0" aria-hidden="true">
+            {SLIDER_IMAGES.map((src, i) => (
+              // eslint-disable-next-line @next/next/no-img-element -- external
+              // Unsplash URLs; a decorative rotating background isn't worth
+              // adding images.unsplash.com to next.config's remotePatterns for.
+              <img
+                key={src}
+                src={src}
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ease-in-out"
+                style={{ opacity: i === activeSlide ? 1 : 0 }}
+              />
+            ))}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0F1725] via-[#0F1725]/70 to-[#0F1725]/35" />
           </div>
 
-          <div className="absolute inset-x-7 top-1/2 hidden -translate-y-1/2 flex-col items-center justify-center text-center text-[#C7D2E5]/20 lg:flex">
-            <MaterialIcon name="image" className="text-[34px]" />
-            <p className="mt-2 text-[13px] font-semibold">Drop a photo of your team or venues</p>
-            <span className="mt-0.5 text-[12px] underline decoration-white/10 underline-offset-4">
-              or browse files
-            </span>
-          </div>
-
-          <div className="absolute inset-x-7 bottom-7">
-            <blockquote className="max-w-[520px] font-display text-[25px] font-extrabold leading-[1.36] lg:text-[28px]">
-              &quot;One console for every club, court, and dispute on the platform.&quot;
-            </blockquote>
-            <div className="mt-5">
-              <div className="text-[14px] font-extrabold">Priya Shah</div>
-              <div className="mt-0.5 text-[13px] font-medium text-[#C7D2E5]">
-                Super Admin, Drift Platform Team
-              </div>
+          {/* The crest's black shield-half disappears against this panel's
+              near-black background — half the logo was invisible before this
+              white badge. Badge keeps it legible regardless of which photo
+              is behind it, not just the flat navy. */}
+          <div className="relative flex items-center gap-2.5">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white p-1.5 shadow-[0_2px_8px_rgba(0,0,0,0.25)]">
+              <Image src="/images/drift-icon.png" alt="Drift" width={192} height={178} className="h-full w-full object-contain" />
             </div>
           </div>
+
         </aside>
 
         <div className="flex flex-1 items-center justify-center px-6 py-10 sm:px-10 lg:min-h-0 lg:px-12">

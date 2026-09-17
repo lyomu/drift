@@ -19,7 +19,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { LocaleSwitcher } from "./locale-switcher";
-import { getDictionary, legalLinks } from "@/lib/content";
+import { getDictionary } from "@/lib/content";
 import { localeHref, type Locale } from "@/lib/locales";
 
 export function SiteHeader({
@@ -34,13 +34,13 @@ export function SiteHeader({
   if (minimal) {
     return (
       <header className="header-enter border-b border-[var(--color-border)] bg-[var(--color-surface)]">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
+        <div className="mx-auto flex h-20 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
           <Link
             href={localeHref(locale, "/")}
             className="brand-link flex shrink-0 items-center"
             aria-label="Drift Tennis, home"
           >
-            <Image src="/images/logo.png" alt="" width={640} height={321} className="brand-mark h-8 w-auto" priority />
+            <Image src="/images/logo.png" alt="" width={640} height={321} className="brand-mark h-16 w-auto" priority />
           </Link>
           <div className="flex shrink-0 items-center gap-5">
             <LocaleSwitcher current={locale} />
@@ -58,9 +58,9 @@ export function SiteHeader({
 
   return (
     <header className="header-enter sticky top-0 z-40 border-b border-[var(--color-border)] bg-[var(--color-surface)]/90 backdrop-blur-sm">
-      <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4 sm:px-6">
+      <div className="mx-auto flex h-20 max-w-6xl items-center gap-4 px-4 sm:px-6">
         <a href="#top" className="brand-link flex shrink-0 items-center" aria-label="Drift Tennis, home">
-          <Image src="/images/logo.png" alt="" width={640} height={321} className="brand-mark h-8 w-auto" priority />
+          <Image src="/images/logo.png" alt="" width={640} height={321} className="brand-mark h-16 w-auto" priority />
         </a>
 
         <nav aria-label={t.header.sectionsAria} className="ml-auto hidden lg:block">
@@ -82,18 +82,6 @@ export function SiteHeader({
                 {t.header.forClubs}
               </a>
             </li>
-            <li>
-              <details className="nav-disclosure">
-                <summary className="nav-link cursor-pointer">{t.header.legal}</summary>
-                <div className="nav-menu">
-                  {legalLinks.map((link) => (
-                    <Link key={link.href} href={link.href}>
-                      {link.label}
-                    </Link>
-                  ))}
-                </div>
-              </details>
-            </li>
           </ul>
         </nav>
 
@@ -103,7 +91,7 @@ export function SiteHeader({
         >
           {t.header.joinCta}
         </Link>
-        <div className="hidden lg:block">
+        <div className="ml-3 hidden shrink-0 lg:block">
           <LocaleSwitcher current={locale} />
         </div>
       </div>
@@ -132,13 +120,6 @@ export function SiteHeader({
               {t.header.forClubs}
             </a>
           </li>
-          {legalLinks.map((link) => (
-            <li key={link.href} className="shrink-0">
-              <Link className="nav-link" href={link.href}>
-                {link.shortLabel}
-              </Link>
-            </li>
-          ))}
         </ul>
       </nav>
     </header>

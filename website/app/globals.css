@@ -8,8 +8,12 @@
  * people deciding whether to download.
  */
 @theme inline {
-  --color-primary: #1c91d0;
-  --color-primary-dark: #126a9b;
+  /* #3399cc is the logo's actual fill color (sampled directly from
+     public/images/logo.png — it's the dominant pixel by a wide margin), not
+     a value someone typed by eye. -dark/-light stay derived from the same
+     hue (~200°) at adjusted lightness so contrast ratios below don't shift. */
+  --color-primary: #3399cc;
+  --color-primary-dark: #126d9b;
   --color-primary-light: #e8f5fc;
   --color-background: #f7fafc;
   --color-surface: #ffffff;
@@ -184,9 +188,9 @@ body {
 }
 
 /* The primary CTA: brand fill, 12px radius (DriftPrimaryButton). The fill
-   uses primary-dark rather than #1c91d0 — white on #1c91d0 is ~3.5:1, which
-   fails AA for 15px text; #126a9b gives ~5.9:1 and still reads as the
-   brand blue. */
+   uses primary-dark rather than the logo's own #3399cc — white on #3399cc is
+   only ~3.2:1, which fails AA for 15px text; #126d9b gives ~5.7:1 and still
+   reads as the brand blue. */
 .btn-primary {
   display: inline-flex;
   align-items: center;
@@ -202,7 +206,7 @@ body {
 }
 
 .btn-primary:hover {
-  background: #0e5380;
+  background: #0e5a80;
 }
 
 .btn-primary:active {
@@ -598,11 +602,11 @@ body {
   border-radius: 16px;
   background: var(--color-primary-light);
   padding: 1.5rem;
-  color: #145578;
+  color: #145778;
 }
 
 .legal-highlight p + p { margin-top: 1rem; }
-.legal-highlight strong { color: #0c4e74; }
+.legal-highlight strong { color: #0c5174; }
 
 .legal-table-wrap {
   margin-top: 1.25rem;

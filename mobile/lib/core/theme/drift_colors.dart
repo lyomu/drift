@@ -43,8 +43,8 @@ class DriftColors extends ThemeExtension<DriftColors> {
   final Color errorSurface;
 
   static const light = DriftColors(
-    primary: Color(0xFF1C91D0),
-    primaryDark: Color(0xFF126A9B),
+    primary: Color(0xFF3399CC),
+    primaryDark: Color(0xFF126D9B),
     primaryLight: Color(0xFFE8F5FC),
     background: Color(0xFFF7FAFC),
     surface: Color(0xFFFFFFFF),
