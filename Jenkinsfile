@@ -191,7 +191,7 @@ pipeline {
                         -e REDIS_URL=redis://${env.CI_REDIS}:6379 \
                         -e JWT_SECRET=ci-only-jenkins-jwt-secret-value-not-used-anywhere-else \
                         -e CORS_ALLOWED_ORIGINS=http://localhost:3010,http://localhost:3011,http://localhost:3012 \
-                        ${env.API_CI_IMAGE} sh -c "npx prisma migrate deploy && npm test && npm run test:e2e"
+                        ${env.API_CI_IMAGE} sh -c "npx prisma migrate deploy && npm run seed && npm test && npm run test:e2e"
                 """
             }
             post {
