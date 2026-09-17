@@ -178,6 +178,13 @@ services:
       NODE_ENV: production
       PORT: 3012
       HOSTNAME: 0.0.0.0
+      # Server-side only (see website/app/api/waitlist/route.ts) — the
+      # waitlist proxy hops to the API container over the compose network,
+      # not to whatever `localhost` means inside this container.
+      API_URL: http://api:3009
+    depends_on:
+      api:
+        condition: service_healthy
     ports:
       - "127.0.0.1:3008:3012"
     healthcheck:

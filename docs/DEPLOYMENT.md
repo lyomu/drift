@@ -91,7 +91,15 @@ MAIL_FROM=Drift Tennis <drift@einsbrand.com>
 `PUBLIC_API_URL` is baked into both consoles' Next.js builds and their CSP
 headers at **build time**, not read at runtime — the image build stage
 (local or Jenkins) needs it, not just this file. The website takes no build
-args; it makes no API calls.
+args.
+
+It does, however, make one server-side API call: the waitlist form posts to
+`/api/waitlist`, a same-origin route that proxies to the API from inside the
+website's own container (see `website/app/api/waitlist/route.ts`). That hop
+reads `API_URL` — not `PUBLIC_API_URL` — at **runtime**, so it has to be set
+in `docker-compose.prod.yml`'s `website` service, pointed at the API's
+compose service name (`http://api:3009`), not at `PUBLIC_API_URL`'s public
+hostname.
 
 The same values also go into the `drift-prod-env-file` Jenkins credential
 (see below) so a Jenkins-driven deploy and a manual one use identical
