@@ -24,7 +24,7 @@ class AuthPrimaryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     // Fixed brand blue — this is a light-surface CTA and shouldn't shift in
     // dark mode the way colors.primary does.
-    const blue = Color(0xFF1C91D0);
+    const blue = Color(0xFF3399CC);
     final enabled = onPressed != null && !loading;
 
     return DecoratedBox(
@@ -33,7 +33,7 @@ class AuthPrimaryButton extends StatelessWidget {
         boxShadow: enabled
             ? const [
                 BoxShadow(
-                  color: Color(0x591C91D0), // blue @ 35%
+                  color: Color(0x593399CC), // blue @ 35%
                   blurRadius: 24,
                   offset: Offset(0, 8),
                 ),

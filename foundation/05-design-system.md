@@ -7,7 +7,7 @@
 ## 1. Design Principles
 
 1. **Tennis-native, not generic SaaS.** Court-inspired geometry, strong statistics typography, athletic imagery. A screenshot of Drift should never be mistaken for a generic CRUD admin tool.
-2. **White/neutral surfaces dominate; blue earns its place.** #1C91D0 marks primary actions, active states, and important statistics — it is never a background flood.
+2. **White/neutral surfaces dominate; blue earns its place.** #3399CC marks primary actions, active states, and important statistics — it is never a background flood.
 3. **Progress is visible.** Ratings, standings, and skill development are always rendered as something the player can watch move over time — charts and trend indicators over static numbers wherever possible.
 4. **Structured over freeform.** Match scheduling, results, and disputes use explicit workflows and named states, not open-ended text, so the product is trustworthy under conflict.
 5. **Beginner-first clarity.** Plain labels (Play, Compete, Discover, Improve) over jargon; a first-time player and a competitive league player both find the interface legible.
@@ -20,8 +20,8 @@
 
 | Token | Value | Usage |
 |---|---|---|
-| `color.primary` | `#1C91D0` | Primary CTA, active nav, selected states, links, key interactions, progress indicators, selected filters, important statistics, brand moments |
-| `color.primary.dark` | `#126A9B` | Pressed/active state of primary, high-emphasis text-on-light accents |
+| `color.primary` | `#3399CC` | Primary CTA, active nav, selected states, links, key interactions, progress indicators, selected filters, important statistics, brand moments |
+| `color.primary.dark` | `#126D9B` | Pressed/active state of primary, high-emphasis text-on-light accents |
 | `color.primary.light` | `#E8F5FC` | Selected-surface backgrounds, subtle highlight fills |
 | `color.background` | `#F7FAFC` | App/page background |
 | `color.surface` | `#FFFFFF` | Cards, sheets, modals |
@@ -31,7 +31,7 @@
 | `color.status.success` | `#16A34A` | Confirmations, wins, positive trend |
 | `color.status.warning` | `#F59E0B` | Pending/attention states (e.g. awaiting confirmation) |
 | `color.status.error` | `#DC2626` | Errors, disputes, destructive actions |
-| `color.status.info` | `#1C91D0` | Informational banners (reuses primary) |
+| `color.status.info` | `#3399CC` | Informational banners (reuses primary) |
 
 **Rule: white and neutral surfaces remain dominant.** Blue is reserved for the interactions listed above — never used as a large background fill, card background, or default icon colour.
 
