@@ -16,6 +16,7 @@ import {
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { blockBetween } from '../common/relationship.util';
+import { demoScope } from '../common/demo-scope';
 import { MessagingService } from '../messaging/messaging.service';
 import { RealtimePublisher } from '../messaging/realtime.publisher';
 import { MatchSystemEvent } from '../messaging/messaging.events';
@@ -97,8 +98,13 @@ export class MatchesService {
     if (userId === otherId) {
       throw new BadRequestException('You cannot challenge yourself.');
     }
+    const scope = await demoScope(this.prisma, userId);
     const other = await this.prisma.user.findFirst({
-      where: { id: otherId, onboardingStep: OnboardingStep.COMPLETE },
+      where: {
+        id: otherId,
+        onboardingStep: OnboardingStep.COMPLETE,
+        ...scope.user,
+      },
     });
     if (!other) {
       throw new NotFoundException('Player not found.');

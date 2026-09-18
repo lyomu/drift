@@ -34,6 +34,8 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/prisma ./prisma
 COPY --from=build /app/prisma.config.ts ./prisma.config.ts
+# Operator scripts (e.g. the demo-account seed) run inside this container.
+COPY --from=build /app/scripts ./scripts
 
 USER node
 EXPOSE 3009

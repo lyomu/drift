@@ -7,6 +7,7 @@ import {
 import { AccountStatus, OnboardingStep, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { blockBetween } from '../common/relationship.util';
+import { demoScope } from '../common/demo-scope';
 import { CreateCoachDto, UpdateCoachDto } from './dto/coach-admin.dto';
 import { SearchCoachesDto } from './dto/search-coaches.dto';
 import {
@@ -86,12 +87,14 @@ export class CoachesService {
 
   async search(viewerId: string, dto: SearchCoachesDto) {
     const excludedIds = await this.blockedUserIds(viewerId);
+    const scope = await demoScope(this.prisma, viewerId);
     const where: Prisma.CoachProfileWhereInput = {
       userId: { notIn: excludedIds },
       user: {
         is: {
           accountStatus: AccountStatus.ACTIVE,
           onboardingStep: OnboardingStep.COMPLETE,
+          ...scope.user,
           ...(dto.search
             ? {
                 OR: [

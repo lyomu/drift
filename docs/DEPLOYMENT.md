@@ -280,6 +280,37 @@ done** — this is on-box-only today, which the runbook treats as incomplete;
 a Storage Box (or equivalent) and a real restore drill are a near-term
 follow-up, not part of this deployment.
 
+## Demo account
+
+A demo **player** and demo **club owner** (with ~60 supporting people and three
+months of backdated matches, ratings, leagues, events, posts and billing) can
+be loaded for sales demos. Everything is flagged `isDemo`; discovery surfaces
+hide it from real users and hide real users from it (`backend/src/common/
+demo-scope.ts`), so it is safe to keep in the production database.
+
+**Order matters.** The `demo_flags` migration and the discovery filters must
+be deployed first — the seed refuses to run against a schema without
+`isDemo`, and without the filters demo players would appear in real users'
+search and Home suggestions.
+
+```bash
+# on the box, after the normal deploy and a fresh pg_dump (see Backups)
+docker compose -f docker-compose.prod.yml exec \
+  -e DEMO_PLAYER_PASSWORD='…' -e DEMO_OWNER_PASSWORD='…' \
+  api node scripts/seed-demo-history.mjs --allow-remote
+```
+
+- **Logins:** `demo.player@demo.driftsports.app` (mobile app) and
+  `demo.owner@demo.driftsports.app` (Club Admin). Passwords come from the
+  two env vars; if unset, random ones are generated and printed once.
+- **Refreshing:** re-running wipes every `isDemo` row and rebuilds relative to
+  today, so run it shortly before a demo to keep "upcoming" items upcoming.
+- **Removing:** `node scripts/seed-demo-history.mjs --reset --allow-remote`.
+- **Known leak:** Platform Admin lists and analytics include demo rows, and
+  the three SANDBOX invoices count toward revenue KPIs for their periods.
+- **Not seeded on purpose:** lesson completions (so the Home achievement card
+  shows), privacy requests, and any Paddle/IntaSend billing reference.
+
 ## Deferred / not part of this deployment
 
 - Observability agent (needs a private Prometheus/Loki path — see

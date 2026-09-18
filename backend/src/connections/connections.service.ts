@@ -8,6 +8,7 @@ import { ConnectionStatus, OnboardingStep } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { blockBetween, connectionBetween } from '../common/relationship.util';
 import { displayName } from '../common/display-name.util';
+import { demoScope } from '../common/demo-scope';
 import { playerInclude, toPlayerSummary } from '../players/player.mapper';
 import { NotificationsService } from '../notifications/notifications.service';
 
@@ -23,8 +24,13 @@ export class ConnectionsService {
       throw new BadRequestException('You cannot connect with yourself.');
     }
 
+    const scope = await demoScope(this.prisma, userId);
     const addressee = await this.prisma.user.findFirst({
-      where: { id: addresseeId, onboardingStep: OnboardingStep.COMPLETE },
+      where: {
+        id: addresseeId,
+        onboardingStep: OnboardingStep.COMPLETE,
+        ...scope.user,
+      },
     });
     if (!addressee) {
       throw new NotFoundException('Player not found.');

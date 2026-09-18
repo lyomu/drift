@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { LadderChallengeState, LadderState, MatchSport } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { demoScope } from '../common/demo-scope';
 import { MatchesService } from '../matches/matches.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { canChallenge, resolvePositions } from './ladder-rules';
@@ -19,10 +20,13 @@ export class LaddersService {
 
   // ------------------------------------------------------------------ read
 
-  async list(clubId?: string) {
+  /** `viewerId` hides demo clubs' ladders from real users. */
+  async list(clubId?: string, viewerId?: string) {
+    const scope = viewerId ? await demoScope(this.prisma, viewerId) : null;
     const ladders = await this.prisma.ladder.findMany({
       where: {
         ...(clubId ? { clubId } : {}),
+        ...scope?.clubRequired,
         state: LadderState.ACTIVE,
       },
       orderBy: { createdAt: 'desc' },

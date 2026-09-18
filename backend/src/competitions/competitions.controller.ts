@@ -21,8 +21,8 @@ export class CompetitionsController {
   }
 
   @Get('leagues')
-  listLeagues() {
-    return this.competitions.listLeagues();
+  listLeagues(@Req() req: Request) {
+    return this.competitions.listLeagues(this.userId(req));
   }
 
   @Get('me/leagues')

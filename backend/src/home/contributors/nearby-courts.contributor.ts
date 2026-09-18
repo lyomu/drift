@@ -25,12 +25,15 @@ export class NearbyCourtsContributor implements HomeCardContributor {
     const { latitude, longitude } = ctx.profile;
     if (latitude === null || longitude === null) return [];
 
-    const { courts } = await this.courts.search({
-      latitude,
-      longitude,
-      maxDistanceKm: NEARBY_RADIUS_KM,
-      take: SUGGESTION_COUNT,
-    });
+    const { courts } = await this.courts.search(
+      {
+        latitude,
+        longitude,
+        maxDistanceKm: NEARBY_RADIUS_KM,
+        take: SUGGESTION_COUNT,
+      },
+      ctx.userId,
+    );
     if (courts.length === 0) return [];
 
     const nearest = courts[0];

@@ -25,8 +25,8 @@ export class CourtsController {
   }
 
   @Get()
-  search(@Query() dto: SearchCourtsDto) {
-    return this.courtsService.search(dto);
+  search(@Req() req: Request, @Query() dto: SearchCourtsDto) {
+    return this.courtsService.search(dto, this.userId(req));
   }
 
   @Get(':id')

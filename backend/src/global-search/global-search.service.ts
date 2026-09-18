@@ -9,6 +9,7 @@ import {
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { displayName } from '../common/display-name.util';
+import { DemoScope, demoScope } from '../common/demo-scope';
 import {
   GlobalSearchDto,
   GlobalSearchEntityType,
@@ -32,18 +33,19 @@ export class GlobalSearchService {
     if (query.length < 2) return { results: [] };
 
     const type = dto.type ?? GlobalSearchEntityType.ALL;
+    const scope = await demoScope(this.prisma, userId);
     const buckets = await Promise.all([
       this.includes(type, GlobalSearchEntityType.PLAYER)
-        ? this.players(userId, query, take)
+        ? this.players(userId, query, take, scope)
         : [],
       this.includes(type, GlobalSearchEntityType.COURT)
-        ? this.courts(query, take)
+        ? this.courts(query, take, scope)
         : [],
       this.includes(type, GlobalSearchEntityType.CLUB)
-        ? this.clubs(query, take)
+        ? this.clubs(query, take, scope)
         : [],
       this.includes(type, GlobalSearchEntityType.COMPETITION)
-        ? this.competitions(query, take)
+        ? this.competitions(query, take, scope)
         : [],
     ]);
 
@@ -71,6 +73,7 @@ export class GlobalSearchService {
     userId: string,
     query: string,
     take: number,
+    scope: DemoScope,
   ): Promise<SearchResult[]> {
     const blockedIds = [userId, ...(await this.blockedUserIds(userId))];
     const users = await this.prisma.user.findMany({
@@ -78,6 +81,7 @@ export class GlobalSearchService {
         id: { notIn: blockedIds },
         accountStatus: AccountStatus.ACTIVE,
         onboardingStep: OnboardingStep.COMPLETE,
+        ...scope.user,
         OR: [
           { firstName: { contains: query, mode: 'insensitive' } },
           { lastName: { contains: query, mode: 'insensitive' } },
@@ -131,9 +135,14 @@ export class GlobalSearchService {
     });
   }
 
-  private async courts(query: string, take: number): Promise<SearchResult[]> {
+  private async courts(
+    query: string,
+    take: number,
+    scope: DemoScope,
+  ): Promise<SearchResult[]> {
     const courts = await this.prisma.court.findMany({
       where: {
+        AND: [scope.clubOptional],
         OR: [
           { name: { contains: query, mode: 'insensitive' } },
           { address: { contains: query, mode: 'insensitive' } },
@@ -152,10 +161,15 @@ export class GlobalSearchService {
     }));
   }
 
-  private async clubs(query: string, take: number): Promise<SearchResult[]> {
+  private async clubs(
+    query: string,
+    take: number,
+    scope: DemoScope,
+  ): Promise<SearchResult[]> {
     const clubs = await this.prisma.club.findMany({
       where: {
         platformStatus: ClubPlatformStatus.ACTIVE,
+        ...scope.club,
         OR: [
           { name: { contains: query, mode: 'insensitive' } },
           { address: { contains: query, mode: 'insensitive' } },
@@ -177,11 +191,13 @@ export class GlobalSearchService {
   private async competitions(
     query: string,
     take: number,
+    scope: DemoScope,
   ): Promise<SearchResult[]> {
     const [leagues, tournaments, ladders] = await Promise.all([
       this.prisma.league.findMany({
         where: {
           state: LeagueState.PUBLISHED,
+          AND: [scope.clubOptional],
           name: { contains: query, mode: 'insensitive' },
         },
         select: { id: true, name: true, sport: true, format: true },
@@ -191,6 +207,7 @@ export class GlobalSearchService {
       this.prisma.tournament.findMany({
         where: {
           state: { not: TournamentState.CANCELLED },
+          ...scope.clubRequired,
           name: { contains: query, mode: 'insensitive' },
         },
         select: {
@@ -205,6 +222,7 @@ export class GlobalSearchService {
       this.prisma.ladder.findMany({
         where: {
           state: LadderState.ACTIVE,
+          ...scope.clubRequired,
           name: { contains: query, mode: 'insensitive' },
         },
         select: { id: true, name: true, club: { select: { name: true } } },
