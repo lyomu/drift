@@ -613,6 +613,10 @@ model User {
 
   verificationStatus VerificationStatus @default(UNVERIFIED)
   accountStatus      AccountStatus      @default(ACTIVE)
+  // Marks a seeded demo persona (`scripts/seed-demo-history.mjs`). Demo users
+  // and real users are invisible to each other in every discovery surface —
+  // see `common/demo-scope.ts`. Never set by any API path.
+  isDemo             Boolean            @default(false)
   emailVerifiedAt    DateTime?
   phoneVerifiedAt    DateTime?
   // Launch policy P.2: Drift Tennis is 18+ until a guardian-consent flow exists.
@@ -1541,6 +1545,9 @@ model Club {
   verificationStatus ListingVerificationStatus @default(UNVERIFIED)
   platformStatus     ClubPlatformStatus        @default(ACTIVE)
   platformStatusReason String?
+  // Seeded demo club (`scripts/seed-demo-history.mjs`): hidden from every
+  // real user's discovery surfaces; demo users see it alongside real clubs.
+  isDemo             Boolean                   @default(false)
   platformSuspendedAt  DateTime?
 
   // Null until the owner finishes (or dismisses) the multi-step setup

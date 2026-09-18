@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { MatchSport, OnboardingStep, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { boundingBox, Coordinates, haversineKm } from '../common/distance.util';
+import { demoScope } from '../common/demo-scope';
 import {
   blockBetween,
   connectionBetween,
@@ -79,6 +80,7 @@ export class PlayersService {
     const viewer = await this.viewerProfile(userId);
     const viewerCoords = this.coordsOf(viewer);
     const excludedIds = [userId, ...(await this.blockedUserIds(userId))];
+    const scope = await demoScope(this.prisma, userId);
 
     // Wave 8: sport dimension — Padel queries PadelProfile, Tennis (default)
     // queries TennisProfile. The rest of the filters map to whichever profile
@@ -135,6 +137,7 @@ export class PlayersService {
       where: {
         id: { notIn: excludedIds },
         onboardingStep: OnboardingStep.COMPLETE,
+        ...scope.user,
         // Wave 8: Padel queries PadelProfile; Tennis (default) queries TennisProfile.
         ...(sport === 'PADEL'
           ? { padelProfile: { isNot: null } }
@@ -253,8 +256,13 @@ export class PlayersService {
       throw new NotFoundException('Player not found.');
     }
 
+    const scope = await demoScope(this.prisma, userId);
     const player = await this.prisma.user.findFirst({
-      where: { id: playerId, onboardingStep: OnboardingStep.COMPLETE },
+      where: {
+        id: playerId,
+        onboardingStep: OnboardingStep.COMPLETE,
+        ...scope.user,
+      },
       include: playerInclude,
     });
     if (!player) {

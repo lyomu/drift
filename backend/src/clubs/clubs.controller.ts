@@ -10,8 +10,11 @@ export class ClubsController {
   constructor(private readonly clubsService: ClubsService) {}
 
   @Get()
-  search(@Query() dto: SearchClubsDto) {
-    return this.clubsService.search(dto);
+  search(@Req() req: Request, @Query() dto: SearchClubsDto) {
+    return this.clubsService.search(
+      (req.user as { userId: string }).userId,
+      dto,
+    );
   }
 
   @Get(':id')

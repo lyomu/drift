@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { TournamentState, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { demoScope } from '../common/demo-scope';
 import { MatchesService } from '../matches/matches.service';
 import { buildDraw, isPowerOfTwo } from './tournament-bracket';
 
@@ -32,10 +33,13 @@ export class TournamentsService {
     };
   }
 
-  async list(clubId?: string) {
+  /** `viewerId` hides demo clubs' tournaments from real users. */
+  async list(clubId?: string, viewerId?: string) {
+    const scope = viewerId ? await demoScope(this.prisma, viewerId) : null;
     const tournaments = await this.prisma.tournament.findMany({
       where: {
         ...(clubId ? { clubId } : {}),
+        ...scope?.clubRequired,
         state: { in: ['REGISTRATION_OPEN', 'RUNNING', 'COMPLETED'] },
       },
       orderBy: { createdAt: 'desc' },

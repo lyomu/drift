@@ -13,7 +13,12 @@ type MockPrisma = {
 function createMockPrisma(): MockPrisma {
   return {
     tennisProfile: { findUnique: jest.fn() },
-    user: { findMany: jest.fn(), findFirst: jest.fn() },
+    user: {
+      findMany: jest.fn(),
+      findFirst: jest.fn(),
+      // demoScope() reads the viewer's isDemo flag.
+      findUnique: jest.fn().mockResolvedValue({ isDemo: false }),
+    },
     block: { findMany: jest.fn().mockResolvedValue([]), findFirst: jest.fn() },
     connection: { findFirst: jest.fn().mockResolvedValue(null) },
     // findOne also computes stats (matches/stats.util.ts) alongside the

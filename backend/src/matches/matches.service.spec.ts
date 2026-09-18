@@ -17,7 +17,11 @@ type MockPrisma = {
 
 function createMockPrisma(): MockPrisma {
   const prisma: MockPrisma = {
-    user: { findFirst: jest.fn().mockResolvedValue({ id: 'other' }) },
+    user: {
+      findFirst: jest.fn().mockResolvedValue({ id: 'other' }),
+      // demoScope() reads the viewer's isDemo flag.
+      findUnique: jest.fn().mockResolvedValue({ isDemo: false }),
+    },
     block: { findFirst: jest.fn().mockResolvedValue(null) },
     match: {
       findUnique: jest.fn(),

@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { ClubPlatformStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { boundingBox, Coordinates, haversineKm } from '../common/distance.util';
+import { demoScope } from '../common/demo-scope';
 import { clubInclude, toClubProfile, toClubSummary } from './club.mapper';
 import { SearchClubsDto } from './dto/search-clubs.dto';
 
@@ -20,14 +21,16 @@ export class ClubsService {
       : null;
   }
 
-  async search(dto: SearchClubsDto) {
+  async search(viewerId: string, dto: SearchClubsDto) {
     const origin: Coordinates | null =
       dto.latitude !== undefined && dto.longitude !== undefined
         ? { latitude: dto.latitude, longitude: dto.longitude }
         : null;
 
+    const scope = await demoScope(this.prisma, viewerId);
     const where: Prisma.ClubWhereInput = {
       platformStatus: ClubPlatformStatus.ACTIVE,
+      ...scope.club,
     };
 
     if (origin && dto.maxDistanceKm !== undefined) {

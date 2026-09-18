@@ -5,10 +5,12 @@ import { PrismaService } from '../prisma/prisma.service';
 type MockPrisma = {
   club: Record<string, jest.Mock>;
   clubMembership: Record<string, jest.Mock>;
+  user: Record<string, jest.Mock>;
 };
 
 function createMockPrisma(): MockPrisma {
   return {
+    user: { findUnique: jest.fn().mockResolvedValue({ isDemo: false }) },
     club: { findMany: jest.fn(), findUnique: jest.fn() },
     clubMembership: { findUnique: jest.fn().mockResolvedValue(null) },
   };
@@ -61,7 +63,7 @@ describe('ClubsService', () => {
       prisma.club.findMany.mockResolvedValue([
         clubRecord('a', { courts: [{ id: 'c1' }, { id: 'c2' }] }),
       ]);
-      const result = await service.search({});
+      const result = await service.search('viewer', {});
       expect(result.clubs[0].courtCount).toBe(2);
     });
 
@@ -76,7 +78,7 @@ describe('ClubsService', () => {
       });
       prisma.club.findMany.mockResolvedValue([far, near]);
 
-      const result = await service.search({
+      const result = await service.search('viewer', {
         latitude: origin.latitude,
         longitude: origin.longitude,
       });

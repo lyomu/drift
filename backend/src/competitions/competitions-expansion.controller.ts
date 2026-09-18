@@ -33,8 +33,8 @@ export class CompetitionsExpansionController {
   // ------------------------------------------------------------ tournaments
 
   @Get('tournaments')
-  list(@Query('clubId') clubId?: string) {
-    return this.tournaments.list(clubId);
+  list(@Req() req: Request, @Query('clubId') clubId?: string) {
+    return this.tournaments.list(clubId, this.userId(req));
   }
 
   @Get('tournaments/:id')
@@ -55,8 +55,8 @@ export class CompetitionsExpansionController {
   // --------------------------------------------------------------- ladders
 
   @Get('ladders')
-  listLadders(@Query('clubId') clubId?: string) {
-    return this.ladders.list(clubId);
+  listLadders(@Req() req: Request, @Query('clubId') clubId?: string) {
+    return this.ladders.list(clubId, this.userId(req));
   }
 
   @Get('ladders/:id')

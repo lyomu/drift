@@ -11,6 +11,7 @@ import {
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { boundingBox, Coordinates, haversineKm } from '../common/distance.util';
+import { demoScope } from '../common/demo-scope';
 import { buildCourtWhere } from './court-query';
 import {
   CourtRecord,
@@ -80,7 +81,12 @@ export class CourtsService {
       : null;
   }
 
-  async search(dto: SearchCourtsDto) {
+  /**
+   * `viewerId` scopes out demo clubs' courts for real users. Omit it only on
+   * a path that is already club-scoped (Club Admin), where the caller is a
+   * member of the club whose courts they are reading.
+   */
+  async search(dto: SearchCourtsDto, viewerId?: string) {
     const origin: Coordinates | null =
       dto.latitude !== undefined && dto.longitude !== undefined
         ? { latitude: dto.latitude, longitude: dto.longitude }
@@ -107,6 +113,12 @@ export class CourtsService {
       },
       box,
     );
+
+    if (viewerId) {
+      const scope = await demoScope(this.prisma, viewerId);
+      // buildCourtWhere never sets AND, so this cannot clobber a filter.
+      where.AND = [scope.clubOptional];
+    }
 
     const candidates = await this.prisma.court.findMany({
       where,

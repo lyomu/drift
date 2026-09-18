@@ -26,6 +26,7 @@ import {
 import { effectiveCompetitionState, isRegistrationOpen } from './competition-state';
 import { NotificationsService } from '../notifications/notifications.service';
 import { sanitizeRichText } from '../common/rich-text.util';
+import { demoScope } from '../common/demo-scope';
 
 const MINUTE_MS = 60 * 1000;
 
@@ -51,9 +52,10 @@ export class CompetitionsService {
 
   // ---------------------------------------------------------------- reads
 
-  async listLeagues() {
+  async listLeagues(viewerId: string) {
+    const scope = await demoScope(this.prisma, viewerId);
     const leagues = await this.prisma.league.findMany({
-      where: { state: LeagueState.PUBLISHED },
+      where: { state: LeagueState.PUBLISHED, AND: [scope.clubOptional] },
       include: { rounds: { select: { index: true, closedAt: true } } },
       orderBy: { createdAt: 'desc' },
     });
