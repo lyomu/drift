@@ -16,6 +16,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from './audit.service';
 import { MailerService } from '../mail/mailer.service';
 import { ErasureService } from '../privacy/erasure.service';
+import { plainTextFromRichText, sanitizeRichText } from '../common/rich-text.util';
 import {
   AssignSupportTicketDto,
   CloseSupportTicketDto,
@@ -46,7 +47,12 @@ const TICKET_INCLUDE = {
   assignedTo: { select: ADMIN_SUMMARY_SELECT },
   resolvedBy: { select: ADMIN_SUMMARY_SELECT },
   messages: {
-    include: { actor: { select: ADMIN_SUMMARY_SELECT } },
+    include: {
+      actor: { select: ADMIN_SUMMARY_SELECT },
+      attachments: {
+        select: { id: true, filename: true, mimeType: true, createdAt: true },
+      },
+    },
     orderBy: { createdAt: 'asc' as const },
   },
 } satisfies Prisma.SupportTicketInclude;
@@ -189,11 +195,20 @@ export class SupportAdminService {
         'Resolved tickets cannot receive new responses.',
       );
     }
-    await this.prisma.supportTicketMessage.create({
+    // sanitizeRichText can return undefined for an editor emptied down to
+    // "<p></p>" — the DTO's @MinLength(2) already stops a truly blank
+    // submit, but a whitespace-only paste can still collapse to nothing
+    // after sanitization, so re-check post-sanitize rather than trust the
+    // pre-sanitize length.
+    const body = sanitizeRichText(dto.body.trim());
+    if (!body) {
+      throw new BadRequestException('The response cannot be empty.');
+    }
+    const message = await this.prisma.supportTicketMessage.create({
       data: {
         ticketId,
         actorId,
-        body: dto.body.trim(),
+        body,
       },
     });
     const ticket = await this.prisma.supportTicket.update({
@@ -210,11 +225,13 @@ export class SupportAdminService {
       'SupportTicket',
       ticketId,
       {
-        responseLength: dto.body.trim().length,
+        responseLength: body.length,
       },
     );
     // Best-effort delivery of the reply to the ticket's user (no-op when SMTP
-    // is not configured). The reply is already stored either way.
+    // is not configured). The reply is already stored either way. Email is
+    // plain-text, so the rich HTML is rendered down rather than leaking
+    // literal <p>/<strong> tags into the message body.
     if (existing.userId) {
       const user = await this.prisma.user.findUnique({
         where: { id: existing.userId },
@@ -224,11 +241,50 @@ export class SupportAdminService {
         await this.mailer.sendSupportReply(
           user.email,
           existing.subject,
-          dto.body.trim(),
+          plainTextFromRichText(body),
         );
       }
     }
-    return { ticket: this.ticketDto(ticket) };
+    return { ticket: this.ticketDto(ticket), messageId: message.id };
+  }
+
+  async addMessageAttachment(
+    ticketId: string,
+    messageId: string,
+    file: Express.Multer.File,
+  ) {
+    if (!file.mimetype.startsWith('image/')) {
+      throw new BadRequestException('Only image uploads are supported.');
+    }
+    const message = await this.prisma.supportTicketMessage.findFirst({
+      where: { id: messageId, ticketId },
+      select: { id: true },
+    });
+    if (!message) throw new NotFoundException('Ticket message not found.');
+    const bytes = new Uint8Array(file.buffer);
+    const attachment = await this.prisma.supportTicketMessageAttachment.create({
+      data: {
+        messageId,
+        filename: file.originalname,
+        mimeType: file.mimetype,
+        bytes,
+      },
+      select: { id: true, filename: true, mimeType: true, createdAt: true },
+    });
+    return { attachment };
+  }
+
+  async messageAttachmentContent(
+    ticketId: string,
+    messageId: string,
+    attachmentId: string,
+  ) {
+    const attachment = await this.prisma.supportTicketMessageAttachment.findFirst({
+      where: { id: attachmentId, messageId, message: { ticketId } },
+      select: { bytes: true, mimeType: true, filename: true },
+    });
+    if (!attachment) throw new NotFoundException('Attachment not found.');
+    return attachment;
   }
 
   async closeTicket(

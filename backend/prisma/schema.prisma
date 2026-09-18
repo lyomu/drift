@@ -2677,9 +2677,25 @@ model SupportTicketMessage {
   body      String
   createdAt DateTime @default(now())
 
+  attachments SupportTicketMessageAttachment[]
+
   @@index([ticketId, createdAt])
   @@index([actorId, createdAt])
   @@map("support_ticket_messages")
+}
+
+model SupportTicketMessageAttachment {
+  id        String @id @default(uuid())
+  messageId String
+  message   SupportTicketMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  filename  String
+  mimeType  String
+  bytes     Bytes
+  createdAt DateTime @default(now())
+
+  @@index([messageId])
+  @@map("support_ticket_message_attachments")
 }
 
 model PrivacyRequest {

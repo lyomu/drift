@@ -219,3 +219,59 @@ tbody tr:hover {
 input[type="checkbox"] {
   accent-color: var(--color-primary);
 }
+
+/*
+ * Rendered + editable support-ticket reply rich text. Ported verbatim from
+ * club-admin/app/globals.css (same RichTextEditor.tsx, same backend
+ * sanitizer allowlist at common/rich-text.util.ts) — keep the two in sync.
+ */
+.drift-prose {
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--color-text-primary);
+}
+.drift-prose :where(p, ul, ol, blockquote, h2, h3, h4):not(:first-child) {
+  margin-top: 0.7em;
+}
+.drift-prose h2 {
+  font-size: 1.2em;
+  font-weight: 700;
+}
+.drift-prose h3 {
+  font-size: 1.08em;
+  font-weight: 700;
+}
+.drift-prose h4 {
+  font-size: 1em;
+  font-weight: 700;
+}
+.drift-prose ul,
+.drift-prose ol {
+  padding-left: 1.4em;
+}
+.drift-prose ul {
+  list-style: disc;
+}
+.drift-prose ol {
+  list-style: decimal;
+}
+.drift-prose li {
+  margin-top: 0.2em;
+}
+.drift-prose a {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+.drift-prose blockquote {
+  border-left: 3px solid var(--color-border);
+  padding-left: 0.9em;
+  color: var(--color-text-secondary);
+}
+.drift-prose[data-placeholder]:empty::before,
+.drift-prose .is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--color-text-secondary);
+  pointer-events: none;
+  float: left;
+  height: 0;
+}

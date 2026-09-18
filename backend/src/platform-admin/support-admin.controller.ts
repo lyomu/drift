@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -7,8 +8,13 @@ import {
   Post,
   Query,
   Req,
+  Res,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import type { Response } from 'express';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { PlatformPermission } from '@prisma/client';
 import { RequirePlatformPermission } from './decorators/require-platform-permission.decorator';
 import { PlatformGuard } from './guards/platform.guard';
@@ -68,6 +74,39 @@ export class SupportAdminController {
     @Body() dto: RespondSupportTicketDto,
   ) {
     return this.support.respondToTicket(req.user.adminId, id, dto);
+  }
+
+  @Post('tickets/:ticketId/messages/:messageId/attachments')
+  @UseInterceptors(
+    FileInterceptor('file', { limits: { fileSize: 5 * 1024 * 1024 } }),
+  )
+  addMessageAttachment(
+    @Param('ticketId') ticketId: string,
+    @Param('messageId') messageId: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) throw new BadRequestException('An image file is required.');
+    return this.support.addMessageAttachment(ticketId, messageId, file);
+  }
+
+  @Get('tickets/:ticketId/messages/:messageId/attachments/:id/content')
+  async messageAttachmentContent(
+    @Param('ticketId') ticketId: string,
+    @Param('messageId') messageId: string,
+    @Param('id') id: string,
+    @Res() res: Response,
+  ) {
+    const attachment = await this.support.messageAttachmentContent(
+      ticketId,
+      messageId,
+      id,
+    );
+    res.setHeader('Content-Type', attachment.mimeType);
+    res.setHeader(
+      'Content-Disposition',
+      `inline; filename="${attachment.filename.replaceAll('"', '')}"`,
+    );
+    res.send(Buffer.from(attachment.bytes));
   }
 
   @Post('tickets/:id/close')
