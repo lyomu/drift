@@ -64,3 +64,23 @@ export function sanitizeRichText(html: string | undefined): string | undefined {
   if (clean === '' || clean === '<p></p>') return undefined;
   return clean;
 }
+
+/**
+ * Plain-text rendering of already-sanitized rich text, for channels that
+ * can't render HTML (transactional email bodies today). Only needs to
+ * handle the fixed tag set `sanitizeRichText` allows through — this is not
+ * a general HTML-to-text converter and must not be fed unsanitized input.
+ */
+export function plainTextFromRichText(html: string): string {
+  return html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(p|li|h2|h3|h4|blockquote)>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}

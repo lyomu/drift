@@ -20,11 +20,19 @@ export type SupportStaff = {
   name: string | null;
 };
 
+export type SupportTicketMessageAttachment = {
+  id: string;
+  filename: string;
+  mimeType: string;
+  createdAt: string;
+};
+
 export type SupportTicketMessage = {
   id: string;
   body: string;
   createdAt: string;
   actor: SupportStaff;
+  attachments: SupportTicketMessageAttachment[];
 };
 
 export type SupportTicket = {

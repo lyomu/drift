@@ -41,9 +41,13 @@ export class AssignSupportTicketDto {
 }
 
 export class RespondSupportTicketDto {
+  // HTML from the rich-text editor, sanitized server-side before storage
+  // (see sanitizeRichText in support-admin.service.ts). 8000 rather than the
+  // 4000 plain-text limit elsewhere in this file: tags eat into the budget,
+  // so the same visible text needs more raw characters once formatted.
   @IsString()
   @MinLength(2)
-  @MaxLength(4000)
+  @MaxLength(8000)
   body!: string;
 }
 

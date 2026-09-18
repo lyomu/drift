@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DefinitionList, DetailRail, ModalShell, RowCard, StatBand } from "@/components/dashboard-design";
+import { AttachmentThumbnail, AttachmentUpload, uploadMessageAttachment } from "@/components/AttachmentUpload";
+import { RichText, RichTextEditor } from "@/components/RichTextEditor";
 import { api, ApiError } from "@/lib/api-client";
 import type { SupportStaff, SupportTicket, SupportTicketCategory, SupportTicketPriority, SupportTicketStatus } from "@/lib/support-types";
 import { dateTime, label, personName } from "@/lib/support-types";
@@ -35,6 +37,8 @@ export default function SupportTicketsPage() {
   const [form, setForm] = useState<TicketForm>(EMPTY_FORM);
   const [showCreate, setShowCreate] = useState(false);
   const [reply, setReply] = useState("");
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
+  const [attachmentError, setAttachmentError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -111,8 +115,16 @@ export default function SupportTicketsPage() {
     setBusy(true);
     setError(null);
     try {
-      await api.post(`/support/tickets/${ticket.id}/messages`, { body: reply });
+      const res = await api.post<{ ticket: SupportTicket; messageId: string }>(
+        `/support/tickets/${ticket.id}/messages`,
+        { body: reply },
+      );
+      if (attachmentFile) {
+        await uploadMessageAttachment(ticket.id, res.messageId, attachmentFile);
+      }
       setReply("");
+      setAttachmentFile(null);
+      setAttachmentError(null);
       await load();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "The response could not be saved.");
@@ -218,7 +230,19 @@ export default function SupportTicketsPage() {
                 {selected.messages.map((message) => (
                   <div key={message.id} className="rounded-xl border border-drift-border px-3 py-2">
                     <div className="text-xs font-bold text-drift-text-secondary">{personName(message.actor)} / {dateTime(message.createdAt)}</div>
-                    <div className="mt-1 whitespace-pre-wrap text-sm leading-6 text-drift-text-primary">{message.body}</div>
+                    <RichText html={message.body} className="mt-1 text-sm leading-6" />
+                    {message.attachments.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {message.attachments.map((attachment) => (
+                          <AttachmentThumbnail
+                            key={attachment.id}
+                            ticketId={selected.id}
+                            messageId={message.id}
+                            attachment={attachment}
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -226,7 +250,18 @@ export default function SupportTicketsPage() {
             {selected.resolutionNote && <div className="mt-4 rounded-xl border border-drift-success/30 bg-drift-success-surface px-4 py-3 text-sm text-drift-success">Resolution: {selected.resolutionNote}</div>}
             {selected.status !== "RESOLVED" && (
               <div className="mt-5">
-                <Field label="Response"><Textarea rows={4} value={reply} onChange={(event) => setReply(event.target.value)} /></Field>
+                <Field label="Response">
+                  <RichTextEditor value={reply} onChange={setReply} placeholder="Write a response..." />
+                </Field>
+                <div className="mt-2 flex items-center justify-between gap-3">
+                  <AttachmentUpload
+                    file={attachmentFile}
+                    disabled={busy}
+                    onFileChange={setAttachmentFile}
+                    onError={setAttachmentError}
+                  />
+                  {attachmentError && <span className="text-xs font-semibold text-drift-error">{attachmentError}</span>}
+                </div>
                 <Button className="mt-3" icon="send" disabled={busy || !reply.trim()} onClick={() => void respond(selected)}>{busy ? "Saving..." : "Respond"}</Button>
               </div>
             )}
