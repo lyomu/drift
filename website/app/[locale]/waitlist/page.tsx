@@ -22,6 +22,7 @@ import { WaitlistForm } from "@/components/waitlist-form";
 import { getDictionary } from "@/lib/content";
 import { isLocale } from "@/lib/locales";
 import { images } from "@/lib/images";
+import { localizedMetadata } from "@/lib/seo";
 
 type PageProps = { params: Promise<{ locale: string }> };
 
@@ -31,19 +32,11 @@ export async function generateMetadata({
   const { locale } = await params;
   if (!isLocale(locale)) return {};
   const t = getDictionary(locale);
-  return {
-    title: `${t.waitlist.title} · Drift Tennis`,
-    description: t.waitlist.body,
-    alternates: {
-      canonical: locale === "en" ? "/waitlist" : `/${locale}/waitlist`,
-      languages: {
-        en: "/waitlist",
-        fr: "/fr/waitlist",
-        es: "/es/waitlist",
-        "x-default": "/waitlist",
-      },
-    },
-  };
+  return localizedMetadata(locale, {
+    path: "/waitlist",
+    title: t.header.joinCta,
+    description: t.waitlist.metaDescription,
+  });
 }
 
 export default async function WaitlistPage({ params }: PageProps) {

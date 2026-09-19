@@ -161,6 +161,8 @@ export type Dictionary = {
     eyebrow: string;
     title: string;
     body: string;
+    /** ~150-character search-result description; `body` is too long for it. */
+    metaDescription: string;
     note: string;
     audiences: WaitlistOption[];
     levels: WaitlistOption[];

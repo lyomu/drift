@@ -166,6 +166,8 @@ harusi-ke's TLS stage silently failing for a month):
 certbot renew --dry-run --cert-name driftsports.app --no-random-sleep
 ```
 
+Search indexing: the `admin.`, `console.` and `api.` blocks send `X-Robots-Tag: noindex, nofollow`; only `driftsports.app` (the website) is meant to be indexed. The website serves its own `/robots.txt` and `/sitemap.xml` (`website/app/robots.ts`, `website/app/sitemap.ts`). There is deliberately no `Disallow: /` robots.txt on those hosts: a crawl block would stop search engines from ever seeing the `noindex`.
+
 ## Basic auth
 
 ```bash

@@ -41,6 +41,7 @@ import { StandingsTable } from "@/components/standings-table";
 import { TheFinal } from "@/components/the-final";
 import { getDictionary, resolveLocale } from "@/lib/content";
 import { images } from "@/lib/images";
+import { localizedMetadata, siteJsonLd } from "@/lib/seo";
 
 type PageProps = { params: Promise<{ locale: string }> };
 
@@ -50,15 +51,12 @@ export async function generateMetadata({
   const { locale } = await params;
   const current = resolveLocale(locale);
   const t = getDictionary(current);
-  return {
+  return localizedMetadata(current, {
+    path: "/",
     title: t.meta.title,
     description: t.meta.description,
-    alternates: {
-      // English is canonical at the root; the others carry their prefix.
-      canonical: current === "en" ? "/" : `/${current}`,
-      languages: { en: "/", fr: "/fr", es: "/es", "x-default": "/" },
-    },
-  };
+    absoluteTitle: true,
+  });
 }
 
 /**
@@ -78,6 +76,16 @@ export default async function HomePage({ params }: PageProps) {
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        // "<" is escaped so no string in the data can close the script tag.
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(siteJsonLd(current, t.meta.description)).replace(
+            /</g,
+            "\\u003c",
+          ),
+        }}
+      />
       <SiteHeader locale={current} />
       <main>
         <Hero locale={current} />

@@ -1,14 +1,26 @@
+import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
 
-import { HtmlLang } from "@/components/html-lang";
+import { dmSans } from "@/lib/fonts";
 import { isLocale, LOCALES } from "@/lib/locales";
+import { baseMetadata } from "@/lib/seo";
+
+import "../globals.css";
 
 /**
- * The locale segment wraps every translated page. Static params pin the three
- * builds (en/fr/es); anything else in the segment 404s rather than falling
- * back silently. The root layout cannot see this segment, so `<html lang>`
- * starts as "en" everywhere and `HtmlLang` corrects it on mount.
+ * The locale segment is the root layout for every translated page, so the
+ * server-rendered `<html lang>` is the locale actually being served (crawlers
+ * and screen readers see it without waiting for hydration). The English-only
+ * legal documents have their own root layout in `app/(legal)`. Static params
+ * pin the three builds (en/fr/es); anything else in the segment 404s rather
+ * than falling back silently.
  */
+export const metadata: Metadata = baseMetadata;
+
+export const viewport: Viewport = {
+  themeColor: "#1c91d0",
+};
+
 export function generateStaticParams() {
   return LOCALES.map((locale) => ({ locale }));
 }
@@ -24,9 +36,8 @@ export default async function LocaleLayout({
   if (!isLocale(locale)) notFound();
 
   return (
-    <>
-      <HtmlLang locale={locale} />
-      {children}
-    </>
+    <html lang={locale} className={dmSans.variable}>
+      <body className="font-sans antialiased">{children}</body>
+    </html>
   );
 }

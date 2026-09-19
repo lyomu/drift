@@ -8,9 +8,9 @@ import type { Dictionary } from "./types";
 export const fr: Dictionary = {
   locale: "fr",
   meta: {
-    title: "Drift Tennis · Trouvez votre match. Jouez votre saison.",
+    title: "Drift Tennis · Trouvez des joueurs de tennis, jouez en ligue",
     description:
-      "Drift Tennis transforme « je devrais jouer plus souvent au tennis » en un vrai match, un vrai plan de progression et une vraie communauté : des adversaires à votre niveau, des résultats vérifiés, de vraies ligues et une cote fiable. Le tennis mène, le padel suit le même chemin. Gratuit pendant le lancement.",
+      "Trouvez des adversaires de tennis et de padel à votre niveau, confirmez les résultats à deux et bâtissez une cote fiable. Gratuit. Android d’abord.",
   },
   header: {
     sectionsAria: "Sections",
@@ -254,12 +254,13 @@ export const fr: Dictionary = {
     join: "Rejoindre la liste d'attente",
     productAria: "Liens produit du pied de page",
     legalAria: "Liens légaux du pied de page",
-    copyright: "Copyright {year} Drift Tennis. Propriétaire.",
+    copyright: "Copyright {year} Drift Tennis.",
   },
   waitlist: {
     eyebrow: "Avant la première mise en jeu",
     title: "Soyez là pour la première journée",
     body: "Drift Tennis sort d'abord sur Android, iOS suivra, et c'est gratuit de rejoindre et de jouer pendant que nous démarrons. Le tennis mène, le padel est là aussi. Laissez votre nom et votre adresse e-mail et nous enverrons les nouvelles de lancement, les mises à jour produit internes et l'occasionnelle offre Drift Tennis. Vous pouvez vous désabonner des e-mails non essentiels quand vous voulez.",
+    metaDescription: "Rejoignez la liste d’attente de Drift Tennis et recevez un e-mail au lancement. Gratuit, Android d’abord puis iOS. Le tennis mène, le padel suit.",
     note: "Nous ne vendons ni ne partageons votre adresse e-mail pour le marketing d'une autre entreprise.",
     audiences: [
       { value: "PLAYER", label: "Un joueur", hint: "Je veux jouer plus au tennis ou au padel" },

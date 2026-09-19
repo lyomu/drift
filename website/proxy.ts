@@ -10,9 +10,11 @@ import { NextResponse, type NextRequest } from "next/server";
  * `drift-locale` cookie so a return visit lands where the person left the
  * site, and the header switcher keeps the cookie in sync.
  *
- * Legal routes (`/terms`, `/privacy-policy`, `/data-privacy`), the API and
- * static assets are excluded from the matcher: the legal documents are
- * authoritative in English only, so they exist at exactly one URL.
+ * Legal routes (`/terms`, `/privacy-policy`, `/data-privacy`), the API,
+ * static assets and the crawler/icon files (`/robots.txt`, `/sitemap.xml`,
+ * `/icon.png`, `/apple-icon.png`) are excluded from the matcher: the legal
+ * documents are authoritative in English only, so they exist at exactly one
+ * URL, and the crawler files must be served as-is, not locale-rewritten.
  *
  * English is never shown at `/en/...`: that path redirects to the unprefixed
  * form, and unprefixed English pages are served by a rewrite, so every locale
@@ -103,8 +105,8 @@ export default function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Everything except the API, Next internals, images and the (English-only)
-    // legal documents.
-    "/((?!api|_next|images|favicon.ico|terms|privacy-policy|data-privacy).*)",
+    // Everything except the API, Next internals, images, the crawler/icon
+    // files and the (English-only) legal documents.
+    "/((?!api|_next|images|favicon.ico|icon.png|apple-icon.png|robots.txt|sitemap.xml|terms|privacy-policy|data-privacy).*)",
   ],
 };

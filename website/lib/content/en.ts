@@ -9,9 +9,9 @@ import type { Dictionary } from "./types";
 export const en: Dictionary = {
   locale: "en",
   meta: {
-    title: "Drift Tennis · Find your match. Play your season.",
+    title: "Drift Tennis · Find tennis players, play real leagues",
     description:
-      "Drift Tennis turns “I should play more tennis” into an actual match, an actual improvement plan, and an actual community: opponents at your level, verified results, real leagues, and a rating you can trust. Tennis leads and padel runs on the same rails. Free to join while we get going.",
+      "Find tennis and padel opponents at your level, agree the match, confirm results together and build a rating you can trust. Free to join. Android first.",
   },
   header: {
     sectionsAria: "Sections",
@@ -255,12 +255,13 @@ export const en: Dictionary = {
     join: "Join the waitlist",
     productAria: "Footer product links",
     legalAria: "Footer legal links",
-    copyright: "Copyright {year} Drift Tennis. Proprietary.",
+    copyright: "Copyright {year} Drift Tennis.",
   },
   waitlist: {
     eyebrow: "Before the first serve",
     title: "Be there for round one",
     body: "Drift Tennis launches on Android first, with iOS to follow, and it is free to join and free to play while we get going. Tennis leads, padel is there too. Leave your name and email and we'll send launch news, internal product updates and the occasional Drift Tennis offer. You can opt out of non-essential emails whenever you want.",
+    metaDescription: "Join the Drift Tennis waitlist and we’ll email you at launch. Free to join, Android first and iOS to follow. Tennis leads, padel is there too.",
     note: "We do not sell or share your email for another business’s marketing.",
     audiences: [
       { value: "PLAYER", label: "A player", hint: "I want to play more tennis or padel" },

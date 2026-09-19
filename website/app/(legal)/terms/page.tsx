@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 
 import { LegalLayout } from "@/components/legal-layout";
+import { englishOnlyMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Terms and Conditions | Drift Tennis",
+export const metadata: Metadata = englishOnlyMetadata({
+  path: "/terms",
+  title: "Terms and Conditions",
   description: "The terms that apply when you use Drift Tennis.",
-};
+});
 
 const sections = [
   { id: "agreement", title: "Your agreement" },

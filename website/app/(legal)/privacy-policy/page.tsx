@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 
 import { LegalLayout } from "@/components/legal-layout";
+import { englishOnlyMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Privacy Policy | Drift Tennis",
+export const metadata: Metadata = englishOnlyMetadata({
+  path: "/privacy-policy",
+  title: "Privacy Policy",
   description: "How Drift Tennis collects, uses and protects personal information.",
-};
+});
 
 const sections = [
   { id: "who", title: "Who we are" },

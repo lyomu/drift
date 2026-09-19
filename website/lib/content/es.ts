@@ -8,9 +8,9 @@ import type { Dictionary } from "./types";
 export const es: Dictionary = {
   locale: "es",
   meta: {
-    title: "Drift Tennis · Encuentra tu partido. Juega tu temporada.",
+    title: "Drift Tennis · Encuentra jugadores de tenis y juega ligas",
     description:
-      "Drift Tennis convierte «debería jugar más al tenis» en un partido de verdad, un plan de mejora real y una comunidad real: rivales a tu nivel, resultados verificados, ligas de verdad y una valoración fiable. El tenis lidera y el pádel corre por la misma vía. Gratis mientras arrancamos.",
+      "Encuentra rivales de tenis y pádel a tu nivel, confirma el resultado entre los dos y construye una valoración fiable. Gratis. Primero en Android.",
   },
   header: {
     sectionsAria: "Secciones",
@@ -254,12 +254,13 @@ export const es: Dictionary = {
     join: "Únete a la lista de espera",
     productAria: "Enlaces de producto del pie de página",
     legalAria: "Enlaces legales del pie de página",
-    copyright: "Copyright {year} Drift Tennis. Propietario.",
+    copyright: "Copyright {year} Drift Tennis.",
   },
   waitlist: {
     eyebrow: "Antes del primer saque",
     title: "Sé parte de la primera ronda",
     body: "Drift Tennis se lanza primero en Android, con iOS después, y es gratis unirse y gratis jugar mientras arrancamos. El tenis lidera, el pádel también está. Deja tu nombre y tu correo y te enviaremos noticias de lanzamiento, novedades internas del producto y alguna oferta ocasional de Drift Tennis. Puedes dejar de recibir correos no esenciales cuando quieras.",
+    metaDescription: "Únete a la lista de espera de Drift Tennis y te avisaremos por correo al lanzar. Gratis, primero en Android y luego iOS. El tenis lidera, el pádel también.",
     note: "No vendemos ni compartimos tu correo para el marketing de otro negocio.",
     audiences: [
       { value: "PLAYER", label: "Un jugador", hint: "Quiero jugar más tenis o pádel" },
