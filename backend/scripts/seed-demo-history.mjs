@@ -992,6 +992,16 @@ async function build() {
   }
 
   // ---------- learning: practice, goals ----------
+  // `practice_sessions.drillId` is a foreign key to learning_content, and the
+  // catalogue comes from `prisma/seed.ts`, which production may never have
+  // run. Link a drill only when it exists; otherwise the session is saved
+  // without one rather than the whole seed failing halfway through.
+  const knownDrills = new Set(
+    (await prisma.learningContent.findMany({ select: { id: true } })).map((c) => c.id),
+  );
+  if (knownDrills.size === 0) {
+    log('warning: learning catalogue is empty — practice sessions will have no drill links');
+  }
   const practiceRows = [];
   const skillSpread = ['SERVE', 'SERVE', 'BACKHAND', 'BACKHAND', 'FOREHAND', 'RETURN', 'NET_PLAY', 'MOVEMENT', 'MATCH_PLAY'];
   for (let i = 0; i < 22; i++) {
@@ -1004,7 +1014,7 @@ async function build() {
       occurredAt: at(day, int(7, 19), pick([0, 15, 30, 45])),
       durationMinutes: pick([30, 45, 60, 60, 90]),
       skillFocus: skill,
-      drillId: DRILL_FOR[skill],
+      drillId: knownDrills.has(DRILL_FOR[skill]) ? DRILL_FOR[skill] : null,
       notes: rand() < 0.4 ? pick(['Felt sharp today.', 'Toss was inconsistent early on.', 'Worked on depth, not pace.', 'Legs heavy, still got the reps in.']) : null,
       perceivedPerformance: clamp(Math.round(2.2 + progress * 2 + (rand() - 0.5) * 1.6), 1, 5),
       createdAt: at(day, 21),
