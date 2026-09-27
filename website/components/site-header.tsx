@@ -1,10 +1,14 @@
 /**
- * The site header: brand mark, section links, the language switcher, and the
- * primary CTA.
+ * The site header: brand mark, section links, the Club Admin entry point for
+ * clubs and coaches, the language switcher, and the primary CTA.
  *
  * Navigation is plain underlined text, not pills. In this design system a
  * pill means a filter or a status (`.badge`, the old rail chip), so pilled
  * nav items read as a row of chips rather than as somewhere to go.
+ *
+ * The Club Admin links (`ConsoleLinks`) sit in the desktop row from `lg` up
+ * and in the chip rail below it, so the pair is reachable at every width with
+ * no gap between the two layouts.
  *
  * `minimal` drops the rail and the CTA entirely. The waitlist and legal
  * pages use it: their anchors would point at sections that do not exist on
@@ -18,34 +22,43 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { ConsoleLinks } from "./console-links";
 import { LocaleSwitcher } from "./locale-switcher";
 import { getDictionary } from "@/lib/content";
 import { localeHref, type Locale } from "@/lib/locales";
+import { apexUrl, waitlistUrl } from "@/lib/site";
 
 export function SiteHeader({
   locale = "en",
   minimal = false,
+  absoluteLinks = false,
 }: {
   locale?: Locale;
   minimal?: boolean;
+  /**
+   * Set by pages rendered on the waitlist origin: the way back to the site has
+   * to cross hosts, and a root-relative href would stay put.
+   */
+  absoluteLinks?: boolean;
 }) {
   const t = getDictionary(locale);
+  const home = absoluteLinks ? apexUrl(locale, "/") : localeHref(locale, "/");
 
   if (minimal) {
     return (
       <header className="header-enter border-b border-[var(--color-border)] bg-[var(--color-surface)]">
         <div className="mx-auto flex h-20 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
           <Link
-            href={localeHref(locale, "/")}
+            href={home}
             className="brand-link flex shrink-0 items-center"
             aria-label="Drift Tennis, home"
           >
-            <Image src="/images/logo.png" alt="" width={640} height={321} className="brand-mark h-16 w-auto" priority />
+            <Image src="/images/logo.png" alt="" width={640} height={321} className="brand-mark h-[72px] w-auto" priority />
           </Link>
           <div className="flex shrink-0 items-center gap-5">
             <LocaleSwitcher current={locale} />
             <Link
-              href={localeHref(locale, "/")}
+              href={home}
               className="text-sm font-semibold text-[var(--color-text-secondary)] hover:text-[var(--color-primary-dark)]"
             >
               {t.header.backToSite}
@@ -60,11 +73,11 @@ export function SiteHeader({
     <header className="header-enter sticky top-0 z-40 border-b border-[var(--color-border)] bg-[var(--color-surface)]/90 backdrop-blur-sm">
       <div className="mx-auto flex h-20 max-w-6xl items-center gap-4 px-4 sm:px-6">
         <a href="#top" className="brand-link flex shrink-0 items-center" aria-label="Drift Tennis, home">
-          <Image src="/images/logo.png" alt="" width={640} height={321} className="brand-mark h-16 w-auto" priority />
+          <Image src="/images/logo.png" alt="" width={640} height={321} className="brand-mark h-[72px] w-auto" priority />
         </a>
 
         <nav aria-label={t.header.sectionsAria} className="ml-auto hidden lg:block">
-          <ul className="flex items-center gap-7">
+          <ul className="flex items-center gap-5 xl:gap-7">
             {t.chapters.map((chapter) => (
               <li key={chapter.id}>
                 <a className="nav-link" href={`#${chapter.id}`}>
@@ -85,9 +98,11 @@ export function SiteHeader({
           </ul>
         </nav>
 
+        <ConsoleLinks locale={locale} variant="bar" />
+
         <Link
-          href={localeHref(locale, "/waitlist")}
-          className="btn-primary ml-auto !px-4 !py-2 text-sm lg:ml-6 xl:ml-14"
+          href={waitlistUrl(locale)}
+          className="btn-primary ml-auto !px-4 !py-2 text-sm lg:ml-4 xl:ml-6"
         >
           {t.header.joinCta}
         </Link>
@@ -120,6 +135,7 @@ export function SiteHeader({
               {t.header.forClubs}
             </a>
           </li>
+          <ConsoleLinks locale={locale} variant="rail" />
         </ul>
       </nav>
     </header>

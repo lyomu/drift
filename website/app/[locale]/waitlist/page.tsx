@@ -1,5 +1,12 @@
 /**
- * /waitlist — the site's one conversion page, one instance per locale.
+ * The site's one conversion page, one instance per locale.
+ *
+ * Served at the root of `waitlist.driftsports.app`, not at `/waitlist` on the
+ * apex: `proxy.ts` maps that host's `/` onto this route, and the apex path
+ * permanently redirects here. The route itself never moved, so this file is
+ * still `app/[locale]/waitlist/page.tsx`. Because the page is on another
+ * origin, its metadata is absolute (`origin: WAITLIST_URL`) and the header and
+ * footer link back to the apex with `absoluteLinks`.
  *
  * Split layout: the form on the left at a comfortable reading measure, a
  * full-height court photograph on the right. The header is rendered in its
@@ -23,6 +30,7 @@ import { getDictionary } from "@/lib/content";
 import { isLocale } from "@/lib/locales";
 import { images } from "@/lib/images";
 import { localizedMetadata } from "@/lib/seo";
+import { WAITLIST_URL } from "@/lib/site";
 
 type PageProps = { params: Promise<{ locale: string }> };
 
@@ -34,6 +42,9 @@ export async function generateMetadata({
   const t = getDictionary(locale);
   return localizedMetadata(locale, {
     path: "/waitlist",
+    // Served at the root of its own origin, so canonical/hreflang/og:url are
+    // absolute there rather than relative to the apex `metadataBase`.
+    origin: WAITLIST_URL,
     title: t.header.joinCta,
     description: t.waitlist.metaDescription,
   });
@@ -47,7 +58,7 @@ export default async function WaitlistPage({ params }: PageProps) {
 
   return (
     <>
-      <SiteHeader minimal locale={locale} />
+      <SiteHeader minimal locale={locale} absoluteLinks />
       <main>
         <div className="lg:grid lg:min-h-[calc(100vh-4rem)] lg:grid-cols-[minmax(0,1fr)_minmax(0,38%)]">
           <div className="mx-auto w-full max-w-3xl px-4 py-14 sm:px-6 lg:max-w-none lg:px-10 lg:py-20 xl:px-16">
@@ -85,7 +96,7 @@ export default async function WaitlistPage({ params }: PageProps) {
           </div>
         </div>
       </main>
-      <SiteFooter locale={locale} />
+      <SiteFooter locale={locale} absoluteLinks />
     </>
   );
 }

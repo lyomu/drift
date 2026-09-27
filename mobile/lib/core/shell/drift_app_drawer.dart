@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../analytics/analytics.dart';
 import '../../features/auth/data/auth_repository.dart';
 import '../../features/profile/application/profile_providers.dart';
 import '../../features/users/application/current_user_provider.dart';
@@ -62,6 +63,9 @@ class _DriftAppDrawerState extends ConsumerState<DriftAppDrawer> {
       await ref.read(authRepositoryProvider).logout(refreshToken);
     }
     await storage.clear();
+    // Clears the analytics identity so the next person on this device is not
+    // recorded as the one who just left.
+    await resetAnalyticsIdentity();
     if (!mounted) return;
     context.go('/welcome');
   }

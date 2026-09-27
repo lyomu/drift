@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/analytics/analytics.dart';
 import '../../../core/network/dio_client.dart';
 import '../../notifications/data/push_service.dart';
+import '../../users/application/current_user_provider.dart';
 import '../data/auth_repository.dart';
 import '../data/social_auth_service.dart';
 
@@ -158,6 +160,23 @@ class AuthController extends AsyncNotifier<AuthSessionStatus> {
     // and neither should stand between someone and the screen they were
     // heading for. PushService swallows its own failures.
     unawaited(ref.read(pushServiceProvider).registerForUser());
+
+    // Same reasoning as above: not awaited, failures swallowed. Ties the
+    // analytics session to the account so a Clarity replay or a PostHog funnel
+    // can be matched to a real user.
+    unawaited(_identifyForAnalytics());
+  }
+
+  Future<void> _identifyForAnalytics() async {
+    if (!posthogEnabled) return;
+    try {
+      final user = await ref.read(currentUserProvider.future);
+      await identifyUser(user.id);
+    } catch (e) {
+      // A failed identify must never surface: the person is already signed in.
+      // The session still records, just anonymously.
+      return;
+    }
   }
 }
 

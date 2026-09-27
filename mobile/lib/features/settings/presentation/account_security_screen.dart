@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/analytics/analytics.dart';
 import '../../../core/network/dio_client.dart';
 import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
@@ -92,6 +93,9 @@ class _AccountSecurityScreenState extends ConsumerState<AccountSecurityScreen> {
       await ref.read(authRepositoryProvider).logout(refreshToken);
     }
     await storage.clear();
+    // Clears the analytics identity so the next person on this device is not
+    // recorded as the one who just left.
+    await resetAnalyticsIdentity();
     if (!mounted) return;
     context.go('/welcome');
   }

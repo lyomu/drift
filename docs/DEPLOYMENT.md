@@ -18,6 +18,7 @@ product's `mem_limit`s were sized against.
 | Route | Service | Port |
 |---|---|---|
 | `https://driftsports.app/` (and `www.`) | Website (landing page) | `127.0.0.1:3008` |
+| `https://waitlist.driftsports.app/` | Waitlist page (same container as the website, routed by `Host`) | `127.0.0.1:3008` |
 | `https://admin.driftsports.app/` | Club Admin | `127.0.0.1:3006` |
 | `https://console.driftsports.app/` | Platform Admin | `127.0.0.1:3007` |
 | `https://api.driftsports.app/` | NestJS API | `127.0.0.1:3005` |
@@ -101,6 +102,18 @@ in `docker-compose.prod.yml`'s `website` service, pointed at the API's
 compose service name (`http://api:3009`), not at `PUBLIC_API_URL`'s public
 hostname.
 
+The website service reads three more groups of runtime variables, all set in
+`docker-compose.prod.yml`:
+
+| Variable | Purpose |
+| --- | --- |
+| `API_URL` | the waitlist proxy hop, above |
+| `WAITLIST_HOST` | which `Host` header serves the waitlist page at its root instead of the landing site (`website/proxy.ts`). Defaults to `waitlist.driftsports.app` |
+| `POSTHOG_KEY`, `POSTHOG_HOST`, `GA_MEASUREMENT_ID`, `CLARITY_PROJECT_ID` | analytics. Each is optional; an absent key means that tool does not load **and** its origins are not added to the website's CSP. See `docs/ANALYTICS.md` |
+
+None of these are `NEXT_PUBLIC_*`, so unlike the consoles, the website image is
+not bound to one environment and the same build runs in staging and production.
+
 The same values also go into the `drift-prod-env-file` Jenkins credential
 (see below) so a Jenkins-driven deploy and a manual one use identical
 config.
@@ -114,6 +127,7 @@ all five already resolve here — nothing left to add.
 |---|---|---|
 | `driftsports.app` | A | `46.225.106.43` |
 | `www.driftsports.app` | A | `46.225.106.43` |
+| `waitlist.driftsports.app` | A | `46.225.106.43` |
 | `admin.driftsports.app` | A | `46.225.106.43` |
 | `console.driftsports.app` | A | `46.225.106.43` |
 | `api.driftsports.app` | A | `46.225.106.43` |
@@ -142,13 +156,21 @@ nginx -t
 systemctl reload nginx
 ```
 
-Issue one certificate covering all five names:
+Issue one certificate covering all six names:
 
 ```bash
 certbot certonly --webroot -w /var/www/certbot \
   -d driftsports.app -d www.driftsports.app -d admin.driftsports.app \
-  -d console.driftsports.app -d api.driftsports.app
+  -d console.driftsports.app -d api.driftsports.app \
+  -d waitlist.driftsports.app
 ```
+
+> **Already deployed?** `waitlist.driftsports.app` was added after the first
+> issuance, so an existing certificate does not cover it. Re-run the command
+> above (it replaces the cert in place, keeping the `driftsports.app` cert
+> name) **before** enabling the waitlist `443` block — nginx will otherwise
+> serve the apex certificate for that name and every visitor gets a TLS
+> warning. Point the DNS record at the box first, or the challenge fails.
 
 Restore the commented-out `443` blocks, then:
 
@@ -166,7 +188,16 @@ harusi-ke's TLS stage silently failing for a month):
 certbot renew --dry-run --cert-name driftsports.app --no-random-sleep
 ```
 
-Search indexing: the `admin.`, `console.` and `api.` blocks send `X-Robots-Tag: noindex, nofollow`; only `driftsports.app` (the website) is meant to be indexed. The website serves its own `/robots.txt` and `/sitemap.xml` (`website/app/robots.ts`, `website/app/sitemap.ts`). There is deliberately no `Disallow: /` robots.txt on those hosts: a crawl block would stop search engines from ever seeing the `noindex`.
+Search indexing: the `admin.`, `console.` and `api.` blocks send `X-Robots-Tag: noindex, nofollow`; only `driftsports.app` and `waitlist.driftsports.app` (the two public website hosts) are meant to be indexed. The website serves its own `/robots.txt` and `/sitemap.xml` (`website/app/robots.ts`, `website/app/sitemap.ts`), and the sitemap covers both hosts. There is deliberately no `Disallow: /` robots.txt on the noindex'd hosts: a crawl block would stop search engines from ever seeing the `noindex`.
+
+All 443 blocks send `Strict-Transport-Security: max-age=31536000; includeSubDomains`
+(no `preload`). To push a change to this file to the live box:
+
+```bash
+cp deploy/nginx/driftsports.app.conf /etc/nginx/sites-available/driftsports.app
+nginx -t
+systemctl reload nginx
+```
 
 ## Basic auth
 
@@ -318,6 +349,5 @@ docker compose -f docker-compose.prod.yml exec \
 - Observability agent (needs a private Prometheus/Loki path — see
   `devops-infra/docs/LOGGING.md` §4).
 - Off-box backup copy and a full disaster-recovery restore drill.
-- HSTS (add once the domain is confirmed permanent).
 - Payment/push/social-login provider credentials — the app already degrades
   gracefully with all of them unset (`backend/.env.example`).

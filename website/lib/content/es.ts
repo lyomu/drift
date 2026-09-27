@@ -19,6 +19,9 @@ export const es: Dictionary = {
     legal: "Legal",
     joinCta: "Únete a la lista de espera",
     backToSite: "← Volver al sitio",
+    clubsAndCoaches: "Clubes y entrenadores",
+    signIn: "Iniciar sesión",
+    signUp: "Registrarse",
   },
   hero: {
     quotePrefix: "«Debería jugar más al ",
@@ -202,7 +205,7 @@ export const es: Dictionary = {
       "Listado y verificación de canchas",
       "Suscripciones de club facturadas en KES vía IntaSend",
     ],
-    cta: "Habla con nosotros",
+    cta: "Solicita tu club",
   },
   final: {
     badge: "La final",

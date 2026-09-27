@@ -84,7 +84,7 @@ if (releaseTaskRequested && hasReleaseSigning) {
 }
 
 android {
-    namespace = "com.drift.tennis.drift_tennis"
+    namespace = "app.driftsports.drift"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -99,7 +99,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.drift.tennis.drift_tennis"
+        applicationId = "app.driftsports.drift"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

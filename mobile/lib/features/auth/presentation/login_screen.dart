@@ -11,6 +11,7 @@ import '../data/auth_repository.dart';
 import 'widgets/auth_form_widgets.dart';
 import 'widgets/auth_page_scaffold.dart';
 import 'widgets/social_auth_buttons.dart';
+import '../../../shared/widgets/coming_soon.dart';
 
 /// Login — `foundation/04-screen-inventory.md` A.1 (redesign 2026-08).
 class LoginScreen extends ConsumerStatefulWidget {
@@ -126,7 +127,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             onPressed: _isSubmitting ? null : _submit,
           ),
           const SizedBox(height: 18),
-          const SocialAuthButtons(),
+          Stack(
+            children: [
+              const IgnorePointer(child: SocialAuthButtons()),
+              Positioned.fill(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => showComingSoon(context),
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 24),
           AuthFooterPrompt(
             lead: 'Need an account? ',

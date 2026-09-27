@@ -78,6 +78,7 @@ export default function DataPrivacyPage() {
         <h2>Third parties</h2>
         <p>We do not sell, rent, trade or share personal data with third parties for their own marketing, advertising, data-brokerage or independent purposes.</p>
         <p>If you choose an external payment checkout or optional social sign-in, you interact with that provider directly and its own terms and privacy information apply. We may disclose data where the law requires it or where necessary to protect people, investigate abuse, enforce our rights or keep the Service secure.</p>
+        <p>We do use analytics processors that act on our instructions: <strong>PostHog</strong> and <strong>Google Analytics</strong> for product and audience analytics, and <strong>Microsoft Clarity</strong> for session replay and heatmaps, mainly in our mobile app. They receive pages and screens you view, actions you take, device and browser information, and approximate location derived from your IP address; Clarity additionally records how you move, scroll and tap through screens. These tools load as soon as you open the Service. Our Privacy Policy explains this in full, including the browser and device controls you can use to limit it.</p>
       </section>
 
       <section id="retention">

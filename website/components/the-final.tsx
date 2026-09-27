@@ -13,7 +13,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { getDictionary, type Locale } from "@/lib/content";
-import { localeHref } from "@/lib/locales";
+import { waitlistUrl } from "@/lib/site";
 import { images } from "@/lib/images";
 
 export function TheFinal({ locale }: { locale: Locale }) {
@@ -52,7 +52,7 @@ export function TheFinal({ locale }: { locale: Locale }) {
 
         <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
           <Link
-            href={localeHref(locale, "/waitlist")}
+            href={waitlistUrl(locale)}
             className="btn-primary !bg-white !text-[var(--color-primary-dark)] hover:!bg-[var(--color-primary-light)]"
           >
             {t.final.cta}

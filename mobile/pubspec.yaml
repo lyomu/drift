@@ -67,6 +67,13 @@ dependencies:
   # iOS PHPicker, so neither needs a runtime gallery permission.
   image_picker: ^1.1.2
 
+  # Analytics. Both are inert unless their --dart-define is supplied; see
+  # core/analytics/analytics.dart and docs/ANALYTICS.md.
+  #   clarity_flutter  - session replay and heatmaps (wraps the widget tree)
+  #   posthog_flutter  - events, funnels, screen views
+  clarity_flutter: ^1.2.0
+  posthog_flutter: ^5.4.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -121,3 +128,17 @@ flutter:
           weight: 500
         - asset: assets/fonts/DMSans-700.ttf
           weight: 700
+    # Montserrat — used for the standout display titles on the pre-auth
+    # onboarding carousel (see intro_carousel_screen.dart). Registered with
+    # the static cuts needed for heavier weights so Android text stays
+    # predictable.
+    - family: Montserrat
+      fonts:
+        - asset: assets/fonts/Montserrat-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Montserrat-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Montserrat-ExtraBold.ttf
+          weight: 800
+        - asset: assets/fonts/Montserrat-Black.ttf
+          weight: 900
