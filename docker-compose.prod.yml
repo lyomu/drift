@@ -63,6 +63,49 @@ services:
     mem_limit: 128m
     cpus: "0.15"
 
+  # Prometheus scrape targets for postgres/redis, sidecars only — no app code
+  # of their own. Credentials/hostnames mirror what `api`'s own DATABASE_URL
+  # and REDIS_URL already use below (service names on the compose network,
+  # not container_names — same convention `api` follows). `drift-redis` has
+  # no --requirepass / REDIS_PASSWORD configured (see the `redis` service
+  # above), so redis-exporter needs no password either. No `networks:` entry
+  # on either exporter, same as every other service here: this file defines
+  # no custom networks, so everything already shares Compose's one default
+  # network for the `drift-prod` project.
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.20.1
+    container_name: drift-postgres-exporter
+    restart: unless-stopped
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:9188:9187"
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+    mem_limit: 64m
+    cpus: "0.10"
+
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.92.1
+    container_name: drift-redis-exporter
+    restart: unless-stopped
+    environment:
+      REDIS_ADDR: "redis://redis:6379"
+    depends_on:
+      redis:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:9123:9121"
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+    mem_limit: 64m
+    cpus: "0.10"
+
   api:
     build:
       context: ./backend
