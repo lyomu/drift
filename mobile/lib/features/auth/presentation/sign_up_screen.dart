@@ -10,6 +10,7 @@ import 'widgets/auth_form_widgets.dart';
 import 'widgets/auth_page_scaffold.dart';
 import 'widgets/phone_field.dart';
 import 'widgets/social_auth_buttons.dart';
+import '../../../shared/widgets/coming_soon.dart';
 
 /// Sign Up — `foundation/04-screen-inventory.md` A.1 (redesign 2026-08).
 ///
@@ -171,9 +172,21 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             onPressed: _isSubmitting || !_acceptedAgePolicy ? null : _submit,
           ),
           const SizedBox(height: 18),
-          SocialAuthButtons(
-            enabled: _acceptedAgePolicy,
-            acceptedAgePolicy: _acceptedAgePolicy,
+          Stack(
+            children: [
+              IgnorePointer(
+                child: SocialAuthButtons(
+                  enabled: _acceptedAgePolicy,
+                  acceptedAgePolicy: _acceptedAgePolicy,
+                ),
+              ),
+              Positioned.fill(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => showComingSoon(context),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 24),
           AuthFooterPrompt(

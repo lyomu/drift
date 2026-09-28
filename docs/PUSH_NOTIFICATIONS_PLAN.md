@@ -206,9 +206,17 @@ and real delivery.
 Add project → pick the project that already holds `GOOGLE_PLACES_API_KEY`.
 Firebase attaches to it rather than creating a second one.
 
-**2. Register the Android app.** Package name `com.drift.tennis.drift_tennis`
+**2. Register the Android app.** Package name `app.driftsports.drift`
 (from `android/app/build.gradle.kts`). Download `google-services.json` to
 `mobile/android/app/google-services.json`.
+
+*Re-registration note:* the Android `applicationId` was renamed from
+`com.drift.tennis.drift_tennis` to `app.driftsports.drift` to match the Play
+Console listing (2026-09-22). The Firebase project still only has an Android
+app registered under the old package name — add a **new** Android app for
+`app.driftsports.drift` in Firebase console and drop the freshly downloaded
+`google-services.json` in over the current one; the old registration can stay
+or be removed, it's no longer referenced by the build.
 
 **3. Apply the Google Services Gradle plugin.** Deliberately *not* committed:
 with the plugin applied and no `google-services.json` present, the Android

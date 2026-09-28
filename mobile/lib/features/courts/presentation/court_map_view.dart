@@ -113,7 +113,7 @@ class _CourtMapViewState extends ConsumerState<CourtMapView> {
           children: [
             TileLayer(
               urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'com.drift.tennis.drift_tennis',
+              userAgentPackageName: 'app.driftsports.drift',
               errorTileCallback: (tile, error, stackTrace) {
                 if (mounted) setState(() => _tileErrors++);
               },

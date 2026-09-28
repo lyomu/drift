@@ -20,6 +20,9 @@ export const en: Dictionary = {
     legal: "Legal",
     joinCta: "Join the waitlist",
     backToSite: "← Back to the site",
+    clubsAndCoaches: "Clubs & coaches",
+    signIn: "Sign in",
+    signUp: "Sign up",
   },
   hero: {
     quotePrefix: "“I should play more ",
@@ -203,7 +206,7 @@ export const en: Dictionary = {
       "Court listings and verification",
       "Club subscriptions billed in KES through IntaSend",
     ],
-    cta: "Talk to us",
+    cta: "Request your club",
   },
   final: {
     badge: "The final",

@@ -93,11 +93,15 @@ import '../../features/settings/presentation/help_screen.dart';
 import '../../features/settings/presentation/legal_screen.dart';
 import '../../features/settings/presentation/privacy_settings_screen.dart';
 import '../../features/settings/presentation/settings_home_screen.dart';
+import '../analytics/analytics.dart';
 import '../shell/app_shell.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/splash',
+    // Reports each route change as a screen view. Inert when no analytics keys
+    // are defined; see core/analytics/analytics.dart.
+    observers: [AnalyticsNavigatorObserver()],
     routes: [
       GoRoute(
         path: '/splash',

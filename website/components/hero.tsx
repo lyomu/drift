@@ -18,7 +18,8 @@ import Link from "next/link";
 
 import { ChallengeCard, FixtureCard, IllustrativeLabel } from "./app-screens";
 import { getDictionary } from "@/lib/content";
-import { localeHref, type Locale } from "@/lib/locales";
+import { type Locale } from "@/lib/locales";
+import { waitlistUrl } from "@/lib/site";
 import { images } from "@/lib/images";
 
 export function Hero({ locale }: { locale: Locale }) {
@@ -71,7 +72,7 @@ export function Hero({ locale }: { locale: Locale }) {
 
           <div className="enter enter-4 mt-8 flex flex-wrap gap-3">
             <Link
-              href={localeHref(locale, "/waitlist")}
+              href={waitlistUrl(locale)}
               className="btn-primary !bg-white !text-[var(--color-primary-dark)] hover:!bg-[var(--color-primary-light)]"
             >
               {t.hero.ctaPrimary}

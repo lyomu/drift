@@ -12,7 +12,7 @@ set -euo pipefail
 
 ADB="${ADB:-$HOME/AppData/Local/Android/Sdk/platform-tools/adb.exe}"
 DEVICE="${DEVICE:-emulator-5554}"
-PKG=com.drift.tennis.drift_tennis
+PKG=app.driftsports.drift
 APK=build/app/outputs/flutter-apk/app-debug.apk
 
 cd "$(dirname "$0")/.."
@@ -28,7 +28,14 @@ if [[ "${1:-}" == "--clean" ]]; then
   flutter pub get
 fi
 
-flutter build apk --debug
+# Analytics keys are optional: with none exported the app builds and runs
+# exactly as before, just uninstrumented (core/analytics/analytics.dart).
+DEFINES=()
+[[ -n "${DRIFT_CLARITY_PROJECT_ID:-}" ]] && DEFINES+=("--dart-define=DRIFT_CLARITY_PROJECT_ID=$DRIFT_CLARITY_PROJECT_ID")
+[[ -n "${DRIFT_POSTHOG_KEY:-}" ]] && DEFINES+=("--dart-define=DRIFT_POSTHOG_KEY=$DRIFT_POSTHOG_KEY")
+[[ -n "${DRIFT_POSTHOG_HOST:-}" ]] && DEFINES+=("--dart-define=DRIFT_POSTHOG_HOST=$DRIFT_POSTHOG_HOST")
+
+flutter build apk --debug ${DEFINES[@]+"${DEFINES[@]}"}
 # uninstall first: a `-r` reinstall needs room for both copies and the AVD
 # runs out of /data space (INSTALL_FAILED_INSUFFICIENT_STORAGE) after a while.
 "$ADB" -s "$DEVICE" shell pm trim-caches 999999999999 || true

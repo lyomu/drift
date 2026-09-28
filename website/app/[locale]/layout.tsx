@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
 
+import { Analytics } from "@/components/analytics";
 import { dmSans } from "@/lib/fonts";
 import { isLocale, LOCALES } from "@/lib/locales";
 import { baseMetadata } from "@/lib/seo";
@@ -37,7 +38,10 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale} className={dmSans.variable}>
-      <body className="font-sans antialiased">{children}</body>
+      <body className="font-sans antialiased">
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }

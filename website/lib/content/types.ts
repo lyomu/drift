@@ -65,6 +65,11 @@ export type Dictionary = {
     legal: string;
     joinCta: string;
     backToSite: string;
+    /** Label for the Club Admin group. Covers coaches too: they share the
+        club destination because no coach console exists yet. */
+    clubsAndCoaches: string;
+    signIn: string;
+    signUp: string;
   };
   hero: {
     quotePrefix: string;

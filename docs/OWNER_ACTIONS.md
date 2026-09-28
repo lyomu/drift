@@ -141,9 +141,12 @@ follow-up — not a re-open of P.4.
 
 ```
 Console → APIs & Services → Credentials → Create OAuth client ID → Android
-  package    com.drift.tennis.drift_tennis
+  package    app.driftsports.drift
   SHA-1      B1:FF:6E:D1:BE:0F:19:1D:36:CA:18:D5:98:DD:86:5F:3C:46:CE:BF
 ```
+
+(Package renamed from `com.drift.tennis.drift_tennis` on 2026-09-22 to match
+the Play Console listing — use the new one, no client has been created yet.)
 
 Register the **new** fingerprint only. The retired `0B:B5:B3:E7:…` must never be
 added anywhere. Then append the new client ID to `GOOGLE_OAUTH_CLIENT_IDS` in

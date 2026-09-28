@@ -22,7 +22,7 @@ class _IntroCarouselScreenState extends State<IntroCarouselScreen> {
   final PageController _controller = PageController();
   int _page = 0;
 
-  static const _brandBlue = Color(0xFF1C91D0);
+  static const _brandBlue = Color(0xFF3399CC);
   static const _shellNavy = Color(0xFF080C28);
 
   static const List<_Slide> _slides = [
@@ -105,6 +105,7 @@ class _IntroCarouselScreenState extends State<IntroCarouselScreen> {
                 onPageChanged: (i) => setState(() => _page = i),
                 itemBuilder: (context, i) => _SlideView(
                   slide: _slides[i],
+                  isActive: i == _page,
                   pageIndex: i,
                   pageCount: _slides.length,
                   brandBlue: _brandBlue,
@@ -153,6 +154,7 @@ class _Slide {
 class _SlideView extends StatelessWidget {
   const _SlideView({
     required this.slide,
+    required this.isActive,
     required this.pageIndex,
     required this.pageCount,
     required this.brandBlue,
@@ -161,6 +163,7 @@ class _SlideView extends StatelessWidget {
   });
 
   final _Slide slide;
+  final bool isActive;
   final int pageIndex;
   final int pageCount;
   final Color brandBlue;
@@ -186,15 +189,35 @@ class _SlideView extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    slide.title,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: 'DMSans',
-                      fontSize: slide.titleSize,
-                      height: 1.05,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
+                  // Standout title: Montserrat ExtraBold, animated in with a
+                  // fade + rise + subtle scale whenever this slide becomes the
+                  // active page.
+                  AnimatedOpacity(
+                    opacity: isActive ? 1 : 0,
+                    duration: const Duration(milliseconds: 600),
+                    curve: Curves.easeOutCubic,
+                    child: AnimatedSlide(
+                      offset: isActive
+                          ? Offset.zero
+                          : const Offset(0, 0.12),
+                      duration: const Duration(milliseconds: 700),
+                      curve: Curves.easeOutCubic,
+                      child: AnimatedScale(
+                        scale: isActive ? 1 : 0.94,
+                        duration: const Duration(milliseconds: 700),
+                        curve: Curves.easeOutCubic,
+                        child: Text(
+                          slide.title,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontSize: slide.titleSize,
+                            height: 1.05,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),

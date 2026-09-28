@@ -3,19 +3,36 @@
  * links point at the English-only legal documents, so they stay
  * route-prefixed (`/terms`), while the product links carry the locale prefix
  * so they resolve back into the right language from any page.
+ *
+ * `absoluteLinks` is set by the waitlist page, which renders on a different
+ * origin: there a root-relative href would stay on the waitlist host, where
+ * none of these pages exist. Off by default so the landing page keeps client
+ * navigation rather than reloading the document on every footer link.
  */
+import Image from "next/image";
 import Link from "next/link";
 
 import { getDictionary, legalLinks } from "@/lib/content";
 import { localeHref, type Locale } from "@/lib/locales";
+import { absoluteUrl, apexUrl, waitlistUrl } from "@/lib/site";
 
-export function SiteFooter({ locale = "en" }: { locale?: Locale }) {
+export function SiteFooter({
+  locale = "en",
+  absoluteLinks = false,
+}: {
+  locale?: Locale;
+  absoluteLinks?: boolean;
+}) {
   const t = getDictionary(locale);
 
+  const site = (path: string) =>
+    absoluteLinks ? apexUrl(locale, path) : localeHref(locale, path);
+
   const productLinks = [
-    { href: localeHref(locale, "/#discover"), label: t.footer.theLoop },
-    { href: localeHref(locale, "/#clubs"), label: t.footer.forClubs },
-    { href: localeHref(locale, "/waitlist"), label: t.footer.join, featured: true },
+    { href: site("/#discover"), label: t.footer.theLoop },
+    { href: site("/#clubs"), label: t.footer.forClubs },
+    // Always absolute: the waitlist is on its own origin from every page.
+    { href: waitlistUrl(locale), label: t.footer.join, featured: true },
   ] as const;
 
   return (
@@ -23,8 +40,8 @@ export function SiteFooter({ locale = "en" }: { locale?: Locale }) {
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <div className="grid gap-10 md:grid-cols-[1.5fr_1fr_1.15fr_1.2fr]">
           <div>
-            <p className="font-bold">Drift Tennis</p>
-            <p className="mt-1 max-w-xs text-sm leading-relaxed text-[var(--color-text-secondary)]">
+            <Image src="/images/logo.png" alt="Drift Tennis" width={640} height={321} className="h-12 w-auto" />
+            <p className="mt-3 max-w-xs text-sm leading-relaxed text-[var(--color-text-secondary)]">
               {t.footer.tagline}
             </p>
           </div>
@@ -51,7 +68,7 @@ export function SiteFooter({ locale = "en" }: { locale?: Locale }) {
               <li key={link.href}>
                 <Link
                   className="hover:text-[var(--color-primary-dark)]"
-                  href={link.href}
+                  href={absoluteLinks ? absoluteUrl(link.href) : link.href}
                 >
                   {link.label}
                 </Link>
@@ -65,9 +82,9 @@ export function SiteFooter({ locale = "en" }: { locale?: Locale }) {
             </p>
             <a
               className="mt-3 inline-block text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-primary-dark)]"
-              href="mailto:drift@einsbrand.com"
+              href="mailto:serve@driftsports.app"
             >
-              drift@einsbrand.com
+              serve@driftsports.app
             </a>
           </div>
         </div>

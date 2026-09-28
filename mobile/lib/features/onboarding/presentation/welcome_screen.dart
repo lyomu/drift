@@ -7,6 +7,7 @@ import '../../auth/presentation/widgets/auth_form_widgets.dart';
 import '../../auth/presentation/widgets/auth_page_scaffold.dart';
 import '../../auth/presentation/widgets/racket_illustration.dart';
 import '../../auth/presentation/widgets/social_auth_buttons.dart';
+import '../../../shared/widgets/coming_soon.dart';
 
 /// Join the Court — the post-intro entry point to auth
 /// (`foundation/03-user-journeys.md` §2, redesign 2026-08). "Continue with
@@ -64,9 +65,21 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             onChanged: (value) => setState(() => _acceptedAgePolicy = value),
           ),
           const SizedBox(height: 10),
-          SocialAuthButtons(
-            enabled: _acceptedAgePolicy,
-            acceptedAgePolicy: _acceptedAgePolicy,
+          Stack(
+            children: [
+              IgnorePointer(
+                child: SocialAuthButtons(
+                  enabled: _acceptedAgePolicy,
+                  acceptedAgePolicy: _acceptedAgePolicy,
+                ),
+              ),
+              Positioned.fill(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => showComingSoon(context),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 24),
           AuthFooterPrompt(

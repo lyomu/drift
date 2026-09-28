@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { SITE_URL, WAITLIST_HOST } from "@/lib/site";
+
 /**
  * Device-language routing for the public site.
  *
@@ -19,6 +21,24 @@ import { NextResponse, type NextRequest } from "next/server";
  * English is never shown at `/en/...`: that path redirects to the unprefixed
  * form, and unprefixed English pages are served by a rewrite, so every locale
  * has exactly one canonical URL (search engines see three, not six).
+ *
+ * HOST SPLIT: the same app serves two origins. The apex is the landing site;
+ * `waitlist.driftsports.app` serves only the waitlist page, at that origin's
+ * root. Locale detection is identical on both — the waitlist host's `/` is
+ * rewritten to `/{locale}/waitlist` rather than to `/{locale}`.
+ *
+ * Each page therefore has exactly one home: `/waitlist` on the apex permanently
+ * redirects to the waitlist origin, and any non-waitlist path on the waitlist
+ * origin redirects back to the apex. Without both halves the two hosts would
+ * serve duplicate copies of the same pages and split their own search ranking.
+ *
+ * ONE EXCEPTION: the legal documents are excluded from the matcher (below), so
+ * they are served rather than redirected on the waitlist host too. That is
+ * harmless — each one sets a self-referencing canonical on the apex
+ * (`englishOnlyMetadata`), so a crawler that reaches
+ * `waitlist.driftsports.app/terms` is told the real URL. Bringing them into the
+ * matcher would mean giving them a locale passthrough they do not otherwise
+ * need, to avoid being rewritten to a `/en/terms` route that does not exist.
  */
 const COOKIE = "drift-locale";
 const ONE_YEAR = 60 * 60 * 24 * 365;
@@ -53,8 +73,71 @@ function detectLocale(request: NextRequest): "en" | "fr" | "es" {
   return "en";
 }
 
+/** Strips a leading locale segment, returning the prefix and the remainder. */
+function splitLocale(pathname: string): {
+  prefix: "" | "/fr" | "/es";
+  rest: string;
+} {
+  const first = pathname.split("/")[1];
+  if (first === "fr" || first === "es") {
+    return { prefix: `/${first}`, rest: pathname.slice(first.length + 1) };
+  }
+  return { prefix: "", rest: pathname };
+}
+
+/**
+ * The waitlist origin: one page at the root, per locale. Anything else there
+ * belongs to the landing site and is sent to the apex.
+ */
+function proxyWaitlistHost(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  const { prefix, rest } = splitLocale(pathname);
+
+  // `/`, `/fr`, `/es` (with or without a trailing slash) are the waitlist page.
+  if (rest === "" || rest === "/") {
+    const locale = prefix === "" ? detectLocale(request) : prefix.slice(1);
+    const response = NextResponse.rewrite(
+      new URL(`/${locale}/waitlist`, request.url),
+    );
+    if (request.cookies.get(COOKIE)?.value !== locale) {
+      response.cookies.set(COOKIE, locale, {
+        path: "/",
+        maxAge: ONE_YEAR,
+        sameSite: "lax",
+      });
+    }
+    return response;
+  }
+
+  // Everything else lives on the apex. `/api/*` never reaches here (the
+  // matcher excludes it), so the waitlist form still posts same-origin to
+  // `/api/waitlist` on this host and `form-action 'self'` continues to hold.
+  return NextResponse.redirect(new URL(pathname, SITE_URL), 308);
+}
+
 export default function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // `request.headers.get("host")` rather than `nextUrl.host`: behind nginx the
+  // former is the name the browser asked for, which is what distinguishes the
+  // two origins.
+  const host = request.headers.get("host")?.split(":")[0].toLowerCase();
+  if (host === WAITLIST_HOST) return proxyWaitlistHost(request);
+
+  // On the apex the waitlist has moved. Redirect rather than rewrite so the
+  // address bar, canonical and any shared link all agree on one origin.
+  const waitlistPath = splitLocale(pathname);
+  if (
+    waitlistPath.rest === "/waitlist" ||
+    waitlistPath.rest === "/waitlist/"
+  ) {
+    const target = waitlistPath.prefix === "" ? "/" : waitlistPath.prefix;
+    return NextResponse.redirect(
+      new URL(target, `https://${WAITLIST_HOST}`),
+      308,
+    );
+  }
+
   const first = pathname.split("/")[1];
 
   // An explicit prefixed visit: serve it and pin the cookie.

@@ -19,6 +19,9 @@ export const fr: Dictionary = {
     legal: "Légal",
     joinCta: "Rejoindre la liste d'attente",
     backToSite: "← Retour au site",
+    clubsAndCoaches: "Clubs et coachs",
+    signIn: "Se connecter",
+    signUp: "S'inscrire",
   },
   hero: {
     quotePrefix: "« Je devrais jouer plus souvent au ",
@@ -202,7 +205,7 @@ export const fr: Dictionary = {
       "Listage et vérification des courts",
       "Abonnements de club facturés en KES via IntaSend",
     ],
-    cta: "Parlez-nous",
+    cta: "Demander votre club",
   },
   final: {
     badge: "La finale",

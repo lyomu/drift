@@ -16,7 +16,7 @@ that opens, completes, and then fails on the server.
 
 | What | Value | Where it comes from |
 |---|---|---|
-| Android package name | `com.drift.tennis.drift_tennis` | `android/app/build.gradle.kts:57` |
+| Android package name | `app.driftsports.drift` | `android/app/build.gradle.kts:102` |
 | iOS bundle ID | `com.drift.tennis.driftTennis` | `ios/Runner.xcodeproj/project.pbxproj` |
 | Debug keystore SHA-1 | `3A:97:43:C1:1F:3E:16:69:32:21:DE:92:53:5A:8C:38:0A:35:29:90` | `~/.android/debug.keystore` |
 | Preview keystore SHA-1 | `EC:3A:1F:1D:1F:F3:CD:D1:6C:75:EF:29:D2:97:CF:52:E5:27:2C:66` | `android/app/preview.keystore`, alias `preview` |
@@ -82,7 +82,7 @@ there is no web app: `google_sign_in` on Android only returns an **ID token**
 — the only thing our backend can verify — when a server client ID is
 configured. Without it, sign-in appears to succeed and hands back nothing usable.
 
-**b. Android** — package name `com.drift.tennis.drift_tennis`, plus the SHA-1
+**b. Android** — package name `app.driftsports.drift`, plus the SHA-1
 of every keystore that will produce a build you sign in from — **debug**,
 **preview** and now **release**, all three listed above. A missing fingerprint
 fails at the Google sheet with a bare `10:` error, which tells you nothing.

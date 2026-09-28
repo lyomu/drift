@@ -14,6 +14,7 @@ const sections = [
   { id: "collect", title: "Information we collect" },
   { id: "use", title: "How we use it" },
   { id: "sharing", title: "No sale or marketing sharing" },
+  { id: "analytics", title: "Analytics and cookies" },
   { id: "visibility", title: "What other users can see" },
   { id: "email", title: "Email updates and offers" },
   { id: "retention", title: "Retention and deletion" },
@@ -66,6 +67,18 @@ export default function PrivacyPolicyPage() {
         <h2>No sale or marketing sharing</h2>
         <p>We do not sell, rent, trade or share your personal information with third parties for advertising, marketing, data brokerage or their independent use. We do not provide user lists to advertisers or allow third parties to market to you using Drift Tennis information.</p>
         <p>A limited exception applies where you choose to use an external service yourself, such as a hosted payment page or optional Apple or Google sign-in. That service handles information you give it under its own privacy notice. We may also disclose information if required by law or where reasonably necessary to protect the rights, safety or security of Drift Tennis, our users or the public.</p>
+      </section>
+
+      <section id="analytics">
+        <h2>Analytics and cookies</h2>
+        <p>We use third-party analytics to understand how people find and use Drift Tennis, so we can fix what is confusing and build what is used. These tools set cookies or similar identifiers on your device and receive information about your visit. They load as soon as you open our website or app.</p>
+        <ul>
+          <li><strong>PostHog:</strong> product analytics on our website and in our app. Records pages and screens viewed, actions taken, approximate location derived from IP address, and device and browser information. Once you sign in, this activity is linked to your account so we can understand how real journeys through the product work.</li>
+          <li><strong>Google Analytics:</strong> website audience and acquisition reporting. Records pages viewed, how you arrived at our site, approximate location derived from IP address, and device and browser information.</li>
+          <li><strong>Microsoft Clarity:</strong> used mainly in our mobile app, and also on our website. Clarity records session replays and heatmaps, which means it captures how you move, scroll and tap through screens so we can see where the product is getting in your way.</li>
+        </ul>
+        <p>These providers process this information on our behalf and under their own privacy terms. We do not use any of them to sell your personal information or to build advertising profiles, and we do not share your Drift Tennis data with them for their own independent purposes.</p>
+        <p>You can limit this collection using your browser or device controls: block or clear cookies, use a private browsing window, or turn on any &ldquo;do not track&rdquo; and limit-ad-tracking setting your device offers. Blocking these tools does not affect your ability to use Drift Tennis.</p>
       </section>
 
       <section id="visibility">

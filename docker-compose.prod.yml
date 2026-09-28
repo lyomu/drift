@@ -182,6 +182,16 @@ services:
       # waitlist proxy hops to the API container over the compose network,
       # not to whatever `localhost` means inside this container.
       API_URL: http://api:3009
+      # Which Host header means "serve the waitlist page at the root" instead
+      # of the landing site (website/proxy.ts). Runtime, not a build arg, for
+      # the same reason API_URL is.
+      WAITLIST_HOST: waitlist.driftsports.app
+      # Analytics. An absent key means that tool does not load AND its origins
+      # are not added to the CSP (website/lib/analytics.ts, next.config.ts).
+      POSTHOG_KEY: ${POSTHOG_KEY:-}
+      POSTHOG_HOST: ${POSTHOG_HOST:-}
+      GA_MEASUREMENT_ID: ${GA_MEASUREMENT_ID:-}
+      CLARITY_PROJECT_ID: ${CLARITY_PROJECT_ID:-}
     depends_on:
       api:
         condition: service_healthy

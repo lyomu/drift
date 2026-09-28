@@ -1,7 +1,8 @@
 /**
  * The away fixture: the club-admin track. Player-first page, so clubs get
- * one honest section with a real contact action (mailto) — no fake demo,
- * no invented pricing.
+ * one honest section with a real action — the Club Admin request form, the
+ * same destination the header's "Clubs & coaches" sign-up points at. No fake
+ * demo, no invented pricing.
  *
  * The aerial court photograph replaces the checklist's right-hand column as
  * the section's visual anchor; the checklist moves under the copy, which
@@ -11,6 +12,7 @@ import Image from "next/image";
 
 import { getDictionary, type Locale } from "@/lib/content";
 import { images } from "@/lib/images";
+import { CLUB_SIGN_UP_URL } from "@/lib/site";
 
 export function ClubsSection({ locale }: { locale: Locale }) {
   const t = getDictionary(locale);
@@ -70,7 +72,8 @@ export function ClubsSection({ locale }: { locale: Locale }) {
             </ul>
 
             <a
-              href="mailto:drift@einsbrand.com"
+              href={CLUB_SIGN_UP_URL}
+              rel="noopener"
               className="btn-primary mt-8"
             >
               {t.clubs.cta}
