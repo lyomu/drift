@@ -5,15 +5,21 @@
  * WHY THESE ARE NOT `NEXT_PUBLIC_*`: that prefix is inlined at build time,
  * which binds an image to one environment — the trap `club-admin` and
  * `platform-admin` are already in, documented at the top of
- * `app/api/waitlist/route.ts`. These are read on the server at request time
- * (in the two root layouts) and handed to the client component as props, so
- * the same image runs in staging and production with different keys.
+ * `app/api/waitlist/route.ts`. Reading them in a layout would be no better:
+ * every page here is statically prerendered, so a server component reading
+ * `process.env` is evaluated at build time and bakes the keys into the HTML
+ * just as surely. The only caller is therefore the `force-dynamic` handler in
+ * `app/api/analytics/route.ts`, which `components/analytics.tsx` fetches on
+ * mount — see that route for the full reasoning.
  *
  * Every field is `null` when its variable is unset, and each integration is
- * skipped entirely in that case. An unconfigured build therefore ships no
- * third-party script at all — which is also what keeps the Content Security
- * Policy in `next.config.ts` tight, since it is built from these same
- * variables and must not widen for a tool that is not loading.
+ * skipped entirely in that case, so an unconfigured build ships no third-party
+ * script and makes no third-party request.
+ *
+ * The Content Security Policy in `next.config.ts` deliberately does NOT follow
+ * suit: it names all three vendor origins unconditionally, because `headers()`
+ * is fixed at build time while these keys are runtime, so a policy derived from
+ * them would silently block a tool enabled later on the box.
  *
  * NOTE ON CONSENT: these load unconditionally, with no consent gate. That was
  * a deliberate product decision. The privacy policy discloses all three
@@ -52,11 +58,4 @@ export function analyticsConfig(): AnalyticsConfig {
     gaMeasurementId: read("GA_MEASUREMENT_ID"),
     clarityProjectId: read("CLARITY_PROJECT_ID"),
   };
-}
-
-/** True when at least one tool is configured. */
-export function anyAnalyticsEnabled(config: AnalyticsConfig): boolean {
-  return Boolean(
-    config.posthogKey || config.gaMeasurementId || config.clarityProjectId,
-  );
 }

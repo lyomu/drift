@@ -109,7 +109,7 @@ The website service reads three more groups of runtime variables, all set in
 | --- | --- |
 | `API_URL` | the waitlist proxy hop, above |
 | `WAITLIST_HOST` | which `Host` header serves the waitlist page at its root instead of the landing site (`website/proxy.ts`). Defaults to `waitlist.driftsports.app` |
-| `POSTHOG_KEY`, `POSTHOG_HOST`, `GA_MEASUREMENT_ID`, `CLARITY_PROJECT_ID` | analytics. Each is optional; an absent key means that tool does not load **and** its origins are not added to the website's CSP. See `docs/ANALYTICS.md` |
+| `POSTHOG_KEY`, `POSTHOG_HOST`, `GA_MEASUREMENT_ID`, `CLARITY_PROJECT_ID` | analytics. Each is optional; an absent key means that tool does not load. The CSP is unaffected either way — it names all three vendor origins unconditionally, since it is fixed at build time while these keys are runtime. See `docs/ANALYTICS.md` |
 
 None of these are `NEXT_PUBLIC_*`, so unlike the consoles, the website image is
 not bound to one environment and the same build runs in staging and production.
