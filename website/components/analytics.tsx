@@ -65,16 +65,26 @@ function useAnalyticsConfig(): AnalyticsConfig | null {
  * PostHog is loaded through its npm package rather than the inline snippet: the
  * snippet assigns to `window.posthog`, which strict mode's double effect
  * invocation makes awkward to guard, and the package gives a typed `capture`.
- * Imported inside the effect so the chunk is only fetched when it is used.
+ * Imported lazily so the chunk is only fetched when it is used.
+ *
+ * MODULE-LEVEL, NOT A REF: `usePostHog` and `PageViews` each need the
+ * initialised client, from two separate effects. Each independently doing
+ * `import("posthog-js").then(...)` — as this used to — is a race: `PageViews`
+ * is a child of `Analytics`, so React runs its effect before `usePostHog`'s,
+ * and the npm build (unlike the inline snippet, which queues calls made
+ * before `init`) silently drops a `.capture()` sent before `.init()` has run.
+ * That dropped the very first `$pageview` of every session — confirmed live
+ * (a real `Pageleave` arrived, wired up inside `init`'s own config, but no
+ * `$pageview` ever did). A single memoized promise makes every caller,
+ * regardless of ordering, wait on the same init before it can capture.
  */
-function usePostHog(config: AnalyticsConfig | null) {
-  const started = useRef(false);
+let posthogPromise: Promise<typeof import("posthog-js").default> | null = null;
 
-  useEffect(() => {
-    if (!config?.posthogKey || started.current) return;
-    started.current = true;
-
-    void import("posthog-js").then(({ default: posthog }) => {
+function getPostHog(
+  config: AnalyticsConfig,
+): Promise<typeof import("posthog-js").default> {
+  if (!posthogPromise) {
+    posthogPromise = import("posthog-js").then(({ default: posthog }) => {
       posthog.init(config.posthogKey as string, {
         api_host: config.posthogHost,
         // Sent by `PageViews`, which also covers client navigation.
@@ -82,7 +92,16 @@ function usePostHog(config: AnalyticsConfig | null) {
         capture_pageleave: true,
         defaults: "2025-05-24",
       });
+      return posthog;
     });
+  }
+  return posthogPromise;
+}
+
+function usePostHog(config: AnalyticsConfig | null) {
+  useEffect(() => {
+    if (!config?.posthogKey) return;
+    void getPostHog(config);
   }, [config]);
 }
 
@@ -107,7 +126,7 @@ function PageViews({ config }: { config: AnalyticsConfig | null }) {
     lastSent.current = url;
 
     if (config.posthogKey) {
-      void import("posthog-js").then(({ default: posthog }) => {
+      void getPostHog(config).then((posthog) => {
         posthog.capture("$pageview", { $current_url: window.location.href });
       });
     }
