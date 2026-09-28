@@ -287,14 +287,24 @@ Review and approve (Jenkins login required):
                 withCredentials([usernamePassword(credentialsId: 'drift-basic-auth', usernameVariable: 'BASIC_USER', passwordVariable: 'BASIC_PASS')]) {
                     sh """
                         set -e
-                        for i in 1 2 3 4 5 6; do
-                            if curl -sf https://api.driftsports.app/health; then break; fi
-                            echo "API not ready yet, retrying..."; sleep 5
-                        done
-                        curl -sf https://api.driftsports.app/health
-                        curl -sf -o /dev/null https://driftsports.app/
-                        curl -sf -o /dev/null -u "\$BASIC_USER:\$BASIC_PASS" https://admin.driftsports.app/
-                        curl -sf -o /dev/null -u "\$BASIC_USER:\$BASIC_PASS" https://console.driftsports.app/
+                        # Every container just (re)started for this deploy - each one gets
+                        # its own retry/backoff, not just the API. A single-shot check on
+                        # the others caused two false "smoke test failed" builds (drift #17,
+                        # #20) where the container came up a couple seconds after the check
+                        # ran and prod was actually fine the whole time.
+                        retry_check() {
+                            label="\$1"; shift
+                            for i in 1 2 3 4 5 6; do
+                                if "\$@"; then return 0; fi
+                                echo "\$label not ready yet, retrying..."; sleep 5
+                            done
+                            echo "\$label never became ready"
+                            return 1
+                        }
+                        retry_check api curl -sf https://api.driftsports.app/health
+                        retry_check website curl -sf -o /dev/null https://driftsports.app/
+                        retry_check club-admin curl -sf -o /dev/null -u "\$BASIC_USER:\$BASIC_PASS" https://admin.driftsports.app/
+                        retry_check platform-admin curl -sf -o /dev/null -u "\$BASIC_USER:\$BASIC_PASS" https://console.driftsports.app/
                         echo "Smoke tests passed."
                     """
                 }
