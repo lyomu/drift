@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/theme/drift_colors.dart';
@@ -251,8 +252,24 @@ class _Verdict extends ConsumerWidget {
           ),
         ],
         const SizedBox(height: DriftSpacing.s6),
+        if (!rejected) ...[
+          DriftButton(
+            label: 'Analyse this clip',
+            onPressed: () {
+              // Reset first: coming back to a screen still showing the previous
+              // verdict, with its own "analyse" button, is how the same clip
+              // gets queued twice.
+              ref.read(uploadControllerProvider.notifier).reset();
+              context.push('/video-analysis/${job.id}');
+            },
+          ),
+          const SizedBox(height: DriftSpacing.s3),
+        ],
         DriftButton(
           label: rejected ? 'Try another clip' : 'Upload another',
+          variant: rejected
+              ? DriftButtonVariant.primary
+              : DriftButtonVariant.text,
           onPressed: () => ref.read(uploadControllerProvider.notifier).reset(),
         ),
       ],

@@ -72,6 +72,8 @@ class VideoAnalysisJob {
     this.rejectionReasons = const [],
     this.findings = const [],
     this.courtChecked = false,
+    this.analysisResult,
+    this.failureReason,
   });
 
   final String id;
@@ -89,6 +91,33 @@ class VideoAnalysisJob {
   /// while the court was never looked at, and saying "looks good" in that case
   /// would overstate what we know.
   final bool courtChecked;
+
+  /// The pipeline's summary, exactly as it produced it.
+  ///
+  /// Deliberately an untyped map. Its shape belongs to the CV service and moves
+  /// with it, and a Dart class mirroring it would be a third copy of a contract
+  /// that already exists in Python and in Postgres. The screen reads the keys it
+  /// knows and ignores the rest.
+  final Map<String, dynamic>? analysisResult;
+
+  /// Why an analysis gave up, in words meant for the person who uploaded it.
+  final String? failureReason;
+
+  /// Whether the court was successfully calibrated on this run.
+  ///
+  /// The single most important thing in the summary. Every distance and every
+  /// speed is derived from a homography fitted to the court's painted lines; if
+  /// that fit failed, those numbers are not measurements, and the pipeline says
+  /// so itself rather than leaving it to be inferred.
+  bool get courtCalibrated => analysisResult?['court_calibrated'] != false;
+
+  /// The pipeline's own warning about this run, if it issued one.
+  String? get analysisWarning => analysisResult?['warning'] as String?;
+
+  bool get isFinished =>
+      status == VideoAnalysisStatus.completed ||
+      status == VideoAnalysisStatus.failed ||
+      status == VideoAnalysisStatus.rejected;
 
   factory VideoAnalysisJob.fromJson(Map<String, dynamic> json) {
     final precheck = json['precheckResult'] as Map<String, dynamic>?;
@@ -108,6 +137,8 @@ class VideoAnalysisJob {
           .map((f) => PrecheckFinding.fromJson(f as Map<String, dynamic>))
           .toList(),
       courtChecked: precheck?['court_checked'] as bool? ?? false,
+      analysisResult: json['analysisResult'] as Map<String, dynamic>?,
+      failureReason: json['failureReason'] as String?,
     );
   }
 }
@@ -177,6 +208,29 @@ class VideoAnalysisRepository {
           sendTimeout: const Duration(minutes: 10),
           receiveTimeout: const Duration(minutes: 2),
         ),
+      );
+      return VideoAnalysisJob.fromJson(response.data!);
+    } on DioException catch (error) {
+      throw _asException(error);
+    }
+  }
+
+  /// Ask for a clip to be analysed. Returns the job, now queued.
+  Future<VideoAnalysisJob> requestAnalysis(String jobId) async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/video-analysis/$jobId/analyze',
+      );
+      return VideoAnalysisJob.fromJson(response.data!);
+    } on DioException catch (error) {
+      throw _asException(error);
+    }
+  }
+
+  Future<VideoAnalysisJob> fetch(String jobId) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        '/video-analysis/$jobId',
       );
       return VideoAnalysisJob.fromJson(response.data!);
     } on DioException catch (error) {

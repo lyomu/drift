@@ -86,6 +86,7 @@ import '../../features/profile/presentation/own_profile_screen.dart';
 import '../../features/search/data/global_search_repository.dart';
 import '../../features/search/presentation/global_search_screen.dart';
 import '../../features/settings/presentation/account_security_screen.dart';
+import '../../features/video_analysis/presentation/video_results_screen.dart';
 import '../../features/video_analysis/presentation/video_upload_screen.dart';
 import '../../features/settings/presentation/blocked_users_screen.dart';
 import '../../features/settings/presentation/contact_support_screen.dart';
@@ -258,6 +259,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/video-analysis',
         builder: (context, state) => const VideoUploadScreen(),
+      ),
+      GoRoute(
+        path: '/video-analysis/:id',
+        builder: (context, state) =>
+            VideoResultsScreen(jobId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: '/stats',
