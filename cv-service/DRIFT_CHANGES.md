@@ -3,6 +3,36 @@
 Changes Drift has made on top of the vendored upstream (`v2.1.1`, commit `5dc8f16`).
 Newest first.
 
+## 2026-09-29 — HTTP service (Phase 1, slice 1a)
+
+- New `api.py`: FastAPI interface for the Drift backend to call. `GET /health`,
+  `POST /precheck` (multipart upload → precheck verdict as JSON), `POST /analyze`.
+- The court model loads **once** in the lifespan handler and is reused per request.
+  That is the entire reason this exists as a service: a CLI invocation pays ~7.8 s of
+  interpreter and library import plus a ResNet-50 load every single time, which is why
+  the precheck's 74 ms–1.6 s only becomes usable in a process that stays up. Verified
+  against the running service: 1.39 s for a clip that goes all the way to the court
+  check, 0.20 s for one rejected on its header.
+- `utils.precheck()` gained an optional `detector` argument so a preloaded model can be
+  injected. Passing `court_model_path` still works and still builds one per call, which
+  is right for the CLI and wrong for a service.
+- `/analyze` returns **501 deliberately**. A full run is minutes of GPU work and belongs
+  on a queue with a callback; the route is declared so the backend can build against the
+  real URL and get an honest error rather than a 404 that could equally mean a
+  misdeployment.
+- **A refused clip is HTTP 200 with `verdict: "reject"`**, not a 4xx. A non-2xx means the
+  check itself failed. Getting this backwards would have the backend report a service
+  outage to the user as a filming problem.
+- Missing weights degrade the service to header checks rather than stopping startup.
+  Those checks rejected every clip in the first real batch, so losing them because an
+  unrelated file is absent would turn a degraded service into no service. Covered by a
+  test that runs the real lifespan against a config pointing at absent weights.
+- Uploads stream to a temp file in 1 MB chunks with the size ceiling enforced mid-stream,
+  and are removed in a `finally`. A test asserts temp files do not accumulate.
+- New `service` extra in `pyproject.toml` (fastapi, uvicorn, python-multipart) — an extra
+  rather than a core dependency because nothing in the pipeline imports it.
+- New `tests/test_api.py`: 13 tests, no weights and no GPU needed (the detector is faked).
+
 ## 2026-09-29 — Pre-upload precheck
 
 First Drift code change on top of upstream.

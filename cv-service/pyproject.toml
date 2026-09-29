@@ -50,6 +50,15 @@ dev = [
     "transformers>=4.40",
     "roboflow>=1.1.0",
 ]
+# The HTTP interface (api.py). An extra rather than a core dependency because the CLI
+# and the library are usable without it, and nothing in the pipeline imports it.
+# python-multipart is not optional despite looking it: FastAPI raises at import time on
+# any route with an UploadFile parameter when it is missing.
+service = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "python-multipart>=0.0.9",
+]
 
 [project.urls]
 Homepage = "https://github.com/HarshTomar1234/Tennis-Vision"
@@ -72,7 +81,7 @@ packages = [
     "trackers",
     "utils",
 ]
-py-modules = ["main", "cli"]
+py-modules = ["main", "cli", "api"]
 
 [tool.setuptools.package-data]
 # Restricted to the small trained weights and any config carried by a package. The large

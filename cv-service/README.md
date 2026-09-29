@@ -101,9 +101,36 @@ gate a pipeline. `--quick` skips loading the court model, `--json` emits a machi
 result. See [`utils/precheck.py`](utils/precheck.py) — some of its thresholds are
 provisional and say so.
 
+## HTTP service
+
+```bash
+pip install -e ".[service]"
+uvicorn api:app --host 0.0.0.0 --port 8000
+```
+
+| Route | Does |
+|---|---|
+| `GET /health` | Liveness, and whether the court model loaded |
+| `POST /precheck` | Multipart video upload → the precheck verdict as JSON |
+| `POST /analyze` | **501 on purpose** — a full run is minutes of GPU work and belongs on a queue |
+
+The court model loads once at startup and is reused, which is what makes `/precheck`
+answer in 74 ms–1.6 s instead of reloading ResNet-50 per request.
+
+A refused clip is **HTTP 200 with `"verdict": "reject"`**, not an error status. A non-2xx
+means the check itself failed. Every rejection carries a `message` written to be shown to
+whoever uploaded the video.
+
+If the weights are missing the service still starts and serves the header checks,
+reporting `court_checked: false` — those catch most bad uploads, and refusing to boot
+would lose them too.
+
+**Internal only as it stands**: no authentication, no rate limiting, no metrics. Do not
+expose it publicly.
+
 ## Tests
 
-**441 unit and integration tests** (`pytest tests/`). Run them with:
+**454 unit and integration tests** (`pytest tests/`). Run them with:
 
 ```bash
 pytest tests/ -m "not slow"
@@ -136,7 +163,8 @@ on Drift's real (non-broadcast) camera footage, which is the next step.
 
 ## Not built yet
 
-- No FastAPI server — CLI only
 - No backend (Nest) integration, no upload handling
+- `/analyze` over HTTP — the CLI is the only way to run a full analysis
+- No auth, rate limiting or metrics on the HTTP service
 - No Dockerfile, no Jenkinsfile stage, no deploy target (won't run on the shared box)
 - No Drift footage tested yet — only the bundled sample clip

@@ -443,6 +443,7 @@ def precheck(
     court_model_path: str | None = None,
     sample_count: int = 12,
     device: str | None = None,
+    detector=None,
 ) -> PrecheckResult:
     """
     Triage a clip. Cheap checks first; expensive ones only if the cheap ones allow it.
@@ -453,6 +454,12 @@ def precheck(
                           checks with no torch import and no model load.
         sample_count:     frames to seek-sample for the tier 2 checks.
         device:           torch device for the court model; defaults to CUDA if present.
+        detector:         an already-loaded CourtLineDetector to reuse. A one-shot CLI
+                          run has nothing to reuse and should pass `court_model_path`
+                          instead; a long-lived service loads the weights once at
+                          startup and passes them here on every request, which is the
+                          difference between ~1.6 s and paying a fresh ResNet-50 load
+                          per clip. Takes precedence over `court_model_path`.
 
     Returns:
         A PrecheckResult. Never raises on a bad clip: an unreadable or unusable video
@@ -484,11 +491,13 @@ def precheck(
     findings.append(assess_camera_motion(frames))
 
     court_checked = False
-    if court_model_path:
+    if detector is None and court_model_path:
         # Imported here, not at module scope, so tier 1 stays free of torch entirely.
         from court_line_detector import CourtLineDetector
 
         detector = CourtLineDetector(court_model_path, device=device)
+
+    if detector is not None:
         keypoints = [detector.predict(f) for f in frames]
         findings.append(assess_court(frames, keypoints))
         court_checked = True
