@@ -22,6 +22,16 @@ class SettingsHomeScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
         children: [
+          // Reachable from Settings rather than a tab: the feature is a Phase 0
+          // spike that cannot analyse anything yet, and promoting it to primary
+          // navigation would promise a great deal more than it does.
+          _SectionLabel('Labs'),
+          _NavRow(
+            icon: Icons.videocam_outlined,
+            label: 'Analyse a clip',
+            onTap: () => context.push('/video-analysis'),
+          ),
+          const SizedBox(height: DriftSpacing.s5),
           _SectionLabel('Privacy & Safety'),
           _NavRow(
             icon: Icons.privacy_tip_outlined,

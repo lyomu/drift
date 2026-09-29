@@ -46,6 +46,11 @@ dependencies:
   flutter_riverpod: ^2.6.1
   flutter_svg: ^2.0.10
   dio: ^5.7.0
+  # Direct because video_analysis sets a MultipartFile contentType explicitly:
+  # a clip picked from the gallery often arrives as application/octet-stream, and
+  # the API refuses anything that is not video/*. dio already pulls this in, but
+  # importing a transitive dependency is how a future dio bump breaks a build.
+  http_parser: ^4.0.2
   flutter_secure_storage: ^9.2.2
   geolocator: ^13.0.2
   geocoding: ^3.0.0
