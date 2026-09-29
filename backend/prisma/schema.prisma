@@ -696,6 +696,7 @@ model User {
   courtInquiries          CourtInquiry[]
   venueVerificationRequests VenueVerificationRequest[]
   dismissedHomeCards        DismissedHomeCard[]
+  videoAnalysisJobs         VideoAnalysisJob[]
 
   @@map("users")
 }
@@ -3141,4 +3142,71 @@ model WaitlistBroadcast {
   @@index([createdAt])
   @@index([sentById])
   @@map("waitlist_broadcasts")
+}
+
+// ── AI match-video analysis (Phase 1) ───────────────────────────────────────
+//
+// See ../AI_VIDEO_ANALYSIS_IMPLEMENTATION_PLAN.md and cv-service/. The pipeline
+// itself is a Phase 0 spike that has not yet been shown to work on Drift's own
+// footage, so this table deliberately records only the JOB, not its findings.
+//
+// The plan's companion `StrokeEvent` table is NOT here yet, and its absence is the
+// point: its fields are type, speed and placement x/y, and placement is derived from
+// a court homography fitted to painted lines. cv-service/PHASE0_FINDINGS.md found
+// those lines worn away or absent on the first batch of real Drift courts. Designing
+// that schema now would be guessing at which outputs survive. Job tracking has no
+// such dependency, so it lands first.
+
+enum VideoAnalysisStatus {
+  // Uploaded and stored; the clip has not been judged yet.
+  PENDING
+  // The CV service refused the clip. Terminal. `rejectionReasons` carries messages
+  // written to be shown to the person who uploaded it.
+  REJECTED
+  // Precheck passed. Terminal *for now*: running the analysis is not implemented
+  // (cv-service returns 501 for it), so nothing currently moves a job past here.
+  ACCEPTED
+  // Declared ahead of the work so the lifecycle reads as intended rather than being
+  // reshaped later. Nothing sets these yet.
+  ANALYZING
+  COMPLETED
+  FAILED
+}
+
+model VideoAnalysisJob {
+  id     String              @id @default(uuid())
+  status VideoAnalysisStatus @default(PENDING)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Opaque key into VideoStorageService rather than a path: the local-disk driver and
+  // an S3 bucket disagree about what a location looks like, and the column should not
+  // have to be migrated when the driver changes. Null once a rejected clip's bytes
+  // have been discarded.
+  storageKey       String?
+  originalFilename String
+  sizeBytes        Int
+  mimeType         String
+
+  // The precheck verdict, stored whole. Kept as JSON rather than exploded into columns
+  // because the shape belongs to cv-service and moves with it; this table should not
+  // need a migration every time a check is added there.
+  precheckResult Json?
+  // Just the user-facing messages from the blocking findings, lifted out of the JSON so
+  // the common read - "why was my video refused" - needs no parsing.
+  rejectionReasons String[] @default([])
+
+  // Which cv-service produced the verdict. Without it, a re-run after a threshold change
+  // is indistinguishable from the original, and the stored verdicts silently become a
+  // mix of incomparable things.
+  cvServiceVersion String?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
+
+  @@index([userId, createdAt])
+  @@index([status])
+  @@map("video_analysis_jobs")
 }
