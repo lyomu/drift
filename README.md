@@ -14,6 +14,7 @@ backend API, and the product/design foundation docs.
 | `club-admin/`    | Next.js (App Router)         | Club-level admin console (members, courts, events, billing, etc.). |
 | `platform-admin/`| Next.js (App Router)         | Platform operator console (tenant/club management, moderation).    |
 | `website/`       | Next.js (App Router)         | Public marketing/landing site (player-first, clubs secondary).     |
+| `cv-service/`    | Python (PyTorch, OpenCV)     | AI match-video analysis pipeline, vendored from Tennis-Vision (MIT). Phase 0 spike, CLI only. |
 | `foundation/`    | Markdown                     | Product strategy, IA, user journeys, screen inventory, design system, architecture, roadmap. |
 
 Additional working notes live in `PROGRESS.md`, `HANDOVER.md`, `PENDING-SCREENS.md`,
@@ -24,6 +25,7 @@ Additional working notes live in `PROGRESS.md`, `HANDOVER.md`, `PENDING-SCREENS.
 - Node.js 20+ and npm
 - PostgreSQL 14+
 - Flutter SDK (stable channel) with Android/iOS toolchain for `mobile/`
+- Python 3.10+ and an NVIDIA GPU with CUDA for `cv-service/`
 
 ## Getting started
 
@@ -61,6 +63,20 @@ flutter run
 ```
 
 For local device installs that avoid stale APK caching, use `mobile/tool/dev_run.sh`.
+
+### CV service (Python)
+
+```bash
+cd cv-service
+python -m venv venv
+venv\Scripts\activate          # source venv/bin/activate on macOS/Linux
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
+pip install -e .
+tennis-vision download-models
+```
+
+CLI only for now. See `cv-service/README.md` for the manual TrackNet download and the
+licensing caveats on the model weights (not yet cleared for production).
 
 ## Conventions
 
