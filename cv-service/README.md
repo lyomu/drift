@@ -36,14 +36,22 @@ evaluation but **not cleared for a commercial product**:
 
 | Component | Source | Terms | Status |
 |---|---|---|---|
-| Ball detection (`tracknet.pt`) | [yastrebksv/TrackNet](https://github.com/yastrebksv/TrackNet) | "Research use only"; licence not stated | Blocker for production |
-| Player detection (`ultralytics` / YOLOv8x) | Ultralytics | AGPL-3.0 — a network service using it must be open-sourced, or buy an Enterprise licence | Blocker for production |
-| Court keypoints (`keypoints_model_geoaug.pth`) | Hugging Face `Coddieharsh/tennis-court-keypoints` | Fine-tuned from TennisCourtDetector, which has no stated licence | Needs confirming |
+| Ball detection (`tracknet.pt`) | [yastrebksv/TrackNet](https://github.com/yastrebksv/TrackNet) | **No licence at all** — so all rights reserved by default, not "research use" | Blocker for production |
+| Player detection (`ultralytics` / YOLOv8x) | Ultralytics | AGPL-3.0 — covers trained models too, and a network service using it must be open-sourced or licensed | Blocker for production |
+| Court keypoints (`keypoints_model_geoaug.pth`) | Hugging Face `Coddieharsh/tennis-court-keypoints` | Research use only; fine-tuned from an unlicensed model trained on YouTube-derived images | Blocker for production |
 | Pose (`pose_landmarker_lite.task`) | Google MediaPipe | Apache-2.0 | OK |
 
-Options before Phase 1 ships: licence or replace TrackNet weights (retrain on our own
-labelled footage), swap YOLOv8 for a permissively licensed detector or buy the
-Ultralytics licence, and confirm the court model's terms.
+`ultralytics` is the only AGPL dependency in the stack — everything else that is not a
+model weight is MIT, Apache-2.0 or BSD.
+
+**See [`LICENSING.md`](LICENSING.md)** for the full assessment: what AGPL-3.0 actually
+requires for our service topology, the permissively licensed replacements (RF-DETR plus
+`supervision.ByteTrack`, both already viable), and why retraining the court and ball
+models on our own labelled footage resolves both the weight licensing and the
+domain-transfer risk found in [`PHASE0_FINDINGS.md`](PHASE0_FINDINGS.md) with one piece
+of work.
+
+None of this blocks internal evaluation. All of it blocks a public launch.
 
 ## Setup
 
