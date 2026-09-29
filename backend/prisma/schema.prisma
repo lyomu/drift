@@ -3197,6 +3197,15 @@ model VideoAnalysisJob {
   // the common read - "why was my video refused" - needs no parsing.
   rejectionReasons String[] @default([])
 
+  // The pipeline's own summary, stored whole for the same reason as precheckResult:
+  // the shape belongs to cv-service. It carries `court_calibrated` and a `warning`
+  // when the court fit failed, which is the difference between a measurement and a
+  // plausible-looking number — flattening it into columns is how that gets lost.
+  analysisResult Json?
+
+  // Why an analysis gave up, in words meant for the person who uploaded the clip.
+  failureReason String?
+
   // Which cv-service produced the verdict. Without it, a re-run after a threshold change
   // is indistinguishable from the original, and the stored verdicts silently become a
   // mix of incomparable things.

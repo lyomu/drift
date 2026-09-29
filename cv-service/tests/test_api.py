@@ -234,13 +234,62 @@ def test_missing_weights_degrade_the_service_rather_than_stopping_it(tmp_path):
 
 # ── analyze ──────────────────────────────────────────────────────────────────
 
-def test_analyze_is_declared_but_not_implemented(client, tmp_path):
-    """
-    501, not 404. The distinction matters to the caller: 404 could equally mean the
-    service is misdeployed, while 501 says the route is real and the work is pending.
-    """
+def test_analyze_returns_the_pipeline_summary(client, tmp_path, monkeypatch):
+    """The summary the pipeline wrote is returned as-is, plus which version wrote it."""
+    monkeypatch.setattr(
+        api, "_run_pipeline",
+        lambda *args, **kwargs: {"total_shots_p1": 3, "court_calibrated": True},
+    )
+
     r = client.post("/analyze",
                     files={"file": ("clip.avi", _video_bytes(tmp_path), "video/avi")})
 
-    assert r.status_code == 501
-    assert "queued job" in r.json()["detail"]
+    assert r.status_code == 200
+    body = r.json()
+    assert body["summary"]["total_shots_p1"] == 3
+    assert body["pipeline_version"]
+    assert body["video"] == "clip.avi"
+
+
+def test_analyze_refuses_a_second_concurrent_run(client, tmp_path, monkeypatch):
+    """
+    One GPU, one analysis. The second caller is refused with a Retry-After rather than
+    admitted into a queue this process would then have to manage — work should pile up
+    in the caller's queue, where it is visible, not in here where it is not.
+    """
+    import asyncio
+
+    # Hold the slot as a running analysis would.
+    slot = asyncio.Semaphore(1)
+    loop = asyncio.new_event_loop()
+    try:
+        loop.run_until_complete(slot.acquire())
+        monkeypatch.setattr(api, "_analysis_slot", slot)
+
+        r = client.post(
+            "/analyze",
+            files={"file": ("clip.avi", _video_bytes(tmp_path), "video/avi")},
+        )
+
+        assert r.status_code == 503
+        assert r.headers["retry-after"] == "60"
+    finally:
+        loop.close()
+
+
+def test_analyze_cleans_up_when_the_pipeline_fails(client, tmp_path, monkeypatch):
+    """A failed run must not leave its working directory behind on a long-lived host."""
+    import tempfile
+    from pathlib import Path as _Path
+
+    def boom(*args, **kwargs):
+        raise RuntimeError("pipeline exploded")
+
+    monkeypatch.setattr(api, "_run_pipeline", boom)
+    before = len(list(_Path(tempfile.gettempdir()).glob("analyze-*")))
+
+    with pytest.raises(RuntimeError):
+        client.post("/analyze",
+                    files={"file": ("clip.avi", _video_bytes(tmp_path), "video/avi")})
+
+    assert len(list(_Path(tempfile.gettempdir()).glob("analyze-*"))) == before

@@ -62,6 +62,18 @@ export class VideoAnalysisController {
     return this.videoAnalysis.serviceStatus();
   }
 
+  /**
+   * Queue an accepted clip for analysis.
+   *
+   * Separate from the upload rather than automatic, because analysis is minutes of
+   * scarce GPU time and most clips are refused before they get near it. Asking makes
+   * the cost explicit and keeps the queue full of work somebody actually wants.
+   */
+  @Post(':id/analyze')
+  analyze(@Req() req: Request, @Param('id') id: string) {
+    return this.videoAnalysis.requestAnalysis(this.userId(req), id);
+  }
+
   @Get()
   list(@Req() req: Request, @Query('take') take?: string) {
     return this.videoAnalysis.listForUser(

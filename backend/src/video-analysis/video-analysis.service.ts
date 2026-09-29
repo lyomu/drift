@@ -4,14 +4,27 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  Optional,
+  ServiceUnavailableException,
 } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
+import type { Queue } from 'bullmq';
 import { VideoAnalysisStatus } from '@prisma/client';
 import { createReadStream } from 'node:fs';
 import { rm } from 'node:fs/promises';
 import { Readable } from 'node:stream';
 import { PrismaService } from '../prisma/prisma.service';
+import { PushService } from '../push/push.service';
 import { VIDEO_STORAGE, type VideoStorage } from '../storage/video-storage.service';
-import { CvServiceClient, type PrecheckResult } from './cv-service.client';
+import {
+  CvServiceBusyError,
+  CvServiceClient,
+  type PrecheckResult,
+} from './cv-service.client';
+import {
+  ANALYSIS_JOB_OPTIONS,
+  VIDEO_ANALYSIS_QUEUE,
+} from './video-analysis.queue';
 
 /**
  * Uploads are refused above this before anything is stored. Generous: a minute of
@@ -31,6 +44,13 @@ export class VideoAnalysisService {
     private readonly prisma: PrismaService,
     private readonly cvService: CvServiceClient,
     @Inject(VIDEO_STORAGE) private readonly storage: VideoStorage,
+    private readonly push: PushService,
+    // Optional so the API still boots, and still prechecks, on a deployment with no
+    // Redis. Upload and refusal are the parts that work today; losing them because
+    // the queue is absent would be the wrong trade.
+    @Optional()
+    @InjectQueue(VIDEO_ANALYSIS_QUEUE)
+    private readonly analysisQueue?: Queue,
   ) {}
 
   /**
@@ -159,6 +179,147 @@ export class VideoAnalysisService {
         completedAt: rejected ? new Date() : null,
       },
     });
+  }
+
+  /**
+   * Queue an accepted clip for analysis.
+   *
+   * Only ACCEPTED jobs are eligible: a REJECTED one has had its video deleted and
+   * nothing to analyse, and anything else is either already queued or already done.
+   */
+  async requestAnalysis(userId: string, jobId: string) {
+    const job = await this.findForUser(userId, jobId);
+
+    if (job.status !== VideoAnalysisStatus.ACCEPTED) {
+      throw new BadRequestException(
+        job.status === VideoAnalysisStatus.REJECTED
+          ? 'This clip failed its checks, so there is nothing to analyse.'
+          : `This clip is already ${job.status.toLowerCase()}.`,
+      );
+    }
+    if (!this.analysisQueue) {
+      throw new ServiceUnavailableException(
+        'Analysis is not available on this deployment.',
+      );
+    }
+
+    await this.analysisQueue.add(
+      'analyze',
+      { jobId: job.id },
+      // Keyed by the job id so a double tap enqueues once. BullMQ treats a repeated
+      // job id as already present rather than as new work.
+      { ...ANALYSIS_JOB_OPTIONS, jobId: job.id },
+    );
+
+    return this.prisma.videoAnalysisJob.update({
+      where: { id: job.id },
+      data: { status: VideoAnalysisStatus.ANALYZING },
+    });
+  }
+
+  /**
+   * Run the analysis for a queued job. Called by the worker.
+   *
+   * Throwing means "retry me"; returning means done. The one case that must not throw
+   * on its way past is a genuine analysis failure on the last attempt, which has to
+   * land as FAILED rather than being retried into silence.
+   */
+  async runAnalysis(jobId: string, options: { isFinalAttempt: boolean }) {
+    const job = await this.prisma.videoAnalysisJob.findUnique({
+      where: { id: jobId },
+    });
+    if (!job) throw new NotFoundException('Video analysis job not found.');
+    if (!job.storageKey) {
+      // Nothing to analyse and nothing a retry would change.
+      await this.markFailed(jobId, 'The video is no longer available.');
+      return;
+    }
+
+    const localPath = this.storage.localPath(job.storageKey);
+    if (!localPath) {
+      throw new Error(
+        'The CV service currently needs a local file, and this storage driver has none.',
+      );
+    }
+
+    try {
+      const result = await this.cvService.analyze(localPath);
+
+      const updated = await this.prisma.videoAnalysisJob.update({
+        where: { id: jobId },
+        data: {
+          status: VideoAnalysisStatus.COMPLETED,
+          analysisResult: result.summary as unknown as object,
+          cvServiceVersion: result.pipeline_version,
+          completedAt: new Date(),
+        },
+      });
+
+      // From the row we already read, not from the update's return: the owner is not
+      // something the write decides, and reading it back couples this to whatever
+      // that update happens to select.
+      await this.notifyCompleted(job.userId, jobId, result.summary);
+      return updated;
+    } catch (error) {
+      if (error instanceof CvServiceBusyError) {
+        // One GPU, and it is in use. Rethrowing puts this back on the queue with
+        // backoff, which is where waiting work belongs.
+        throw error;
+      }
+      if (!options.isFinalAttempt) throw error;
+
+      // Out of attempts: record the failure rather than let a retry loop end in
+      // silence, leaving the job ANALYZING forever with nobody told.
+      this.logger.error(`Analysis of ${jobId} failed for good: ${String(error)}`);
+      await this.markFailed(
+        jobId,
+        'The analysis could not be completed. Please try again later.',
+      );
+      return;
+    }
+  }
+
+  private async markFailed(jobId: string, reason: string) {
+    return this.prisma.videoAnalysisJob.update({
+      where: { id: jobId },
+      data: {
+        status: VideoAnalysisStatus.FAILED,
+        failureReason: reason,
+        completedAt: new Date(),
+      },
+    });
+  }
+
+  private async notifyCompleted(
+    userId: string,
+    jobId: string,
+    summary: Record<string, unknown>,
+  ) {
+    // A push that overstates the result is worse than none. The pipeline says outright
+    // when the court fit failed, and in that case its numbers are not measurements —
+    // so the notification says the clip is ready to look at, not what it found.
+    const calibrated = summary['court_calibrated'] !== false;
+    try {
+      await this.push.sendToUser(
+        userId,
+        'Your clip has been analysed',
+        calibrated
+          ? 'Tap to see what we found.'
+          : "Tap to see the results — the court wasn't clear enough to measure "
+            + 'distances, so some numbers are missing.',
+        {
+          category: 'video_analysis',
+          relatedEntityType: 'videoAnalysisJob',
+          relatedEntityId: jobId,
+        },
+      );
+    } catch (error) {
+      // The analysis succeeded; failing the job because a notification did not send
+      // would throw away real work.
+      this.logger.warn(
+        `Analysis of ${jobId} completed but the push failed: ${String(error)}`,
+      );
+    }
   }
 
   async findForUser(userId: string, jobId: string) {

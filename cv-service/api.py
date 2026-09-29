@@ -31,14 +31,18 @@ metrics. This is an internal service that must not be exposed publicly as it sta
 """
 from __future__ import annotations
 
+import asyncio
+import json
 import logging
 import os
 import shutil
+import subprocess
+import sys
 import tempfile
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 
 logger = logging.getLogger("cv-service.api")
@@ -51,6 +55,15 @@ MAX_UPLOAD_BYTES = 1024 * 1024 * 1024  # 1 GiB
 # Read once at import so a misconfigured deployment fails at startup rather than on the
 # first request. Overridable so a container can point at a mounted weights volume.
 CONFIG_PATH = os.environ.get("TENNIS_VISION_CONFIG", "configs/config.yaml")
+
+# Ceiling on one analysis. Generous rather than tuned: a 30 s clip is roughly half a
+# minute of work on an RTX 4060, and a three-minute one is several. The point is to
+# bound a hung run, not to predict a healthy one.
+ANALYSIS_TIMEOUT_S = int(os.environ.get("TENNIS_VISION_ANALYSIS_TIMEOUT_S", 1800))
+
+# One GPU, one analysis. Held for the whole run so a second caller is refused rather
+# than admitted into a queue this process would then have to manage.
+_analysis_slot = asyncio.Semaphore(1)
 
 _state: dict = {"detector": None, "court_model_path": None}
 
@@ -167,23 +180,148 @@ async def precheck_endpoint(file: UploadFile = File(...)) -> JSONResponse:
 
 
 @app.post("/analyze")
-async def analyze_endpoint(file: UploadFile = File(...)) -> JSONResponse:
+async def analyze_endpoint(
+    file: UploadFile = File(...),
+    max_frames: int = Form(0),
+    fast: bool = Form(False),
+) -> JSONResponse:
     """
-    Not implemented, on purpose.
+    Run the full pipeline on a clip and return its summary.
 
-    A full analysis is minutes of GPU work. Doing it inside a request would tie up a
-    worker, time out at every proxy in between, and give the caller nowhere to look when
-    it failed. It belongs on a queue with a job id and a callback, and that plumbing is
-    the next piece of work rather than a thing to fake here.
+    Long and synchronous, which is a deliberate choice about where durability lives.
+    The caller is the backend's queue worker, not a person: it already has retries,
+    backoff and persistence, and duplicating those here — a job table, a callback,
+    and credentials in the reverse direction — would put the same concerns in two
+    places to save a held-open connection on an internal network that nothing is
+    waiting on.
 
-    Declared so the backend can build against the real path and receive an honest 501
-    instead of a 404 that could equally mean the service is misdeployed.
+    The pipeline runs as a SUBPROCESS rather than in-process. `main.main()` reads
+    `sys.argv`, so calling it from a request handler would mean mutating process-global
+    state under concurrency; and a CUDA fault in a subprocess kills the subprocess
+    rather than the service. The ~8 s of interpreter startup is nothing against an
+    analysis measured in minutes.
+
+    One GPU means one analysis. A second concurrent request is refused with 503 and
+    Retry-After rather than queued, so work piles up in the caller's queue where it can
+    be seen, instead of in this process where it cannot.
     """
-    raise HTTPException(
-        status_code=501,
-        detail=(
-            "Analysis is not available over HTTP yet. A full run takes minutes and will "
-            "be dispatched as a queued job with a callback; use the `tennis-vision "
-            "analyze` CLI meanwhile."
-        ),
+    if _analysis_slot.locked():
+        raise HTTPException(
+            status_code=503,
+            headers={"Retry-After": "60"},
+            detail=(
+                "Another analysis is already running. This service handles one at a "
+                "time because it has one GPU."
+            ),
+        )
+
+    async with _analysis_slot:
+        suffix = Path(file.filename or "upload.mp4").suffix or ".mp4"
+        workdir = Path(tempfile.mkdtemp(prefix="analyze-"))
+        clip = workdir / f"input{suffix}"
+
+        try:
+            written = 0
+            with clip.open("wb") as handle:
+                while chunk := await file.read(1024 * 1024):
+                    written += len(chunk)
+                    if written > MAX_UPLOAD_BYTES:
+                        raise HTTPException(
+                            status_code=413,
+                            detail=(
+                                f"Video is larger than the "
+                                f"{MAX_UPLOAD_BYTES // (1024 * 1024)} MB limit."
+                            ),
+                        )
+                    handle.write(chunk)
+
+            if written == 0:
+                raise HTTPException(status_code=400, detail="Uploaded file is empty.")
+
+            summary = await asyncio.to_thread(
+                _run_pipeline, clip, workdir, max_frames, fast
+            )
+            return JSONResponse(
+                {
+                    "video": file.filename,
+                    "summary": summary,
+                    "pipeline_version": _pipeline_version(),
+                }
+            )
+        finally:
+            shutil.rmtree(workdir, ignore_errors=True)
+
+
+def _run_pipeline(clip: Path, workdir: Path, max_frames: int, fast: bool) -> dict:
+    """
+    Run the CLI against `clip` and return the summary it wrote.
+
+    Blocking: called in a worker thread. Reads the summary from disk rather than
+    parsing stdout, because the JSON on disk is the pipeline's actual output contract
+    and log formats are not.
+    """
+    output_dir = workdir / "output"
+
+    # Every output path is redirected into this request's own directory via a config
+    # overlay. `load_config` layers built-in defaults, then configs/config.yaml, then
+    # this file, so the model paths from the base config survive and only the io block
+    # moves. Without it the pipeline writes into the repo's own output/, where
+    # concurrent requests would read each other's summaries and nothing would ever be
+    # cleaned up.
+    overlay = workdir / "config.yaml"
+    overlay.write_text(
+        "io:\n"
+        f"  output_video: {(output_dir / 'videos' / 'analysis.avi').as_posix()}\n"
+        f"  output_frames_dir: {(output_dir / 'frames').as_posix()}\n"
+        f"  output_stats_dir: {(output_dir / 'stats').as_posix()}\n"
+        f"  log_dir: {(workdir / 'logs').as_posix()}\n",
+        encoding="utf-8",
     )
+
+    command = [
+        sys.executable, "-m", "cli", "analyze", str(clip),
+        "--config", str(overlay),
+    ]
+    if max_frames:
+        command += ["--max-frames", str(max_frames)]
+    if fast:
+        command.append("--fast")
+
+    result = subprocess.run(
+        command,
+        # Run from the package root: `-m cli` and the base config's relative model
+        # paths both resolve from there.
+        cwd=Path(__file__).resolve().parent,
+        capture_output=True,
+        text=True,
+        timeout=ANALYSIS_TIMEOUT_S,
+    )
+
+    summaries = sorted((output_dir / "stats").glob("summary_*.json"))
+    if not summaries:
+        # No summary means the run did not reach the end. The pipeline's own stderr is
+        # the only useful thing to say, trimmed: it is an internal caller reading this.
+        tail = (result.stderr or result.stdout or "").strip().splitlines()[-15:]
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error": "The analysis did not produce a summary.",
+                "exit_code": result.returncode,
+                "log_tail": tail,
+            },
+        )
+
+    return json.loads(summaries[-1].read_text(encoding="utf-8"))
+
+
+def _pipeline_version() -> str:
+    """
+    Which pipeline produced a result.
+
+    Stored by the caller against the job. Without it, a result from before a model or
+    threshold change is indistinguishable from one after, and a table of them quietly
+    becomes a mix of incomparable things.
+    """
+    import cli
+
+    return cli.__version__

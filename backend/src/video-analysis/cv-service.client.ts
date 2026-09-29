@@ -37,6 +37,26 @@ export interface CvServiceHealth {
   court_model_path: string | null;
 }
 
+export interface AnalysisResult {
+  video: string;
+  /**
+   * The pipeline's own summary, passed through untouched.
+   *
+   * Not reshaped into columns here. It carries `court_calibrated` and a `warning`
+   * when the court fit failed, which is the difference between a measurement and a
+   * plausible-looking number, and flattening it is how that distinction gets lost.
+   */
+  summary: Record<string, unknown>;
+  pipeline_version: string;
+}
+
+/** cv-service is busy with another analysis; the caller should retry later. */
+export class CvServiceBusyError extends Error {
+  constructor(readonly retryAfterSeconds: number) {
+    super('The analysis service is busy.');
+  }
+}
+
 /**
  * Talks to cv-service (see cv-service/api.py).
  *
@@ -51,6 +71,7 @@ export class CvServiceClient {
   private readonly logger = new Logger(CvServiceClient.name);
   private readonly baseUrl: string;
   private readonly timeoutMs: number;
+  private readonly analysisTimeoutMs: number;
 
   constructor(private readonly config: ConfigService) {
     this.baseUrl = (
@@ -61,6 +82,13 @@ export class CvServiceClient {
     // the model costs several seconds, rather than against the check itself.
     this.timeoutMs = Number(
       this.config.get<string>('CV_SERVICE_TIMEOUT_MS') ?? 60_000,
+    );
+    // A full analysis is minutes. Measured on an RTX 4060, a 60-frame run took 38s
+    // end to end over HTTP; a three-minute clip is far longer. This bounds a hung
+    // run rather than predicting a healthy one, and cv-service applies its own
+    // ceiling independently.
+    this.analysisTimeoutMs = Number(
+      this.config.get<string>('CV_SERVICE_ANALYSIS_TIMEOUT_MS') ?? 30 * 60_000,
     );
   }
 
@@ -120,6 +148,55 @@ export class CvServiceClient {
     return (await response.json()) as PrecheckResult;
   }
 
+  /**
+   * Run the full pipeline on a clip. Minutes, not seconds.
+   *
+   * Called only from the queue worker. The long timeout is the point: cv-service does
+   * the work inside the request because the queue already owns retries and
+   * persistence, and duplicating those at the other end would put the same concerns
+   * in two places.
+   *
+   * A 503 means it is busy with another clip — one GPU, one analysis — and is
+   * distinguished from a failure so the caller can requeue rather than mark the job
+   * failed.
+   */
+  async analyze(
+    filePath: string,
+    options: { maxFrames?: number; fast?: boolean } = {},
+  ): Promise<AnalysisResult> {
+    const form = new FormData();
+    form.append('file', await this.toBlob(filePath), basename(filePath));
+    if (options.maxFrames) form.append('max_frames', String(options.maxFrames));
+    if (options.fast) form.append('fast', 'true');
+
+    let response: Response;
+    try {
+      response = await this.fetchWithTimeout(
+        `${this.baseUrl}/analyze`,
+        { method: 'POST', body: form },
+        this.analysisTimeoutMs,
+      );
+    } catch (error) {
+      this.logger.error(`CV service analyze failed: ${String(error)}`);
+      throw new ServiceUnavailableException('The analysis service is unreachable.');
+    }
+
+    if (response.status === 503) {
+      const retryAfter = Number(response.headers.get('retry-after') ?? 60);
+      throw new CvServiceBusyError(Number.isFinite(retryAfter) ? retryAfter : 60);
+    }
+
+    if (!response.ok) {
+      const body = await response.text().catch(() => '');
+      this.logger.error(
+        `CV service analyze returned ${response.status}: ${body.slice(0, 1000)}`,
+      );
+      throw new Error(`The analysis failed (${response.status}).`);
+    }
+
+    return (await response.json()) as AnalysisResult;
+  }
+
   private async toBlob(filePath: string): Promise<Blob> {
     const { openAsBlob } = await import('node:fs');
     if (typeof openAsBlob === 'function') {
@@ -137,9 +214,10 @@ export class CvServiceClient {
   private async fetchWithTimeout(
     url: string,
     init: RequestInit,
+    timeoutMs = this.timeoutMs,
   ): Promise<Response> {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
       return await fetch(url, { ...init, signal: controller.signal });
     } finally {
