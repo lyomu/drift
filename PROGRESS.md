@@ -119,6 +119,83 @@ The APK needs the backend (`npm run start:dev`) reachable at the baked-in addres
 - Multi-club switcher + fine-grained role scopes (COACH/CONTENT_MANAGER/COMPETITION_MANAGER/READ_ONLY still functionally identical to no elevated access)
 - Coach scheduling & lesson management (coach directory exists; scheduling/lessons need their own phase)
 
+## Coach Web Dashboard (2026-09-30, in progress)
+
+Coaches can now apply for a public listing themselves. Until this, the only way
+a `CoachProfile` could exist was a club owner creating one by account email
+(`coaches.service.ts` `createForClub`), so a coach with no club had no route in
+at all. Plan: `docs/WEB_COACH_AND_CLUB_PORTAL_PLAN.md`.
+
+**Two decisions taken against that plan, both deliberate:**
+
+1. **One origin, not two.** The doc's "coach web portal origin" line is dropped;
+   the coach workspace lives inside Club Admin at `admin.driftsports.app`,
+   forked by role after login. A coach and club staff are both ordinary Drift
+   accounts on the same JWT and the same API, so a second origin would have
+   duplicated the deploy, the CI stages and the `components/ui` copy without
+   moving any trust boundary. (Platform Admin stays separate — it genuinely has
+   its own identity model.) The doc's own acceptance criteria already said
+   "club staff and coaches use the same login entry point".
+2. **Review gates visibility.** `GET /coaches` previously returned every profile
+   regardless of `verificationStatus`, so the doc's "an unapproved coach is not
+   returned by public coach search" was simply false. It now requires
+   `VERIFIED`, which only `CoachApplicationsService.review` can set.
+
+**Backend (complete):**
+
+- `CoachApplication` (one per user, reused across resubmissions) and
+  append-only `CoachApplicationEvent`; migration
+  `20260930120000_coach_applications`.
+- Coach routes: `GET/PATCH /coach-applications/me`, `POST
+  /coach-applications/me/submit`, plus `GET/PATCH /coaches/me` and `GET
+  /coaches/me/clubs` for an approved coach's live listing.
+- Review queue: `GET /platform-admin/coach-applications[/:id]` and `POST
+  /platform-admin/coach-applications/:id/decision`, behind `USERS_MANAGE`.
+- `GET /auth/me/contexts` returns club memberships + coach context together —
+  the single call the web shell reads to decide which workspace to open. It is
+  navigation data only; nothing authorizes off it.
+
+**Two traps this had to clear, both of which would have failed silently:**
+
+- **The backfill.** Every profile created the old way sits at the `UNVERIFIED`
+  default. Tightening the search filter without the migration's backfill would
+  have dropped every existing coach out of mobile Discover on deploy, so the
+  migration approves them in place and records a synthetic event saying why.
+- **The onboarding gate.** `GET /coaches` also requires `onboardingStep =
+  COMPLETE`. A coach who signs up on the web never walks player onboarding, so
+  an approved coach would still have been invisible. Approval now marks the
+  account `COMPLETE` and creates the empty `TennisProfile`, the same treatment
+  `ClubOnboardingService.complete` gives club owners.
+
+**Club Admin (complete):** `WorkspaceProvider` owns the single
+`/auth/me/contexts` call and `ClubProvider` now derives the club view from it,
+so the ~30 existing dashboard pages calling `useClub()` were not touched. The
+fork itself is three lines in `(dashboard)/layout.tsx`: an account with no club
+membership goes to `/coach` if it has a coach context, `/request-club`
+otherwise. The coach workspace is a sibling route group `(coach)` — overview,
+application, public profile, clubs — with its own sidebar and header. The header
+is not `SiteHeader`: that one links to /settings, /team, /audit and
+/notifications, all club routes a coach cannot open. `CoachForm` gained a
+`mode: "club" | "self"` prop rather than being forked, the only structural
+difference being the Drift-account field, which is meaningless when a coach is
+describing themselves. `/coach-signup` is self-service on the existing
+`/auth/signup` + `/auth/verify` routes — clubs deliberately have no such path,
+but nobody vouches for a coach before they apply, and review is what gates
+visibility.
+
+**Platform Admin (complete):** review queue at `/users/coach-applications` —
+filter by state, expand for the full submission plus the append-only decision
+history, then approve / reject / request changes. A non-approval requires a
+reason, client and server, because the coach reads it verbatim and "rejected,
+no reason given" is not actionable.
+
+**Mobile:** no change needed. The coach list, profile, filters and Discover
+entry already exist and read `GET /coaches`.
+
+**Not yet run:** nothing here has been built, migrated, linted or tested. That
+pass is still outstanding and should cover, at minimum, the backfill against a
+database that already holds `UNVERIFIED` coach profiles.
+
 ## Open Dependencies
 
 - ~~**Sharp Sans Display font license**~~ — **struck 2026-09-03: no longer a dependency.** The redesign dropped the typeface entirely, so there is nothing to purchase and no placeholder to replace. What actually ships is **Outfit** for display and **DMSans** for body — both SIL OFL, both bundled as static cuts in `mobile/pubspec.yaml` and set in `drift_typography.dart`. Space Grotesk is gone too. *Note:* `foundation/05-design-system.md` still specifies Sharp Sans Display throughout and is now the only place this claim survives; it describes the pre-redesign design system, not the build.

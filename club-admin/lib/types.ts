@@ -389,3 +389,54 @@ export type BillingCheckout = {
 export type ChangeSubscriptionResult = ClubBilling & {
   checkout?: BillingCheckout;
 };
+
+// ---------------------------------------------------------------- workspaces
+//
+// Club staff and coaches share one login on this origin. `WorkspaceContexts`
+// is what the shell reads to decide which workspace to open -- navigation
+// only, never an authorization source.
+
+export type CoachApplicationStatus =
+  | "DRAFT"
+  | "PENDING_REVIEW"
+  | "CHANGES_REQUESTED"
+  | "APPROVED"
+  | "REJECTED";
+
+/** Present once an account has opened the coach form even once. */
+export type CoachContext = {
+  applicationId: string | null;
+  applicationStatus: CoachApplicationStatus | null;
+  submittedAt: string | null;
+  coachProfileId: string | null;
+  verificationStatus: VerificationStatus | null;
+};
+
+export type WorkspaceContexts = {
+  clubMemberships: Membership[];
+  coach: CoachContext | null;
+};
+
+export type CoachPublicContact = {
+  email: string | null;
+  phone: string | null;
+  bookingUrl: string | null;
+};
+
+export type CoachApplication = {
+  id: string;
+  status: CoachApplicationStatus;
+  bio: string | null;
+  qualifications: string[];
+  yearsExperience: number | null;
+  specialisations: string[];
+  levels: CoachLevel[];
+  availabilityNote: string | null;
+  publicContact: CoachPublicContact;
+  submittedAt: string | null;
+  reviewedAt: string | null;
+  /** The reviewer's note, shown verbatim so the coach knows what to fix. */
+  decisionReason: string | null;
+  createdAt: string;
+  updatedAt: string;
+};

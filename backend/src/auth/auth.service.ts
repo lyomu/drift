@@ -11,6 +11,7 @@ import * as bcrypt from 'bcrypt';
 import {
   AccountStatus,
   AuthProvider,
+  ClubMembershipStatus,
   Prisma,
   OnboardingStep,
   VerificationChannel,
@@ -499,6 +500,55 @@ export class AuthService {
    * devices — the closest this phase gets to "log out other sessions"
    * without a session-tracking table (deferred, see PROGRESS.md).
    */
+  /**
+   * What workspaces this account can open on the admin web origin. Club staff
+   * and coaches share one login, so the client needs a single answer to
+   * "where do I send this person" -- and this is that answer.
+   *
+   * It is navigation data only. Every route still enforces its own
+   * authorization server-side: holding a coach context here grants nothing,
+   * it only decides which menu renders.
+   */
+  async workspaceContexts(userId: string) {
+    const [memberships, application, profile] = await Promise.all([
+      this.prisma.clubMembership.findMany({
+        where: { userId, status: ClubMembershipStatus.ACTIVE },
+        include: { club: { select: { name: true, setupCompletedAt: true } } },
+        orderBy: { createdAt: 'asc' },
+      }),
+      this.prisma.coachApplication.findUnique({
+        where: { userId },
+        select: { id: true, status: true, submittedAt: true },
+      }),
+      this.prisma.coachProfile.findUnique({
+        where: { userId },
+        select: { id: true, verificationStatus: true },
+      }),
+    ]);
+
+    return {
+      clubMemberships: memberships.map((row) => ({
+        clubId: row.clubId,
+        clubName: row.club.name,
+        role: row.role,
+        setupComplete: row.club.setupCompletedAt != null,
+      })),
+      // Null only for an account that has never opened the coach form. Once
+      // they have, the coach workspace stays reachable whatever the verdict,
+      // so a rejected coach can still read why and resubmit.
+      coach:
+        application || profile
+          ? {
+              applicationId: application?.id ?? null,
+              applicationStatus: application?.status ?? null,
+              submittedAt: application?.submittedAt ?? null,
+              coachProfileId: profile?.id ?? null,
+              verificationStatus: profile?.verificationStatus ?? null,
+            }
+          : null,
+    };
+  }
+
   async changePassword(userId: string, dto: ChangePasswordDto) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (

@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Patch,
@@ -129,6 +130,18 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   oauthLink(@Body() dto: OAuthLinkDto) {
     return this.authService.oauthLink(dto);
+  }
+
+  /**
+   * Drives the role fork on the admin web origin: club staff and coaches sign
+   * in through the same form, and the client reads this to decide which
+   * workspace to open. Navigation only -- never an authorization source.
+   */
+  @Get('me/contexts')
+  @UseGuards(JwtAuthGuard)
+  contexts(@Req() req: Request) {
+    const userId = (req.user as { userId: string }).userId;
+    return this.authService.workspaceContexts(userId);
   }
 
   @Patch('change-password')

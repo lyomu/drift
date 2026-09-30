@@ -1,16 +1,17 @@
 "use client";
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
-import { useRouter } from "next/navigation";
-import { api, ApiError, hasToken, setToken } from "./api-client";
+import { createContext, useContext, useMemo } from "react";
+import { useWorkspace } from "./workspace-context";
 import type { ClubRole, Membership } from "./types";
 
+/**
+ * The club half of the workspace context. This used to own the fetch itself;
+ * since coaches and club staff share one login, `WorkspaceProvider` now makes
+ * the single `/auth/me/contexts` call and this derives the club view from it.
+ *
+ * The shape is unchanged on purpose — every existing dashboard page calls
+ * `useClub()` and none of them needed to know about the coach workspace.
+ */
 type ClubContextValue = {
   loading: boolean;
   authed: boolean;
@@ -27,66 +28,25 @@ type ClubContextValue = {
 const ClubContext = createContext<ClubContextValue | null>(null);
 
 export function ClubProvider({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [authed, setAuthed] = useState(false);
-  const [memberships, setMemberships] = useState<Membership[]>([]);
+  const { loading, authed, memberships, refresh, logout } = useWorkspace();
 
-  const refresh = useCallback(async () => {
-    if (!hasToken()) {
-      setAuthed(false);
-      setMemberships([]);
-      setLoading(false);
-      return;
-    }
-    setAuthed(true);
-    try {
-      const res = await api.get<{ memberships: Membership[] }>(
-        "/clubs/me/memberships",
-      );
-      setMemberships(res.memberships);
-    } catch (err) {
-      setMemberships([]);
-      // An expired session and "this account genuinely has no clubs" used to
-      // look identical here, so a logged-out user got a broken-looking empty
-      // dashboard instead of the login screen. The client clears the token on
-      // a 401, so all that's left is to reflect that in the auth state.
-      if (err instanceof ApiError && err.status === 401) setAuthed(false);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    refresh();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const logout = useCallback(() => {
-    setToken(null);
-    setAuthed(false);
-    setMemberships([]);
-    router.push("/login");
-  }, [router]);
-
-  const primary = memberships[0] ?? null;
+  const value = useMemo<ClubContextValue>(() => {
+    const primary = memberships[0] ?? null;
+    return {
+      loading,
+      authed,
+      clubId: primary?.clubId ?? null,
+      clubName: primary?.clubName ?? null,
+      role: primary?.role ?? null,
+      setupComplete: primary?.setupComplete ?? true,
+      memberships,
+      refresh,
+      logout,
+    };
+  }, [loading, authed, memberships, refresh, logout]);
 
   return (
-    <ClubContext.Provider
-      value={{
-        loading,
-        authed,
-        clubId: primary?.clubId ?? null,
-        clubName: primary?.clubName ?? null,
-        role: primary?.role ?? null,
-        setupComplete: primary?.setupComplete ?? true,
-        memberships,
-        refresh,
-        logout,
-      }}
-    >
-      {children}
-    </ClubContext.Provider>
+    <ClubContext.Provider value={value}>{children}</ClubContext.Provider>
   );
 }
 

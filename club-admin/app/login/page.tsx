@@ -7,11 +7,11 @@ import { useRouter } from "next/navigation";
 import { MaterialIcon } from "@/components/dashboard-design";
 import { Button, ErrorBanner, Input, PasswordField } from "@/components/ui";
 import { api, ApiError, setToken } from "@/lib/api-client";
-import { useClub } from "@/lib/club-context";
+import { useWorkspace } from "@/lib/workspace-context";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { refresh } = useClub();
+  const { refresh } = useWorkspace();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -82,10 +82,10 @@ export default function LoginPage() {
         <div className="w-full max-w-[400px] rounded-[24px] bg-white px-8 py-9 shadow-[0_28px_64px_rgba(17,24,39,0.14)]">
           <div className="text-center">
             <h1 className="font-display text-[26px] font-extrabold leading-tight text-[#111827]">
-              Club Admin Login
+              Drift Admin Login
             </h1>
-            <p className="mx-auto mt-2.5 max-w-[280px] text-[14px] leading-6 text-[#6B7280]">
-              Enter your details to get signed in to your club dashboard
+            <p className="mx-auto mt-2.5 max-w-[300px] text-[14px] leading-6 text-[#6B7280]">
+              One sign-in for club administrators and coaches
             </p>
           </div>
 
@@ -136,12 +136,20 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <p className="mt-6 text-center text-[13px] text-[#6B7280]">
-            New to Drift?{" "}
-            <Link href="/request-club" className="font-extrabold text-[#111827] hover:underline">
-              Register a club
-            </Link>
-          </p>
+          <div className="mt-6 flex flex-col gap-1.5 text-center text-[13px] text-[#6B7280]">
+            <p>
+              New to Drift?{" "}
+              <Link href="/request-club" className="font-extrabold text-[#111827] hover:underline">
+                Register a club
+              </Link>
+            </p>
+            <p>
+              Coaching independently?{" "}
+              <Link href="/coach-signup" className="font-extrabold text-[#111827] hover:underline">
+                Apply as a coach
+              </Link>
+            </p>
+          </div>
         </div>
       </section>
 

@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useClub } from "@/lib/club-context";
+import { useWorkspace } from "@/lib/workspace-context";
 import { hasToken } from "@/lib/api-client";
 import { Sidebar } from "@/components/Sidebar";
 import { MobileNav } from "@/components/MobileNav";
@@ -15,6 +16,7 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const { loading, clubId, clubName, role, setupComplete } = useClub();
+  const { coach } = useWorkspace();
 
   useEffect(() => {
     if (!hasToken()) {
@@ -23,11 +25,14 @@ export default function DashboardLayout({
     }
     if (loading) return;
     if (!clubId) {
-      router.replace("/request-club");
+      // The role fork. Club staff and coaches share this origin and this
+      // login, so "/" is whichever workspace the account actually holds --
+      // and only an account with neither is asked to register a club.
+      router.replace(coach ? "/coach" : "/request-club");
     } else if (!setupComplete) {
       router.replace("/setup");
     }
-  }, [loading, clubId, setupComplete, router]);
+  }, [loading, clubId, coach, setupComplete, router]);
 
   if (!hasToken() || loading || !clubId || !setupComplete) {
     return (
