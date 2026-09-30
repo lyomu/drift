@@ -119,6 +119,22 @@ export class ErasureService {
         specialisations: [],
       },
     });
+    // The draft behind that profile carries the same personal fields, plus
+    // whatever was in flight at review time. The review trail itself
+    // (status, reviewer, decisionReason, timestamps) is left alone --
+    // that is a record of platform staff's own decision, not the user's data.
+    await tx.coachApplication.updateMany({
+      where: { userId },
+      data: {
+        bio: null,
+        publicEmail: null,
+        publicPhone: null,
+        availabilityNote: null,
+        bookingUrl: null,
+        qualifications: [],
+        specialisations: [],
+      },
+    });
     await tx.availabilitySlot.deleteMany({
       where: { tennisProfile: { is: { userId } } },
     });

@@ -25,6 +25,7 @@ const ERASED = new Set([
   'TennisProfile',
   'PadelProfile',
   'CoachProfile',
+  'CoachApplication',
   'VerificationCode',
   'RefreshToken',
   'SocialIdentity',
