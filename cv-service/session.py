@@ -65,6 +65,7 @@ from utils.rally_segmenter import (
     cut_span,
     segment_session,
 )
+from utils.match_structure import analyse_structure
 from utils.session_aggregate import (
     ANALYSED,
     FAILED,
@@ -298,6 +299,12 @@ def run_session(
 
         session = aggregate_session(records)
         session["segmentation"] = segmentation.as_dict()
+        # Match structure: points are the spans the pre-pass already found, games are inferred
+        # from the pauses between them. Computed from the segmentation rather than from the
+        # analysed subset, deliberately — a rally skipped for budget still happened, and a
+        # points count that shrank because the GPU ran out would be wrong about the tennis.
+        session["structure"] = analyse_structure(segmentation.spans,
+                                                 segmentation.duration_s)
         session["frame_budget"] = frame_budget
         session["frames_analysed"] = spent
         session["source_video"] = os.path.basename(video_path)

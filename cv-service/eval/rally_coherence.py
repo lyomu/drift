@@ -39,7 +39,7 @@ import utils.rally_decode as rally_decode
 from court_line_detector import CourtLineDetector
 from trackers import PlayerTracker, TrackNetBallTracker
 from utils import read_video, select_two_players, stub_path_for_video
-from utils.hit_bounce_classifier import derive_shot_frames, striking_side
+from utils.hit_bounce_classifier import derive_shot_frames, striking_player
 from utils.rally_audit import audit_rally
 
 DEFAULT_CLIPS = "datasets/eval_clips/*.mp4"
@@ -77,7 +77,7 @@ def analyse(path: str, priors: list[float | None]) -> dict:
             )
         hitters = {}
         for frame in contacts:
-            who = striking_side(frame, ball, players, SHOT_DISTANCE_PX)
+            who = striking_player(frame, ball, players, SHOT_DISTANCE_PX)
             if who is not None:
                 hitters[frame] = who
         results[prior] = audit_rally(contacts, bounces, hitter_by_frame=hitters)

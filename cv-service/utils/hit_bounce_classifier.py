@@ -41,6 +41,10 @@ import logging
 from pathlib import Path
 
 from .ball_state import CONTACT, BOUNCE
+# Imported as a module, not by name: court_sides imports `striking_player` from this file, so a
+# from-import here would be circular at load time. Module-level is enough because the call site
+# resolves the attribute at call time.
+from . import court_sides
 
 logger = logging.getLogger(__name__)
 
@@ -382,7 +386,7 @@ def classify_reversals_by_trajectory(
 PROXIMITY_RELIABILITY = 5.0 / 7.0
 
 
-def striking_side(
+def striking_player(
     frame: int,
     ball_detections: list[dict],
     player_detections: list[dict],
@@ -390,6 +394,13 @@ def striking_side(
 ) -> int | None:
     """
     Which player was nearest the ball at this frame, or None if it cannot be said.
+
+    Renamed from `striking_side`, which is what it was called while returning a player id.
+    That mismatch was a real bug: `rally_decode` consumes a "side" and enforces "a contact by
+    the side that last struck the ball means the ball never crossed the net". In singles one
+    player is one side so it worked; in doubles two partners share a side, and comparing player
+    ids accepts a partner-then-partner sequence the ball could not have made. Side now comes
+    from `utils/court_sides.striking_side`; this answers attribution only.
 
     Distance is measured to the player's box rather than to its centre, because a near
     player's box is tall: a ball at their feet is far from the box centre while being
@@ -447,6 +458,8 @@ def derive_shot_frames(
     player_detections: list[dict],
     shot_player_distance_px: int = 300,
     deletion_prior: float | None = None,
+    court_keypoints=None,
+    frame_height: int | None = None,
 ):
     """
     Turn ball detections into the pipeline's confirmed shot and bounce frames.
@@ -523,8 +536,17 @@ def derive_shot_frames(
             # at its measured reliability rather than as a certainty.
             p_contact = (PROXIMITY_RELIABILITY if proximity_labels[frame]
                          else 1.0 - PROXIMITY_RELIABILITY)
-        side = striking_side(frame, ball_detections, player_detections,
-                             shot_player_distance_px)
+        # A court SIDE, not a player id — see utils/court_sides.py for why that distinction
+        # is load-bearing and why this is a behaviour change on the singles path too.
+        # `court_keypoints`/`frame_height` are optional: without them this falls back to
+        # judging the striker against the other players in frame, which needs no calibration
+        # and is what keeps the grammar working on clips whose court fit failed.
+        side = court_sides.striking_side(
+            frame, ball_detections, player_detections,
+            court_keypoints=court_keypoints,
+            frame_height=frame_height,
+            max_distance_px=shot_player_distance_px,
+        )
         events.append((frame, p_contact, side))
 
     if deletion_prior is None:

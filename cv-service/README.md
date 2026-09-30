@@ -169,7 +169,7 @@ expose it publicly.
 
 ## Tests
 
-**556 unit and integration tests** (`pytest tests/`). Run them with:
+**616 unit and integration tests** (`pytest tests/`). Run them with:
 
 ```bash
 pytest tests/ -m "not slow"

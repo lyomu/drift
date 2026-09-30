@@ -156,8 +156,25 @@ def test_as_dict_is_json_serialisable_with_numpy_inputs():
 
     text = json.dumps(payload)
     assert json.loads(text)["players_on_opposite_sides"] is True
-    for key, value in payload.items():
-        assert type(value) in (str, int, float, bool), f"{key} is {type(value)}"
+
+    # Checked recursively rather than only at the top level. The payload gained a nested
+    # `players` list when selection became N-player for doubles, and this test's purpose is that
+    # no numpy type survives into summary.json - not that the payload is flat. A numpy scalar
+    # nested one level down truncates the file exactly the same way.
+    def assert_json_safe(value, path="payload"):
+        if isinstance(value, dict):
+            for k, v in value.items():
+                assert type(k) is str, f"{path} key {k!r} is {type(k)}"
+                assert_json_safe(v, f"{path}.{k}")
+        elif isinstance(value, list):
+            for i, v in enumerate(value):
+                assert_json_safe(v, f"{path}[{i}]")
+        else:
+            assert type(value) in (str, int, float, bool, type(None)), (
+                f"{path} is {type(value)}"
+            )
+
+    assert_json_safe(payload)
 
 
 def test_failed_and_degraded_payloads_carry_the_warning():

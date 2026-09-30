@@ -79,9 +79,15 @@ class PlayerTracker:
     # handful of frames should not.
     MIN_TRACK_PERSISTENCE = 0.15
 
-    def choose_and_filter_players(self, player_detections, court_keypoints):
+    def choose_and_filter_players(self, player_detections, court_keypoints, per_side=1):
         """
-        Choose the two players once for the whole clip, then keep only their tracks.
+        Choose the players once for the whole clip, then keep only their tracks.
+
+        `per_side` is 1 for singles and 2 for doubles. It is an explicit count rather than
+        something inferred from how many people the detector found, deliberately: on the
+        reference clip the detector finds 11-14 people, and the whole purpose of the scoring
+        below is that a count alone cannot tell four players from two players plus two ball
+        kids. Guessing it would put that judgement back where it was before this function.
 
         Evidence is aggregated over every frame rather than read off frame 0. A
         broadcast clip's first frame is arbitrary - it may open on a replay wipe or
@@ -90,7 +96,8 @@ class PlayerTracker:
         separates them: players are present for most of a rally, incidental people
         are not.
         """
-        chosen_player = self._choose_players_over_clip(player_detections, court_keypoints)
+        chosen_player = self._choose_players_over_clip(
+            player_detections, court_keypoints, per_side=per_side)
         filtered_player_detections = []
         for player_dict in player_detections:
             filtered_player_dict = {track_id: bbox for track_id, bbox in player_dict.items() if track_id in chosen_player}
@@ -98,7 +105,7 @@ class PlayerTracker:
 
         return filtered_player_detections
 
-    def _choose_players_over_clip(self, player_detections, court_keypoints):
+    def _choose_players_over_clip(self, player_detections, court_keypoints, per_side=1):
         """
         Rank every track seen anywhere in the clip and return the chosen track ids.
 
@@ -152,21 +159,29 @@ class PlayerTracker:
             print("  [PLAYER SELECTION V3] WARNING: no track met persistence bar, "
                   "falling back to longest-lived")
             longest = sorted(totals.items(), key=lambda kv: kv[1]['frames'], reverse=True)
-            return [track_id for track_id, _ in longest[:2]]
+            return [track_id for track_id, _ in longest[:per_side * 2]]
 
         bottom = sorted([c for c in candidates if c['is_bottom_half']],
                         key=lambda c: c['score'], reverse=True)
         top    = sorted([c for c in candidates if not c['is_bottom_half']],
                         key=lambda c: c['score'], reverse=True)
 
-        chosen = [group[0] for group in (bottom, top) if group]
-        for c, label in zip(chosen, ("BOTTOM" if bottom else "TOP", "TOP")):
-            print(f"  [PLAYER SELECTION V3] {label} half winner: ID {c['id']} "
-                  f"(mean score={c['score']:.1f}, seen {c['frames']} frames)")
+        # Top `per_side` from each half. Taking fewer than per_side from a half is correct
+        # rather than backfilled from the other half: a doubles clip where one player is
+        # never tracked should analyse three players and say so, not promote a fourth track
+        # that the scoring already ranked below them (in practice a line judge or ball kid).
+        chosen_groups = [group[:per_side] for group in (bottom, top)]
+        chosen = [c for group in chosen_groups for c in group]
+        for group, label in zip(chosen_groups, ("BOTTOM", "TOP")):
+            for c in group:
+                print(f"  [PLAYER SELECTION V3] {label} half winner: ID {c['id']} "
+                      f"(mean score={c['score']:.1f}, seen {c['frames']} frames)")
 
-        if len(chosen) < 2:
-            print("  [PLAYER SELECTION V3] WARNING: only one half has a qualifying "
-                  "player - analysing a single player rather than guessing a second")
+        expected = per_side * 2
+        if len(chosen) < expected:
+            print(f"  [PLAYER SELECTION V3] WARNING: found {len(chosen)} qualifying "
+                  f"player(s), expected {expected} - analysing what was found rather than "
+                  f"promoting a lower-ranked track")
 
         print(f"  [PLAYER SELECTION V3] Final chosen: {[c['id'] for c in chosen]}")
         return [c['id'] for c in chosen]

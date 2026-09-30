@@ -48,10 +48,10 @@ from utils import (
     peak_speed_kmh_near_frame,
     read_video,
     assess_selection,
-    select_two_players,
+    select_players,
     save_video,
     smooth_trajectories,
-    striking_side,
+    striking_player,
     stub_matches_frames,
     stub_path_for_video,
 )
@@ -143,6 +143,8 @@ _DEFAULTS: dict = {
         "use_pose_shots": True,
         # Off by default: the weights are optional, gated, and not redistributed here.
         "use_sam3d_pose": False,
+        # See configs/config.yaml. Explicit, not detected, and unvalidated.
+        "doubles": False,
     },
     "models": {
         "player": "yolov8x",
@@ -312,7 +314,9 @@ def save_stats(stats_df: pd.DataFrame, output_dir: str, logger: logging.Logger,
                rally_decoding: dict | None = None,
                shot_classification: dict | None = None,
                player_selection: dict | None = None,
-               ball: dict | None = None):
+               ball: dict | None = None,
+               shots_by_player: dict | None = None,
+               doubles: bool = False):
     """Write full stats CSV + match-summary JSON to output_dir."""
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -336,6 +340,28 @@ def save_stats(stats_df: pd.DataFrame, output_dir: str, logger: logging.Logger,
         "avg_player_speed_p1_kmh": _safe("player_1_average_player_speed"),
         "avg_player_speed_p2_kmh": _safe("player_2_average_player_speed"),
     }
+    # Per-player attribution, for any number of players. ADDITIVE: the p1/p2 keys above stay,
+    # because the mobile results screen and utils/session_aggregate.py both read them and both
+    # are already shipped. This block is what a doubles clip has that those keys cannot express.
+    #
+    # Counts come from shot attribution (which player was nearest the ball at each contact), so
+    # they exist for all four players. SPEEDS DO NOT: average shot and player speed are read from
+    # the stats DataFrame, whose columns are generated for players 1 and 2 only. Generalising
+    # that accumulation is the remaining piece of doubles support and is called out in
+    # DRIFT_CHANGES.md rather than quietly emitting nulls for players 3 and 4.
+    if doubles or shots_by_player:
+        players_block = []
+        for pid in sorted((shots_by_player or {}).keys()):
+            entry = {"player": int(pid), "shots": int(shots_by_player[pid])}
+            avg_shot = last.get(f"player_{pid}_average_shot_speed")
+            if avg_shot is not None:
+                entry["avg_shot_speed_kmh"] = round(float(avg_shot), 1)
+            players_block.append(entry)
+        if players_block:
+            summary["players"] = players_block
+        summary["doubles"] = bool(doubles)
+        summary["shots_attributed"] = int(sum((shots_by_player or {}).values()))
+
     if serve_speed_kmh > 0:
         # Named for what it is: average over the flight, not a radar-equivalent
         # contact speed. Consumers must not present it as the latter.
@@ -686,8 +712,12 @@ def main():
     # Shared with the evals (utils.player_selection) so they grade the same two players
     # the pipeline reports on, rather than every person YOLO found in the stands.
     people_detected = len({tid for frame in player_detections for tid in frame})
-    player_detections, player_id_map = select_two_players(
-        player_tracker, player_detections, court_keypoints
+    # Doubles is an explicit config choice, not inferred from how many people were detected:
+    # the reference clip has 11-14 people in frame and the selection scoring exists precisely
+    # because a head count cannot tell four players from two players plus two ball kids.
+    per_side = 2 if cfg.get("pipeline", {}).get("doubles", False) else 1
+    player_detections, player_id_map = select_players(
+        player_tracker, player_detections, court_keypoints, per_side=per_side
     )
     logger.info(f"  Player ID mapping: {player_id_map} "
                 f"(chosen from {people_detected} detected people)")
@@ -701,6 +731,7 @@ def main():
         player_detections,
         net_y=(court_keypoints[1] + court_keypoints[5]) / 2.0,
         people_detected=people_detected,
+        expected_per_side=per_side,
     )
     if selection.status == "failed":
         logger.warning(f"  {selection.reason}")
@@ -731,9 +762,16 @@ def main():
     # logic rather than a re-implementation of it. See that function for why three
     # generators are needed and what each one is blind to.
     shot_dist_px = cfg.get("detection", {}).get("shot_player_distance_px", 300)
+    # Court geometry is passed so the rally grammar gets a real court side rather than falling
+    # back to judging players against each other. The grammar's rule is "a contact by the side
+    # that last struck the ball means the ball never crossed the net", and it was previously fed
+    # a player id — correct in singles by coincidence, wrong in doubles, where two partners
+    # share a side. See utils/court_sides.py.
     (confirmed_shot_frames, bounce_frames,
      raw_reversal_frames, decode_notes) = derive_shot_frames(
-        ball_tracker, ball_detections, player_detections, shot_dist_px
+        ball_tracker, ball_detections, player_detections, shot_dist_px,
+        court_keypoints=court_keypoints,
+        frame_height=video_frames[0].shape[0] if video_frames else None,
     )
     if decode_notes:
         logger.info("  Rally grammar overruled the per-event classifier where its "
@@ -1296,7 +1334,7 @@ def main():
                 # it" can disagree, and the audit would then be checking a different
                 # answer from the one drawn. Unbounded here because a contact has to be
                 # placed somewhere, while the grammar prefers None over a wrong guess.
-                hitter = striking_side(frame, ball_detections, player_detections)
+                hitter = striking_player(frame, ball_detections, player_detections)
                 if hitter is None:
                     continue
                 px1, _, px2, py2 = players[hitter]
@@ -1493,7 +1531,15 @@ def main():
                    "serve_evidenced": len(serve_frames_found),
                    "physics_evidenced": physics_evidenced,
                    "physics_downgraded_to_groundstroke": physics_downgraded,
-               } if shot_classifications else None)
+               } if shot_classifications else None,
+               # Per-shot attribution, counted from the classifier's own player_id. This is the
+               # only per-player figure that exists for players 3 and 4, since the stats
+               # DataFrame is built for two.
+               shots_by_player=dict(Counter(
+                   v["player_id"] for v in shot_classifications.values()
+                   if v.get("player_id") is not None
+               )) if shot_classifications else None,
+               doubles=(per_side == 2))
 
     # ── 9. Render output video ─────────────────────────────────────
     logger.info("[9/9] Rendering output video...")

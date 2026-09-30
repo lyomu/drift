@@ -10,6 +10,18 @@ pipeline:
   use_homography: true         # Real perspective homography (vs. nearest-keypoint approx)
   use_tracknet: true          # true = TrackNet v2 ball detector; false = YOLO (set true after weights downloaded)
   use_pose_shots: true
+  # Doubles: four players, two per side. EXPLICIT rather than detected, because the detector
+  # finds 11-14 people on the reference clip and a head count cannot distinguish four players
+  # from two players plus two ball kids - that is what the selection scoring is for.
+  #
+  # Turning this on changes only WHO is tracked and how shots are attributed. The rally grammar
+  # is already correct for doubles: it constrains by court SIDE, so two partners hitting in
+  # succession is rejected (the ball never crossed the net) while either partner hitting is
+  # allowed. See utils/court_sides.py.
+  #
+  # UNVALIDATED: no doubles footage exists in this repo, so nothing here has been measured
+  # against a doubles clip. Phase 4's acceptance criterion needs a labelled doubles set.
+  doubles: false
   # Optional stronger pose backend for contact frames only. MediaPipe drops the occluded
   # arm on 44-58% of backhands, which is the arm that decides forehand vs backhand.
   # Weights are gated and under Meta's SAM License, so they are not shipped here:
