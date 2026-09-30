@@ -1,6 +1,9 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Readable } from 'node:stream';
-import { VideoAnalysisService } from './video-analysis.service';
+import {
+  SESSION_DURATION_S,
+  VideoAnalysisService,
+} from './video-analysis.service';
 import { CvServiceBusyError, type PrecheckResult } from './cv-service.client';
 
 type MockPrisma = {
@@ -80,6 +83,7 @@ function build(precheck: PrecheckResult = precheckResult()) {
   const cv = {
     precheck: jest.fn().mockResolvedValue(precheck),
     analyze: jest.fn(),
+    analyzeSession: jest.fn(),
     health: jest.fn(),
   };
   const push = { sendToUser: jest.fn().mockResolvedValue(undefined) };
@@ -426,6 +430,179 @@ describe('VideoAnalysisService — analysis', () => {
       expect(cv.analyze).not.toHaveBeenCalled();
       expect(prisma.videoAnalysisJob.update.mock.calls[0][0].data.status)
         .toBe('FAILED');
+    });
+  });
+});
+
+describe('VideoAnalysisService — sessions', () => {
+  /**
+   * A clip's duration decides which pipeline runs it, and the duration comes from the
+   * precheck verdict already stored on the row. No column, no second source of truth.
+   */
+  function jobWithDuration(durationS: number | undefined) {
+    return {
+      id: 'job-1',
+      userId: 'user-1',
+      storageKey: 'ab/ab-cd.mp4',
+      precheckResult:
+        durationS === undefined
+          ? { video: 'clip.mp4', verdict: 'pass' }
+          : { video: 'clip.mp4', verdict: 'pass', metadata: { duration_s: durationS } },
+    };
+  }
+
+  const SESSION_SUMMARY = {
+    mode: 'session',
+    segments_found: 20,
+    segments_analysed: 8,
+    court_calibrated: true,
+    totals: { total_shots: 96 },
+  };
+
+  describe('deciding which pipeline runs', () => {
+    it('sends a long clip to the session pipeline', async () => {
+      const { service, prisma, cv } = build();
+      prisma.videoAnalysisJob.findUnique.mockResolvedValue(
+        jobWithDuration(SESSION_DURATION_S + 60),
+      );
+      cv.analyzeSession.mockResolvedValue({
+        video: 'session.mp4',
+        summary: SESSION_SUMMARY,
+        pipeline_version: '2.1.1',
+      });
+
+      await service.runAnalysis('job-1', { isFinalAttempt: false });
+
+      expect(cv.analyzeSession).toHaveBeenCalled();
+      expect(cv.analyze).not.toHaveBeenCalled();
+    });
+
+    it('sends a short clip to the single-rally pipeline', async () => {
+      const { service, prisma, cv } = build();
+      prisma.videoAnalysisJob.findUnique.mockResolvedValue(jobWithDuration(19));
+      cv.analyze.mockResolvedValue({
+        video: 'clip.mp4',
+        summary: { total_shots_p1: 3, court_calibrated: true },
+        pipeline_version: '2.1.1',
+      });
+
+      await service.runAnalysis('job-1', { isFinalAttempt: false });
+
+      expect(cv.analyze).toHaveBeenCalled();
+      expect(cv.analyzeSession).not.toHaveBeenCalled();
+    });
+
+    it('treats an unknown duration as a single clip', async () => {
+      // An older row may predate the metadata block. The single-clip path is the honest
+      // default: running a 20-second rally as a session wastes a pre-pass, where running a
+      // 40-minute session as one rally produces a refusal or a meaningless number.
+      const { service, prisma, cv } = build();
+      prisma.videoAnalysisJob.findUnique.mockResolvedValue(jobWithDuration(undefined));
+      cv.analyze.mockResolvedValue({
+        video: 'clip.mp4',
+        summary: {},
+        pipeline_version: '2.1.1',
+      });
+
+      await service.runAnalysis('job-1', { isFinalAttempt: false });
+
+      expect(cv.analyze).toHaveBeenCalled();
+      expect(cv.analyzeSession).not.toHaveBeenCalled();
+    });
+
+    it('reads the threshold defensively, never throwing on odd stored JSON', () => {
+      // This JSON came out of Postgres and its shape is whatever cv-service wrote at the
+      // time. A throw here would fail the whole analysis over a malformed field.
+      expect(VideoAnalysisService.isSessionLength(null)).toBe(false);
+      expect(VideoAnalysisService.isSessionLength('nonsense')).toBe(false);
+      expect(VideoAnalysisService.isSessionLength({})).toBe(false);
+      expect(VideoAnalysisService.isSessionLength({ metadata: null })).toBe(false);
+      expect(
+        VideoAnalysisService.isSessionLength({ metadata: { duration_s: 'long' } }),
+      ).toBe(false);
+    });
+
+    it('puts the boundary exactly where cv-service warns the user about it', () => {
+      // precheck.py warns above LONG_DURATION_S that the clip will be handled as a session.
+      // If these disagreed, a user could be told one thing and given the other.
+      expect(VideoAnalysisService.isSessionLength({
+        metadata: { duration_s: SESSION_DURATION_S },
+      })).toBe(false);
+      expect(VideoAnalysisService.isSessionLength({
+        metadata: { duration_s: SESSION_DURATION_S + 0.1 },
+      })).toBe(true);
+    });
+  });
+
+  describe('storing and announcing a session', () => {
+    it('stores the session summary whole, as it does a single clip', async () => {
+      const { service, prisma, cv } = build();
+      prisma.videoAnalysisJob.findUnique.mockResolvedValue(
+        jobWithDuration(SESSION_DURATION_S + 60),
+      );
+      cv.analyzeSession.mockResolvedValue({
+        video: 'session.mp4',
+        summary: SESSION_SUMMARY,
+        pipeline_version: '2.1.1',
+      });
+
+      await service.runAnalysis('job-1', { isFinalAttempt: false });
+
+      const { data } = prisma.videoAnalysisJob.update.mock.calls[0][0];
+      expect(data.status).toBe('COMPLETED');
+      expect(data.analysisResult).toEqual(SESSION_SUMMARY);
+    });
+
+    it('tells the user how much of the session was measured, not that it is done', async () => {
+      // "Your session has been analysed" over 8 of 20 rallies reads as all of it.
+      const { service, prisma, cv, push } = build();
+      prisma.videoAnalysisJob.findUnique.mockResolvedValue(
+        jobWithDuration(SESSION_DURATION_S + 60),
+      );
+      cv.analyzeSession.mockResolvedValue({
+        video: 'session.mp4',
+        summary: SESSION_SUMMARY,
+        pipeline_version: '2.1.1',
+      });
+
+      await service.runAnalysis('job-1', { isFinalAttempt: false });
+
+      const [, title, body] = push.sendToUser.mock.calls[0];
+      expect(title).toMatch(/session/i);
+      expect(body).toContain('8');
+      expect(body).toContain('20');
+    });
+
+    it('does not claim partial coverage when every rally was measured', async () => {
+      const { service, prisma, cv, push } = build();
+      prisma.videoAnalysisJob.findUnique.mockResolvedValue(
+        jobWithDuration(SESSION_DURATION_S + 60),
+      );
+      cv.analyzeSession.mockResolvedValue({
+        video: 'session.mp4',
+        summary: { ...SESSION_SUMMARY, segments_found: 8, segments_analysed: 8 },
+        pipeline_version: '2.1.1',
+      });
+
+      await service.runAnalysis('job-1', { isFinalAttempt: false });
+
+      const [, , body] = push.sendToUser.mock.calls[0];
+      expect(body).not.toMatch(/of the/);
+    });
+
+    it('requeues rather than failing when the GPU is busy with another session', async () => {
+      // One GPU, and a session holds it for far longer than a rally. Mistaking busy for
+      // broken would mark a perfectly analysable session FAILED.
+      const { service, prisma, cv } = build();
+      prisma.videoAnalysisJob.findUnique.mockResolvedValue(
+        jobWithDuration(SESSION_DURATION_S + 60),
+      );
+      cv.analyzeSession.mockRejectedValue(new CvServiceBusyError(300));
+
+      await expect(
+        service.runAnalysis('job-1', { isFinalAttempt: true }),
+      ).rejects.toBeInstanceOf(CvServiceBusyError);
+      expect(prisma.videoAnalysisJob.update).not.toHaveBeenCalled();
     });
   });
 });

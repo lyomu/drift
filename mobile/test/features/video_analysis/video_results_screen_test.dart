@@ -63,6 +63,54 @@ Map<String, dynamic> _summary({bool calibrated = true}) => {
             'treated as measurements.',
 };
 
+/// A session summary shaped like the one `utils/session_aggregate.py` produces.
+///
+/// `found` above `analysed` is the partial case, which is the normal one: a session runs
+/// under a frame budget because the service has one GPU, so a 12-minute upload routinely
+/// contains more rallies than there was time to measure.
+Map<String, dynamic> _sessionSummary({
+  int found = 4,
+  int analysed = 2,
+  int uncalibrated = 0,
+  bool calibrated = true,
+}) => {
+  'mode': 'session',
+  'segments_found': found,
+  'segments_analysed': analysed,
+  'segments_skipped_budget': found - analysed,
+  'segments_skipped_short': 0,
+  'segments_failed': 0,
+  'segments_uncalibrated': uncalibrated,
+  'court_calibrated': calibrated,
+  'totals': {
+    'total_shots_p1': 9,
+    'total_shots_p2': 6,
+    'total_shots': 15,
+    if (calibrated) 'avg_shot_speed_p1_kmh': 74.3,
+  },
+  'shot_types': {'Forehand': 8, 'Serve': 2},
+  'segments': [
+    for (var i = 0; i < analysed; i++)
+      {
+        'index': i,
+        'status': 'analysed',
+        'span': {'start_s': 30.0 + i * 60, 'end_s': 45.0 + i * 60},
+        'summary': {
+          'total_shots_p1': 5,
+          'total_shots_p2': 3,
+          'court_calibrated': i >= uncalibrated,
+        },
+      },
+    for (var i = analysed; i < found; i++)
+      {
+        'index': i,
+        'status': 'skipped_budget',
+        'span': {'start_s': 30.0 + i * 60, 'end_s': 45.0 + i * 60},
+        'reason': 'The session budget was already spent on earlier rallies.',
+      },
+  ],
+};
+
 Future<_FakeRepository> _pump(
   WidgetTester tester,
   VideoAnalysisJob job, {
@@ -272,6 +320,150 @@ void main() {
         expect(find.text('This clip is in portrait.'), findsOneWidget);
       });
     });
+
+    group('a session rather than a single rally', () {
+      for (final brightness in Brightness.values) {
+        testWidgets('renders without throwing in ${brightness.name}', (
+          tester,
+        ) async {
+          await _pump(
+            tester,
+            _job(
+              status: VideoAnalysisStatus.completed,
+              summary: _sessionSummary(),
+            ),
+            brightness: brightness,
+          );
+          expect(tester.takeException(), isNull);
+        });
+      }
+
+      testWidgets('says how many of the rallies it found were measured', (
+        tester,
+      ) async {
+        // The whole point of the session screen. Totals over 2 of 4 rallies must not
+        // read as totals over the session, and a number without its denominator gets
+        // screenshotted and quoted without it.
+        await _pump(
+          tester,
+          _job(
+            status: VideoAnalysisStatus.completed,
+            summary: _sessionSummary(found: 4, analysed: 2),
+          ),
+        );
+
+        expect(find.textContaining('2 of 4'), findsOneWidget);
+      });
+
+      testWidgets('does not claim partial coverage when it measured everything', (
+        tester,
+      ) async {
+        await _pump(
+          tester,
+          _job(
+            status: VideoAnalysisStatus.completed,
+            summary: _sessionSummary(found: 3, analysed: 3),
+          ),
+        );
+
+        expect(find.textContaining('of 3 rallies'), findsNothing);
+        expect(find.textContaining('all 3'), findsOneWidget);
+      });
+
+      testWidgets('lists every rally it found, including the skipped ones', (
+        tester,
+      ) async {
+        // A skipped rally is real play that we chose not to measure. Hiding it would
+        // make the session look shorter than it was.
+        await _pump(
+          tester,
+          _job(
+            status: VideoAnalysisStatus.completed,
+            summary: _sessionSummary(found: 4, analysed: 2),
+          ),
+        );
+
+        expect(find.text('Rally by rally'), findsOneWidget);
+        expect(
+          find.textContaining('ran out of analysis time'),
+          findsNWidgets(2),
+        );
+      });
+
+      testWidgets('shows session totals from the totals block', (tester) async {
+        await _pump(
+          tester,
+          _job(
+            status: VideoAnalysisStatus.completed,
+            summary: _sessionSummary(),
+          ),
+        );
+
+        expect(find.text('Session totals'), findsOneWidget);
+        expect(find.text('15'), findsOneWidget);
+      });
+
+      testWidgets('hides session speeds when no rally had a court fit', (
+        tester,
+      ) async {
+        // Same rule as a single clip, one level up: without a homography the speeds are
+        // plausible numbers that are not measurements.
+        await _pump(
+          tester,
+          _job(
+            status: VideoAnalysisStatus.completed,
+            summary: _sessionSummary(calibrated: false),
+          ),
+        );
+
+        expect(find.text('Speed'), findsNothing);
+        expect(find.textContaining('74.3'), findsNothing);
+      });
+
+      testWidgets('shot counts survive when the court fit did not', (tester) async {
+        // Contact detection does not depend on the court fit, so the counts stay.
+        await _pump(
+          tester,
+          _job(
+            status: VideoAnalysisStatus.completed,
+            summary: _sessionSummary(calibrated: false),
+          ),
+        );
+
+        expect(find.text('15'), findsOneWidget);
+      });
+
+      testWidgets('flags rallies that were measured without a court fit', (
+        tester,
+      ) async {
+        await _pump(
+          tester,
+          _job(
+            status: VideoAnalysisStatus.completed,
+            summary: _sessionSummary(found: 4, analysed: 2, uncalibrated: 1),
+          ),
+        );
+
+        expect(find.textContaining('court lines'), findsWidgets);
+      });
+
+      testWidgets('a single-clip job still gets the single-clip screen', (
+        tester,
+      ) async {
+        // The branch is keyed on the summary's own `mode`, so a clip result must not
+        // wander into the session view and report "0 rallies measured".
+        await _pump(
+          tester,
+          _job(
+            status: VideoAnalysisStatus.completed,
+            summary: _summary(),
+          ),
+        );
+
+        expect(find.text('Session totals'), findsNothing);
+        expect(find.text('Shots'), findsOneWidget);
+      });
+    });
   });
 
   group('VideoAnalysisJob.courtCalibrated', () {
@@ -294,6 +486,41 @@ void main() {
         ).courtCalibrated,
         isFalse,
       );
+    });
+
+
+  });
+
+  group('SessionSegment', () {
+    test('reads a timestamp a person can scrub to', () {
+      final segment = SessionSegment.fromJson({
+        'index': 0,
+        'status': 'analysed',
+        'span': {'start_s': 90.0, 'end_s': 125.0},
+        'summary': {'total_shots_p1': 3, 'total_shots_p2': 2},
+      });
+
+      expect(segment.timestampLabel, '1:30–2:05');
+      expect(segment.durationLabel, '35s');
+      expect(segment.shots, 5);
+      expect(segment.wasAnalysed, isTrue);
+    });
+
+    test('a missing calibration key counts as calibrated', () {
+      // `!= false`, matching session_aggregate.py and video-analysis.service.ts. A layer
+      // reading this differently would stop showing a warning the others show.
+      final segment = SessionSegment.fromJson({
+        'index': 0,
+        'status': 'analysed',
+        'span': {'start_s': 0.0, 'end_s': 10.0},
+        'summary': {'total_shots_p1': 1},
+      });
+
+      expect(segment.courtCalibrated, isTrue);
+    });
+
+    test('a malformed segment is not reported as analysed', () {
+      expect(SessionSegment.fromJson({}).wasAnalysed, isFalse);
     });
   });
 }

@@ -106,17 +106,27 @@ The highest-risk phase. Every reviewed repo either skips this or scores near cha
 
 Removes the "single trimmed rally only" constraint so users can upload a whole practice session.
 
+**Status (2026-09-30):** built across all three layers; mechanism verified by design and by
+tests, boundary accuracy unverified because no multi-rally footage exists. See `PROGRESS.md`
+and `cv-service/DRIFT_CHANGES.md`.
+
 **Tasks**
 
-- [ ] Build an "is play happening" pre-pass using ball and player motion to find rally boundaries in a longer video
-- [ ] Auto-chunk a session into individual rally segments
-- [ ] Run the Phase 1/2 pipeline per segment
-- [ ] Aggregate stats across the whole session in the results screen (per-rally breakdown + session totals)
+- [x] Build an "is play happening" pre-pass to find rally boundaries in a longer video — `cv-service/utils/rally_segmenter.py`. **Deviates from "ball and player motion" deliberately:** ball detection was measured at 0-25% of frames on real Drift clips (`cv-service/PHASE0_FINDINGS.md`) and TrackNet is half the pipeline's runtime, so the signal is court validity plus residual subject motion instead. Player detection is applied to candidate spans only, not to the whole session, so its cost scales with play rather than with session length
+- [x] Auto-chunk a session into individual rally segments — hysteresis, gap merging, context padding and a minimum length, in that order, streaming at most three frames at a time
+- [x] Run the Phase 1/2 pipeline per segment — `cv-service/session.py`, one subprocess per rally, under a frame budget
+- [x] Aggregate stats across the whole session in the results screen (per-rally breakdown + session totals) — `cv-service/utils/session_aggregate.py`, `POST /analyze-session`, and the session view in `mobile/lib/features/video_analysis/presentation/video_results_screen.dart`
 
 **Acceptance criteria**
 
-- [ ] A 10+ minute session video is correctly split into rally segments without manual trimming
-- [ ] Session-level aggregation matches the sum of its per-rally parts
+- [ ] A 10+ minute session video is correctly split into rally segments without manual trimming — **not met and not refuted.** No multi-rally footage exists on this machine; the two available clips are 7s and 19s of broadcast, and the Phase 0 re-shoot has not happened. `cv-service/tools/make_session_clip.py` builds a synthetic session with exact ground truth and `cv-service/eval/rally_segmentation_accuracy.py` scores against it, which measures the mechanism and explicitly not whether the thresholds suit real footage. Every threshold is marked `provisional` in its own output
+- [x] Session-level aggregation matches the sum of its per-rally parts — asserted on the shipped object by `session_totals_match_parts`, for **counts**. Speed averages are deliberately *not* the sum of their parts: they are weighted by the shots that produced them, because a mean of per-rally means weights a one-shot rally exactly as heavily as a twelve-shot one
+
+**One finding that bears on Phase 4's runtime note.** The runtime problem Phase 4 flags for full
+matches already binds here: at the measured ~0.63 s/frame, a 10-minute session is ~3 hours end
+to end, and ~1.6 hours even after segmentation, on a service with one GPU. Session mode
+therefore runs under an explicit frame budget and reports every rally it found alongside the
+ones it measured. Phase 4 will need the same arithmetic done before, not after.
 
 ## Phase 4 — Doubles and full matches
 

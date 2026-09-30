@@ -50,6 +50,35 @@ export interface AnalysisResult {
   pipeline_version: string;
 }
 
+/**
+ * One rally inside a session, as cv-service reports it.
+ *
+ * `status` is why this rally is or is not in the session totals — `analysed`,
+ * `skipped_budget`, `skipped_too_short` or `failed`. It is never absent, because "not in the
+ * totals" must always carry a reason rather than being an unexplained gap.
+ */
+export interface SessionSegment {
+  index: number;
+  status: 'analysed' | 'skipped_budget' | 'skipped_too_short' | 'failed';
+  span: Record<string, unknown>;
+  summary?: Record<string, unknown>;
+  reason?: string;
+}
+
+export interface SessionResult {
+  video: string;
+  /**
+   * The session summary, passed through untouched for the same reason as a single clip's.
+   *
+   * Carries `mode: "session"`, which is how every layer downstream tells a session apart
+   * from one rally without a schema change. Also carries `segments_found` alongside
+   * `segments_analysed`: a session can hold more rallies than the frame budget covers, and
+   * totals over 8 of 20 rallies must not read as totals over all 20.
+   */
+  summary: Record<string, unknown>;
+  pipeline_version: string;
+}
+
 /** cv-service is busy with another analysis; the caller should retry later. */
 export class CvServiceBusyError extends Error {
   constructor(readonly retryAfterSeconds: number) {
@@ -72,6 +101,7 @@ export class CvServiceClient {
   private readonly baseUrl: string;
   private readonly timeoutMs: number;
   private readonly analysisTimeoutMs: number;
+  private readonly sessionTimeoutMs: number;
 
   constructor(private readonly config: ConfigService) {
     this.baseUrl = (
@@ -89,6 +119,13 @@ export class CvServiceClient {
     // ceiling independently.
     this.analysisTimeoutMs = Number(
       this.config.get<string>('CV_SERVICE_ANALYSIS_TIMEOUT_MS') ?? 30 * 60_000,
+    );
+    // A session is many clips plus a pre-pass over the whole video. cv-service's default
+    // frame budget alone is roughly 55 minutes of GPU at the measured ~0.63s/frame, so this
+    // sits well above the single-clip ceiling. It bounds a hung run; cv-service applies its
+    // own TENNIS_VISION_SESSION_TIMEOUT_S independently and neither trusts the other.
+    this.sessionTimeoutMs = Number(
+      this.config.get<string>('CV_SERVICE_SESSION_TIMEOUT_MS') ?? 4 * 60 * 60_000,
     );
   }
 
@@ -195,6 +232,59 @@ export class CvServiceClient {
     }
 
     return (await response.json()) as AnalysisResult;
+  }
+
+  /**
+   * Analyse a clip longer than one rally: segment it, run each rally, return the session.
+   *
+   * Hours, not minutes. The same 503-means-busy contract as `analyze` applies, and matters
+   * more here: a session holds the single GPU for far longer, so a caller that mistook a
+   * busy service for a failure would mark a perfectly analysable session FAILED.
+   *
+   * `dryRun` segments only and analyses nothing — seconds instead of hours. It answers "how
+   * many rallies are in this video and where" without committing the GPU, which is what an
+   * upload flow wants before asking someone to wait an hour.
+   */
+  async analyzeSession(
+    filePath: string,
+    options: { frameBudget?: number; dryRun?: boolean } = {},
+  ): Promise<SessionResult> {
+    const form = new FormData();
+    form.append('file', await this.toBlob(filePath), basename(filePath));
+    if (options.frameBudget) {
+      form.append('frame_budget', String(options.frameBudget));
+    }
+    if (options.dryRun) form.append('dry_run', 'true');
+
+    let response: Response;
+    try {
+      response = await this.fetchWithTimeout(
+        `${this.baseUrl}/analyze-session`,
+        { method: 'POST', body: form },
+        // A dry run is a pre-pass over the video and nothing more, so it gets the ordinary
+        // analysis ceiling rather than the session one. Giving it four hours would leave a
+        // hung pre-pass sitting on the slot for an afternoon.
+        options.dryRun ? this.analysisTimeoutMs : this.sessionTimeoutMs,
+      );
+    } catch (error) {
+      this.logger.error(`CV service analyze-session failed: ${String(error)}`);
+      throw new ServiceUnavailableException('The analysis service is unreachable.');
+    }
+
+    if (response.status === 503) {
+      const retryAfter = Number(response.headers.get('retry-after') ?? 300);
+      throw new CvServiceBusyError(Number.isFinite(retryAfter) ? retryAfter : 300);
+    }
+
+    if (!response.ok) {
+      const body = await response.text().catch(() => '');
+      this.logger.error(
+        `CV service analyze-session returned ${response.status}: ${body.slice(0, 1000)}`,
+      );
+      throw new Error(`The session analysis failed (${response.status}).`);
+    }
+
+    return (await response.json()) as SessionResult;
   }
 
   private async toBlob(filePath: string): Promise<Blob> {

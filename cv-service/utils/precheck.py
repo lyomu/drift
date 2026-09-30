@@ -104,9 +104,10 @@ RECOMMENDED_WIDTH_PX = 1280
 # A clip shorter than this cannot contain a rally worth measuring.
 MIN_DURATION_S = 3.0
 
-# Beyond this a clip is a session rather than a single take. The pipeline assumes one
-# continuous view of play; splitting sessions into rallies is Phase 3 work, so for now
-# this warns rather than rejects.
+# Beyond this a clip is a session rather than a single take. `main.py` still assumes one
+# continuous view of play, but `session.py` now segments a long clip into its rallies and
+# analyses them individually, so this is no longer a reason to send the user away — it warns
+# that the clip will be handled as a session, which costs more and may not cover all of it.
 LONG_DURATION_S = 600.0
 
 # Global frame-to-frame shift, as a fraction of frame width, between seek-sampled
@@ -310,9 +311,10 @@ def _check_duration(meta: dict) -> Finding:
                        f"rally worth measuring.", detail)
     if d > LONG_DURATION_S:
         return Finding("duration", WARN,
-                       f"This clip is {d / 60:.0f} minutes long. The pipeline analyses "
-                       f"one continuous passage of play, so a whole session is better "
-                       f"uploaded as its individual rallies for now.", detail)
+                       f"This clip is {d / 60:.0f} minutes long, so it will be analysed "
+                       f"as a session: we find the rallies in it and measure them one by "
+                       f"one. Long sessions take a while and we may not get through every "
+                       f"rally — you'll see which ones we measured.", detail)
     return Finding("duration", PASS, f"{d:.1f}s of footage.", detail)
 
 

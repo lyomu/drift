@@ -20,11 +20,16 @@ is the whole design.
 
 Scope
 -----
-`/precheck` is real. `/analyze` is deliberately a stub that refuses with 501: the full
-pipeline is a minutes-long job that belongs on a queue with a callback, not on an HTTP
-request, and the job plumbing it will report to does not exist yet. It is declared here
-so the backend can wire against the real URL shape now and get a truthful error rather
-than a 404 that might mean anything.
+`/precheck`, `/analyze` and `/analyze-session` are all real. `/analyze-session` is for a
+clip longer than one rally: it finds the rallies inside, analyses each within a frame
+budget, and returns session totals alongside the per-rally breakdown. It shares the single
+analysis slot with `/analyze` for the same reason — one GPU.
+
+`/precheck` and `/analyze` are both real. `/analyze` runs the full pipeline as a
+subprocess and answers synchronously, which is a deliberate choice about where durability
+lives — the caller is the backend's queue worker, which already has retries and
+persistence. One GPU means one analysis, so a second concurrent request is refused with
+503 and Retry-After rather than queued. The reasoning is on the endpoint itself.
 
 Not built yet: authentication, rate limiting, request size limits beyond the one below,
 metrics. This is an internal service that must not be exposed publicly as it stands.
@@ -60,6 +65,12 @@ CONFIG_PATH = os.environ.get("TENNIS_VISION_CONFIG", "configs/config.yaml")
 # minute of work on an RTX 4060, and a three-minute one is several. The point is to
 # bound a hung run, not to predict a healthy one.
 ANALYSIS_TIMEOUT_S = int(os.environ.get("TENNIS_VISION_ANALYSIS_TIMEOUT_S", 1800))
+
+# Ceiling on one SESSION. An order of magnitude above a single clip, because a session is
+# many clips plus a pre-pass over the whole video: at the measured ~0.63 s/frame, the default
+# 5400-frame budget in configs/config.yaml is roughly 55 minutes of GPU on its own. Three
+# hours bounds a hung run against a slower card without cutting a healthy one short.
+SESSION_TIMEOUT_S = int(os.environ.get("TENNIS_VISION_SESSION_TIMEOUT_S", 3 * 3600))
 
 # One GPU, one analysis. Held for the whole run so a second caller is refused rather
 # than admitted into a queue this process would then have to manage.
@@ -325,3 +336,130 @@ def _pipeline_version() -> str:
     import cli
 
     return cli.__version__
+
+
+@app.post("/analyze-session")
+async def analyze_session_endpoint(
+    file: UploadFile = File(...),
+    frame_budget: int = Form(0),
+    dry_run: bool = Form(False),
+) -> JSONResponse:
+    """
+    Analyse a clip longer than one rally: segment it, run each rally, return the session.
+
+    Why a separate endpoint rather than a flag on `/analyze`
+    -------------------------------------------------------
+    The two return different shapes and cost different orders of magnitude. `/analyze`
+    returns one pipeline summary; this returns session totals plus a per-rally breakdown,
+    marked `mode: "session"`. Conflating them behind a flag would mean a caller could not
+    tell from the request what shape it was going to get back, and the backend routes on
+    exactly that decision.
+
+    It shares `_analysis_slot` with `/analyze`. One GPU means one analysis, whether it is a
+    rally or a session, and a session holding the slot for an hour is the honest cost of
+    having asked for a session — refusing with 503 and Retry-After is better than admitting
+    a second caller into a queue this process would then have to manage.
+
+    `dry_run` segments only and analyses nothing. That is the cheap call: it answers "how
+    many rallies are in here and where" in seconds rather than an hour, which is what an
+    upload screen wants before committing a user to the full run.
+    """
+    if _analysis_slot.locked():
+        raise HTTPException(
+            status_code=503,
+            headers={"Retry-After": "300"},
+            detail=(
+                "Another analysis is already running. This service handles one at a "
+                "time because it has one GPU. A session takes considerably longer than "
+                "a single clip."
+            ),
+        )
+
+    async with _analysis_slot:
+        suffix = Path(file.filename or "upload.mp4").suffix or ".mp4"
+        workdir = Path(tempfile.mkdtemp(prefix="session-"))
+        clip = workdir / f"input{suffix}"
+
+        try:
+            written = 0
+            with clip.open("wb") as handle:
+                while chunk := await file.read(1024 * 1024):
+                    written += len(chunk)
+                    if written > MAX_UPLOAD_BYTES:
+                        raise HTTPException(
+                            status_code=413,
+                            detail=(
+                                f"Video is larger than the "
+                                f"{MAX_UPLOAD_BYTES // (1024 * 1024)} MB limit."
+                            ),
+                        )
+                    handle.write(chunk)
+
+            if written == 0:
+                raise HTTPException(status_code=400, detail="Uploaded file is empty.")
+
+            summary = await asyncio.to_thread(
+                _run_session, clip, workdir, frame_budget, dry_run
+            )
+            return JSONResponse(
+                {
+                    "video": file.filename,
+                    "summary": summary,
+                    "pipeline_version": _pipeline_version(),
+                }
+            )
+        finally:
+            shutil.rmtree(workdir, ignore_errors=True)
+
+
+def _run_session(clip: Path, workdir: Path, frame_budget: int, dry_run: bool) -> dict:
+    """
+    Segment and analyse a session. Blocking; called in a worker thread.
+
+    Called in-process rather than as a subprocess, unlike `_run_pipeline`. That looks
+    inconsistent and is not: `session.run_session` already runs each rally as its own
+    subprocess, so the isolation `_run_pipeline` buys is present a level down. Adding a
+    second layer would put a subprocess inside a subprocess for no further protection,
+    and the pre-pass itself has no `sys.argv` problem to avoid.
+
+    The court model is the one the service already loaded at startup. That is the whole
+    reason this endpoint is worth having in a long-lived process: the pre-pass calls the
+    court detector ~1200 times on a 10-minute session, and paying the ResNet-50 load once
+    instead of per call is the difference between a cheap pre-pass and a pointless one.
+    """
+    import session as session_module
+
+    cfg = _load_pipeline_config()
+    budget = frame_budget or int(
+        cfg.get("session", {}).get("frame_budget", session_module.DEFAULT_FRAME_BUDGET)
+    )
+
+    if dry_run:
+        from utils.rally_segmenter import segment_session
+
+        result = segment_session(str(clip), court_detector=_state["detector"])
+        return {
+            "mode": "session_dry_run",
+            "frame_budget": budget,
+            # Named so it cannot be mistaken for an analysis: this call measured no tennis,
+            # it only located where some probably is.
+            "analysed": False,
+            "segmentation": result.as_dict(),
+        }
+
+    return session_module.run_session(
+        str(clip),
+        court_detector=_state["detector"],
+        frame_budget=budget,
+        base_config=CONFIG_PATH,
+        workdir=str(workdir / "session"),
+        # Cleaned up by the endpoint's own finally, which removes the whole workdir.
+        keep_workdir=True,
+    )
+
+
+def _load_pipeline_config() -> dict:
+    """The pipeline's merged config. Imported lazily to keep torch off the import path."""
+    import main as pipeline
+
+    return pipeline.load_config(CONFIG_PATH)

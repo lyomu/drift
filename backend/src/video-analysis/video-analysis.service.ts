@@ -36,6 +36,17 @@ export const MAX_VIDEO_BYTES = 512 * 1024 * 1024;
 
 const ACCEPTED_MIME_PREFIX = 'video/';
 
+/**
+ * Above this many seconds a clip is analysed as a SESSION — segmented into its rallies,
+ * each analysed, then aggregated — rather than as one continuous passage of play.
+ *
+ * Must stay in step with `LONG_DURATION_S` in cv-service/utils/precheck.py, which is what
+ * warns the user at upload time that their clip will be handled this way. Two thresholds
+ * that disagree would promise one thing and do another: a clip could be told it would be
+ * treated as a session and then be run as a single rally, or the reverse.
+ */
+export const SESSION_DURATION_S = 600;
+
 @Injectable()
 export class VideoAnalysisService {
   private readonly logger = new Logger(VideoAnalysisService.name);
@@ -64,9 +75,9 @@ export class VideoAnalysisService {
    * portrait, film it in landscape" is better than letting them close the app and
    * pushing them the same sentence minutes later.
    *
-   * The queue's actual job is the ANALYSIS, which takes minutes of GPU time and does
-   * not exist yet (cv-service answers 501). It goes in when there is something for it
-   * to run.
+   * The queue's actual job is the ANALYSIS, which takes minutes of GPU time for one rally
+   * and can take hours for a whole session. That is why it is queued and the precheck is
+   * not.
    */
   async createFromUpload(
     userId: string,
@@ -242,8 +253,17 @@ export class VideoAnalysisService {
       );
     }
 
+    // Session or single rally, decided from the precheck already stored on the row rather
+    // than from a new column. cv-service read the duration out of the video header at upload
+    // time and we kept the whole verdict, so a migration here would add a field whose only
+    // source is data we have. `analysisResult` is schemaless JSON and carries `mode`, so the
+    // two result shapes coexist without a schema change either.
+    const asSession = VideoAnalysisService.isSessionLength(job.precheckResult);
+
     try {
-      const result = await this.cvService.analyze(localPath);
+      const result = asSession
+        ? await this.cvService.analyzeSession(localPath)
+        : await this.cvService.analyze(localPath);
 
       const updated = await this.prisma.videoAnalysisJob.update({
         where: { id: jobId },
@@ -299,14 +319,36 @@ export class VideoAnalysisService {
     // when the court fit failed, and in that case its numbers are not measurements —
     // so the notification says the clip is ready to look at, not what it found.
     const calibrated = summary['court_calibrated'] !== false;
+    const isSession = summary['mode'] === 'session';
+
+    // A session's headline is how much of it was measured, not that it is "analysed".
+    // A budget-limited session covered 8 of 20 rallies, and a notification saying
+    // "your session has been analysed" would be read as all of it.
+    const found = Number(summary['segments_found'] ?? 0);
+    const analysed = Number(summary['segments_analysed'] ?? 0);
+    const partial = isSession && found > analysed;
+
+    const title = isSession
+      ? 'Your session has been analysed'
+      : 'Your clip has been analysed';
+    let body: string;
+    if (partial) {
+      body = `We measured ${analysed} of the ${found} rallies we found. Tap to see them.`;
+    } else if (isSession) {
+      body = `We measured ${analysed} rall${analysed === 1 ? 'y' : 'ies'}. `
+        + 'Tap to see what we found.';
+    } else if (calibrated) {
+      body = 'Tap to see what we found.';
+    } else {
+      body = "Tap to see the results — the court wasn't clear enough to measure "
+        + 'distances, so some numbers are missing.';
+    }
+
     try {
       await this.push.sendToUser(
         userId,
-        'Your clip has been analysed',
-        calibrated
-          ? 'Tap to see what we found.'
-          : "Tap to see the results — the court wasn't clear enough to measure "
-            + 'distances, so some numbers are missing.',
+        title,
+        body,
         {
           category: 'video_analysis',
           relatedEntityType: 'videoAnalysisJob',
@@ -343,6 +385,23 @@ export class VideoAnalysisService {
   /** Whether the CV service is reachable, for the upload screen to check first. */
   async serviceStatus() {
     return this.cvService.health();
+  }
+
+  /**
+   * Whether a stored precheck verdict describes a clip long enough to be a session.
+   *
+   * Static and defensive because it reads JSON that came out of Postgres, where the shape is
+   * whatever cv-service wrote at the time. An older row may predate the metadata block
+   * entirely, and the honest default for "we cannot tell how long this is" is the single-clip
+   * path: running a 20-second rally through session mode wastes a pre-pass, while running a
+   * 40-minute session as one rally produces a confident refusal or a meaningless number.
+   */
+  static isSessionLength(precheckResult: unknown): boolean {
+    if (!precheckResult || typeof precheckResult !== 'object') return false;
+    const metadata = (precheckResult as { metadata?: unknown }).metadata;
+    if (!metadata || typeof metadata !== 'object') return false;
+    const duration = (metadata as { duration_s?: unknown }).duration_s;
+    return typeof duration === 'number' && duration > SESSION_DURATION_S;
   }
 
   /** Exposed for tests and for a future queue worker. */

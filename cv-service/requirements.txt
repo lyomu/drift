@@ -9,8 +9,49 @@ torch>=1.10.0
 torchvision>=0.11.0
 
 # Object detection / tracking
+#
+# ultralytics is AGPL-3.0 and is the ONLY AGPL dependency in this stack. It is a launch
+# blocker, not a preference: AGPL §13 covers serving over a network, which is exactly this
+# service's topology, and the obligation extends to weights fine-tuned through it
+# "regardless of whether you train from scratch". See LICENSING.md §1. Kept for now because
+# every measured number in README.md was produced on it and the replacement is unmeasured.
 ultralytics>=8.0.0
-supervision>=0.27.0
+# The permissive replacement, Apache-2.0. Selected by models.player_backend: rfdetr, and
+# used for the racket detector, whose COCO checkpoints already carry a `tennis racket` class
+# — so a first racket signal needs no training and encumbers no weights.
+#
+# Version floor is the current release rather than a measured minimum: nothing here has been
+# run against an older one. The class names are read from rfdetr.util.coco_classes at
+# runtime rather than hardcoded, because the two COCO numbering schemes disagree and
+# confusing them yields a detector for `knife` that never raises — see
+# trackers/coco_labels.py.
+#
+# VERIFIED on install (2026-09-30, rfdetr 1.11.0): it does NOT pull opencv-python-headless the
+# way roboflow does, and it does NOT touch torch — the CUDA build survived
+# (torch 2.14.0+cu126, cuda available) and cv2 5.0.0 kept its GUI functions, so
+# tools/label_shots.py still works. It does upgrade huggingface_hub and installs transformers.
+#
+# One thing to know if you pin a newer version: the COCO label map has moved once already
+# (rfdetr.util was REMOVED in v1.9.0 and the map went to rfdetr.assets, not
+# rfdetr.utilities), and RFDETRBase is deprecated since v1.7.0 for removal in v2.0.0.
+# trackers/coco_labels.py tries both map locations and resolves by name for this reason.
+rfdetr>=1.11.0
+# MIT, and already here. Supplies ByteTrack, which is the tracking half of the ultralytics
+# replacement — .track() bundles detection and tracking, RF-DETR does not.
+#
+# CAPPED below 0.31 deliberately. sv.ByteTrack is deprecated since supervision 0.28.0 and is
+# REMOVED in 0.31.0 — measured, not read: the deprecation warning fires on the installed
+# 0.30.6. Without the cap a fresh install would resolve 0.31 and detector_rfdetr.py would
+# break at runtime.
+#
+# The migration is not a one-liner, and the reason is worth recording. The replacement is
+# ByteTrackTracker from a PyPI package literally named "trackers", which COLLIDES with this
+# repo's own top-level trackers/ package. cv-service runs from its own root, so the local
+# package shadows the installed one and "from trackers import ByteTrackTracker" would resolve
+# to our code instead. Migrating means renaming our package or aliasing the import — a
+# deliberate change, not something to discover during a dependency bump. The update method
+# also renames from update_with_detections() to update().
+supervision>=0.27.0,<0.31.0
 lapx>=0.5.2
 
 # Pose estimation (forehand/backhand from body geometry)

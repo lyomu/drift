@@ -146,6 +146,10 @@ _DEFAULTS: dict = {
     },
     "models": {
         "player": "yolov8x",
+        # See configs/config.yaml for why the AGPL backend is still the default and what
+        # has to be measured before that changes. LICENSING.md §1 for the obligation.
+        "player_backend": "yolo",
+        "player_rfdetr_size": "medium",
         "ball": "models/last.pt",
         # The geometrically fine-tuned weights, which is what scripts/download_models.py
         # fetches. models/keypoints_model.pth is the superseded original.
@@ -177,6 +181,11 @@ _DEFAULTS: dict = {
         "player_confidence": 0.7,
         "ball_confidence": 0.6,
         "shot_player_distance_px": 300,
+    },
+    "session": {
+        # See configs/config.yaml. A policy bound on how long one session upload may hold
+        # the single GPU, not a measurement.
+        "frame_budget": 5400,
     },
     "shot_classifier": {
         "volley_distance_threshold": 40,
@@ -536,18 +545,25 @@ def main():
 
     # ── 2. Player detection ────────────────────────────────────────
     logger.info("[2/9] Player detection...")
-    player_tracker = PlayerTracker(model_path=cfg["models"]["player"])
+    player_tracker = PlayerTracker.from_config(cfg)
+    # Name the backend, not "YOLO". With two detectors selectable from config, a log line
+    # that always says YOLO is how a run gets attributed to the wrong detector afterwards.
+    backend_name = getattr(player_tracker.detector, "name", "unknown")
     use_player_stubs = cfg["stubs"]["use_player_stubs"]
     # Keyed to this clip for the same reason as the ball stub below: a shared cache
-    # handed one video's player boxes to another.
-    player_stub = stub_path_for_video(cfg["io"]["player_stub_path"], input_path)
+    # handed one video's player boxes to another. Keyed by BACKEND too, because the two
+    # detectors write different boxes for the same video and a shared key would load one
+    # backend's players into the other's run.
+    player_stub = stub_path_for_video(
+        cfg["io"]["player_stub_path"], input_path, variant=backend_name
+    )
     player_detections = player_tracker.detect_frames(
         video_frames,
         read_from_stub=use_player_stubs,
         stub_path=player_stub,
         save_stub=not truncated,
     )
-    source = f"stub ({player_stub})" if use_player_stubs else "fresh YOLO"
+    source = f"stub ({player_stub})" if use_player_stubs else f"fresh {backend_name}"
     logger.info(f"  Source: {source}")
 
     # ── 3. Ball detection ──────────────────────────────────────────

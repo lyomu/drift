@@ -1,4 +1,3 @@
-from ultralytics import YOLO 
 import cv2
 import os
 import pickle
@@ -9,8 +8,69 @@ from utils import get_center_of_bbox, measure_distance_between_points
 
 
 class PlayerTracker:
-    def __init__(self,model_path):
-        self.model = YOLO(model_path)
+    """
+    Finds the two players in a clip and keeps only their tracks.
+
+    Detection is a swappable backend; player *selection* is not. That split is the whole
+    structure of this class, and it follows a measured finding: `UPSTREAM_README.md` records
+    that a larger or newer detector buys nothing here, because on the reference clip YOLOv8x
+    already finds 11-14 people per frame and the pipeline needs 2. The hard problem is
+    choosing which two, which is the ~200 lines below and is detector-independent.
+
+    So the backend exists for licensing, not accuracy. `ultralytics` is AGPL-3.0 and this
+    pipeline is headed for a network service; `detector_rfdetr.py` is the Apache-2.0
+    replacement. Both feed the identical `{track_id: bbox}` contract into the same selection
+    code, which is what makes the two comparable on one clip — see
+    `eval/player_detector_comparison.py`.
+    """
+
+    def __init__(self, model_path=None, detector=None):
+        """
+        Args:
+            model_path: YOLO weights. Kept as the first positional parameter because
+                `PlayerTracker(model_path=...)` is constructed at eight call sites, and a
+                licensing refactor that also churned every eval script would have made the
+                before/after comparison harder to trust than the change itself.
+            detector: any object with `detect_frame(frame) -> {track_id: bbox}`. Supplied,
+                it wins and `model_path` is ignored. See `detector_yolo.py` /
+                `detector_rfdetr.py`, or `from_config` to pick one by name.
+        """
+        if detector is None:
+            if model_path is None:
+                raise ValueError(
+                    "PlayerTracker needs either model_path (YOLO) or detector "
+                    "(any backend with detect_frame). See PlayerTracker.from_config."
+                )
+            from .detector_yolo import YoloPersonDetector
+            detector = YoloPersonDetector(model_path)
+        self.detector = detector
+
+    @classmethod
+    def from_config(cls, cfg):
+        """
+        Build the backend named by `models.player_backend`, defaulting to `yolo`.
+
+        Defaulting to the AGPL path is deliberate and is not an endorsement of it. Every
+        measured number in this repo was produced on YOLO, so flipping the default would
+        silently re-baseline all of them; the switch belongs to whoever has run
+        `eval/player_detector_comparison.py` and looked at the result.
+        """
+        models_cfg = cfg.get("models", {})
+        backend = str(models_cfg.get("player_backend", "yolo")).lower()
+
+        if backend == "yolo":
+            from .detector_yolo import YoloPersonDetector
+            return cls(detector=YoloPersonDetector(models_cfg.get("player", "yolov8x")))
+
+        if backend == "rfdetr":
+            from .detector_rfdetr import RfDetrPersonDetector
+            return cls(detector=RfDetrPersonDetector(
+                size=str(models_cfg.get("player_rfdetr_size", "base"))
+            ))
+
+        raise ValueError(
+            f"Unknown models.player_backend {backend!r}. Expected 'yolo' or 'rfdetr'."
+        )
 
 
     # A chosen track must appear in at least this share of the clip. Deliberately
@@ -323,23 +383,16 @@ class PlayerTracker:
     
 
     def detect_frame(self,frame):
-        results = self.model.track(frame, persist=True)[0]
-        id_name_dict = results.names
+        """
+        One frame's people, as `{track_id: [x1, y1, x2, y2]}`.
 
-        player_dict = {}
-        for box in results.boxes:
-            object_cls_id = box.cls.tolist()[0]
-            if id_name_dict[object_cls_id] != "person":
-                continue
-            # ByteTrack returns detections it has not yet confirmed into a track with
-            # id=None. Player selection scores candidates by ID across frames, so a
-            # detection with no stable ID is unusable - skip it rather than invent one.
-            if box.id is None:
-                continue
-            player_dict[int(box.id.tolist()[0])] = box.xyxy.tolist()[0]
+        Delegated to the backend. Kept as a method rather than deleted because both the
+        stub loader above and `tools/label_shots.py` call it, and because the contract it
+        returns — not the model that produces it — is what the rest of this class is written
+        against.
+        """
+        return self.detector.detect_frame(frame)
 
-        return player_dict
-    
     def filter_by_confidence(self, player_detections, confidence_threshold=0.7):
         """
         Filter player detections by confidence score to improve accuracy

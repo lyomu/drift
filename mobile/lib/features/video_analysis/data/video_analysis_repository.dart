@@ -25,8 +25,8 @@ enum VideoAnalysisStatus {
   /// What to tell the person, in their terms rather than the enum's.
   ///
   /// `accepted` deliberately does not say "done". The clip passed the checks and
-  /// nothing has analysed it — analysis is not built yet — and a label like
-  /// "Analysed" would be a straightforward lie to the user.
+  /// nothing has analysed it yet — analysis is a separate, queued step — and a
+  /// label like "Analysed" would be a straightforward lie to the user.
   String get label => switch (this) {
     VideoAnalysisStatus.pending => 'Checking…',
     VideoAnalysisStatus.rejected => "Can't be analysed",
@@ -114,6 +114,56 @@ class VideoAnalysisJob {
   /// The pipeline's own warning about this run, if it issued one.
   String? get analysisWarning => analysisResult?['warning'] as String?;
 
+  /// Whether this job analysed a whole session rather than one rally.
+  ///
+  /// Read from the summary's own `mode`, not from a column: the backend decides which
+  /// pipeline to run from the clip's duration and cv-service stamps the answer into the
+  /// result. One source of truth, and it is the one that actually produced the numbers.
+  bool get isSession => analysisResult?['mode'] == 'session';
+
+  /// How many passages of play the pre-pass found in the video.
+  int get segmentsFound => (analysisResult?['segments_found'] as num?)?.toInt() ?? 0;
+
+  /// How many of those were actually measured.
+  ///
+  /// This can be fewer than [segmentsFound], and the gap is the single most important
+  /// thing on a session screen: a session runs under a frame budget because the service
+  /// has one GPU, so totals over 8 of 20 rallies are not totals over the session. The
+  /// screen states both rather than letting the totals imply completeness.
+  int get segmentsAnalysed =>
+      (analysisResult?['segments_analysed'] as num?)?.toInt() ?? 0;
+
+  /// Rallies found but not measured because the session ran out of budget.
+  int get segmentsSkippedBudget =>
+      (analysisResult?['segments_skipped_budget'] as num?)?.toInt() ?? 0;
+
+  /// Rallies that were measured but had no usable court fit.
+  ///
+  /// They contribute shot counts and no speeds — the same rule this screen already
+  /// applies to a single uncalibrated clip, one level up. See [courtCalibrated].
+  int get segmentsUncalibrated =>
+      (analysisResult?['segments_uncalibrated'] as num?)?.toInt() ?? 0;
+
+  /// Whether some rallies were found but left unmeasured.
+  bool get isPartialSession => isSession && segmentsFound > segmentsAnalysed;
+
+  /// Session-wide totals. Empty for a single-clip job.
+  Map<String, dynamic> get sessionTotals =>
+      (analysisResult?['totals'] as Map<String, dynamic>?) ?? const {};
+
+  /// Shot types summed across the session's measured rallies.
+  Map<String, dynamic> get sessionShotTypes =>
+      (analysisResult?['shot_types'] as Map<String, dynamic>?) ?? const {};
+
+  /// Per-rally detail, in clip order, so a number can be traced to the rally it came from.
+  List<SessionSegment> get segments {
+    final raw = analysisResult?['segments'] as List<dynamic>? ?? const [];
+    return raw
+        .whereType<Map<String, dynamic>>()
+        .map(SessionSegment.fromJson)
+        .toList();
+  }
+
   bool get isFinished =>
       status == VideoAnalysisStatus.completed ||
       status == VideoAnalysisStatus.failed ||
@@ -139,6 +189,72 @@ class VideoAnalysisJob {
       courtChecked: precheck?['court_checked'] as bool? ?? false,
       analysisResult: json['analysisResult'] as Map<String, dynamic>?,
       failureReason: json['failureReason'] as String?,
+    );
+  }
+}
+
+/// One rally inside a session.
+///
+/// A segment always has a [status], including when it was not measured. "Not in the totals"
+/// has to carry a reason a person can read — `skipped_budget` is a different thing from
+/// `failed`, and showing an unexplained gap in a list of rallies invites the assumption that
+/// the rally did not happen.
+class SessionSegment {
+  const SessionSegment({
+    required this.index,
+    required this.status,
+    required this.startS,
+    required this.endS,
+    this.reason,
+    this.summary,
+  });
+
+  final int index;
+  final String status; // analysed | skipped_budget | skipped_too_short | failed
+  final double startS;
+  final double endS;
+  final String? reason;
+  final Map<String, dynamic>? summary;
+
+  bool get wasAnalysed => status == 'analysed';
+
+  /// Whether this rally's own court fit succeeded.
+  ///
+  /// Same reading as the job-level [VideoAnalysisJob.courtCalibrated] — `!= false`, so a
+  /// summary omitting the key counts as calibrated. Three layers of this stack agree on that
+  /// convention, and they have to: a layer that read it differently would stop showing the
+  /// warning the other two show.
+  bool get courtCalibrated => summary?['court_calibrated'] != false;
+
+  int get shots {
+    final p1 = (summary?['total_shots_p1'] as num?)?.toInt() ?? 0;
+    final p2 = (summary?['total_shots_p2'] as num?)?.toInt() ?? 0;
+    return p1 + p2;
+  }
+
+  /// Where this rally sits in the source video, as `m:ss`, for someone scrubbing to it.
+  String get timestampLabel {
+    String stamp(double seconds) {
+      final total = seconds.round();
+      final minutes = total ~/ 60;
+      final secs = (total % 60).toString().padLeft(2, '0');
+      return '$minutes:$secs';
+    }
+
+    return '${stamp(startS)}–${stamp(endS)}';
+  }
+
+  String get durationLabel => '${(endS - startS).round()}s';
+
+  factory SessionSegment.fromJson(Map<String, dynamic> json) {
+    final span = json['span'] as Map<String, dynamic>? ?? const {};
+    return SessionSegment(
+      index: (json['index'] as num?)?.toInt() ?? 0,
+      status: json['status'] as String? ?? 'failed',
+      startS: (span['start_s'] as num?)?.toDouble() ?? 0,
+      endS: (span['end_s'] as num?)?.toDouble() ?? 0,
+      reason: json['reason'] as String?,
+      summary: json['summary'] as Map<String, dynamic>?,
     );
   }
 }

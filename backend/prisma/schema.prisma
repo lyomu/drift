@@ -3163,12 +3163,15 @@ enum VideoAnalysisStatus {
   // The CV service refused the clip. Terminal. `rejectionReasons` carries messages
   // written to be shown to the person who uploaded it.
   REJECTED
-  // Precheck passed. Terminal *for now*: running the analysis is not implemented
-  // (cv-service returns 501 for it), so nothing currently moves a job past here.
+  // Precheck passed and the analysis has been enqueued. No longer terminal: the queue
+  // worker picks the job up from here and moves it to ANALYZING.
   ACCEPTED
-  // Declared ahead of the work so the lifecycle reads as intended rather than being
-  // reshaped later. Nothing sets these yet.
+  // Handed to cv-service, which runs the pipeline synchronously on one GPU.
   ANALYZING
+  // The pipeline returned a summary, stored whole in `analysisResult`. Note that a
+  // COMPLETED job is not the same as a calibrated one: the summary carries
+  // `court_calibrated` and a `warning` when the court fit failed, and that distinction
+  // is the difference between a measurement and a plausible-looking number.
   COMPLETED
   FAILED
 }

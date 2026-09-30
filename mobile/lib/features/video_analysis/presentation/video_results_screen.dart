@@ -70,7 +70,10 @@ class _Body extends ConsumerWidget {
               'Something went wrong while analysing this clip.',
         );
       case VideoAnalysisStatus.completed:
-        return _Results(job: job);
+        // A session and a single rally are different screens, not one screen with extra
+        // rows. A session's first question is "how much of it did you measure", which a
+        // single clip never has to answer.
+        return job.isSession ? _SessionResults(job: job) : _Results(job: job);
     }
   }
 }
@@ -350,6 +353,223 @@ class _SpeedRows extends StatelessWidget {
           style: type.caption.copyWith(color: colors.textSecondary),
         ),
       ],
+    );
+  }
+}
+
+/// What the pipeline found across a whole session.
+///
+/// The thing this screen must not do is present partial totals as complete ones. A session
+/// runs under a frame budget because the service has one GPU, so a 12-minute upload can
+/// easily contain more rallies than there was time to measure. Totals over 8 of 20 rallies
+/// are a real measurement of those 8 and say nothing about the other 12 — and a number
+/// without its denominator gets screenshotted and quoted without it.
+///
+/// So the count of rallies found versus measured sits above the totals, not in a footnote,
+/// and the per-rally list shows every rally including the ones that were skipped, each with
+/// its reason.
+class _SessionResults extends StatelessWidget {
+  const _SessionResults({required this.job});
+
+  final VideoAnalysisJob job;
+
+  @override
+  Widget build(BuildContext context) {
+    final type = Theme.of(context).extension<DriftTypography>()!;
+    final colors = Theme.of(context).extension<DriftColors>()!;
+    final totals = job.sessionTotals;
+    final shotTypes = job.sessionShotTypes;
+    final segments = job.segments;
+
+    final shots = (totals['total_shots'] as num?)?.toInt();
+    final shotsP1 = (totals['total_shots_p1'] as num?)?.toInt();
+    final shotsP2 = (totals['total_shots_p2'] as num?)?.toInt();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (job.isPartialSession)
+          _Message(
+            title:
+                'We measured ${job.segmentsAnalysed} of '
+                '${job.segmentsFound} rallies',
+            body:
+                'Analysing video is slow, so we work through as much of a session as '
+                'we can. The totals below cover the ${job.segmentsAnalysed} rallies '
+                'we measured — not the whole session. Every rally we found is listed '
+                'further down.',
+            tone: _Tone.warning,
+          )
+        else
+          _Message(
+            title:
+                'We measured all ${job.segmentsAnalysed} '
+                'rall${job.segmentsAnalysed == 1 ? 'y' : 'ies'} we found',
+            body: 'The totals below cover the whole session.',
+            tone: _Tone.success,
+          ),
+
+        if (job.segmentsUncalibrated > 0) ...[
+          const SizedBox(height: DriftSpacing.s3),
+          _Message(
+            title: 'Some rallies could not be measured for speed',
+            // The pipeline's own sentence where it gave one: it knows how many and why.
+            body:
+                job.analysisWarning ??
+                '${job.segmentsUncalibrated} of the rallies we measured did not have '
+                    'clear enough court lines, so they add to the shot counts but not '
+                    'to the speeds.',
+            tone: _Tone.warning,
+          ),
+        ],
+
+        const SizedBox(height: DriftSpacing.s5),
+        Text('Session totals', style: type.subtitle),
+        const SizedBox(height: DriftSpacing.s3),
+        Row(
+          children: [
+            Expanded(
+              child: _Stat(
+                label: 'Rallies measured',
+                value: '${job.segmentsAnalysed}',
+              ),
+            ),
+            const SizedBox(width: DriftSpacing.s3),
+            // Shot counts come from contact detection, which does not depend on the court
+            // fit, so they survive uncalibrated rallies intact — same as a single clip.
+            Expanded(child: _Stat(label: 'Shots', value: '${shots ?? 0}')),
+          ],
+        ),
+
+        if (shotsP1 != null || shotsP2 != null) ...[
+          const SizedBox(height: DriftSpacing.s3),
+          Row(
+            children: [
+              Expanded(child: _Stat(label: 'You', value: '${shotsP1 ?? 0}')),
+              const SizedBox(width: DriftSpacing.s3),
+              Expanded(
+                child: _Stat(label: 'Opponent', value: '${shotsP2 ?? 0}'),
+              ),
+            ],
+          ),
+        ],
+
+        if (shotTypes.isNotEmpty) ...[
+          const SizedBox(height: DriftSpacing.s5),
+          Text('Shot types', style: type.subtitle),
+          const SizedBox(height: DriftSpacing.s2),
+          ...shotTypes.entries.map(
+            (entry) => Padding(
+              padding: const EdgeInsets.only(bottom: DriftSpacing.s1),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(entry.key, style: type.body),
+                  Text('${entry.value}', style: type.body),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: DriftSpacing.s2),
+          Text(
+            'Shot types are an early feature and are often wrong. Treat them as '
+            'a rough guide.',
+            style: type.caption.copyWith(color: colors.textSecondary),
+          ),
+        ],
+
+        if (job.courtCalibrated) ...[
+          const SizedBox(height: DriftSpacing.s5),
+          Text('Speed', style: type.subtitle),
+          const SizedBox(height: DriftSpacing.s3),
+          // Fed the session totals rather than a single summary. Those averages are
+          // weighted by the shots that produced them, not a mean of per-rally means,
+          // which would weight a one-shot rally like a twelve-shot one.
+          _SpeedRows(summary: totals),
+        ],
+
+        if (segments.isNotEmpty) ...[
+          const SizedBox(height: DriftSpacing.s6),
+          Text('Rally by rally', style: type.subtitle),
+          const SizedBox(height: DriftSpacing.s3),
+          ...segments.map((segment) => _SegmentRow(segment: segment)),
+        ],
+
+        const SizedBox(height: DriftSpacing.s6),
+        Text(
+          'Analysis is an early feature. Numbers here come from a single camera '
+          'and are estimates, not radar readings.',
+          style: type.caption.copyWith(color: colors.textSecondary),
+        ),
+      ],
+    );
+  }
+}
+
+/// One rally in the session list, measured or not.
+///
+/// A skipped rally is shown, not hidden. It is a real passage of play that we found and
+/// chose not to measure, and omitting it would make the session look shorter than it was.
+class _SegmentRow extends StatelessWidget {
+  const _SegmentRow({required this.segment});
+
+  final SessionSegment segment;
+
+  @override
+  Widget build(BuildContext context) {
+    final type = Theme.of(context).extension<DriftTypography>()!;
+    final colors = Theme.of(context).extension<DriftColors>()!;
+
+    final (icon, tint, note) = switch (segment.status) {
+      'analysed' => (
+        Icons.check_circle_outline,
+        colors.success,
+        segment.courtCalibrated
+            ? '${segment.shots} shots'
+            : '${segment.shots} shots · no court fit, so no speeds',
+      ),
+      'skipped_budget' => (
+        Icons.schedule,
+        colors.textSecondary,
+        'Not measured — we ran out of analysis time for this session',
+      ),
+      'skipped_too_short' => (
+        Icons.straighten,
+        colors.textSecondary,
+        'Too short to measure',
+      ),
+      _ => (
+        Icons.error_outline,
+        colors.error,
+        segment.reason ?? 'This rally could not be analysed',
+      ),
+    };
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: DriftSpacing.s3),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 18, color: tint),
+          const SizedBox(width: DriftSpacing.s2),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${segment.timestampLabel}  ·  ${segment.durationLabel}',
+                  style: type.body,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  note,
+                  style: type.caption.copyWith(color: colors.textSecondary),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

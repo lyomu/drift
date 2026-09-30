@@ -122,3 +122,67 @@ def test_missing_mini_court_position_refuses_rather_than_guesses():
 def test_separation_constant_is_physically_sensible():
     """A guard on the constant itself: seconds, and long enough to mean a new point."""
     assert 1.0 <= MIN_SERVE_SEPARATION_S <= 10.0
+
+
+# ── NaN ball positions: the Phase 0 crash ──────────────────────────────────────
+
+def test_nan_ball_box_is_refused_not_crashed():
+    """
+    A clip with no ball detections at all crashed the pipeline instead of refusing.
+
+    `interpolate_ball_positions` has nothing to interpolate between when zero frames carry
+    a ball, and pandas leaves the NaNs in place. A list of four NaNs is truthy, so the
+    `if not ball_box` guard passed it through to `get_center_of_bbox`, which casts to int
+    and raised `ValueError: cannot convert float NaN to integer`.
+
+    Observed on clip 4 of the Phase 0 batch (0/150 frames with a ball) — see
+    PHASE0_FINDINGS.md "Incidental bug". The court gate had already refused that clip, so
+    nothing wrong was published, but a raise where a refusal belongs takes the whole job
+    down on one bad upload.
+    """
+    ball, players, mini = _scene(60, [10])
+    ball[10] = {1: [float("nan")] * 4}
+
+    verdict, reason = is_serve(10, ball, players, mini, FAR_Y, NEAR_Y, explain=True)
+    assert verdict is False
+    assert "not a number" in reason
+
+
+def test_partially_nan_ball_box_is_also_refused():
+    """
+    One NaN corner is enough. A box with three good coordinates still has no usable centre,
+    and averaging a NaN into it produces NaN rather than an approximation.
+    """
+    ball, players, mini = _scene(60, [10])
+    ball[10] = {1: [425.0, float("nan"), 435.0, 255.0]}
+
+    verdict, reason = is_serve(10, ball, players, mini, FAR_Y, NEAR_Y, explain=True)
+    assert verdict is False
+    assert "not a number" in reason
+
+
+def test_infinite_ball_box_is_refused():
+    """
+    Infinity is not NaN and is just as unusable: `int(inf)` raises the same way, and an
+    infinite coordinate would otherwise pass an `isnan` check and fail later, further from
+    the cause.
+    """
+    ball, players, mini = _scene(60, [10])
+    ball[10] = {1: [425.0, float("inf"), 435.0, 255.0]}
+
+    verdict, reason = is_serve(10, ball, players, mini, FAR_Y, NEAR_Y, explain=True)
+    assert verdict is False
+    assert "not a number" in reason
+
+
+def test_nan_frames_do_not_break_the_whole_clip():
+    """
+    The refusal has to be per frame, not per clip. A rally with one unusable ball position
+    should still have its other contacts judged, or a single bad frame silently costs every
+    serve in the clip.
+    """
+    ball, players, mini = _scene(60, [10, 40])
+    ball[10] = {1: [float("nan")] * 4}
+
+    assert detect_serve_frames([10, 40], ball, players, mini,
+                               FAR_Y, NEAR_Y, fps=30.0) == [40]

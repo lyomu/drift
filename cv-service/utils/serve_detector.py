@@ -42,6 +42,8 @@ are the assumptions that produced the phantom serves in the first place.
 """
 from __future__ import annotations
 
+import math
+
 from utils.bbox_utils import get_center_of_bbox
 
 # How far beyond a baseline a server may stand, as a fraction of court length.
@@ -105,6 +107,25 @@ def is_serve(
     ball_box = ball_detections[frame].get(1)
     if not ball_box:
         return result(False, "no ball detection at contact")
+
+    # A box of NaNs is not a missing box, and `not ball_box` does not catch it — a list of
+    # four floats is truthy whatever the floats are. `interpolate_ball_positions` produces
+    # exactly that when a clip has no ball detections to interpolate between: pandas leaves
+    # the NaNs in place. `get_center_of_bbox` then casts to int and raises
+    # `ValueError: cannot convert float NaN to integer` at bbox_utils.py:3.
+    #
+    # Observed on clip 4 of the Phase 0 batch (0/150 frames with a ball detected), which
+    # crashed the run instead of refusing it — see PHASE0_FINDINGS.md "Incidental bug". The
+    # validity gate had already refused that clip, so no wrong number was published, but a
+    # pipeline that raises where it could decline is one bad clip away from taking a whole
+    # job down.
+    #
+    # Refused here rather than by teaching `get_center_of_bbox` to tolerate NaN: that
+    # helper is called from everywhere, and a tolerant version would let a NaN position
+    # propagate into speeds and placements as a plausible-looking number instead of
+    # stopping at the one place that can name what went wrong.
+    if not all(isinstance(v, (int, float)) and math.isfinite(v) for v in ball_box):
+        return result(False, "ball position is not a number at contact")
 
     frame_players = player_detections[frame]
     ball_centre = get_center_of_bbox(ball_box)

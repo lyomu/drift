@@ -1,7 +1,7 @@
 import cv2
 import os
 
-def stub_path_for_video(base_stub: str, video_path: str) -> str:
+def stub_path_for_video(base_stub: str, video_path: str, variant: str = "") -> str:
     """
     Derive a per-video cache path from a generic stub path.
 
@@ -39,6 +39,16 @@ def stub_path_for_video(base_stub: str, video_path: str) -> str:
 
     A video that does not exist keeps the name-only key: it cannot be analysed anyway, and
     this function is called in tests with paths that were never on disk.
+
+    `variant` is the same argument one level further out: a cache key must identify what
+    PRODUCED the detections, not only what they were produced from. Player detection is now
+    a choice between two backends (`models.player_backend`), and a key made of the video
+    alone would let a YOLO run's boxes be loaded into an RF-DETR run and compared against
+    themselves. That is this docstring's own failure mode with the detector substituted for
+    the clip, so it is keyed out the same way.
+
+        tracker_stubs/player_detections.pkl
+        → tracker_stubs/player_detections__rfdetr__clip_05_wimbledon_4615919.pkl
     """
     stem = os.path.splitext(os.path.basename(video_path))[0]
     try:
@@ -46,7 +56,10 @@ def stub_path_for_video(base_stub: str, video_path: str) -> str:
     except OSError:
         pass
     root, ext = os.path.splitext(base_stub)
-    return f"{root}__{stem}{ext}"
+    # No variant keeps the pre-existing path exactly, so every already-cached stub and every
+    # caller that does not know about backends is unaffected.
+    prefix = f"__{variant}" if variant else ""
+    return f"{root}{prefix}__{stem}{ext}"
 
 
 def stub_matches_frames(detections, frames) -> bool:

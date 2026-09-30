@@ -101,6 +101,39 @@ gate a pipeline. `--quick` skips loading the court model, `--json` emits a machi
 result. See [`utils/precheck.py`](utils/precheck.py) — some of its thresholds are
 provisional and say so.
 
+### Analysing a whole session
+
+```bash
+# What's in here, and where? Seconds, no GPU work.
+tennis-vision session input_videos/practice.mp4 --dry-run
+
+# Find the rallies and analyse each one
+tennis-vision session input_videos/practice.mp4 -o output/session.json
+```
+
+`analyze` assumes one continuous passage of play; `session` removes that constraint. A cheap
+pre-pass seek-samples the clip for court validity and subject motion, turns that into rally
+spans, and runs the pipeline once per rally as a subprocess. Session totals come back with a
+per-rally breakdown.
+
+Two things about it are worth knowing before reading its numbers:
+
+- **It runs under a frame budget** (`session.frame_budget`, default 5400 frames ≈ 3 minutes
+  of play ≈ 55 minutes of GPU). A session can contain more rallies than that covers. Every
+  rally found is reported either way, and the ones that did not fit carry
+  `status: "skipped_budget"` — so `segments_found` and `segments_analysed` always travel
+  together. A total over 8 of 20 rallies must not read as a total over the session.
+- **Its thresholds are provisional, not calibrated.** There is no multi-rally footage in this
+  repo to calibrate against. `tools/make_session_clip.py` builds a synthetic session from real
+  rally clips with known boundaries and `eval/rally_segmentation_accuracy.py` scores against
+  it, which measures the mechanism and explicitly not whether the thresholds suit real
+  footage. See [`utils/rally_segmenter.py`](utils/rally_segmenter.py).
+
+Session averages are weighted by the shots that produced them rather than averaged across
+rallies, and an uncalibrated rally contributes shot counts but no speeds — see
+[`utils/session_aggregate.py`](utils/session_aggregate.py) for why both of those are
+load-bearing.
+
 ## HTTP service
 
 ```bash
@@ -112,7 +145,13 @@ uvicorn api:app --host 0.0.0.0 --port 8000
 |---|---|
 | `GET /health` | Liveness, and whether the court model loaded |
 | `POST /precheck` | Multipart video upload → the precheck verdict as JSON |
-| `POST /analyze` | **501 on purpose** — a full run is minutes of GPU work and belongs on a queue |
+| `POST /analyze` | Full pipeline on one rally, synchronously. Minutes. `503` when busy |
+| `POST /analyze-session` | Segment a long clip and analyse its rallies. Hours. `dry_run=true` segments only |
+
+Both analysis routes are synchronous and share a single slot, because there is one GPU. A
+second concurrent request gets `503` with `Retry-After` rather than being queued — the
+caller (the backend's worker) already owns retries and persistence, and duplicating them here
+would put the same concerns in two places.
 
 The court model loads once at startup and is reused, which is what makes `/precheck`
 answer in 74 ms–1.6 s instead of reloading ResNet-50 per request.
@@ -130,7 +169,7 @@ expose it publicly.
 
 ## Tests
 
-**454 unit and integration tests** (`pytest tests/`). Run them with:
+**556 unit and integration tests** (`pytest tests/`). Run them with:
 
 ```bash
 pytest tests/ -m "not slow"
@@ -163,8 +202,13 @@ on Drift's real (non-broadcast) camera footage, which is the next step.
 
 ## Not built yet
 
-- No backend (Nest) integration, no upload handling
-- `/analyze` over HTTP — the CLI is the only way to run a full analysis
 - No auth, rate limiting or metrics on the HTTP service
 - No Dockerfile, no Jenkinsfile stage, no deploy target (won't run on the shared box)
-- No Drift footage tested yet — only the bundled sample clip
+- **No Drift footage tested yet** — only the bundled broadcast samples. The Phase 0 re-shoot
+  has not happened, so the court gate is still unscored on real footage
+  ([`PHASE0_FINDINGS.md`](PHASE0_FINDINGS.md)), no stroke-type label has cleared a bar on
+  Drift footage, and the session segmenter's thresholds are uncalibrated
+- No stroke-type classification wired into the pipeline. The racket detector and its features
+  exist and are measured for coverage only ([`trackers/racket_detector.py`](trackers/racket_detector.py))
+- The permissive detector backend is built but not the default, so `ultralytics` (AGPL-3.0)
+  is still on the critical path for a launch — see [`LICENSING.md`](LICENSING.md)

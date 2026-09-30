@@ -18,6 +18,22 @@ pipeline:
 
 models:
   player: "yolov8x"
+  # Which person detector runs. `yolo` is ultralytics/YOLOv8x (AGPL-3.0); `rfdetr` is
+  # RF-DETR (Apache-2.0) plus supervision.ByteTrack (MIT) for track ids.
+  #
+  # Default is deliberately still the AGPL path: every measured number in README.md and
+  # UPSTREAM_README.md was produced on it, so switching the default silently re-baselines
+  # all of them. Flip it once eval/player_detector_comparison.py says the two agree on the
+  # thing that matters — whether player selection finds two players on opposite sides.
+  #
+  # The switch is a LAUNCH BLOCKER, not an optimisation: AGPL-3.0 §13 covers serving over a
+  # network, and it covers weights fine-tuned through ultralytics "regardless of whether you
+  # train from scratch". See LICENSING.md §1.
+  player_backend: "yolo"     # yolo | rfdetr
+  player_rfdetr_size: "medium" # nano | small | medium | base | large. Unmeasured. NOT "base":
+                             # RFDETRBase is deprecated upstream since v1.7.0 and removed
+                             # in v2.0.0, measured on rfdetr 1.11.0. Still selectable for
+                             # reproducing anything measured on it.
   ball: "models/last.pt"
   # Geometrically fine-tuned (translation/scale/perspective/flip). Beat the original
   # weights on BOTH gates: in-distribution val median 4.03 -> 2.90 px, and real-clip
@@ -52,6 +68,17 @@ detection:
   player_confidence: 0.7
   ball_confidence: 0.6
   shot_player_distance_px: 300  # ball must be within this many px of a player to count as a shot (not a bounce)
+
+session:
+  # Rally frames one `tennis-vision session` run may spend. At the measured ~0.63 s/frame
+  # on an RTX 4060, 5400 frames (~3 minutes of play) is roughly 55 minutes of GPU.
+  #
+  # This is a POLICY choice, not a measurement: the service runs one analysis at a time
+  # because it has one GPU, so this bounds how long a single session upload may occupy it.
+  # A 10-minute session can easily contain more rallies than this covers — every rally found
+  # is reported either way, and the ones that did not fit carry `skipped_budget`. Raise it on
+  # dedicated hardware. See session.py.
+  frame_budget: 5400
 
 shot_classifier:
   volley_distance_threshold: 40   # px from net on mini-court (was 150 - was broken)

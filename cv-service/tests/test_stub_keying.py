@@ -202,3 +202,38 @@ def test_a_missing_video_keeps_the_name_only_key():
     """
     key = stub_path_for_video(BASE, "input_videos/never_existed.mp4")
     assert key.endswith("__never_existed.pkl")
+
+
+# ── backend keying: a cache must identify what PRODUCED the detections ─────────
+
+def test_backend_variant_changes_the_key():
+    """
+    Player detection is now a choice between two detectors (models.player_backend), and they
+    write different boxes for the same clip. A key made of the video alone would let a YOLO
+    run's players be loaded into an RF-DETR run — which is this file's original bug with the
+    detector substituted for the clip, and it would silently make the two backends look
+    identical in any comparison that used stubs.
+    """
+    yolo = stub_path_for_video(BASE, "input_videos/clip_05.mp4", variant="yolo")
+    rfdetr = stub_path_for_video(BASE, "input_videos/clip_05.mp4", variant="rfdetr")
+    assert yolo != rfdetr
+
+
+def test_no_variant_keeps_the_existing_path_exactly():
+    """
+    Back-compatibility, and it is load-bearing: every already-cached stub on disk and every
+    caller that does not know about backends must keep resolving to the same file, or adding
+    the parameter silently invalidates the whole cache.
+    """
+    assert (stub_path_for_video(BASE, "input_videos/clip_05.mp4")
+            == stub_path_for_video(BASE, "input_videos/clip_05.mp4", variant=""))
+
+
+def test_variant_and_clip_are_both_in_the_key():
+    """Neither dimension may swallow the other: two backends x two clips is four keys."""
+    keys = {
+        stub_path_for_video(BASE, f"input_videos/{clip}.mp4", variant=backend)
+        for clip in ("clip_05", "clip_08")
+        for backend in ("yolo", "rfdetr")
+    }
+    assert len(keys) == 4

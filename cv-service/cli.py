@@ -8,6 +8,7 @@ so there is exactly one code path per capability and the CLI cannot drift from w
 `python main.py` does.
 
     tennis-vision analyze clip.mp4 -o output/run.avi
+    tennis-vision session practice.mp4 --dry-run
     tennis-vision precheck clip.mp4
     tennis-vision download-models
     tennis-vision version
@@ -69,6 +70,19 @@ def _cmd_analyze(argv: list[str]) -> int:
     finally:
         sys.argv = original_argv
     return 0
+
+
+def _cmd_session(argv: list[str]) -> int:
+    """
+    Find the rallies in a long clip and analyse each one.
+
+    Delegates to `session.py` rather than reimplementing its argument parsing, so the
+    subcommand and `python session.py` cannot drift — the same rule the other subcommands
+    follow.
+    """
+    import session
+
+    return session.main(argv)
 
 
 def _cmd_precheck(argv: list[str]) -> int:
@@ -162,13 +176,15 @@ def main() -> int:
         epilog="Run 'tennis-vision <command> --help' for command-specific options.",
     )
     parser.add_argument("command", nargs="?", default="help",
-                        choices=["analyze", "precheck", "download-models", "version",
-                                 "help"],
+                        choices=["analyze", "session", "precheck", "download-models",
+                                 "version", "help"],
                         help="what to do")
     args, rest = parser.parse_known_args()
 
     if args.command == "analyze":
         return _cmd_analyze(rest)
+    if args.command == "session":
+        return _cmd_session(rest)
     if args.command == "precheck":
         return _cmd_precheck(rest)
     if args.command == "download-models":

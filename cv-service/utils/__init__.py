@@ -45,3 +45,21 @@ from .precheck import (
     WARN,
     REJECT,
 )
+# Session segmentation and aggregation (Phase 3). Imported here for the same reason as the
+# rest: `from utils import ...` is the convention the pipeline and every eval script use.
+#
+# `rally_segmenter` imports `precheck` above it for MIN_DURATION_S — the segmenter and the
+# upload gate must agree about what is too short to be a rally, so the floor is shared rather
+# than restated.
+from .rally_segmenter import (
+    segment_session,
+    subject_motion,
+    cut_span,
+    RallySpan,
+    SegmentationResult,
+)
+from .session_aggregate import (
+    aggregate_session,
+    session_totals_match_parts,
+    is_calibrated,
+)

@@ -39,7 +39,10 @@ dependencies = [
     # Required by ultralytics' tracking mode, which PlayerTracker uses. Absent from this
     # list until now, so `pip install tennis-vision` produced an install that crashed on
     # the first tracked frame while `pip install -r requirements.txt` worked.
-    "supervision>=0.27",
+    # Capped below 0.31: sv.ByteTrack is removed there, and the replacement lives in a PyPI
+    # package named "trackers" that collides with this repo's own trackers/ package. See
+    # requirements.txt for the full note.
+    "supervision>=0.27,<0.31",
     "lapx>=0.5.2",
 ]
 
@@ -81,7 +84,9 @@ packages = [
     "trackers",
     "utils",
 ]
-py-modules = ["main", "cli", "api"]
+# `session` orchestrates `main` once per rally, so a wheel that ships one and not the
+# other has a `tennis-vision session` subcommand that cannot import its own implementation.
+py-modules = ["main", "cli", "api", "session"]
 
 [tool.setuptools.package-data]
 # Restricted to the small trained weights and any config carried by a package. The large
