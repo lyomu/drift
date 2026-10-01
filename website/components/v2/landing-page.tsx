@@ -168,7 +168,6 @@ export function LandingPage({ locale }: LandingPageProps) {
             <Button href={waitlist}>START PLAYING</Button>
             <a className={styles.textAction} href="#clubs"><BuildingIcon /> FOR CLUBS / COACHES</a>
           </div>
-          <p className={styles.online}><span /> 1,240 players looking for a match now</p>
         </div>
       </section>
 
@@ -177,41 +176,24 @@ export function LandingPage({ locale }: LandingPageProps) {
           <div className={styles.aboutTop}>
             <div>
               <Kicker lime>ABOUT DRIFT</Kicker>
-              <h2>A season, not a scramble.</h2>
-              <p>Drift started with a simple frustration: finding a good match takes more effort than playing one. So we built the whole loop into one app - find an opponent at your level, agree a court and a time, play, and confirm the result together. Tennis leads, padel runs on the same rails.</p>
+              <h2>Built around the people who power the game.</h2>
+              <p>Drift is a connected tennis platform built for players, coaches, clubs and communities. We make it easier for players to find opponents, discover local coaches, organise matches, join competitions, discover courts and track their progress, while giving coaches a platform to connect with players and support their development. For clubs, Drift simplifies the management of members, competitions, fixtures, results, standings, courts and communication. By bringing every part of the tennis community into one ecosystem, Drift helps create more opportunities to <strong>play, compete, connect and grow the game.</strong></p>
             </div>
             <div className={`${styles.photoPanel} ${styles.aboutPhoto}`} />
-          </div>
-          <div className={styles.aboutBottom}>
-            <div className={styles.statsRow}>
-              <div><strong>2</strong><span>SPORTS, ONE RATING</span></div>
-              <div><strong>5</strong><span>STAGE SEASON LOOP</span></div>
-              <div><strong>Free</strong><span>WHILE WE GET GOING</span></div>
-              <div><strong>Padel</strong><span>FOLLOWING TENNIS</span></div>
-            </div>
           </div>
         </div>
       </section>
 
       <section className={`${styles.proof} ${styles.deepBand}`}>
         <div className={`${styles.inner} ${styles.proofGrid}`}>
+          <div className={styles.liveCard} aria-label="Illustrative live match card" style={{ padding: 0, overflow: "hidden", width: "100%", height: "100%", border: "none", background: "none", boxShadow: "none" }}>
+            <img src="/images/match-card-preview.jpg" alt="Court preview" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+          </div>
           <div className={styles.proofCopy}>
             <Kicker lime>ONE APP. EVERY MATCH.</Kicker>
-            <h2>Find the people who make you play more.</h2>
-            <p>Drift turns a spare hour into a great match. Discover players at your level, join a local court, and let the good games happen.</p>
-            <div className={styles.proofStats}><span><b>4.9</b> APP RATING</span><span><b>24k</b> ACTIVE PLAYERS</span></div>
-          </div>
-          <div className={styles.liveCard} aria-label="Illustrative live match card">
-            <div className={styles.liveTop}><strong>DRIFT / PLAY NOW</strong><span><i /> 18 NEARBY</span></div>
-            <div className={styles.matchCard}>
-              <div className={styles.playerDetails}>
-                <span>TODAY | 6:30 PM</span>
-                <h3>Sunset Rally</h3>
-                <p>Riverside Club | Intermediate</p>
-                <button type="button">JOIN MATCH <Arrow /></button>
-              </div>
-              <div className={styles.courtPreview}><span /><i /></div>
-            </div>
+            <h2>Find your next match. Play more often.</h2>
+            <p>Drift connects you with players at your level, helps you find the right court, and makes organising your next match simple. Less time planning, more time playing.</p>
+            <div className={styles.proofStats}><span><b>100+</b> COUNTRIES</span></div>
           </div>
         </div>
       </section>
@@ -239,9 +221,12 @@ export function LandingPage({ locale }: LandingPageProps) {
         <div className={styles.clubsPhotoShade} aria-hidden="true" />
         <div className={`${styles.inner} ${styles.clubsCopy}`}>
           <Kicker lime>YOUR HOME COURT</Kicker>
-          <h2>Clubs that feel like a second home.</h2>
-          <p>Explore courts, coaching, drop-ins, and the people who are always up for one more set.</p>
-          <a className={styles.clubsAction} href="#clubs">EXPLORE CLUBS <Arrow /></a>
+          <h2>Manage your club</h2>
+          <p>Bring your tennis and padel players, courts, coaches and competitions together with Drift. Manage memberships, organise leagues and tournaments, coordinate fixtures, schedules and results, and keep your community informed and connected. From everyday club activities to competitive events and player development, Drift gives you the tools to simplify your tennis or padel club management, engage your members and create more opportunities for everyone to play, compete and grow.</p>
+          <div style={{ display: "flex", gap: "32px", alignItems: "center", marginTop: "32px" }}>
+            <Button href={waitlist}>ONBOARD YOUR CLUB TODAY</Button>
+            <a className={styles.clubsAction} href="#clubs" style={{ margin: 0 }}>EXPLORE CLUBS <Arrow /></a>
+          </div>
         </div>
         <div className={styles.featuredClub}><span>FEATURED CLUB</span><strong>NORTHSIDE TENNIS CLUB</strong><small>12 courts | Open until 10 PM</small></div>
       </section>
@@ -250,11 +235,10 @@ export function LandingPage({ locale }: LandingPageProps) {
         <div className={`${styles.inner} ${styles.communityGrid}`}>
           <div className={styles.communityHeader}>
             <Kicker lime>THE DRIFT EFFECT</Kicker>
-            <h2>Made for the people who stay for one more set.</h2>
+            <h2>More connections. More competition. More time on court.</h2>
+            <p style={{ marginTop: 16, color: 'var(--muted)', fontSize: 17, lineHeight: '25px', maxWidth: 640 }}>Drift brings the people and opportunities around tennis into one connected experience. Find players, discover clubs and coaches, join competitions, develop your skills, and always have a reason to get back on court.</p>
           </div>
-          <blockquote><span>&quot;</span>Drift changed my city from a list of courts into a community of people I actually want to play with.</blockquote>
-          <p className={styles.quoteBy}>MAYA R. | DRIFT MEMBER, LONDON</p>
-          <div className={styles.communityStats}><span><b>48k+</b>MATCHES MADE</span><span><b>92%</b>COME BACK WEEKLY</span><span><b>36</b>CITIES IN PLAY</span></div>
+          <blockquote><span style={{ fontStyle: 'normal', fontWeight: 700, fontSize: 18, color: 'var(--lime)', display: 'block', marginBottom: 12 }}>Built around community.</span>Whether you&apos;re looking for your next opponent, working on your game, coaching new players, or running a growing club, Drift gives you the tools and connections to make more happen on and off the court.</blockquote>
           <div className={styles.communityPhoto} />
         </div>
       </section>
@@ -271,12 +255,10 @@ export function LandingPage({ locale }: LandingPageProps) {
       <section className={styles.training} id="training">
         <div className={styles.trainingPhoto} aria-hidden="true" />
         <div className={styles.trainingPhotoShade} aria-hidden="true" />
-        <div className={styles.trainingBadge}>COACH-LED, NOT FEED-LED</div>
         <div className={`${styles.inner} ${styles.trainingCopy}`}>
-          <Kicker lime>GET BETTER, TOGETHER</Kicker>
-          <h2>Find coaches who speak your game.</h2>
-          <p>Book small-group sessions, get personal feedback, and turn your next hour on court into real progress.</p>
-          <div className={styles.benefitRow}><span><b>1:1</b>Private drills</span><span><b>SMALL</b>Squads of 4</span><span><b>LOCAL</b>Verified coaches</span></div>
+          <Kicker lime>FOR COACHES</Kicker>
+          <h2>Grow your coaching. Find more players.</h2>
+          <p>Join Drift and put your coaching services in front of players actively looking to improve their game. Build your coaching profile, showcase your experience and specialities, connect with players at different levels, manage coaching opportunities and grow your presence within the tennis community.</p>
         </div>
       </section>
 
@@ -321,9 +303,9 @@ export function LandingPage({ locale }: LandingPageProps) {
 
       <section className={`${styles.assessment} ${styles.lightBand}`} id="assessment">
         <div className={`${styles.inner} ${styles.assessmentGrid}`}>
-          <div><span className={styles.sectionNumber}>01</span><h2>Find your level. Find your people.</h2><p>A short, honest assessment places you on a 1.0–7.0 scale. Discovery stays beginner-safe by only introducing you to players you can actually rally with.</p></div>
+          <div><h2>Find your level. Find your people.</h2><p>Start with a quick assessment that helps Drift understand your experience, playing style and current skill level. From there, discover players who match how you want to play — whether you&apos;re looking for a casual rally, a regular hitting partner or your next competitive challenge.</p></div>
           <div className={styles.assessmentPhoto} />
-          <div className={styles.assessmentBenefits}><span><b>ADAPTIVE ASSESSMENT</b>Thirteen questions estimate your level and skill breakdown. Adjust it if the result misses.</span><span><b>PRIVACY-FIRST</b>Filter by level, distance, format and availability - exact locations and contact details stay private.</span><span><b>COURTS NEARBY</b>Surface, lighting, booking type and verified club details in one useful court finder.</span></div>
+          <div className={styles.assessmentBenefits}><span><b>SMART ASSESSMENT</b>Answer a few questions about your experience, skills and match play to establish a starting level that you can review and adjust.</span><span><b>BETTER MATCHES</b>Discover players based on level, location, availability and playing preferences — so you can spend less time searching and more time playing.</span><span><b>PLAY YOUR WAY</b>Looking for singles, doubles, social play or serious competition? Set your preferences and find players who want the same kind of game.</span></div>
         </div>
       </section>
 
@@ -334,16 +316,10 @@ export function LandingPage({ locale }: LandingPageProps) {
         </div>
       </section>
 
-      <section className={`${styles.rules} ${styles.lightBand}`} id="rules">
-        <div className={`${styles.inner} ${styles.rulesGrid}`}>
-          <div><Kicker>YOUR SEASON, AT A GLANCE</Kicker><h2>A format that keeps results honest.</h2><p>Real fixtures, real confirmations and clear movement - without the admin circus.</p></div>
-          <div className={styles.ruleList}><article><b>01</b><div><h3>AUTOMATIC FIXTURES</h3><p>Round-robin fixtures are generated per season and land on your calendar when the round opens.</p></div></article><article><b>02</b><div><h3>CONFIRMED RESULTS</h3><p>Opponent-confirmed results; disputes remain in a real queue until they are settled.</p></div></article><article><b>03</b><div><h3>STANDINGS WITH HISTORY</h3><p>Round-closed standings snapshots make every movement arrow next to your name earned, not decorative.</p></div></article></div>
-        </div>
-      </section>
 
-      <section className={styles.faq} id="faq"><div className={styles.inner}><Kicker>FAQ</Kicker><h2>Questions, answered.</h2><p>A few helpful details before you join the community and play your next match.</p><div className={styles.faqGrid}>{["Is Drift free to join?", "How does matching work?", "Can I play in a club league?", "When will the app be available?"].map((question) => <details key={question}><summary>{question}<span>⌄</span></summary><p>We are building Drift to make local tennis simpler, more social, and easier to keep playing.</p></details>)}</div></div></section>
+      <section className={styles.faq} id="faq"><div className={styles.inner}><Kicker>FAQ</Kicker><h2>Questions, answered.</h2><p>A few helpful details before you join the community and play your next match.</p><div className={styles.faqList}>{[{q:"How does player matching work?",a:"Drift helps you discover players based on factors such as your playing level, location, availability and playing preferences. Whether you want a casual hitting partner or a competitive opponent, the goal is to help you find people who fit the way you want to play."},{q:"Can I join leagues and tournaments?",a:"Yes. Drift lets you discover and join available leagues, tournaments and other competitions. You can follow fixtures, schedule matches, submit results and keep track of standings and your competition progress from the app."},{q:"Can coaches and clubs join Drift?",a:"Yes. Coaches can create profiles, showcase their experience and services, and connect with players looking to improve. Clubs can use Drift to manage members, organise competitions, coordinate fixtures and results, communicate with their community and create more opportunities for members to play."},{q:"How does Drift determine my playing level?",a:"When you join, Drift guides you through a short assessment covering your experience, skills and match play. This helps establish a starting level that can evolve as you play, record results and build your playing history."},{q:"Is Drift only for tennis players?",a:"Drift is built primarily around tennis, bringing players, coaches and clubs into one connected platform. Padel is also supported as an additional sport, allowing players to expand their profile and discover more ways to play."},{q:"Can I find courts on Drift?",a:"Yes. Drift helps you discover courts and clubs, view useful facility information and find available contact or booking options where provided."},{q:"Can Drift help me improve my skills?",a:"Yes. Drift is designed around more than finding matches. You can understand different areas of your game, set development goals, access relevant training and drills, and track how your skills develop over time."},{q:"Is my location visible to other players?",a:"Drift is designed with player privacy in mind. Discovery can use general location information to help you find relevant players and courts without publicly exposing your precise location or private contact information."}].map(({q,a}) => <details key={q}><summary>{q}<span className={styles.faqIcon}>+</span></summary><p>{a}</p></details>)}</div></div></section>
 
-      <section className={styles.download} id="download"><div className={styles.inner}><Kicker lime>GET THE APP</Kicker><h2>Play your first match this week.</h2><p>One app for finding opponents at your level, agreeing a court and a time, and keeping your season honest.</p><div className={styles.storeButtons}><a href={waitlist}><StoreIcon platform="apple" /><div><span>Download on the</span><b>App Store</b></div></a><a href={waitlist}><StoreIcon platform="android" /><div><span>Get it on</span><b>Google Play</b></div></a></div><small>Tennis first. Padel follows. Free to join while we get going.</small></div></section>
+      <section className={styles.download} id="download"><div className={styles.inner}><Kicker lime>GET THE APP</Kicker><h2>Your next game starts with Drift.</h2><p>Find players at your level, organise matches, discover courts, join competitions and keep building your game — all in one place.</p><div className={styles.storeButtons}><a href={waitlist} aria-label="Download on the App Store"><img src="/images/app-store-badge.webp" alt="Download on the App Store" style={{ height: 52, width: 'auto' }} /></a><a href={waitlist} aria-label="Get it on Google Play"><img src="/images/google-play-badge.png" alt="Get it on Google Play" style={{ height: 52, width: 'auto' }} /></a></div><small>Tennis first. Padel follows. Free to join while we get going.</small></div></section>
 
       <section className={styles.closing} id="closing"><div className={styles.inner}><div><h2>Your season starts with one match.</h2><p>Join the waitlist—Tennis first, Padel follows. We’ll let you know the moment Drift is live.</p></div><Button href={waitlist}>JOIN THE WAITLIST</Button></div></section>
 
