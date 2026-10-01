@@ -78,6 +78,7 @@ dependencies:
   #   posthog_flutter  - events, funnels, screen views
   clarity_flutter: ^1.2.0
   posthog_flutter: ^5.4.0
+  material_symbols_icons: ^4.2960.0
 
 dev_dependencies:
   flutter_test:
@@ -122,9 +123,42 @@ flutter:
   # https://flutter.dev/to/asset-from-package
 
   fonts:
-    # The single app family — display, heading, body and UI all sit on DM
-    # Sans since the 2026-09 shell redesign (Outfit was dropped). Static cuts
-    # keep Android text weights predictable.
+    # Outfit — the 2026-10 prototype's family, reinstated for the screens
+    # being ported from it (settings, …). DM Sans still carries every screen
+    # that has not been re-skinned yet, so the two coexist during the port.
+    # Static cuts only: Impeller ignores the `wght` axis of a variable font
+    # (400–800 are the cuts the app shipped before; 900 is instanced from
+    # Outfit[wght].ttf). Run `flutter clean` after touching this block.
+    - family: Outfit
+      fonts:
+        - asset: assets/fonts/Outfit-400.ttf
+          weight: 400
+        - asset: assets/fonts/Outfit-500.ttf
+          weight: 500
+        - asset: assets/fonts/Outfit-600.ttf
+          weight: 600
+        - asset: assets/fonts/Outfit-700.ttf
+          weight: 700
+        - asset: assets/fonts/Outfit-800.ttf
+          weight: 800
+        - asset: assets/fonts/Outfit-900.ttf
+          weight: 900
+    # Material Symbols Rounded, pre-instanced at FILL 1 / wght 500 / opsz 20
+    # and subset to the glyphs actually used. The material_symbols_icons
+    # package ships the font as a variable with FILL defaulting to 0, and
+    # Impeller ignores the axis — `Icon(..., fill: 1)` renders OUTLINED on
+    # Android. See shared/widgets/drift_symbol.dart.
+    - family: MaterialSymbolsRoundedFilled
+      fonts:
+        - asset: assets/fonts/MaterialSymbolsRounded-Filled.ttf
+    # Same font at wght 600 — the weight the mocks use for check_circle and
+    # the +/- steppers. A separate family because the weight is baked in,
+    # for the same reason the fill is.
+    - family: MaterialSymbolsRoundedFilled600
+      fonts:
+        - asset: assets/fonts/MaterialSymbolsRounded-Filled600.ttf
+    # DM Sans — every screen not yet ported off the 2026-09 shell redesign.
+    # Static cuts keep Android text weights predictable.
     - family: DMSans
       fonts:
         - asset: assets/fonts/DMSans-400.ttf

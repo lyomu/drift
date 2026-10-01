@@ -1,0 +1,11 @@
+-- Adds FOOTWORK to AssessmentPillar for the redesigned Log Practice screen.
+--
+-- Practice-only: the assessment question bank has no FOOTWORK questions, so
+-- the value is intentionally absent from PILLAR_ORDER and the branch scopes
+-- in assessment.service.ts. It scores from practice logs alone, which
+-- computeSkillScores already handles (null assessment baseline).
+--
+-- ALTER TYPE ... ADD VALUE cannot run inside a transaction block on
+-- PostgreSQL versions before 12. Prisma wraps migrations in one, so this is
+-- safe on 12+ only; the project targets a modern Postgres.
+ALTER TYPE "AssessmentPillar" ADD VALUE IF NOT EXISTS 'FOOTWORK';

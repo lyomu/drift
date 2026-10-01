@@ -2,19 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/theme/drift_colors.dart';
-import '../../../core/theme/drift_typography.dart';
-import '../../../shared/widgets/drift_pill.dart';
-import '../../../shared/widgets/drift_player_card.dart';
-import '../../../shared/widgets/drift_soft_card.dart';
+import '../../../shared/widgets/drift_player_results.dart';
 import '../application/players_providers.dart';
 import '../data/players_repository.dart';
 import 'player_filters_sheet.dart';
 
+const _muted = Color(0xFF94A3B8);
+
 /// Player Search / Discovery — `foundation/04-screen-inventory.md` §A.4
-/// (redesign 2026-08: `App.tsx` `DiscoverPlayersTab`). Results are ranked
-/// server-side (proximity + level compatibility); the search box filters the
-/// loaded page by name (the API has no text query).
+/// (redesign 2026-10). Results are ranked server-side (proximity + level
+/// compatibility); the search box filters the loaded page by name or
+/// location, since the API has no text query.
+///
+/// The list furniture is [DriftPlayerResultCard] / [DriftPlayerSearchBar],
+/// shared with Play → Find — the two surfaces show the same card and differ
+/// only in the card's action.
 ///
 /// Renders [embedded] inside the Discover Hub, which already supplies the
 /// title and SafeArea.
@@ -39,74 +41,23 @@ class _PlayerSearchScreenState extends ConsumerState<PlayerSearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final type = Theme.of(context).extension<DriftTypography>()!;
-    final colors = Theme.of(context).extension<DriftColors>()!;
     final results = ref.watch(playerSearchProvider);
     final filtersActive = !ref.watch(playerFiltersProvider).isEmpty;
 
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (!widget.embedded)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-            child: Text('Players', style: type.h2),
-          ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-          child: Row(
-            children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                  decoration: BoxDecoration(
-                    color: colors.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: colors.border, width: 1.5),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.search, size: 18, color: colors.textSecondary),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextField(
-                          controller: _controller,
-                          onChanged: (v) => setState(() => _query = v),
-                          style: type.body,
-                          cursorColor: colors.primary,
-                          decoration: InputDecoration(
-                            isDense: true,
-                            filled: false,
-                            border: InputBorder.none,
-                            enabledBorder: InputBorder.none,
-                            focusedBorder: InputBorder.none,
-                            hintText: 'Search players…',
-                            hintStyle: type.body.copyWith(
-                              color: colors.textSecondary,
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              vertical: 12,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              _FilterButton(
-                active: filtersActive,
-                onTap: () => showPlayerFiltersSheet(context, ref),
-              ),
-            ],
-          ),
+        DriftPlayerSearchBar(
+          controller: _controller,
+          onChanged: (v) => setState(() => _query = v),
+          filtersActive: filtersActive,
+          onFilters: () => showPlayerFiltersSheet(context, ref),
         ),
         Expanded(
           child: RefreshIndicator(
             onRefresh: () => ref.refresh(playerSearchProvider.future),
             child: switch (results) {
-              AsyncData(:final value) => _list(_filter(value)),
+              AsyncData(:final value) => _list(filterPlayers(value, _query)),
               AsyncError() => _message("Couldn't load players. Pull to retry."),
               _ => const Center(child: CircularProgressIndicator()),
             },
@@ -118,32 +69,32 @@ class _PlayerSearchScreenState extends ConsumerState<PlayerSearchScreen> {
     return widget.embedded ? content : SafeArea(child: content);
   }
 
-  List<PlayerSummary> _filter(List<PlayerSummary> players) {
-    if (_query.trim().isEmpty) return players;
-    final q = _query.trim().toLowerCase();
-    return players
-        .where((p) => p.displayName.toLowerCase().contains(q))
-        .toList();
-  }
-
   Widget _list(List<PlayerSummary> players) {
     if (players.isEmpty) {
       return _message(
-        'No players match these filters — try widening distance or level '
-        'range.',
+        _query.trim().isEmpty
+            ? 'No players match these filters. Try widening distance or level '
+                  'range.'
+            : 'No players found.',
       );
     }
     return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       itemCount: players.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 8),
-      itemBuilder: (context, i) => _PlayerRow(player: players[i]),
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      itemBuilder: (context, i) => DriftPlayerResultCard(
+        player: players[i],
+        action: DriftPlayerActionButton(
+          label: 'Connect',
+          // The connect action itself lives on the profile, which is also
+          // where the current relationship state is known.
+          onTap: () => context.push('/players/${players[i].id}'),
+        ),
+      ),
     );
   }
 
   Widget _message(String text) {
-    final type = Theme.of(context).extension<DriftTypography>()!;
-    final colors = Theme.of(context).extension<DriftColors>()!;
     return ListView(
       children: [
         Padding(
@@ -151,7 +102,7 @@ class _PlayerSearchScreenState extends ConsumerState<PlayerSearchScreen> {
           child: Text(
             text,
             textAlign: TextAlign.center,
-            style: type.body.copyWith(color: colors.textSecondary),
+            style: const TextStyle(fontSize: 14, height: 1.4, color: _muted),
           ),
         ),
       ],
@@ -159,118 +110,16 @@ class _PlayerSearchScreenState extends ConsumerState<PlayerSearchScreen> {
   }
 }
 
-class _FilterButton extends StatelessWidget {
-  const _FilterButton({required this.active, required this.onTap});
-
-  final bool active;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<DriftColors>()!;
-    return Material(
-      color: colors.surface,
-      borderRadius: BorderRadius.circular(12),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: colors.border, width: 1.5),
-          ),
-          child: Icon(
-            Icons.tune,
-            size: 18,
-            color: active ? colors.primary : colors.textPrimary,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _PlayerRow extends StatelessWidget {
-  const _PlayerRow({required this.player});
-
-  final PlayerSummary player;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<DriftColors>()!;
-    final type = Theme.of(context).extension<DriftTypography>()!;
-
-    final meta = [
-      if (player.level != null && player.levelLabel != null)
-        'Level ${player.level!.toStringAsFixed(1)} · ${player.levelLabel}',
-      if (player.distanceBand != null) player.distanceBand!,
-      if (player.generalLocation != null) player.generalLocation!,
-    ].join(' · ');
-
-    return DriftSoftCard(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      onTap: () => context.push('/players/${player.id}'),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          DriftPlayerAvatar(player: player, radius: 22),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  player.displayName,
-                  style: type.title.copyWith(fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  meta,
-                  style: type.caption.copyWith(color: colors.textSecondary),
-                ),
-                if (player.availabilitySummary != null) ...[
-                  const SizedBox(height: 6),
-                  DriftPill(label: player.availabilitySummary!),
-                ],
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          _ConnectButton(playerId: player.id),
-        ],
-      ),
-    );
-  }
-}
-
-class _ConnectButton extends StatelessWidget {
-  const _ConnectButton({required this.playerId});
-
-  final String playerId;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<DriftColors>()!;
-    final type = Theme.of(context).extension<DriftTypography>()!;
-    return Material(
-      color: colors.primary,
-      borderRadius: BorderRadius.circular(999),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () => context.push('/players/$playerId'),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          child: Text(
-            'Connect',
-            style: type.caption.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+/// Name-or-location match over the loaded page. Shared by both result
+/// surfaces so "no results" means the same thing on each.
+List<PlayerSummary> filterPlayers(List<PlayerSummary> players, String query) {
+  final q = query.trim().toLowerCase();
+  if (q.isEmpty) return players;
+  return players
+      .where(
+        (p) =>
+            p.displayName.toLowerCase().contains(q) ||
+            (p.generalLocation?.toLowerCase().contains(q) ?? false),
+      )
+      .toList();
 }

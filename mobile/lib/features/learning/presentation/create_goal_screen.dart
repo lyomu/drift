@@ -20,6 +20,7 @@ const _skillOptions = [
   (value: 'NET_PLAY', label: 'Net Play'),
   (value: 'MOVEMENT', label: 'Movement'),
   (value: 'MATCH_PLAY', label: 'Match Play'),
+  (value: 'FOOTWORK', label: 'Footwork'),
 ];
 
 /// Create Goal — `foundation/04-screen-inventory.md` §A.7. Milestones are

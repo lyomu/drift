@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/drift_colors.dart';
-import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/drift_pill_tabs.dart';
+import 'event_list_screen.dart';
 import 'ladder_list_screen.dart';
 import 'league_list_screen.dart';
 import 'tournament_list_screen.dart';
 
-/// Compete Hub — `foundation/04-screen-inventory.md` A5 (redesign 2026-08).
+/// Compete Hub — `foundation/04-screen-inventory.md` A5 (redesign 2026-10).
 /// Pill tabs: Leagues / Ladders / Tournaments / Events.
 class CompeteHubScreen extends StatefulWidget {
   const CompeteHubScreen({super.key});
@@ -36,7 +36,7 @@ class _CompeteHubScreenState extends State<CompeteHubScreen> {
           selected: _segment,
           onChanged: (i) => setState(() => _segment = i),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         Expanded(
           child: Container(
             color: colors.background,
@@ -44,54 +44,11 @@ class _CompeteHubScreenState extends State<CompeteHubScreen> {
               0 => const LeagueListScreen(embedded: true),
               1 => const LadderListScreen(embedded: true),
               2 => const TournamentListScreen(embedded: true),
-              _ => const _EventsComingSoon(),
+              _ => const EventListScreen(),
             },
           ),
         ),
       ],
-    );
-  }
-}
-
-class _EventsComingSoon extends StatelessWidget {
-  const _EventsComingSoon();
-
-  @override
-  Widget build(BuildContext context) {
-    final type = Theme.of(context).extension<DriftTypography>()!;
-    final colors = Theme.of(context).extension<DriftColors>()!;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(32, 0, 32, 60),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 64,
-              height: 64,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: colors.primaryLight,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Icon(
-                Icons.calendar_month_outlined,
-                size: 30,
-                color: colors.primary,
-              ),
-            ),
-            const SizedBox(height: 14),
-            Text('Events coming soon', style: type.h4),
-            const SizedBox(height: 6),
-            Text(
-              'Club events and tournaments will appear here once available '
-              'in your area.',
-              textAlign: TextAlign.center,
-              style: type.body.copyWith(color: colors.textSecondary),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

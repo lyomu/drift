@@ -7,7 +7,7 @@ import { AttachmentThumbnail, AttachmentUpload, uploadMessageAttachment } from "
 import { RichText, RichTextEditor } from "@/components/RichTextEditor";
 import { api, ApiError } from "@/lib/api-client";
 import type { SupportStaff, SupportTicket, SupportTicketCategory, SupportTicketPriority, SupportTicketStatus } from "@/lib/support-types";
-import { dateTime, label, personName } from "@/lib/support-types";
+import { SUPPORT_DEPARTMENT_OPTIONS, dateTime, departmentLabel, label, personName } from "@/lib/support-types";
 import { Badge, Button, Card, EmptyState, ErrorBanner, Field, Input, PageHeader, Select, Textarea, statusTone } from "@/components/ui";
 
 type TicketForm = {
@@ -31,6 +31,7 @@ export default function SupportTicketsPage() {
   const [staff, setStaff] = useState<SupportStaff[]>([]);
   const [status, setStatus] = useState<SupportTicketStatus | "">("OPEN");
   const [priority, setPriority] = useState<SupportTicketPriority | "">("");
+  const [department, setDepartment] = useState<SupportTicketCategory | "">("");
   const [assignedToId, setAssignedToId] = useState("");
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -59,6 +60,7 @@ export default function SupportTicketsPage() {
       const params = new URLSearchParams();
       if (status) params.set("status", status);
       if (priority) params.set("priority", priority);
+      if (department) params.set("category", department);
       if (assignedToId) params.set("assignedToId", assignedToId);
       if (search.trim()) params.set("search", search.trim());
       const response = await api.get<{ tickets: SupportTicket[]; staff: SupportStaff[] }>(`/support/tickets?${params.toString()}`);
@@ -68,7 +70,7 @@ export default function SupportTicketsPage() {
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Support tickets could not be loaded.");
     }
-  }, [assignedToId, priority, search, selectedId, status]);
+  }, [assignedToId, department, priority, search, selectedId, status]);
 
   useEffect(() => {
     void load();
@@ -153,7 +155,7 @@ export default function SupportTicketsPage() {
     <div>
       <PageHeader
         title="Support Tickets"
-        description="Internal support queue for player, billing, club, match, and technical issues."
+        description="Internal support queue routed by department for player, billing, club, match, and technical issues."
         action={<Button icon="confirmation_number" onClick={() => setShowCreate(true)}>Open ticket</Button>}
       />
       <ErrorBanner message={error} />
@@ -167,9 +169,15 @@ export default function SupportTicketsPage() {
       />
 
       <Card className="mb-5 p-4">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_160px_160px_200px_auto]">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_150px_170px_150px_200px_auto]">
           <Field label="Search"><Input value={search} onChange={(event) => { setSearch(event.target.value); setTickets(null); }} placeholder="Subject, body, or user" /></Field>
           <Field label="Status"><Select value={status} onChange={(event) => { setStatus(event.target.value as SupportTicketStatus | ""); setTickets(null); }}><option value="">Any status</option><option value="OPEN">Open</option><option value="ASSIGNED">Assigned</option><option value="RESOLVED">Resolved</option></Select></Field>
+          <Field label="Department">
+            <Select value={department} onChange={(event) => { setDepartment(event.target.value as SupportTicketCategory | ""); setTickets(null); }}>
+              <option value="">Any department</option>
+              {SUPPORT_DEPARTMENT_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+            </Select>
+          </Field>
           <Field label="Priority"><Select value={priority} onChange={(event) => { setPriority(event.target.value as SupportTicketPriority | ""); setTickets(null); }}><option value="">Any priority</option><option value="NORMAL">Normal</option><option value="HIGH">High</option><option value="URGENT">Urgent</option></Select></Field>
           <Field label="Assignee"><Select value={assignedToId} onChange={(event) => { setAssignedToId(event.target.value); setTickets(null); }}><option value="">Any assignee</option><option value="UNASSIGNED">Unassigned</option>{staff.map((person) => <option key={person.id} value={person.id}>{personName(person)}</option>)}</Select></Field>
           <div className="flex items-end"><Button type="button" variant="secondary" icon="refresh" onClick={() => void load()}>Refresh</Button></div>
@@ -179,7 +187,7 @@ export default function SupportTicketsPage() {
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
         <div>
           {tickets === null && !error && <EmptyState message="Loading support tickets..." />}
-          {tickets?.length === 0 && <EmptyState message={status === "OPEN" && !priority && !assignedToId && !search.trim() ? "No open tickets" : "No support tickets match these filters."} />}
+          {tickets?.length === 0 && <EmptyState message={status === "OPEN" && !priority && !department && !assignedToId && !search.trim() ? "No open tickets" : "No support tickets match these filters."} />}
           {tickets && tickets.length > 0 && (
             <div className="grid gap-3">
               {tickets.map((ticket) => (
@@ -187,7 +195,7 @@ export default function SupportTicketsPage() {
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="font-bold text-drift-text-primary">{ticket.subject}</div>
-                      <div className="mt-1 text-xs font-semibold text-drift-text-secondary">{label(ticket.category)} / {label(ticket.priority)}</div>
+                      <div className="mt-1 text-xs font-semibold text-drift-text-secondary">{departmentLabel(ticket.category)} / {label(ticket.priority)}</div>
                       <div className="mt-2 text-sm text-drift-text-secondary">
                         {ticket.user ? <Link href={`/users?query=${encodeURIComponent(ticket.user.email ?? ticket.user.id)}`} className="font-bold text-drift-primary hover:underline">{personName(ticket.user)}</Link> : "Unlinked"}
                       </div>
@@ -213,6 +221,7 @@ export default function SupportTicketsPage() {
             <DefinitionList
               rows={[
                 { label: "User", value: personName(selected.user) },
+                { label: "Department", value: departmentLabel(selected.category) },
                 { label: "Assignee", value: personName(selected.assignedTo) },
                 { label: "Created", value: dateTime(selected.createdAt) },
                 { label: "Updated", value: dateTime(selected.updatedAt) },
@@ -281,7 +290,11 @@ export default function SupportTicketsPage() {
             <Field label="Linked user ID"><Input value={form.userId} onChange={(event) => setForm((current) => ({ ...current, userId: event.target.value }))} placeholder="Optional" /></Field>
             <Field label="Subject"><Input required value={form.subject} onChange={(event) => setForm((current) => ({ ...current, subject: event.target.value }))} /></Field>
             <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Category"><Select value={form.category} onChange={(event) => setForm((current) => ({ ...current, category: event.target.value as SupportTicketCategory }))}><option value="ACCOUNT">Account</option><option value="BILLING">Billing</option><option value="MATCHES">Matches</option><option value="CLUBS">Clubs</option><option value="TECHNICAL">Technical</option><option value="OTHER">Other</option></Select></Field>
+              <Field label="Department">
+                <Select value={form.category} onChange={(event) => setForm((current) => ({ ...current, category: event.target.value as SupportTicketCategory }))}>
+                  {SUPPORT_DEPARTMENT_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                </Select>
+              </Field>
               <Field label="Priority"><Select value={form.priority} onChange={(event) => setForm((current) => ({ ...current, priority: event.target.value as SupportTicketPriority }))}><option value="NORMAL">Normal</option><option value="HIGH">High</option><option value="URGENT">Urgent</option></Select></Field>
             </div>
             <Field label="Issue"><Textarea required rows={5} value={form.body} onChange={(event) => setForm((current) => ({ ...current, body: event.target.value }))} /></Field>

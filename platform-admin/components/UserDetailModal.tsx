@@ -3,12 +3,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { DefinitionList, ModalShell } from "@/components/dashboard-design";
 import { api, ApiError } from "@/lib/api-client";
-import { Badge, Button, ErrorBanner, Select, statusTone } from "@/components/ui";
+import { Badge, Button, ErrorBanner, Field, Input, Select, Textarea, statusTone } from "@/components/ui";
 import {
   USER_CATEGORY_LABEL,
   displayName,
   type UserDetail,
   type UserVerificationStatus,
+  type UserActivityEvent,
 } from "@/lib/user-types";
 
 const VERIFICATION_OPTIONS: UserVerificationStatus[] = [
@@ -48,12 +49,30 @@ export function UserDetailModal({
   const [user, setUser] = useState<UserDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [activity, setActivity] = useState<UserActivityEvent[]>([]);
+  const [form, setForm] = useState({
+    firstName: "",
+    lastName: "",
+    phone: "",
+    bio: "",
+    phoneOnWhatsApp: false,
+  });
 
   const load = useCallback(async () => {
     try {
       setError(null);
       const res = await api.get<{ user: UserDetail }>(`/users/${userId}`);
       setUser(res.user);
+      setForm({
+        firstName: res.user.firstName ?? "",
+        lastName: res.user.lastName ?? "",
+        phone: res.user.phone ?? "",
+        bio: res.user.bio ?? "",
+        phoneOnWhatsApp: res.user.phoneOnWhatsApp ?? false,
+      });
+      const history = await api.get<{ events: UserActivityEvent[] }>(`/users/${userId}/activity`);
+      setActivity(history.events);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to load user.");
     }
@@ -76,6 +95,20 @@ export function UserDetailModal({
     } finally {
       setBusy(false);
     }
+
+  }
+
+  async function saveProfile() {
+    await run(() =>
+      api.patch(`/users/${userId}/profile`, {
+        firstName: form.firstName,
+        lastName: form.lastName,
+        phone: form.phone || null,
+        bio: form.bio || null,
+        phoneOnWhatsApp: form.phoneOnWhatsApp,
+      }),
+    );
+    setEditing(false);
   }
 
   const deleted = user?.accountStatus === "DELETED";
@@ -103,6 +136,14 @@ export function UserDetailModal({
               Force logout
             </Button>
             <Button
+              variant="secondary"
+              icon="edit"
+              disabled={busy}
+              onClick={() => setEditing((value) => !value)}
+            >
+              {editing ? "Cancel edit" : "Edit profile"}
+            </Button>
+            <Button
               variant={suspended ? "secondary" : "destructive"}
               icon={suspended ? "restart_alt" : "block"}
               disabled={busy}
@@ -118,7 +159,34 @@ export function UserDetailModal({
             >
               {suspended ? "Restore" : "Suspend"}
             </Button>
+            <Button
+              variant="destructive"
+              icon="delete"
+              disabled={busy}
+              onClick={() =>
+                void run(
+                  () => api.post(`/users/${user.id}/delete`),
+                  `Deactivate ${user.email ?? "this user"}? They will be signed out and hidden from active workflows.`,
+                )
+              }
+            >
+              Deactivate
+            </Button>
           </>
+        ) : user ? (
+          <Button
+            variant="secondary"
+            icon="restart_alt"
+            disabled={busy}
+            onClick={() =>
+              void run(
+                () => api.post(`/users/${user.id}/restore`),
+                `Restore ${user.email ?? "this user"}?`,
+              )
+            }
+          >
+            Restore account
+          </Button>
         ) : null
       }
     >
@@ -141,6 +209,37 @@ export function UserDetailModal({
               </Badge>
             ))}
           </div>
+
+          {editing && !deleted && (
+            <section className="grid gap-3 rounded-lg border border-drift-border bg-drift-neutral-surface p-4">
+              <h3 className="font-display text-sm font-bold uppercase text-drift-text-secondary">
+                Edit profile
+              </h3>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field label="First name">
+                  <Input value={form.firstName} onChange={(e) => setForm((current) => ({ ...current, firstName: e.target.value }))} />
+                </Field>
+                <Field label="Last name">
+                  <Input value={form.lastName} onChange={(e) => setForm((current) => ({ ...current, lastName: e.target.value }))} />
+                </Field>
+                <Field label="Phone">
+                  <Input value={form.phone} onChange={(e) => setForm((current) => ({ ...current, phone: e.target.value }))} />
+                </Field>
+                <label className="flex items-center gap-2 self-end pb-2 text-sm font-semibold">
+                  <input type="checkbox" checked={form.phoneOnWhatsApp} onChange={(e) => setForm((current) => ({ ...current, phoneOnWhatsApp: e.target.checked }))} />
+                  WhatsApp reachable
+                </label>
+              </div>
+              <Field label="Bio">
+                <Textarea rows={3} value={form.bio} onChange={(e) => setForm((current) => ({ ...current, bio: e.target.value }))} />
+              </Field>
+              <div className="flex justify-end">
+                <Button variant="primary" disabled={busy || !form.firstName.trim() || !form.lastName.trim()} onClick={() => void saveProfile()}>
+                  {busy ? "Saving..." : "Save profile"}
+                </Button>
+              </div>
+            </section>
+          )}
 
           {!deleted && (
             <div className="flex items-end gap-2">
@@ -184,6 +283,39 @@ export function UserDetailModal({
               { label: "Active sessions", value: user.stats.activeSessions },
             ]}
           />
+
+          <section>
+            <h3 className="mb-2 font-display text-sm font-bold uppercase text-drift-text-secondary">
+              Location & clubs
+            </h3>
+            <DefinitionList
+              rows={[
+                {
+                  label: "General location",
+                  value: user.tennisProfile?.generalLocation ?? "-",
+                },
+                {
+                  label: "Location coordinates",
+                  value:
+                    user.tennisProfile?.latitude != null &&
+                    user.tennisProfile?.longitude != null
+                      ? `${user.tennisProfile.latitude.toFixed(5)}, ${user.tennisProfile.longitude.toFixed(5)}`
+                      : "-",
+                },
+                {
+                  label: "Preferred club",
+                  value: user.tennisProfile?.preferredClubName ?? "-",
+                },
+                {
+                  label: "Club memberships",
+                  value:
+                    user.clubMemberships.length > 0
+                      ? user.clubMemberships.map((membership) => membership.clubName).join(", ")
+                      : "-",
+                },
+              ]}
+            />
+          </section>
 
           {(user.tennisProfile || user.padelProfile) && (
             <section>
@@ -268,6 +400,31 @@ export function UserDetailModal({
               />
             </section>
           )}
+
+          <section>
+            <h3 className="mb-2 font-display text-sm font-bold uppercase text-drift-text-secondary">
+              Activity history
+            </h3>
+            {activity.length === 0 ? (
+              <p className="text-sm text-drift-text-secondary">No platform-admin activity recorded.</p>
+            ) : (
+              <div className="divide-y divide-drift-border rounded-lg border border-drift-border">
+                {activity.map((event) => (
+                  <div key={event.id} className="flex items-start justify-between gap-4 p-3 text-sm">
+                    <div>
+                      <div className="font-semibold">{event.action.replaceAll(".", " ")}</div>
+                      <div className="text-xs text-drift-text-secondary">
+                        by {event.actor.name || event.actor.email}
+                      </div>
+                    </div>
+                    <time className="shrink-0 text-xs text-drift-text-secondary">
+                      {new Date(event.createdAt).toLocaleString()}
+                    </time>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
         </div>
       )}
     </ModalShell>

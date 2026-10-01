@@ -20,6 +20,7 @@ const _pillarLabels = {
   'NET_PLAY': 'Net Play',
   'MOVEMENT': 'Movement',
   'MATCH_PLAY': 'Match Play',
+  'FOOTWORK': 'Footwork',
   'COMPETITION_EXPERIENCE': 'Competition Experience',
 };
 

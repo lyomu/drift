@@ -1,40 +1,42 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/theme/drift_spacing.dart';
-import '../../../core/theme/drift_typography.dart';
-import '../../../shared/widgets/buttons/drift_button.dart';
-import '../../../shared/widgets/drift_filter_chip.dart';
+import '../../../shared/widgets/drift_filter_sheet.dart';
 import '../application/players_providers.dart';
 import '../data/players_repository.dart';
 
 /// Player Filters — `foundation/04-screen-inventory.md` §A.4. Applying
 /// writes to [playerFiltersProvider], which the search provider watches.
 Future<void> showPlayerFiltersSheet(BuildContext context, WidgetRef ref) {
-  return showModalBottomSheet<void>(
+  return showDriftFilterSheet<void>(
     context: context,
-    isScrollControlled: true,
-    showDragHandle: true,
     builder: (_) => const _PlayerFiltersSheet(),
   );
 }
 
-const _distanceOptions = [5, 10, 25, 50];
-const _levelBands = [
-  (label: 'Beginner (1.0-2.5)', min: 1.0, max: 2.5),
-  (label: 'Foundational (2.5-4.0)', min: 2.5, max: 4.0),
-  (label: 'Intermediate (4.0-5.5)', min: 4.0, max: 5.5),
-  (label: 'Advanced (5.5-7.0)', min: 5.5, max: 7.0),
+/// The level bands, matching `labelForLevel` on the server exactly — there is
+/// no fifth "Elite" band, so the sheet does not offer one.
+const _levelBands = <({String label, double min, double max})>[
+  (label: 'Beginner', min: 1.0, max: 2.5),
+  (label: 'Foundational', min: 2.5, max: 4.0),
+  (label: 'Intermediate', min: 4.0, max: 5.5),
+  (label: 'Advanced', min: 5.5, max: 7.0),
 ];
-const _formatOptions = [
-  (value: 'SINGLES', label: 'Singles'),
-  (value: 'DOUBLES', label: 'Doubles'),
-  (value: 'EITHER', label: 'Either'),
+
+const _timeBlocks = <(String, String)>[
+  ('MORNING', 'Morning'),
+  ('AFTERNOON', 'Afternoon'),
+  ('EVENING', 'Evening'),
 ];
-const _styleOptions = [
-  (value: 'SOCIAL', label: 'Social'),
-  (value: 'COMPETITIVE', label: 'Competitive'),
-  (value: 'EITHER', label: 'Either'),
+const _formatOptions = <(String, String)>[
+  ('SINGLES', 'Singles'),
+  ('DOUBLES', 'Doubles'),
+  ('EITHER', 'Either'),
+];
+const _styleOptions = <(String, String)>[
+  ('SOCIAL', 'Social'),
+  ('COMPETITIVE', 'Competitive'),
+  ('EITHER', 'Either'),
 ];
 
 class _PlayerFiltersSheet extends ConsumerStatefulWidget {
@@ -48,160 +50,143 @@ class _PlayerFiltersSheet extends ConsumerStatefulWidget {
 class _PlayerFiltersSheetState extends ConsumerState<_PlayerFiltersSheet> {
   late PlayerFilters _draft = ref.read(playerFiltersProvider);
 
+  /// Indices into [_levelBands]. Held separately from [_draft] because the
+  /// API takes a single `levelMin`/`levelMax` range, which cannot record
+  /// *which* bands were tapped — selecting Beginner and Intermediate sends
+  /// 1.0..5.5, and reading that back could not tell it from all four bands.
+  /// This set is the selection; the range is what it compiles to.
+  late Set<int> _levels = _bandsWithin(_draft);
+
+  /// Best-effort reconstruction when the sheet reopens: every band wholly
+  /// inside the stored range. Exact whenever the range came from this sheet.
+  static Set<int> _bandsWithin(PlayerFilters filters) {
+    final min = filters.levelMin;
+    final max = filters.levelMax;
+    if (min == null || max == null) return {};
+    return {
+      for (var i = 0; i < _levelBands.length; i++)
+        if (_levelBands[i].min >= min && _levelBands[i].max <= max) i,
+    };
+  }
+
+  int get _activeCount =>
+      _levels.length +
+      (_draft.maxDistanceKm != null ? 1 : 0) +
+      (_draft.timeBlock != null ? 1 : 0) +
+      (_draft.formatPreference != null ? 1 : 0) +
+      (_draft.stylePreference != null ? 1 : 0);
+
   void _apply() {
-    ref.read(playerFiltersProvider.notifier).state = _draft;
+    // The selection compiles to the range that spans it. A non-contiguous
+    // pick (Beginner + Advanced) therefore also returns the bands between,
+    // because the endpoint has no way to express a gap.
+    final committed = _levels.isEmpty
+        ? _draft.copyWith(clearLevel: true)
+        : _draft.copyWith(
+            levelMin: _levels
+                .map((i) => _levelBands[i].min)
+                .reduce((a, b) => a < b ? a : b),
+            levelMax: _levels
+                .map((i) => _levelBands[i].max)
+                .reduce((a, b) => a > b ? a : b),
+          );
+
+    ref.read(playerFiltersProvider.notifier).state = committed;
     Navigator.of(context).pop();
   }
 
-  void _reset() {
-    setState(() => _draft = const PlayerFilters());
+  void _clear() {
+    setState(() {
+      _draft = const PlayerFilters();
+      _levels = {};
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final type = Theme.of(context).extension<DriftTypography>()!;
-
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          DriftSpacing.s6,
-          0,
-          DriftSpacing.s6,
-          DriftSpacing.s6,
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Filters', style: type.h2),
-              const SizedBox(height: DriftSpacing.s5),
-
-              _Section(
-                title: 'Distance',
-                child: Wrap(
-                  spacing: DriftSpacing.s2,
-                  runSpacing: DriftSpacing.s2,
-                  children: [
-                    for (final km in _distanceOptions)
-                      DriftFilterChip(
-                        label: 'Within $km km',
-                        selected: _draft.maxDistanceKm == km,
-                        onTap: () => setState(() {
-                          _draft = _draft.maxDistanceKm == km
-                              ? _draft.copyWith(clearDistance: true)
-                              : _draft.copyWith(maxDistanceKm: km);
-                        }),
-                      ),
-                  ],
-                ),
-              ),
-
-              _Section(
-                title: 'Level',
-                child: Wrap(
-                  spacing: DriftSpacing.s2,
-                  runSpacing: DriftSpacing.s2,
-                  children: [
-                    for (final band in _levelBands)
-                      DriftFilterChip(
-                        label: band.label,
-                        selected:
-                            _draft.levelMin == band.min &&
-                            _draft.levelMax == band.max,
-                        onTap: () => setState(() {
-                          final isSelected =
-                              _draft.levelMin == band.min &&
-                              _draft.levelMax == band.max;
-                          _draft = isSelected
-                              ? _draft.copyWith(clearLevel: true)
-                              : _draft.copyWith(
-                                  levelMin: band.min,
-                                  levelMax: band.max,
-                                );
-                        }),
-                      ),
-                  ],
-                ),
-              ),
-
-              _Section(
-                title: 'Format',
-                child: Wrap(
-                  spacing: DriftSpacing.s2,
-                  runSpacing: DriftSpacing.s2,
-                  children: [
-                    for (final option in _formatOptions)
-                      DriftFilterChip(
-                        label: option.label,
-                        selected: _draft.formatPreference == option.value,
-                        onTap: () => setState(() {
-                          _draft = _draft.formatPreference == option.value
-                              ? _draft.copyWith(clearFormat: true)
-                              : _draft.copyWith(formatPreference: option.value);
-                        }),
-                      ),
-                  ],
-                ),
-              ),
-
-              _Section(
-                title: 'Style',
-                child: Wrap(
-                  spacing: DriftSpacing.s2,
-                  runSpacing: DriftSpacing.s2,
-                  children: [
-                    for (final option in _styleOptions)
-                      DriftFilterChip(
-                        label: option.label,
-                        selected: _draft.stylePreference == option.value,
-                        onTap: () => setState(() {
-                          _draft = _draft.stylePreference == option.value
-                              ? _draft.copyWith(clearStyle: true)
-                              : _draft.copyWith(stylePreference: option.value);
-                        }),
-                      ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: DriftSpacing.s6),
-              DriftButton(label: 'Apply', onPressed: _apply),
-              const SizedBox(height: DriftSpacing.s2),
-              Center(
-                child: DriftButton(
-                  label: 'Reset',
-                  variant: DriftButtonVariant.text,
-                  onPressed: _reset,
-                ),
-              ),
+    return DriftFilterSheet(
+      activeCount: _activeCount,
+      onClear: _clear,
+      onApply: _apply,
+      sections: [
+        DriftFilterSection(
+          title: 'Level',
+          child: DriftFilterPills<int>(
+            options: [
+              for (var i = 0; i < _levelBands.length; i++)
+                DriftFilterOption(value: i, label: _levelBands[i].label),
             ],
+            isSelected: _levels.contains,
+            onTap: (i) => setState(() {
+              if (!_levels.remove(i)) _levels.add(i);
+            }),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _Section extends StatelessWidget {
-  const _Section({required this.title, required this.child});
-
-  final String title;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final type = Theme.of(context).extension<DriftTypography>()!;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: DriftSpacing.s5),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: type.label),
-          const SizedBox(height: DriftSpacing.s2),
-          child,
-        ],
-      ),
+        DriftFilterSection(
+          title: 'Distance',
+          child: DriftFilterSegments<int?>(
+            options: const [
+              DriftFilterOption(value: 5, label: '<5 km'),
+              DriftFilterOption(value: 10, label: '<10 km'),
+              DriftFilterOption(value: 20, label: '<20 km'),
+              DriftFilterOption(value: null, label: 'Any'),
+            ],
+            // "Any" is the absence of a distance filter, so it reads as
+            // selected whenever none is set.
+            isSelected: (km) => _draft.maxDistanceKm == km,
+            onTap: (km) => setState(() {
+              _draft = km == null
+                  ? _draft.copyWith(clearDistance: true)
+                  : _draft.copyWith(maxDistanceKm: km);
+            }),
+          ),
+        ),
+        DriftFilterSection(
+          title: 'Availability',
+          child: DriftFilterPills<String>(
+            options: [
+              for (final (value, label) in _timeBlocks)
+                DriftFilterOption(value: value, label: label),
+            ],
+            isSelected: (v) => _draft.timeBlock == v,
+            onTap: (v) => setState(() {
+              _draft = _draft.timeBlock == v
+                  ? _draft.copyWith(clearTimeBlock: true)
+                  : _draft.copyWith(timeBlock: v);
+            }),
+          ),
+        ),
+        DriftFilterSection(
+          title: 'Format',
+          child: DriftFilterSegments<String>(
+            options: [
+              for (final (value, label) in _formatOptions)
+                DriftFilterOption(value: value, label: label),
+            ],
+            isSelected: (v) => _draft.formatPreference == v,
+            onTap: (v) => setState(() {
+              _draft = _draft.formatPreference == v
+                  ? _draft.copyWith(clearFormat: true)
+                  : _draft.copyWith(formatPreference: v);
+            }),
+          ),
+        ),
+        DriftFilterSection(
+          title: 'Style',
+          child: DriftFilterSegments<String>(
+            options: [
+              for (final (value, label) in _styleOptions)
+                DriftFilterOption(value: value, label: label),
+            ],
+            isSelected: (v) => _draft.stylePreference == v,
+            onTap: (v) => setState(() {
+              _draft = _draft.stylePreference == v
+                  ? _draft.copyWith(clearStyle: true)
+                  : _draft.copyWith(stylePreference: v);
+            }),
+          ),
+        ),
+      ],
     );
   }
 }

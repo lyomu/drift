@@ -2,13 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_typography.dart';
-import '../../../shared/widgets/drift_pill.dart';
-import '../../../shared/widgets/drift_soft_card.dart';
+import '../../../shared/widgets/drift_competition_card.dart';
 import '../data/expansion_repository.dart';
 
-/// Tournaments segment — browse and open the bracket detail.
+const _muted = Color(0xFF94A3B8);
+
+/// Tournaments segment (redesign 2026-10).
+///
+/// "Spots left" is `drawSize - entryCount`, which is what the mock's number
+/// means; at zero the card reads Full and the action goes flat, matching the
+/// mock. A tournament that is running or completed is past entering, so its
+/// action reflects the state rather than offering a place that is not there.
 class TournamentListScreen extends ConsumerWidget {
   const TournamentListScreen({super.key, this.embedded = false});
 
@@ -18,71 +23,21 @@ class TournamentListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final tournaments = ref.watch(tournamentsListProvider);
     final type = Theme.of(context).extension<DriftTypography>()!;
-    final colors = Theme.of(context).extension<DriftColors>()!;
 
     final content = RefreshIndicator(
       onRefresh: () => ref.refresh(tournamentsListProvider.future),
       child: switch (tournaments) {
         AsyncData(:final value) when value.isEmpty => _message(
-          context,
-          'No tournaments yet — ask your club to run one.',
+          'No tournaments yet. Ask your club to run one.',
         ),
         AsyncData(:final value) => ListView.separated(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           itemCount: value.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 8),
-          itemBuilder: (context, i) {
-            final t = value[i];
-            return DriftSoftCard(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              onTap: () => context.push('/compete/tournaments/${t.id}'),
-              child: Row(
-                children: [
-                  Container(
-                    width: 42,
-                    height: 42,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: colors.primaryLight,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      Icons.emoji_events_outlined,
-                      size: 20,
-                      color: colors.primary,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          t.name,
-                          style: type.body.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '${t.clubName} · ${t.entryCount}/${t.drawSize} slots',
-                          style: type.caption.copyWith(
-                            color: colors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  DriftPill(label: _label(t.state), tone: _tone(t.state)),
-                ],
-              ),
-            );
-          },
+          separatorBuilder: (_, _) => const SizedBox(height: 10),
+          itemBuilder: (context, i) =>
+              _TournamentCard(tournament: value[i], index: i),
         ),
-        AsyncError() => _message(context, "Couldn't load tournaments."),
+        AsyncError() => _message("Couldn't load tournaments."),
         _ => const Center(child: CircularProgressIndicator()),
       },
     );
@@ -102,23 +57,7 @@ class TournamentListScreen extends ConsumerWidget {
     );
   }
 
-  static String _label(String state) => switch (state) {
-    'REGISTRATION_OPEN' => 'Open',
-    'RUNNING' => 'In progress',
-    'COMPLETED' => 'Completed',
-    _ => state,
-  };
-
-  static DriftPillTone _tone(String state) => switch (state) {
-    'REGISTRATION_OPEN' => DriftPillTone.success,
-    'RUNNING' => DriftPillTone.warning,
-    'COMPLETED' => DriftPillTone.neutral,
-    _ => DriftPillTone.neutral,
-  };
-
-  Widget _message(BuildContext context, String text) {
-    final type = Theme.of(context).extension<DriftTypography>()!;
-    final colors = Theme.of(context).extension<DriftColors>()!;
+  Widget _message(String text) {
     return ListView(
       children: [
         Padding(
@@ -126,10 +65,73 @@ class TournamentListScreen extends ConsumerWidget {
           child: Text(
             text,
             textAlign: TextAlign.center,
-            style: type.body.copyWith(color: colors.textSecondary),
+            style: const TextStyle(fontSize: 14, height: 1.4, color: _muted),
           ),
         ),
       ],
+    );
+  }
+}
+
+class _TournamentCard extends StatelessWidget {
+  const _TournamentCard({required this.tournament, required this.index});
+
+  final TournamentSummary tournament;
+  final int index;
+
+  static String _stateLabel(String state) => switch (state) {
+    'REGISTRATION_OPEN' => 'Open',
+    'RUNNING' => 'In progress',
+    'COMPLETED' => 'Completed',
+    _ => state,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = driftCompetitionAccent(index);
+    final open = tournament.state == 'REGISTRATION_OPEN';
+    final spotsLeft = (tournament.drawSize - tournament.entryCount)
+        .clamp(0, tournament.drawSize);
+
+    final (label, style) = switch ((open, spotsLeft)) {
+      (true, > 0) => ('Enter', DriftCompetitionActionStyle.filled),
+      (true, _) => ('Full', DriftCompetitionActionStyle.disabled),
+      // Not open: the state is the answer, and there is nothing to enter.
+      _ => (
+        _stateLabel(tournament.state),
+        DriftCompetitionActionStyle.disabled,
+      ),
+    };
+
+    return DriftCompetitionCard(
+      leading: DriftCompetitionIconTile(
+        icon: Icons.military_tech_rounded,
+        accent: accent,
+      ),
+      title: tournament.name,
+      badge: _stateLabel(tournament.state),
+      badgeAccent: accent,
+      meta: open && spotsLeft > 0
+          ? '$spotsLeft ${spotsLeft == 1 ? 'spot' : 'spots'} left'
+          : null,
+      details: [
+        if (tournament.clubName.isNotEmpty)
+          DriftCompetitionDetail(
+            icon: Icons.location_on,
+            label: tournament.clubName,
+          ),
+        DriftCompetitionDetail(
+          icon: Icons.group,
+          label: '${tournament.entryCount}/${tournament.drawSize} in the draw',
+        ),
+      ],
+      action: DriftCompetitionActionButton(
+        label: label,
+        style: style,
+        accent: accent,
+        onTap: () => context.push('/compete/tournaments/${tournament.id}'),
+      ),
+      onTap: () => context.push('/compete/tournaments/${tournament.id}'),
     );
   }
 }

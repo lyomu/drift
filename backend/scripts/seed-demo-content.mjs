@@ -69,9 +69,15 @@ export async function step(label, fn) {
 
 // ------------------------------------------------------------- accounts
 
-export async function signupOrLogin(email, password) {
+export async function signupOrLogin(email, password, profile = {}) {
   try {
-    const signup = await api('post', '/auth/signup', null, { email, password });
+    const signup = await api('post', '/auth/signup', null, {
+      email,
+      password,
+      firstName: profile.firstName ?? 'Demo',
+      lastName: profile.lastName ?? 'Player',
+      acceptedAgePolicy: true,
+    });
     const verify = await api('post', '/auth/verify', null, {
       email,
       code: signup.devVerificationCode,
@@ -261,7 +267,7 @@ export const ROSTER = [
 async function buildRoster() {
   const people = {};
   for (const p of ROSTER) {
-    const { token } = await signupOrLogin(p.email, DEMO_PASSWORD);
+    const { token } = await signupOrLogin(p.email, DEMO_PASSWORD, p);
     const me = await api('get', '/users/me', token);
     if (me.onboardingStep !== 'COMPLETE') {
       try {

@@ -1,4 +1,5 @@
 import {
+  SKILL_DIMENSIONS,
   computeSkillScores,
   deriveGoalStatus,
   recommendContent,
@@ -53,12 +54,21 @@ describe('computeSkillScores', () => {
     expect(serve.score).toBeLessThanOrEqual(6);
   });
 
-  it('excludes COMPETITION_EXPERIENCE from the seven dimensions', () => {
+  it('excludes COMPETITION_EXPERIENCE from the development dimensions', () => {
     const scores = computeSkillScores({ COMPETITION_EXPERIENCE: 5 }, []);
     expect(scores.some((s) => s.skill === 'COMPETITION_EXPERIENCE')).toBe(
       false,
     );
-    expect(scores).toHaveLength(7);
+    expect(scores).toHaveLength(SKILL_DIMENSIONS.length);
+  });
+
+  it('scores FOOTWORK from practice alone — it has no assessment questions', () => {
+    const scores = computeSkillScores({ FOREHAND: 4 }, [
+      { skillFocus: 'FOOTWORK', perceivedPerformance: 5 },
+    ]);
+    const footwork = scores.find((s) => s.skill === 'FOOTWORK')!;
+    expect(footwork.score).not.toBeNull();
+    expect(footwork.maturity).toBe('ESTABLISHED');
   });
 });
 

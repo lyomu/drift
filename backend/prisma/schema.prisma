@@ -112,6 +112,11 @@ enum AssessmentPillar {
   MOVEMENT
   MATCH_PLAY
   COMPETITION_EXPERIENCE
+  // Added 2026-10 for the redesigned Log Practice screen. Practice-only:
+  // the question bank has no FOOTWORK questions, so it is deliberately
+  // absent from the assessment's PILLAR_ORDER / branch scopes and scores
+  // purely from practice logs.
+  FOOTWORK
 }
 
 enum AnswerOption {

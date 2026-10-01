@@ -139,6 +139,7 @@ class PlayerFilters {
     this.formatPreference,
     this.stylePreference,
     this.clubName,
+    this.timeBlock,
   });
 
   final int? maxDistanceKm;
@@ -148,13 +149,22 @@ class PlayerFilters {
   final String? stylePreference;
   final String? clubName;
 
+  /// `TimeBlock` — MORNING / AFTERNOON / EVENING. Single-valued because
+  /// `SearchPlayersDto.timeBlock` is: the server matches players with *some*
+  /// availability slot in that block, and there is no way to ask for several.
+  /// The companion `dayOfWeek` parameter is deliberately not surfaced — one
+  /// weekday at a time is not a filter anyone wants, and "weekends" would
+  /// need two values the endpoint cannot take.
+  final String? timeBlock;
+
   bool get isEmpty =>
       maxDistanceKm == null &&
       levelMin == null &&
       levelMax == null &&
       formatPreference == null &&
       stylePreference == null &&
-      (clubName == null || clubName!.isEmpty);
+      (clubName == null || clubName!.isEmpty) &&
+      timeBlock == null;
 
   PlayerFilters copyWith({
     int? maxDistanceKm,
@@ -163,10 +173,12 @@ class PlayerFilters {
     String? formatPreference,
     String? stylePreference,
     String? clubName,
+    String? timeBlock,
     bool clearDistance = false,
     bool clearLevel = false,
     bool clearFormat = false,
     bool clearStyle = false,
+    bool clearTimeBlock = false,
   }) => PlayerFilters(
     maxDistanceKm: clearDistance ? null : (maxDistanceKm ?? this.maxDistanceKm),
     levelMin: clearLevel ? null : (levelMin ?? this.levelMin),
@@ -178,6 +190,7 @@ class PlayerFilters {
         ? null
         : (stylePreference ?? this.stylePreference),
     clubName: clubName ?? this.clubName,
+    timeBlock: clearTimeBlock ? null : (timeBlock ?? this.timeBlock),
   );
 
   Map<String, dynamic> toQuery() => {
@@ -187,6 +200,7 @@ class PlayerFilters {
     if (formatPreference != null) 'formatPreference': formatPreference,
     if (stylePreference != null) 'stylePreference': stylePreference,
     if (clubName != null && clubName!.isNotEmpty) 'clubName': clubName,
+    if (timeBlock != null) 'timeBlock': timeBlock,
   };
 }
 

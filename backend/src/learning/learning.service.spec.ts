@@ -1,6 +1,7 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { LearningService } from './learning.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { SKILL_DIMENSIONS } from './skill-score';
 
 type MockPrisma = {
   tennisProfile: Record<string, jest.Mock>;
@@ -61,7 +62,7 @@ describe('LearningService', () => {
 
     it('returns null scores and no weakest skill when there is no data at all', async () => {
       const result = await service.getSkillProfile('user-1');
-      expect(result.skills).toHaveLength(7);
+      expect(result.skills).toHaveLength(SKILL_DIMENSIONS.length);
       expect(result.skills.every((s) => s.score === null)).toBe(true);
       expect(result.weakestSkill).toBeNull();
       expect(result.recommendations).toEqual([]);

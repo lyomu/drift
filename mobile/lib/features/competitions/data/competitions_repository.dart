@@ -74,12 +74,38 @@ class League {
     this.scoringFormat,
     this.walkoverRule,
     this.unfinishedMatchPolicy,
+    this.clubName,
+    this.enrolledCount,
+    this.capacity,
+    this.viewerRegistrationStatus,
   });
 
   final String id;
   final String sport;
   final String name;
   final String? description;
+
+  /// The host club's name, when the read included it. Null on the reads that
+  /// do not join the club (league detail, club admin lists), so a card that
+  /// shows it must tolerate its absence.
+  final String? clubName;
+
+  /// Players with an ENROLLED registration. Null when the read did not count
+  /// them.
+  final int? enrolledCount;
+  final int? capacity;
+
+  /// The viewer's own registration, when the read resolved it. Null means
+  /// either "not registered" or "this read does not say" — the list and the
+  /// detail both populate it, so on those surfaces null is a real "no".
+  final SeasonRegistrationStatus? viewerRegistrationStatus;
+
+  /// Whether the viewer holds a live place (enrolled or waitlisted). A
+  /// withdrawn registration reads as not joined, which is what the Join
+  /// button on the list card keys off.
+  bool get viewerHasPlace =>
+      viewerRegistrationStatus == SeasonRegistrationStatus.enrolled ||
+      viewerRegistrationStatus == SeasonRegistrationStatus.waitlisted;
 
   /// Sanitised HTML (backend common/rich-text.util.ts) — render with an
   /// HTML widget, not a plain [Text].
@@ -113,6 +139,14 @@ class League {
     scoringFormat: json['scoringFormat'] as String?,
     walkoverRule: json['walkoverRule'] as String?,
     unfinishedMatchPolicy: json['unfinishedMatchPolicy'] as String?,
+    clubName: json['clubName'] as String?,
+    enrolledCount: json['enrolledCount'] as int?,
+    capacity: json['capacity'] as int?,
+    viewerRegistrationStatus: json['viewerRegistrationStatus'] == null
+        ? null
+        : SeasonRegistrationStatus.fromJson(
+            json['viewerRegistrationStatus'] as String,
+          ),
   );
 }
 
