@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/onboarding/onboarding_step_route.dart';
-import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
-import '../../../shared/widgets/drift_scaffold.dart';
 import '../../../shared/widgets/drift_text_field.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../users/data/users_repository.dart';
+import 'widgets/onboarding_scaffold.dart';
 
 /// Club / Preferred Courts — `foundation/03-user-journeys.md` §2. Free-text
 /// only this checkpoint (Courts/Clubs modules land in Phase M9); optional
@@ -58,46 +57,30 @@ class _ClubCourtsScreenState extends ConsumerState<ClubCourtsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<DriftColors>()!;
-
-    return DriftScaffold(
-      title: 'Club / Preferred Courts',
-      body: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text('No club yet? Skip for now.'),
-            const SizedBox(height: DriftSpacing.s4),
-            DriftTextField(
-              label: 'Club name (optional)',
-              controller: _clubController,
-            ),
-            const SizedBox(height: DriftSpacing.s4),
-            DriftTextField(
-              label: 'Preferred court (optional)',
-              controller: _courtController,
-            ),
-            if (_errorText != null) ...[
-              const SizedBox(height: DriftSpacing.s3),
-              Text(_errorText!, style: TextStyle(color: colors.error)),
-            ],
-            const SizedBox(height: DriftSpacing.s6),
-            DriftButton(
-              label: _isSubmitting ? 'Saving…' : 'Continue',
-              onPressed: _isSubmitting ? null : _submit,
-            ),
-            const SizedBox(height: DriftSpacing.s2),
-            Center(
-              child: DriftButton(
-                label: 'Skip',
-                variant: DriftButtonVariant.text,
-                onPressed: _isSubmitting ? null : _submit,
-              ),
-            ),
-          ],
-        ),
+    return DriftOnboardingScaffold(
+      step: OnboardingStepIndex.clubCourts,
+      title: 'Where do you play?',
+      highlight: 'play?',
+      subtitle: 'No club yet? Skip this one.',
+      loading: _isSubmitting,
+      onContinue: _isSubmitting ? null : _submit,
+      errorText: _errorText,
+      footer: DriftButton(
+        label: 'Skip',
+        variant: DriftButtonVariant.text,
+        onPressed: _isSubmitting ? null : _submit,
       ),
+      children: [
+        DriftTextField(
+          label: 'Club name (optional)',
+          controller: _clubController,
+        ),
+        const SizedBox(height: DriftSpacing.s4),
+        DriftTextField(
+          label: 'Preferred court (optional)',
+          controller: _courtController,
+        ),
+      ],
     );
   }
 }

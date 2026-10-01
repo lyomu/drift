@@ -1183,6 +1183,15 @@ model League {
   // SINGLES enforced by competitions.service.ts this phase — a doubles
   // league needs pair-registration, which Doc 6 doesn't specify.
   format      MatchFormat @default(SINGLES)
+  // The level this league is pitched at, reusing the same AssessmentBranch
+  // tiering as the onboarding assessment and LearningContent rather than
+  // inventing a second scale. Null means "all levels" — the league is open
+  // to anyone, which is the default and what most club leagues are.
+  //
+  // Advisory only: `register()` deliberately does not gate on it. A player
+  // with no level at all resolves to 0 (player-level.ts), so a level check
+  // would lock un-assessed players out of exactly the leagues they need.
+  levelBand   AssessmentBranch?
   state       LeagueState @default(PUBLISHED)
 
   // Competition scheduling (folded up from the former Season model).

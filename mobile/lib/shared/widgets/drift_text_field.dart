@@ -45,7 +45,10 @@ class DriftTextField extends StatelessWidget {
       maxLength: maxLength,
       inputFormatters: inputFormatters,
       decoration: InputDecoration(
-        labelText: label,
+        // An empty label means "no label" — used where the field sits under a
+        // heading that already names it. Passing '' through would reserve the
+        // floating-label row and render a blank line above the field.
+        labelText: label.isEmpty ? null : label,
         hintText: hintText,
         errorText: errorText,
       ),

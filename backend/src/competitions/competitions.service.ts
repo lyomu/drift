@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import {
+  AssessmentBranch,
   LeagueState,
   LeagueRegistrationStatus,
   MatchFormat,
@@ -337,6 +338,7 @@ export class CompetitionsService {
       capacity?: number;
       sport?: MatchSport;
       format?: MatchFormat;
+      levelBand?: AssessmentBranch;
     },
   ) {
     this.assertCompetitionWindow(dto);
@@ -357,6 +359,7 @@ export class CompetitionsService {
         capacity: dto.capacity,
         sport: dto.sport,
         format: dto.format,
+        levelBand: dto.levelBand,
         state: LeagueState.DRAFT,
       },
       include: { rounds: { select: { index: true, closedAt: true } } },
@@ -445,6 +448,7 @@ export class CompetitionsService {
       capacity?: number;
       cancelReason?: string;
       state?: LeagueState;
+      levelBand?: AssessmentBranch;
     },
   ) {
     const current = await this.prisma.league.findUnique({
@@ -616,6 +620,7 @@ export class CompetitionsService {
       walkoverRule: string | null;
       unfinishedMatchPolicy: string | null;
       format: string;
+      levelBand: AssessmentBranch | null;
       state: LeagueState;
       registrationOpensAt: Date | null;
       registrationClosesAt: Date | null;
@@ -647,6 +652,7 @@ export class CompetitionsService {
       walkoverRule: league.walkoverRule,
       unfinishedMatchPolicy: league.unfinishedMatchPolicy,
       format: league.format,
+      levelBand: league.levelBand,
       state: league.state,
       competitionState: effectiveCompetitionState(
         league,

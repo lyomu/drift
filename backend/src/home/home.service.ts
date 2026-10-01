@@ -1,6 +1,8 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { MatchState } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { labelForLevel } from '../common/level-label.util';
+import { activityStreakWeeks, levelProgress } from './home-progress';
 import { HOME_CARD_PRIORITY, type HomeCard } from './home-card';
 import type {
   HomeCardContributor,
@@ -89,6 +91,7 @@ export class HomeService {
       this.prisma.tennisProfile.findUnique({
         where: { userId },
         select: {
+          id: true,
           userSelectedLevel: true,
           systemSuggestedLevel: true,
           singlesRating: true,
@@ -110,7 +113,56 @@ export class HomeService {
       singlesRating: profile.singlesRating,
       doublesRating: profile.doublesRating,
       goals: profile.onboardingGoals,
+      streakWeeks: await this.activityStreak(userId, profile.id),
+      // Null for an un-levelled player and for the top band, where there is
+      // no next level — Home hides the bar rather than showing a full one.
+      levelProgress: levelProgress(level),
     };
+  }
+
+  /**
+   * Consecutive weeks with at least one practice session or played match.
+   *
+   * Only counts matches that actually happened: a proposal that expired or
+   * was cancelled is not activity. `confirmedTime` is the agreed playing
+   * time, which is the date the week is bucketed by.
+   *
+   * Bounded to the last year — a streak longer than that is not worth the
+   * scan, and the week walk stops at the first gap anyway.
+   */
+  private async activityStreak(
+    userId: string,
+    tennisProfileId: string,
+  ): Promise<number> {
+    const since = new Date(Date.now() - 370 * 24 * 60 * 60 * 1000);
+
+    const [practices, matches] = await Promise.all([
+      this.prisma.practiceSession.findMany({
+        where: { tennisProfileId, occurredAt: { gte: since } },
+        select: { occurredAt: true },
+      }),
+      this.prisma.match.findMany({
+        where: {
+          participants: { some: { userId } },
+          state: {
+            in: [
+              MatchState.COMPLETED,
+              MatchState.WALKOVER,
+              MatchState.RETIRED,
+            ],
+          },
+          confirmedTime: { gte: since },
+        },
+        select: { confirmedTime: true },
+      }),
+    ]);
+
+    return activityStreakWeeks([
+      ...practices.map((p) => p.occurredAt),
+      ...matches
+        .map((m) => m.confirmedTime)
+        .filter((d): d is Date => d !== null),
+    ]);
   }
 
   async getFeed(userId: string): Promise<{ cards: HomeCard[] }> {

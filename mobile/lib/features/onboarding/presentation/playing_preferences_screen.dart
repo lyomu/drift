@@ -5,6 +5,7 @@ import '../../../core/onboarding/onboarding_step_route.dart';
 import '../../../core/theme/drift_colors.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../users/data/users_repository.dart';
+import 'widgets/onboarding_scaffold.dart';
 
 /// One chip in a section. [value] is the backend enum; everything else is
 /// presentation taken from the redesign mock. The mock swaps a Material
@@ -103,15 +104,10 @@ const _timeOptions = <_ChipOption>[
 /// because the prototype is a four-screen excerpt; the real flow is ten, and
 /// the sibling redesigned steps (tennis experience, padel interest) already
 /// count against the real total.
-const _totalSteps = 10;
-const _thisStep = 6;
 
 const _ink = Color(0xFF0F172A);
 const _muted = Color(0xFF94A3B8);
 
-/// The progress bar's far end. Blue to green reads as "nearly there" in the
-/// mock; it is a one-off gradient, not a palette token.
-const _progressEnd = Color(0xFF69DB7C);
 
 /// Playing Preferences — `foundation/03-user-journeys.md` §2.
 class PlayingPreferencesScreen extends ConsumerStatefulWidget {
@@ -164,224 +160,61 @@ class _PlayingPreferencesScreenState
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<DriftColors>()!;
-
-    return Scaffold(
-      backgroundColor: colors.background,
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            const _StepHeader(step: _thisStep, total: _totalSteps),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  _SectionCard(
-                    label: 'Format',
-                    child: _ChipGroup(
-                      options: _formatOptions,
-                      isSelected: (o) => _format == o.value,
-                      // Single choice: tapping replaces rather than toggles,
-                      // so a section can never end up empty once touched.
-                      onTap: (o) => setState(() {
-                        _format = o.value;
-                        _errorText = null;
-                      }),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _SectionCard(
-                    label: 'Style',
-                    child: _ChipGroup(
-                      options: _styleOptions,
-                      isSelected: (o) => _style == o.value,
-                      onTap: (o) => setState(() {
-                        _style = o.value;
-                        _errorText = null;
-                      }),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _SectionCard(
-                    label: 'Preferred times',
-                    note: 'select all that apply',
-                    child: _ChipGroup(
-                      options: _timeOptions,
-                      isSelected: (o) => _times.contains(o.value),
-                      onTap: (o) => setState(() {
-                        if (!_times.remove(o.value)) _times.add(o.value);
-                        _errorText = null;
-                      }),
-                    ),
-                  ),
-                  // The mock reserves this row whether or not the message
-                  // shows, so nothing below it shifts.
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    height: 16,
-                    child: _errorText == null
-                        ? null
-                        : Text(
-                            _errorText!,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              height: 1.33,
-                              color: Color(0xFFEF4444),
-                            ),
-                          ),
-                  ),
-                ],
-              ),
-            ),
-            _ContinueBar(
-              active: _canContinue,
-              loading: _isSubmitting,
-              onPressed: _isSubmitting ? null : _submit,
-            ),
-          ],
+    return DriftOnboardingScaffold(
+      step: OnboardingStepIndex.playingPreferences,
+      title: 'How do you like to play?',
+      highlight: 'play?',
+      subtitle: 'This shapes who we match you with.',
+      ctaActive: _canContinue,
+      loading: _isSubmitting,
+      onContinue: _isSubmitting ? null : _submit,
+      errorText: _errorText,
+      children: [
+        _SectionCard(
+          label: 'Format',
+          child: _ChipGroup(
+            options: _formatOptions,
+            isSelected: (o) => _format == o.value,
+            // Single choice: tapping replaces rather than toggles, so a
+            // section can never end up empty once touched.
+            onTap: (o) => setState(() {
+              _format = o.value;
+              _errorText = null;
+            }),
+          ),
         ),
-      ),
+        const SizedBox(height: 12),
+        _SectionCard(
+          label: 'Style',
+          child: _ChipGroup(
+            options: _styleOptions,
+            isSelected: (o) => _style == o.value,
+            onTap: (o) => setState(() {
+              _style = o.value;
+              _errorText = null;
+            }),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _SectionCard(
+          label: 'Preferred times',
+          note: 'select all that apply',
+          child: _ChipGroup(
+            options: _timeOptions,
+            isSelected: (o) => _times.contains(o.value),
+            onTap: (o) => setState(() {
+              if (!_times.remove(o.value)) _times.add(o.value);
+              _errorText = null;
+            }),
+          ),
+        ),
+      ],
     );
   }
 }
 
 /// White header band: back button, step eyebrow, title, and a single
 /// gradient progress bar filled to [step] / [total].
-class _StepHeader extends StatelessWidget {
-  const _StepHeader({required this.step, required this.total});
-
-  final int step;
-  final int total;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<DriftColors>()!;
-    final hairline = Color.alphaBlend(
-      colors.primary.withValues(alpha: 0.08),
-      colors.surface,
-    );
-    // Onboarding steps are server driven and usually entered with `go`, which
-    // leaves nothing to pop. Show the control only when it would do something.
-    final canPop = Navigator.of(context).canPop();
-
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface,
-        border: Border(bottom: BorderSide(color: hairline)),
-      ),
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              if (canPop) ...[
-                _BackButton(onTap: () => Navigator.of(context).pop()),
-                const SizedBox(width: 12),
-              ],
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Step $step of $total',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        height: 1.2,
-                        color: colors.primary,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    const Text(
-                      'Playing Preferences',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        height: 1.1,
-                        color: _ink,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          _ProgressBar(fraction: step / total),
-        ],
-      ),
-    );
-  }
-}
-
-class _BackButton extends StatelessWidget {
-  const _BackButton({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<DriftColors>()!;
-    return Material(
-      color: colors.background,
-      borderRadius: BorderRadius.circular(10),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: Color.alphaBlend(
-                colors.primary.withValues(alpha: 0.14),
-                colors.surface,
-              ),
-              width: 1.5,
-            ),
-          ),
-          child: const Icon(Icons.arrow_back_rounded, size: 20, color: _ink),
-        ),
-      ),
-    );
-  }
-}
-
-class _ProgressBar extends StatelessWidget {
-  const _ProgressBar({required this.fraction});
-
-  final double fraction;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<DriftColors>()!;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(99),
-      child: Container(
-        height: 4,
-        color: colors.primary.withValues(alpha: 0.14),
-        child: FractionallySizedBox(
-          alignment: Alignment.centerLeft,
-          widthFactor: fraction.clamp(0.0, 1.0),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [colors.primary, _progressEnd],
-              ),
-              borderRadius: BorderRadius.circular(99),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// White card holding one labelled group of chips.
 class _SectionCard extends StatelessWidget {
   const _SectionCard({required this.label, required this.child, this.note});
 
@@ -614,96 +447,6 @@ class _OptionChip extends StatelessWidget {
                     ),
                   ],
                 ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Pinned footer holding the CTA, on its own white band above the gesture
-/// inset so the button never sits under the home indicator.
-class _ContinueBar extends StatelessWidget {
-  const _ContinueBar({
-    required this.active,
-    required this.loading,
-    required this.onPressed,
-  });
-
-  final bool active;
-  final bool loading;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<DriftColors>()!;
-    final hairline = Color.alphaBlend(
-      colors.primary.withValues(alpha: 0.08),
-      colors.surface,
-    );
-
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface,
-        border: Border(top: BorderSide(color: hairline)),
-      ),
-      padding: EdgeInsets.fromLTRB(
-        16,
-        8,
-        16,
-        24 + MediaQuery.viewPaddingOf(context).bottom,
-      ),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOut,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: active
-              ? [
-                  BoxShadow(
-                    color: colors.primary.withValues(alpha: 0.25),
-                    blurRadius: 24,
-                    offset: const Offset(0, 8),
-                  ),
-                ]
-              : null,
-        ),
-        child: Material(
-          color: active
-              ? colors.primary
-              : Color.alphaBlend(
-                  colors.primary.withValues(alpha: 0.14),
-                  colors.surface,
-                ),
-          borderRadius: BorderRadius.circular(14),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            // Still tappable when incomplete: the tap is what surfaces the
-            // "choose an option in each section" message, as in the mock.
-            onTap: onPressed,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              child: Center(
-                child: loading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : Text(
-                        'Continue  →',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          height: 1.2,
-                          color: active ? Colors.white : _muted,
-                        ),
-                      ),
               ),
             ),
           ),

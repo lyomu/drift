@@ -559,6 +559,10 @@ export async function createDisputeSeason(people, ownerToken, clubId) {
       description: 'Two-player demo league for exercising the dispute queue.',
       sport: 'TENNIS',
       format: 'SINGLES',
+      // Advisory band. Set here and deliberately left unset on Riverside
+      // Autumn Singles below, so the Compete card renders both a real band
+      // and the null "All levels" default.
+      levelBand: 'INTERMEDIATE',
       registrationOpensAt: futureIso(-1),
       registrationClosesAt: futureIso(2),
       startsAt: futureIso(2.5),

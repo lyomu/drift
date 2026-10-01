@@ -2,16 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/onboarding/onboarding_step_route.dart';
-import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
 import '../../../shared/widgets/drift_filter_chip.dart';
-import '../../../shared/widgets/drift_scaffold.dart';
 import '../../../shared/widgets/drift_text_field.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../auth/presentation/widgets/phone_field.dart';
 import '../../users/application/current_user_provider.dart';
 import '../../users/data/users_repository.dart';
+import 'widgets/onboarding_scaffold.dart';
 
 const _dominantHands = [
   ('LEFT', 'Left'),
@@ -41,15 +40,16 @@ class BasicProfileScreen extends ConsumerWidget {
     final user = ref.watch(currentUserProvider);
 
     // The form seeds its controllers once from this value, so it can only be
-    // built after the user resolves.
-    return DriftScaffold(
-      title: 'Basic Profile',
-      body: switch (user) {
-        AsyncData(:final value) => _BasicProfileForm(user: value),
-        AsyncError() => const _LoadFailed(),
-        _ => const Center(child: CircularProgressIndicator()),
-      },
-    );
+    // built after the user resolves. The form supplies its own
+    // [DriftOnboardingScaffold]; the two non-form states need a plain one so
+    // the step chrome does not appear over an error or a spinner.
+    return switch (user) {
+      AsyncData(:final value) => _BasicProfileForm(user: value),
+      AsyncError() => const Scaffold(body: SafeArea(child: _LoadFailed())),
+      _ => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      ),
+    };
   }
 }
 
@@ -148,49 +148,45 @@ class _BasicProfileFormState extends ConsumerState<_BasicProfileForm> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<DriftColors>()!;
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          DriftTextField(label: 'First name', controller: _firstNameController),
-          const SizedBox(height: DriftSpacing.s4),
-          DriftTextField(label: 'Last name', controller: _lastNameController),
-          const SizedBox(height: DriftSpacing.s4),
-          PhoneField(
-            controller: _phoneController,
-            onWhatsApp: _phoneOnWhatsApp,
-            onWhatsAppChanged: (v) => setState(() => _phoneOnWhatsApp = v),
-          ),
-          const SizedBox(height: DriftSpacing.s6),
-          Text('Playing hand', style: Theme.of(context).textTheme.labelLarge),
-          const SizedBox(height: DriftSpacing.s3),
-          Wrap(
-            spacing: DriftSpacing.s3,
-            runSpacing: DriftSpacing.s3,
-            children: _dominantHands
-                .map(
-                  (hand) => DriftFilterChip(
-                    label: hand.$2,
-                    selected: _dominantHand == hand.$1,
-                    onTap: () => setState(() => _dominantHand = hand.$1),
-                  ),
-                )
-                .toList(),
-          ),
-          if (_errorText != null) ...[
-            const SizedBox(height: DriftSpacing.s3),
-            Text(_errorText!, style: TextStyle(color: colors.error)),
-          ],
-          const SizedBox(height: DriftSpacing.s6),
-          DriftButton(
-            label: _isSubmitting ? 'Saving…' : 'Continue',
-            onPressed: _isSubmitting ? null : _submit,
-          ),
-        ],
-      ),
+    return DriftOnboardingScaffold(
+      step: OnboardingStepIndex.basicProfile,
+      title: 'Tell us about you',
+      highlight: 'you',
+      subtitle: 'Just the basics. You can change any of it later.',
+      ctaActive: _dominantHand != null,
+      loading: _isSubmitting,
+      onContinue: _isSubmitting ? null : _submit,
+      errorText: _errorText,
+      children: [
+        DriftTextField(label: 'First name', controller: _firstNameController),
+        const SizedBox(height: DriftSpacing.s4),
+        DriftTextField(label: 'Last name', controller: _lastNameController),
+        const SizedBox(height: DriftSpacing.s4),
+        PhoneField(
+          controller: _phoneController,
+          onWhatsApp: _phoneOnWhatsApp,
+          onWhatsAppChanged: (v) => setState(() => _phoneOnWhatsApp = v),
+        ),
+        const SizedBox(height: DriftSpacing.s6),
+        Text('Playing hand', style: Theme.of(context).textTheme.labelLarge),
+        const SizedBox(height: DriftSpacing.s3),
+        Wrap(
+          spacing: DriftSpacing.s3,
+          runSpacing: DriftSpacing.s3,
+          children: _dominantHands
+              .map(
+                (hand) => DriftFilterChip(
+                  label: hand.$2,
+                  selected: _dominantHand == hand.$1,
+                  onTap: () => setState(() {
+                    _dominantHand = hand.$1;
+                    _errorText = null;
+                  }),
+                ),
+              )
+              .toList(),
+        ),
+      ],
     );
   }
 }

@@ -5,6 +5,7 @@ import '../../../core/onboarding/onboarding_step_route.dart';
 import '../../../core/theme/drift_colors.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../users/data/users_repository.dart';
+import 'widgets/onboarding_scaffold.dart';
 
 /// One selectable experience band. [signal] is the backend enum value; the
 /// rest is presentation taken from the redesign mock.
@@ -80,8 +81,6 @@ const _experienceOptions = <_ExperienceOption>[
 /// How many steps onboarding has end to end, and where this screen sits —
 /// `OnboardingStep.basicProfile`..`padelInterest`, see
 /// `core/onboarding/onboarding_step_route.dart`.
-const _totalSteps = 10;
-const _thisStep = 2;
 
 const _ink = Color(0xFF0F172A);
 const _checkBorder = Color(0xFFCBD5E1);
@@ -128,153 +127,33 @@ class _TennisExperienceScreenState
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<DriftColors>()!;
-
-    return Scaffold(
-      backgroundColor: colors.surface,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 32, 16, 32),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const _ProgressBar(current: _thisStep, total: _totalSteps),
-              const SizedBox(height: 20),
-              const _Header(step: _thisStep, total: _totalSteps),
-              const SizedBox(height: 20),
-              for (var i = 0; i < _experienceOptions.length; i++) ...[
-                if (i > 0) const SizedBox(height: 8),
-                _OptionCard(
-                  option: _experienceOptions[i],
-                  selected: _experienceSignal == _experienceOptions[i].signal,
-                  onTap: () => setState(() {
-                    _experienceSignal = _experienceOptions[i].signal;
-                    _errorText = null;
-                  }),
-                ),
-              ],
-              // The mock reserves this row whether or not the message shows,
-              // so the Continue button never shifts.
-              const SizedBox(height: 8),
-              SizedBox(
-                height: 16,
-                child: _errorText == null
-                    ? null
-                    : Text(
-                        _errorText!,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          height: 1.33,
-                          color: Color(0xFFEF4444),
-                        ),
-                      ),
-              ),
-              const SizedBox(height: 8),
-              _ContinueButton(
-                active: _experienceSignal != null,
-                loading: _isSubmitting,
-                onPressed: _isSubmitting ? null : _submit,
-              ),
-              const SizedBox(height: 8),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Row of 24×4 rounded ticks — filled up to [current], tinted after it.
-class _ProgressBar extends StatelessWidget {
-  const _ProgressBar({required this.current, required this.total});
-
-  final int current;
-  final int total;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<DriftColors>()!;
-    return Padding(
-      padding: const EdgeInsets.only(top: 4),
-      child: Row(
-        children: [
-          for (var i = 0; i < total; i++) ...[
-            if (i > 0) const SizedBox(width: 8),
-            Flexible(
-              child: Container(
-                constraints: const BoxConstraints(maxWidth: 24),
-                height: 4,
-                decoration: BoxDecoration(
-                  color: i < current
-                      ? colors.primary
-                      : colors.primary.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(99),
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _Header extends StatelessWidget {
-  const _Header({required this.step, required this.total});
-
-  final int step;
-  final int total;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<DriftColors>()!;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return DriftOnboardingScaffold(
+      step: OnboardingStepIndex.tennisExperience,
+      title: "What's your tennis experience?",
+      highlight: 'experience?',
+      subtitle: "We'll personalize your training to match your level.",
+      ctaActive: _experienceSignal != null,
+      loading: _isSubmitting,
+      onContinue: _isSubmitting ? null : _submit,
+      errorText: _errorText,
       children: [
-        Text(
-          'STEP $step OF $total',
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 2.2,
-            height: 1.2,
-            color: colors.primary,
+        for (var i = 0; i < _experienceOptions.length; i++) ...[
+          if (i > 0) const SizedBox(height: 8),
+          _OptionCard(
+            option: _experienceOptions[i],
+            selected: _experienceSignal == _experienceOptions[i].signal,
+            onTap: () => setState(() {
+              _experienceSignal = _experienceOptions[i].signal;
+              _errorText = null;
+            }),
           ),
-        ),
-        const SizedBox(height: 4),
-        Text.rich(
-          TextSpan(
-            children: [
-              const TextSpan(text: "What's your tennis "),
-              TextSpan(
-                text: 'experience?',
-                style: TextStyle(color: colors.primary),
-              ),
-            ],
-          ),
-          style: const TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w700,
-            height: 1.2,
-            color: _ink,
-          ),
-        ),
-        const SizedBox(height: 4),
-        const Text(
-          "We'll personalize your training to match your level.",
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            height: 1.4,
-            color: _ink,
-          ),
-        ),
+        ],
       ],
     );
   }
 }
 
+/// Row of 24×4 rounded ticks — filled up to [current], tinted after it.
 class _OptionCard extends StatelessWidget {
   const _OptionCard({
     required this.option,
@@ -405,74 +284,6 @@ class _CheckDot extends StatelessWidget {
       child: selected
           ? const Icon(Icons.check_rounded, size: 10, color: Colors.white)
           : null,
-    );
-  }
-}
-
-/// Full-width CTA — half-opacity until a band is chosen, then opaque with the
-/// brand glow from the mock.
-class _ContinueButton extends StatelessWidget {
-  const _ContinueButton({
-    required this.active,
-    required this.loading,
-    required this.onPressed,
-  });
-
-  final bool active;
-  final bool loading;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<DriftColors>()!;
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 250),
-      curve: Curves.easeOut,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: active
-            ? [
-                BoxShadow(
-                  color: colors.primary.withValues(alpha: 0.4),
-                  blurRadius: 24,
-                  offset: const Offset(0, 8),
-                ),
-              ]
-            : null,
-      ),
-      child: Material(
-        color: colors.primary.withValues(alpha: active ? 1 : 0.5),
-        borderRadius: BorderRadius.circular(16),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onPressed,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            child: Center(
-              child: loading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : const Text(
-                      'Continue  →',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.48,
-                        height: 1.2,
-                        color: Colors.white,
-                      ),
-                    ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

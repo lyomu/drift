@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/theme/drift_spacing.dart';
-import '../../../core/theme/drift_typography.dart';
-import '../../../shared/widgets/buttons/drift_button.dart';
-import '../../../shared/widgets/drift_filter_chip.dart';
+import '../../../shared/widgets/drift_filter_sheet.dart';
 import '../application/courts_providers.dart';
 import '../data/courts_repository.dart';
 
@@ -14,21 +11,20 @@ import '../data/courts_repository.dart';
 /// [courtSearchProvider] watches. Amenities has no controlled vocabulary
 /// anywhere in the foundation docs, so it's left out of this sheet rather
 /// than inventing one.
+///
+/// Uses the app-wide [DriftFilterSheet] (2026-10).
 Future<void> showCourtFiltersSheet(BuildContext context, WidgetRef ref) {
-  return showModalBottomSheet<void>(
+  return showDriftFilterSheet<void>(
     context: context,
-    isScrollControlled: true,
-    showDragHandle: true,
     builder: (_) => const _CourtFiltersSheet(),
   );
 }
 
-const _distanceOptions = [5, 10, 25, 50];
-const _surfaceOptions = [
-  (value: 'HARD', label: 'Hard'),
-  (value: 'CLAY', label: 'Clay'),
-  (value: 'GRASS', label: 'Grass'),
-  (value: 'ARTIFICIAL_GRASS', label: 'Artificial Grass'),
+const _surfaceOptions = <(String, String)>[
+  ('HARD', 'Hard'),
+  ('CLAY', 'Clay'),
+  ('GRASS', 'Grass'),
+  ('ARTIFICIAL_GRASS', 'Artificial'),
 ];
 
 class _CourtFiltersSheet extends ConsumerStatefulWidget {
@@ -41,214 +37,126 @@ class _CourtFiltersSheet extends ConsumerStatefulWidget {
 class _CourtFiltersSheetState extends ConsumerState<_CourtFiltersSheet> {
   late CourtFilters _draft = ref.read(courtFiltersProvider);
 
+  int get _activeCount =>
+      (_draft.maxDistanceKm != null ? 1 : 0) +
+      _draft.surfaces.length +
+      (_draft.indoor != null ? 1 : 0) +
+      (_draft.lighting != null ? 1 : 0) +
+      (_draft.isPublic != null ? 1 : 0) +
+      (_draft.hasBookingInfo != null ? 1 : 0);
+
   void _apply() {
     ref.read(courtFiltersProvider.notifier).state = _draft;
     Navigator.of(context).pop();
   }
 
-  void _reset() {
-    setState(() => _draft = const CourtFilters());
+  /// The search text is owned by the court list's own field, not this sheet,
+  /// so clearing the filters must not wipe what the player typed.
+  void _clear() {
+    setState(() => _draft = CourtFilters(search: _draft.search));
   }
 
   void _toggleSurface(String value) {
     setState(() {
       final surfaces = List<String>.from(_draft.surfaces);
-      if (surfaces.contains(value)) {
-        surfaces.remove(value);
-      } else {
-        surfaces.add(value);
-      }
+      if (!surfaces.remove(value)) surfaces.add(value);
       _draft = _draft.copyWith(surfaces: surfaces);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final type = Theme.of(context).extension<DriftTypography>()!;
-
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          DriftSpacing.s6,
-          0,
-          DriftSpacing.s6,
-          DriftSpacing.s6,
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Filters', style: type.h2),
-              const SizedBox(height: DriftSpacing.s5),
-
-              _Section(
-                title: 'Distance',
-                child: Wrap(
-                  spacing: DriftSpacing.s2,
-                  runSpacing: DriftSpacing.s2,
-                  children: [
-                    for (final km in _distanceOptions)
-                      DriftFilterChip(
-                        label: 'Within $km km',
-                        selected: _draft.maxDistanceKm == km,
-                        onTap: () => setState(() {
-                          _draft = _draft.maxDistanceKm == km
-                              ? _draft.copyWith(clearDistance: true)
-                              : _draft.copyWith(maxDistanceKm: km);
-                        }),
-                      ),
-                  ],
-                ),
-              ),
-
-              _Section(
-                title: 'Surface',
-                child: Wrap(
-                  spacing: DriftSpacing.s2,
-                  runSpacing: DriftSpacing.s2,
-                  children: [
-                    for (final option in _surfaceOptions)
-                      DriftFilterChip(
-                        label: option.label,
-                        selected: _draft.surfaces.contains(option.value),
-                        onTap: () => _toggleSurface(option.value),
-                      ),
-                  ],
-                ),
-              ),
-
-              _Section(
-                title: 'Indoor / Outdoor',
-                child: Wrap(
-                  spacing: DriftSpacing.s2,
-                  runSpacing: DriftSpacing.s2,
-                  children: [
-                    DriftFilterChip(
-                      label: 'Indoor',
-                      selected: _draft.indoor == true,
-                      onTap: () => setState(() {
-                        _draft = _draft.indoor == true
-                            ? _draft.copyWith(clearIndoor: true)
-                            : _draft.copyWith(indoor: true);
-                      }),
-                    ),
-                    DriftFilterChip(
-                      label: 'Outdoor',
-                      selected: _draft.indoor == false,
-                      onTap: () => setState(() {
-                        _draft = _draft.indoor == false
-                            ? _draft.copyWith(clearIndoor: true)
-                            : _draft.copyWith(indoor: false);
-                      }),
-                    ),
-                  ],
-                ),
-              ),
-
-              _Section(
-                title: 'Lighting',
-                child: Wrap(
-                  spacing: DriftSpacing.s2,
-                  runSpacing: DriftSpacing.s2,
-                  children: [
-                    DriftFilterChip(
-                      label: 'Floodlit',
-                      selected: _draft.lighting == true,
-                      onTap: () => setState(() {
-                        _draft = _draft.lighting == true
-                            ? _draft.copyWith(clearLighting: true)
-                            : _draft.copyWith(lighting: true);
-                      }),
-                    ),
-                  ],
-                ),
-              ),
-
-              _Section(
-                title: 'Access',
-                child: Wrap(
-                  spacing: DriftSpacing.s2,
-                  runSpacing: DriftSpacing.s2,
-                  children: [
-                    DriftFilterChip(
-                      label: 'Public',
-                      selected: _draft.isPublic == true,
-                      onTap: () => setState(() {
-                        _draft = _draft.isPublic == true
-                            ? _draft.copyWith(clearIsPublic: true)
-                            : _draft.copyWith(isPublic: true);
-                      }),
-                    ),
-                    DriftFilterChip(
-                      label: 'Private',
-                      selected: _draft.isPublic == false,
-                      onTap: () => setState(() {
-                        _draft = _draft.isPublic == false
-                            ? _draft.copyWith(clearIsPublic: true)
-                            : _draft.copyWith(isPublic: false);
-                      }),
-                    ),
-                  ],
-                ),
-              ),
-
-              _Section(
-                title: 'Booking',
-                child: Wrap(
-                  spacing: DriftSpacing.s2,
-                  runSpacing: DriftSpacing.s2,
-                  children: [
-                    DriftFilterChip(
-                      label: 'Has booking info',
-                      selected: _draft.hasBookingInfo == true,
-                      onTap: () => setState(() {
-                        _draft = _draft.hasBookingInfo == true
-                            ? _draft.copyWith(clearHasBookingInfo: true)
-                            : _draft.copyWith(hasBookingInfo: true);
-                      }),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: DriftSpacing.s6),
-              DriftButton(label: 'Apply', onPressed: _apply),
-              const SizedBox(height: DriftSpacing.s2),
-              Center(
-                child: DriftButton(
-                  label: 'Reset',
-                  variant: DriftButtonVariant.text,
-                  onPressed: _reset,
-                ),
-              ),
+    return DriftFilterSheet(
+      activeCount: _activeCount,
+      onClear: _clear,
+      onApply: _apply,
+      sections: [
+        DriftFilterSection(
+          title: 'Distance',
+          child: DriftFilterSegments<int?>(
+            options: const [
+              DriftFilterOption(value: 5, label: '<5 km'),
+              DriftFilterOption(value: 10, label: '<10 km'),
+              DriftFilterOption(value: 25, label: '<25 km'),
+              DriftFilterOption(value: null, label: 'Any'),
             ],
+            // "Any" is the absence of a distance filter, so it reads as
+            // selected whenever none is set.
+            isSelected: (km) => _draft.maxDistanceKm == km,
+            onTap: (km) => setState(() {
+              _draft = km == null
+                  ? _draft.copyWith(clearDistance: true)
+                  : _draft.copyWith(maxDistanceKm: km);
+            }),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _Section extends StatelessWidget {
-  const _Section({required this.title, required this.child});
-
-  final String title;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final type = Theme.of(context).extension<DriftTypography>()!;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: DriftSpacing.s5),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: type.label),
-          const SizedBox(height: DriftSpacing.s2),
-          child,
-        ],
-      ),
+        DriftFilterSection(
+          title: 'Surface',
+          child: DriftFilterPills<String>(
+            options: [
+              for (final (value, label) in _surfaceOptions)
+                DriftFilterOption(value: value, label: label),
+            ],
+            isSelected: _draft.surfaces.contains,
+            onTap: _toggleSurface,
+          ),
+        ),
+        DriftFilterSection(
+          title: 'Indoor / Outdoor',
+          child: DriftFilterSegments<bool?>(
+            options: const [
+              DriftFilterOption(value: true, label: 'Indoor'),
+              DriftFilterOption(value: false, label: 'Outdoor'),
+              DriftFilterOption(value: null, label: 'Either'),
+            ],
+            isSelected: (v) => _draft.indoor == v,
+            onTap: (v) => setState(() {
+              _draft = v == null
+                  ? _draft.copyWith(clearIndoor: true)
+                  : _draft.copyWith(indoor: v);
+            }),
+          ),
+        ),
+        DriftFilterSection(
+          title: 'Access',
+          child: DriftFilterSegments<bool?>(
+            options: const [
+              DriftFilterOption(value: true, label: 'Public'),
+              DriftFilterOption(value: false, label: 'Private'),
+              DriftFilterOption(value: null, label: 'Either'),
+            ],
+            isSelected: (v) => _draft.isPublic == v,
+            onTap: (v) => setState(() {
+              _draft = v == null
+                  ? _draft.copyWith(clearIsPublic: true)
+                  : _draft.copyWith(isPublic: v);
+            }),
+          ),
+        ),
+        DriftFilterSection(
+          title: 'Features',
+          child: DriftFilterPills<String>(
+            options: const [
+              DriftFilterOption(value: 'lighting', label: 'Floodlit'),
+              DriftFilterOption(value: 'booking', label: 'Has booking info'),
+            ],
+            isSelected: (v) => v == 'lighting'
+                ? _draft.lighting == true
+                : _draft.hasBookingInfo == true,
+            onTap: (v) => setState(() {
+              if (v == 'lighting') {
+                _draft = _draft.lighting == true
+                    ? _draft.copyWith(clearLighting: true)
+                    : _draft.copyWith(lighting: true);
+              } else {
+                _draft = _draft.hasBookingInfo == true
+                    ? _draft.copyWith(clearHasBookingInfo: true)
+                    : _draft.copyWith(hasBookingInfo: true);
+              }
+            }),
+          ),
+        ),
+      ],
     );
   }
 }

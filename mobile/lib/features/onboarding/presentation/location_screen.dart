@@ -3,13 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/location/location_service.dart';
 import '../../../core/onboarding/onboarding_step_route.dart';
-import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
-import '../../../shared/widgets/drift_scaffold.dart';
 import '../../../shared/widgets/drift_text_field.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../users/data/users_repository.dart';
+import 'widgets/onboarding_scaffold.dart';
 
 /// Location — `foundation/04-screen-inventory.md` A.2. "Use current
 /// location" resolves GPS coordinates to a city/area string; a denied
@@ -100,38 +99,27 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<DriftColors>()!;
-
-    return DriftScaffold(
-      title: 'Location',
-      body: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            DriftTextField(
-              label: 'General location / city',
-              controller: _locationController,
-              onChanged: (_) => setState(() => _locationSource = 'MANUAL'),
-            ),
-            const SizedBox(height: DriftSpacing.s3),
-            DriftButton(
-              label: _isLocating ? 'Locating…' : 'Use current location',
-              variant: DriftButtonVariant.text,
-              onPressed: _isLocating ? null : _useCurrentLocation,
-            ),
-            if (_errorText != null) ...[
-              const SizedBox(height: DriftSpacing.s3),
-              Text(_errorText!, style: TextStyle(color: colors.error)),
-            ],
-            const SizedBox(height: DriftSpacing.s6),
-            DriftButton(
-              label: _isSubmitting ? 'Saving…' : 'Continue',
-              onPressed: _isSubmitting ? null : _submit,
-            ),
-          ],
+    return DriftOnboardingScaffold(
+      step: OnboardingStepIndex.location,
+      title: 'Where are you based?',
+      highlight: 'based?',
+      subtitle: 'We use this to find players and courts near you.',
+      loading: _isSubmitting,
+      onContinue: _isSubmitting ? null : _submit,
+      errorText: _errorText,
+      children: [
+        DriftTextField(
+          label: 'General location / city',
+          controller: _locationController,
+          onChanged: (_) => setState(() => _locationSource = 'MANUAL'),
         ),
-      ),
+        const SizedBox(height: DriftSpacing.s3),
+        DriftButton(
+          label: _isLocating ? 'Locating…' : 'Use current location',
+          variant: DriftButtonVariant.text,
+          onPressed: _isLocating ? null : _useCurrentLocation,
+        ),
+      ],
     );
   }
 }

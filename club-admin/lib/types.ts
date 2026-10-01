@@ -25,6 +25,15 @@ export type LeagueState = "DRAFT" | "PUBLISHED" | "CANCELLED";
 export type MatchSport = "TENNIS" | "PADEL";
 export type MatchFormat = "SINGLES" | "DOUBLES";
 
+// The app's one level vocabulary: the onboarding assessment's branches, reused
+// by learning content and by a league's advisory level band. Null, wherever it
+// appears, means "any level".
+export type AssessmentBranch =
+  | "BEGINNER"
+  | "FOUNDATIONAL"
+  | "INTERMEDIATE"
+  | "ADVANCED";
+
 export type LeagueRegistrationStatus = "ENROLLED" | "WAITLISTED" | "WITHDRAWN";
 
 export type CompetitionState =
@@ -110,6 +119,8 @@ export type LeagueSummary = {
   walkoverRule: string | null;
   unfinishedMatchPolicy: string | null;
   format: MatchFormat;
+  /** Advisory only — null means the league is open to all levels. */
+  levelBand: AssessmentBranch | null;
   state: LeagueState;
   competitionState: CompetitionState;
   registrationOpensAt: string | null;

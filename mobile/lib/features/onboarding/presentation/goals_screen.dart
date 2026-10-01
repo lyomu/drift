@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/onboarding/onboarding_step_route.dart';
-import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
 import '../../../shared/widgets/drift_filter_chip.dart';
-import '../../../shared/widgets/drift_scaffold.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../users/data/users_repository.dart';
+import 'widgets/onboarding_scaffold.dart';
 
 const _goalOptions = [
   ('play_more', 'Play more often'),
@@ -54,60 +53,40 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<DriftColors>()!;
-
-    return DriftScaffold(
-      title: 'Goals',
-      body: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: ListView(
-                children: [
-                  const Text('What are you hoping to get out of Drift?'),
-                  const SizedBox(height: DriftSpacing.s4),
-                  Wrap(
-                    spacing: DriftSpacing.s2,
-                    runSpacing: DriftSpacing.s2,
-                    children: _goalOptions
-                        .map(
-                          (goal) => DriftFilterChip(
-                            label: goal.$2,
-                            selected: _selected.contains(goal.$1),
-                            onTap: () => setState(() {
-                              if (!_selected.remove(goal.$1)) {
-                                _selected.add(goal.$1);
-                              }
-                            }),
-                          ),
-                        )
-                        .toList(),
-                  ),
-                ],
-              ),
-            ),
-            if (_errorText != null) ...[
-              const SizedBox(height: DriftSpacing.s3),
-              Text(_errorText!, style: TextStyle(color: colors.error)),
-            ],
-            const SizedBox(height: DriftSpacing.s6),
-            DriftButton(
-              label: _isSubmitting ? 'Saving…' : 'Continue',
-              onPressed: _isSubmitting ? null : _submit,
-            ),
-            const SizedBox(height: DriftSpacing.s2),
-            Center(
-              child: DriftButton(
-                label: 'Skip',
-                variant: DriftButtonVariant.text,
-                onPressed: _isSubmitting ? null : _submit,
-              ),
-            ),
-          ],
-        ),
+    return DriftOnboardingScaffold(
+      step: OnboardingStepIndex.goals,
+      title: 'What brings you to Drift?',
+      highlight: 'Drift?',
+      subtitle: 'Pick as many as you like. This only shapes what we suggest.',
+      loading: _isSubmitting,
+      onContinue: _isSubmitting ? null : _submit,
+      errorText: _errorText,
+      // Goals are optional, and submitting an empty set is what Skip has
+      // always done — the API takes a list, not a null.
+      footer: DriftButton(
+        label: 'Skip',
+        variant: DriftButtonVariant.text,
+        onPressed: _isSubmitting ? null : _submit,
       ),
+      children: [
+        Wrap(
+          spacing: DriftSpacing.s2,
+          runSpacing: DriftSpacing.s2,
+          children: _goalOptions
+              .map(
+                (goal) => DriftFilterChip(
+                  label: goal.$2,
+                  selected: _selected.contains(goal.$1),
+                  onTap: () => setState(() {
+                    if (!_selected.remove(goal.$1)) {
+                      _selected.add(goal.$1);
+                    }
+                  }),
+                ),
+              )
+              .toList(),
+        ),
+      ],
     );
   }
 }

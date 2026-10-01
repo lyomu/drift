@@ -66,6 +66,9 @@ class _AppShellState extends ConsumerState<AppShell> {
   };
 
   List<Widget> get _actions => switch (_index) {
+    // Home only: the streak is about the player's own activity, and the chip
+    // hides itself below two weeks.
+    0 => [const DriftStreakChip()],
     1 => [
       DriftHeaderSquareButton(
         icon: Icons.tune,

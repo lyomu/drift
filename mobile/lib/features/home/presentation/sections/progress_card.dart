@@ -4,8 +4,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/drift_colors.dart';
 import '../../../../core/theme/drift_typography.dart';
-import '../../../../shared/widgets/drift_section_header.dart';
-import '../../../../shared/widgets/drift_soft_card.dart';
 import '../../../achievements/application/achievements_providers.dart';
 import 'home_empty_state.dart';
 
@@ -29,69 +27,132 @@ class ProgressSection extends ConsumerWidget {
         .where((a) => a.state != 'EARNED')
         .firstOrNull;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          DriftSectionHeader(
-            title: 'Your progress',
-            actionLabel: 'View all',
-            onAction: () => context.push('/profile/achievements'),
+    // The section header is supplied by the enclosing `HomeSectionPanel`.
+    if (earned == 0) {
+      return HomeEmptyState(
+        icon: Icons.emoji_events_outlined,
+        message:
+            'Play matches and log practice to start earning achievements.',
+        actionLabel: 'View',
+        onAction: () => context.push('/profile/achievements'),
+      );
+    }
+
+    const violet = Color(0xFF8B5CF6);
+
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(14),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => context.push('/profile/achievements'),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                colors.primary.withValues(alpha: 0.06),
+                violet.withValues(alpha: 0.06),
+              ],
+            ),
+            border: Border.all(
+              color: Color.alphaBlend(
+                colors.primary.withValues(alpha: 0.18),
+                colors.surface,
+              ),
+              width: 1.5,
+            ),
           ),
-          const SizedBox(height: 12),
-          if (earned == 0)
-            HomeEmptyState(
-              icon: Icons.emoji_events_outlined,
-              message:
-                  'Play matches and log practice to start earning '
-                  'achievements.',
-              actionLabel: 'View',
-              onAction: () => context.push('/profile/achievements'),
-            )
-          else
-            DriftSoftCard(
-              onTap: () => context.push('/profile/achievements'),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Achievements',
-                        style: type.body.copyWith(fontWeight: FontWeight.w600),
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [colors.primary, violet],
                       ),
-                      Text(
-                        '$earned / $total',
-                        style: type.body.copyWith(
-                          color: colors.primary,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(999),
-                    child: LinearProgressIndicator(
-                      value: total == 0 ? 0 : earned / total,
-                      minHeight: 6,
-                      backgroundColor: colors.primaryLight,
-                      valueColor: AlwaysStoppedAnimation<Color>(colors.primary),
+                    ),
+                    child: const Icon(
+                      Icons.military_tech_rounded,
+                      size: 17,
+                      color: Colors.white,
                     ),
                   ),
-                  if (nextLocked != null) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      'Next: ${nextLocked.title} — ${nextLocked.criteria}',
-                      style: type.caption.copyWith(color: colors.textSecondary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Achievements',
+                      style: type.body.copyWith(fontWeight: FontWeight.w700),
                     ),
-                  ],
+                  ),
+                  Text(
+                    '$earned / $total',
+                    style: type.body.copyWith(
+                      color: colors.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ],
               ),
-            ),
-        ],
+              const SizedBox(height: 12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(999),
+                child: Container(
+                  height: 7,
+                  color: Color.alphaBlend(
+                    colors.primary.withValues(alpha: 0.18),
+                    colors.surface,
+                  ),
+                  child: FractionallySizedBox(
+                    alignment: Alignment.centerLeft,
+                    widthFactor: total == 0
+                        ? 0
+                        : (earned / total).clamp(0.0, 1.0),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [colors.primary, violet],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              if (nextLocked != null) ...[
+                const SizedBox(height: 10),
+                Text.rich(
+                  TextSpan(
+                    children: [
+                      const TextSpan(text: 'Next: '),
+                      TextSpan(
+                        text: nextLocked.title,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                      TextSpan(text: ' — ${nextLocked.criteria}'),
+                    ],
+                  ),
+                  style: type.caption.copyWith(
+                    color: const Color(0xFF475569),
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }

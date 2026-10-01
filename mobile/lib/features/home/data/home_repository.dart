@@ -187,6 +187,23 @@ class HomeCard {
 }
 
 /// The identity header above the feed — `GET /home/summary`.
+/// How far through the current level band the player is. Null on the summary
+/// for an un-levelled player and for anyone in the top band, where there is no
+/// next level — Home hides the bar rather than showing a full one.
+class LevelProgress {
+  const LevelProgress({required this.nextLevel, required this.percent});
+
+  final double nextLevel;
+
+  /// 0-100.
+  final int percent;
+
+  factory LevelProgress.fromJson(Map<String, dynamic> json) => LevelProgress(
+    nextLevel: (json['nextLevel'] as num).toDouble(),
+    percent: (json['percent'] as num).toInt(),
+  );
+}
+
 class HomeSummary {
   const HomeSummary({
     required this.firstName,
@@ -195,6 +212,8 @@ class HomeSummary {
     required this.singlesRating,
     required this.doublesRating,
     required this.goals,
+    this.streakWeeks = 0,
+    this.levelProgress,
   });
 
   final String? firstName;
@@ -203,6 +222,12 @@ class HomeSummary {
   final double? singlesRating;
   final double? doublesRating;
   final List<String> goals;
+
+  /// Consecutive weeks with a logged practice session or a played match.
+  /// Weekly rather than daily by design — see `home-progress.ts`.
+  final int streakWeeks;
+
+  final LevelProgress? levelProgress;
 
   factory HomeSummary.fromJson(Map<String, dynamic> json) => HomeSummary(
     firstName: json['firstName'] as String?,
@@ -213,6 +238,10 @@ class HomeSummary {
     goals: (json['goals'] as List<dynamic>? ?? [])
         .map((g) => g as String)
         .toList(),
+    streakWeeks: (json['streakWeeks'] as num?)?.toInt() ?? 0,
+    levelProgress: json['levelProgress'] == null
+        ? null
+        : LevelProgress.fromJson(json['levelProgress'] as Map<String, dynamic>),
   );
 }
 

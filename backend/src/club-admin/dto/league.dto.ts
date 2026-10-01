@@ -9,7 +9,12 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
-import { LeagueState, MatchFormat, MatchSport } from '@prisma/client';
+import {
+  AssessmentBranch,
+  LeagueState,
+  MatchFormat,
+  MatchSport,
+} from '@prisma/client';
 
 /**
  * A league is a single competition run since M15 — registration window,
@@ -86,6 +91,15 @@ export class CreateLeagueDto {
   @IsOptional()
   @IsEnum(MatchFormat)
   format?: MatchFormat;
+
+  /**
+   * Advisory level band, shown on the Compete list card. Omit for "all
+   * levels", which is the default. Reuses AssessmentBranch rather than a
+   * league-specific scale — see LEAGUE_LEVEL_BAND_SPEC.md.
+   */
+  @IsOptional()
+  @IsEnum(AssessmentBranch)
+  levelBand?: AssessmentBranch;
 }
 
 export class UpdateLeagueDto {
@@ -158,6 +172,11 @@ export class UpdateLeagueDto {
   @IsOptional()
   @IsEnum(LeagueState)
   state?: LeagueState;
+
+  /** See [CreateLeagueDto.levelBand]. */
+  @IsOptional()
+  @IsEnum(AssessmentBranch)
+  levelBand?: AssessmentBranch;
 }
 
 export class IssueLeagueAwardDto {

@@ -14,9 +14,9 @@ import 'drift_competition_card.dart';
 /// simply not rendered, so a league with no club shows no location row rather
 /// than a placeholder.
 ///
-/// There is no level band on the card: the mock shows one, but nothing in
-/// `League` or the league payload models a level, and inventing one would put
-/// a number on a league that the league does not have.
+/// The level band beside the format is advisory and never gates registration
+/// (see `LEAGUE_LEVEL_BAND_SPEC.md`); a league with no band set reads as
+/// "All levels", which is both the default and the honest answer.
 class DriftLeagueCard extends StatelessWidget {
   const DriftLeagueCard({
     super.key,
@@ -52,6 +52,7 @@ class DriftLeagueCard extends StatelessWidget {
       title: league.name,
       badge: league.format == 'DOUBLES' ? 'Doubles' : 'Singles',
       badgeAccent: accent,
+      meta: league.levelBandLabel,
       details: [
         if (league.clubName != null)
           DriftCompetitionDetail(

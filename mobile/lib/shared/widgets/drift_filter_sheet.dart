@@ -91,7 +91,13 @@ class DriftFilterSheet extends StatelessWidget {
       ),
       child: SafeArea(
         top: false,
-        child: Column(
+        child: Padding(
+          // Lifts the sheet clear of the keyboard when a section holds a text
+          // field; zero otherwise.
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.viewInsetsOf(context).bottom,
+          ),
+          child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             // Drawn rather than `showDragHandle: true`: the Material handle
@@ -152,6 +158,7 @@ class DriftFilterSheet extends StatelessWidget {
               child: _ApplyButton(activeCount: activeCount, onTap: onApply),
             ),
           ],
+          ),
         ),
       ),
     );

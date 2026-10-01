@@ -5,8 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/drift_colors.dart';
 import '../../../../core/theme/drift_typography.dart';
 import '../../../../shared/widgets/drift_player_card.dart';
-import '../../../../shared/widgets/drift_section_header.dart';
-import '../../../../shared/widgets/drift_soft_card.dart';
 import '../../../matches/application/matches_providers.dart';
 import '../../../matches/data/matches_repository.dart';
 import '../../../players/data/players_repository.dart';
@@ -42,33 +40,18 @@ class NextMatchSection extends ConsumerWidget {
         : ref.watch(matchDetailProvider(matchId!)).valueOrNull;
     final viewerId = ref.watch(currentUserProvider).valueOrNull?.id;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          DriftSectionHeader(
-            title: 'Next match',
-            actionLabel: 'View all',
-            onAction: () => context.go('/home?tab=play&play=active'),
-          ),
-          const SizedBox(height: 12),
-          if (match == null)
-            HomeEmptyState(
-              icon: Icons.event_available_outlined,
-              message: 'No matches scheduled yet.',
-              actionLabel: 'Find a match',
-              onAction: () => context.go('/home?tab=play&play=find'),
-            )
-          else
-            _MatchCard(
-              match: match,
-              opponent: viewerId == null
-                  ? null
-                  : match.opponentFor(viewerId)?.player,
-            ),
-        ],
-      ),
+    // The section header is supplied by the enclosing `HomeSectionPanel`.
+    if (match == null) {
+      return HomeEmptyState(
+        icon: Icons.event_available_outlined,
+        message: 'No matches scheduled yet.',
+        actionLabel: 'Find a match',
+        onAction: () => context.go('/home?tab=play&play=find'),
+      );
+    }
+    return _MatchCard(
+      match: match,
+      opponent: viewerId == null ? null : match.opponentFor(viewerId)?.player,
     );
   }
 }
@@ -91,9 +74,27 @@ class _MatchCard extends StatelessWidget {
               '${when.hour.toString().padLeft(2, '0')}:'
               '${when.minute.toString().padLeft(2, '0')}';
 
-    return DriftSoftCard(
-      onTap: () => context.push('/matches/${match.id}'),
-      child: Row(
+    // Tinted ground rather than a white card: this sits inside a white panel,
+    // so a white card on white would have nothing to sit against.
+    return Material(
+      color: colors.background,
+      borderRadius: BorderRadius.circular(14),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => context.push('/matches/${match.id}'),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: Color.alphaBlend(
+                colors.primary.withValues(alpha: 0.18),
+                colors.surface,
+              ),
+              width: 1.5,
+            ),
+          ),
+          padding: const EdgeInsets.all(14),
+          child: Row(
         children: [
           if (opponent != null)
             DriftPlayerAvatar(player: opponent!, radius: 24)
@@ -133,7 +134,9 @@ class _MatchCard extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           _ViewPill(onTap: () => context.push('/matches/${match.id}')),
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -147,16 +150,36 @@ class _ViewPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<DriftColors>()!;
-    final type = Theme.of(context).extension<DriftTypography>()!;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: colors.border, width: 1.5),
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
+        boxShadow: [
+          BoxShadow(
+            color: colors.primary.withValues(alpha: 0.25),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: colors.primary,
+        borderRadius: BorderRadius.circular(999),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+            child: Text(
+              'View',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                height: 1.2,
+                color: Colors.white,
+              ),
+            ),
+          ),
         ),
-        child: Text('View', style: type.label.copyWith(color: colors.primary)),
       ),
     );
   }

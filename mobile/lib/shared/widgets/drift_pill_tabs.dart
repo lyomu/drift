@@ -34,21 +34,43 @@ class DriftPillTabs extends StatelessWidget {
           final active = i == selected;
           return GestureDetector(
             onTap: () => onChanged(i),
-            child: Container(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              curve: Curves.easeOut,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               decoration: BoxDecoration(
                 color: active ? colors.primary : colors.surface,
                 borderRadius: BorderRadius.circular(999),
                 border: active
                     ? null
-                    : Border.all(color: colors.border, width: 1.5),
+                    : Border.all(
+                        // The redesign's brand-tinted hairline (#E2EAFF
+                        // against white) rather than the neutral border.
+                        color: Color.alphaBlend(
+                          colors.primary.withValues(alpha: 0.18),
+                          colors.surface,
+                        ),
+                        width: 1.5,
+                      ),
+                // Lifts the selected tab off the ground, which is what makes
+                // the row read as one control with a current item rather than
+                // as four separate buttons.
+                boxShadow: active
+                    ? [
+                        BoxShadow(
+                          color: colors.primary.withValues(alpha: 0.19),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ]
+                    : null,
               ),
               alignment: Alignment.center,
               child: Text(
                 labels[i],
                 style: type.body.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: active ? Colors.white : colors.textSecondary,
+                  fontWeight: active ? FontWeight.w700 : FontWeight.w400,
+                  color: active ? Colors.white : const Color(0xFF0F172A),
                 ),
               ),
             ),

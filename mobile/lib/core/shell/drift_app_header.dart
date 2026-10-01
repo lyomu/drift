@@ -62,23 +62,126 @@ class DriftAppHeader extends ConsumerWidget {
   }
 }
 
+const _weekdays = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+];
+
+const _months = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
+
 class _Greeting extends ConsumerWidget {
   const _Greeting();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final type = Theme.of(context).extension<DriftTypography>()!;
+    final colors = Theme.of(context).extension<DriftColors>()!;
     final summary = ref.watch(homeSummaryProvider).valueOrNull;
 
     final greeting = summary?.firstName == null
         ? 'Welcome back'
         : 'Hi, ${summary!.firstName}';
 
-    return Text(
-      greeting,
-      style: type.h2.copyWith(fontSize: 22),
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
+    // Spelled out rather than via `intl`: the app carries no localisation and
+    // DateFormat would pull a dependency in for one line.
+    final now = DateTime.now();
+    final date =
+        '${_weekdays[now.weekday - 1]}, ${now.day} ${_months[now.month - 1]}';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          greeting,
+          style: type.h2.copyWith(fontSize: 22, height: 1.1),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: 2),
+        Text(
+          date,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: type.caption.copyWith(fontSize: 11, color: colors.textSecondary),
+        ),
+      ],
+    );
+  }
+}
+
+/// Consecutive weeks with a logged practice session or a played match.
+///
+/// Hidden below two weeks: a "1" is not a streak, and showing one would make
+/// the chip permanent furniture rather than something earned. Home only — the
+/// shell passes it as that tab's action.
+class DriftStreakChip extends ConsumerWidget {
+  const DriftStreakChip({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final weeks = ref.watch(homeSummaryProvider).valueOrNull?.streakWeeks ?? 0;
+    if (weeks < 2) return const SizedBox.shrink();
+
+    const flame = Color(0xFFF97316);
+    return Tooltip(
+      message: '$weeks weeks in a row with a match or practice logged',
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(999),
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [flame, Color(0xFFEA580C)],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: flame.withValues(alpha: 0.31),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.local_fire_department_rounded,
+              size: 14,
+              color: Colors.white,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              '$weeks',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                height: 1.2,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

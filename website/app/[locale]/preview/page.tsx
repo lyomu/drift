@@ -17,6 +17,7 @@
  */
 import type { Metadata } from "next";
 
+import { PreviewLandingPage } from "@/components/v2/landing-page";
 import { getDictionary, resolveLocale } from "@/lib/content";
 
 type PageProps = { params: Promise<{ locale: string }> };
@@ -37,31 +38,5 @@ export async function generateMetadata({
 export default async function PreviewHomePage({ params }: PageProps) {
   const { locale } = await params;
   const current = resolveLocale(locale);
-
-  return (
-    <main style={{ padding: "4rem 1.5rem", maxWidth: "48rem", margin: "0 auto" }}>
-      <p
-        style={{
-          display: "inline-block",
-          padding: "0.25rem 0.75rem",
-          borderRadius: 999,
-          background: "var(--color-primary-light)",
-          color: "var(--color-primary-dark)",
-          fontSize: 12,
-          fontWeight: 600,
-        }}
-      >
-        Preview
-      </p>
-      <h1 style={{ fontSize: "2rem", fontWeight: 700, marginTop: "1rem" }}>
-        Redesign lands here
-      </h1>
-      <p style={{ marginTop: "1rem", color: "var(--color-text-secondary)" }}>
-        Locale <code>{current}</code>. The current site is untouched at{" "}
-        <a href={current === "en" ? "/" : `/${current}`}>its own URL</a>. New
-        sections go in <code>components/v2/</code> and are composed from this
-        file.
-      </p>
-    </main>
-  );
+  return <PreviewLandingPage locale={current} />;
 }

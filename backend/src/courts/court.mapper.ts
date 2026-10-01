@@ -51,6 +51,20 @@ export function toCourtSummary(court: CourtRecord, distanceKm: number | null) {
     bookingType: court.bookingType,
     clubId: court.club?.id ?? null,
     clubName: court.club?.name ?? null,
+    // Added 2026-10 for the redesigned court card on Home and in Discover.
+    // All three come from data `courtInclude` already loads, so this costs no
+    // extra query — they were simply not exposed on the list shape before.
+    //
+    // The first photo only: a list card shows one thumbnail, and sending the
+    // whole gallery to render 100x80px of it is waste. The gallery stays on
+    // the profile. Null when the court has no photo, never a placeholder.
+    photoUrl: court.photoUrls[0] ?? null,
+    // Total playable courts across every group, which is what "6 courts"
+    // means on the card. Groups are per surface/indoor split.
+    courtCount: court.courtGroups.reduce((total, g) => total + g.count, 0),
+    // Free text as the curator wrote it ("7:00-22:00", "Dawn to dusk"), not a
+    // parsed schedule — there is no structured opening-hours model.
+    openingHoursNote: court.openingHoursNote,
   };
 }
 
