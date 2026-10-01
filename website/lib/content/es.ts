@@ -10,7 +10,7 @@ export const es: Dictionary = {
   meta: {
     title: "Drift Tennis · Encuentra jugadores de tenis y juega ligas",
     description:
-      "Encuentra rivales de tenis y pádel a tu nivel, confirma el resultado entre los dos y construye una valoración fiable. Gratis. Primero en Android.",
+      "Encuentra rivales de tenis y pádel a tu nivel, confirma el resultado entre los dos y construye una valoración fiable. Gratis. Primero el tenis, después el pádel.",
   },
   header: {
     sectionsAria: "Secciones",
@@ -33,7 +33,7 @@ export const es: Dictionary = {
     body: "Pensado para deportes de raqueta, Drift Tennis te encuentra rivales a tu nivel, agenda el partido, registra el resultado que ambos jugadores confirman y convierte tu temporada en una valoración fiable. El tenis lidera, el pádel corre por la misma vía y ambos viven en una sola app, en lugar de una web de reservas, tres grupos de WhatsApp y una escalera en hoja de cálculo.",
     ctaPrimary: "Únete a la lista de espera",
     ctaSecondary: "Cómo funciona una temporada ↓",
-    freeNote: "Gratis mientras arrancamos. Primero Android, luego iOS.",
+    freeNote: "Gratis mientras arrancamos. Primero el tenis, después el pádel.",
   },
   loopStrip: {
     heading: "Un bucle, cinco etapas, y vuelves a entrar cada semana",
@@ -212,7 +212,7 @@ export const es: Dictionary = {
     title: "Tu temporada empieza con un partido",
     body: "Regístrate, haz la valoración y Drift hace el resto: rivales a tu nivel, el encuentro en tu calendario y una valoración que solo se mueve cuando los resultados se confirman.",
     cta: "Únete a la lista de espera",
-    note: "Gratis mientras arrancamos. Primero Android, luego iOS. Las tiendas aún no están activas, así que la lista de espera es cómo te enteras primero.",
+    note: "Gratis mientras arrancamos. Primero el tenis, después el pádel. Las tiendas aún no están activas, así que la lista de espera es cómo te enteras primero.",
   },
   appScreens: {
     illustrative: "Pantallas ilustrativas de la app, no datos reales de jugadores.",
@@ -262,8 +262,8 @@ export const es: Dictionary = {
   waitlist: {
     eyebrow: "Antes del primer saque",
     title: "Sé parte de la primera ronda",
-    body: "Drift Tennis se lanza primero en Android, con iOS después, y es gratis unirse y gratis jugar mientras arrancamos. El tenis lidera, el pádel también está. Deja tu nombre y tu correo y te enviaremos noticias de lanzamiento, novedades internas del producto y alguna oferta ocasional de Drift Tennis. Puedes dejar de recibir correos no esenciales cuando quieras.",
-    metaDescription: "Únete a la lista de espera de Drift Tennis y te avisaremos por correo al lanzar. Gratis, primero en Android y luego iOS. El tenis lidera, el pádel también.",
+    body: "Drift Tennis se lanza primero con tenis y después con pádel, y es gratis unirse y jugar mientras arrancamos. Deja tu nombre y tu correo y te enviaremos noticias de lanzamiento, novedades internas del producto y alguna oferta ocasional de Drift Tennis. Puedes dejar de recibir correos no esenciales cuando quieras.",
+    metaDescription: "Únete a la lista de espera de Drift Tennis y te avisaremos por correo al lanzar. Gratis, primero el tenis y después el pádel.",
     note: "No vendemos ni compartimos tu correo para el marketing de otro negocio.",
     audiences: [
       { value: "PLAYER", label: "Un jugador", hint: "Quiero jugar más tenis o pádel" },
