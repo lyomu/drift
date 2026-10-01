@@ -14,7 +14,7 @@ import "../globals.css";
 export const metadata: Metadata = baseMetadata;
 
 export const viewport: Viewport = {
-  themeColor: "#1c91d0",
+  themeColor: "#07120f",
 };
 
 export default function LegalRootLayout({
