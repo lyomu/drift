@@ -39,7 +39,7 @@ class AppTheme {
       brightness: brightness,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: colors.background,
-      fontFamily: 'DMSans',
+      fontFamily: 'Outfit',
       textTheme: TextTheme(
         displayLarge: typography.display,
         headlineLarge: typography.h1,

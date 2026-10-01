@@ -14,10 +14,6 @@ import '../../features/players/data/players_repository.dart';
 /// `playerFiltersProvider`, so keeping one card keeps them honest: a change
 /// to how a player is summarised cannot land on one surface and not the other.
 
-const _ink = Color(0xFF0F172A);
-const _subdued = Color(0xFF64748B);
-const _muted = Color(0xFF94A3B8);
-
 /// Avatar tints, assigned by a stable hash of the player id so a given player
 /// keeps the same colour across rebuilds and sessions. The API sends no colour
 /// of its own, and cycling by list position would recolour people as results
@@ -86,14 +82,14 @@ class DriftPlayerSearchBar extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 14),
               child: Row(
                 children: [
-                  const Icon(Icons.search_rounded, size: 18, color: _muted),
+                  Icon(Icons.search_rounded, size: 18, color: colors.textSecondary),
                   const SizedBox(width: 10),
                   Expanded(
                     child: TextField(
                       controller: controller,
                       onChanged: onChanged,
                       cursorColor: colors.primary,
-                      style: const TextStyle(fontSize: 13, color: _ink),
+                      style: TextStyle(fontSize: 13, color: colors.textPrimary),
                       decoration: InputDecoration(
                         isDense: true,
                         filled: false,
@@ -101,9 +97,9 @@ class DriftPlayerSearchBar extends StatelessWidget {
                         enabledBorder: InputBorder.none,
                         focusedBorder: InputBorder.none,
                         hintText: hintText,
-                        hintStyle: const TextStyle(
+                        hintStyle: TextStyle(
                           fontSize: 13,
-                          color: _muted,
+                          color: colors.textSecondary,
                         ),
                         contentPadding: const EdgeInsets.symmetric(
                           vertical: 12,
@@ -205,11 +201,11 @@ class DriftPlayerResultCard extends StatelessWidget {
                           player.displayName,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
                             height: 1.3,
-                            color: _ink,
+                            color: colors.textPrimary,
                           ),
                         ),
                         const SizedBox(height: 3),
@@ -218,10 +214,10 @@ class DriftPlayerResultCard extends StatelessWidget {
                           const SizedBox(height: 2),
                           Row(
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.location_on,
                                 size: 12,
-                                color: _muted,
+                                color: colors.textSecondary,
                               ),
                               const SizedBox(width: 4),
                               Expanded(
@@ -229,10 +225,10 @@ class DriftPlayerResultCard extends StatelessWidget {
                                   player.generalLocation!,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 11,
                                     height: 1.3,
-                                    color: _subdued,
+                                    color: colors.textSecondary,
                                   ),
                                 ),
                               ),
@@ -267,6 +263,7 @@ class _MetaRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<DriftColors>()!;
     final level = player.level;
     final trailing = [
       if (player.levelLabel != null) player.levelLabel!,
@@ -297,13 +294,21 @@ class _MetaRow extends StatelessWidget {
           ),
         for (var i = 0; i < trailing.length; i++) ...[
           if (i > 0 || level != null)
-            const Text(
+            Text(
               '·',
-              style: TextStyle(fontSize: 11, height: 1.4, color: _subdued),
+              style: TextStyle(
+                fontSize: 11,
+                height: 1.4,
+                color: colors.textSecondary,
+              ),
             ),
           Text(
             trailing[i],
-            style: const TextStyle(fontSize: 11, height: 1.4, color: _subdued),
+            style: TextStyle(
+              fontSize: 11,
+              height: 1.4,
+              color: colors.textSecondary,
+            ),
           ),
         ],
       ],

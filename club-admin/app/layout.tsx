@@ -4,13 +4,6 @@ import "./globals.css";
 import { ClubProvider } from "@/lib/club-context";
 import { WorkspaceProvider } from "@/lib/workspace-context";
 
-const dmSans = localFont({
-  src: "./fonts/DMSans-Variable.ttf",
-  variable: "--font-dm-sans",
-  weight: "100 1000",
-  display: "swap",
-});
-
 const outfit = localFont({
   src: "./fonts/Outfit-Variable.ttf",
   variable: "--font-outfit",
@@ -32,7 +25,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${dmSans.variable} ${outfit.variable} h-full antialiased`}
+      className={`${outfit.variable} h-full antialiased`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />

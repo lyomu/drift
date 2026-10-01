@@ -4,8 +4,8 @@
  * Design tokens - mirrors foundation/05-design-system.md and
  * mobile/lib/core/theme/drift_colors.dart's DriftColors values exactly,
  * so the same vocabulary (color.primary, radius.lg, ...) holds across
- * Flutter and this Next.js admin app. Body/UI text uses DM Sans; headings
- * and display roles use Outfit Thin.
+ * Flutter and this Next.js admin app. Outfit carries body/UI text, headings,
+ * and display roles as Drift's official family.
  */
 
 :root {
@@ -117,7 +117,7 @@
   --color-drift-error-surface: var(--color-error-surface);
   --color-drift-neutral-surface: var(--color-neutral-surface);
 
-  --font-body: var(--font-dm-sans);
+  --font-body: var(--font-outfit);
   --font-display: var(--font-outfit);
 
   /* Every tracking token is zero, so a stray `tracking-*` utility cannot

@@ -10,7 +10,7 @@
  * the hero (PRODUCT.md principle 1), and each merged chapter keeps its
  * second stage intact as a coda with its own heading and treatment.
  * OWN-WORLD: Drift's committed identity — #1c91d0 carrying full regions,
- * white 16px soft cards, DM Sans at zero tracking, tabular scoreline
+ * white 16px soft cards, Outfit at zero tracking, tabular scoreline
  * numerals. New in this revision: photography carries the large regions
  * that flat colour used to, always under a primary-dark scrim so white type
  * clears AA and the brand still owns the field.
@@ -39,6 +39,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { StandingsTable } from "@/components/standings-table";
 import { TheFinal } from "@/components/the-final";
+import { LandingPage } from "@/components/v2/landing-page";
 import { getDictionary, resolveLocale } from "@/lib/content";
 import { images } from "@/lib/images";
 import { localizedMetadata, siteJsonLd } from "@/lib/seo";
@@ -69,7 +70,7 @@ const CHAPTER_LAYOUT = [
   { photo: images.improve, variant: "photo-band" },
 ] as const;
 
-export default async function HomePage({ params }: PageProps) {
+export async function ReservedLandingPage({ params }: PageProps) {
   const { locale } = await params;
   const current = resolveLocale(locale);
   const t = getDictionary(current);
@@ -112,4 +113,9 @@ export default async function HomePage({ params }: PageProps) {
       <SiteFooter locale={current} />
     </>
   );
+}
+
+export default async function HomePage({ params }: PageProps) {
+  const { locale } = await params;
+  return <LandingPage locale={resolveLocale(locale)} />;
 }

@@ -19,11 +19,8 @@ import '../../../../core/theme/drift_colors.dart';
 /// added to the enum cannot leave the screens disagreeing about the total.
 const onboardingTotalSteps = 10;
 
-/// The prototype's family. Only the ported screens are on Outfit — the rest
-/// of the app is still DM Sans, so this cannot go in the global theme yet.
+/// Drift's official readable text family.
 const onboardingFont = 'Outfit';
-
-const onboardingInk = Color(0xFF0F172A);
 
 /// 1-based position of each numbered step.
 abstract final class OnboardingStepIndex {
@@ -111,12 +108,12 @@ class DriftOnboardingScaffold extends StatelessWidget {
                     ? null
                     : Text(
                         errorText!,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: onboardingFont,
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                           height: 1.33,
-                          color: Color(0xFFEF4444),
+                          color: colors.error,
                         ),
                       ),
               ),
@@ -231,24 +228,24 @@ class OnboardingHeader extends StatelessWidget {
         const SizedBox(height: 4),
         Text.rich(
           TextSpan(children: _spans(colors.primary)),
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: onboardingFont,
             fontSize: 24,
             fontWeight: FontWeight.w900,
             height: 1.2,
-            color: onboardingInk,
+            color: colors.textPrimary,
           ),
         ),
         if (subtitle != null) ...[
           const SizedBox(height: 8),
           Text(
             subtitle!,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: onboardingFont,
               fontSize: 13,
               fontWeight: FontWeight.w400,
               height: 1.5,
-              color: onboardingInk,
+              color: colors.textPrimary,
             ),
           ),
         ],

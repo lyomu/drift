@@ -6,10 +6,6 @@ import '../../../../core/theme/drift_colors.dart';
 import '../../../courts/data/courts_repository.dart';
 import 'home_empty_state.dart';
 
-const _ink = Color(0xFF0F172A);
-const _subdued = Color(0xFF64748B);
-const _muted = Color(0xFF94A3B8);
-
 /// Surface accents, so the badge over the photo matches the court's surface.
 /// Falls back to the brand colour for anything unrecognised.
 const _surfaceAccents = <String, Color>{
@@ -124,21 +120,21 @@ class _CourtCard extends StatelessWidget {
                             court.name,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
                               height: 1.2,
-                              color: _ink,
+                              color: colors.textPrimary,
                             ),
                           ),
                           if (meta.isNotEmpty) ...[
                             const SizedBox(height: 2),
                             Row(
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.location_on,
                                   size: 11,
-                                  color: _muted,
+                                  color: colors.textSecondary,
                                 ),
                                 const SizedBox(width: 3),
                                 Expanded(
@@ -146,10 +142,10 @@ class _CourtCard extends StatelessWidget {
                                     meta,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 11,
                                       height: 1.2,
-                                      color: _subdued,
+                                      color: colors.textSecondary,
                                     ),
                                   ),
                                 ),
@@ -165,10 +161,10 @@ class _CourtCard extends StatelessWidget {
                               footer,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 10,
                                 height: 1.2,
-                                color: _subdued,
+                                color: colors.textSecondary,
                               ),
                             ),
                           ),

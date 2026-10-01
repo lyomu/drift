@@ -7,10 +7,6 @@ import '../../core/theme/drift_colors.dart';
 /// a badge/meta line, zero or more icon-and-text detail rows, and an action
 /// in the top-right corner. One card keeps the four tabs from drifting apart.
 
-const _ink = Color(0xFF0F172A);
-const _subdued = Color(0xFF64748B);
-const _muted = Color(0xFF94A3B8);
-
 /// Per-row accents, cycled by list position. These lists are short, stable and
 /// ordered by the server, so position is a reasonable key here — unlike the
 /// player lists, which re-rank and therefore hash off the id instead.
@@ -95,11 +91,11 @@ class DriftCompetitionCard extends StatelessWidget {
                       title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
                         height: 1.3,
-                        color: _ink,
+                        color: colors.textPrimary,
                       ),
                     ),
                     if (badge != null || meta != null) ...[
@@ -131,20 +127,20 @@ class DriftCompetitionCard extends StatelessWidget {
                             ),
                           if (meta != null) ...[
                             if (badge != null)
-                              const Text(
+                              Text(
                                 '·',
                                 style: TextStyle(
                                   fontSize: 11,
                                   height: 1.4,
-                                  color: _subdued,
+                                  color: colors.textSecondary,
                                 ),
                               ),
                             Text(
                               meta!,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 11,
                                 height: 1.4,
-                                color: _subdued,
+                                color: colors.textSecondary,
                               ),
                             ),
                           ],
@@ -155,17 +151,21 @@ class DriftCompetitionCard extends StatelessWidget {
                       const SizedBox(height: 3),
                       Row(
                         children: [
-                          Icon(detail.icon, size: 12, color: _muted),
+                          Icon(
+                            detail.icon,
+                            size: 12,
+                            color: colors.textSecondary,
+                          ),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
                               detail.label,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 11,
                                 height: 1.3,
-                                color: _subdued,
+                                color: colors.textSecondary,
                               ),
                             ),
                           ),
@@ -313,7 +313,7 @@ class DriftCompetitionActionButton extends StatelessWidget {
           colors.primary.withValues(alpha: 0.12),
           colors.surface,
         ),
-        _muted,
+        colors.textSecondary,
         null,
       ),
     };

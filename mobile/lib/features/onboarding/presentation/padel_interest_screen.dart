@@ -10,12 +10,8 @@ import '../../auth/data/auth_repository.dart';
 import '../../users/data/users_repository.dart';
 import 'widgets/onboarding_scaffold.dart';
 
-/// The prototype's family. Only the ported screens are on Outfit — the rest
-/// of the app is still DM Sans, so this cannot go in the global theme yet.
+/// Drift's official readable text family.
 const _font = 'Outfit';
-
-const _ink = Color(0xFF0F172A);
-const _checkBorder = Color(0xFFCBD5E1);
 
 /// Padel Interest is the last onboarding step — see
 /// `core/onboarding/onboarding_step_route.dart`.
@@ -231,18 +227,18 @@ class _OptionCard extends StatelessWidget {
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
                             height: 1.2,
-                            color: selected ? colors.primary : _ink,
+                            color: selected ? colors.primary : colors.textPrimary,
                           ),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           option.subtitle,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: _font,
                             fontSize: 12,
                             fontWeight: FontWeight.w400,
                             height: 1.3,
-                            color: _ink,
+                            color: colors.textPrimary,
                           ),
                         ),
                       ],
@@ -268,6 +264,7 @@ class _CheckDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<DriftColors>()!;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 180),
       width: 18,
@@ -276,7 +273,7 @@ class _CheckDot extends StatelessWidget {
         shape: BoxShape.circle,
         color: selected ? accent : Colors.transparent,
         border: Border.all(
-          color: selected ? accent : _checkBorder,
+          color: selected ? accent : colors.border,
           width: 2,
         ),
       ),

@@ -504,22 +504,39 @@ async function seedClubAdmin(people, ownerToken) {
     });
   });
 
-  await step('publish a fresh announcement', async () => {
-    await api('post', `/clubs/${clubId}/announcements`, ownerToken, {
-      title: 'New Autumn Singles season now open',
-      body: 'Registration is open for the new season — sign up from the League tab. Round 1 pairings go out once registration closes.',
-      pinned: false,
-      status: 'PUBLISHED',
+  const announcementList = await step('inspect existing club announcements', () =>
+    api('get', `/clubs/${clubId}/announcements`, ownerToken),
+  );
+  const existingAnnouncementTitles = new Set(
+    (announcementList?.announcements ?? []).map((announcement) =>
+      announcement.title.trim().toLowerCase(),
+    ),
+  );
+
+  if (!existingAnnouncementTitles.has('new autumn singles season now open')) {
+    await step('publish the demo announcement', async () => {
+      await api('post', `/clubs/${clubId}/announcements`, ownerToken, {
+        title: 'New Autumn Singles season now open',
+        body: 'Registration is open for the new season — sign up from the League tab. Round 1 pairings go out once registration closes.',
+        pinned: false,
+        status: 'PUBLISHED',
+      });
     });
-  });
-  await step('save a draft announcement', async () => {
-    await api('post', `/clubs/${clubId}/announcements`, ownerToken, {
-      title: 'Clubhouse resurfacing — draft, not yet published',
-      body: "Draft: courts 3-4 closed for resurfacing the week of [DATE]. Confirm dates before publishing.",
-      pinned: false,
-      status: 'DRAFT',
+  }
+  if (
+    !existingAnnouncementTitles.has(
+      'clubhouse resurfacing — draft, not yet published',
+    )
+  ) {
+    await step('save the demo draft announcement', async () => {
+      await api('post', `/clubs/${clubId}/announcements`, ownerToken, {
+        title: 'Clubhouse resurfacing — draft, not yet published',
+        body: "Draft: courts 3-4 closed for resurfacing the week of [DATE]. Confirm dates before publishing.",
+        pinned: false,
+        status: 'DRAFT',
+      });
     });
-  });
+  }
 
   await step('claim the independent Highbury Fields Courts', async () => {
     await api(
@@ -528,17 +545,25 @@ async function seedClubAdmin(people, ownerToken) {
       ownerToken,
     );
   });
-  await step('add a new club court', async () => {
-    await api('post', `/clubs/${clubId}/courts`, ownerToken, {
-      name: 'Riverside Court 2 (Indoor)',
-      address: 'Riverside Tennis Club grounds',
-      latitude: 51.478,
-      longitude: -0.15,
-      courtGroups: [
-        { surface: 'HARD', indoor: true, lighting: true, count: 2 },
-      ],
+  const courtList = await step('inspect existing club courts', () =>
+    api('get', `/clubs/${clubId}/courts`, ownerToken),
+  );
+  const hasDemoCourt = (courtList?.courts ?? []).some(
+    (court) => court.name.trim().toLowerCase() === 'riverside court 2 (indoor)',
+  );
+  if (!hasDemoCourt) {
+    await step('add the demo club court', async () => {
+      await api('post', `/clubs/${clubId}/courts`, ownerToken, {
+        name: 'Riverside Court 2 (Indoor)',
+        address: 'Riverside Tennis Club grounds',
+        latitude: 51.478,
+        longitude: -0.15,
+        courtGroups: [
+          { surface: 'HARD', indoor: true, lighting: true, count: 2 },
+        ],
+      });
     });
-  });
+  }
 
   return clubId;
 }

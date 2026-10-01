@@ -33,9 +33,9 @@ export default async function WaitlistPage({ params }: PageProps) {
   return (
     <main className={`${styles.waitlist} ${outfit.className}`}>
       <div className={styles.canvas}>
-        <Link className={styles.brand} href={apexUrl(locale)} aria-label="Drift home">DRIFT</Link>
+        <Link className={styles.brand} href={apexUrl(locale, "/")} aria-label="Drift home">DRIFT</Link>
         <nav className={styles.navigation} aria-label="Waitlist navigation">
-          <Link className={styles.backLink} href={apexUrl(locale)}>← BACK TO DRIFT</Link>
+          <Link className={styles.backLink} href={apexUrl(locale, "/")}>← BACK TO DRIFT</Link>
           <span className={styles.accessPill}>EARLY ACCESS</span>
         </nav>
 

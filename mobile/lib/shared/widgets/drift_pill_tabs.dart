@@ -70,7 +70,7 @@ class DriftPillTabs extends StatelessWidget {
                 labels[i],
                 style: type.body.copyWith(
                   fontWeight: active ? FontWeight.w700 : FontWeight.w400,
-                  color: active ? Colors.white : const Color(0xFF0F172A),
+                  color: active ? Colors.white : colors.textPrimary,
                 ),
               ),
             ),

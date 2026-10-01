@@ -8,8 +8,6 @@ import '../../../players/data/players_repository.dart';
 import '../../../users/application/current_user_provider.dart';
 import 'home_empty_state.dart';
 
-const _ink = Color(0xFF0F172A);
-
 /// Avatar gradients, picked by a stable hash of the player id so a player
 /// keeps the same colour between rebuilds — the API sends no colour, and
 /// cycling by position would recolour people as the feed re-ranks.
@@ -86,11 +84,11 @@ class _PlayerTile extends StatelessWidget {
               _shortName,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
                 height: 1.2,
-                color: _ink,
+                color: colors.textPrimary,
               ),
             ),
             const SizedBox(height: 4),

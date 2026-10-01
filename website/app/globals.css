@@ -28,7 +28,7 @@
   --color-error-surface: #fdecec;
   --color-neutral-surface: #f1f3f5;
 
-  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
 }
 
 html {

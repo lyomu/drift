@@ -123,10 +123,8 @@ flutter:
   # https://flutter.dev/to/asset-from-package
 
   fonts:
-    # Outfit — the 2026-10 prototype's family, reinstated for the screens
-    # being ported from it (settings, …). DM Sans still carries every screen
-    # that has not been re-skinned yet, so the two coexist during the port.
-    # Static cuts only: Impeller ignores the `wght` axis of a variable font
+    # Outfit — Drift's official readable text family across mobile, dashboards,
+    # and the public website. Static cuts only: Impeller ignores the `wght` axis of a variable font
     # (400–800 are the cuts the app shipped before; 900 is instanced from
     # Outfit[wght].ttf). Run `flutter clean` after touching this block.
     - family: Outfit
@@ -157,27 +155,3 @@ flutter:
     - family: MaterialSymbolsRoundedFilled600
       fonts:
         - asset: assets/fonts/MaterialSymbolsRounded-Filled600.ttf
-    # DM Sans — every screen not yet ported off the 2026-09 shell redesign.
-    # Static cuts keep Android text weights predictable.
-    - family: DMSans
-      fonts:
-        - asset: assets/fonts/DMSans-400.ttf
-          weight: 400
-        - asset: assets/fonts/DMSans-500.ttf
-          weight: 500
-        - asset: assets/fonts/DMSans-700.ttf
-          weight: 700
-    # Montserrat — used for the standout display titles on the pre-auth
-    # onboarding carousel (see intro_carousel_screen.dart). Registered with
-    # the static cuts needed for heavier weights so Android text stays
-    # predictable.
-    - family: Montserrat
-      fonts:
-        - asset: assets/fonts/Montserrat-Regular.ttf
-          weight: 400
-        - asset: assets/fonts/Montserrat-Bold.ttf
-          weight: 700
-        - asset: assets/fonts/Montserrat-ExtraBold.ttf
-          weight: 800
-        - asset: assets/fonts/Montserrat-Black.ttf
-          weight: 900

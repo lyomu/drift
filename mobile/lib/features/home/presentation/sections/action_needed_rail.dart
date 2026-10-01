@@ -5,9 +5,6 @@ import '../../../../core/theme/drift_colors.dart';
 import '../../../../shared/widgets/drift_section_header.dart';
 import '../../data/home_repository.dart';
 
-const _ink = Color(0xFF0F172A);
-const _body = Color(0xFF475569);
-
 /// Horizontally-scrolling rail of urgent prompts (redesign 2026-10: each card
 /// washed in its own accent rather than plain white). Each links to the screen
 /// that resolves it (`card.action.route`).
@@ -110,11 +107,11 @@ class _ActionCard extends StatelessWidget {
                   card.title,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     height: 1.3,
-                    color: _ink,
+                    color: colors.textPrimary,
                   ),
                 ),
                 if (card.body.isNotEmpty) ...[
@@ -124,10 +121,10 @@ class _ActionCard extends StatelessWidget {
                       card.body,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
                         height: 1.5,
-                        color: _body,
+                        color: colors.textSecondary,
                       ),
                     ),
                   ),

@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 
 import { Analytics } from "@/components/analytics";
-import { dmSans } from "@/lib/fonts";
+import { outfit } from "@/lib/fonts";
 import { baseMetadata } from "@/lib/seo";
 
 import "../globals.css";
@@ -23,7 +23,7 @@ export default function LegalRootLayout({
   // This is a second root layout, so it needs its own analytics mount: the
   // `[locale]` layout never wraps these pages.
   return (
-    <html lang="en" className={dmSans.variable}>
+    <html lang="en" className={outfit.variable}>
       <body className="font-sans antialiased">
         {children}
         <Analytics />

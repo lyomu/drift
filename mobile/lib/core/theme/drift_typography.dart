@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 
 /// Type scale for Drift Tennis. Mirrors `DESIGN_SPEC.md` §2.
 ///
-/// DM Sans is the single app family — display, heading, body and UI. Outfit
-/// was dropped in the 2026-09 header/shell redesign: headings there are heavy,
-/// and DM Sans has no thin cut to carry the old `w100` display look.
+/// Outfit is the single app family — display, heading, body and UI.
 ///
 /// Every style pins `letterSpacing: 0`. Without it the null field lets
 /// Material's own text theme merge its default tracking back in (0.1-0.5 on
@@ -42,8 +40,8 @@ class DriftTypography extends ThemeExtension<DriftTypography> {
   final TextStyle button;
   final TextStyle statistics;
 
-  static const _displayFamily = 'DMSans';
-  static const _bodyFamily = 'DMSans';
+  static const _displayFamily = 'Outfit';
+  static const _bodyFamily = 'Outfit';
 
   factory DriftTypography.from(Color textPrimary, Color textSecondary) {
     return DriftTypography(

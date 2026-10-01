@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
 
 import { Analytics } from "@/components/analytics";
-import { dmSans } from "@/lib/fonts";
+import { outfit } from "@/lib/fonts";
 import { isLocale, LOCALES } from "@/lib/locales";
 import { baseMetadata } from "@/lib/seo";
 
@@ -37,7 +37,7 @@ export default async function LocaleLayout({
   if (!isLocale(locale)) notFound();
 
   return (
-    <html lang={locale} className={dmSans.variable}>
+    <html lang={locale} className={outfit.variable}>
       <body className="font-sans antialiased">
         {children}
         <Analytics />

@@ -177,7 +177,7 @@ class _FeaturedStory extends StatelessWidget {
                   '${_categoryLabel(story.categories.firstOrNull)} · Long read',
                   style: const TextStyle(
                     color: Colors.white,
-                    fontFamily: 'DMSans',
+                    fontFamily: 'Outfit',
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                   ),
@@ -196,7 +196,7 @@ class _FeaturedStory extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontFamily: 'DMSans',
+                        fontFamily: 'Outfit',
                         fontSize: 29,
                         height: 1.08,
                         fontWeight: FontWeight.w500,
@@ -278,7 +278,7 @@ class _SectionHeading extends ConsumerWidget {
                 'FRESH OFF THE COURT',
                 style: TextStyle(
                   color: _green,
-                  fontFamily: 'DMSans',
+                  fontFamily: 'Outfit',
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.5,
@@ -289,7 +289,7 @@ class _SectionHeading extends ConsumerWidget {
                 'Latest stories',
                 style: TextStyle(
                   color: _ink,
-                  fontFamily: 'DMSans',
+                  fontFamily: 'Outfit',
                   fontSize: 27,
                   height: 1.1,
                   fontWeight: FontWeight.w500,
@@ -320,7 +320,7 @@ class _SectionHeading extends ConsumerWidget {
                   categoryLabel,
                   style: const TextStyle(
                     color: _muted,
-                    fontFamily: 'DMSans',
+                    fontFamily: 'Outfit',
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
@@ -367,7 +367,7 @@ class _StoryCard extends StatelessWidget {
                     _categoryLabel(story.categories.firstOrNull),
                     style: const TextStyle(
                       color: _green,
-                      fontFamily: 'DMSans',
+                      fontFamily: 'Outfit',
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                     ),
@@ -376,7 +376,7 @@ class _StoryCard extends StatelessWidget {
                     _relativeDate(story.publicationDate),
                     style: const TextStyle(
                       color: _muted,
-                      fontFamily: 'DMSans',
+                      fontFamily: 'Outfit',
                       fontSize: 13,
                     ),
                   ),
@@ -389,7 +389,7 @@ class _StoryCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   color: _ink,
-                  fontFamily: 'DMSans',
+                  fontFamily: 'Outfit',
                   fontSize: 20,
                   height: 1.25,
                   fontWeight: FontWeight.w500,
@@ -402,7 +402,7 @@ class _StoryCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   color: _muted,
-                  fontFamily: 'DMSans',
+                  fontFamily: 'Outfit',
                   fontSize: 16,
                   height: 1.45,
                 ),
@@ -415,7 +415,7 @@ class _StoryCard extends StatelessWidget {
                     '${story.publisher} · Quick read',
                     style: const TextStyle(
                       color: _muted,
-                      fontFamily: 'DMSans',
+                      fontFamily: 'Outfit',
                       fontSize: 13,
                     ),
                   ),
@@ -572,7 +572,7 @@ class _NavItem extends StatelessWidget {
                     label,
                     style: TextStyle(
                       color: selected ? _ink : Colors.white70,
-                      fontFamily: 'DMSans',
+                      fontFamily: 'Outfit',
                       fontSize: 11,
                       fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                     ),

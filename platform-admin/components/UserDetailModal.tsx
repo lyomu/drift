@@ -153,7 +153,9 @@ export function UserDetailModal({
                     api.patch(`/users/${user.id}/status`, {
                       status: suspended ? "ACTIVE" : "SUSPENDED",
                     }),
-                  `${suspended ? "Restore" : "Suspend"} ${user.email ?? "this user"}?`,
+                  suspended
+                    ? `Restore ${user.email ?? "this user"}?\n\nThey will be able to sign in again.`
+                    : `Suspend ${user.email ?? "this user"}?\n\nThey will be blocked from signing in and all live sessions will be revoked.`,
                 )
               }
             >

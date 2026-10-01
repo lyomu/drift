@@ -117,7 +117,7 @@
   --color-drift-error: var(--color-error);
   --color-drift-error-surface: var(--color-error-surface);
 
-  --font-body: var(--font-dm-sans);
+  --font-body: var(--font-outfit);
   --font-display: var(--font-outfit);
 
   /* Every tracking token is zero, so a stray `tracking-*` utility cannot

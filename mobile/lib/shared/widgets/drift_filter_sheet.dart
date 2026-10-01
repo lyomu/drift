@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/drift_colors.dart';
 
-const _ink = Color(0xFF0F172A);
-const _muted = Color(0xFF94A3B8);
-
 /// How much of the screen the scrolling section list may take before it
 /// scrolls. The header, the Apply button and the safe-area inset sit outside
 /// it, so the sheet as a whole is always taller than this.
@@ -121,11 +118,11 @@ class DriftFilterSheet extends StatelessWidget {
                   Expanded(
                     child: Text(
                       title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                         height: 1.2,
-                        color: _ink,
+                        color: colors.textPrimary,
                       ),
                     ),
                   ),
@@ -173,6 +170,7 @@ class _ClearAllButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<DriftColors>()!;
     return Material(
       color: Colors.transparent,
       borderRadius: BorderRadius.circular(8),
@@ -187,7 +185,7 @@ class _ClearAllButton extends StatelessWidget {
               fontSize: 13,
               fontWeight: FontWeight.w600,
               height: 1.2,
-              color: _muted.withValues(alpha: enabled ? 1 : 0.5),
+              color: colors.textSecondary.withValues(alpha: enabled ? 1 : 0.5),
             ),
           ),
         ),
@@ -259,16 +257,17 @@ class DriftFilterSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<DriftColors>()!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w700,
             height: 1.2,
-            color: _ink,
+            color: colors.textPrimary,
           ),
         ),
         const SizedBox(height: 10),
@@ -407,7 +406,7 @@ class _FilterChoice extends StatelessWidget {
                 fontSize: 12,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
                 height: 1.3,
-                color: selected ? colors.primary : _ink,
+                color: selected ? colors.primary : colors.textPrimary,
               ),
             ),
           ),

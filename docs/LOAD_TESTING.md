@@ -25,7 +25,7 @@ one.
   different, cheaper responses from the home feed and will flatter the results.
 
 ```bash
-export DRIFT_BASE_URL=https://drift.einsbrand.com/api
+export DRIFT_BASE_URL=https://api.driftsports.app
 export DRIFT_LOAD_EMAIL=…
 export DRIFT_LOAD_PASSWORD=…
 ```

@@ -105,9 +105,6 @@ const _timeOptions = <_ChipOption>[
 /// the sibling redesigned steps (tennis experience, padel interest) already
 /// count against the real total.
 
-const _ink = Color(0xFF0F172A);
-const _muted = Color(0xFF94A3B8);
-
 
 /// Playing Preferences — `foundation/03-user-journeys.md` §2.
 class PlayingPreferencesScreen extends ConsumerStatefulWidget {
@@ -249,22 +246,22 @@ class _SectionCard extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     height: 1.2,
-                    color: _ink,
+                    color: colors.textPrimary,
                   ),
                 ),
                 if (note != null) ...[
                   const SizedBox(width: 6),
                   Text(
                     note!,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w400,
                       height: 1.2,
-                      color: _muted,
+                      color: colors.textSecondary,
                     ),
                   ),
                 ],
@@ -424,7 +421,7 @@ class _OptionChip extends StatelessWidget {
                             ? FontWeight.w700
                             : FontWeight.w500,
                         height: 1.2,
-                        color: selected ? accent : _ink,
+                        color: selected ? accent : colors.textPrimary,
                       ),
                     ),
                     // Reserved whether or not the dot shows: the mock lets the

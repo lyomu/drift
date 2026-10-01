@@ -248,7 +248,7 @@ class _SlideView extends StatelessWidget {
                   Text(
                     slide.body,
                     style: const TextStyle(
-                      fontFamily: 'DMSans',
+                      fontFamily: 'Outfit',
                       fontSize: 15,
                       height: 1.6,
                       fontWeight: FontWeight.w400,

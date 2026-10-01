@@ -6,10 +6,6 @@ import '../../../../core/theme/drift_colors.dart';
 import '../../../news/application/news_providers.dart';
 import '../../../news/data/news_repository.dart';
 
-const _ink = Color(0xFF0F172A);
-const _subdued = Color(0xFF64748B);
-const _muted = Color(0xFF94A3B8);
-
 /// Category accents. Anything not listed falls back to the brand colour, so a
 /// new category on the server renders correctly rather than uncoloured.
 const _categoryAccents = <String, Color>{
@@ -105,11 +101,11 @@ class _StoryCard extends StatelessWidget {
                             story.headline,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
                               height: 1.4,
-                              color: _ink,
+                              color: colors.textPrimary,
                             ),
                           ),
                         ),
@@ -121,23 +117,26 @@ class _StoryCard extends StatelessWidget {
                                 story.publisher,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 11,
                                   height: 1.2,
-                                  color: _subdued,
+                                  color: colors.textSecondary,
                                 ),
                               ),
                             ),
-                            const Text(
+                            Text(
                               ' · ',
-                              style: TextStyle(fontSize: 11, color: _muted),
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: colors.textSecondary,
+                              ),
                             ),
                             Text(
                               _age(story.publicationDate),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 11,
                                 height: 1.2,
-                                color: _muted,
+                                color: colors.textSecondary,
                               ),
                             ),
                           ],

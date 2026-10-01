@@ -6,7 +6,7 @@ import 'package:flutter/widgets.dart';
 /// font whose `FILL` axis defaults to 0, and `Icon(..., fill: 1)` drives that
 /// axis through `fontVariations` — which Impeller ignores on Android, so the
 /// icons come out outlined. Same bug that forced static cuts for Outfit and
-/// Montserrat.
+/// Outfit.
 ///
 /// So the filled glyphs come from a pre-instanced static subset
 /// (`assets/fonts/MaterialSymbolsRounded-Filled.ttf`, FILL 1 / wght 500 /

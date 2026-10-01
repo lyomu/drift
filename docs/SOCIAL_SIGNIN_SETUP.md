@@ -130,7 +130,7 @@ editing; the list is read once at construction.
 
 ```bash
 flutter build apk --release \
-  --dart-define=DRIFT_API_BASE_URL=https://drift.einsbrand.com/api \
+  --dart-define=DRIFT_API_BASE_URL=https://api.driftsports.app \
   --dart-define=DRIFT_GOOGLE_SERVER_CLIENT_ID=921637855690-mpmeootgo8lnh4qh2k8eggfjfcr5q7ks.apps.googleusercontent.com \
   --dart-define=DRIFT_GOOGLE_IOS_CLIENT_ID=921637855690-621pq70ca20pj5b7tafr3r1nequael5f.apps.googleusercontent.com
 ```
@@ -185,7 +185,7 @@ plugin falls back to a web flow:
 
 ```bash
 --dart-define=DRIFT_APPLE_SERVICES_ID=com.drift.tennis.driftTennis.service \
---dart-define=DRIFT_APPLE_REDIRECT_URI=https://drift.einsbrand.com/api/auth/apple/callback
+--dart-define=DRIFT_APPLE_REDIRECT_URI=https://api.driftsports.app/auth/apple/callback
 ```
 
 Without them the Apple button on Android reports *"Apple sign-in isn't

@@ -1,6 +1,6 @@
 # Published Foundation Pages
 
-These are the live, visually-designed versions of the documents in this folder, published as Claude Artifacts (Drift's actual colour tokens, Sharp Sans Display headlines, Outfit body text). The `.md` files here remain the source of truth — if they're edited, these pages need to be republished to catch up.
+These are the live, visually-designed versions of the documents in this folder, published as Claude Artifacts (Drift's actual colour tokens and Outfit typography). The `.md` files here remain the source of truth — if they're edited, these pages need to be republished to catch up.
 
 | Document | Link |
 |---|---|

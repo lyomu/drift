@@ -17,12 +17,19 @@ const PREVIEW_PATHS = [
   ),
 ];
 
+const RESERVED_PATHS = [
+  "/reserved",
+  ...LOCALES.filter((locale) => locale !== "en").map(
+    (locale) => `/${locale}/reserved`,
+  ),
+];
+
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/api/", ...PREVIEW_PATHS],
+      disallow: ["/api/", ...PREVIEW_PATHS, ...RESERVED_PATHS],
     },
     sitemap: absoluteUrl("/sitemap.xml"),
   };

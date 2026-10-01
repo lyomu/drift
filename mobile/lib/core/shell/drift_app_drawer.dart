@@ -11,8 +11,7 @@ import '../../shared/widgets/drift_symbol.dart';
 import '../network/dio_client.dart';
 import '../theme/drift_colors.dart';
 
-/// The prototype's family. Only the ported screens are on Outfit — the rest
-/// of the app is still DM Sans, so this cannot go in the global theme yet.
+/// Drift's official readable text family.
 const _font = 'Outfit';
 
 const _ink = Color(0xFF0F172A);

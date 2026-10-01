@@ -255,7 +255,7 @@ exactly as before.
 2. Put a **sandbox** key in `backend/.env` and run the flow end to end against
    `sandbox.intasend.com`.
 3. Create the webhook in the IntaSend dashboard pointing at
-   `https://drift.einsbrand.com/api/payments/webhooks/intasend`, with a
+   `https://api.driftsports.app/payments/webhooks/intasend`, with a
    challenge, and put the same value in `INTASEND_WEBHOOK_CHALLENGE`.
 4. Only then put a live key on the production box.
 
@@ -263,7 +263,7 @@ exactly as before.
 1. Sign up, and get a **sandbox** API key plus a Notification Destination
    (webhook) secret from the Paddle dashboard.
 2. Point the Notification Destination at
-   `https://drift.einsbrand.com/api/payments/webhooks/paddle` and put the
+   `https://api.driftsports.app/payments/webhooks/paddle` and put the
    secret in `PADDLE_WEBHOOK_SECRET`.
 3. Set the account's default payment link / post-checkout redirect in
    Paddle's dashboard to `https://drift.einsbrand.com/billing` — there is no

@@ -8,8 +8,7 @@ import '../../auth/data/auth_repository.dart';
 import '../application/learning_providers.dart';
 import '../data/learning_repository.dart';
 
-/// The prototype's family. Only the ported screens are on Outfit — the rest
-/// of the app is still DM Sans, so this cannot go in the global theme yet.
+/// Drift's official readable text family.
 const _font = 'Outfit';
 
 const _ink = Color(0xFF0F172A);

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import type { Locale } from "@/lib/locales";
@@ -75,7 +76,7 @@ function Kicker({ children, lime = false }: { children: ReactNode; lime?: boolea
  * FIRST VIEWPORT: full-bleed court photography with a left-aligned action stack.
  * FORM: Pen's staged, full-width editorial landing page; source-export fidelity leads.
  */
-export function PreviewLandingPage({ locale }: LandingPageProps) {
+export function LandingPage({ locale }: LandingPageProps) {
   const waitlist = waitlistUrl(locale);
   const rootRef = useRef<HTMLElement>(null);
   const [heroSlide, setHeroSlide] = useState(0);
@@ -346,7 +347,10 @@ export function PreviewLandingPage({ locale }: LandingPageProps) {
 
       <section className={styles.closing} id="closing"><div className={styles.inner}><div><h2>Your season starts with one match.</h2><p>Join the waitlist—Tennis first, Padel follows. We’ll let you know the moment Drift is live.</p></div><Button href={waitlist}>JOIN THE WAITLIST</Button></div></section>
 
-      <footer className={styles.footer} id="footer"><div className={`${styles.inner} ${styles.footerGrid}`}><div><strong>DRIFT</strong><p>Find your next rally.</p></div><div><b>LEGAL</b><a href="/terms">Terms and Conditions</a><a href="/privacy-policy">Privacy Policy</a><a href="/data-privacy">Data Privacy Notice</a></div><div><b>CONTACT</b><a href="mailto:serve@driftsports.app">serve@driftsports.app</a></div></div><p className={`${styles.inner} ${styles.copyright}`}>© 2026 Drift Sports. Built for the next point.</p></footer>
+      <footer className={styles.footer} id="footer"><div className={`${styles.inner} ${styles.footerGrid}`}><div><strong>DRIFT</strong><p>Find your next rally.</p></div><div><b>LEGAL</b><Link href="/terms">Terms and Conditions</Link><Link href="/privacy-policy">Privacy Policy</Link><Link href="/data-privacy">Data Privacy Notice</Link></div><div><b>CONTACT</b><a href="mailto:serve@driftsports.app">serve@driftsports.app</a></div></div><p className={`${styles.inner} ${styles.copyright}`}>© 2026 Drift Sports. Built for the next point.</p></footer>
     </main>
   );
 }
+
+// Compatibility alias for the noindex `/preview` comparison route.
+export const PreviewLandingPage = LandingPage;

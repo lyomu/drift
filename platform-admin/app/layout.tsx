@@ -2,13 +2,6 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 
-const dmSans = localFont({
-  src: "./fonts/DMSans-Variable.ttf",
-  variable: "--font-dm-sans",
-  weight: "100 1000",
-  display: "swap",
-});
-
 const outfit = localFont({
   src: "./fonts/Outfit-Variable.ttf",
   variable: "--font-outfit",
@@ -34,7 +27,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${dmSans.variable} ${outfit.variable} h-full antialiased`}
+      className={`${outfit.variable} h-full antialiased`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
