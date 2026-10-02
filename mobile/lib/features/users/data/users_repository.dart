@@ -151,11 +151,13 @@ class UsersRepository {
     double? latitude,
     double? longitude,
     required String locationSource,
+    String? country,
   }) => _patchStep('/users/me/location', {
     'generalLocation': generalLocation,
     if (latitude != null) 'latitude': latitude,
     if (longitude != null) 'longitude': longitude,
     'locationSource': locationSource,
+    if (country != null) 'country': country,
   });
 
   Future<OnboardingStep> updateClubCourts({

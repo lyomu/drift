@@ -40,7 +40,7 @@ export function SiteFooter({
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <div className="grid gap-10 md:grid-cols-[1.5fr_1fr_1.15fr_1.2fr]">
           <div>
-            <Image src="/images/logo.png" alt="Drift Tennis" width={640} height={321} className="h-12 w-auto" />
+            <Image src="/images/logo.png" alt="Drift Tennis" width={1600} height={495} className="h-12 w-auto" />
             <p className="mt-3 max-w-xs text-sm leading-relaxed text-[var(--color-text-secondary)]">
               {t.footer.tagline}
             </p>

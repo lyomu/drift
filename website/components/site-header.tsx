@@ -53,7 +53,7 @@ export function SiteHeader({
             className="brand-link flex shrink-0 items-center"
             aria-label="Drift Tennis, home"
           >
-            <Image src="/images/logo.png" alt="" width={640} height={321} className="brand-mark h-[72px] w-auto" priority />
+            <Image src="/images/logo.png" alt="" width={1600} height={495} className="brand-mark h-[72px] w-auto" priority />
           </Link>
           <div className="flex shrink-0 items-center gap-5">
             <LocaleSwitcher current={locale} />
@@ -73,7 +73,7 @@ export function SiteHeader({
     <header className="header-enter sticky top-0 z-40 border-b border-[var(--color-border)] bg-[var(--color-surface)]/90 backdrop-blur-sm">
       <div className="mx-auto flex h-20 max-w-6xl items-center gap-4 px-4 sm:px-6">
         <a href="#top" className="brand-link flex shrink-0 items-center" aria-label="Drift Tennis, home">
-          <Image src="/images/logo.png" alt="" width={640} height={321} className="brand-mark h-[72px] w-auto" priority />
+          <Image src="/images/logo.png" alt="" width={1600} height={495} className="brand-mark h-[72px] w-auto" priority />
         </a>
 
         <nav aria-label={t.header.sectionsAria} className="ml-auto hidden lg:block">

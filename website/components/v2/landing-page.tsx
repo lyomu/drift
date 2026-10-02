@@ -265,6 +265,7 @@ export function LandingPage({ locale }: LandingPageProps) {
               <Kicker lime>ABOUT DRIFT</Kicker>
               <SectionTitle>Built around the people who power the game.</SectionTitle>
               <SectionBody>Drift is a connected tennis platform built for players, coaches, clubs and communities. We make it easier for players to find opponents, discover local coaches, organise matches, join competitions, discover courts and track their progress, while giving coaches a platform to connect with players and support their development. For clubs, Drift simplifies the management of members, competitions, fixtures, results, standings, courts and communication. By bringing every part of the tennis community into one ecosystem, Drift helps create more opportunities to <strong>play, compete, connect and grow the game.</strong></SectionBody>
+              <Button href={waitlist}>JOIN THE WAITLIST</Button>
             </div>
             <div className={`${styles.photoPanel} ${styles.aboutPhoto}`} />
           </div>
@@ -305,7 +306,6 @@ export function LandingPage({ locale }: LandingPageProps) {
 
       <section className={styles.clubsHero} id="clubs">
         <div className={styles.clubsPhoto} aria-hidden="true" />
-        <div className={styles.clubsPhotoShade} aria-hidden="true" />
         <div className={`${styles.inner} ${styles.clubsCopy}`}>
           <Kicker lime>FOR CLUBS &amp; ACADEMIES</Kicker>
           <SectionTitle>Manage your club</SectionTitle>

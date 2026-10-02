@@ -68,7 +68,7 @@ export function LegalLayout({ title, summary, sections, children }: LegalLayoutP
           <div className={styles.inner}>
             <p>Questions about your information?</p>
             <p>
-              Email <a href="mailto:drift@einsbrand.com">drift@einsbrand.com</a>. You can also read our <Link href="/privacy-policy">Privacy Policy</Link> and <Link href="/data-privacy">Data Privacy Notice</Link>.
+              Email <a href="mailto:serve@driftsports.app">serve@driftsports.app</a>. You can also read our <Link href="/privacy-policy">Privacy Policy</Link> and <Link href="/data-privacy">Data Privacy Notice</Link>.
             </p>
           </div>
         </section>

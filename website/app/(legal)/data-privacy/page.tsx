@@ -71,7 +71,7 @@ export default function DataPrivacyPage() {
       <section id="email">
         <h2>Emails and offers</h2>
         <p>We use your email to send verification, security, support, billing and other essential service notices. We may also use it to send internal Drift Tennis product updates, launch news and occasional offers. This is our own communication only. We do not share your email with third parties for their marketing.</p>
-        <p>To stop promotional messages, email <a href="mailto:drift@einsbrand.com?subject=Unsubscribe">drift@einsbrand.com</a> with “Unsubscribe” in the subject line. Essential operational messages will still be sent when needed.</p>
+        <p>To stop promotional messages, email <a href="mailto:serve@driftsports.app?subject=Unsubscribe">serve@driftsports.app</a> with “Unsubscribe” in the subject line. Essential operational messages will still be sent when needed.</p>
       </section>
 
       <section id="sharing">
@@ -89,7 +89,7 @@ export default function DataPrivacyPage() {
 
       <section id="requests">
         <h2>Your privacy requests</h2>
-        <p>You may ask us to access, correct, export, object to or delete your personal information, subject to applicable law. Send your request to <a href="mailto:drift@einsbrand.com">drift@einsbrand.com</a> and include enough information for us to find and verify your account. We will respond in line with applicable law.</p>
+        <p>You may ask us to access, correct, export, object to or delete your personal information, subject to applicable law. Send your request to <a href="mailto:serve@driftsports.app">serve@driftsports.app</a> and include enough information for us to find and verify your account. We will respond in line with applicable law.</p>
         <p>For Kenya-based users, the Kenyan Data Protection Act, 2019 provides rights to be informed, access personal data, object to processing, correct false or misleading data and seek deletion in appropriate circumstances. If you remain dissatisfied after contacting us, you may raise a complaint with the <a href="https://www.odpc.go.ke/" target="_blank" rel="noreferrer">Office of the Data Protection Commissioner</a>.</p>
       </section>
     </LegalLayout>

@@ -20,6 +20,7 @@ const PREFERENCE_FIELD: Record<
   | 'learning'
   | 'news'
   | 'clubs'
+  | 'announcements'
 > = {
   CONNECTIONS: 'connections',
   MATCHES: 'matches',
@@ -28,6 +29,7 @@ const PREFERENCE_FIELD: Record<
   LEARNING: 'learning',
   NEWS: 'news',
   CLUBS: 'clubs',
+  ANNOUNCEMENTS: 'announcements',
 };
 
 @Injectable()
@@ -44,6 +46,11 @@ export class NotificationsService {
    * preference for `category` first and silently skips the write if
    * they've opted out — cheaper than filtering at read time, and it means
    * "0 notifications" genuinely means 0, not "some hidden ones exist".
+   *
+   * Returns whether it actually wrote/pushed (false when the recipient has
+   * opted out) — most callers ignore this, but a bulk sender (platform-admin
+   * push broadcasts) uses it to report real delivered/skipped counts rather
+   * than just "sent to N people" with no idea how many were opted out.
    */
   async create(
     userId: string,
@@ -52,10 +59,10 @@ export class NotificationsService {
     body: string,
     relatedEntityType?: string,
     relatedEntityId?: string,
-  ): Promise<void> {
+  ): Promise<boolean> {
     const preference = await this.getOrCreatePreference(userId);
     if (!preference[PREFERENCE_FIELD[category]]) {
-      return;
+      return false;
     }
 
     await this.prisma.notification.create({
@@ -81,6 +88,8 @@ export class NotificationsService {
       relatedEntityType,
       relatedEntityId,
     });
+
+    return true;
   }
 
   // ------------------------------------------------------------- devices
@@ -156,6 +165,7 @@ export class NotificationsService {
         learning: dto.learning,
         news: dto.news,
         clubs: dto.clubs,
+        announcements: dto.announcements,
       },
     });
     return toPreferencesDto(preference);

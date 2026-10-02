@@ -29,6 +29,10 @@ const _categoryLabels = {
     'Clubs',
     'Announcements and membership updates from your clubs',
   ),
+  NotificationCategory.announcements: (
+    'Announcements',
+    'News and updates from the Drift team',
+  ),
 };
 
 /// Notification Preferences — `foundation/04-screen-inventory.md` §A.11.

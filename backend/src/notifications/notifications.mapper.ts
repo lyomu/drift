@@ -28,6 +28,7 @@ export function toPreferencesDto(preference: {
   learning: boolean;
   news: boolean;
   clubs: boolean;
+  announcements: boolean;
 }) {
   return {
     connections: preference.connections,
@@ -37,5 +38,6 @@ export function toPreferencesDto(preference: {
     learning: preference.learning,
     news: preference.news,
     clubs: preference.clubs,
+    announcements: preference.announcements,
   };
 }

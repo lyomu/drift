@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useClub } from "@/lib/club-context";
+import { BrandIcon } from "@/components/BrandIcon";
 import { MaterialIcon } from "@/components/dashboard-design";
 
 const NAV_GROUPS: {
@@ -110,7 +110,7 @@ export function Sidebar({
   return (
     <aside className="sticky top-0 hidden h-screen w-[264px] shrink-0 flex-col border-r border-drift-border bg-drift-surface px-4 py-6 sm:flex">
       <div className="flex flex-col px-2 pb-5">
-        <Image src="/images/drift-icon.png" alt="Drift" width={192} height={178} priority className="h-6 w-auto" />
+        <BrandIcon className="h-6" />
         <div className="mt-2.5 truncate text-sm font-bold text-drift-text-primary">
           {clubName ?? "-"}
         </div>

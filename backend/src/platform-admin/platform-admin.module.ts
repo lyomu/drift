@@ -3,6 +3,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MatchesModule } from '../matches/matches.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { PaymentsModule } from '../payments/payments.module';
 import { PasswordPolicyService } from '../auth/password-policy';
 import { PlatformAdminController } from './platform-admin.controller';
@@ -34,6 +35,8 @@ import { SupportAdminController } from './support-admin.controller';
 import { SupportAdminService } from './support-admin.service';
 import { WaitlistAdminController } from './waitlist-admin.controller';
 import { WaitlistAdminService } from './waitlist-admin.service';
+import { PushBroadcastAdminController } from './push-broadcast-admin.controller';
+import { PushBroadcastAdminService } from './push-broadcast-admin.service';
 
 @Module({
   imports: [
@@ -58,6 +61,10 @@ import { WaitlistAdminService } from './waitlist-admin.service';
     // provider calls. Reusing the payments module's seam is what keeps the two
     // consoles from drifting into two different ideas of what is live.
     PaymentsModule,
+    // PushBroadcastAdminService sends through the same NotificationsService
+    // every in-app event already funnels through, rather than calling
+    // PushService directly.
+    NotificationsModule,
   ],
   controllers: [
     PlatformAdminController,
@@ -72,6 +79,7 @@ import { WaitlistAdminService } from './waitlist-admin.service';
     PlatformConfigAdminController,
     SupportAdminController,
     WaitlistAdminController,
+    PushBroadcastAdminController,
   ],
   providers: [
     PlatformAdminService,
@@ -87,6 +95,7 @@ import { WaitlistAdminService } from './waitlist-admin.service';
     PlatformConfigAdminService,
     SupportAdminService,
     WaitlistAdminService,
+    PushBroadcastAdminService,
     AuditService,
     PlatformJwtStrategy,
     PlatformPermissionGuard,

@@ -9,9 +9,9 @@
  */
 
 :root {
-  --color-primary: #3399cc;
-  --color-primary-dark: #126d9b;
-  --color-primary-light: #e8f5fc;
+  --color-primary: #0099ff;
+  --color-primary-dark: #0077cc;
+  --color-primary-light: #e6f5ff;
   --color-background: #f7fafc;
   --color-surface: #ffffff;
   --color-surface-raised: #ffffff;
@@ -35,9 +35,9 @@
  * the :root block above.
  */
 .theme-light {
-  --color-primary: #3399cc;
-  --color-primary-dark: #126d9b;
-  --color-primary-light: #e8f5fc;
+  --color-primary: #0099ff;
+  --color-primary-dark: #0077cc;
+  --color-primary-light: #e6f5ff;
   --color-background: #f7fafc;
   --color-surface: #ffffff;
   --color-surface-raised: #ffffff;
@@ -61,9 +61,9 @@
  */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --color-primary: #4fb3e8;
-    --color-primary-dark: #7cc9ef;
-    --color-primary-light: #16324a;
+    --color-primary: #38b6ff;
+    --color-primary-dark: #7dd3ff;
+    --color-primary-light: #0d3a52;
     --color-background: #0a121f;
     --color-surface: #111b2c;
     --color-surface-raised: #162236;
@@ -81,9 +81,9 @@
 }
 
 :root[data-theme="dark"] {
-  --color-primary: #4fb3e8;
-  --color-primary-dark: #7cc9ef;
-  --color-primary-light: #16324a;
+  --color-primary: #38b6ff;
+  --color-primary-dark: #7dd3ff;
+  --color-primary-light: #0d3a52;
   --color-background: #0a121f;
   --color-surface: #111b2c;
   --color-surface-raised: #162236;
@@ -98,6 +98,20 @@
   --color-error-surface: #341415;
   --color-neutral-surface: #1c2738;
 }
+
+/*
+ * BrandIcon (components/BrandIcon.tsx) stacks the blue and white drift-icon
+ * crops and toggles which one is visible here, by the same dark-mode
+ * selectors as the color tokens above — the black half of the blue mark
+ * disappears against a dark surface, so dark mode needs the white crop.
+ */
+.brand-icon-dark { display: none; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .brand-icon-light { display: none; }
+  :root:not([data-theme="light"]) .brand-icon-dark { display: block; }
+}
+:root[data-theme="dark"] .brand-icon-light { display: none; }
+:root[data-theme="dark"] .brand-icon-dark { display: block; }
 
 @theme inline {
   --color-drift-primary: var(--color-primary);

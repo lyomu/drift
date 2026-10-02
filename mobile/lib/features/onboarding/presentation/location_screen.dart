@@ -25,6 +25,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
   final _locationController = TextEditingController();
   double? _latitude;
   double? _longitude;
+  String? _country;
   String _locationSource = 'MANUAL';
   bool _isLocating = false;
   bool _isSubmitting = false;
@@ -50,6 +51,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
       setState(() {
         _latitude = resolved.latitude;
         _longitude = resolved.longitude;
+        _country = resolved.countryCode;
         _locationSource = 'GPS';
         _locationController.text =
             resolved.label ??
@@ -87,6 +89,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
             latitude: _latitude,
             longitude: _longitude,
             locationSource: _locationSource,
+            country: _country,
           );
       if (!mounted) return;
       goToOnboardingStep(context, nextStep);
@@ -111,7 +114,10 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
         DriftTextField(
           label: 'General location / city',
           controller: _locationController,
-          onChanged: (_) => setState(() => _locationSource = 'MANUAL'),
+          onChanged: (_) => setState(() {
+            _locationSource = 'MANUAL';
+            _country = null;
+          }),
         ),
         const SizedBox(height: DriftSpacing.s3),
         DriftButton(

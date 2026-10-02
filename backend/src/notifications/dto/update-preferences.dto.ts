@@ -28,4 +28,8 @@ export class UpdatePreferencesDto {
   @IsOptional()
   @IsBoolean()
   clubs?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  announcements?: boolean;
 }

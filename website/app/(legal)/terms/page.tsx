@@ -36,7 +36,7 @@ export default function TermsPage() {
 
       <section id="eligibility">
         <h2>Eligibility and accounts</h2>
-        <p>You must provide accurate account information and keep your sign-in details secure. You are responsible for activity carried out through your account. Tell us promptly at <a href="mailto:drift@einsbrand.com">drift@einsbrand.com</a> if you believe your account has been accessed without permission.</p>
+        <p>You must provide accurate account information and keep your sign-in details secure. You are responsible for activity carried out through your account. Tell us promptly at <a href="mailto:serve@driftsports.app">serve@driftsports.app</a> if you believe your account has been accessed without permission.</p>
         <p>Drift Tennis is currently intended for adults. Do not create an account if you are under 18. We do not ask for a date of birth for this purpose; account creation uses an age-confirmation step instead.</p>
       </section>
 
@@ -76,7 +76,7 @@ export default function TermsPage() {
       <section id="email">
         <h2>Email updates and offers</h2>
         <p>We use the email address you give us for essential account and service messages, such as verification, security, support and important changes. We may also send internal Drift Tennis product updates, launch news and occasional offers that relate to Drift Tennis.</p>
-        <p>You can ask us to stop non-essential promotional emails at any time by emailing <a href="mailto:drift@einsbrand.com?subject=Unsubscribe">drift@einsbrand.com</a> with “Unsubscribe” in the subject line. Opting out does not stop essential service or security messages.</p>
+        <p>You can ask us to stop non-essential promotional emails at any time by emailing <a href="mailto:serve@driftsports.app?subject=Unsubscribe">serve@driftsports.app</a> with “Unsubscribe” in the subject line. Opting out does not stop essential service or security messages.</p>
       </section>
 
       <section id="liability">
@@ -89,7 +89,7 @@ export default function TermsPage() {
         <h2>Changes, termination and contact</h2>
         <p>We may update the Service or these terms as it develops. For a material change, we will give reasonable notice through the Service or by email before it takes effect where practical. Continuing to use the Service after the effective date means you accept the updated terms.</p>
         <p>You may stop using Drift Tennis at any time. You can request account deletion in the app. The account is deactivated immediately and personal information is then anonymised after a 30-day recovery window, subject to records we must retain for other players’ records, safety, legal obligations or legitimate operational reasons. See our Privacy Policy for detail.</p>
-        <p>These terms are governed by the laws of Kenya, except where mandatory law in your place of residence provides otherwise. Questions about these terms can be sent to <a href="mailto:drift@einsbrand.com">drift@einsbrand.com</a>.</p>
+        <p>Drift Tennis is a product of EinsBrand Digital. These terms are governed by the laws of Kenya, except where mandatory law in your place of residence provides otherwise. Questions about these terms can be sent to <a href="mailto:serve@driftsports.app">serve@driftsports.app</a>.</p>
       </section>
     </LegalLayout>
   );

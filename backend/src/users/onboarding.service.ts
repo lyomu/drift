@@ -149,6 +149,7 @@ export class OnboardingService {
           latitude: dto.latitude,
           longitude: dto.longitude,
           locationSource: dto.locationSource,
+          country: dto.country?.toUpperCase(),
         },
       }),
       this.prisma.user.update({

@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { BrandIcon } from "@/components/BrandIcon";
 import { MaterialIcon } from "@/components/dashboard-design";
 import { APPLICATION_COPY } from "@/lib/coach-api";
 import { useWorkspace } from "@/lib/workspace-context";
@@ -27,13 +27,7 @@ export function CoachSidebar() {
   return (
     <aside className="sticky top-0 hidden h-screen w-[264px] shrink-0 flex-col border-r border-drift-border bg-drift-surface px-4 py-6 sm:flex">
       <div className="flex flex-col px-2 pb-5">
-        <Image
-          src="/images/drift-icon.png"
-          alt="Drift"
-          width={192}
-          height={178}
-          className="h-6 w-auto"
-        />
+        <BrandIcon className="h-6" />
         <div className="mt-2.5 truncate text-sm font-bold text-drift-text-primary">
           Coach workspace
         </div>

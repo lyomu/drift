@@ -88,8 +88,8 @@ export default function CoachSignupPage() {
           <Image
             src="/images/drift-icon.png"
             alt="Drift"
-            width={192}
-            height={178}
+            width={512}
+            height={453}
             className="h-7 w-auto"
           />
           <span className="h-[2px] w-[72px] bg-[#111827] transition group-hover:w-full" />

@@ -13,6 +13,7 @@ enum NotificationCategory {
   learning('LEARNING'),
   news('NEWS'),
   clubs('CLUBS'),
+  announcements('ANNOUNCEMENTS'),
 
   /// Anything this build doesn't recognise. A newer backend adding a
   /// category must not break the whole Notification Centre — before this
@@ -99,6 +100,7 @@ class NotificationPreferences {
     required this.learning,
     required this.news,
     required this.clubs,
+    required this.announcements,
   });
 
   final bool connections;
@@ -108,6 +110,7 @@ class NotificationPreferences {
   final bool learning;
   final bool news;
   final bool clubs;
+  final bool announcements;
 
   bool forCategory(NotificationCategory category) => switch (category) {
     NotificationCategory.connections => connections,
@@ -117,6 +120,7 @@ class NotificationPreferences {
     NotificationCategory.learning => learning,
     NotificationCategory.news => news,
     NotificationCategory.clubs => clubs,
+    NotificationCategory.announcements => announcements,
     // Not a real preference — nothing renders a toggle for it.
     NotificationCategory.unknown => true,
   };
@@ -129,8 +133,9 @@ class NotificationPreferences {
         competitions: json['competitions'] as bool,
         learning: json['learning'] as bool,
         news: json['news'] as bool,
-        // Tolerates a backend that predates the CLUBS category.
+        // Tolerates a backend that predates the CLUBS/ANNOUNCEMENTS category.
         clubs: json['clubs'] as bool? ?? true,
+        announcements: json['announcements'] as bool? ?? true,
       );
 }
 
@@ -196,6 +201,7 @@ class NotificationsRepository {
     NotificationCategory.learning => 'learning',
     NotificationCategory.news => 'news',
     NotificationCategory.clubs => 'clubs',
+    NotificationCategory.announcements => 'announcements',
     NotificationCategory.unknown => 'unknown',
   };
 

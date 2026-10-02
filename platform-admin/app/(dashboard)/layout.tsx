@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { BrandIcon } from "@/components/BrandIcon";
 import { InitialsAvatar, MaterialIcon } from "@/components/dashboard-design";
 import { Button } from "@/components/ui";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -133,6 +133,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/support/tickets", label: "Support Tickets", icon: "confirmation_number", permissions: ["SUPPORT_MANAGE"] },
       { href: "/support/privacy-requests", label: "Privacy Requests", icon: "privacy_tip", permissions: ["SUPPORT_MANAGE"] },
       { href: "/waitlist", label: "Launch Waitlist", icon: "mark_email_read", permissions: ["SUPPORT_MANAGE"] },
+      { href: "/push-broadcasts", label: "Push Broadcasts", icon: "campaign", permissions: ["SUPPORT_MANAGE"] },
     ],
   },
 ];
@@ -239,7 +240,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="flex min-h-screen bg-drift-background">
       <aside className="hidden w-[264px] shrink-0 flex-col border-r border-drift-border bg-drift-surface px-4 py-6 lg:flex">
         <div className="px-2">
-          <Image src="/images/drift-icon.png" alt="Drift" width={192} height={178} className="h-7 w-auto" />
+          <BrandIcon className="h-7" />
           <div className="mt-1 text-sm font-bold text-drift-text-primary">Platform Admin</div>
           <div className="mt-4 flex items-center gap-3 rounded-xl border border-drift-border bg-drift-background p-2">
             <InitialsAvatar label={admin.name || admin.email} />
@@ -305,7 +306,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="flex min-w-0 flex-1 flex-col">
         <SiteHeader admin={admin} onSignOut={signOut} />
         <div className="border-b border-drift-border bg-drift-surface px-4 py-3 lg:hidden">
-          <Image src="/images/drift-icon.png" alt="Drift" width={192} height={178} className="h-6 w-auto" />
+          <BrandIcon className="h-6" />
           <div className="text-xs font-bold text-drift-text-secondary">Platform Admin / {admin.role.name}</div>
         </div>
         <div className="flex items-center gap-2 border-b border-drift-border bg-drift-surface px-3 py-2 lg:hidden">

@@ -118,14 +118,11 @@ export default function LoginPage() {
             <div className="absolute inset-0 bg-gradient-to-t from-[#0F1725] via-[#0F1725]/70 to-[#0F1725]/35" />
           </div>
 
-          {/* The crest's black shield-half disappears against this panel's
-              near-black background — half the logo was invisible before this
-              white badge. Badge keeps it legible regardless of which photo
-              is behind it, not just the flat navy. */}
+          {/* The blue crest's black shield-half disappears against this
+              panel's near-black background, so this panel uses the white
+              crop of the mark directly instead of the blue one. */}
           <div className="relative flex items-center gap-2.5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white p-1.5 shadow-[0_2px_8px_rgba(0,0,0,0.25)]">
-              <Image src="/images/drift-icon.png" alt="Drift" width={192} height={178} className="h-full w-full object-contain" />
-            </div>
+            <Image src="/images/drift-icon-white.png" alt="Drift" width={512} height={423} className="h-10 w-auto" />
           </div>
 
         </aside>

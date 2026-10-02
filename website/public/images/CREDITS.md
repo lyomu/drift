@@ -17,11 +17,13 @@ Already licensed for the product; reused here from
 ## Brand mark
 
 `logo.png` is the official Drift Sports mark (icon + wordmark), supplied
-2026-09-16 and used as-is (transparent background, resized only). It replaced
-`site-header.tsx`'s placeholder inline-SVG `BallMark` + "Drift Tennis" text in
-both header variants. The icon-only crop is reused in `club-admin` and
-`platform-admin` as `public/images/drift-icon.png` — same source, no
-resizing/effects applied here beyond scale.
+2026-10-02 (`Drift Official Logo-01.png`, the green lockup) and used as-is
+beyond a trim-and-repad crop (transparent background, no color changes). It
+replaced the earlier blue lockup supplied 2026-09-16. `club-admin` and
+`platform-admin` use a separate blue lockup (`Drift Logo blue.png`) as their
+own `public/images/drift-icon.png` — the website and the admin consoles now
+carry different brand colors on purpose (green in public-facing contexts,
+`#0099FF` in the consoles).
 
 ## From Unsplash
 

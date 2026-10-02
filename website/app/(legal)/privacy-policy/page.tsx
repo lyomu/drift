@@ -33,7 +33,7 @@ export default function PrivacyPolicyPage() {
       <section id="who">
         <h2>Who we are</h2>
         <p>Drift Tennis (“we”, “us” or “our”) provides a tennis-first platform for players, clubs, coaches and padel players. This Privacy Policy explains how we handle personal information when you use our app, website, waitlist and related services.</p>
-        <p>For privacy questions or requests, contact us at <a href="mailto:drift@einsbrand.com">drift@einsbrand.com</a>. Our more detailed Data Privacy Notice sits alongside this policy and explains the information categories, purposes and retention approach in a practical format.</p>
+        <p>For privacy questions or requests, contact us at <a href="mailto:serve@driftsports.app">serve@driftsports.app</a>. Our more detailed Data Privacy Notice sits alongside this policy and explains the information categories, purposes and retention approach in a practical format.</p>
       </section>
 
       <section id="collect">
@@ -90,7 +90,7 @@ export default function PrivacyPolicyPage() {
       <section id="email">
         <h2>Email updates and offers</h2>
         <p>In addition to essential emails, we may use your email address to send internal Drift Tennis product updates, launch announcements and occasional offers related to Drift Tennis. We do not give your email address to another business so it can promote its own products.</p>
-        <p>You can stop non-essential promotional email at any time by emailing <a href="mailto:drift@einsbrand.com?subject=Unsubscribe">drift@einsbrand.com</a> with “Unsubscribe” in the subject line. You will still receive necessary account, safety, billing and service notices.</p>
+        <p>You can stop non-essential promotional email at any time by emailing <a href="mailto:serve@driftsports.app?subject=Unsubscribe">serve@driftsports.app</a> with “Unsubscribe” in the subject line. You will still receive necessary account, safety, billing and service notices.</p>
       </section>
 
       <section id="retention">
@@ -106,14 +106,14 @@ export default function PrivacyPolicyPage() {
 
       <section id="rights">
         <h2>Your choices and rights</h2>
-        <p>Subject to applicable law, you may ask to access, correct, update, delete or receive a copy of your personal information, object to certain processing, or withdraw consent. You may also manage supported privacy and notification settings in the app. To make a request, email <a href="mailto:drift@einsbrand.com">drift@einsbrand.com</a>. We may need to verify your identity before acting.</p>
+        <p>Subject to applicable law, you may ask to access, correct, update, delete or receive a copy of your personal information, object to certain processing, or withdraw consent. You may also manage supported privacy and notification settings in the app. To make a request, email <a href="mailto:serve@driftsports.app">serve@driftsports.app</a>. We may need to verify your identity before acting.</p>
         <p>If you are in Kenya and believe your privacy rights have not been addressed, you may contact the Office of the Data Protection Commissioner. The rights described here are intended to reflect the Kenyan Data Protection Act, 2019 and do not limit rights available under other applicable law.</p>
       </section>
 
       <section id="changes">
         <h2>Changes and contact</h2>
         <p>We may update this policy as Drift Tennis changes or as legal requirements evolve. We will post the updated version here and revise the effective date. For material changes, we will provide additional notice where appropriate.</p>
-        <p>Contact us about this policy at <a href="mailto:drift@einsbrand.com">drift@einsbrand.com</a>.</p>
+        <p>Contact us about this policy at <a href="mailto:serve@driftsports.app">serve@driftsports.app</a>.</p>
       </section>
     </LegalLayout>
   );

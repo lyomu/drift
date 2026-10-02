@@ -16,6 +16,7 @@ class ResolvedLocation {
     required this.latitude,
     required this.longitude,
     this.label,
+    this.countryCode,
   });
 
   final double latitude;
@@ -24,6 +25,10 @@ class ResolvedLocation {
   /// Reverse-geocoded "City, Region" — null if the lookup returned nothing
   /// usable, in which case the caller falls back to raw coordinates.
   final String? label;
+
+  /// ISO-3166-1 alpha-2, from the same reverse-geocode lookup as [label].
+  /// Null under the same conditions [label] is — a failed or empty lookup.
+  final String? countryCode;
 }
 
 /// Extracted from onboarding's Location screen, which was the only place
@@ -55,6 +60,7 @@ class LocationService {
     );
 
     String? label;
+    String? countryCode;
     try {
       final placemarks = await placemarkFromCoordinates(
         position.latitude,
@@ -66,16 +72,19 @@ class LocationService {
         place?.administrativeArea,
       ].where((part) => part != null && part.isNotEmpty).join(', ');
       label = joined.isNotEmpty ? joined : null;
+      countryCode = place?.isoCountryCode;
     } catch (_) {
       // Reverse geocoding is a nice-to-have here — the coordinates
       // themselves are still valid without a resolved label.
       label = null;
+      countryCode = null;
     }
 
     return ResolvedLocation(
       latitude: position.latitude,
       longitude: position.longitude,
       label: label,
+      countryCode: countryCode,
     );
   }
 }

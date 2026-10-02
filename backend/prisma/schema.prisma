@@ -405,6 +405,10 @@ enum NotificationCategory {
   // notifications.service.ts is a Record over this enum, so adding a value
   // here won't compile until the matching column below exists.
   CLUBS
+  // Platform-wide staff broadcasts (platform-admin Push Broadcasts). Defaults
+  // on, unlike NEWS, since this carries official Drift communication rather
+  // than opt-in marketing.
+  ANNOUNCEMENTS
 }
 
 // Which push transport a device token belongs to (Phase 6).
@@ -753,6 +757,12 @@ model TennisProfile {
   latitude        Float?
   longitude       Float?
   locationSource  LocationSource?
+  // ISO-3166-1 alpha-2, set by the same onboarding location step as the
+  // fields above (via reverse-geocode). Existing profiles stay null until
+  // the user next updates their location — never backfilled by guessing
+  // from generalLocation's free text. Used for platform-admin push-broadcast
+  // country targeting (via User.tennisProfile.country).
+  country         String?
 
   preferredClubName   String?
   preferredCourtNames String[]
@@ -2218,13 +2228,14 @@ model NotificationPreference {
   userId String @unique
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  connections  Boolean @default(true)
-  matches      Boolean @default(true)
-  messages     Boolean @default(true)
-  competitions Boolean @default(true)
-  learning     Boolean @default(true)
-  news         Boolean @default(false)
-  clubs        Boolean @default(true)
+  connections   Boolean @default(true)
+  matches       Boolean @default(true)
+  messages      Boolean @default(true)
+  competitions  Boolean @default(true)
+  learning      Boolean @default(true)
+  news          Boolean @default(false)
+  clubs         Boolean @default(true)
+  announcements Boolean @default(true)
 
   @@map("notification_preferences")
 }
@@ -2308,6 +2319,7 @@ model PlatformAdmin {
   supportMessages          SupportTicketMessage[]
   processedPrivacyRequests PrivacyRequest[]                  @relation("PrivacyRequestProcessor")
   waitlistBroadcasts       WaitlistBroadcast[]
+  pushBroadcasts           PushBroadcast[]
 
   @@index([roleId, deactivatedAt])
   @@map("platform_admins")
@@ -3258,6 +3270,33 @@ model WaitlistBroadcast {
   @@index([createdAt])
   @@index([sentById])
   @@map("waitlist_broadcasts")
+}
+
+/// A platform-admin push notification sent to app users (Push Broadcasts).
+/// Distinct from WaitlistBroadcast, which emails pre-signup leads — this
+/// reaches real accounts via NotificationsService/PushService, respecting
+/// each recipient's own ANNOUNCEMENTS preference (skippedCount is how many
+/// had it off, not a delivery failure).
+model PushBroadcast {
+  id    String @id @default(uuid())
+  title String
+  body  String
+
+  /// ISO-3166-1 alpha-2; null means every country.
+  country String?
+
+  recipientCount Int
+  deliveredCount Int
+  skippedCount   Int
+
+  sentById String
+  sentBy   PlatformAdmin @relation(fields: [sentById], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([sentById])
+  @@map("push_broadcasts")
 }
 
 // ── AI match-video analysis (Phase 1) ───────────────────────────────────────
