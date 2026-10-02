@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import { legalLinks } from "@/lib/content";
@@ -19,8 +20,7 @@ export function LegalLayout({ title, summary, sections, children }: LegalLayoutP
     <div className={styles.legalSurface}>
       <header className={styles.header}>
         <Link className={styles.brand} href="/" aria-label="Drift home">
-          <span className={styles.brandBall} aria-hidden="true" />
-          <span>DRIFT</span>
+          <Image src="/images/logo.png" alt="" width={1600} height={495} className={styles.brandMark} priority />
         </Link>
         <nav className={styles.nav} aria-label="Primary navigation">
           <Link href="/#play">FOR PLAYERS</Link>
@@ -77,7 +77,7 @@ export function LegalLayout({ title, summary, sections, children }: LegalLayoutP
       <footer className={styles.footer} id="footer">
         <div className={`${styles.inner} ${styles.footerGrid}`}>
           <div>
-            <strong>DRIFT</strong>
+            <Image src="/images/logo.png" alt="Drift Tennis" width={1600} height={495} className={styles.footerMark} />
             <p>Find your next rally.</p>
           </div>
           <nav aria-label="Legal">

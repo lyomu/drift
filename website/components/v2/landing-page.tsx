@@ -213,8 +213,7 @@ export function LandingPage({ locale }: LandingPageProps) {
         <div className={styles.heroShade} />
         <header className={styles.header}>
           <a className={styles.brand} href="#top" aria-label="Drift home">
-            <span className={styles.brandBall} aria-hidden="true" />
-            <span>DRIFT</span>
+            <Image src="/images/logo.png" alt="" width={1600} height={495} className={styles.brandMark} priority />
           </a>
           <nav className={styles.nav} aria-label="Primary navigation">
             <a href="#play">FOR PLAYERS</a>
@@ -404,7 +403,7 @@ export function LandingPage({ locale }: LandingPageProps) {
         </div>
       </section>
 
-      <footer className={styles.footer} id="footer"><div className={`${styles.inner} ${styles.footerGrid}`}><div><strong>DRIFT</strong><p>Find your next rally.</p></div><div><b>LEGAL</b><Link href="/terms">Terms and Conditions</Link><Link href="/privacy-policy">Privacy Policy</Link><Link href="/data-privacy">Data Privacy Notice</Link></div><div><b>CONTACT</b><a href="mailto:serve@driftsports.app">serve@driftsports.app</a></div></div><p className={`${styles.inner} ${styles.copyright}`}>© 2026 Drift Sports. Built for the next point.</p></footer>
+      <footer className={styles.footer} id="footer"><div className={`${styles.inner} ${styles.footerGrid}`}><div><Image src="/images/logo.png" alt="Drift Tennis" width={1600} height={495} className={styles.footerMark} /><p>Find your next rally.</p></div><div><b>LEGAL</b><Link href="/terms">Terms and Conditions</Link><Link href="/privacy-policy">Privacy Policy</Link><Link href="/data-privacy">Data Privacy Notice</Link></div><div><b>CONTACT</b><a href="mailto:serve@driftsports.app">serve@driftsports.app</a></div></div><p className={`${styles.inner} ${styles.copyright}`}>© 2026 Drift Sports. Built for the next point.</p></footer>
     </main>
   );
 }

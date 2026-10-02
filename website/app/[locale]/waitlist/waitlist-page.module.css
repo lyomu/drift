@@ -1,5 +1,5 @@
 .waitlist {
-  min-height: 100vh;
+  min-height: 100dvh;
   overflow-x: hidden;
   background: #07120f;
   color: #f6f7f2;
@@ -21,11 +21,13 @@
   z-index: 2;
   top: 44px;
   left: 72px;
-  color: #f6f7f2;
-  font-size: 25px;
-  font-weight: 700;
-  letter-spacing: .052em;
-  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.brandMark {
+  height: 28px;
+  width: auto;
 }
 
 .navigation {
@@ -59,7 +61,8 @@
 
 @media (max-width: 900px) {
   .canvas { display: flex; flex-direction: column; width: 100%; height: auto; min-height: 100vh; overflow: visible; }
-  .brand { top: 28px; left: 24px; font-size: 22px; }
+  .brand { top: 28px; left: 24px; }
+  .brandMark { height: 24px; }
   .navigation { top: 20px; right: 24px; width: auto; height: 44px; gap: 14px; }
   .backLink { display: none; }.accessPill { height: 40px; padding: 0 15px; font-size: 11px; }
   .copy { position: relative; top: auto; left: auto; width: auto; padding: 144px 24px 56px; }.eyebrow { font-size: 12px; }.copy h1 { width: auto; margin-top: 18px; font-size: 48px; line-height: 47px; }.description { width: auto; margin-top: 32px; font-size: 18px; line-height: 26px; }.footnote { position: static; width: auto; margin-top: 34px; font-size: 14px; line-height: 20px; }

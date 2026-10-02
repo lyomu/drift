@@ -46,19 +46,12 @@
 .legalSurface .brand {
   display: inline-flex;
   align-items: center;
-  gap: 11px;
   width: max-content;
-  color: var(--cream);
-  font-size: 21px;
-  font-weight: 800;
-  letter-spacing: 0.085em;
 }
 
-.brandBall {
-  width: 24px;
-  height: 24px;
-  border-radius: 999px;
-  background: var(--lime);
+.brandMark {
+  height: 28px;
+  width: auto;
 }
 
 .nav {
@@ -386,9 +379,9 @@
   gap: 10px;
 }
 
-.footerGrid strong {
-  font-size: 25px;
-  letter-spacing: 0.07em;
+.footerMark {
+  height: 28px;
+  width: auto;
 }
 
 .footerGrid p,
@@ -476,8 +469,8 @@
     height: 72px;
   }
 
-  .brand {
-    font-size: 18px;
+  .brandMark {
+    height: 24px;
   }
 
   .appLink {
