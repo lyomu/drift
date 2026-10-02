@@ -7,8 +7,8 @@ Future<void> showComingSoon(BuildContext context) {
     builder: (context) => AlertDialog(
       title: const Text('Coming soon'),
       content: const Text(
-        "Google and Apple sign-in aren't ready yet — we're still setting "
-        "them up. Please continue with email for now.",
+        "Apple sign-in isn't ready yet — we're still setting it up. Please "
+        "continue with Google or email for now.",
       ),
       actions: [
         TextButton(

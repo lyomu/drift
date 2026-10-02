@@ -87,7 +87,42 @@ SMTP_PORT=465
 SMTP_USER=drift@einsbrand.com
 SMTP_PASS=
 MAIL_FROM=Drift Tennis <drift@einsbrand.com>
+
+# Social sign-in audiences. Every OAuth client that may present a token, or
+# that token is rejected. Comma-separated, no spaces; read once at
+# construction, so the API must be restarted after a change — a reload will
+# not pick it up. Client IDs are public by design (they ship in every APK);
+# the full list and what each one is for lives in docs/SOCIAL_SIGNIN_SETUP.md.
+# Omitting this does not fail the boot — it makes the Google routes answer
+# 503, which reads like a code fault rather than a missing line here.
+GOOGLE_OAUTH_CLIENT_IDS=921637855690-mpmeootgo8lnh4qh2k8eggfjfcr5q7ks.apps.googleusercontent.com,921637855690-0ljoaisejhja0bfdgkpu0d0sdegdu7sm.apps.googleusercontent.com,921637855690-3r6qk5bbvdcm2isoh9u22n8pdcea3vga.apps.googleusercontent.com,921637855690-621pq70ca20pj5b7tafr3r1nequael5f.apps.googleusercontent.com,921637855690-qelh0kbj201u5qgisql9vo0298d5a187.apps.googleusercontent.com
+
+# Apple's two audiences — the Services ID (web/Android flow) and the bundle
+# ID (native iOS). Both stay empty until Developer Program enrolment lands
+# (LAUNCH_TRACKER P.6); the Apple routes answer 503 meanwhile, by design.
+APPLE_SERVICES_ID=
+APPLE_BUNDLE_ID=
+
+# Venue enrichment in the platform-admin console. Optional: without it the
+# console reports the integration as unconfigured rather than erroring.
+GOOGLE_PLACES_API_KEY=
+
+# Push via Firebase Cloud Messaging (fans out to both APNs and Android). The
+# whole service is disabled when this is absent and every send becomes a
+# silent no-op, so a box without it behaves normally rather than failing.
+FIREBASE_SERVICE_ACCOUNT=
+
+# Paddle. PADDLE_ENVIRONMENT defaults to `sandbox`; set it to `production`
+# only on this box. Setting PADDLE_API_KEY without PADDLE_WEBHOOK_SECRET is a
+# hard boot failure by design (config/environment.ts) — payment confirmations
+# could not be verified, and failing loudly beats accepting unsigned ones.
+PADDLE_API_KEY=
+PADDLE_ENVIRONMENT=production
+PADDLE_WEBHOOK_SECRET=
 ```
+
+The analytics keys in the table below (`POSTHOG_KEY`, `GA_MEASUREMENT_ID`,
+`CLARITY_PROJECT_ID`) also live in this file.
 
 `PUBLIC_API_URL` is baked into both consoles' Next.js builds and their CSP
 headers at **build time**, not read at runtime — the image build stage
@@ -259,6 +294,23 @@ Job-scoped credentials (isolated from RetailFlow/harusi-ke):
 | `drift-ghcr-token` | Username/password | GitHub PAT (`write:packages`), pushes to `ghcr.io` |
 | `drift-prod-env-file` | Secret file | `.env.production` content |
 | `drift-basic-auth` | Username/password | Smoke-tests the two basic-auth-protected consoles |
+
+> **`drift-prod-env-file` is a copy, and nothing keeps it honest.** The
+> pipeline never writes it to the box — `scripts/deploy.sh` only checks that
+> `/srv/drift/prod/.env.production` exists and passes it to
+> `docker compose --env-file`. So editing the box by hand works and survives
+> deploys, and the Jenkins copy silently goes stale. It is what a rebuild from
+> this document would restore, so **every hand edit on the box must be mirrored
+> into this credential**, or the rebuilt box comes up missing whatever was only
+> ever added by hand.
+>
+> This has already bitten once, in the other direction: `GOOGLE_OAUTH_CLIENT_IDS`
+> was missing from the box *and* from the template, so Google sign-in answered
+> `503` in production from the day it shipped and nothing surfaced it — the
+> variable is optional at boot, and the app's buttons were shimmed out behind a
+> "Coming soon" dialog, so no client ever called the route. Added to both on
+> 2026-10-02. When a var is optional at boot, absence is silent: check the
+> route, not the logs.
 
 Global env var (`Manage Jenkins → System`): `DRIFT_PROD_HOST =
 46.225.106.43` — never hardcoded in the Jenkinsfile, matching the
