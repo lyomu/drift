@@ -1,7 +1,6 @@
 import Link from "next/link";
 
 import { legalLinks } from "@/lib/content";
-import { waitlistUrl } from "@/lib/site";
 
 import styles from "./legal-layout.module.css";
 
@@ -28,9 +27,12 @@ export function LegalLayout({ title, summary, sections, children }: LegalLayoutP
           <Link href="/#clubs">FOR CLUBS</Link>
           <Link href="/#training">FOR COACHES</Link>
         </nav>
-        <a className={styles.appLink} href={waitlistUrl("en")}>
+        {/* The CTA is labelled GET THE APP, so it goes to the landing page's
+            download section (`#download`), not the waitlist form. Same
+            convention as the `/#play`, `/#clubs` section links above. */}
+        <Link className={styles.appLink} href="/#download">
           GET THE APP <Arrow />
-        </a>
+        </Link>
       </header>
 
       <main>
