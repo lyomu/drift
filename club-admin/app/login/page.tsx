@@ -53,7 +53,7 @@ export default function LoginPage() {
 
       <div
         aria-hidden="true"
-        className="absolute left-[6%] top-[32%] hidden h-[116px] w-[90px] rounded-md bg-[#E8F5FC] lg:block"
+        className="absolute left-[6%] top-[32%] hidden h-[116px] w-[90px] rounded-md bg-[#E6F5FF] lg:block"
         style={{
           backgroundImage: "radial-gradient(#111827 1.6px, transparent 1.6px)",
           backgroundPosition: "8px 8px",
@@ -62,7 +62,7 @@ export default function LoginPage() {
       />
       <div
         aria-hidden="true"
-        className="absolute right-[7%] top-[21%] hidden h-[124px] w-[100px] rounded-md bg-[#E8F5FC] lg:block"
+        className="absolute right-[7%] top-[21%] hidden h-[124px] w-[100px] rounded-md bg-[#E6F5FF] lg:block"
         style={{
           backgroundImage: "radial-gradient(#111827 1.6px, transparent 1.6px)",
           backgroundPosition: "8px 8px",

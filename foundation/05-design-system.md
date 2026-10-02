@@ -35,6 +35,8 @@
 
 **Rule: white and neutral surfaces remain dominant.** Blue is reserved for the interactions listed above — never used as a large background fill, card background, or default icon colour.
 
+**Platform divergence (since the 2026-10-02 brand refresh):** the table above is still the Flutter app's palette (`mobile/lib/core/theme/drift_colors.dart`). `club-admin` and `platform-admin` moved their `color.primary` to `#0099FF` (`-dark` `#0077CC`, `-light` `#E6F5FF`) to match their new brand mark (`Drift Logo blue.png`); the public website kept its existing `#3399CC` UI accent independent of its own mark, which is now green. The three platforms no longer share one literal hex value — only the vocabulary (`color.primary`, `color.primary.dark`, `color.primary.light`) stays identical across all of them.
+
 ### Semantic tokens (never hard-code raw hex in components)
 
 ```

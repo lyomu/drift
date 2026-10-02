@@ -173,7 +173,7 @@ export default function LoginPage() {
                   />
                   Remember me
                 </label>
-                <Link href="/reset-password" className="font-bold text-[#1D4ED8] hover:underline">
+                <Link href="/reset-password" className="font-bold text-[#0099FF] hover:underline">
                   Forgot password?
                 </Link>
               </div>
@@ -181,13 +181,13 @@ export default function LoginPage() {
               <Button
                 type="submit"
                 disabled={submitting}
-                className="mt-3 min-h-[54px] w-full rounded-[10px] bg-[#1D4ED8] text-[16px] hover:bg-[#1E3A8A]"
+                className="mt-3 min-h-[54px] w-full rounded-[10px] bg-[#0099FF] text-[16px] hover:bg-[#0077CC]"
               >
                 {submitting ? "Signing in..." : "Sign in"}
               </Button>
               <p className="mt-1 text-center text-[14px] text-[#6B7280]">
                 Have an invite link?{" "}
-                <Link href="/accept-invite" className="font-bold text-[#1D4ED8] hover:underline">
+                <Link href="/accept-invite" className="font-bold text-[#0099FF] hover:underline">
                   Accept invite
                 </Link>
               </p>
