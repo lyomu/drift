@@ -130,3 +130,33 @@ jobs:
         run: npm ci
       - name: Build Platform Admin
         run: npm run build
+
+  website:
+    name: Website lint and production image
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+      - name: Install dependencies
+        working-directory: website
+        run: npm ci
+      - name: Lint website
+        working-directory: website
+        run: npm run lint
+      # Built through the real Dockerfile rather than `npm run build` on the runner,
+      # because the bug this job exists to catch was specific to the image's npm.
+      # website/package-lock.json twice failed `npm ci` in deploy: the first fix was
+      # regenerated with a local npm (11.6.2) and resolved a different @emnapi entry set
+      # than node:24-bookworm-slim's npm (11.19.0) actually needed, so it broke again on
+      # the next deploy. A runner-side build would have gone green both times. Building
+      # the Dockerfile runs `npm ci` and `npm run build` under the exact npm that ships
+      # the site, and covers the Dockerfile itself as well.
+      - name: Build production image
+        run: docker build -f website/Dockerfile website
