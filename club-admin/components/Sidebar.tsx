@@ -171,7 +171,7 @@ export function Sidebar({
                         className={`navitem rounded-md px-2.5 py-[7px] text-[13.5px] transition-colors ${
                           active
                             ? "bg-drift-primary-light font-bold text-drift-primary-dark"
-                            : "font-semibold text-drift-text-secondary"
+                            : "font-normal text-drift-text-primary"
                         }`}
                       >
                         {item.label}

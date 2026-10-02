@@ -45,6 +45,27 @@ export const coachApi = {
     api.patch<CoachAdmin>("/coaches/me", payload),
 
   myClubs: () => api.get<{ clubs: CoachClub[] }>("/coaches/me/clubs"),
+
+  /** A coach's photo is their account photo — same endpoint the mobile
+   * app's "edit my profile" screen uses. */
+  uploadMyPhoto: (file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return api.upload<{ photoUrl: string | null }>("/users/me/photo", form);
+  },
+  deleteMyPhoto: () => api.delete<{ photoUrl: string | null }>("/users/me/photo"),
+
+  /** Club admin setting a coach's photo on their behalf. */
+  uploadCoachPhoto: (clubId: string, coachId: string, file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return api.upload<CoachAdmin>(
+      `/clubs/${clubId}/coaches/${coachId}/photo`,
+      form,
+    );
+  },
+  deleteCoachPhoto: (clubId: string, coachId: string) =>
+    api.delete<CoachAdmin>(`/clubs/${clubId}/coaches/${coachId}/photo`),
 };
 
 /** Copy for each application state, kept in one place so the status card, the

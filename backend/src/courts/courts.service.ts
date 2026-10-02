@@ -36,6 +36,7 @@ export interface CreateCourtInput {
   latitude?: number;
   longitude?: number;
   mapsUrl?: string;
+  photoUrls?: string[];
   courtGroups: CourtGroupInput[];
 }
 
@@ -227,6 +228,7 @@ export class CourtsService {
         latitude: input.latitude,
         longitude: input.longitude,
         mapsUrl: normaliseUrl(input.mapsUrl),
+        photoUrls: input.photoUrls ?? [],
         courtGroups: {
           create: input.courtGroups.map((g) => ({
             sport: g.sport,
@@ -254,7 +256,9 @@ export class CourtsService {
           latitude: input.latitude,
           longitude: input.longitude,
           mapsUrl:
-            input.mapsUrl === undefined ? undefined : normaliseUrl(input.mapsUrl),
+            input.mapsUrl === undefined
+              ? undefined
+              : normaliseUrl(input.mapsUrl),
           phone: input.phone,
           website: input.website,
           bookingType: input.bookingType,

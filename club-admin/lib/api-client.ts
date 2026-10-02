@@ -92,6 +92,20 @@ export const api = {
   blob: async (path: string) => (await rawFetch(path)).blob(),
 };
 
+/**
+ * Resolves a relative media path (`/media/user-photos/<id>`,
+ * `/media/court-photos/<id>`) to an absolute URL the browser can load
+ * directly in an `<img>` tag. These routes are deliberately unauthenticated
+ * (mirrors `mobile/lib/core/network/media_url.dart`'s `driftMediaUrl`), so no
+ * token/blob fetch is needed — unlike the club media store, which requires
+ * `api.blob()`. Absolute URLs are left alone.
+ */
+export function mediaUrl(path: string | null | undefined): string | null {
+  if (!path) return null;
+  if (path.startsWith("http://") || path.startsWith("https://")) return path;
+  return `${API_URL}${path.startsWith("/") ? "" : "/"}${path}`;
+}
+
 export function downloadBlob(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');

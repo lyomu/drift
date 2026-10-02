@@ -6,6 +6,7 @@ import { api, ApiError } from "@/lib/api-client";
 import { useClub } from "@/lib/club-context";
 import { Button, Card, ErrorBanner, Field, Input, PageHeader } from "@/components/ui";
 import { CourtGroupsEditor } from "@/components/CourtGroupsEditor";
+import { CourtPhotoUpload } from "@/components/CourtPhotoUpload";
 import type { CourtGroup } from "@/lib/types";
 
 export default function NewCourtPage() {
@@ -14,6 +15,7 @@ export default function NewCourtPage() {
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [mapsUrl, setMapsUrl] = useState("");
+  const [photoUrls, setPhotoUrls] = useState<string[]>([]);
   const [groups, setGroups] = useState<CourtGroup[]>([
     { surface: "HARD", indoor: false, lighting: false, count: 1 },
   ]);
@@ -30,6 +32,7 @@ export default function NewCourtPage() {
         name,
         address: address || undefined,
         mapsUrl: mapsUrl.trim() || undefined,
+        photoUrls,
         courtGroups: groups,
       });
       router.push("/courts");
@@ -55,6 +58,9 @@ export default function NewCourtPage() {
           <Field label="Google Maps link (optional)">
             <Input type="url" inputMode="url" placeholder="https://maps.google.com/…" value={mapsUrl} onChange={(e) => setMapsUrl(e.target.value)} />
           </Field>
+          {clubId && (
+            <CourtPhotoUpload clubId={clubId} photoUrls={photoUrls} onChange={setPhotoUrls} />
+          )}
           <CourtGroupsEditor groups={groups} onChange={setGroups} />
           <Button type="submit" disabled={saving} className="self-start">
             {saving ? "Creating…" : "Create court"}

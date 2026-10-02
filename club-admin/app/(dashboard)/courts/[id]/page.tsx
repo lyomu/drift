@@ -6,6 +6,7 @@ import { api, ApiError } from "@/lib/api-client";
 import { useClub } from "@/lib/club-context";
 import { Button, Card, ErrorBanner, Field, Input, PageHeader } from "@/components/ui";
 import { CourtGroupsEditor } from "@/components/CourtGroupsEditor";
+import { CourtPhotoUpload } from "@/components/CourtPhotoUpload";
 import type { CourtGroup, CourtProfile } from "@/lib/types";
 
 export default function EditCourtPage() {
@@ -24,6 +25,7 @@ export default function EditCourtPage() {
     website: "",
   });
   const [groups, setGroups] = useState<CourtGroup[]>([]);
+  const [photoUrls, setPhotoUrls] = useState<string[]>([]);
 
   useEffect(() => {
     api.get<CourtProfile>(`/courts/${id}`).then((res) => {
@@ -35,6 +37,7 @@ export default function EditCourtPage() {
         website: res.website ?? "",
       });
       setGroups(res.courtGroups);
+      setPhotoUrls(res.photoUrls ?? []);
       setLoading(false);
     });
   }, [id]);
@@ -47,6 +50,7 @@ export default function EditCourtPage() {
     try {
       await api.patch(`/clubs/${clubId}/courts/${id}`, {
         ...form,
+        photoUrls,
         courtGroups: groups,
       });
       router.push("/courts");
@@ -102,6 +106,9 @@ export default function EditCourtPage() {
               />
             </Field>
           </div>
+          {clubId && (
+            <CourtPhotoUpload clubId={clubId} photoUrls={photoUrls} onChange={setPhotoUrls} />
+          )}
           <CourtGroupsEditor groups={groups} onChange={setGroups} />
           <Button type="submit" disabled={saving} className="self-start">
             {saving ? "Saving…" : "Save changes"}

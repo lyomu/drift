@@ -59,6 +59,12 @@ export class CreateCourtDto {
   @MaxLength(2048)
   mapsUrl?: string;
 
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsString({ each: true })
+  photoUrls?: string[];
+
   @IsArray()
   @ArrayMaxSize(20)
   @ValidateNested({ each: true })

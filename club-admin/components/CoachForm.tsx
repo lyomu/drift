@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import { Button, Card, Field, Input, Textarea } from "@/components/ui";
+import { CoachPhotoUpload } from "@/components/CoachPhotoUpload";
+import { coachApi } from "@/lib/coach-api";
+import { useClub } from "@/lib/club-context";
 import type { CoachAdmin, CoachLevel } from "@/lib/types";
 
 const LEVELS: { value: CoachLevel; label: string }[] = [
@@ -70,6 +73,8 @@ export function CoachForm({
   submitLabel?: string;
 }) {
   const self = mode === "self";
+  const { clubId } = useClub();
+  const [photoUrl, setPhotoUrl] = useState(coach?.photoUrl ?? null);
   const [accountEmail, setAccountEmail] = useState(coach?.accountEmail ?? "");
   const [bio, setBio] = useState(coach?.bio ?? "");
   const [qualifications, setQualifications] = useState(
@@ -95,6 +100,26 @@ export function CoachForm({
     coach?.publicContact.bookingUrl ?? "",
   );
   const [contactError, setContactError] = useState<string | null>(null);
+
+  async function uploadPhoto(file: File) {
+    if (self) {
+      const res = await coachApi.uploadMyPhoto(file);
+      setPhotoUrl(res.photoUrl);
+    } else if (coach && clubId) {
+      const res = await coachApi.uploadCoachPhoto(clubId, coach.id, file);
+      setPhotoUrl(res.photoUrl);
+    }
+  }
+
+  async function removePhoto() {
+    if (self) {
+      const res = await coachApi.deleteMyPhoto();
+      setPhotoUrl(res.photoUrl);
+    } else if (coach && clubId) {
+      const res = await coachApi.deleteCoachPhoto(clubId, coach.id);
+      setPhotoUrl(res.photoUrl);
+    }
+  }
 
   function toggleLevel(level: CoachLevel) {
     setLevels((current) =>
@@ -145,6 +170,9 @@ export function CoachForm({
             : "The coach's Drift account and background."
         }
       >
+        {(self || coach) && (
+          <CoachPhotoUpload photoUrl={photoUrl} onUpload={uploadPhoto} onRemove={removePhoto} />
+        )}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {!self && (
             <Field label="Drift account email">

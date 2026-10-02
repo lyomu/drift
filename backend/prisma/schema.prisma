@@ -590,7 +590,7 @@ enum CourtReportReason {
 // duplicating the user. `@@unique([provider, providerAccountId])` is what
 // makes provider sign-in idempotent.
 model SocialIdentity {
-  id                String      @id @default(cuid())
+  id                String       @id @default(cuid())
   provider          AuthProvider
   providerAccountId String
   userId            String
@@ -598,7 +598,7 @@ model SocialIdentity {
   // Apple returns the name ONLY on the very first authorization — persist it
   // here the first time or it is gone forever.
   name              String?
-  createdAt         DateTime    @default(now())
+  createdAt         DateTime     @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -608,17 +608,17 @@ model SocialIdentity {
 }
 
 model User {
-  id           String  @id @default(uuid())
-  email        String? @unique
+  id              String  @id @default(uuid())
+  email           String? @unique
   // Collected at signup and on Basic Profile, always optional, and stored
   // UNVERIFIED — no SMS provider exists, so `phoneVerifiedAt` stays null and
   // nothing may treat this as proof of anything. It is a contact detail.
-  phone        String? @unique
+  phone           String? @unique
   // Whether the person says `phone` is reachable on WhatsApp. Meaningless
   // without a number, so writers only set it alongside one.
   phoneOnWhatsApp Boolean @default(false)
   // Nullable since Phase 4: a Google/Apple-only user has no password.
-  passwordHash String?
+  passwordHash    String?
 
   firstName String?
   lastName  String?
@@ -629,14 +629,14 @@ model User {
   photoUrl  String?
   bio       String?
 
-  verificationStatus VerificationStatus @default(UNVERIFIED)
-  accountStatus      AccountStatus      @default(ACTIVE)
+  verificationStatus  VerificationStatus @default(UNVERIFIED)
+  accountStatus       AccountStatus      @default(ACTIVE)
   // Marks a seeded demo persona (`scripts/seed-demo-history.mjs`). Demo users
   // and real users are invisible to each other in every discovery surface —
   // see `common/demo-scope.ts`. Never set by any API path.
-  isDemo             Boolean            @default(false)
-  emailVerifiedAt    DateTime?
-  phoneVerifiedAt    DateTime?
+  isDemo              Boolean            @default(false)
+  emailVerifiedAt     DateTime?
+  phoneVerifiedAt     DateTime?
   // Launch policy P.2: Drift Tennis is 18+ until a guardian-consent flow exists.
   // Store the consent timestamp, not date of birth, to avoid collecting extra PII.
   agePolicyAcceptedAt DateTime?
@@ -657,24 +657,24 @@ model User {
   refreshTokens     RefreshToken[]
   socialIdentities  SocialIdentity[]
 
-  tournamentEntries TournamentEntry[] @relation("TournamentEntries")
-  ladderEntries     LadderEntry[]    @relation("LadderEntries")
-  ladderChallengesAsChallenger LadderChallenge[] @relation("LadderChallenger")
-  ladderChallengesAsDefender   LadderChallenge[] @relation("LadderDefender")
-  tournamentFixturesAsA TournamentFixture[] @relation("TFixA")
-  tournamentFixturesAsB TournamentFixture[] @relation("TFixB")
-  connectionsRequested Connection[]    @relation("ConnectionRequester")
-  connectionsReceived  Connection[]    @relation("ConnectionAddressee")
-  blocksMade           Block[]         @relation("Blocker")
-  blocksReceived       Block[]         @relation("Blocked")
-  reportsMade          PlayerReport[]  @relation("Reporter")
-  reportsReceived      PlayerReport[]  @relation("Reported")
-  courtReportsMade     CourtReport[]   @relation("CourtReporter")
-  abuseCasesSubject    AbuseCase[]      @relation("AbuseCaseSubject")
-  supportTickets       SupportTicket[]
-  privacyRequests      PrivacyRequest[]
-  savedStories         SavedStory[]
-  messageReportsMade   MessageReport[] @relation("MessageReporter")
+  tournamentEntries            TournamentEntry[]   @relation("TournamentEntries")
+  ladderEntries                LadderEntry[]       @relation("LadderEntries")
+  ladderChallengesAsChallenger LadderChallenge[]   @relation("LadderChallenger")
+  ladderChallengesAsDefender   LadderChallenge[]   @relation("LadderDefender")
+  tournamentFixturesAsA        TournamentFixture[] @relation("TFixA")
+  tournamentFixturesAsB        TournamentFixture[] @relation("TFixB")
+  connectionsRequested         Connection[]        @relation("ConnectionRequester")
+  connectionsReceived          Connection[]        @relation("ConnectionAddressee")
+  blocksMade                   Block[]             @relation("Blocker")
+  blocksReceived               Block[]             @relation("Blocked")
+  reportsMade                  PlayerReport[]      @relation("Reporter")
+  reportsReceived              PlayerReport[]      @relation("Reported")
+  courtReportsMade             CourtReport[]       @relation("CourtReporter")
+  abuseCasesSubject            AbuseCase[]         @relation("AbuseCaseSubject")
+  supportTickets               SupportTicket[]
+  privacyRequests              PrivacyRequest[]
+  savedStories                 SavedStory[]
+  messageReportsMade           MessageReport[]     @relation("MessageReporter")
 
   notifications          Notification[]
   notificationPreference NotificationPreference?
@@ -700,19 +700,20 @@ model User {
   resultsDisputed  MatchResult[]     @relation("ResultDisputer")
   matchReflections MatchReflection[] @relation("ReflectionAuthor")
 
-  leagueRegistrations LeagueRegistration[]
-  fixturesAsSideA     Fixture[]            @relation("FixtureSideA")
-  fixturesAsSideB     Fixture[]            @relation("FixtureSideB")
-  standings           Standing[]
-  leagueAwardsReceived    LeagueAward[]             @relation("LeagueAwardRecipient")
-  leagueAwardsIssued      LeagueAward[]             @relation("LeagueAwardIssuer")
-  eventRegistrations      ClubEventRegistration[]
-  clubEventsCreated       ClubEvent[]                @relation("ClubEventCreator")
-  clubPostReportsMade     ClubPostModerationReport[] @relation("ClubPostReporter")
-  clubPostReportsResolved ClubPostModerationReport[] @relation("ClubPostReportResolver")
-  clubAuditActions        ClubAuditLog[]             @relation("ClubAuditActor")
-  mediaAssetsUploaded     ClubMediaAsset[]           @relation("ClubMediaUploader")
-  courtInquiries          CourtInquiry[]
+  leagueRegistrations       LeagueRegistration[]
+  fixturesAsSideA           Fixture[]                  @relation("FixtureSideA")
+  fixturesAsSideB           Fixture[]                  @relation("FixtureSideB")
+  standings                 Standing[]
+  leagueAwardsReceived      LeagueAward[]              @relation("LeagueAwardRecipient")
+  leagueAwardsIssued        LeagueAward[]              @relation("LeagueAwardIssuer")
+  eventRegistrations        ClubEventRegistration[]
+  clubEventsCreated         ClubEvent[]                @relation("ClubEventCreator")
+  clubPostReportsMade       ClubPostModerationReport[] @relation("ClubPostReporter")
+  clubPostReportsResolved   ClubPostModerationReport[] @relation("ClubPostReportResolver")
+  clubAuditActions          ClubAuditLog[]             @relation("ClubAuditActor")
+  mediaAssetsUploaded       ClubMediaAsset[]           @relation("ClubMediaUploader")
+  courtPhotoAssetsUploaded  CourtPhotoAsset[]          @relation("CourtPhotoUploader")
+  courtInquiries            CourtInquiry[]
   venueVerificationRequests VenueVerificationRequest[]
   dismissedHomeCards        DismissedHomeCard[]
   videoAnalysisJobs         VideoAnalysisJob[]
@@ -952,9 +953,9 @@ model PlayerReport {
   reporter       User   @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
   reported       User   @relation("Reported", fields: [reportedUserId], references: [id], onDelete: Cascade)
 
-  reason ReportReason
-  notes  String?
-  status ReportStatus @default(OPEN)
+  reason   ReportReason
+  notes    String?
+  status   ReportStatus        @default(OPEN)
   priority TrustSafetyPriority @default(NORMAL)
 
   createdAt DateTime @default(now())
@@ -1004,16 +1005,16 @@ model Match {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  participants  MatchParticipant[]
-  timeProposals TimeProposal[]
-  conversation  Conversation?
-  result        MatchResult?
-  reflections   MatchReflection[]
+  participants       MatchParticipant[]
+  timeProposals      TimeProposal[]
+  conversation       Conversation?
+  result             MatchResult?
+  reflections        MatchReflection[]
   // Doc 6 §1's "competitionContext" hook, realized once something needs it
   // (Phase M8) — set only for fixture-generated matches.
   tournamentFixtures TournamentFixture[]
-  ladderChallenges    LadderChallenge[]
-  fixture       Fixture?
+  ladderChallenges   LadderChallenge[]
+  fixture            Fixture?
 
   @@index([state])
   @@map("matches")
@@ -1165,24 +1166,24 @@ model MatchReflection {
 // on read from now() vs. these dates — see competitions/competition-state.ts.
 // Draft/Cancelled/Completed stay explicit since they aren't time-derivable.
 model League {
-  id          String      @id @default(uuid())
+  id                    String            @id @default(uuid())
   // Phase M14 — every league now has an owning club (Club Admin is the
   // only way to create one going forward). Nullable rather than required:
   // the M8 seed league predates Club Admin and was never club-linked, and
   // backfilling a fabricated owner for it would violate the "never
   // fabricate" rule this project has held since M9.
-  clubId      String?
-  club        Club?       @relation(fields: [clubId], references: [id], onDelete: Cascade)
-  sport       MatchSport  @default(TENNIS)
-  name        String
-  description String?
-  rulesText   String?
+  clubId                String?
+  club                  Club?             @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  sport                 MatchSport        @default(TENNIS)
+  name                  String
+  description           String?
+  rulesText             String?
   scoringFormat         String?
   walkoverRule          String?
   unfinishedMatchPolicy String?
   // SINGLES enforced by competitions.service.ts this phase — a doubles
   // league needs pair-registration, which Doc 6 doesn't specify.
-  format      MatchFormat @default(SINGLES)
+  format                MatchFormat       @default(SINGLES)
   // The level this league is pitched at, reusing the same AssessmentBranch
   // tiering as the onboarding assessment and LearningContent rather than
   // inventing a second scale. Null means "all levels" — the league is open
@@ -1191,8 +1192,8 @@ model League {
   // Advisory only: `register()` deliberately does not gate on it. A player
   // with no level at all resolves to 0 (player-level.ts), so a level check
   // would lock un-assessed players out of exactly the leagues they need.
-  levelBand   AssessmentBranch?
-  state       LeagueState @default(PUBLISHED)
+  levelBand             AssessmentBranch?
+  state                 LeagueState       @default(PUBLISHED)
 
   // Competition scheduling (folded up from the former Season model).
   // Nullable so a league can be drafted before its dates are set and so
@@ -1225,13 +1226,13 @@ model League {
 }
 
 model LeagueAward {
-  id          String @id @default(uuid())
+  id          String   @id @default(uuid())
   leagueId    String
-  league      League @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  league      League   @relation(fields: [leagueId], references: [id], onDelete: Cascade)
   recipientId String
-  recipient   User   @relation("LeagueAwardRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  recipient   User     @relation("LeagueAwardRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
   issuedById  String
-  issuedBy    User   @relation("LeagueAwardIssuer", fields: [issuedById], references: [id], onDelete: Restrict)
+  issuedBy    User     @relation("LeagueAwardIssuer", fields: [issuedById], references: [id], onDelete: Restrict)
   title       String
   notes       String?
   issuedAt    DateTime @default(now())
@@ -1472,14 +1473,17 @@ model Court {
   // Unknown, never guessed public or private (Doc 6 §2 business rule).
   isPublic Boolean?
 
-  // External URLs only — no image upload flow exists anywhere in this app
-  // yet. Empty array is the honest default, not a fabricated placeholder.
+  // Populated from CourtPhotoAsset uploads (`/media/court-photos/<id>`), a
+  // public, unauthenticated read route distinct from ClubMediaAsset's
+  // authenticated `/clubs/:id/media` store — the mobile client's
+  // NetworkImage can't attach a bearer token, so a court photo has to be
+  // reachable without one. Empty array is the honest default.
   photoUrls String[]
 
   // Optional enrichment hook per Doc 6 §1. Platform Admin can link a real
   // Place ID and refresh provider-owned fields when credentials are present;
   // null remains the honest state for curated or non-Google venues.
-  googlePlacesRef String?
+  googlePlacesRef        String?
   googlePlacesSyncStatus VenuePlacesSyncStatus @default(STALE)
   googlePlacesSyncedAt   DateTime?
   googlePlacesSyncError  String?
@@ -1531,9 +1535,9 @@ model CourtReport {
   reporterId String
   reporter   User   @relation("CourtReporter", fields: [reporterId], references: [id], onDelete: Cascade)
 
-  reason CourtReportReason
-  notes  String?
-  status ReportStatus      @default(OPEN)
+  reason   CourtReportReason
+  notes    String?
+  status   ReportStatus        @default(OPEN)
   priority TrustSafetyPriority @default(NORMAL)
 
   createdAt DateTime @default(now())
@@ -1571,12 +1575,12 @@ model Club {
   openingHoursNote String?
   photoUrls        String[]
 
-  verificationStatus ListingVerificationStatus @default(UNVERIFIED)
-  platformStatus     ClubPlatformStatus        @default(ACTIVE)
+  verificationStatus   ListingVerificationStatus @default(UNVERIFIED)
+  platformStatus       ClubPlatformStatus        @default(ACTIVE)
   platformStatusReason String?
   // Seeded demo club (`scripts/seed-demo-history.mjs`): hidden from every
   // real user's discovery surfaces; demo users see it alongside real clubs.
-  isDemo             Boolean                   @default(false)
+  isDemo               Boolean                   @default(false)
   platformSuspendedAt  DateTime?
 
   // Null until the owner finishes (or dismisses) the multi-step setup
@@ -1587,21 +1591,22 @@ model Club {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  courts        Court[]
-  leagues       League[]
-  memberships   ClubMembership[]
-  announcements Announcement[]
-  posts         ClubPost[]
-  tournaments   Tournament[]
-  ladders       Ladder[]
-  coachAffiliations CoachClubAffiliation[]
-  billingAccount BillingAccount?
-  events         ClubEvent[]
-  mediaAssets    ClubMediaAsset[]
-  moderationReports ClubPostModerationReport[]
-  notificationSettings ClubNotificationSettings?
-  auditLogs      ClubAuditLog[]
-  courtInquiries CourtInquiry[]
+  courts                    Court[]
+  leagues                   League[]
+  memberships               ClubMembership[]
+  announcements             Announcement[]
+  posts                     ClubPost[]
+  tournaments               Tournament[]
+  ladders                   Ladder[]
+  coachAffiliations         CoachClubAffiliation[]
+  billingAccount            BillingAccount?
+  events                    ClubEvent[]
+  mediaAssets               ClubMediaAsset[]
+  courtPhotoAssets          CourtPhotoAsset[]
+  moderationReports         ClubPostModerationReport[]
+  notificationSettings      ClubNotificationSettings?
+  auditLogs                 ClubAuditLog[]
+  courtInquiries            CourtInquiry[]
   venueVerificationRequests VenueVerificationRequest[]
 
   @@index([latitude, longitude])
@@ -1620,13 +1625,13 @@ enum ClubCreationRequestStatus {
 /// one-time setup link (setupTokenHash) minted. `POST /clubs` no longer
 /// exists — the setup-link completion path is the only way a club is born.
 model ClubCreationRequest {
-  id             String @id @default(uuid())
-  clubName       String
-  location       String
-  requesterName  String
-  requesterEmail String
-  status         ClubCreationRequestStatus @default(PENDING)
-  decisionNote   String?
+  id                  String                    @id @default(uuid())
+  clubName            String
+  location            String
+  requesterName       String
+  requesterEmail      String
+  status              ClubCreationRequestStatus @default(PENDING)
+  decisionNote        String?
   // PlatformAdmin id — no FK relation; the admin audit log is the
   // authoritative trail for who decided what.
   reviewedById        String?
@@ -1637,8 +1642,8 @@ model ClubCreationRequest {
   setupTokenExpiresAt DateTime?
   completedAt         DateTime?
   createdClubId       String?
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
 
   @@index([status, createdAt])
   @@index([requesterEmail])
@@ -1705,8 +1710,8 @@ model Announcement {
 
   title       String
   body        String
-  pinned      Boolean             @default(false)
-  status      AnnouncementStatus  @default(DRAFT)
+  pinned      Boolean              @default(false)
+  status      AnnouncementStatus   @default(DRAFT)
   audience    AnnouncementAudience @default(EVERYONE)
   publishedAt DateTime?
 
@@ -1738,7 +1743,7 @@ model ClubPost {
 
   createdAt DateTime @default(now())
 
-  reactions ClubPostReaction[]
+  reactions         ClubPostReaction[]
   moderationReports ClubPostModerationReport[]
 
   @@index([clubId, createdAt])
@@ -1752,15 +1757,15 @@ enum CourtInquiryKind {
 }
 
 model CourtInquiry {
-  id        String @id @default(uuid())
+  id        String           @id @default(uuid())
   clubId    String
-  club      Club @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  club      Club             @relation(fields: [clubId], references: [id], onDelete: Cascade)
   courtId   String
-  court     Court @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  court     Court            @relation(fields: [courtId], references: [id], onDelete: Cascade)
   viewerId  String?
-  viewer    User? @relation(fields: [viewerId], references: [id], onDelete: SetNull)
+  viewer    User?            @relation(fields: [viewerId], references: [id], onDelete: SetNull)
   kind      CourtInquiryKind
-  createdAt DateTime @default(now())
+  createdAt DateTime         @default(now())
 
   @@index([clubId, createdAt])
   @@index([courtId, kind, createdAt])
@@ -1775,20 +1780,20 @@ enum ClubPostModerationStatus {
 }
 
 model ClubPostModerationReport {
-  id           String @id @default(uuid())
+  id           String                   @id @default(uuid())
   clubId       String
-  club         Club @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  club         Club                     @relation(fields: [clubId], references: [id], onDelete: Cascade)
   postId       String
-  post         ClubPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  post         ClubPost                 @relation(fields: [postId], references: [id], onDelete: Cascade)
   reporterId   String
-  reporter     User @relation("ClubPostReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  reporter     User                     @relation("ClubPostReporter", fields: [reporterId], references: [id], onDelete: Cascade)
   reason       String
   status       ClubPostModerationStatus @default(PENDING)
-  priority     TrustSafetyPriority @default(NORMAL)
+  priority     TrustSafetyPriority      @default(NORMAL)
   resolvedById String?
-  resolvedBy   User? @relation("ClubPostReportResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+  resolvedBy   User?                    @relation("ClubPostReportResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
   resolvedAt   DateTime?
-  createdAt    DateTime @default(now())
+  createdAt    DateTime                 @default(now())
 
   @@index([clubId, status, createdAt])
   @@index([priority, status, createdAt])
@@ -1796,11 +1801,11 @@ model ClubPostModerationReport {
 }
 
 model ClubMediaAsset {
-  id           String @id @default(uuid())
+  id           String   @id @default(uuid())
   clubId       String
-  club         Club @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  club         Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
   uploadedById String
-  uploadedBy   User @relation("ClubMediaUploader", fields: [uploadedById], references: [id], onDelete: Restrict)
+  uploadedBy   User     @relation("ClubMediaUploader", fields: [uploadedById], references: [id], onDelete: Restrict)
   filename     String
   mimeType     String
   bytes        Bytes
@@ -1811,13 +1816,34 @@ model ClubMediaAsset {
   @@map("club_media_assets")
 }
 
+/// A court photo, stored the same way club media is — bytes in Postgres,
+/// served back by opaque asset id, but through a public/unauthenticated read
+/// route (see Court.photoUrls) rather than ClubMediaAsset's authenticated
+/// one. Scoped to the club rather than a specific Court row so a photo can
+/// be uploaded before the court itself is created (the "New court" form
+/// uploads first, then submits the resulting URLs on create).
+model CourtPhotoAsset {
+  id           String   @id @default(uuid())
+  clubId       String
+  club         Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  uploadedById String
+  uploadedBy   User     @relation("CourtPhotoUploader", fields: [uploadedById], references: [id], onDelete: Restrict)
+  filename     String
+  mimeType     String
+  bytes        Bytes
+  createdAt    DateTime @default(now())
+
+  @@index([clubId, createdAt])
+  @@map("court_photo_assets")
+}
+
 /// A player's profile photo, stored the same way club media is — bytes in
 /// Postgres, served back by opaque asset id. One per user: uploading again
 /// replaces the row rather than accumulating orphans.
 model UserPhotoAsset {
-  id        String @id @default(uuid())
-  userId    String @unique
-  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   filename  String
   mimeType  String
   bytes     Bytes
@@ -1828,25 +1854,25 @@ model UserPhotoAsset {
 }
 
 model ClubNotificationSettings {
-  id                 String @id @default(uuid())
-  clubId             String @unique
-  club               Club @relation(fields: [clubId], references: [id], onDelete: Cascade)
-  membershipChanges  Boolean @default(true)
-  competitionUpdates Boolean @default(true)
-  eventRegistrations Boolean @default(true)
-  moderationAlerts   Boolean @default(true)
-  weeklyDigest       Boolean @default(true)
+  id                 String   @id @default(uuid())
+  clubId             String   @unique
+  club               Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  membershipChanges  Boolean  @default(true)
+  competitionUpdates Boolean  @default(true)
+  eventRegistrations Boolean  @default(true)
+  moderationAlerts   Boolean  @default(true)
+  weeklyDigest       Boolean  @default(true)
   updatedAt          DateTime @updatedAt
 
   @@map("club_notification_settings")
 }
 
 model ClubAuditLog {
-  id         String @id @default(uuid())
+  id         String   @id @default(uuid())
   clubId     String
-  club       Club @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  club       Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
   actorId    String
-  actor      User @relation("ClubAuditActor", fields: [actorId], references: [id], onDelete: Restrict)
+  actor      User     @relation("ClubAuditActor", fields: [actorId], references: [id], onDelete: Restrict)
   action     String
   entityType String
   entityId   String?
@@ -1873,11 +1899,11 @@ enum ClubEventRegistrationStatus {
 }
 
 model ClubEvent {
-  id          String @id @default(uuid())
+  id          String          @id @default(uuid())
   clubId      String
-  club        Club @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  club        Club            @relation(fields: [clubId], references: [id], onDelete: Cascade)
   createdById String
-  createdBy   User @relation("ClubEventCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  createdBy   User            @relation("ClubEventCreator", fields: [createdById], references: [id], onDelete: Restrict)
   name        String
   description String?
   // Event image reference. Club-admin stores uploaded media content paths here
@@ -1887,8 +1913,8 @@ model ClubEvent {
   endsAt      DateTime?
   capacity    Int?
   status      ClubEventStatus @default(DRAFT)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
 
   registrations ClubEventRegistration[]
 
@@ -1897,13 +1923,13 @@ model ClubEvent {
 }
 
 model ClubEventRegistration {
-  id           String @id @default(uuid())
+  id           String                      @id @default(uuid())
   eventId      String
-  event        ClubEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event        ClubEvent                   @relation(fields: [eventId], references: [id], onDelete: Cascade)
   userId       String
-  user         User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
   status       ClubEventRegistrationStatus @default(REGISTERED)
-  registeredAt DateTime @default(now())
+  registeredAt DateTime                    @default(now())
   attendedAt   DateTime?
 
   @@unique([eventId, userId])
@@ -2236,9 +2262,9 @@ model MessageReport {
   messageId  String
   message    Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
 
-  reason ReportReason
-  notes  String?
-  status ReportStatus @default(OPEN)
+  reason   ReportReason
+  notes    String?
+  status   ReportStatus        @default(OPEN)
   priority TrustSafetyPriority @default(NORMAL)
 
   createdAt DateTime @default(now())
@@ -2255,32 +2281,32 @@ model MessageReport {
 // (owner decision, 2026-08-24), so a compromised player account can never
 // hold governance power and there is no second "staff mode" to reason about.
 model PlatformAdmin {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  passwordHash String
-  name         String?
-  roleId       String
-  role         PlatformRole @relation(fields: [roleId], references: [id], onDelete: Restrict)
-  twoFactorEnabled Boolean @default(true)
+  id               String       @id @default(uuid())
+  email            String       @unique
+  passwordHash     String
+  name             String?
+  roleId           String
+  role             PlatformRole @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  twoFactorEnabled Boolean      @default(true)
 
-  createdAt  DateTime   @default(now())
-  lastLoginAt DateTime?
+  createdAt     DateTime  @default(now())
+  lastLoginAt   DateTime?
   deactivatedAt DateTime?
 
-  auditLogs AdminAuditLog[]
-  ruledResults MatchResult[]
-  twoFactorChallenges PlatformAdminTwoFactorChallenge[]
-  passwordResets PlatformAdminPasswordReset[]
-  invitationsSent PlatformAdminInvitation[] @relation("PlatformInvitationSender")
-  venueVerificationReviews VenueVerificationRequest[] @relation("VenueVerificationReviewer")
-  venueDuplicateDecisions VenueDuplicateDecision[]
-  abuseCasesOpened AbuseCase[] @relation("AbuseCaseOpenedBy")
-  abuseCasesClosed AbuseCase[] @relation("AbuseCaseClosedBy")
-  abuseCaseNotes AbuseCaseNote[]
-  assignedSupportTickets SupportTicket[] @relation("SupportTicketAssignee")
-  resolvedSupportTickets SupportTicket[] @relation("SupportTicketResolver")
-  supportMessages SupportTicketMessage[]
-  processedPrivacyRequests PrivacyRequest[] @relation("PrivacyRequestProcessor")
+  auditLogs                AdminAuditLog[]
+  ruledResults             MatchResult[]
+  twoFactorChallenges      PlatformAdminTwoFactorChallenge[]
+  passwordResets           PlatformAdminPasswordReset[]
+  invitationsSent          PlatformAdminInvitation[]         @relation("PlatformInvitationSender")
+  venueVerificationReviews VenueVerificationRequest[]        @relation("VenueVerificationReviewer")
+  venueDuplicateDecisions  VenueDuplicateDecision[]
+  abuseCasesOpened         AbuseCase[]                       @relation("AbuseCaseOpenedBy")
+  abuseCasesClosed         AbuseCase[]                       @relation("AbuseCaseClosedBy")
+  abuseCaseNotes           AbuseCaseNote[]
+  assignedSupportTickets   SupportTicket[]                   @relation("SupportTicketAssignee")
+  resolvedSupportTickets   SupportTicket[]                   @relation("SupportTicketResolver")
+  supportMessages          SupportTicketMessage[]
+  processedPrivacyRequests PrivacyRequest[]                  @relation("PrivacyRequestProcessor")
   waitlistBroadcasts       WaitlistBroadcast[]
 
   @@index([roleId, deactivatedAt])
@@ -2303,10 +2329,10 @@ enum PlatformPermission {
 }
 
 model PlatformRole {
-  id          String @id @default(uuid())
-  name        String @unique
+  id          String   @id @default(uuid())
+  name        String   @unique
   description String?
-  isSystem    Boolean @default(false)
+  isSystem    Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -2319,7 +2345,7 @@ model PlatformRole {
 
 model PlatformRolePermission {
   roleId     String
-  role       PlatformRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  role       PlatformRole       @relation(fields: [roleId], references: [id], onDelete: Cascade)
   permission PlatformPermission
 
   @@id([roleId, permission])
@@ -2328,45 +2354,45 @@ model PlatformRolePermission {
 }
 
 model PlatformAdminTwoFactorChallenge {
-  id         String @id @default(uuid())
+  id         String        @id @default(uuid())
   adminId    String
   admin      PlatformAdmin @relation(fields: [adminId], references: [id], onDelete: Cascade)
   codeHash   String
   expiresAt  DateTime
-  attempts   Int @default(0)
+  attempts   Int           @default(0)
   consumedAt DateTime?
-  createdAt  DateTime @default(now())
+  createdAt  DateTime      @default(now())
 
   @@index([adminId, expiresAt])
   @@map("platform_admin_two_factor_challenges")
 }
 
 model PlatformAdminPasswordReset {
-  id         String @id @default(uuid())
+  id         String        @id @default(uuid())
   adminId    String
   admin      PlatformAdmin @relation(fields: [adminId], references: [id], onDelete: Cascade)
   codeHash   String
   expiresAt  DateTime
-  attempts   Int @default(0)
+  attempts   Int           @default(0)
   consumedAt DateTime?
-  lastSentAt DateTime @default(now())
-  createdAt  DateTime @default(now())
+  lastSentAt DateTime      @default(now())
+  createdAt  DateTime      @default(now())
 
   @@index([adminId, expiresAt])
   @@map("platform_admin_password_resets")
 }
 
 model PlatformAdminInvitation {
-  id          String @id @default(uuid())
+  id          String        @id @default(uuid())
   email       String
   roleId      String
-  role        PlatformRole @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  role        PlatformRole  @relation(fields: [roleId], references: [id], onDelete: Restrict)
   invitedById String
   invitedBy   PlatformAdmin @relation("PlatformInvitationSender", fields: [invitedById], references: [id], onDelete: Restrict)
-  tokenHash   String @unique
+  tokenHash   String        @unique
   expiresAt   DateTime
   acceptedAt  DateTime?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime      @default(now())
 
   @@index([email, acceptedAt])
   @@map("platform_admin_invitations")
@@ -2382,14 +2408,14 @@ model CoachProfile {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   bio                String?
-  qualifications     String[] @default([])
+  qualifications     String[]                  @default([])
   yearsExperience    Int?
-  specialisations    String[] @default([])
-  levels             CoachLevel[] @default([])
+  specialisations    String[]                  @default([])
+  levels             CoachLevel[]              @default([])
   availabilityNote   String?
-  publicEmail         String?
-  publicPhone         String?
-  bookingUrl          String?
+  publicEmail        String?
+  publicPhone        String?
+  bookingUrl         String?
   verificationStatus ListingVerificationStatus @default(UNVERIFIED)
 
   createdAt DateTime @default(now())
@@ -2430,17 +2456,17 @@ model CoachApplication {
   status CoachApplicationStatus @default(DRAFT)
 
   bio              String?
-  qualifications   String[]    @default([])
+  qualifications   String[]     @default([])
   yearsExperience  Int?
-  specialisations  String[]    @default([])
+  specialisations  String[]     @default([])
   levels           CoachLevel[] @default([])
   availabilityNote String?
   publicEmail      String?
   publicPhone      String?
   bookingUrl       String?
 
-  submittedAt DateTime?
-  reviewedAt  DateTime?
+  submittedAt    DateTime?
+  reviewedAt     DateTime?
   // PlatformAdmin id -- no FK relation, matching ClubCreationRequest.reviewedById.
   // CoachApplicationEvent and the admin audit log are the authoritative trail.
   reviewedById   String?
@@ -2512,7 +2538,7 @@ model PaymentPlan {
 }
 
 model BillingAccount {
-  id     String @id @default(uuid())
+  id     String  @id @default(uuid())
   userId String? @unique
   user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
   clubId String? @unique
@@ -2525,7 +2551,7 @@ model BillingAccount {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  subscription  BillingSubscription?
+  subscription   BillingSubscription?
   paymentMethods PaymentMethod[]
   invoices       BillingInvoice[]
   transactions   PaymentTransaction[]
@@ -2534,12 +2560,12 @@ model BillingAccount {
 }
 
 model BillingSubscription {
-  id               String                    @id @default(uuid())
-  billingAccountId String                    @unique
-  billingAccount   BillingAccount            @relation(fields: [billingAccountId], references: [id], onDelete: Cascade)
-  planId           String
-  plan             PaymentPlan               @relation(fields: [planId], references: [id])
-  status           BillingSubscriptionStatus @default(ACTIVE)
+  id                 String                    @id @default(uuid())
+  billingAccountId   String                    @unique
+  billingAccount     BillingAccount            @relation(fields: [billingAccountId], references: [id], onDelete: Cascade)
+  planId             String
+  plan               PaymentPlan               @relation(fields: [planId], references: [id])
+  status             BillingSubscriptionStatus @default(ACTIVE)
   currentPeriodStart DateTime
   currentPeriodEnd   DateTime
   providerReference  String?
@@ -2599,24 +2625,24 @@ model BillingInvoice {
 }
 
 model PaymentTransaction {
-  id               String                   @id @default(uuid())
-  billingAccountId String
-  billingAccount   BillingAccount           @relation(fields: [billingAccountId], references: [id], onDelete: Cascade)
-  invoiceId        String                   @unique
-  invoice          BillingInvoice           @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  paymentMethodId  String?
-  paymentMethod    PaymentMethod?           @relation(fields: [paymentMethodId], references: [id], onDelete: SetNull)
-  provider         String
-  providerReference String                  @unique
-  amountMinor      Int
-  currency         String
-  status           PaymentTransactionStatus
-  failureReason    String?
+  id                String                   @id @default(uuid())
+  billingAccountId  String
+  billingAccount    BillingAccount           @relation(fields: [billingAccountId], references: [id], onDelete: Cascade)
+  invoiceId         String                   @unique
+  invoice           BillingInvoice           @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  paymentMethodId   String?
+  paymentMethod     PaymentMethod?           @relation(fields: [paymentMethodId], references: [id], onDelete: SetNull)
+  provider          String
+  providerReference String                   @unique
+  amountMinor       Int
+  currency          String
+  status            PaymentTransactionStatus
+  failureReason     String?
   // The provider's own per-charge invoice id, captured from the webhook.
   // Refunds are filed against this, not against our invoice number, so a
   // transaction without it can only ever be marked refunded in our ledger.
   providerInvoiceId String?
-  createdAt        DateTime                 @default(now())
+  createdAt         DateTime                 @default(now())
 
   @@index([billingAccountId, createdAt])
   @@index([status])
@@ -2648,7 +2674,7 @@ model Promotion {
 }
 
 model SponsorPlacement {
-  id             String   @id @default(uuid())
+  id             String    @id @default(uuid())
   name           String
   sponsorName    String
   placementKey   String
@@ -2656,10 +2682,10 @@ model SponsorPlacement {
   imageUrl       String?
   startsAt       DateTime
   endsAt         DateTime?
-  isActive       Boolean  @default(true)
+  isActive       Boolean   @default(true)
   deactivatedAt  DateTime?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   @@index([placementKey, isActive])
   @@index([startsAt, endsAt])
@@ -2739,20 +2765,20 @@ model IntegrationConfig {
 }
 
 model SupportTicket {
-  id          String                @id @default(uuid())
-  userId      String?
-  user        User?                 @relation(fields: [userId], references: [id], onDelete: SetNull)
-  subject     String
-  body        String
-  category    SupportTicketCategory @default(OTHER)
-  priority    SupportTicketPriority @default(NORMAL)
-  status      SupportTicketStatus   @default(OPEN)
+  id       String                @id @default(uuid())
+  userId   String?
+  user     User?                 @relation(fields: [userId], references: [id], onDelete: SetNull)
+  subject  String
+  body     String
+  category SupportTicketCategory @default(OTHER)
+  priority SupportTicketPriority @default(NORMAL)
+  status   SupportTicketStatus   @default(OPEN)
 
-  assignedToId String?
-  assignedTo   PlatformAdmin? @relation("SupportTicketAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
-  resolvedById String?
-  resolvedBy   PlatformAdmin? @relation("SupportTicketResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
-  resolvedAt   DateTime?
+  assignedToId   String?
+  assignedTo     PlatformAdmin? @relation("SupportTicketAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  resolvedById   String?
+  resolvedBy     PlatformAdmin? @relation("SupportTicketResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+  resolvedAt     DateTime?
   resolutionNote String?
 
   createdAt DateTime @default(now())
@@ -2767,7 +2793,7 @@ model SupportTicket {
 }
 
 model SupportTicketMessage {
-  id       String @id @default(uuid())
+  id       String        @id @default(uuid())
   ticketId String
   ticket   SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
   actorId  String
@@ -2784,7 +2810,7 @@ model SupportTicketMessage {
 }
 
 model SupportTicketMessageAttachment {
-  id        String @id @default(uuid())
+  id        String               @id @default(uuid())
   messageId String
   message   SupportTicketMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
 
@@ -2802,11 +2828,11 @@ model PrivacyRequest {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  type   PrivacyRequestType
-  status PrivacyRequestStatus @default(PENDING)
-  requestNote String?
+  type            PrivacyRequestType
+  status          PrivacyRequestStatus @default(PENDING)
+  requestNote     String?
   fulfillmentNote String?
-  exportSnapshot Json?
+  exportSnapshot  Json?
 
   processedById String?
   processedBy   PlatformAdmin? @relation("PrivacyRequestProcessor", fields: [processedById], references: [id], onDelete: SetNull)
@@ -2845,15 +2871,15 @@ model AbuseCase {
   subjectUserId String
   subjectUser   User   @relation("AbuseCaseSubject", fields: [subjectUserId], references: [id], onDelete: Cascade)
 
-  status   AbuseCaseStatus @default(OPEN)
+  status   AbuseCaseStatus     @default(OPEN)
   priority TrustSafetyPriority @default(HIGH)
   summary  String
 
-  openedById String
-  openedBy   PlatformAdmin @relation("AbuseCaseOpenedBy", fields: [openedById], references: [id], onDelete: Restrict)
-  closedById String?
-  closedBy   PlatformAdmin? @relation("AbuseCaseClosedBy", fields: [closedById], references: [id], onDelete: SetNull)
-  closedAt   DateTime?
+  openedById  String
+  openedBy    PlatformAdmin  @relation("AbuseCaseOpenedBy", fields: [openedById], references: [id], onDelete: Restrict)
+  closedById  String?
+  closedBy    PlatformAdmin? @relation("AbuseCaseClosedBy", fields: [closedById], references: [id], onDelete: SetNull)
+  closedAt    DateTime?
   closeReason String?
 
   createdAt DateTime @default(now())
@@ -2867,9 +2893,9 @@ model AbuseCase {
 }
 
 model AbuseCaseNote {
-  id      String @id @default(uuid())
+  id      String        @id @default(uuid())
   caseId  String
-  case    AbuseCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  case    AbuseCase     @relation(fields: [caseId], references: [id], onDelete: Cascade)
   actorId String
   actor   PlatformAdmin @relation(fields: [actorId], references: [id], onDelete: Restrict)
 
@@ -2891,13 +2917,13 @@ model CompetitionRuleset {
   sport       MatchSport  @default(TENNIS)
   format      MatchFormat @default(SINGLES)
 
-  competitionTypes       String[] @default([])
-  scoringFormat          String
-  walkoverRule           String
-  unfinishedMatchPolicy  String
-  rulesText              String?
-  isDefault              Boolean  @default(false)
-  isActive               Boolean  @default(true)
+  competitionTypes      String[] @default([])
+  scoringFormat         String
+  walkoverRule          String
+  unfinishedMatchPolicy String
+  rulesText             String?
+  isDefault             Boolean  @default(false)
+  isActive              Boolean  @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2908,16 +2934,16 @@ model CompetitionRuleset {
 }
 
 model VenueVerificationRequest {
-  id            String                         @id @default(uuid())
-  clubId        String
-  club          Club                           @relation(fields: [clubId], references: [id], onDelete: Cascade)
-  submittedById String
-  submittedBy   User                           @relation(fields: [submittedById], references: [id], onDelete: Restrict)
-  status        VenueVerificationRequestStatus @default(PENDING)
+  id             String                         @id @default(uuid())
+  clubId         String
+  club           Club                           @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  submittedById  String
+  submittedBy    User                           @relation(fields: [submittedById], references: [id], onDelete: Restrict)
+  status         VenueVerificationRequestStatus @default(PENDING)
   submissionNote String?
   decisionNote   String?
   reviewedById   String?
-  reviewedBy     PlatformAdmin?                @relation("VenueVerificationReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewedBy     PlatformAdmin?                 @relation("VenueVerificationReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
   reviewedAt     DateTime?
   createdAt      DateTime                       @default(now())
   updatedAt      DateTime                       @updatedAt
@@ -2928,16 +2954,16 @@ model VenueVerificationRequest {
 }
 
 model VenueDuplicateDecision {
-  id               String                     @id @default(uuid())
-  pairKey          String                     @unique
-  firstCourtId     String
-  secondCourtId    String
-  decision         VenueDuplicateDecisionType
-  survivorCourtId  String?
-  decidedById      String
-  decidedBy        PlatformAdmin              @relation(fields: [decidedById], references: [id], onDelete: Restrict)
-  metadata         Json?
-  createdAt        DateTime                   @default(now())
+  id              String                     @id @default(uuid())
+  pairKey         String                     @unique
+  firstCourtId    String
+  secondCourtId   String
+  decision        VenueDuplicateDecisionType
+  survivorCourtId String?
+  decidedById     String
+  decidedBy       PlatformAdmin              @relation(fields: [decidedById], references: [id], onDelete: Restrict)
+  metadata        Json?
+  createdAt       DateTime                   @default(now())
 
   @@index([decision, createdAt])
   @@map("venue_duplicate_decisions")
@@ -2956,17 +2982,17 @@ enum TournamentState {
 }
 
 model Tournament {
-  id          String          @id @default(uuid())
-  clubId      String
-  club        Club            @relation(fields: [clubId], references: [id], onDelete: Cascade)
-  sport       MatchSport      @default(TENNIS)
-  name        String
-  description String?
+  id                   String          @id @default(uuid())
+  clubId               String
+  club                 Club            @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  sport                MatchSport      @default(TENNIS)
+  name                 String
+  description          String?
   // Power of two: 4/8/16/32. Enforced in the service, not the schema.
-  drawSize    Int
-  state       TournamentState @default(REGISTRATION_OPEN)
+  drawSize             Int
+  state                TournamentState @default(REGISTRATION_OPEN)
   registrationClosesAt DateTime
-  createdAt   DateTime        @default(now())
+  createdAt            DateTime        @default(now())
 
   entries TournamentEntry[]
   rounds  TournamentRound[]
@@ -2989,7 +3015,7 @@ model TournamentEntry {
 }
 
 model TournamentRound {
-  id           String  @id @default(uuid())
+  id           String     @id @default(uuid())
   tournamentId String
   tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   // 1 = first round. Round name (R16/QF/SF/F) is derived from index + drawSize.
@@ -3004,18 +3030,18 @@ model TournamentRound {
 // Mirrors the league Fixture shape: no stored status ? derived from the
 // linked Match, or a bye when sideB is null.
 model TournamentFixture {
-  id            String  @id @default(uuid())
-  roundId       String
-  round         TournamentRound @relation(fields: [roundId], references: [id], onDelete: Cascade)
-  slotIndex     Int
-  sideAUserId   String?
-  sideA         User?   @relation("TFixA", fields: [sideAUserId], references: [id], onDelete: SetNull)
-  sideBUserId   String?
-  sideB         User?   @relation("TFixB", fields: [sideBUserId], references: [id], onDelete: SetNull)
-  isBye         Boolean @default(false)
-  winnerUserId  String?
-  matchId       String? @unique
-  match         Match?  @relation(fields: [matchId], references: [id], onDelete: SetNull)
+  id           String          @id @default(uuid())
+  roundId      String
+  round        TournamentRound @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  slotIndex    Int
+  sideAUserId  String?
+  sideA        User?           @relation("TFixA", fields: [sideAUserId], references: [id], onDelete: SetNull)
+  sideBUserId  String?
+  sideB        User?           @relation("TFixB", fields: [sideBUserId], references: [id], onDelete: SetNull)
+  isBye        Boolean         @default(false)
+  winnerUserId String?
+  matchId      String?         @unique
+  match        Match?          @relation(fields: [matchId], references: [id], onDelete: SetNull)
 
   @@unique([roundId, slotIndex])
   @@map("tournament_fixtures")
@@ -3034,15 +3060,15 @@ enum LadderChallengeState {
 }
 
 model Ladder {
-  id             String     @id @default(uuid())
+  id             String      @id @default(uuid())
   clubId         String
-  club           Club       @relation(fields: [clubId], references: [id], onDelete: Cascade)
-  sport          MatchSport @default(TENNIS)
+  club           Club        @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  sport          MatchSport  @default(TENNIS)
   name           String
   // A challenger may only challenge opponents within N rungs above them.
-  challengeRange Int        @default(2)
+  challengeRange Int         @default(2)
   state          LadderState @default(ACTIVE)
-  createdAt      DateTime   @default(now())
+  createdAt      DateTime    @default(now())
 
   entries    LadderEntry[]
   challenges LadderChallenge[]
@@ -3052,16 +3078,16 @@ model Ladder {
 }
 
 model LadderEntry {
-  id        String  @id @default(uuid())
+  id        String   @id @default(uuid())
   ladderId  String
-  ladder    Ladder  @relation(fields: [ladderId], references: [id], onDelete: Cascade)
+  ladder    Ladder   @relation(fields: [ladderId], references: [id], onDelete: Cascade)
   userId    String
-  user      User    @relation("LadderEntries", fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation("LadderEntries", fields: [userId], references: [id], onDelete: Cascade)
   // Rung 1 = top. Uniqueness enforced in the swap transaction, not here ?
   // a position swap updates two rows and would transiently collide.
   position  Int
-  wins      Int     @default(0)
-  losses    Int     @default(0)
+  wins      Int      @default(0)
+  losses    Int      @default(0)
   createdAt DateTime @default(now())
 
   @@unique([ladderId, userId])
@@ -3069,22 +3095,21 @@ model LadderEntry {
 }
 
 model LadderChallenge {
-  id           String              @id @default(uuid())
+  id           String               @id @default(uuid())
   ladderId     String
-  ladder       Ladder              @relation(fields: [ladderId], references: [id], onDelete: Cascade)
+  ladder       Ladder               @relation(fields: [ladderId], references: [id], onDelete: Cascade)
   challengerId String
-  challenger   User                @relation("LadderChallenger", fields: [challengerId], references: [id], onDelete: Cascade)
+  challenger   User                 @relation("LadderChallenger", fields: [challengerId], references: [id], onDelete: Cascade)
   defenderId   String
-  defender     User                @relation("LadderDefender", fields: [defenderId], references: [id], onDelete: Cascade)
+  defender     User                 @relation("LadderDefender", fields: [defenderId], references: [id], onDelete: Cascade)
   state        LadderChallengeState @default(PENDING)
-  matchId      String?             @unique
-  match        Match?              @relation(fields: [matchId], references: [id], onDelete: SetNull)
-  createdAt    DateTime            @default(now())
+  matchId      String?              @unique
+  match        Match?               @relation(fields: [matchId], references: [id], onDelete: SetNull)
+  createdAt    DateTime             @default(now())
 
   @@index([ladderId, state])
   @@map("ladder_challenges")
 }
-
 
 /// Home feed card dismissal / snooze (foundation/04-screen-inventory.md §A.3
 /// lists "Dismiss/snooze a card" as a Home secondary action).
@@ -3186,8 +3211,8 @@ model WaitlistSignup {
   /// `level` holds a band from the app's real
   /// 1.0–7.0 scale (e.g. "2.5-3.5"), never a computed rating — nobody has
   /// taken the assessment at this point.
-  city  String?
-  level String?
+  city    String?
+  level   String?
 
   /// Where the signup came from, so a later campaign can be told apart from
   /// the launch page without guessing by date.
@@ -3286,7 +3311,7 @@ model VideoAnalysisJob {
   // The precheck verdict, stored whole. Kept as JSON rather than exploded into columns
   // because the shape belongs to cv-service and moves with it; this table should not
   // need a migration every time a check is added there.
-  precheckResult Json?
+  precheckResult   Json?
   // Just the user-facing messages from the blocking findings, lifted out of the JSON so
   // the common read - "why was my video refused" - needs no parsing.
   rejectionReasons String[] @default([])
