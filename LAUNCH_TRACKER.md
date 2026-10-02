@@ -590,10 +590,12 @@ artifact, so a commit or PR can close an item by referencing its ID
   Google button was shimmed out, so no client ever called the route. Added and
   the API restarted 2026-10-02; the route now returns `401` on a bad token.
   Consent screen moved from Testing to
-  Published, and the Play Console developer account is approved. One live
-  limit remains until the consent screen passes verification: Google caps an
-  unverified app at 100 sensitive-scope logins — fine for a soft launch, worth
-  watching once volume grows. The three `SocialAuthButtons` screens (Welcome,
+  Published, and the Play Console developer account is approved. **No user cap
+  and no verification outstanding** — Google's 100-user limit applies only to
+  sensitive/restricted scopes and this app requests `openid email profile`
+  only; the console's "100 sensitive scope logins" notice is boilerplate shown
+  on every client creation. That changes if a sensitive scope is ever added
+  (`docs/SOCIAL_SIGNIN_SETUP.md` §1). The three `SocialAuthButtons` screens (Welcome,
   Login, Sign-up) had the Google button shimmed behind a "Coming soon" dialog
   from the redesign (commit `cb83e29`) with no tracker item covering it; the
   shim has been removed and Google is live in the app.

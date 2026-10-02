@@ -75,10 +75,25 @@ second project only if you want sign-in isolated from Places.
 it exists. External user type; app name *Drift Tennis*; a support email; the
 `drift.einsbrand.com` domain. **Published 2026-10-02** — the consent screen
 moved out of Testing, so sign-in no longer requires each account to be added
-as a test user first. The basic email/profile scopes needed no verification
-review for this. One live limit remains: Google caps an unverified-for-scope
-app at **100 sensitive-scope logins** until the consent screen passes
-verification — fine for a soft launch, a ceiling to watch once volume grows.
+as a test user first. **There is no user cap and no verification to do.**
+
+The console shows a "limited to 100 sensitive scope logins until verified"
+notice when a client is created. It is boilerplate, printed regardless of the
+scopes an app uses, and it does **not** apply here. Google's 100-*user* cap
+(distinct accounts that have ever consented, cumulative — not logins) attaches
+only to **sensitive** and **restricted** scopes. This app requests
+`openid email profile` and nothing else: `authenticate()` in
+`social_auth_service.dart` passes no `scopes`, and the backend only verifies
+the ID token and reads `sub`, `email`, `given_name`, `family_name` from it —
+it never calls a Google API or holds an access token. Basic scopes need no
+verification and carry no cap.
+
+> **This changes the day a sensitive scope is added.** A feature like "add
+> this match to my Google Calendar" would pull in a sensitive scope, and with
+> it the verification requirement *and* the 100-user cap — which bites at 100
+> accounts and does not reset. Restricted scopes (Gmail or Drive content) add
+> an annual third-party security assessment on top. Neither is a small change;
+> treat adding a scope as a launch-blocking decision, not a feature flag.
 
 Then **Credentials → Create credentials → OAuth client ID**, three times:
 
