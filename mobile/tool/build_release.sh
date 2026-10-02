@@ -82,13 +82,49 @@ echo "Support email    ${SUPPORT_EMAIL}"
 echo "Signing profile  android/${DRIFT_ANDROID_KEY_PROPERTIES}"
 echo
 
+# Where a finished artifact is kept. `build/` is not that place: it is
+# gitignored, and `flutter clean` -- which this very script's --clean sibling
+# and every "try a clean build" instinct reaches for -- deletes the thing you
+# were about to upload. `dist/` is already gitignored at the repo root, so a
+# 53 MB bundle cannot be committed by accident either.
+ARCHIVE_DIR="dist"
+mkdir -p "${ARCHIVE_DIR}"
+
+# version: 1.0.0+1 -> 1.0.0-build1. Play rejects a duplicate version code, so
+# the version alone cannot name the file; the timestamp distinguishes repeated
+# builds of the same version, which is exactly what a store upload cycle does.
+APP_VERSION="$(grep -E '^version:' pubspec.yaml | head -1 | sed 's/^version:[[:space:]]*//')"
+ARCHIVE_STAMP="$(date +%Y%m%d-%H%M%S)"
+ARCHIVE_NAME="drift-${APP_VERSION//+/-build}-${ARCHIVE_STAMP}"
+
 flutter build appbundle --release "${DEFINES[@]}"
-echo "bundle: build/app/outputs/bundle/release/app-release.aab"
+cp build/app/outputs/bundle/release/app-release.aab "${ARCHIVE_DIR}/${ARCHIVE_NAME}.aab"
+echo "bundle:   build/app/outputs/bundle/release/app-release.aab"
+echo "archived: ${ARCHIVE_DIR}/${ARCHIVE_NAME}.aab"
 
 if [ "${1:-}" = "--apk" ]; then
   flutter build apk --release "${DEFINES[@]}"
-  echo "apk:    build/app/outputs/flutter-apk/app-release.apk"
+  cp build/app/outputs/flutter-apk/app-release.apk "${ARCHIVE_DIR}/${ARCHIVE_NAME}.apk"
+  echo "apk:      build/app/outputs/flutter-apk/app-release.apk"
+  echo "archived: ${ARCHIVE_DIR}/${ARCHIVE_NAME}.apk"
 fi
+
+# Provenance beside the artifact. An archive directory with four similar .aab
+# files in it is only useful if each one can still answer what it was built
+# from and what was baked into it -- none of which is readable from the bundle
+# months later, and all of which decides whether it is safe to upload.
+{
+  echo "artifact:   ${ARCHIVE_NAME}"
+  echo "built:      $(date --iso-8601=seconds)"
+  echo "version:    ${APP_VERSION}"
+  echo "commit:     $(git rev-parse HEAD 2>/dev/null || echo unknown)"
+  echo "branch:     $(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)"
+  echo "tree:       $(git diff --quiet 2>/dev/null && echo clean || echo DIRTY)"
+  echo "api:        ${API_BASE_URL}"
+  echo "google:     ${GOOGLE_SERVER_CLIENT_ID}"
+  echo "signing:    android/${DRIFT_ANDROID_KEY_PROPERTIES}"
+} > "${ARCHIVE_DIR}/${ARCHIVE_NAME}.txt"
+echo "metadata: ${ARCHIVE_DIR}/${ARCHIVE_NAME}.txt"
 
 # Verify what actually signed it rather than trusting the flags above. The
 # fingerprint must match the release key recorded in docs/SOCIAL_SIGNIN_SETUP.md
@@ -96,4 +132,7 @@ fi
 # means the wrong keystore was picked up and the artifact must not be uploaded.
 echo
 echo "Confirm the signer before uploading:"
-echo "  keytool -printcert -jarfile build/app/outputs/bundle/release/app-release.aab"
+echo "  keytool -printcert -jarfile ${ARCHIVE_DIR}/${ARCHIVE_NAME}.aab"
+echo
+echo "Upload the archived copy, not the one under build/ -- that one does not"
+echo "survive a flutter clean."

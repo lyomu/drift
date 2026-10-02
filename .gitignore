@@ -31,6 +31,9 @@ key.properties
 
 # Preview build artifacts (large binaries; rebuild with the commands in PROGRESS.md)
 *.apk
+# Play bundles: large, signed, and built from a commit rather than edited.
+# mobile/dist/ is covered by `dist/` above; this catches one left anywhere else.
+*.aab
 
 # OS junk
 .DS_Store
