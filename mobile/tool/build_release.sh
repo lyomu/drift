@@ -44,6 +44,22 @@ if [ -n "${DRIFT_DEV_ACCESS:-}${DRIFT_DEV_REFRESH:-}" ]; then
   exit 1
 fi
 
+# The bundle task strips native debug symbols and then verifies the result with
+# the SDK's cmdline-tools. Absent those, the build runs for a minute, fails, and
+# blames the strip -- "Release app bundle failed to strip debug symbols from
+# native libraries", pointing at the NDK, which is fine. The real line is buried
+# under --verbose: "Failed to find cmdline-tools when checking final appbundle".
+# Checked here so the message names the actual missing piece, before the wait.
+ANDROID_SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/AppData/Local/Android/sdk}}"
+if ! ls "${ANDROID_SDK}"/cmdline-tools/*/bin/sdkmanager* >/dev/null 2>&1; then
+  echo "Android cmdline-tools are missing from ${ANDROID_SDK}." >&2
+  echo "The bundle will build and then fail claiming it could not strip debug" >&2
+  echo "symbols. Install them via Android Studio's SDK Manager (SDK Tools ->" >&2
+  echo "Android SDK Command-line Tools), or unzip the standalone package to" >&2
+  echo "${ANDROID_SDK}/cmdline-tools/latest/ (it must contain bin/sdkmanager)." >&2
+  exit 1
+fi
+
 DEFINES=(
   "--dart-define=DRIFT_API_BASE_URL=${API_BASE_URL}"
   "--dart-define=DRIFT_GOOGLE_SERVER_CLIENT_ID=${GOOGLE_SERVER_CLIENT_ID}"
