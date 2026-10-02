@@ -580,15 +580,19 @@ artifact, so a commit or PR can close an item by referencing its ID
   `docs/LOAD_TESTING.md` § Run 1.
 - [~] **P.6 — Apple & Google developer accounts**
   Prerequisites for Phases 4 and 6. Long lead time — start the paperwork early.
-  **Google side is largely done:** four OAuth clients exist in project `921637855690`
-  (web/server, Android debug, Android preview, iOS) — IDs recorded in
-  `docs/SOCIAL_SIGNIN_SETUP.md`. **Still needed for Android launch:** a fifth client
-  for the *release* keystore SHA-1 `B1:FF:6E:D1:BE:0F:19:1D:36:CA:18:D5:98:DD:86:5F:3C:46:CE:BF`
-  added to `GOOGLE_OAUTH_CLIENT_IDS`, the consent screen moved from Testing to
-  Published, and a Play Console developer account.
+  **Google side closed 2026-10-02:** five OAuth clients now exist in project
+  `921637855690` (web/server, Android debug, Android preview, Android release,
+  iOS) — IDs recorded in `docs/SOCIAL_SIGNIN_SETUP.md` and all five in the
+  backend's `GOOGLE_OAUTH_CLIENT_IDS`. Consent screen moved from Testing to
+  Published, and the Play Console developer account is approved. One live
+  limit remains until the consent screen passes verification: Google caps an
+  unverified app at 100 sensitive-scope logins — fine for a soft launch, worth
+  watching once volume grows. The three `SocialAuthButtons` screens (Welcome,
+  Login, Sign-up) had the Google button shimmed behind a "Coming soon" dialog
+  from the redesign (commit `cb83e29`) with no tracker item covering it; the
+  shim has been removed and Google is live in the app.
   **Apple side is untouched** and is the whole of the iOS lead time.
-  *Blocks:* the Android release client blocks Google sign-in in a store build;
-  Apple enrolment blocks 4.5 and therefore all of iOS.
+  *Blocks:* Apple enrolment blocks 4.5 and therefore all of iOS.
 - [ ] **P.7 — Web account-deletion request page** 🔴 *Play submission blocker*
   **Split out of P.4 on 2026-09-03, when P.4 closed.** Play's account-deletion policy
   asks for **two** routes once an app lets people create accounts: in-app deletion,

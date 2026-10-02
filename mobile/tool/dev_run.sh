@@ -28,9 +28,16 @@ if [[ "${1:-}" == "--clean" ]]; then
   flutter pub get
 fi
 
+# The Web ("server") client ID is what makes google_sign_in return an ID token
+# on Android -- without it the flow completes and the button reports "isn't
+# configured". Public by design; it ships in every build. The debug keystore's
+# own Android client is registered too (docs/SOCIAL_SIGNIN_SETUP.md), so a
+# debug APK can sign in against the local backend as-is.
+GOOGLE_SERVER_CLIENT_ID="${DRIFT_GOOGLE_SERVER_CLIENT_ID:-921637855690-mpmeootgo8lnh4qh2k8eggfjfcr5q7ks.apps.googleusercontent.com}"
+
 # Analytics keys are optional: with none exported the app builds and runs
 # exactly as before, just uninstrumented (core/analytics/analytics.dart).
-DEFINES=()
+DEFINES=("--dart-define=DRIFT_GOOGLE_SERVER_CLIENT_ID=${GOOGLE_SERVER_CLIENT_ID}")
 [[ -n "${DRIFT_CLARITY_PROJECT_ID:-}" ]] && DEFINES+=("--dart-define=DRIFT_CLARITY_PROJECT_ID=$DRIFT_CLARITY_PROJECT_ID")
 [[ -n "${DRIFT_POSTHOG_KEY:-}" ]] && DEFINES+=("--dart-define=DRIFT_POSTHOG_KEY=$DRIFT_POSTHOG_KEY")
 [[ -n "${DRIFT_POSTHOG_HOST:-}" ]] && DEFINES+=("--dart-define=DRIFT_POSTHOG_HOST=$DRIFT_POSTHOG_HOST")

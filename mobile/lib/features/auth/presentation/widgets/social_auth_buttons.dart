@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/onboarding/onboarding_step_route.dart';
 import '../../../../core/theme/drift_colors.dart';
 import '../../../../core/theme/drift_typography.dart';
+import '../../../../shared/widgets/coming_soon.dart';
 import '../../../users/data/users_repository.dart';
 import '../../application/auth_controller.dart';
 import '../../data/auth_repository.dart';
@@ -119,11 +120,31 @@ class _SocialAuthButtonsState extends ConsumerState<SocialAuthButtons> {
           onPressed: enabled ? () => _start(SocialProvider.google) : null,
         ),
         const SizedBox(height: 10),
-        AuthSocialButton(
-          label: 'Continue with Apple',
-          icon: const Icon(Icons.apple, size: 20, color: Color(0xFF1A1A1A)),
-          loading: _busy == SocialProvider.apple,
-          onPressed: enabled ? () => _start(SocialProvider.apple) : null,
+        // Apple stays shimmed out: the flow is written and tested, but it
+        // cannot work until the Developer Program enrolment lands (tracker
+        // P.6), so a live button would only ever report "not available".
+        // Shown rather than hidden so the layout doesn't shift when it opens.
+        Stack(
+          children: [
+            IgnorePointer(
+              child: AuthSocialButton(
+                label: 'Continue with Apple',
+                icon: const Icon(
+                  Icons.apple,
+                  size: 20,
+                  color: Color(0xFF1A1A1A),
+                ),
+                loading: _busy == SocialProvider.apple,
+                onPressed: enabled ? () => _start(SocialProvider.apple) : null,
+              ),
+            ),
+            Positioned.fill(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => showComingSoon(context),
+              ),
+            ),
+          ],
         ),
         if (_error != null) ...[
           const SizedBox(height: 12),

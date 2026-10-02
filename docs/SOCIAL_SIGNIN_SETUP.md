@@ -1,9 +1,12 @@
 # Social Sign-In — Provider Setup
 
-Owner-side setup for tracker **4.4** and **4.5**. The code is built and tested;
-none of it does anything real until the identifiers below exist. Until then the
-backend answers `503` on the OAuth routes and the app shows *"Google sign-in
-isn't configured in this build yet."* — which is the correct behaviour, not a bug.
+Owner-side setup for tracker **4.4** and **4.5**. The code is built and tested.
+**Google is fully wired and live** as of 2026-10-02: consent screen published,
+all five OAuth clients (including the release keystore) registered, backend
+`GOOGLE_OAUTH_CLIENT_IDS` set. **Apple is not** — until its identifiers exist
+the backend answers `503` on the Apple OAuth routes and the app's Apple button
+shows *"Apple sign-in isn't ready yet"* — which is the correct behaviour, not
+a bug.
 
 Companion: `docs/SOCIAL_SIGNIN_PLAN.md` (design), `LAUNCH_TRACKER.md` 4.1–4.5.
 
@@ -70,9 +73,12 @@ second project only if you want sign-in isolated from Places.
 
 **APIs & Services → OAuth consent screen** first — nothing can be created until
 it exists. External user type; app name *Drift Tennis*; a support email; the
-`drift.einsbrand.com` domain. You can stay in "Testing" mode with your own
-accounts as test users; **publishing is only required before public launch**,
-and the basic email/profile scopes need no verification review.
+`drift.einsbrand.com` domain. **Published 2026-10-02** — the consent screen
+moved out of Testing, so sign-in no longer requires each account to be added
+as a test user first. The basic email/profile scopes needed no verification
+review for this. One live limit remains: Google caps an unverified-for-scope
+app at **100 sensitive-scope logins** until the consent screen passes
+verification — fine for a soft launch, a ceiling to watch once volume grows.
 
 Then **Credentials → Create credentials → OAuth client ID**, three times:
 
@@ -90,9 +96,9 @@ fails at the Google sheet with a bare `10:` error, which tells you nothing.
 **c. iOS** — bundle ID `com.drift.tennis.driftTennis`. Download the
 `GoogleService-Info.plist` it offers and place it at `ios/Runner/`.
 
-### The clients — created 2026-09-02
+### The clients — created 2026-09-02, release client added 2026-10-02
 
-All four exist in project `921637855690`. **Client IDs are public by design** —
+All five exist in project `921637855690`. **Client IDs are public by design** —
 they ship inside every build and can be read out of any APK — so they are
 recorded here and committed. The Web client's *secret* is a different thing and
 **is not used anywhere in this architecture**: tokens are verified against
@@ -103,14 +109,13 @@ Google's public JWKS, so there is no code exchange. Leave it in the console.
 | Web (server) | `mpmeootgo8lnh4qh2k8eggfjfcr5q7ks` |
 | Android — debug keystore | `0ljoaisejhja0bfdgkpu0d0sdegdu7sm` |
 | Android — preview keystore | `3r6qk5bbvdcm2isoh9u22n8pdcea3vga` |
+| Android — release keystore | `qelh0kbj201u5qgisql9vo0298d5a187` |
 | iOS | `621pq70ca20pj5b7tafr3r1nequael5f` |
 
-> **A release-keystore client is still to be created.** 5.1 is now answered and
-> the key rotated, so the blocker is gone — add a fourth Android OAuth client
-> for SHA-1 `B1:FF:6E:D1:BE:0F:19:1D:36:CA:18:D5:98:DD:86:5F:3C:46:CE:BF` before
-> any release build needs to sign in with Google, and add that ID to
-> `GOOGLE_OAUTH_CLIENT_IDS`. Register the **new** fingerprint only; the retired
-> key's must never be added anywhere.
+The release-keystore client is registered against SHA-1
+`B1:FF:6E:D1:BE:0F:19:1D:36:CA:18:D5:98:DD:86:5F:3C:46:CE:BF` — the rotated key
+from 5.1. Register the **new** fingerprint only; the retired key's must never
+be added anywhere.
 
 ### Where the IDs go
 
@@ -118,7 +123,7 @@ Google's public JWKS, so there is no code exchange. Leave it in the console.
 `.env.production` on the box (and the local `.env`, already set):
 
 ```
-GOOGLE_OAUTH_CLIENT_IDS=921637855690-mpmeootgo8lnh4qh2k8eggfjfcr5q7ks.apps.googleusercontent.com,921637855690-0ljoaisejhja0bfdgkpu0d0sdegdu7sm.apps.googleusercontent.com,921637855690-3r6qk5bbvdcm2isoh9u22n8pdcea3vga.apps.googleusercontent.com,921637855690-621pq70ca20pj5b7tafr3r1nequael5f.apps.googleusercontent.com
+GOOGLE_OAUTH_CLIENT_IDS=921637855690-mpmeootgo8lnh4qh2k8eggfjfcr5q7ks.apps.googleusercontent.com,921637855690-0ljoaisejhja0bfdgkpu0d0sdegdu7sm.apps.googleusercontent.com,921637855690-3r6qk5bbvdcm2isoh9u22n8pdcea3vga.apps.googleusercontent.com,921637855690-621pq70ca20pj5b7tafr3r1nequael5f.apps.googleusercontent.com,921637855690-qelh0kbj201u5qgisql9vo0298d5a187.apps.googleusercontent.com
 ```
 
 This list is the **audience check** — what stops a token minted for someone
