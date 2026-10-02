@@ -8,13 +8,29 @@ import { Button, EmptyState, ErrorBanner, Field, Input, Select, Textarea } from 
 import { StatusBadge } from "@/components/StatusBadge";
 import { IconChip, ModalShell } from "@/components/dashboard-design";
 import { RichTextEditor } from "@/components/RichTextEditor";
-import type { LeagueSummary, MatchFormat, MatchSport } from "@/lib/types";
+import type {
+  AssessmentBranch,
+  LeagueSummary,
+  MatchFormat,
+  MatchSport,
+} from "@/lib/types";
+
+/** Empty string is "All levels" in the form; it posts as `undefined`. */
+type LevelBandChoice = AssessmentBranch | "";
+
+export const LEVEL_BAND_LABELS: Record<AssessmentBranch, string> = {
+  BEGINNER: "Beginner",
+  FOUNDATIONAL: "Foundational",
+  INTERMEDIATE: "Intermediate",
+  ADVANCED: "Advanced",
+};
 
 type LeagueForm = {
   name: string;
   description: string;
   sport: MatchSport;
   format: MatchFormat;
+  levelBand: LevelBandChoice;
   registrationOpensAt: string;
   registrationClosesAt: string;
   startsAt: string;
@@ -28,6 +44,7 @@ const EMPTY_FORM: LeagueForm = {
   description: "",
   sport: "TENNIS",
   format: "SINGLES",
+  levelBand: "",
   registrationOpensAt: "",
   registrationClosesAt: "",
   startsAt: "",
@@ -82,6 +99,9 @@ export default function LeaguesPage() {
         description: form.description || undefined,
         sport: form.sport,
         format: form.format,
+        // Omitted rather than sent as null: the API treats an absent band as
+        // "all levels", which is what the empty choice means.
+        levelBand: form.levelBand || undefined,
         registrationOpensAt: opens.toISOString(),
         registrationClosesAt: closes.toISOString(),
         startsAt: starts.toISOString(),
@@ -129,7 +149,10 @@ export default function LeaguesPage() {
                   </div>
                   <div className="mt-0.5 text-[12.5px] text-drift-text-secondary">
                     {league.sport.replace("_", " ")} / {league.format.replace("_", " ")} /{" "}
-                    {league.enrolledCount} enrolled
+                    {league.levelBand
+                      ? LEVEL_BAND_LABELS[league.levelBand]
+                      : "All levels"}{" "}
+                    / {league.enrolledCount} enrolled
                     {league.roundCount ? ` / ${league.roundCount} rounds` : ""}
                   </div>
                 </div>
@@ -186,6 +209,30 @@ export default function LeaguesPage() {
                 </Select>
               </Field>
             </div>
+            <Field label="Level">
+              <Select
+                value={form.levelBand}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    levelBand: e.target.value as LevelBandChoice,
+                  })
+                }
+              >
+                <option value="">All levels</option>
+                {(
+                  Object.keys(LEVEL_BAND_LABELS) as AssessmentBranch[]
+                ).map((band) => (
+                  <option key={band} value={band}>
+                    {LEVEL_BAND_LABELS[band]}
+                  </option>
+                ))}
+              </Select>
+              <p className="mt-1 text-[12px] text-drift-text-secondary">
+                Guidance for players browsing leagues. It does not stop anyone
+                registering.
+              </p>
+            </Field>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <Field label="Registration opens">
                 <Input

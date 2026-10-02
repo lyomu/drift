@@ -69,9 +69,15 @@ export async function step(label, fn) {
 
 // ------------------------------------------------------------- accounts
 
-export async function signupOrLogin(email, password) {
+export async function signupOrLogin(email, password, profile = {}) {
   try {
-    const signup = await api('post', '/auth/signup', null, { email, password });
+    const signup = await api('post', '/auth/signup', null, {
+      email,
+      password,
+      firstName: profile.firstName ?? 'Demo',
+      lastName: profile.lastName ?? 'Player',
+      acceptedAgePolicy: true,
+    });
     const verify = await api('post', '/auth/verify', null, {
       email,
       code: signup.devVerificationCode,
@@ -261,7 +267,7 @@ export const ROSTER = [
 async function buildRoster() {
   const people = {};
   for (const p of ROSTER) {
-    const { token } = await signupOrLogin(p.email, DEMO_PASSWORD);
+    const { token } = await signupOrLogin(p.email, DEMO_PASSWORD, p);
     const me = await api('get', '/users/me', token);
     if (me.onboardingStep !== 'COMPLETE') {
       try {
@@ -498,22 +504,39 @@ async function seedClubAdmin(people, ownerToken) {
     });
   });
 
-  await step('publish a fresh announcement', async () => {
-    await api('post', `/clubs/${clubId}/announcements`, ownerToken, {
-      title: 'New Autumn Singles season now open',
-      body: 'Registration is open for the new season — sign up from the League tab. Round 1 pairings go out once registration closes.',
-      pinned: false,
-      status: 'PUBLISHED',
+  const announcementList = await step('inspect existing club announcements', () =>
+    api('get', `/clubs/${clubId}/announcements`, ownerToken),
+  );
+  const existingAnnouncementTitles = new Set(
+    (announcementList?.announcements ?? []).map((announcement) =>
+      announcement.title.trim().toLowerCase(),
+    ),
+  );
+
+  if (!existingAnnouncementTitles.has('new autumn singles season now open')) {
+    await step('publish the demo announcement', async () => {
+      await api('post', `/clubs/${clubId}/announcements`, ownerToken, {
+        title: 'New Autumn Singles season now open',
+        body: 'Registration is open for the new season — sign up from the League tab. Round 1 pairings go out once registration closes.',
+        pinned: false,
+        status: 'PUBLISHED',
+      });
     });
-  });
-  await step('save a draft announcement', async () => {
-    await api('post', `/clubs/${clubId}/announcements`, ownerToken, {
-      title: 'Clubhouse resurfacing — draft, not yet published',
-      body: "Draft: courts 3-4 closed for resurfacing the week of [DATE]. Confirm dates before publishing.",
-      pinned: false,
-      status: 'DRAFT',
+  }
+  if (
+    !existingAnnouncementTitles.has(
+      'clubhouse resurfacing — draft, not yet published',
+    )
+  ) {
+    await step('save the demo draft announcement', async () => {
+      await api('post', `/clubs/${clubId}/announcements`, ownerToken, {
+        title: 'Clubhouse resurfacing — draft, not yet published',
+        body: "Draft: courts 3-4 closed for resurfacing the week of [DATE]. Confirm dates before publishing.",
+        pinned: false,
+        status: 'DRAFT',
+      });
     });
-  });
+  }
 
   await step('claim the independent Highbury Fields Courts', async () => {
     await api(
@@ -522,17 +545,25 @@ async function seedClubAdmin(people, ownerToken) {
       ownerToken,
     );
   });
-  await step('add a new club court', async () => {
-    await api('post', `/clubs/${clubId}/courts`, ownerToken, {
-      name: 'Riverside Court 2 (Indoor)',
-      address: 'Riverside Tennis Club grounds',
-      latitude: 51.478,
-      longitude: -0.15,
-      courtGroups: [
-        { surface: 'HARD', indoor: true, lighting: true, count: 2 },
-      ],
+  const courtList = await step('inspect existing club courts', () =>
+    api('get', `/clubs/${clubId}/courts`, ownerToken),
+  );
+  const hasDemoCourt = (courtList?.courts ?? []).some(
+    (court) => court.name.trim().toLowerCase() === 'riverside court 2 (indoor)',
+  );
+  if (!hasDemoCourt) {
+    await step('add the demo club court', async () => {
+      await api('post', `/clubs/${clubId}/courts`, ownerToken, {
+        name: 'Riverside Court 2 (Indoor)',
+        address: 'Riverside Tennis Club grounds',
+        latitude: 51.478,
+        longitude: -0.15,
+        courtGroups: [
+          { surface: 'HARD', indoor: true, lighting: true, count: 2 },
+        ],
+      });
     });
-  });
+  }
 
   return clubId;
 }
@@ -553,6 +584,10 @@ export async function createDisputeSeason(people, ownerToken, clubId) {
       description: 'Two-player demo league for exercising the dispute queue.',
       sport: 'TENNIS',
       format: 'SINGLES',
+      // Advisory band. Set here and deliberately left unset on Riverside
+      // Autumn Singles below, so the Compete card renders both a real band
+      // and the null "All levels" default.
+      levelBand: 'INTERMEDIATE',
       registrationOpensAt: futureIso(-1),
       registrationClosesAt: futureIso(2),
       startsAt: futureIso(2.5),

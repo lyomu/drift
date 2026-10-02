@@ -10,7 +10,7 @@ export const fr: Dictionary = {
   meta: {
     title: "Drift Tennis · Trouvez des joueurs de tennis, jouez en ligue",
     description:
-      "Trouvez des adversaires de tennis et de padel à votre niveau, confirmez les résultats à deux et bâtissez une cote fiable. Gratuit. Android d’abord.",
+      "Trouvez des adversaires de tennis et de padel à votre niveau, confirmez les résultats à deux et bâtissez une cote fiable. Gratuit. Le tennis d’abord, le padel ensuite.",
   },
   header: {
     sectionsAria: "Sections",
@@ -33,7 +33,7 @@ export const fr: Dictionary = {
     body: "Conçu pour les sports de raquette, Drift Tennis vous trouve des adversaires à votre niveau, planifie le match, enregistre le résultat confirmé par les deux joueurs, et transforme votre saison en une cote fiable. Le tennis mène, le padel suit le même chemin, et les deux vivent dans une seule application, plutôt que sur un site de réservation, trois groupes WhatsApp et un classement sur tableur.",
     ctaPrimary: "Rejoindre la liste d'attente",
     ctaSecondary: "Comment fonctionne une saison ↓",
-    freeNote: "Gratuit pendant que nous démarrons. Android d'abord, iOS ensuite.",
+    freeNote: "Gratuit pendant que nous démarrons. Le tennis d'abord, le padel ensuite.",
   },
   loopStrip: {
     heading: "Une boucle, cinq étapes, et vous y revenez chaque semaine",
@@ -212,7 +212,7 @@ export const fr: Dictionary = {
     title: "Votre saison commence par un match",
     body: "Inscrivez-vous, passez l'évaluation, et Drift fait le reste : des adversaires à votre niveau, la rencontre dans votre calendrier, et une cote qui ne bouge que lorsque les résultats sont confirmés.",
     cta: "Rejoindre la liste d'attente",
-    note: "Gratuit pendant que nous démarrons. Android d'abord, iOS ensuite. Les stores ne sont pas encore en ligne ; la liste d'attente est la façon d'être prévenu en premier.",
+    note: "Gratuit pendant que nous démarrons. Le tennis d'abord, le padel ensuite. Les stores ne sont pas encore en ligne ; la liste d'attente est la façon d'être prévenu en premier.",
   },
   appScreens: {
     illustrative: "Écrans d'application illustratifs, pas de vraies données de joueurs.",
@@ -262,8 +262,8 @@ export const fr: Dictionary = {
   waitlist: {
     eyebrow: "Avant la première mise en jeu",
     title: "Soyez là pour la première journée",
-    body: "Drift Tennis sort d'abord sur Android, iOS suivra, et c'est gratuit de rejoindre et de jouer pendant que nous démarrons. Le tennis mène, le padel est là aussi. Laissez votre nom et votre adresse e-mail et nous enverrons les nouvelles de lancement, les mises à jour produit internes et l'occasionnelle offre Drift Tennis. Vous pouvez vous désabonner des e-mails non essentiels quand vous voulez.",
-    metaDescription: "Rejoignez la liste d’attente de Drift Tennis et recevez un e-mail au lancement. Gratuit, Android d’abord puis iOS. Le tennis mène, le padel suit.",
+    body: "Drift Tennis sort d'abord avec le tennis, puis le padel, et c'est gratuit de rejoindre et de jouer pendant que nous démarrons. Laissez votre nom et votre adresse e-mail et nous enverrons les nouvelles de lancement, les mises à jour produit internes et l'occasionnelle offre Drift Tennis. Vous pouvez vous désabonner des e-mails non essentiels quand vous voulez.",
+    metaDescription: "Rejoignez la liste d’attente de Drift Tennis et recevez un e-mail au lancement. Gratuit, le tennis d’abord puis le padel.",
     note: "Nous ne vendons ni ne partageons votre adresse e-mail pour le marketing d'une autre entreprise.",
     audiences: [
       { value: "PLAYER", label: "Un joueur", hint: "Je veux jouer plus au tennis ou au padel" },

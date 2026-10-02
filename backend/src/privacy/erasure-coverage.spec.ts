@@ -25,6 +25,7 @@ const ERASED = new Set([
   'TennisProfile',
   'PadelProfile',
   'CoachProfile',
+  'CoachApplication',
   'VerificationCode',
   'RefreshToken',
   'SocialIdentity',
@@ -39,6 +40,10 @@ const ERASED = new Set([
   'DismissedHomeCard',
   'ClubPostReaction',
   'PrivacyRequest',
+  // Rows AND the video files they point at. This is the first erased model whose
+  // payload lives outside Postgres, so the row delete alone is not the erasure —
+  // see the note in ErasureService.
+  'VideoAnalysisJob',
 ]);
 
 /**

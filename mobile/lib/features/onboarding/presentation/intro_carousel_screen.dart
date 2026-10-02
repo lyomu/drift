@@ -2,15 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
+
 /// Pre-auth intro carousel — three full-bleed slides shown to every
 /// logged-out user before the Welcome/auth screen
-/// (`foundation/03-user-journeys.md` §2, redesign 2026-08). Swipe, tap a
-/// dot, or use "Next" (slides 1–2 only) to move between slides; "Get
-/// Started" jumps to `/welcome` (Join the Court) from any slide.
+/// (`foundation/03-user-journeys.md` §2, redesign 2026-10).
 ///
-/// This screen is a fixed dark composition, so its blue and the overlay
-/// navy are intentionally hard-coded rather than pulled from [DriftColors]
-/// (which would shift in dark mode).
+/// Swipe, tap a dot, or use "Continue" to move between slides; the last
+/// slide's "Get Started" goes to `/welcome` (Join the Court), as does "Skip".
+///
+/// This screen is a fixed dark composition, so its blue and the overlay navy
+/// are intentionally hard-coded rather than pulled from [DriftColors] (which
+/// would shift in dark mode). The blue is the app's own brand value, not the
+/// prototype's #1A7AFF.
 class IntroCarouselScreen extends StatefulWidget {
   const IntroCarouselScreen({super.key});
 
@@ -31,27 +34,27 @@ class _IntroCarouselScreenState extends State<IntroCarouselScreen> {
       // objectPosition: center top
       alignment: Alignment(0, -1),
       title: 'The Game\nNever Stops',
-      titleSize: 46,
       body:
-          'Match schedules, player stats and tournament updates in real time.',
+          'Stay connected to every match, result, and tournament update as '
+          'your tennis community keeps moving.',
     ),
     _Slide(
       image: 'assets/images/onboarding/intro_advance_your_game.jpg',
       // objectPosition: center 30%
       alignment: Alignment(0, -0.4),
       title: 'Advance\nYour Game',
-      titleSize: 46,
       body:
-          'Analyze your progress, set new goals, and improve your skills with '
-          'smart coaching tools.',
+          'Track your progress, sharpen your skills, and build better habits '
+          'with insights made for your tennis journey.',
     ),
     _Slide(
       image: 'assets/images/onboarding/intro_tennis_journey.jpg',
       // objectPosition: center 20%
       alignment: Alignment(0, -0.6),
       title: 'Start Your\nTennis Journey',
-      titleSize: 39,
-      body: 'Join ladders, tournaments and communities. Your court awaits.',
+      body:
+          'Discover players, clubs, and competitions near you, then step onto '
+          'the court with confidence.',
     ),
   ];
 
@@ -69,9 +72,13 @@ class _IntroCarouselScreenState extends State<IntroCarouselScreen> {
     super.dispose();
   }
 
-  void _getStarted() => context.go('/welcome');
+  void _toWelcome() => context.go('/welcome');
 
-  void _next() {
+  void _advance() {
+    if (_page == _slides.length - 1) {
+      _toWelcome();
+      return;
+    }
     _controller.nextPage(
       duration: const Duration(milliseconds: 320),
       curve: Curves.easeOutCubic,
@@ -88,6 +95,8 @@ class _IntroCarouselScreenState extends State<IntroCarouselScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isLast = _page == _slides.length - 1;
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
       child: PopScope(
@@ -106,27 +115,36 @@ class _IntroCarouselScreenState extends State<IntroCarouselScreen> {
                 itemBuilder: (context, i) => _SlideView(
                   slide: _slides[i],
                   isActive: i == _page,
+                  isLast: i == _slides.length - 1,
                   pageIndex: i,
                   pageCount: _slides.length,
                   brandBlue: _brandBlue,
-                  onGetStarted: _getStarted,
+                  onContinue: _advance,
                   onDotTap: _goToPage,
                 ),
               ),
-              // "Next" advances the carousel; hidden on the last slide, where
-              // "Get Started" is the only way forward.
-              if (_page < _slides.length - 1)
-                Positioned(
-                  top: 0,
-                  right: 0,
-                  child: SafeArea(
-                    bottom: false,
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 8, right: 24),
-                      child: _NextButton(onTap: _next),
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+                    // The prototype labels this "Next", which duplicates the
+                    // Continue button exactly. The carousel shows on every
+                    // logged-out launch (there is no "seen" flag), so the
+                    // control that earns its place up here is the one that
+                    // gets a returning user past it.
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: isLast
+                          ? const SizedBox.shrink()
+                          : _GlassPill(label: 'Skip', onTap: _toWelcome),
                     ),
                   ),
                 ),
+              ),
             ],
           ),
         ),
@@ -140,14 +158,12 @@ class _Slide {
     required this.image,
     required this.alignment,
     required this.title,
-    required this.titleSize,
     required this.body,
   });
 
   final String image;
   final Alignment alignment;
   final String title;
-  final double titleSize;
   final String body;
 }
 
@@ -155,19 +171,21 @@ class _SlideView extends StatelessWidget {
   const _SlideView({
     required this.slide,
     required this.isActive,
+    required this.isLast,
     required this.pageIndex,
     required this.pageCount,
     required this.brandBlue,
-    required this.onGetStarted,
+    required this.onContinue,
     required this.onDotTap,
   });
 
   final _Slide slide;
   final bool isActive;
+  final bool isLast;
   final int pageIndex;
   final int pageCount;
   final Color brandBlue;
-  final VoidCallback onGetStarted;
+  final VoidCallback onContinue;
   final ValueChanged<int> onDotTap;
 
   @override
@@ -184,14 +202,13 @@ class _SlideView extends StatelessWidget {
           child: SafeArea(
             top: false,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(28, 0, 28, 32),
+              padding: const EdgeInsets.fromLTRB(28, 0, 28, 36),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Standout title: Montserrat ExtraBold, animated in with a
-                  // fade + rise + subtle scale whenever this slide becomes the
-                  // active page.
+                  // Standout title, animated in with a fade + rise + subtle
+                  // scale whenever this slide becomes the active page.
                   AnimatedOpacity(
                     opacity: isActive ? 1 : 0,
                     duration: const Duration(milliseconds: 600),
@@ -206,36 +223,45 @@ class _SlideView extends StatelessWidget {
                         scale: isActive ? 1 : 0.94,
                         duration: const Duration(milliseconds: 700),
                         curve: Curves.easeOutCubic,
+                        alignment: Alignment.bottomLeft,
                         child: Text(
                           slide.title,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: 'Montserrat',
-                            fontSize: slide.titleSize,
-                            height: 1.05,
-                            fontWeight: FontWeight.w800,
+                          style: const TextStyle(
+                            fontFamily: 'Outfit',
+                            fontSize: 44,
+                            height: 1.08,
+                            fontWeight: FontWeight.w900,
                             color: Colors.white,
+                            shadows: [
+                              Shadow(
+                                color: Color(0x66000000),
+                                blurRadius: 20,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
                           ),
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
                   Text(
                     slide.body,
-                    textAlign: TextAlign.center,
                     style: const TextStyle(
-                      fontFamily: 'DMSans',
-                      fontSize: 13.5,
-                      height: 1.55,
+                      fontFamily: 'Outfit',
+                      fontSize: 15,
+                      height: 1.6,
                       fontWeight: FontWeight.w400,
-                      color: Color(0xA6FFFFFF),
+                      color: Color(0xCCFFFFFF),
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  _GetStartedButton(color: brandBlue, onTap: onGetStarted),
-                  // dots carry 8px of their own top padding as tap target
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 32),
+                  _CtaButton(
+                    label: isLast ? 'Get Started' : 'Continue',
+                    color: brandBlue,
+                    onTap: onContinue,
+                  ),
+                  const SizedBox(height: 20),
                   _Dots(count: pageCount, active: pageIndex, onTap: onDotTap),
                 ],
               ),
@@ -272,9 +298,68 @@ class _GradientScrim extends StatelessWidget {
   }
 }
 
-class _GetStartedButton extends StatelessWidget {
-  const _GetStartedButton({required this.color, required this.onTap});
+/// Glass surface shared by every highlight treatment and the Skip pill. No
+/// backdrop blur: `BackdropFilter` over a full-bleed photo costs a saved layer
+/// per element, which is a real cost on this screen for an effect the scrim
+/// already mostly provides.
+BoxDecoration _glass({required double radius}) => BoxDecoration(
+  color: Colors.white.withValues(alpha: 0.15),
+  borderRadius: BorderRadius.circular(radius),
+  border: Border.all(color: Colors.white.withValues(alpha: 0.28)),
+);
 
+class _GlassPill extends StatelessWidget {
+  const _GlassPill({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(999),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          decoration: _glass(radius: 999),
+          padding: const EdgeInsets.fromLTRB(16, 7, 12, 7),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontFamily: 'Outfit',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  height: 1.2,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 2),
+              const Icon(
+                Icons.chevron_right_rounded,
+                size: 18,
+                color: Colors.white,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CtaButton extends StatelessWidget {
+  const _CtaButton({
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  final String label;
   final Color color;
   final VoidCallback onTap;
 
@@ -283,10 +368,10 @@ class _GetStartedButton extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: color.withValues(alpha: 0.5),
+            color: color.withValues(alpha: 0.44),
             blurRadius: 32,
             offset: const Offset(0, 8),
           ),
@@ -295,17 +380,18 @@ class _GetStartedButton extends StatelessWidget {
       child: Material(
         type: MaterialType.transparency,
         child: InkWell(
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: BorderRadius.circular(18),
           onTap: onTap,
-          child: const Padding(
-            padding: EdgeInsets.symmetric(vertical: 17),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 17),
             child: Center(
               child: Text(
-                'Get Started',
-                style: TextStyle(
-                  fontFamily: 'DMSans',
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
+                label,
+                style: const TextStyle(
+                  fontFamily: 'Outfit',
+                  fontSize: 17,
+                  fontWeight: FontWeight.w900,
+                  height: 1.2,
                   color: Colors.white,
                 ),
               ),
@@ -317,6 +403,7 @@ class _GetStartedButton extends StatelessWidget {
   }
 }
 
+/// The active dot stretches into a 24px bar; the rest stay 6px.
 class _Dots extends StatelessWidget {
   const _Dots({required this.count, required this.active, required this.onTap});
 
@@ -334,55 +421,23 @@ class _Dots extends StatelessWidget {
             behavior: HitTestBehavior.opaque,
             onTap: () => onTap(i),
             child: Padding(
-              // visual dot is 8px; padding widens the tap target to ~24px
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-              child: Container(
-                width: 8,
-                height: 8,
+              // The visual dot is 6px; the padding widens the tap target.
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOut,
+                width: i == active ? 24 : 6,
+                height: 6,
                 decoration: BoxDecoration(
-                  shape: BoxShape.circle,
+                  borderRadius: BorderRadius.circular(999),
                   color: i == active
                       ? Colors.white
-                      : Colors.white.withValues(alpha: 0.3),
+                      : Colors.white.withValues(alpha: 0.35),
                 ),
               ),
             ),
           ),
       ],
-    );
-  }
-}
-
-class _NextButton extends StatelessWidget {
-  const _NextButton({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final tint = Colors.white.withValues(alpha: 0.75);
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(999),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Next',
-              style: TextStyle(
-                fontFamily: 'DMSans',
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: tint,
-              ),
-            ),
-            const SizedBox(width: 4),
-            Icon(Icons.chevron_right, size: 18, color: tint),
-          ],
-        ),
-      ),
     );
   }
 }

@@ -542,6 +542,104 @@ export class PlatformAdminService {
     return { id: userId, status };
   }
 
+  async updateUserProfile(
+    actorId: string,
+    userId: string,
+    input: {
+      firstName?: string;
+      lastName?: string;
+      bio?: string | null;
+      phone?: string | null;
+      phoneOnWhatsApp?: boolean;
+    },
+  ) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        accountStatus: true,
+        firstName: true,
+        lastName: true,
+        bio: true,
+        phone: true,
+        phoneOnWhatsApp: true,
+      },
+    });
+    if (!user) throw new NotFoundException('User not found.');
+    if (user.accountStatus === AccountStatus.DELETED) {
+      throw new BadRequestException('Deleted accounts cannot be edited.');
+    }
+    if (input.phone === null || input.phone === '') {
+      input.phoneOnWhatsApp = false;
+    }
+
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: input,
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        bio: true,
+        phone: true,
+        phoneOnWhatsApp: true,
+      },
+    });
+    await this.audit.record(actorId, 'user.profile_update', 'User', userId, {
+      changes: Object.fromEntries(
+        Object.entries(input).map(([key, value]) => [
+          key,
+          { from: user[key as keyof typeof user], to: value },
+        ]),
+      ),
+    });
+    return { user: updated };
+  }
+
+  async setUserDeleted(actorId: string, userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { accountStatus: true },
+    });
+    if (!user) throw new NotFoundException('User not found.');
+    if (user.accountStatus === AccountStatus.DELETED) {
+      throw new BadRequestException('User is already deleted.');
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: userId },
+        data: { accountStatus: AccountStatus.DELETED },
+      }),
+      this.prisma.refreshToken.updateMany({
+        where: { userId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      }),
+    ]);
+    await this.audit.record(actorId, 'user.delete', 'User', userId, {
+      previousStatus: user.accountStatus,
+    });
+    return { id: userId, status: AccountStatus.DELETED };
+  }
+
+  async restoreDeletedUser(actorId: string, userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { accountStatus: true },
+    });
+    if (!user) throw new NotFoundException('User not found.');
+    if (user.accountStatus !== AccountStatus.DELETED) {
+      throw new BadRequestException('User is not deleted.');
+    }
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { accountStatus: AccountStatus.ACTIVE },
+    });
+    await this.audit.record(actorId, 'user.restore_deleted', 'User', userId, {
+      previousStatus: user.accountStatus,
+    });
+    return { id: userId, status: AccountStatus.ACTIVE };
+  }
+
   /**
    * Everything an admin needs to judge one account before acting on it. Kept
    * separate from `listUsers` because it fans out across every profile
@@ -570,6 +668,10 @@ export class PlatformAdminService {
             singlesRating: true,
             doublesRating: true,
             dominantHand: true,
+            generalLocation: true,
+            latitude: true,
+            longitude: true,
+            preferredClubName: true,
           },
         },
         padelProfile: {
@@ -676,6 +778,28 @@ export class PlatformAdminService {
     );
 
     return { id: userId, revokedTokens: count };
+  }
+
+  async getUserActivity(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true },
+    });
+    if (!user) throw new NotFoundException('User not found.');
+
+    const events = await this.prisma.adminAuditLog.findMany({
+      where: { entityType: 'User', entityId: userId },
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+      select: {
+        id: true,
+        action: true,
+        metadata: true,
+        createdAt: true,
+        actor: { select: { id: true, name: true, email: true } },
+      },
+    });
+    return { events };
   }
 
   /**

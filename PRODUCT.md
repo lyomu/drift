@@ -34,7 +34,7 @@ For Tennis players of every level, Drift Tennis turns "I should play more Tennis
 
 - Name: **Drift Tennis**. Tennis-first, never "racket sports" or "multi-sport".
 - Palette: primary `#1C91D0`, primaryDark `#126A9B`, primaryLight `#E8F5FC`; light background `#F7FAFC`; text `#111827` / `#6B7280`; border `#E5E7EB`; semantic green/amber/red surfaces per design system (foundation/05-design-system.md, mobile/lib/core/theme/).
-- Typography: **DM Sans** is the single family (display, heading, body, UI), zero letter-spacing. Outfit was dropped in the 2026 header redesign.
+- Typography: **Outfit** is the official single family (display, heading, body, UI), zero letter-spacing.
 - Voice: honest, non-intimidating, player-respecting. No fake scarcity, no hype, no fabricated data — the product itself follows a "never fabricate" rule and the landing page must too.
 
 ## Evidence on Hand

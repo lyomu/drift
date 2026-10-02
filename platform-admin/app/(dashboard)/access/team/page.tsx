@@ -65,6 +65,15 @@ export default function TeamUsersPage() {
     }
   }
 
+  function updateStatus(admin: PlatformStaff, active: boolean) {
+    const verb = active ? "Suspend" : "Restore";
+    const consequence = active
+      ? "They will immediately lose platform access."
+      : "They will be able to access the platform again.";
+    if (!window.confirm(`${verb} ${admin.email}?\n\n${consequence}`)) return;
+    void update(admin.id, { status: active ? "SUSPENDED" : "ACTIVE" });
+  }
+
   return (
     <div>
       <PageHeader
@@ -115,7 +124,7 @@ export default function TeamUsersPage() {
                   <Td><Badge tone={admin.twoFactorEnabled ? "success" : "warning"}>{admin.twoFactorEnabled ? "Required" : "Disabled"}</Badge></Td>
                   <Td>{admin.lastLoginAt ? new Date(admin.lastLoginAt).toLocaleString() : "Never"}</Td>
                   <Td><Badge tone={statusTone(active ? "ACTIVE" : "SUSPENDED")}>{active ? "ACTIVE" : "SUSPENDED"}</Badge></Td>
-                  <Td className="text-right"><Button variant={active ? "destructive" : "secondary"} disabled={busyId === admin.id} onClick={() => void update(admin.id, { status: active ? "SUSPENDED" : "ACTIVE" })}>{busyId === admin.id ? "Working..." : active ? "Suspend" : "Restore"}</Button></Td>
+                  <Td className="text-right"><Button variant={active ? "destructive" : "secondary"} disabled={busyId === admin.id} onClick={() => updateStatus(admin, active)}>{busyId === admin.id ? "Working..." : active ? "Suspend" : "Restore"}</Button></Td>
                 </tr>;
               })}
             </tbody>

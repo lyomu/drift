@@ -4,6 +4,7 @@ import {
   IsEmail,
   IsOptional,
   IsString,
+  IsBoolean,
   Length,
   Matches,
   MaxLength,
@@ -54,6 +55,34 @@ export class UpdateUserVerificationDto {
   // verification — see PlatformAdminService.setUserVerification.
   @IsEnum(VerificationStatus)
   status!: VerificationStatus;
+}
+
+export class UpdateUserProfileDto {
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(80)
+  firstName?: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(80)
+  lastName?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  bio?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(32)
+  phone?: string | null;
+
+  @IsOptional()
+  @IsBoolean()
+  phoneOnWhatsApp?: boolean;
 }
 
 export class UpdateReportDto {

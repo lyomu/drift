@@ -1,5 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { AccountStatus, Prisma } from '@prisma/client';
+import {
+  VIDEO_STORAGE,
+  type VideoStorage,
+} from '../storage/video-storage.service';
 
 /** Days a deactivated account is retained before erasure runs (owner decision
  * P.3a, 2026-09-03). Erasure is irreversible, so the window exists to make a
@@ -32,6 +36,10 @@ export function redactionMarker(requestId: string): string {
 @Injectable()
 export class ErasureService {
   private readonly logger = new Logger(ErasureService.name);
+
+  constructor(
+    @Inject(VIDEO_STORAGE) private readonly videoStorage: VideoStorage,
+  ) {}
 
   async eraseUser(
     tx: Prisma.TransactionClient,
@@ -111,6 +119,22 @@ export class ErasureService {
         specialisations: [],
       },
     });
+    // The draft behind that profile carries the same personal fields, plus
+    // whatever was in flight at review time. The review trail itself
+    // (status, reviewer, decisionReason, timestamps) is left alone --
+    // that is a record of platform staff's own decision, not the user's data.
+    await tx.coachApplication.updateMany({
+      where: { userId },
+      data: {
+        bio: null,
+        publicEmail: null,
+        publicPhone: null,
+        availabilityNote: null,
+        bookingUrl: null,
+        qualifications: [],
+        specialisations: [],
+      },
+    });
     await tx.availabilitySlot.deleteMany({
       where: { tennisProfile: { is: { userId } } },
     });
@@ -144,6 +168,40 @@ export class ErasureService {
     await tx.savedStory.deleteMany({ where: { userId } });
     await tx.dismissedHomeCard.deleteMany({ where: { userId } });
     await tx.clubPostReaction.deleteMany({ where: { userId } });
+
+    // ---- uploaded match video --------------------------------------------
+    // Footage of the person, plus the filename they chose and the verdict on it.
+    // Two things have to happen here and only one of them is a database write.
+    //
+    // This is the first table whose payload does NOT live in Postgres. Every other
+    // binary in this product is a `Bytes` column, so deleting the row has always been
+    // enough; a video is a file under VideoStorageService, and deleting the row would
+    // leave the footage exactly where it was. The photo-asset case above is the
+    // precedent — bytes, not just the reference to them — and it needs restating
+    // because the bytes have moved out of reach of the transaction.
+    const jobs = await tx.videoAnalysisJob.findMany({
+      where: { userId },
+      select: { storageKey: true },
+    });
+    await tx.videoAnalysisJob.deleteMany({ where: { userId } });
+
+    // Best-effort, and deliberately not rolled back with the transaction: if this
+    // commits and the delete has not run, footage of an erased person is still on
+    // disk, which is the failure that matters. The opposite ordering risks deleting
+    // video for an erasure that then rolls back — data the person had already asked
+    // to be rid of. A failure here is logged loudly rather than swallowed, because
+    // the row is gone and nothing will point at the orphaned file again.
+    for (const { storageKey } of jobs) {
+      if (!storageKey) continue;
+      try {
+        await this.videoStorage.delete(storageKey);
+      } catch (error) {
+        this.logger.error(
+          `Erased user ${userId} but could NOT delete their video ${storageKey}: ` +
+            `${String(error)}. This file must be removed by hand.`,
+        );
+      }
+    }
 
     this.logger.log(`Erased user ${userId} for privacy request ${requestId}`);
   }

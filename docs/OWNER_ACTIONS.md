@@ -62,7 +62,7 @@ have no provider to route to at all.
    `transaction.completed` and `transaction.payment_failed`. Note the
    destination's signing secret.
 2. Point that Notification Destination's URL at
-   `https://drift.einsbrand.com/api/payments/webhooks/paddle`.
+   `https://api.driftsports.app/payments/webhooks/paddle`.
 3. Set, in `backend/.env` first:
    ```
    PADDLE_API_KEY=<sandbox key>
@@ -214,7 +214,7 @@ curl -I -u drift-preview:<password> https://drift.einsbrand.com/platform/
 ```
 
 **Done when:** that returns the app's `Content-Security-Policy` header naming
-`https://drift.einsbrand.com/api` — an unauthenticated request returns nginx's
+`https://api.driftsports.app` — an unauthenticated request returns nginx's
 own 401 with no app headers, which is why the credentials are needed.
 
 ## 9. Run the load test — tracker P.5

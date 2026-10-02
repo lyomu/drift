@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_typography.dart';
@@ -10,6 +11,7 @@ import '../application/home_sections.dart';
 import 'home_header.dart';
 import 'sections/action_needed_rail.dart';
 import 'sections/courts_near_you_list.dart';
+import 'sections/home_section_panel.dart';
 import 'sections/next_match_card.dart';
 import 'sections/players_near_you_rail.dart';
 import 'sections/progress_card.dart';
@@ -58,35 +60,75 @@ class _HomeBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const gap = SizedBox(height: 20);
     final actionNeeded = sections.actionNeeded;
 
-    return ListView(
-      padding: const EdgeInsets.only(top: 8, bottom: 32),
-      children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16),
-          child: HomeHeader(),
-        ),
-        gap,
-        if (actionNeeded.isNotEmpty) ...[
-          ActionNeededRail(cards: actionNeeded),
-          gap,
+    // Banded layout (redesign 2026-10): the hero, Action needed and Quick
+    // actions sit on the tinted ground, then every remaining section is a
+    // white panel separated by an 8px rule. That split is what makes the top
+    // of the page read as a dashboard and the rest as a feed.
+    return ColoredBox(
+      color: homeGround,
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: HomeHeader(),
+          ),
+          const SizedBox(height: 16),
+          if (actionNeeded.isNotEmpty) ...[
+            ActionNeededRail(cards: actionNeeded),
+            const SizedBox(height: 16),
+          ],
+          const QuickActionsGrid(),
+          const SizedBox(height: 16),
+          const HomeDivider(),
+          HomeSectionPanel(
+            title: 'Next match',
+            actionLabel: 'View all',
+            onAction: () => context.go('/home?tab=play&play=active'),
+            child: NextMatchSection(
+              matchId: sections.nextMatch?.data?.matchId,
+            ),
+          ),
+          const HomeDivider(),
+          HomeSectionPanel(
+            title: 'Players near you',
+            actionLabel: 'Find more',
+            onAction: () => context.go('/home?tab=play&play=find'),
+            child: PlayersNearYouSection(
+              players: sections.players?.data?.players ?? const [],
+            ),
+          ),
+          const HomeDivider(),
+          HomeSectionPanel(
+            title: 'Courts near you',
+            actionLabel: 'Map view',
+            onAction: () => context.go('/home?tab=discover&discover=courts'),
+            child: CourtsNearYouSection(
+              courts: sections.courts?.data?.courts ?? const [],
+            ),
+          ),
+          const HomeDivider(),
+          HomeSectionPanel(
+            title: 'Your progress',
+            actionLabel: 'View all',
+            onAction: () => context.push('/profile/achievements'),
+            child: const ProgressSection(),
+          ),
+          const HomeDivider(),
+          // The news rail bleeds to the screen edge, so the panel adds no
+          // horizontal inset and the rail pads its own scroll view.
+          HomeSectionPanel(
+            title: 'Tennis news',
+            actionLabel: 'See all',
+            onAction: () => context.push('/news'),
+            contentPadding: EdgeInsets.zero,
+            child: const TennisNewsRail(),
+          ),
+          const HomeDivider(),
         ],
-        const QuickActionsGrid(),
-        gap,
-        NextMatchSection(matchId: sections.nextMatch?.data?.matchId),
-        gap,
-        PlayersNearYouSection(
-          players: sections.players?.data?.players ?? const [],
-        ),
-        gap,
-        CourtsNearYouSection(courts: sections.courts?.data?.courts ?? const []),
-        gap,
-        const ProgressSection(),
-        gap,
-        const TennisNewsRail(),
-      ],
+      ),
     );
   }
 }

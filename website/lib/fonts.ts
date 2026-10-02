@@ -1,14 +1,18 @@
-import { DM_Sans } from "next/font/google";
+import { DM_Serif_Display, Outfit } from "next/font/google";
 
-/**
- * DM Sans is the single family for this surface — display, headings, body
- * and UI — mirroring the 2026-09 mobile typography decision
- * (mobile/lib/core/theme/drift_typography.dart). Shared by both root
- * layouts (the localised site and the English-only legal pages).
- */
-export const dmSans = DM_Sans({
+/** Shared Outfit font for every public-site surface. */
+export const outfit = Outfit({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-dm-sans",
+  weight: ["400", "500", "600", "700", "800", "900"],
+  variable: "--font-outfit",
+  display: "swap",
+});
+
+/** Accent face used by the Figma-led app CTA section. */
+export const dmSerifDisplay = DM_Serif_Display({
+  subsets: ["latin"],
+  weight: ["400"],
+  style: ["italic"],
+  variable: "--font-dm-serif",
   display: "swap",
 });

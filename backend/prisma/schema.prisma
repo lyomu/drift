@@ -112,6 +112,11 @@ enum AssessmentPillar {
   MOVEMENT
   MATCH_PLAY
   COMPETITION_EXPERIENCE
+  // Added 2026-10 for the redesigned Log Practice screen. Practice-only:
+  // the question bank has no FOOTWORK questions, so it is deliberately
+  // absent from the assessment's PILLAR_ORDER / branch scopes and scores
+  // purely from practice logs.
+  FOOTWORK
 }
 
 enum AnswerOption {
@@ -457,6 +462,19 @@ enum ListingVerificationStatus {
   VERIFIED
 }
 
+// The review lifecycle of a coach's application to be listed publicly.
+// Deliberately separate from CoachProfile.verificationStatus: that tri-state
+// answers "is this listing trustworthy", this one answers "where is this
+// submission in review". A profile only exists once an application is
+// APPROVED, so the two never disagree about visibility.
+enum CoachApplicationStatus {
+  DRAFT
+  PENDING_REVIEW
+  CHANGES_REQUESTED
+  APPROVED
+  REJECTED
+}
+
 enum ClubPlatformStatus {
   PENDING_REVIEW
   ACTIVE
@@ -633,6 +651,7 @@ model User {
   tennisProfile     TennisProfile?
   padelProfile      PadelProfile?
   coachProfile      CoachProfile?
+  coachApplication  CoachApplication?
   billingAccount    BillingAccount?
   verificationCodes VerificationCode[]
   refreshTokens     RefreshToken[]
@@ -696,6 +715,7 @@ model User {
   courtInquiries          CourtInquiry[]
   venueVerificationRequests VenueVerificationRequest[]
   dismissedHomeCards        DismissedHomeCard[]
+  videoAnalysisJobs         VideoAnalysisJob[]
 
   @@map("users")
 }
@@ -1163,6 +1183,15 @@ model League {
   // SINGLES enforced by competitions.service.ts this phase — a doubles
   // league needs pair-registration, which Doc 6 doesn't specify.
   format      MatchFormat @default(SINGLES)
+  // The level this league is pitched at, reusing the same AssessmentBranch
+  // tiering as the onboarding assessment and LearningContent rather than
+  // inventing a second scale. Null means "all levels" — the league is open
+  // to anyone, which is the default and what most club leagues are.
+  //
+  // Advisory only: `register()` deliberately does not gate on it. A player
+  // with no level at all resolves to 0 (player-level.ts), so a level check
+  // would lock un-assessed players out of exactly the leagues they need.
+  levelBand   AssessmentBranch?
   state       LeagueState @default(PUBLISHED)
 
   // Competition scheduling (folded up from the former Season model).
@@ -2385,6 +2414,69 @@ model CoachClubAffiliation {
   @@map("coach_club_affiliations")
 }
 
+// A coach's submission to be listed publicly. Holds the same fields as
+// CoachProfile because a pending edit must not mutate the live listing:
+// the application is the draft, the profile is what Discover returns. On
+// APPROVED the fields are copied across and the profile is made VERIFIED.
+//
+// One per user, reused across resubmissions — CHANGES_REQUESTED sends the
+// same row back to the coach rather than opening a second one. The full
+// decision trail lives in CoachApplicationEvent, never in this row.
+model CoachApplication {
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  status CoachApplicationStatus @default(DRAFT)
+
+  bio              String?
+  qualifications   String[]    @default([])
+  yearsExperience  Int?
+  specialisations  String[]    @default([])
+  levels           CoachLevel[] @default([])
+  availabilityNote String?
+  publicEmail      String?
+  publicPhone      String?
+  bookingUrl       String?
+
+  submittedAt DateTime?
+  reviewedAt  DateTime?
+  // PlatformAdmin id -- no FK relation, matching ClubCreationRequest.reviewedById.
+  // CoachApplicationEvent and the admin audit log are the authoritative trail.
+  reviewedById   String?
+  decisionReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  events CoachApplicationEvent[]
+
+  @@index([status, submittedAt])
+  @@map("coach_applications")
+}
+
+// Append-only. Every state change writes one row and nothing ever updates or
+// deletes them, so "who decided what, when, and why" survives a later edit to
+// the application itself. Exactly one actor column is set: actorUserId for the
+// coach's own submissions, actorAdminId for a reviewer decision.
+model CoachApplicationEvent {
+  id            String           @id @default(uuid())
+  applicationId String
+  application   CoachApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  actorUserId  String?
+  actorAdminId String?
+
+  previousStatus CoachApplicationStatus?
+  nextStatus     CoachApplicationStatus
+  note           String?
+
+  createdAt DateTime @default(now())
+
+  @@index([applicationId, createdAt])
+  @@map("coach_application_events")
+}
+
 // Provider-neutral billing foundation. BillingAccount deliberately owns
 // either a User or a Club; the migration adds the exactly-one-owner CHECK
 // constraint Prisma cannot express. No raw card/mobile-money credentials are
@@ -3141,4 +3233,83 @@ model WaitlistBroadcast {
   @@index([createdAt])
   @@index([sentById])
   @@map("waitlist_broadcasts")
+}
+
+// ── AI match-video analysis (Phase 1) ───────────────────────────────────────
+//
+// See ../AI_VIDEO_ANALYSIS_IMPLEMENTATION_PLAN.md and cv-service/. The pipeline
+// itself is a Phase 0 spike that has not yet been shown to work on Drift's own
+// footage, so this table deliberately records only the JOB, not its findings.
+//
+// The plan's companion `StrokeEvent` table is NOT here yet, and its absence is the
+// point: its fields are type, speed and placement x/y, and placement is derived from
+// a court homography fitted to painted lines. cv-service/PHASE0_FINDINGS.md found
+// those lines worn away or absent on the first batch of real Drift courts. Designing
+// that schema now would be guessing at which outputs survive. Job tracking has no
+// such dependency, so it lands first.
+
+enum VideoAnalysisStatus {
+  // Uploaded and stored; the clip has not been judged yet.
+  PENDING
+  // The CV service refused the clip. Terminal. `rejectionReasons` carries messages
+  // written to be shown to the person who uploaded it.
+  REJECTED
+  // Precheck passed and the analysis has been enqueued. No longer terminal: the queue
+  // worker picks the job up from here and moves it to ANALYZING.
+  ACCEPTED
+  // Handed to cv-service, which runs the pipeline synchronously on one GPU.
+  ANALYZING
+  // The pipeline returned a summary, stored whole in `analysisResult`. Note that a
+  // COMPLETED job is not the same as a calibrated one: the summary carries
+  // `court_calibrated` and a `warning` when the court fit failed, and that distinction
+  // is the difference between a measurement and a plausible-looking number.
+  COMPLETED
+  FAILED
+}
+
+model VideoAnalysisJob {
+  id     String              @id @default(uuid())
+  status VideoAnalysisStatus @default(PENDING)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Opaque key into VideoStorageService rather than a path: the local-disk driver and
+  // an S3 bucket disagree about what a location looks like, and the column should not
+  // have to be migrated when the driver changes. Null once a rejected clip's bytes
+  // have been discarded.
+  storageKey       String?
+  originalFilename String
+  sizeBytes        Int
+  mimeType         String
+
+  // The precheck verdict, stored whole. Kept as JSON rather than exploded into columns
+  // because the shape belongs to cv-service and moves with it; this table should not
+  // need a migration every time a check is added there.
+  precheckResult Json?
+  // Just the user-facing messages from the blocking findings, lifted out of the JSON so
+  // the common read - "why was my video refused" - needs no parsing.
+  rejectionReasons String[] @default([])
+
+  // The pipeline's own summary, stored whole for the same reason as precheckResult:
+  // the shape belongs to cv-service. It carries `court_calibrated` and a `warning`
+  // when the court fit failed, which is the difference between a measurement and a
+  // plausible-looking number — flattening it into columns is how that gets lost.
+  analysisResult Json?
+
+  // Why an analysis gave up, in words meant for the person who uploaded the clip.
+  failureReason String?
+
+  // Which cv-service produced the verdict. Without it, a re-run after a threshold change
+  // is indistinguishable from the original, and the stored verdicts silently become a
+  // mix of incomparable things.
+  cvServiceVersion String?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
+
+  @@index([userId, createdAt])
+  @@index([status])
+  @@map("video_analysis_jobs")
 }

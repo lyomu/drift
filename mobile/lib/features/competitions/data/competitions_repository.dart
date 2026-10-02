@@ -74,12 +74,54 @@ class League {
     this.scoringFormat,
     this.walkoverRule,
     this.unfinishedMatchPolicy,
+    this.clubName,
+    this.enrolledCount,
+    this.capacity,
+    this.viewerRegistrationStatus,
+    this.levelBand,
   });
 
   final String id;
   final String sport;
   final String name;
   final String? description;
+
+  /// The host club's name, when the read included it. Null on the reads that
+  /// do not join the club (league detail, club admin lists), so a card that
+  /// shows it must tolerate its absence.
+  final String? clubName;
+
+  /// Players with an ENROLLED registration. Null when the read did not count
+  /// them.
+  final int? enrolledCount;
+  final int? capacity;
+
+  /// The viewer's own registration, when the read resolved it. Null means
+  /// either "not registered" or "this read does not say" — the list and the
+  /// detail both populate it, so on those surfaces null is a real "no".
+  final SeasonRegistrationStatus? viewerRegistrationStatus;
+
+  /// `AssessmentBranch` — the level this league is pitched at. Null means
+  /// "all levels", exactly as it does on learning content; the band is
+  /// advisory and never gates registration.
+  final String? levelBand;
+
+  /// What the card prints. Null and any unrecognised value both read as
+  /// "All levels", so a band added server-side never renders as a raw enum.
+  String get levelBandLabel => switch (levelBand) {
+    'BEGINNER' => 'Beginner',
+    'FOUNDATIONAL' => 'Foundational',
+    'INTERMEDIATE' => 'Intermediate',
+    'ADVANCED' => 'Advanced',
+    _ => 'All levels',
+  };
+
+  /// Whether the viewer holds a live place (enrolled or waitlisted). A
+  /// withdrawn registration reads as not joined, which is what the Join
+  /// button on the list card keys off.
+  bool get viewerHasPlace =>
+      viewerRegistrationStatus == SeasonRegistrationStatus.enrolled ||
+      viewerRegistrationStatus == SeasonRegistrationStatus.waitlisted;
 
   /// Sanitised HTML (backend common/rich-text.util.ts) — render with an
   /// HTML widget, not a plain [Text].
@@ -113,6 +155,15 @@ class League {
     scoringFormat: json['scoringFormat'] as String?,
     walkoverRule: json['walkoverRule'] as String?,
     unfinishedMatchPolicy: json['unfinishedMatchPolicy'] as String?,
+    clubName: json['clubName'] as String?,
+    levelBand: json['levelBand'] as String?,
+    enrolledCount: json['enrolledCount'] as int?,
+    capacity: json['capacity'] as int?,
+    viewerRegistrationStatus: json['viewerRegistrationStatus'] == null
+        ? null
+        : SeasonRegistrationStatus.fromJson(
+            json['viewerRegistrationStatus'] as String,
+          ),
   );
 }
 
@@ -130,6 +181,8 @@ class SeasonDetail {
     required this.enrolledCount,
     required this.capacity,
     required this.viewerRegistrationStatus,
+    this.format,
+    this.levelBand,
   });
 
   final String id;
@@ -137,6 +190,24 @@ class SeasonDetail {
   final String leagueName;
   final String label;
   final SeasonState state;
+
+  /// `MatchFormat` — SINGLES or DOUBLES. Same payload as [League]; this model
+  /// is the detail view of the very same `GET /leagues/:id` response.
+  final String? format;
+
+  /// `AssessmentBranch`, or null for "all levels". Advisory — registration
+  /// never checks it. See `LEAGUE_LEVEL_BAND_SPEC.md`.
+  final String? levelBand;
+
+  String get formatLabel => format == 'DOUBLES' ? 'Doubles' : 'Singles';
+
+  String get levelBandLabel => switch (levelBand) {
+    'BEGINNER' => 'Beginner',
+    'FOUNDATIONAL' => 'Foundational',
+    'INTERMEDIATE' => 'Intermediate',
+    'ADVANCED' => 'Advanced',
+    _ => 'All levels',
+  };
   final DateTime registrationOpensAt;
   final DateTime registrationClosesAt;
   final DateTime startsAt;
@@ -159,6 +230,8 @@ class SeasonDetail {
     leagueName: json['name'] as String,
     label: json['name'] as String,
     state: SeasonState.fromJson(json['competitionState'] as String),
+    format: json['format'] as String?,
+    levelBand: json['levelBand'] as String?,
     registrationOpensAt: _date(json['registrationOpensAt']),
     registrationClosesAt: _date(json['registrationClosesAt']),
     startsAt: _date(json['startsAt']),

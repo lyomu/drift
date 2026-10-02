@@ -1,0 +1,102 @@
+# Tennis-Vision Configuration
+# All tunable parameters live here - no magic numbers in code.
+# CLI override: python main.py --config my_config.yaml
+# Per-parameter: --input, --output, --no-stubs, --fast, --debug
+
+pipeline:
+  per_frame_keypoints: true   # Per-frame court keypoints (camera-robust, slower)
+  use_bytetrack: true          # ByteTrack Kalman smoother for ball trajectory
+  shot_classification: true    # Enable shot type classification
+  use_homography: true         # Real perspective homography (vs. nearest-keypoint approx)
+  use_tracknet: true          # true = TrackNet v2 ball detector; false = YOLO (set true after weights downloaded)
+  use_pose_shots: true
+  # Doubles: four players, two per side. EXPLICIT rather than detected, because the detector
+  # finds 11-14 people on the reference clip and a head count cannot distinguish four players
+  # from two players plus two ball kids - that is what the selection scoring is for.
+  #
+  # Turning this on changes only WHO is tracked and how shots are attributed. The rally grammar
+  # is already correct for doubles: it constrains by court SIDE, so two partners hitting in
+  # succession is rejected (the ball never crossed the net) while either partner hitting is
+  # allowed. See utils/court_sides.py.
+  #
+  # UNVALIDATED: no doubles footage exists in this repo, so nothing here has been measured
+  # against a doubles clip. Phase 4's acceptance criterion needs a labelled doubles set.
+  doubles: false
+  # Optional stronger pose backend for contact frames only. MediaPipe drops the occluded
+  # arm on 44-58% of backhands, which is the arm that decides forehand vs backhand.
+  # Weights are gated and under Meta's SAM License, so they are not shipped here:
+  #   python scripts/download_sam3d_body.py
+  use_sam3d_pose: false         # pose-based forehand/backhand (falls back to position rules when pose is unavailable)
+
+models:
+  player: "yolov8x"
+  # Which person detector runs. `yolo` is ultralytics/YOLOv8x (AGPL-3.0); `rfdetr` is
+  # RF-DETR (Apache-2.0) plus supervision.ByteTrack (MIT) for track ids.
+  #
+  # Default is deliberately still the AGPL path: every measured number in README.md and
+  # UPSTREAM_README.md was produced on it, so switching the default silently re-baselines
+  # all of them. Flip it once eval/player_detector_comparison.py says the two agree on the
+  # thing that matters — whether player selection finds two players on opposite sides.
+  #
+  # The switch is a LAUNCH BLOCKER, not an optimisation: AGPL-3.0 §13 covers serving over a
+  # network, and it covers weights fine-tuned through ultralytics "regardless of whether you
+  # train from scratch". See LICENSING.md §1.
+  player_backend: "yolo"     # yolo | rfdetr
+  player_rfdetr_size: "medium" # nano | small | medium | base | large. Unmeasured. NOT "base":
+                             # RFDETRBase is deprecated upstream since v1.7.0 and removed
+                             # in v2.0.0, measured on rfdetr 1.11.0. Still selectable for
+                             # reproducing anything measured on it.
+  ball: "models/last.pt"
+  # Geometrically fine-tuned (translation/scale/perspective/flip). Beat the original
+  # weights on BOTH gates: in-distribution val median 4.03 -> 2.90 px, and real-clip
+  # court fits 4/9 -> 8/9 passing. Reproduce with eval/court_keypoint_accuracy.py
+  # and eval/court_validity_calibration.py.
+  # Original weights kept at models/keypoints_model.pth for comparison.
+  court: "models/keypoints_model_geoaug.pth"
+  tracknet: "models/tracknet.pt"    # download: gdown 1XEYZ4myUN7QT-NeBYJI0xteLsvs-ZAOl -O models/tracknet.pt
+  # download: curl -L -o models/pose_landmarker_lite.task https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task
+  pose: "models/pose_landmarker_lite.task"
+  sam3d_body: "models/sam3d_body"
+
+io:
+  input_video: "input_videos/input_video_2.mp4"
+  output_video: "output/videos/output_video.avi"   # processed video
+  output_frames_dir: "output/frames"               # extracted frame JPEGs
+  output_stats_dir: "output/stats"                 # CSV + JSON per run
+  log_dir: "logs"                                  # run_<timestamp>.log
+  player_stub_path: "tracker_stubs/player_detections.pkl"
+  ball_stub_bytetrack_path: "tracker_stubs/ball_detections_tracked.pkl"
+  ball_stub_path: "tracker_stubs/ball_detections.pkl"
+  tracknet_stub_path: "tracker_stubs/ball_detections_tracknet.pkl"
+
+stubs:
+  # OFF by default, deliberately. A stub is a cache of one specific video's detections;
+  # loading it while analysing a different video silently produces confident nonsense.
+  # For repeated runs on the same clip use configs/dev.yaml, which turns these on.
+  use_player_stubs: false   # true = load from disk (fast dev), false = rerun YOLO
+  use_ball_stubs: false     # true = load cached TrackNet detections (fast rerender)
+
+detection:
+  player_confidence: 0.7
+  ball_confidence: 0.6
+  shot_player_distance_px: 300  # ball must be within this many px of a player to count as a shot (not a bounce)
+
+session:
+  # Rally frames one `tennis-vision session` run may spend. At the measured ~0.63 s/frame
+  # on an RTX 4060, 5400 frames (~3 minutes of play) is roughly 55 minutes of GPU.
+  #
+  # This is a POLICY choice, not a measurement: the service runs one analysis at a time
+  # because it has one GPU, so this bounds how long a single session upload may occupy it.
+  # A 10-minute session can easily contain more rallies than this covers — every rally found
+  # is reported either way, and the ones that did not fit carry `skipped_budget`. Raise it on
+  # dedicated hardware. See session.py.
+  frame_budget: 5400
+
+shot_classifier:
+  volley_distance_threshold: 40   # px from net on mini-court (was 150 - was broken)
+  smash_height_threshold: 0.7     # ball_y delta > this fraction of mini-court height
+  net_y_position_relative: 0.5    # net sits at 50% of mini-court height
+
+logging:
+  level: "INFO"          # DEBUG | INFO | WARNING
+  write_to_file: true    # also write to logs/run_<timestamp>.log

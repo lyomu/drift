@@ -12,7 +12,7 @@ import {
 } from 'class-validator';
 import { CoachLevel } from '@prisma/client';
 
-class CoachFieldsDto {
+export class CoachFieldsDto {
   @IsOptional()
   @IsString()
   @MaxLength(3000)

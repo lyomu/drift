@@ -1,7 +1,8 @@
 import Link from "next/link";
 
-import { SiteFooter } from "@/components/site-footer";
-import { SiteHeader } from "@/components/site-header";
+import { legalLinks } from "@/lib/content";
+
+import styles from "./legal-layout.module.css";
 
 type LegalSection = { id: string; title: string };
 
@@ -12,49 +13,96 @@ type LegalLayoutProps = {
   children: React.ReactNode;
 };
 
-/** The legal routes share a quiet, long-form reading surface. */
+/** The legal routes share a branded long-form reading surface. */
 export function LegalLayout({ title, summary, sections, children }: LegalLayoutProps) {
   return (
-    <div className="min-h-screen bg-[var(--color-background)]">
-      <SiteHeader minimal />
+    <div className={styles.legalSurface}>
+      <header className={styles.header}>
+        <Link className={styles.brand} href="/" aria-label="Drift home">
+          <span className={styles.brandBall} aria-hidden="true" />
+          <span>DRIFT</span>
+        </Link>
+        <nav className={styles.nav} aria-label="Primary navigation">
+          <Link href="/#play">FOR PLAYERS</Link>
+          <Link href="/#clubs">FOR CLUBS</Link>
+          <Link href="/#training">FOR COACHES</Link>
+        </nav>
+        {/* The CTA is labelled GET THE APP, so it goes to the landing page's
+            download section (`#download`), not the waitlist form. Same
+            convention as the `/#play`, `/#clubs` section links above. */}
+        <Link className={styles.appLink} href="/#download">
+          GET THE APP <Arrow />
+        </Link>
+      </header>
+
       <main>
-        <section className="bg-[var(--color-primary-dark)] text-white" data-on-primary>
-          <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-16">
-            <p className="text-sm font-semibold text-white/80">Drift Tennis legal</p>
-            <h1 className="mt-3 max-w-3xl text-4xl font-bold leading-tight text-balance sm:text-5xl">{title}</h1>
-            <p className="mt-5 max-w-2xl leading-relaxed text-white/90">{summary}</p>
-            <p className="mt-7 text-sm text-white/75">Effective 8 September 2026 · Version 1.0</p>
+        <section className={styles.hero}>
+          <div className={styles.heroImage} aria-hidden="true" />
+          <div className={styles.heroShade} aria-hidden="true" />
+          <div className={`${styles.inner} ${styles.heroContent}`}>
+            <p className={styles.kicker}>DRIFT TENNIS LEGAL</p>
+            <h1>{title}</h1>
+            <p>{summary}</p>
+            <span>Effective 8 September 2026 | Version 1.0</span>
           </div>
         </section>
 
-        <div className="mx-auto grid max-w-6xl gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[12rem_minmax(0,46rem)] lg:gap-16 lg:py-16">
-          <aside className="lg:sticky lg:top-8 lg:h-fit">
-            <p className="text-sm font-semibold text-[var(--color-text-primary)]">On this page</p>
-            <nav aria-label={`${title} contents`} className="mt-3">
-              <ol className="space-y-2 border-l border-[var(--color-border)] pl-4 text-sm">
+        <div className={`${styles.inner} ${styles.contentGrid}`}>
+          <aside className={styles.contents}>
+            <p>ON THIS PAGE</p>
+            <nav aria-label={`${title} contents`}>
+              <ol>
                 {sections.map((section) => (
                   <li key={section.id}>
-                    <a className="text-[var(--color-text-secondary)] hover:text-[var(--color-primary-dark)]" href={`#${section.id}`}>
-                      {section.title}
-                    </a>
+                    <a href={`#${section.id}`}>{section.title}</a>
                   </li>
                 ))}
               </ol>
             </nav>
           </aside>
+
           <article className="legal-copy min-w-0">{children}</article>
         </div>
 
-        <section className="border-t border-[var(--color-border)] bg-[var(--color-surface)]">
-          <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-            <p className="font-semibold">Questions about your information?</p>
-            <p className="mt-2 text-sm leading-relaxed text-[var(--color-text-secondary)]">
+        <section className={styles.supportBand}>
+          <div className={styles.inner}>
+            <p>Questions about your information?</p>
+            <p>
               Email <a href="mailto:drift@einsbrand.com">drift@einsbrand.com</a>. You can also read our <Link href="/privacy-policy">Privacy Policy</Link> and <Link href="/data-privacy">Data Privacy Notice</Link>.
             </p>
           </div>
         </section>
       </main>
-      <SiteFooter />
+
+      <footer className={styles.footer} id="footer">
+        <div className={`${styles.inner} ${styles.footerGrid}`}>
+          <div>
+            <strong>DRIFT</strong>
+            <p>Find your next rally.</p>
+          </div>
+          <nav aria-label="Legal">
+            <b>LEGAL</b>
+            {legalLinks.map((link) => (
+              <Link href={link.href} key={link.href}>
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+          <div>
+            <b>CONTACT</b>
+            <a href="mailto:serve@driftsports.app">serve@driftsports.app</a>
+          </div>
+        </div>
+        <p className={`${styles.inner} ${styles.copyright}`}>© 2026 Drift Sports. Built for the next point.</p>
+      </footer>
     </div>
+  );
+}
+
+function Arrow() {
+  return (
+    <svg aria-hidden="true" className={styles.arrow} viewBox="0 0 16 16" fill="none">
+      <path d="M3 13 13 3M6 3h7v7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }

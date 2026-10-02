@@ -11,7 +11,7 @@ export const en: Dictionary = {
   meta: {
     title: "Drift Tennis · Find tennis players, play real leagues",
     description:
-      "Find tennis and padel opponents at your level, agree the match, confirm results together and build a rating you can trust. Free to join. Android first.",
+      "Find tennis and padel opponents at your level, agree the match, confirm results together and build a rating you can trust. Free to join. Tennis first, padel follows.",
   },
   header: {
     sectionsAria: "Sections",
@@ -34,7 +34,7 @@ export const en: Dictionary = {
     body: "Built for racket sports, Drift Tennis finds you opponents at your level, schedules the match, records the result both players confirm, and turns your season into a rating you can trust. Tennis leads, padel runs on the same rails, and both live in one app instead of a booking site, three WhatsApp groups and a spreadsheet ladder.",
     ctaPrimary: "Join the waitlist",
     ctaSecondary: "How a season works ↓",
-    freeNote: "Free to join while we get going. Android first, iOS follows.",
+    freeNote: "Free to join while we get going. Tennis first, padel follows.",
   },
   loopStrip: {
     heading: "One loop, five stages, and you re-enter it every week",
@@ -213,7 +213,7 @@ export const en: Dictionary = {
     title: "Your season starts with one match",
     body: "Sign up, take the assessment, and Drift does the rest: opponents at your level, the fixture on your calendar, and a rating that moves only when results are confirmed.",
     cta: "Join the waitlist",
-    note: "Free to join while we get going. Android first, iOS follows. The app stores are not live yet, so the waitlist is how you hear about it first.",
+    note: "Free to join while we get going. Tennis first, padel follows. The app stores are not live yet, so the waitlist is how you hear about it first.",
   },
   appScreens: {
     illustrative: "Illustrative app screens, not real player data.",
@@ -263,8 +263,8 @@ export const en: Dictionary = {
   waitlist: {
     eyebrow: "Before the first serve",
     title: "Be there for round one",
-    body: "Drift Tennis launches on Android first, with iOS to follow, and it is free to join and free to play while we get going. Tennis leads, padel is there too. Leave your name and email and we'll send launch news, internal product updates and the occasional Drift Tennis offer. You can opt out of non-essential emails whenever you want.",
-    metaDescription: "Join the Drift Tennis waitlist and we’ll email you at launch. Free to join, Android first and iOS to follow. Tennis leads, padel is there too.",
+    body: "Drift Tennis launches with tennis first and padel to follow, and it is free to join and free to play while we get going. Leave your name and email and we'll send launch news, internal product updates and the occasional Drift Tennis offer. You can opt out of non-essential emails whenever you want.",
+    metaDescription: "Join the Drift Tennis waitlist and we’ll email you at launch. Free to join, tennis first and padel to follow.",
     note: "We do not sell or share your email for another business’s marketing.",
     audiences: [
       { value: "PLAYER", label: "A player", hint: "I want to play more tennis or padel" },

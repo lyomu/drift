@@ -54,13 +54,13 @@ export function LocaleSwitcher({ current }: { current: Locale }) {
     return () => document.removeEventListener("pointerdown", handlePointerDown);
   }, []);
 
-  // Strip this page's own prefix ("/fr", "/es") to get the page path; English
-  // is canonical at the root and the rewritten English pages see the original
-  // unprefixed path, so no stripping is needed there.
+  // Strip any locale prefix to get the sibling page path. The proxy can expose
+  // an internal `/en/...` rewrite to `usePathname`, especially on the waitlist
+  // host, so English must be stripped as well as the visible `/fr` and `/es`.
   const segments = pathname.split("/");
   const first = segments[1];
   const unprefixed =
-    first === "fr" || first === "es"
+    LOCALES.some((locale) => locale === first)
       ? `/${segments.slice(2).join("/")}`.replace(/\/+$/, "") || "/"
       : pathname;
   const suffix = unprefixed === "/" ? "" : unprefixed;

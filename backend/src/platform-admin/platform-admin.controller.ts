@@ -26,6 +26,7 @@ import {
   RuleDisputeDto,
   UpdateReportDto,
   UpdateUserStatusDto,
+  UpdateUserProfileDto,
   UpdateUserVerificationDto,
   UpsertNewsSourceDto,
 } from './dto/platform-admin.dto';
@@ -132,6 +133,37 @@ export class PlatformAdminController {
 
   @UseGuards(PlatformGuard, PlatformPermissionGuard)
   @RequirePlatformPermission(PlatformPermission.USERS_MANAGE)
+  @Patch('users/:id/profile')
+  updateUserProfile(
+    @Req() req: { user: { adminId: string } },
+    @Param('id') id: string,
+    @Body() dto: UpdateUserProfileDto,
+  ) {
+    return this.platform.updateUserProfile(req.user.adminId, id, dto);
+  }
+
+  @UseGuards(PlatformGuard, PlatformPermissionGuard)
+  @RequirePlatformPermission(PlatformPermission.USERS_MANAGE)
+  @Post('users/:id/delete')
+  deleteUser(
+    @Req() req: { user: { adminId: string } },
+    @Param('id') id: string,
+  ) {
+    return this.platform.setUserDeleted(req.user.adminId, id);
+  }
+
+  @UseGuards(PlatformGuard, PlatformPermissionGuard)
+  @RequirePlatformPermission(PlatformPermission.USERS_MANAGE)
+  @Post('users/:id/restore')
+  restoreUser(
+    @Req() req: { user: { adminId: string } },
+    @Param('id') id: string,
+  ) {
+    return this.platform.restoreDeletedUser(req.user.adminId, id);
+  }
+
+  @UseGuards(PlatformGuard, PlatformPermissionGuard)
+  @RequirePlatformPermission(PlatformPermission.USERS_MANAGE)
   @Patch('users/:id/verification')
   setUserVerification(
     @Req() req: { user: { adminId: string } },
@@ -150,6 +182,13 @@ export class PlatformAdminController {
     @Param('id') id: string,
   ) {
     return this.platform.revokeUserSessions(req.user.adminId, id);
+  }
+
+  @UseGuards(PlatformGuard, PlatformPermissionGuard)
+  @RequirePlatformPermission(PlatformPermission.USERS_MANAGE)
+  @Get('users/:id/activity')
+  getUserActivity(@Param('id') id: string) {
+    return this.platform.getUserActivity(id);
   }
 
   @UseGuards(PlatformGuard, PlatformPermissionGuard)

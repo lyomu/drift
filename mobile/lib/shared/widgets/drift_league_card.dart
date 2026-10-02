@@ -1,124 +1,85 @@
 import 'package:flutter/material.dart';
 
-import '../../core/theme/drift_colors.dart';
-import '../../core/theme/drift_typography.dart';
 import '../../features/competitions/data/competitions_repository.dart';
-import 'drift_soft_card.dart';
+import 'drift_competition_card.dart';
 
-/// League Card — the redesign's gradient league tile (`App.tsx`
-/// CompeteLeaguesTab): brand gradient, name, format pill, description.
+/// League Card (redesign 2026-10). White card with a trophy tile, the
+/// league's name, its format, where it is played and how many have enrolled,
+/// plus a Join / Joined action.
+///
+/// The gradient tile this replaces carried the name and a format pill and
+/// nothing else. The fields behind the new lines were already on the list
+/// payload (`enrolledCount`) or were added to it for this card
+/// (`clubName`, `viewerRegistrationStatus`); anything the API does not send is
+/// simply not rendered, so a league with no club shows no location row rather
+/// than a placeholder.
+///
+/// The level band beside the format is advisory and never gates registration
+/// (see `LEAGUE_LEVEL_BAND_SPEC.md`); a league with no band set reads as
+/// "All levels", which is both the default and the honest answer.
 class DriftLeagueCard extends StatelessWidget {
-  const DriftLeagueCard({super.key, required this.league, this.onTap});
+  const DriftLeagueCard({
+    super.key,
+    required this.league,
+    this.accentIndex = 0,
+    this.onTap,
+    this.onJoin,
+  });
 
   final League league;
+
+  /// Position in the list, which picks the tile's accent.
+  final int accentIndex;
+
   final VoidCallback? onTap;
+
+  /// Defaults to [onTap] — registration happens on the league's own screen,
+  /// so the button and the card lead to the same place unless a caller
+  /// wires something else.
+  final VoidCallback? onJoin;
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<DriftColors>()!;
-    final type = Theme.of(context).extension<DriftTypography>()!;
+    final accent = driftCompetitionAccent(accentIndex);
+    final joined = league.viewerHasPlace;
+    final enrolled = league.enrolledCount;
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: DriftSoftCard.shadow,
+    return DriftCompetitionCard(
+      leading: DriftCompetitionIconTile(
+        icon: Icons.emoji_events_rounded,
+        accent: accent,
       ),
-      child: Material(
-        borderRadius: BorderRadius.circular(16),
-        clipBehavior: Clip.antiAlias,
-        color: colors.primary,
-        child: InkWell(
-          onTap: onTap,
-          child: Ink(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [colors.primary, colors.primaryDark],
-              ),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          league.name,
-                          style: type.h4.copyWith(color: Colors.white),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Text(
-                          league.format == 'DOUBLES' ? 'Doubles' : 'Singles',
-                          style: type.caption.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (league.description != null &&
-                      league.description!.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      league.description!,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: type.bodySmall.copyWith(
-                        color: Colors.white.withValues(alpha: 0.8),
-                        height: 1.45,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
+      title: league.name,
+      badge: league.format == 'DOUBLES' ? 'Doubles' : 'Singles',
+      badgeAccent: accent,
+      meta: league.levelBandLabel,
+      details: [
+        if (league.clubName != null)
+          DriftCompetitionDetail(
+            icon: Icons.location_on,
+            label: league.clubName!,
           ),
-        ),
+        if (enrolled != null)
+          DriftCompetitionDetail(
+            icon: Icons.group,
+            label: league.capacity == null
+                ? '$enrolled ${enrolled == 1 ? 'member' : 'members'}'
+                : '$enrolled/${league.capacity} members',
+          ),
+      ],
+      action: DriftCompetitionActionButton(
+        label: joined
+            ? (league.viewerRegistrationStatus ==
+                      SeasonRegistrationStatus.waitlisted
+                  ? 'Waitlisted'
+                  : 'Joined')
+            : 'Join',
+        style: joined
+            ? DriftCompetitionActionStyle.selected
+            : DriftCompetitionActionStyle.filled,
+        onTap: onJoin ?? onTap,
       ),
-    );
-  }
-}
-
-/// Season Card — a single season row inside League Detail.
-class DriftSeasonCard extends StatelessWidget {
-  const DriftSeasonCard({super.key, required this.season, this.onTap});
-
-  final LeagueSeasonRef season;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final type = Theme.of(context).extension<DriftTypography>()!;
-    final colors = Theme.of(context).extension<DriftColors>()!;
-
-    return DriftSoftCard(
       onTap: onTap,
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              season.label,
-              style: type.body.copyWith(fontWeight: FontWeight.w600),
-            ),
-          ),
-          Icon(Icons.chevron_right, color: colors.textSecondary),
-        ],
-      ),
     );
   }
 }

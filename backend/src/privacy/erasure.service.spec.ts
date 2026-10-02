@@ -19,6 +19,7 @@ function createTx(): Tx {
     tennisProfile: model(),
     padelProfile: model(),
     coachProfile: model(),
+    coachApplication: model(),
     availabilitySlot: model(),
     message: model(),
     matchReflection: model(),
@@ -28,19 +29,34 @@ function createTx(): Tx {
     savedStory: model(),
     dismissedHomeCard: model(),
     clubPostReaction: model(),
+    videoAnalysisJob: {
+      ...model(),
+      findMany: jest.fn().mockResolvedValue([]),
+    },
+  };
+}
+
+function createVideoStorage() {
+  return {
+    save: jest.fn(),
+    read: jest.fn(),
+    delete: jest.fn().mockResolvedValue(undefined),
+    localPath: jest.fn(),
   };
 }
 
 describe('ErasureService', () => {
   let service: ErasureService;
   let tx: Tx;
+  let videoStorage: ReturnType<typeof createVideoStorage>;
 
   const USER = 'user-1';
   const REQUEST = 'req-1';
   const marker = redactionMarker(REQUEST);
 
   beforeEach(async () => {
-    service = new ErasureService();
+    videoStorage = createVideoStorage();
+    service = new ErasureService(videoStorage as never);
     tx = createTx();
     await service.eraseUser(tx as unknown as Prisma.TransactionClient, USER, REQUEST);
   });
@@ -167,5 +183,109 @@ describe('ErasureService.dueAt', () => {
     const from = new Date('2026-09-03T00:00:00.000Z');
     ErasureService.dueAt(from);
     expect(from.toISOString()).toBe('2026-09-03T00:00:00.000Z');
+  });
+});
+
+describe('ErasureService and uploaded video', () => {
+  const USER = 'user-1';
+  const REQUEST = 'req-1';
+
+  function createTxWithJobs(jobs: { storageKey: string | null }[]) {
+    const model = () => ({
+      update: jest.fn(),
+      updateMany: jest.fn(),
+      deleteMany: jest.fn(),
+    });
+    const tx: Record<string, Record<string, jest.Mock>> = {
+      user: model(),
+      userPhotoAsset: model(),
+      socialIdentity: model(),
+      deviceToken: model(),
+      verificationCode: model(),
+      refreshToken: model(),
+      tennisProfile: model(),
+      padelProfile: model(),
+      coachProfile: model(),
+    coachApplication: model(),
+      availabilitySlot: model(),
+      message: model(),
+      matchReflection: model(),
+      supportTicket: model(),
+      playerReport: model(),
+      notification: model(),
+      savedStory: model(),
+      dismissedHomeCard: model(),
+      clubPostReaction: model(),
+      videoAnalysisJob: {
+        ...model(),
+        findMany: jest.fn().mockResolvedValue(jobs),
+      },
+    };
+    return tx;
+  }
+
+  function storageMock() {
+    return {
+      save: jest.fn(),
+      read: jest.fn(),
+      delete: jest.fn().mockResolvedValue(undefined),
+      localPath: jest.fn(),
+    };
+  }
+
+  it('deletes the video files, not only the rows', async () => {
+    // The row delete alone leaves footage of the erased person on disk. This is the
+    // first erased model whose payload lives outside Postgres, so it is the first
+    // time the two can come apart.
+    const storage = storageMock();
+    const tx = createTxWithJobs([
+      { storageKey: 'ab/one.mp4' },
+      { storageKey: 'cd/two.mp4' },
+    ]);
+
+    await new ErasureService(storage as never).eraseUser(
+      tx as unknown as Prisma.TransactionClient,
+      USER,
+      REQUEST,
+    );
+
+    expect(tx.videoAnalysisJob.deleteMany).toHaveBeenCalledWith({
+      where: { userId: USER },
+    });
+    expect(storage.delete).toHaveBeenCalledWith('ab/one.mp4');
+    expect(storage.delete).toHaveBeenCalledWith('cd/two.mp4');
+  });
+
+  it('skips jobs whose video was already discarded', async () => {
+    // A refused clip has its bytes deleted at upload time and its storageKey nulled.
+    const storage = storageMock();
+    const tx = createTxWithJobs([{ storageKey: null }]);
+
+    await new ErasureService(storage as never).eraseUser(
+      tx as unknown as Prisma.TransactionClient,
+      USER,
+      REQUEST,
+    );
+
+    expect(storage.delete).not.toHaveBeenCalled();
+  });
+
+  it('completes the erasure even when a file cannot be deleted', async () => {
+    // Failing the whole erasure because one file is stuck would leave far more
+    // personal data in place than it removes. The failure is logged for hand
+    // cleanup instead.
+    const storage = storageMock();
+    storage.delete.mockRejectedValue(new Error('disk gone'));
+    const tx = createTxWithJobs([{ storageKey: 'ab/one.mp4' }]);
+
+    await expect(
+      new ErasureService(storage as never).eraseUser(
+        tx as unknown as Prisma.TransactionClient,
+        USER,
+        REQUEST,
+      ),
+    ).resolves.toBeUndefined();
+
+    expect(tx.user.update).toHaveBeenCalled();
   });
 });

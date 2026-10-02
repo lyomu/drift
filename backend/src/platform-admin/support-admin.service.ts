@@ -9,6 +9,7 @@ import {
   PrivacyRequestStatus,
   PrivacyRequestType,
   Prisma,
+  SupportTicketCategory,
   SupportTicketPriority,
   SupportTicketStatus,
 } from '@prisma/client';
@@ -74,16 +75,19 @@ export class SupportAdminService {
   async listTickets(query: {
     status?: string;
     priority?: string;
+    category?: string;
     assignedToId?: string;
     search?: string;
   }) {
     const status = this.enumValue(SupportTicketStatus, query.status);
     const priority = this.enumValue(SupportTicketPriority, query.priority);
+    const category = this.enumValue(SupportTicketCategory, query.category);
     const search = query.search?.trim();
     const tickets = await this.prisma.supportTicket.findMany({
       where: {
         ...(status ? { status } : {}),
         ...(priority ? { priority } : {}),
+        ...(category ? { category } : {}),
         ...(query.assignedToId === 'UNASSIGNED'
           ? { assignedToId: null }
           : query.assignedToId

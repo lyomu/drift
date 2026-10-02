@@ -68,21 +68,18 @@ Every status colour pairs with an icon or label — e.g. a disputed match shows 
 
 ## 3. Typography
 
-**Two-family pairing:**
+**Single-family system:**
 
-- **Display typeface — Sharp Sans Display.** Carries headlines, screen titles, section headers, and large statistics/scores — the moments where Drift needs an athletic, confident voice (scoreboards, suggested-level reveals, standings).
-- **Body/UI typeface — Outfit.** Carries everything read at length or interacted with: body copy, labels, buttons, form fields, captions, navigation.
+- **Official typeface — Outfit.** Carries headlines, screen titles, section headers, large statistics/scores, body copy, labels, buttons, form fields, captions, and navigation.
 
-This replaces the earlier single-typeface direction (Inter) established in the original brief — the two-family pairing gives headlines a distinct, sportier presence while keeping UI chrome and reading text in a clean, highly-legible geometric sans.
-
-> **Open licensing dependency:** Sharp Sans Display is a commercial typeface (Sharp Type foundry) and requires a purchased license (desktop + web-font license covering the app's expected reach) before it can ship in production Flutter/Next.js builds. **Until that license is secured, use [Space Grotesk](https://fonts.google.com/specimen/Space+Grotesk) (SIL Open Font License, free) as the display-family fallback** — it shares Sharp Sans Display's geometric, slightly technical character closely enough that no rework is needed when the licensed font is dropped in. Outfit (SIL OFL) has no licensing dependency and can be used immediately. Treat "acquire the Sharp Sans Display license" as a P0 dependency to track in Document 7, not a detail to forget once build starts.
+This replaces the earlier two-family direction. Outfit is the official product voice across Flutter, the admin dashboards, and the public website, avoiding a licensing dependency and keeping every surface visually consistent.
 
 | Style | Family | Size / Line-height | Weight | Usage |
 |---|---|---|---|---|
-| Display | Sharp Sans Display *(fallback: Space Grotesk)* | 34 / 40 | 700 | Rare hero moments (onboarding "Let's understand your game") |
-| H1 | Sharp Sans Display *(fallback: Space Grotesk)* | 28 / 34 | 700 | Screen titles |
-| H2 | Sharp Sans Display *(fallback: Space Grotesk)* | 24 / 30 | 700 | Section headers |
-| H3 | Sharp Sans Display *(fallback: Space Grotesk)* | 20 / 26 | 600 | Card group headers |
+| Display | Outfit | 34 / 40 | 700 | Rare hero moments (onboarding "Let's understand your game") |
+| H1 | Outfit | 28 / 34 | 700 | Screen titles |
+| H2 | Outfit | 24 / 30 | 700 | Section headers |
+| H3 | Outfit | 20 / 26 | 600 | Card group headers |
 | H4 | Outfit | 18 / 24 | 600 | Sub-section headers |
 | Title | Outfit | 16 / 22 | 600 | Card titles, list item primary text |
 | Subtitle | Outfit | 14 / 20 | 500 | Card secondary text |
@@ -92,12 +89,12 @@ This replaces the earlier single-typeface direction (Inter) established in the o
 | Label | Outfit | 13 / 16 | 600 | Form labels, tab labels |
 | Caption | Outfit | 12 / 16 | 400 | Timestamps, fine print |
 | Button | Outfit | 15 / 20 | 600 | Button text |
-| Statistics / Numbers | Sharp Sans Display *(fallback: Space Grotesk)* | 28-40 / 1.1, tabular-nums | 700 | Ratings, scores, standings — always tabular figures so columns of numbers align |
+| Statistics / Numbers | Outfit | 28-40 / 1.1, tabular-nums | 700 | Ratings, scores, standings — always tabular figures so columns of numbers align |
 
 Rules:
 - Statistics and scores always use a tabular-figure numeral style so leaderboards/standings align vertically.
-- **H4 and below stay in Outfit even inside a heavily-headlined screen** (e.g., a card group header uses H3/Sharp Sans Display, but the card titles beneath it use Title/Outfit) — this keeps the display face special-occasion rather than diluted across every level of hierarchy.
-- Fallback stack beneath both families: `ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`.
+- Outfit carries every text role; hierarchy comes from size, weight, spacing, and tabular figures rather than a second family.
+- Fallback stack beneath Outfit: `ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`.
 
 ## 4. Spacing System
 
@@ -195,7 +192,7 @@ Tokens are defined once, platform-neutral (as YAML/JSON in the eventual implemen
 | Token category | Flutter | Next.js |
 |---|---|---|
 | Colour | `ThemeExtension<DriftColors>` fields matching semantic token names (`primary`, `primarySurface`, `textSecondary`, etc.), consumed via `Theme.of(context).extension<DriftColors>()` | CSS custom properties (`--color-primary`, `--color-text-secondary`, ...) + Tailwind theme extension referencing the same variables |
-| Typography | `TextTheme` / custom `ThemeExtension<DriftType>` matching the scale in §3, with both `fontFamily: 'SharpSansDisplay'` (display styles) and `fontFamily: 'Outfit'` (body/UI styles) registered as app fonts (`pubspec.yaml`) | Tailwind `fontSize`/`lineHeight` scale + two `@font-face` declarations (`Sharp Sans Display`, `Outfit`), exposed as `font-display` / `font-body` Tailwind font-family utilities |
+| Typography | `TextTheme` / custom `ThemeExtension<DriftType>` matching the scale in §3, with `fontFamily: 'Outfit'` registered as the app font (`pubspec.yaml`) | Tailwind `fontSize`/`lineHeight` scale + one Outfit font source, exposed through both `font-display` and `font-body` utilities |
 | Spacing | Static `EdgeInsets`/`SizedBox` constants named `Spacing.s2`, `Spacing.s4`, etc. | Tailwind spacing scale aligned to the same 8px steps |
 | Radius/Elevation | `BorderRadius`/`BoxShadow` constants | Tailwind `borderRadius`/`boxShadow` tokens |
 | Breakpoints | N/A (mobile-only) | Tailwind `screens` config matching §5 |

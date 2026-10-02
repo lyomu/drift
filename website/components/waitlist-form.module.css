@@ -1,0 +1,88 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 560px;
+  margin-top: 68px;
+  padding: 28px;
+  border-radius: 20px;
+  background: #103028;
+}
+
+.formHeader { display: grid; gap: 4px; }
+.formHeader strong { color: #f6f7f2; font-size: 18px; font-weight: 600; line-height: 24px; }
+.formHeader span { color: #a6beb5; font-size: 14px; line-height: 20px; }
+
+.field, .roleField { display: grid; min-width: 0; gap: 8px; margin: 0; padding: 0; border: 0; }
+.field label, .roleField legend { padding: 0; color: #f6f7f2; font-size: 13px; font-weight: 600; line-height: 18px; }
+.field label span { color: #8fa9a0; font-weight: 400; }
+
+.control {
+  width: 100%;
+  height: 52px;
+  padding: 0 16px;
+  border: 1px solid #1c3931;
+  border-radius: 10px;
+  background: #163b31;
+  color: #f6f7f2;
+  font: 400 15px/1 inherit;
+}
+
+.control::placeholder { color: #8fa9a0; opacity: 1; }
+.control:focus { outline: 2px solid #c7f34d; outline-offset: 2px; }
+.control:disabled { cursor: not-allowed; opacity: .6; }
+.select { padding-right: 40px; }
+
+.roleOptions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.roleOption {
+  position: relative;
+  display: grid;
+  min-height: 82px;
+  gap: 3px;
+  padding: 16px;
+  border: 1px solid #1c3931;
+  border-radius: 12px;
+  background: #0d2721;
+  cursor: pointer;
+}
+.roleOption:has(input:checked) { border: 1.5px solid #c7f34d; background: #163b31; }
+.roleOption:focus-within { outline: 2px solid #c7f34d; outline-offset: 2px; }
+.roleOption input { position: absolute; opacity: 0; pointer-events: none; }
+.roleTitle { color: #f6f7f2; font-size: 14px; font-weight: 600; line-height: 18px; }
+.roleHint { color: #8fa9a0; font-size: 12px; line-height: 16px; }
+
+.cityLevel { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.error { min-height: 0; margin: -6px 0 0; color: #ffb4a7; font-size: 13px; line-height: 18px; }
+.error:not(:empty) { min-height: 18px; }
+
+.submit {
+  width: 100%;
+  height: 56px;
+  border: 0;
+  border-radius: 28px;
+  background: #c7f34d;
+  color: #07120f;
+  font: 700 14px/1 inherit;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.submit:hover { background: #d4ff62; }
+.submit:focus-visible { outline: 2px solid #f6f7f2; outline-offset: 3px; }
+.submit:disabled { cursor: wait; opacity: .7; }
+.submit span { margin-left: 6px; }
+
+.privacy { margin: -6px 0 0; color: #8fa9a0; font-size: 12px; line-height: 18px; }
+.privacy a { color: #c7f34d; text-decoration: none; }
+.privacy a:hover { text-decoration: underline; }
+
+.success { width: 560px; margin-top: 68px; padding: 28px; border-radius: 20px; background: #103028; }
+.success > span { color: #c7f34d; font-size: 13px; font-weight: 700; letter-spacing: .085em; }
+.successTitle { margin: 18px 0 0; color: #f6f7f2; font-size: 24px; font-weight: 600; line-height: 30px; }
+.successBody { margin: 10px 0 0; color: #a6beb5; font-size: 15px; line-height: 22px; }
+
+@media (max-width: 620px) {
+  .form, .success { width: 100%; margin-top: 44px; padding: 20px; border-radius: 16px; }
+  .roleOptions, .cityLevel { grid-template-columns: 1fr; }
+  .roleOption { min-height: 72px; }
+}

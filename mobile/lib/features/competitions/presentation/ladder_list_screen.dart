@@ -2,13 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_typography.dart';
-import '../../../shared/widgets/drift_pill.dart';
-import '../../../shared/widgets/drift_soft_card.dart';
+import '../../../shared/widgets/drift_competition_card.dart';
 import '../data/expansion_repository.dart';
 
-/// Ladders segment — browse and open the rung standings.
+const _muted = Color(0xFF94A3B8);
+
+/// Ladders segment — browse and open the rung standings (redesign 2026-10).
+///
+/// The mock's Ladders tab shows one ladder's rungs: ranked rows with medals,
+/// points and a movement delta. That is this app's *ladder detail* screen
+/// (`/compete/ladders/:id`, which already renders the standings table) — the
+/// tab itself is the index of every ladder a player can open, which is the
+/// "two listings" collapse the 2026-08 pass settled on. So the tab keeps its
+/// index role and takes the redesign's card, rather than pinning one
+/// arbitrary ladder's rungs here.
 class LadderListScreen extends ConsumerWidget {
   const LadderListScreen({super.key, this.embedded = false});
 
@@ -18,56 +26,20 @@ class LadderListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final ladders = ref.watch(laddersListProvider);
     final type = Theme.of(context).extension<DriftTypography>()!;
-    final colors = Theme.of(context).extension<DriftColors>()!;
 
     final content = RefreshIndicator(
       onRefresh: () => ref.refresh(laddersListProvider.future),
       child: switch (ladders) {
         AsyncData(:final value) when value.isEmpty => _message(
-          context,
-          'No ladders yet — ask your club to start one.',
+          'No ladders yet. Ask your club to start one.',
         ),
         AsyncData(:final value) => ListView.separated(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           itemCount: value.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 12),
-          itemBuilder: (context, i) {
-            final l = value[i];
-            return DriftSoftCard(
-              onTap: () => context.push('/compete/ladders/${l.id}'),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l.name,
-                          style: type.title.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          l.clubName,
-                          style: type.caption.copyWith(
-                            color: colors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  DriftPill(
-                    label: '${l.entryCount} players',
-                    tone: DriftPillTone.neutral,
-                  ),
-                ],
-              ),
-            );
-          },
+          separatorBuilder: (_, _) => const SizedBox(height: 10),
+          itemBuilder: (context, i) => _LadderCard(ladder: value[i], index: i),
         ),
-        AsyncError() => _message(context, "Couldn't load ladders."),
+        AsyncError() => _message("Couldn't load ladders."),
         _ => const Center(child: CircularProgressIndicator()),
       },
     );
@@ -87,9 +59,7 @@ class LadderListScreen extends ConsumerWidget {
     );
   }
 
-  Widget _message(BuildContext context, String text) {
-    final type = Theme.of(context).extension<DriftTypography>()!;
-    final colors = Theme.of(context).extension<DriftColors>()!;
+  Widget _message(String text) {
     return ListView(
       children: [
         Padding(
@@ -97,10 +67,51 @@ class LadderListScreen extends ConsumerWidget {
           child: Text(
             text,
             textAlign: TextAlign.center,
-            style: type.body.copyWith(color: colors.textSecondary),
+            style: const TextStyle(fontSize: 14, height: 1.4, color: _muted),
           ),
         ),
       ],
+    );
+  }
+}
+
+class _LadderCard extends StatelessWidget {
+  const _LadderCard({required this.ladder, required this.index});
+
+  final LadderSummary ladder;
+  final int index;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = driftCompetitionAccent(index);
+
+    return DriftCompetitionCard(
+      leading: DriftCompetitionIconTile(
+        icon: Icons.stairs_rounded,
+        accent: accent,
+      ),
+      title: ladder.name,
+      details: [
+        // `clubName` is '' when the payload carried no club.
+        if (ladder.clubName.isNotEmpty)
+          DriftCompetitionDetail(
+            icon: Icons.location_on,
+            label: ladder.clubName,
+          ),
+        DriftCompetitionDetail(
+          icon: Icons.group,
+          label:
+              '${ladder.entryCount} '
+              '${ladder.entryCount == 1 ? 'player' : 'players'}',
+        ),
+      ],
+      action: DriftCompetitionActionButton(
+        label: 'View',
+        style: DriftCompetitionActionStyle.filled,
+        accent: accent,
+        onTap: () => context.push('/compete/ladders/${ladder.id}'),
+      ),
+      onTap: () => context.push('/compete/ladders/${ladder.id}'),
     );
   }
 }

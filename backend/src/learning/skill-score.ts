@@ -17,9 +17,13 @@
 import { AssessmentPillar } from '@prisma/client';
 
 /**
- * The seven development dimensions from Doc 3 §8 / Doc 4 §A.7. Excludes
+ * The eight development dimensions from Doc 3 §8 / Doc 4 §A.7. Excludes
  * COMPETITION_EXPERIENCE — the assessment tracks it as an experience
  * signal, not a skill to develop.
+ *
+ * FOOTWORK (added 2026-10) has no assessment questions, so its baseline is
+ * always null and it scores from practice logs alone — which the null-
+ * baseline branch below already handles.
  */
 export const SKILL_DIMENSIONS: AssessmentPillar[] = [
   AssessmentPillar.FOREHAND,
@@ -29,6 +33,7 @@ export const SKILL_DIMENSIONS: AssessmentPillar[] = [
   AssessmentPillar.NET_PLAY,
   AssessmentPillar.MOVEMENT,
   AssessmentPillar.MATCH_PLAY,
+  AssessmentPillar.FOOTWORK,
 ];
 
 const ASSESSMENT_WEIGHT = 0.6;

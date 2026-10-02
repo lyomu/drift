@@ -73,9 +73,26 @@ class _SeasonDetailScreenState extends ConsumerState<SeasonDetailScreen> {
                     children: [
                       Text(value.leagueName, style: type.h2),
                       const SizedBox(height: 12),
-                      DriftPill(
-                        label: value.state.label,
-                        tone: _tone(value.state),
+                      // Format and level sit beside the state so the three
+                      // things a player weighs before registering are in one
+                      // row. The level band is guidance, not a gate.
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          DriftPill(
+                            label: value.state.label,
+                            tone: _tone(value.state),
+                          ),
+                          DriftPill(
+                            label: value.formatLabel,
+                            tone: DriftPillTone.neutral,
+                          ),
+                          DriftPill(
+                            label: value.levelBandLabel,
+                            tone: DriftPillTone.neutral,
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 16),
 

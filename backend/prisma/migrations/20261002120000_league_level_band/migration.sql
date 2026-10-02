@@ -1,0 +1,14 @@
+-- Adds an advisory level band to leagues, so the Compete list card can say
+-- who a league is pitched at (see LEAGUE_LEVEL_BAND_SPEC.md).
+--
+-- Reuses AssessmentBranch rather than introducing a second level scale: it is
+-- already the vocabulary of the onboarding assessment, of labelForLevel (which
+-- renders every player card's level label), and of LearningContent.branch.
+--
+-- Nullable, with no backfill: a null band means "all levels", so every
+-- existing league keeps exactly the meaning it had before this column.
+--
+-- Advisory only. competitions.service.ts register() does not check it; a
+-- player with no level resolves to 0, so a gate here would exclude
+-- un-assessed players from every banded league.
+ALTER TABLE "leagues" ADD COLUMN "levelBand" "AssessmentBranch";

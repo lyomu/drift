@@ -56,6 +56,7 @@ export type UserDetail = {
   id: string;
   email: string | null;
   phone: string | null;
+  phoneOnWhatsApp: boolean;
   firstName: string | null;
   lastName: string | null;
   bio: string | null;
@@ -72,6 +73,10 @@ export type UserDetail = {
     singlesRating: number | null;
     doublesRating: number | null;
     dominantHand: string | null;
+    generalLocation: string | null;
+    latitude: number | null;
+    longitude: number | null;
+    preferredClubName: string | null;
   } | null;
   padelProfile: {
     singlesRating: number | null;
@@ -98,6 +103,14 @@ export type UserDetail = {
     connections: number;
     activeSessions: number;
   };
+};
+
+export type UserActivityEvent = {
+  id: string;
+  action: string;
+  metadata: unknown;
+  createdAt: string;
+  actor: { id: string; name: string; email: string };
 };
 
 export function displayName(user: {

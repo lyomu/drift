@@ -19,6 +19,10 @@ type MockPrisma = {
   tennisProfile: { findUnique: jest.Mock };
   user: { findUnique: jest.Mock };
   dismissedHomeCard: { findMany: jest.Mock; upsert: jest.Mock };
+  // Read by getSummary's activity-streak query. The streak rule itself is
+  // tested in home-progress.spec.ts; here they just need to resolve.
+  practiceSession: { findMany: jest.Mock };
+  match: { findMany: jest.Mock };
 };
 
 function createMockPrisma(): MockPrisma {
@@ -29,6 +33,8 @@ function createMockPrisma(): MockPrisma {
       findMany: jest.fn().mockResolvedValue([]),
       upsert: jest.fn().mockResolvedValue({}),
     },
+    practiceSession: { findMany: jest.fn().mockResolvedValue([]) },
+    match: { findMany: jest.fn().mockResolvedValue([]) },
   };
 }
 
@@ -226,6 +232,36 @@ describe('HomeService', () => {
       const summary = await service.getSummary('user-1');
       expect(summary.level).toBe(3.0);
       expect(summary.levelLabel).toBe('Foundational');
+      // 3.0 sits a third of the way through Foundational (2.5–4.0).
+      expect(summary.levelProgress).toEqual({ nextLevel: 4.0, percent: 33 });
+    });
+
+    it('reports no level progress for a player in the top band', async () => {
+      prisma.tennisProfile.findUnique.mockResolvedValue({
+        userSelectedLevel: 6.0,
+        systemSuggestedLevel: null,
+        singlesRating: null,
+        doublesRating: null,
+        onboardingGoals: [],
+      });
+
+      const service = createService(prisma, []);
+      const summary = await service.getSummary('user-1');
+      expect(summary.levelLabel).toBe('Advanced');
+      expect(summary.levelProgress).toBeNull();
+    });
+
+    it('reports a zero streak when nothing has been logged', async () => {
+      prisma.tennisProfile.findUnique.mockResolvedValue({
+        userSelectedLevel: 3.0,
+        systemSuggestedLevel: null,
+        singlesRating: null,
+        doublesRating: null,
+        onboardingGoals: [],
+      });
+
+      const service = createService(prisma, []);
+      expect((await service.getSummary('user-1')).streakWeeks).toBe(0);
     });
 
     it('reports a null level rather than inventing a default', async () => {

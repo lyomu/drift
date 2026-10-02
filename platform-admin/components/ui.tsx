@@ -341,6 +341,7 @@ export function statusTone(status: string): "neutral" | "success" | "warning" | 
     case "OPEN":
     case "PENDING":
     case "PENDING_REVIEW":
+    case "CHANGES_REQUESTED":
     case "REVIEWING":
     case "PAUSED":
     case "DEGRADED":

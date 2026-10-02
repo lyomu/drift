@@ -4,7 +4,12 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { AccountStatus, OnboardingStep, Prisma } from '@prisma/client';
+import {
+  AccountStatus,
+  ListingVerificationStatus,
+  OnboardingStep,
+  Prisma,
+} from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { blockBetween } from '../common/relationship.util';
 import { demoScope } from '../common/demo-scope';
@@ -90,6 +95,10 @@ export class CoachesService {
     const scope = await demoScope(this.prisma, viewerId);
     const where: Prisma.CoachProfileWhereInput = {
       userId: { notIn: excludedIds },
+      // Only an approved application creates a VERIFIED profile
+      // (CoachApplicationsService.review), so this is the public-visibility
+      // gate: an unreviewed or rejected coach is never discoverable.
+      verificationStatus: ListingVerificationStatus.VERIFIED,
       user: {
         is: {
           accountStatus: AccountStatus.ACTIVE,
@@ -149,7 +158,13 @@ export class CoachesService {
       where: { id: coachId },
       include: coachInclude,
     });
-    if (!coach || coach.user.accountStatus !== AccountStatus.ACTIVE) {
+    if (
+      !coach ||
+      coach.user.accountStatus !== AccountStatus.ACTIVE ||
+      coach.verificationStatus !== ListingVerificationStatus.VERIFIED
+    ) {
+      // A 404 rather than a 403: an unapproved profile should not be
+      // distinguishable from one that does not exist.
       throw new NotFoundException('Coach not found.');
     }
     const blocked = await this.prisma.block.findFirst({
@@ -157,6 +172,62 @@ export class CoachesService {
     });
     if (blocked) throw new NotFoundException('Coach not found.');
     return toCoachDetail(coach);
+  }
+
+  // ------------------------------------------------- the coach's own profile
+
+  /**
+   * An approved coach editing their live listing. Separate from the
+   * application routes on purpose: once approved, edits take effect
+   * immediately rather than re-entering review. The fields reachable here are
+   * the descriptive ones only -- verificationStatus is not among them, so a
+   * coach can never promote their own listing.
+   */
+  async findMine(userId: string) {
+    const coach = await this.prisma.coachProfile.findUnique({
+      where: { userId },
+      include: coachInclude,
+    });
+    if (!coach) throw new NotFoundException('You do not have a coach profile.');
+    return toCoachAdminDetail(coach);
+  }
+
+  async updateMine(userId: string, dto: UpdateCoachDto) {
+    const existing = await this.prisma.coachProfile.findUnique({
+      where: { userId },
+    });
+    if (!existing) {
+      throw new NotFoundException('You do not have a coach profile.');
+    }
+    const update = this.updateData(dto);
+    this.ensurePublicContact({
+      publicEmail:
+        update.publicEmail === undefined
+          ? existing.publicEmail
+          : (update.publicEmail as string | null),
+      publicPhone:
+        update.publicPhone === undefined
+          ? existing.publicPhone
+          : (update.publicPhone as string | null),
+      bookingUrl:
+        update.bookingUrl === undefined
+          ? existing.bookingUrl
+          : (update.bookingUrl as string | null),
+    });
+    await this.prisma.coachProfile.update({
+      where: { id: existing.id },
+      data: update,
+    });
+    return this.findMine(userId);
+  }
+
+  async listMyClubs(userId: string) {
+    const coach = await this.prisma.coachProfile.findUnique({
+      where: { userId },
+      include: coachInclude,
+    });
+    if (!coach) return { clubs: [] };
+    return { clubs: coach.affiliations.map((row) => row.club) };
   }
 
   async listForClub(clubId: string) {

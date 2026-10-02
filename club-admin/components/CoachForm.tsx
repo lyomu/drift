@@ -50,15 +50,26 @@ function Section({
   );
 }
 
+/**
+ * Shared by the club console ("add a coach to my club", by account email) and
+ * the coach workspace ("this is me"). The only structural difference is the
+ * Drift-account field, which is meaningless when a coach is describing
+ * themselves -- they are already signed in.
+ */
 export function CoachForm({
   coach,
   saving,
   onSubmit,
+  mode = "club",
+  submitLabel,
 }: {
   coach?: CoachAdmin;
   saving: boolean;
   onSubmit: (payload: CoachFormPayload) => Promise<void>;
+  mode?: "club" | "self";
+  submitLabel?: string;
 }) {
+  const self = mode === "self";
   const [accountEmail, setAccountEmail] = useState(coach?.accountEmail ?? "");
   const [bio, setBio] = useState(coach?.bio ?? "");
   const [qualifications, setQualifications] = useState(
@@ -111,7 +122,7 @@ export function CoachForm({
         .map((item) => item.trim())
         .filter(Boolean);
     await onSubmit({
-      ...(!coach ? { accountEmail: accountEmail.trim() } : {}),
+      ...(!self && !coach ? { accountEmail: accountEmail.trim() } : {}),
       bio: bio.trim() || null,
       qualifications: cleanLines(qualifications),
       yearsExperience: yearsExperience ? Number(yearsExperience) : null,
@@ -128,18 +139,24 @@ export function CoachForm({
     <form onSubmit={submit} className="flex flex-col gap-5">
       <Section
         title="Profile"
-        description="The coach's Drift account and background."
+        description={
+          self
+            ? "How you introduce yourself to players."
+            : "The coach's Drift account and background."
+        }
       >
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Field label="Drift account email">
-            <Input
-              type="email"
-              required
-              disabled={Boolean(coach)}
-              value={accountEmail}
-              onChange={(event) => setAccountEmail(event.target.value)}
-            />
-          </Field>
+          {!self && (
+            <Field label="Drift account email">
+              <Input
+                type="email"
+                required
+                disabled={Boolean(coach)}
+                value={accountEmail}
+                onChange={(event) => setAccountEmail(event.target.value)}
+              />
+            </Field>
+          )}
           <Field label="Years of coaching experience">
             <Input
               type="number"
@@ -162,7 +179,11 @@ export function CoachForm({
 
       <Section
         title="Coaching"
-        description="What this coach teaches and who they work with."
+        description={
+          self
+            ? "What you teach and who you work with."
+            : "What this coach teaches and who they work with."
+        }
       >
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Field label="Qualifications — one per line">
@@ -207,7 +228,11 @@ export function CoachForm({
 
       <Section
         title="Public contact"
-        description="Only these details appear in the player app. Private account contact information is never exposed."
+        description={
+          self
+            ? "Only these details appear in the player app. Your private account email and phone number are never shown."
+            : "Only these details appear in the player app. Private account contact information is never exposed."
+        }
       >
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <Field label="Public email">
@@ -249,7 +274,9 @@ export function CoachForm({
       </Section>
 
       <Button type="submit" disabled={saving} className="self-start">
-        {saving ? "Saving…" : coach ? "Save coach" : "Add coach"}
+        {saving
+          ? "Saving…"
+          : (submitLabel ?? (coach ? "Save coach" : "Add coach"))}
       </Button>
     </form>
   );

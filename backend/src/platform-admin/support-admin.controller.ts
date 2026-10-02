@@ -39,10 +39,17 @@ export class SupportAdminController {
   tickets(
     @Query('status') status?: string,
     @Query('priority') priority?: string,
+    @Query('category') category?: string,
     @Query('assignedToId') assignedToId?: string,
     @Query('search') search?: string,
   ) {
-    return this.support.listTickets({ status, priority, assignedToId, search });
+    return this.support.listTickets({
+      status,
+      priority,
+      category,
+      assignedToId,
+      search,
+    });
   }
 
   @Post('tickets')

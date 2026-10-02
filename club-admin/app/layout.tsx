@@ -2,13 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { ClubProvider } from "@/lib/club-context";
-
-const dmSans = localFont({
-  src: "./fonts/DMSans-Variable.ttf",
-  variable: "--font-dm-sans",
-  weight: "100 1000",
-  display: "swap",
-});
+import { WorkspaceProvider } from "@/lib/workspace-context";
 
 const outfit = localFont({
   src: "./fonts/Outfit-Variable.ttf",
@@ -18,8 +12,8 @@ const outfit = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Drift Club Admin",
-  description: "Manage your club, leagues, courts, and members on Drift.",
+  title: "Drift Admin",
+  description: "Manage your club or your coaching profile on Drift.",
 };
 
 // Set the saved theme before first paint so a light-mode user on a dark OS
@@ -31,7 +25,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${dmSans.variable} ${outfit.variable} h-full antialiased`}
+      className={`${outfit.variable} h-full antialiased`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
@@ -43,7 +37,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         />
       </head>
       <body className="min-h-full flex flex-col font-body">
-        <ClubProvider>{children}</ClubProvider>
+        <WorkspaceProvider>
+          <ClubProvider>{children}</ClubProvider>
+        </WorkspaceProvider>
       </body>
     </html>
   );

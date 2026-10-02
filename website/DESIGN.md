@@ -39,8 +39,8 @@ token block in `club-admin/src/app/globals.css`.
 - **Light only.** The landing page is read outdoors, on phones, by people
   deciding whether to download an app; the light palette is the scene, not a
   default. No dark variant ships on this surface.
-- **Typography — DM Sans only**, one family for display, headings, body and UI,
-  mirroring the 2026-09 mobile typography decision (`drift_typography.dart`).
+- **Typography — Outfit only**, one family for display, headings, body and UI,
+  mirroring the official platform typography decision (`drift_typography.dart`).
   Letter-spacing is zero everywhere. Numerals in fixtures/standings use
   tabular figures (`font-feature-settings: "tnum"`), matching the app's
   `statistics` style. Display scale may exceed the app's 34px for the hero,

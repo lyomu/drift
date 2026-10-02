@@ -18,6 +18,7 @@ const _skillLabels = {
   'NET_PLAY': 'Net Play',
   'MOVEMENT': 'Movement',
   'MATCH_PLAY': 'Match Play',
+  'FOOTWORK': 'Footwork',
 };
 
 /// Goal List — `foundation/04-screen-inventory.md` §A.7.

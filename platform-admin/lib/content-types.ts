@@ -10,7 +10,8 @@ export type AssessmentPillar =
   | "NET_PLAY"
   | "MOVEMENT"
   | "MATCH_PLAY"
-  | "COMPETITION_EXPERIENCE";
+  | "COMPETITION_EXPERIENCE"
+  | "FOOTWORK";
 
 export const SKILL_OPTIONS: AssessmentPillar[] = [
   "FOREHAND",
@@ -21,6 +22,7 @@ export const SKILL_OPTIONS: AssessmentPillar[] = [
   "MOVEMENT",
   "MATCH_PLAY",
   "COMPETITION_EXPERIENCE",
+  "FOOTWORK",
 ];
 
 export const BRANCH_OPTIONS: AssessmentBranch[] = [

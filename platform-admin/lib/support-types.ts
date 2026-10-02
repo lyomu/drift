@@ -4,6 +4,15 @@ export type SupportTicketCategory = "ACCOUNT" | "BILLING" | "MATCHES" | "CLUBS" 
 export type PrivacyRequestType = "EXPORT" | "DELETION";
 export type PrivacyRequestStatus = "PENDING" | "FULFILLED";
 
+export const SUPPORT_DEPARTMENT_OPTIONS: { value: SupportTicketCategory; label: string }[] = [
+  { value: "ACCOUNT", label: "Account" },
+  { value: "BILLING", label: "Billing" },
+  { value: "MATCHES", label: "Matches" },
+  { value: "CLUBS", label: "Clubs" },
+  { value: "TECHNICAL", label: "Technical" },
+  { value: "OTHER", label: "Other" },
+];
+
 export type SupportUser = {
   id: string;
   email: string | null;
@@ -73,6 +82,10 @@ export type PrivacyRequest = {
 
 export function label(value: string | null | undefined) {
   return value ? value.replaceAll("_", " ") : "None";
+}
+
+export function departmentLabel(value: SupportTicketCategory | string | null | undefined) {
+  return SUPPORT_DEPARTMENT_OPTIONS.find((option) => option.value === value)?.label ?? label(value);
 }
 
 export function personName(person: SupportUser | SupportStaff | null | undefined) {

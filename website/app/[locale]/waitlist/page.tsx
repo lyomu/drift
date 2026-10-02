@@ -1,49 +1,24 @@
-/**
- * The site's one conversion page, one instance per locale.
- *
- * Served at the root of `waitlist.driftsports.app`, not at `/waitlist` on the
- * apex: `proxy.ts` maps that host's `/` onto this route, and the apex path
- * permanently redirects here. The route itself never moved, so this file is
- * still `app/[locale]/waitlist/page.tsx`. Because the page is on another
- * origin, its metadata is absolute (`origin: WAITLIST_URL`) and the header and
- * footer link back to the apex with `absoluteLinks`.
- *
- * Split layout: the form on the left at a comfortable reading measure, a
- * full-height court photograph on the right. The header is rendered in its
- * `minimal` variant because this route has none of the landing page's
- * sections to link to, and a conversion page should not offer five ways to
- * leave. The language switcher stays in the minimal header: picking up the
- * wrong language must always have a visible way out.
- *
- * What the page promises is exactly what the backend does: store the address
- * and send one email at launch. No counts, no queue position, no scarcity
- * (DESIGN.md rule 4; PRODUCT.md forbids numbers that do not exist).
- */
 import type { Metadata } from "next";
-import Image from "next/image";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { SiteFooter } from "@/components/site-footer";
-import { SiteHeader } from "@/components/site-header";
 import { WaitlistForm } from "@/components/waitlist-form";
 import { getDictionary } from "@/lib/content";
+import { outfit } from "@/lib/fonts";
 import { isLocale } from "@/lib/locales";
-import { images } from "@/lib/images";
 import { localizedMetadata } from "@/lib/seo";
-import { WAITLIST_URL } from "@/lib/site";
+import { apexUrl, WAITLIST_URL } from "@/lib/site";
+
+import styles from "./waitlist-page.module.css";
 
 type PageProps = { params: Promise<{ locale: string }> };
 
-export async function generateMetadata({
-  params,
-}: PageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale } = await params;
   if (!isLocale(locale)) return {};
   const t = getDictionary(locale);
   return localizedMetadata(locale, {
     path: "/waitlist",
-    // Served at the root of its own origin, so canonical/hreflang/og:url are
-    // absolute there rather than relative to the apex `metadataBase`.
     origin: WAITLIST_URL,
     title: t.header.joinCta,
     description: t.waitlist.metaDescription,
@@ -54,49 +29,33 @@ export default async function WaitlistPage({ params }: PageProps) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
   const t = getDictionary(locale);
-  const photo = images.waitlist;
 
   return (
-    <>
-      <SiteHeader minimal locale={locale} absoluteLinks />
-      <main>
-        <div className="lg:grid lg:min-h-[calc(100vh-4rem)] lg:grid-cols-[minmax(0,1fr)_minmax(0,38%)]">
-          <div className="mx-auto w-full max-w-3xl px-4 py-14 sm:px-6 lg:max-w-none lg:px-10 lg:py-20 xl:px-16">
-            <div className="mx-auto max-w-3xl">
-              <p className="badge badge-primary enter enter-1">{t.waitlist.eyebrow}</p>
-              <h1 className="court-rule display-lg enter enter-2 mt-4 pb-1">
-                {t.waitlist.title}
-              </h1>
-              <p className="enter enter-3 mt-8 max-w-2xl text-lg leading-relaxed text-[var(--color-text-secondary)]">
-                {t.waitlist.body}
-              </p>
+    <main className={`${styles.waitlist} ${outfit.className}`}>
+      <div className={styles.canvas}>
+        <Link className={styles.brand} href={apexUrl(locale, "/")} aria-label="Drift home">DRIFT</Link>
+        <nav className={styles.navigation} aria-label="Waitlist navigation">
+          <Link className={styles.backLink} href={apexUrl(locale, "/")}>← BACK TO DRIFT</Link>
+          <span className={styles.accessPill}>EARLY ACCESS</span>
+        </nav>
 
-              <div className="enter enter-4 mt-8">
-                <WaitlistForm t={t.waitlist} />
-              </div>
-            </div>
-          </div>
+        <section className={styles.copy} aria-labelledby="waitlist-title">
+          <p className={styles.eyebrow}>PLAY MORE. BELONG MORE.</p>
+          <h1 id="waitlist-title">Your next rally is waiting.</h1>
+          <p className={styles.description}>Drift helps you find compatible players, join real seasons, and keep your tennis life moving forward.</p>
+          <WaitlistForm t={t.waitlist} />
+          <p className={styles.footnote}>A better way to play tennis starts with one honest match.</p>
+        </section>
 
-          {/* Decorative on this route — the page's meaning is entirely in the
-              copy and the form beside it, so the photograph is hidden from
-              assistive tech rather than described twice. */}
-          <div
-            aria-hidden="true"
-            className="relative hidden lg:block"
-          >
-            <Image
-              src={photo.src}
-              alt=""
-              fill
-              priority
-              sizes="38vw"
-              className="hero-photo object-cover"
-              style={{ objectPosition: photo.focal }}
-            />
+        <aside className={styles.photoPanel} aria-label="Drift tennis community">
+          <div className={styles.photoOverlay} />
+          <div className={styles.photoCopy}>
+            <p>DRIFT / 01</p>
+            <h2>Find your level. Find your people.</h2>
+            <span>One app for the players, clubs, practice, and seasons that make your game yours.</span>
           </div>
-        </div>
-      </main>
-      <SiteFooter locale={locale} absoluteLinks />
-    </>
+        </aside>
+      </div>
+    </main>
   );
 }

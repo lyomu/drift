@@ -103,11 +103,25 @@ class CourtSummary {
     required this.bookingType,
     required this.clubId,
     required this.clubName,
+    this.photoUrl,
+    this.courtCount,
+    this.openingHoursNote,
   });
 
   final String id;
   final String name;
   final String? address;
+
+  /// The venue's first photo, for a list thumbnail. The full gallery stays on
+  /// [CourtProfile]. Null when the court has no photo — never a placeholder.
+  final String? photoUrl;
+
+  /// Total playable courts across every court group.
+  final int? courtCount;
+
+  /// Free text as the curator wrote it ("7:00-22:00", "Dawn to dusk"), not a
+  /// parsed schedule.
+  final String? openingHoursNote;
   final double? latitude;
   final double? longitude;
 
@@ -139,6 +153,9 @@ class CourtSummary {
     bookingType: CourtBookingType.fromJson(json['bookingType'] as String),
     clubId: json['clubId'] as String?,
     clubName: json['clubName'] as String?,
+    photoUrl: json['photoUrl'] as String?,
+    courtCount: (json['courtCount'] as num?)?.toInt(),
+    openingHoursNote: json['openingHoursNote'] as String?,
   );
 }
 

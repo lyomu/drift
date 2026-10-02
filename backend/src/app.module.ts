@@ -12,6 +12,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { AssessmentModule } from './assessment/assessment.module';
 import { PadelModule } from './padel/padel.module';
+import { VideoAnalysisModule } from './video-analysis/video-analysis.module';
 import { HomeModule } from './home/home.module';
 import { ConnectionsModule } from './connections/connections.module';
 import { SafetyModule } from './safety/safety.module';
@@ -70,6 +71,7 @@ import { validateEnvironment } from './config/environment';
     UsersModule,
     AssessmentModule,
     PadelModule,
+    VideoAnalysisModule,
     HomeModule,
     PlayersModule,
     ConnectionsModule,

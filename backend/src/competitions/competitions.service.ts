@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import {
+  AssessmentBranch,
   LeagueState,
   LeagueRegistrationStatus,
   MatchFormat,
@@ -56,12 +57,29 @@ export class CompetitionsService {
     const scope = await demoScope(this.prisma, viewerId);
     const leagues = await this.prisma.league.findMany({
       where: { state: LeagueState.PUBLISHED, AND: [scope.clubOptional] },
-      include: { rounds: { select: { index: true, closedAt: true } } },
+      include: {
+        rounds: { select: { index: true, closedAt: true } },
+        club: { select: { name: true } },
+      },
       orderBy: { createdAt: 'desc' },
     });
+
+    // The viewer's own registration status, in one query rather than one per
+    // league: the list card shows Join vs Joined, and without this it would
+    // have to open each league to find out.
+    const registrations = await this.prisma.leagueRegistration.findMany({
+      where: { userId: viewerId, leagueId: { in: leagues.map((l) => l.id) } },
+      select: { leagueId: true, status: true },
+    });
+    const statusByLeague = new Map(
+      registrations.map((r) => [r.leagueId, r.status]),
+    );
+
     return {
       leagues: await Promise.all(
-        leagues.map((l) => this.toLeagueSummary(l)),
+        leagues.map((l) =>
+          this.toLeagueSummary(l, statusByLeague.get(l.id) ?? null),
+        ),
       ),
     };
   }
@@ -320,6 +338,7 @@ export class CompetitionsService {
       capacity?: number;
       sport?: MatchSport;
       format?: MatchFormat;
+      levelBand?: AssessmentBranch;
     },
   ) {
     this.assertCompetitionWindow(dto);
@@ -340,6 +359,7 @@ export class CompetitionsService {
         capacity: dto.capacity,
         sport: dto.sport,
         format: dto.format,
+        levelBand: dto.levelBand,
         state: LeagueState.DRAFT,
       },
       include: { rounds: { select: { index: true, closedAt: true } } },
@@ -428,6 +448,7 @@ export class CompetitionsService {
       capacity?: number;
       cancelReason?: string;
       state?: LeagueState;
+      levelBand?: AssessmentBranch;
     },
   ) {
     const current = await this.prisma.league.findUnique({
@@ -599,6 +620,7 @@ export class CompetitionsService {
       walkoverRule: string | null;
       unfinishedMatchPolicy: string | null;
       format: string;
+      levelBand: AssessmentBranch | null;
       state: LeagueState;
       registrationOpensAt: Date | null;
       registrationClosesAt: Date | null;
@@ -609,6 +631,9 @@ export class CompetitionsService {
       cancelledAt: Date | null;
       completedAt: Date | null;
       rounds: { index: number; closedAt: Date | null }[];
+      // Optional: only the reads that drive a list card include the club, and
+      // the rest would otherwise all need the join to satisfy this type.
+      club?: { name: string } | null;
     },
     viewerRegistrationStatus: LeagueRegistrationStatus | null = null,
   ) {
@@ -618,6 +643,7 @@ export class CompetitionsService {
     return {
       id: league.id,
       clubId: league.clubId,
+      clubName: league.club?.name ?? null,
       sport: league.sport,
       name: league.name,
       description: league.description,
@@ -626,6 +652,7 @@ export class CompetitionsService {
       walkoverRule: league.walkoverRule,
       unfinishedMatchPolicy: league.unfinishedMatchPolicy,
       format: league.format,
+      levelBand: league.levelBand,
       state: league.state,
       competitionState: effectiveCompetitionState(
         league,

@@ -54,7 +54,7 @@ Everything a player needs for the full core loop (Discover → Play → Compete 
 
 ## 4.5 Open Dependencies to Resolve Before Build
 
-- **Sharp Sans Display font license.** The design system (Document 5 §3) specifies Sharp Sans Display as the display/headline typeface, paired with Outfit for body/UI. Sharp Sans Display is a commercial typeface requiring a purchased license before it can ship in production Flutter/Next.js builds. Track this as a P0 procurement item — design-system build-out (implementation step 2 below) should start against the free **Space Grotesk** fallback and swap in the licensed font without rework once secured, rather than blocking on it.
+- **Typography.** The design system (Document 5 §3) specifies Outfit as the official single family across display, body, and UI, so there is no commercial font procurement blocker.
 - **Minors / age-gating policy** (Document 6 §4) — parental consent flow and minimum age need a legal/compliance decision before onboarding (implementation step 3) ships.
 
 ## 5. Recommended Implementation Order

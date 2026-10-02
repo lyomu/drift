@@ -79,7 +79,17 @@ export default function UsersPage() {
 
   async function setStatusFor(user: UserRow, next: "ACTIVE" | "SUSPENDED") {
     const verb = next === "SUSPENDED" ? "Suspend" : "Restore";
-    if (!window.confirm(`${verb} ${user.email ?? "this user"}?`)) return;
+    const consequence =
+      next === "SUSPENDED"
+        ? "They will be blocked from signing in and all live sessions will be revoked."
+        : "They will be able to sign in again.";
+    if (
+      !window.confirm(
+        `${verb} ${user.email ?? "this user"}?\n\n${consequence}`,
+      )
+    ) {
+      return;
+    }
     setBusyId(user.id);
     try {
       await api.patch(`/users/${user.id}/status`, { status: next });
