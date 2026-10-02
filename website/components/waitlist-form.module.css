@@ -1,31 +1,32 @@
 .form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  width: 560px;
-  margin-top: 68px;
-  padding: 28px;
-  border-radius: 20px;
+  gap: 11px;
+  width: 100%;
+  max-width: 540px;
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 16px;
   background: #103028;
 }
 
-.formHeader { display: grid; gap: 4px; }
-.formHeader strong { color: #f6f7f2; font-size: 18px; font-weight: 600; line-height: 24px; }
-.formHeader span { color: #a6beb5; font-size: 14px; line-height: 20px; }
+.formHeader { display: grid; gap: 3px; }
+.formHeader strong { color: #f6f7f2; font-size: 16px; font-weight: 600; line-height: 21px; }
+.formHeader span { color: #a6beb5; font-size: 13px; line-height: 18px; }
 
-.field, .roleField { display: grid; min-width: 0; gap: 8px; margin: 0; padding: 0; border: 0; }
-.field label, .roleField legend { padding: 0; color: #f6f7f2; font-size: 13px; font-weight: 600; line-height: 18px; }
+.field, .roleField { display: grid; min-width: 0; gap: 6px; margin: 0; padding: 0; border: 0; }
+.field label, .roleField legend { padding: 0; color: #f6f7f2; font-size: 12px; font-weight: 600; line-height: 16px; }
 .field label span { color: #8fa9a0; font-weight: 400; }
 
 .control {
   width: 100%;
-  height: 52px;
-  padding: 0 16px;
+  height: 40px;
+  padding: 0 14px;
   border: 1px solid #1c3931;
-  border-radius: 10px;
+  border-radius: 9px;
   background: #163b31;
   color: #f6f7f2;
-  font: 400 15px/1 inherit;
+  font: 400 14px/1 inherit;
 }
 
 .control::placeholder { color: #8fa9a0; opacity: 1; }
@@ -33,36 +34,36 @@
 .control:disabled { cursor: not-allowed; opacity: .6; }
 .select { padding-right: 40px; }
 
-.roleOptions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.roleOptions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .roleOption {
   position: relative;
   display: grid;
-  min-height: 82px;
-  gap: 3px;
-  padding: 16px;
+  min-height: 58px;
+  gap: 2px;
+  padding: 10px 12px;
   border: 1px solid #1c3931;
-  border-radius: 12px;
+  border-radius: 11px;
   background: #0d2721;
   cursor: pointer;
 }
 .roleOption:has(input:checked) { border: 1.5px solid #c7f34d; background: #163b31; }
 .roleOption:focus-within { outline: 2px solid #c7f34d; outline-offset: 2px; }
 .roleOption input { position: absolute; opacity: 0; pointer-events: none; }
-.roleTitle { color: #f6f7f2; font-size: 14px; font-weight: 600; line-height: 18px; }
-.roleHint { color: #8fa9a0; font-size: 12px; line-height: 16px; }
+.roleTitle { color: #f6f7f2; font-size: 13px; font-weight: 600; line-height: 17px; }
+.roleHint { color: #8fa9a0; font-size: 11px; line-height: 15px; }
 
-.cityLevel { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.error { min-height: 0; margin: -6px 0 0; color: #ffb4a7; font-size: 13px; line-height: 18px; }
+.cityLevel { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.error { min-height: 0; margin: -4px 0 0; color: #ffb4a7; font-size: 13px; line-height: 18px; }
 .error:not(:empty) { min-height: 18px; }
 
 .submit {
   width: 100%;
-  height: 56px;
+  height: 44px;
   border: 0;
-  border-radius: 28px;
+  border-radius: 22px;
   background: #c7f34d;
   color: #07120f;
-  font: 700 14px/1 inherit;
+  font: 700 13px/1 inherit;
   letter-spacing: .04em;
   text-transform: uppercase;
   cursor: pointer;
@@ -72,17 +73,17 @@
 .submit:disabled { cursor: wait; opacity: .7; }
 .submit span { margin-left: 6px; }
 
-.privacy { margin: -6px 0 0; color: #8fa9a0; font-size: 12px; line-height: 18px; }
+.privacy { margin: -4px 0 0; color: #8fa9a0; font-size: 11px; line-height: 16px; }
 .privacy a { color: #c7f34d; text-decoration: none; }
 .privacy a:hover { text-decoration: underline; }
 
-.success { width: 560px; margin-top: 68px; padding: 28px; border-radius: 20px; background: #103028; }
+.success { width: 100%; max-width: 540px; margin-top: 24px; padding: 20px; border-radius: 18px; background: #103028; }
 .success > span { color: #c7f34d; font-size: 13px; font-weight: 700; letter-spacing: .085em; }
-.successTitle { margin: 18px 0 0; color: #f6f7f2; font-size: 24px; font-weight: 600; line-height: 30px; }
-.successBody { margin: 10px 0 0; color: #a6beb5; font-size: 15px; line-height: 22px; }
+.successTitle { margin: 18px 0 0; color: #f6f7f2; font-size: 22px; font-weight: 600; line-height: 28px; }
+.successBody { margin: 10px 0 0; color: #a6beb5; font-size: 14px; line-height: 20px; }
 
 @media (max-width: 620px) {
-  .form, .success { width: 100%; margin-top: 44px; padding: 20px; border-radius: 16px; }
+  .form, .success { margin-top: 32px; padding: 18px; border-radius: 16px; }
   .roleOptions, .cityLevel { grid-template-columns: 1fr; }
-  .roleOption { min-height: 72px; }
+  .roleOption { min-height: 60px; }
 }
