@@ -33,8 +33,18 @@ void main() {
 
     // No stored session → the pre-auth intro carousel.
     expect(find.text('The Game\nNever Stops'), findsOneWidget);
-    expect(find.text('Get Started'), findsOneWidget);
 
+    // The CTA reads 'Continue' until the last slide, where it becomes
+    // 'Get Started' - so walk the carousel the way a person does rather
+    // than expecting the final label on the first screen. Driving it by
+    // the button also covers the advance itself, which tapping 'Skip'
+    // would step over.
+    while (find.text('Continue').evaluate().isNotEmpty) {
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+    }
+
+    expect(find.text('Get Started'), findsOneWidget);
     await tester.tap(find.text('Get Started'));
     await tester.pumpAndSettle();
 

@@ -42,11 +42,19 @@ Future<void> pumpScreen(
 
 /// Same, but behind a real [GoRouter] so `context.push` works. Only needed
 /// for tests that actually navigate; [pumpScreen] is cheaper for the rest.
+///
+/// A screen that merely *reads* the router still counts as needing one — any
+/// widget holding a `context.go` callback asserts "No GoRouter found in
+/// context" at build time, long before anything is tapped. That is why
+/// [brightness] exists here as well as on [pumpScreen]: the render-in-both-
+/// themes tests cannot drop down to the cheaper helper just to pick a theme.
 Future<void> pumpRouted(
   WidgetTester tester,
   Widget screen, {
   List<Override> overrides = const [],
   List<GoRoute> extraRoutes = const [],
+  Brightness brightness = Brightness.light,
+  bool settle = true,
 }) async {
   final router = GoRouter(
     initialLocation: '/',
@@ -59,10 +67,22 @@ Future<void> pumpRouted(
   await tester.pumpWidget(
     ProviderScope(
       overrides: overrides,
-      child: MaterialApp.router(theme: AppTheme.light(), routerConfig: router),
+      child: MaterialApp.router(
+        theme: brightness == Brightness.dark
+            ? AppTheme.dark()
+            : AppTheme.light(),
+        routerConfig: router,
+      ),
     ),
   );
-  await tester.pumpAndSettle();
+  // Same escape hatch as [pumpScreen]: a screen left in its loading state
+  // spins a CircularProgressIndicator forever, and pumpAndSettle waits for an
+  // animation that never ends rather than failing on anything real.
+  if (settle) {
+    await tester.pumpAndSettle();
+  } else {
+    await tester.pump();
+  }
 }
 
 /// A future that never resolves — the loading branch of an `AsyncValue`

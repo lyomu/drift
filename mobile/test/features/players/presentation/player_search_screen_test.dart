@@ -19,7 +19,7 @@ void main() {
       final label = brightness.name;
 
       testWidgets('renders results in $label', (tester) async {
-        await pumpScreen(
+        await pumpRouted(
           tester,
           screen(),
           brightness: brightness,
@@ -30,12 +30,14 @@ void main() {
           ],
         );
 
-        expect(find.text('Players'), findsOneWidget);
+        // No 'Players' heading to assert any more: the screen renders inside
+        // the Discover Hub, which supplies the title. The result card is the
+        // thing this test is actually about.
         expect(find.text('Ana Diaz'), findsOneWidget);
       });
 
       testWidgets('renders its empty state in $label', (tester) async {
-        await pumpScreen(
+        await pumpRouted(
           tester,
           screen(),
           brightness: brightness,
@@ -48,7 +50,8 @@ void main() {
 
         expect(
           find.text(
-            'No players match these filters — try widening distance or level range.',
+            'No players match these filters. Try widening distance or level '
+            'range.',
           ),
           findsOneWidget,
         );
@@ -56,7 +59,7 @@ void main() {
     }
 
     testWidgets('shows a spinner while loading', (tester) async {
-      await pumpScreen(
+      await pumpRouted(
         tester,
         screen(),
         settle: false,
@@ -71,7 +74,7 @@ void main() {
     });
 
     testWidgets('offers a retry after an error', (tester) async {
-      await pumpScreen(
+      await pumpRouted(
         tester,
         screen(),
         overrides: [

@@ -22,7 +22,7 @@ void main() {
       final label = brightness.name;
 
       testWidgets('renders the navigation hub in $label', (tester) async {
-        await pumpScreen(
+        await pumpRouted(
           tester,
           screen(),
           brightness: brightness,
@@ -45,7 +45,7 @@ void main() {
       testWidgets("survives failed profiles without throwing in $label", (
         tester,
       ) async {
-        await pumpScreen(
+        await pumpRouted(
           tester,
           screen(),
           brightness: brightness,

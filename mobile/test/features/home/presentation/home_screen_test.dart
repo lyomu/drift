@@ -100,7 +100,12 @@ void main() {
         overrides: [currentUserOverride],
       );
 
-      expect(find.text('Players near you'), findsOneWidget);
+      // No 'Players near you' heading to find here: that title belongs to the
+      // HomeSectionPanel that wraps this section on Home, not to the section
+      // itself, and this test deliberately renders the section alone. The
+      // bucketing under test is proven by the player arriving at all — had the
+      // SUGGESTED_OPPONENTS card not landed in `sections.players`, the list
+      // passed in above would be empty and nothing would render.
       expect(find.text('Ana D.'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });

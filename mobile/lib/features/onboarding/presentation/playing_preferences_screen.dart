@@ -105,7 +105,6 @@ const _timeOptions = <_ChipOption>[
 /// the sibling redesigned steps (tennis experience, padel interest) already
 /// count against the real total.
 
-
 /// Playing Preferences — `foundation/03-user-journeys.md` §2.
 class PlayingPreferencesScreen extends ConsumerStatefulWidget {
   const PlayingPreferencesScreen({super.key});
@@ -290,20 +289,31 @@ class _ChipGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        for (var i = 0; i < options.length; i++) ...[
-          if (i > 0) const SizedBox(width: 8),
-          Expanded(
-            child: _OptionChip(
-              option: options[i],
-              selected: isSelected(options[i]),
-              onTap: () => onTap(options[i]),
+    // `stretch` is what keeps every chip the same height so their borders line
+    // up when one label wraps to two lines and its neighbour does not. On its
+    // own it is also a crash: stretch sizes children to the Row's own height,
+    // the onboarding scaffold puts this inside a SingleChildScrollView, and a
+    // scrollable gives its child unbounded height — so the chips were being
+    // asked to be infinitely tall ("BoxConstraints forces an infinite height").
+    // IntrinsicHeight bounds the Row to its tallest child first, which is the
+    // height stretch then matches. The cost is one extra layout pass over a
+    // handful of chips, which is the cheap half of this trade.
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var i = 0; i < options.length; i++) ...[
+            if (i > 0) const SizedBox(width: 8),
+            Expanded(
+              child: _OptionChip(
+                option: options[i],
+                selected: isSelected(options[i]),
+                onTap: () => onTap(options[i]),
+              ),
             ),
-          ),
+          ],
         ],
-      ],
+      ),
     );
   }
 }
@@ -392,9 +402,7 @@ class _OptionChip extends StatelessWidget {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: accent.withValues(
-                          alpha: selected ? 0.13 : 0.06,
-                        ),
+                        color: accent.withValues(alpha: selected ? 0.13 : 0.06),
                         borderRadius: BorderRadius.circular(11),
                         border: Border.all(
                           color: accent.withValues(
