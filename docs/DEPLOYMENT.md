@@ -302,8 +302,15 @@ Job-scoped credentials (isolated from RetailFlow/harusi-ke):
 > deploys, and the Jenkins copy silently goes stale. It is what a rebuild from
 > this document would restore, so **every hand edit on the box must be mirrored
 > into this credential**, or the rebuilt box comes up missing whatever was only
-> ever added by hand. This bit once already: `GOOGLE_OAUTH_CLIENT_IDS` was
-> live on the box but absent from the template above until 2026-10-02.
+> ever added by hand.
+>
+> This has already bitten once, in the other direction: `GOOGLE_OAUTH_CLIENT_IDS`
+> was missing from the box *and* from the template, so Google sign-in answered
+> `503` in production from the day it shipped and nothing surfaced it — the
+> variable is optional at boot, and the app's buttons were shimmed out behind a
+> "Coming soon" dialog, so no client ever called the route. Added to both on
+> 2026-10-02. When a var is optional at boot, absence is silent: check the
+> route, not the logs.
 
 Global env var (`Manage Jenkins → System`): `DRIFT_PROD_HOST =
 46.225.106.43` — never hardcoded in the Jenkinsfile, matching the

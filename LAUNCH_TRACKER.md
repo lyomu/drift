@@ -583,7 +583,13 @@ artifact, so a commit or PR can close an item by referencing its ID
   **Google side closed 2026-10-02:** five OAuth clients now exist in project
   `921637855690` (web/server, Android debug, Android preview, Android release,
   iOS) — IDs recorded in `docs/SOCIAL_SIGNIN_SETUP.md` and all five in the
-  backend's `GOOGLE_OAUTH_CLIENT_IDS`. Consent screen moved from Testing to
+  backend's `GOOGLE_OAUTH_CLIENT_IDS`, **local and production**. The production
+  `.env.production` was found to be missing that variable entirely, so the live
+  API had been answering `503` on `/auth/oauth/google` since the feature
+  shipped; nothing caught it because the var is optional at boot and the app's
+  Google button was shimmed out, so no client ever called the route. Added and
+  the API restarted 2026-10-02; the route now returns `401` on a bad token.
+  Consent screen moved from Testing to
   Published, and the Play Console developer account is approved. One live
   limit remains until the consent screen passes verification: Google caps an
   unverified app at 100 sensitive-scope logins — fine for a soft launch, worth
