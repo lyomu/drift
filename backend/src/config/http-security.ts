@@ -3,7 +3,6 @@ import type { CorsOptions } from '@nestjs/common/interfaces/external/cors-option
 import helmet from 'helmet';
 
 const DEVELOPMENT_ORIGINS = [
-  'http://localhost:3000',
   'http://localhost:3001',
   'http://localhost:3002',
   'http://localhost:3003',

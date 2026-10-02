@@ -81,6 +81,7 @@ const KEPT: Record<string, string> = {
   Announcement: 'club communication authored on the club behalf',
   ClubAuditLog: 'audit trail must not be rewritable by its subject',
   ClubMediaAsset: 'club-owned asset, not personal data',
+  CourtPhotoAsset: 'club-owned asset, not personal data — same shape as ClubMediaAsset',
   CourtInquiry: 'venue-side record with no free text from the user',
   VenueVerificationRequest: 'venue record submitted on the venue behalf',
   BillingAccount: 'financial records carry a statutory retention duty',
