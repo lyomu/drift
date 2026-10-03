@@ -37,19 +37,29 @@ String onboardingStepToRoute(OnboardingStep step) {
   }
 }
 
-/// Routes to wherever `step` resumes onboarding. `/verify` is the one
+/// Pushes the next onboarding step onto the stack. `/verify` is the one
 /// destination that needs data (the account email) passed as `extra`,
 /// since `VerifyScreen` doesn't have a session-derived email to fall back
-/// on the way the other onboarding screens do.
+/// on the way the other onboarding screens do. Keeping the stack is what
+/// makes the shared back control return players to the answer they just gave.
 void goToOnboardingStep(
   BuildContext context,
   OnboardingStep step, {
   String? email,
+  bool replace = false,
 }) {
   final route = onboardingStepToRoute(step);
   if (step == OnboardingStep.verify) {
-    context.go(route, extra: email);
+    if (replace) {
+      context.go(route, extra: email);
+    } else {
+      context.push(route, extra: email);
+    }
   } else {
-    context.go(route);
+    if (replace) {
+      context.go(route);
+    } else {
+      context.push(route);
+    }
   }
 }

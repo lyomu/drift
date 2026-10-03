@@ -70,7 +70,7 @@ class _PadelInterestScreenState extends ConsumerState<PadelInterestScreen> {
       // correct for *resuming* an already-finished session, but not for
       // the moment onboarding actually finishes.
       if (nextStep == OnboardingStep.complete) {
-        context.go('/onboarding/complete');
+        context.push('/onboarding/complete');
       } else {
         goToOnboardingStep(context, nextStep);
       }
@@ -287,7 +287,5 @@ class _CheckDot extends StatelessWidget {
     );
   }
 }
-
-
 Color _tintedBorder(DriftColors colors) =>
     Color.alphaBlend(colors.primary.withValues(alpha: 0.18), colors.surface);

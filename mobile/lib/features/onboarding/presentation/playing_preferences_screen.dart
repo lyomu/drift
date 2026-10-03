@@ -289,31 +289,25 @@ class _ChipGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // `stretch` is what keeps every chip the same height so their borders line
-    // up when one label wraps to two lines and its neighbour does not. On its
-    // own it is also a crash: stretch sizes children to the Row's own height,
-    // the onboarding scaffold puts this inside a SingleChildScrollView, and a
-    // scrollable gives its child unbounded height — so the chips were being
-    // asked to be infinitely tall ("BoxConstraints forces an infinite height").
-    // IntrinsicHeight bounds the Row to its tallest child first, which is the
-    // height stretch then matches. The cost is one extra layout pass over a
-    // handful of chips, which is the cheap half of this trade.
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          for (var i = 0; i < options.length; i++) ...[
-            if (i > 0) const SizedBox(width: 8),
-            Expanded(
-              child: _OptionChip(
-                option: options[i],
-                selected: isSelected(options[i]),
-                onTap: () => onTap(options[i]),
-              ),
+    // This row is inside a vertical scroll view, which supplies unbounded
+    // height. Stretching it would ask its chips to fill that infinite height;
+    // release builds can fail that layout without showing an error. Each chip
+    // has a fixed icon, one-line label, and reserved selection marker, so its
+    // natural height is already identical to its neighbours.
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (var i = 0; i < options.length; i++) ...[
+          if (i > 0) const SizedBox(width: 8),
+          Expanded(
+            child: _OptionChip(
+              option: options[i],
+              selected: isSelected(options[i]),
+              onTap: () => onTap(options[i]),
             ),
-          ],
+          ),
         ],
-      ),
+      ],
     );
   }
 }

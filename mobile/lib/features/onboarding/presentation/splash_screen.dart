@@ -56,7 +56,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     try {
       final user = await ref.read(usersRepositoryProvider).getMe();
       if (!mounted) return;
-      goToOnboardingStep(context, user.onboardingStep, email: user.email);
+      goToOnboardingStep(
+        context,
+        user.onboardingStep,
+        email: user.email,
+        replace: true,
+      );
     } catch (_) {
       await storage.clear();
       if (!mounted) return;

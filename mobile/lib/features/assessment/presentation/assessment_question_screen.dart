@@ -107,7 +107,7 @@ class _AssessmentQuestionScreenState
         if (widget.onComplete != null) {
           widget.onComplete!(context, outcome.result!);
         } else {
-          context.go('/onboarding/level-review', extra: outcome.result);
+          context.push('/onboarding/level-review', extra: outcome.result);
         }
         return;
       }

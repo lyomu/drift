@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/drift_colors.dart';
 
@@ -80,6 +81,7 @@ class DriftOnboardingScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<DriftColors>()!;
+    final canGoBack = context.canPop();
 
     return Scaffold(
       backgroundColor: colors.surface,
@@ -89,7 +91,40 @@ class DriftOnboardingScaffold extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              OnboardingProgressBar(current: step),
+              Row(
+                children: [
+                  Semantics(
+                    button: true,
+                    label: 'Go back',
+                    child: Material(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                      clipBehavior: Clip.antiAlias,
+                      child: InkWell(
+                        onTap: canGoBack ? () => context.pop() : null,
+                        child: Ink(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: colors.surface,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: colors.border),
+                          ),
+                          child: Icon(
+                            Icons.arrow_back_rounded,
+                            size: 20,
+                            color: canGoBack
+                                ? colors.textPrimary
+                                : colors.textSecondary.withValues(alpha: 0.45),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(child: OnboardingProgressBar(current: step)),
+                ],
+              ),
               const SizedBox(height: 20),
               OnboardingHeader(
                 step: step,
