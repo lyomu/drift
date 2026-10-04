@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/drift_colors.dart';
 
@@ -81,7 +80,7 @@ class DriftOnboardingScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<DriftColors>()!;
-    final canGoBack = context.canPop();
+    final canGoBack = Navigator.canPop(context);
 
     return Scaffold(
       backgroundColor: colors.surface,
@@ -101,7 +100,7 @@ class DriftOnboardingScaffold extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                       clipBehavior: Clip.antiAlias,
                       child: InkWell(
-                        onTap: canGoBack ? () => context.pop() : null,
+                        onTap: canGoBack ? () => Navigator.pop(context) : null,
                         child: Ink(
                           width: 40,
                           height: 40,

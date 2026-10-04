@@ -8,8 +8,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
-/// OAuth client IDs, supplied at build time so no client secret or project
-/// identifier is committed. See `docs/SOCIAL_SIGNIN_SETUP.md`.
+/// Optional OAuth client ID overrides. Android normally reads its Google
+/// configuration from `android/app/google-services.json`; these build-time
+/// values are retained for iOS and custom release environments. See
+/// `docs/SOCIAL_SIGNIN_SETUP.md`.
 ///
 ///   flutter build apk --release \
 ///     --dart-define=DRIFT_GOOGLE_SERVER_CLIENT_ID=`the web client id` \
@@ -102,9 +104,6 @@ class SocialAuthService {
   /// than Apple's guarantee, and it is the API's ceiling, not a shortcut.
   late final String _googleNonce = _rawNonce();
 
-  bool get googleConfigured =>
-      _googleServerClientId.isNotEmpty || _googleIosClientId.isNotEmpty;
-
   /// True on iOS/macOS, where the flow is native. On Android it depends on
   /// the two web-flow defines above.
   bool get appleConfigured {
@@ -113,12 +112,6 @@ class SocialAuthService {
   }
 
   Future<SocialCredential> google() async {
-    if (!googleConfigured) {
-      throw const SocialSignInUnavailable(
-        'Google sign-in isn\'t configured in this build yet.',
-      );
-    }
-
     if (!_googleInitialised) {
       await GoogleSignIn.instance.initialize(
         clientId: _googleIosClientId.isEmpty ? null : _googleIosClientId,

@@ -55,6 +55,7 @@ const notificationPreferences = NotificationPreferences(
   learning: true,
   news: false,
   clubs: true,
+  announcements: true,
 );
 
 // ------------------------------------------------------------------ clubs

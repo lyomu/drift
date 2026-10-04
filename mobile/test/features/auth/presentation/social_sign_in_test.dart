@@ -204,17 +204,15 @@ void main() {
     );
   });
 
-  testWidgets('surfaces an unconfigured build instead of failing silently', (
-    tester,
-  ) async {
+  testWidgets('surfaces an unavailable Google sign-in attempt', (tester) async {
     when(() => social.google()).thenThrow(
-      const SocialSignInUnavailable('Google sign-in isn\'t configured yet.'),
+      const SocialSignInUnavailable('Google sign-in could not be completed.'),
     );
 
     await pumpButtons(tester);
     await tester.tap(find.text('Continue with Google'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Google sign-in isn\'t configured yet.'), findsOneWidget);
+    expect(find.text('Google sign-in could not be completed.'), findsOneWidget);
   });
 }

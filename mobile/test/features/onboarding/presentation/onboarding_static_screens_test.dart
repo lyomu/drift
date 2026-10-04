@@ -58,6 +58,11 @@ void main() {
           );
 
           expect(tester.takeException(), isNull);
+          if (entry.key == 'PlayingPreferencesScreen') {
+            expect(find.text('Singles'), findsOneWidget);
+            expect(find.text('Doubles'), findsOneWidget);
+            expect(find.text('Either'), findsNWidgets(2));
+          }
         });
       }
     });
