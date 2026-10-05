@@ -43,6 +43,9 @@ Future<void> initAnalytics() async {
         ..host = posthogHost
         ..captureApplicationLifecycleEvents = true,
     );
+    // The website sends to the same PostHog project, so every mobile event is
+    // tagged here to keep app and web apart in the dashboards.
+    await Posthog().register('platform', 'mobile');
   } catch (e) {
     debugPrint('[analytics] PostHog setup failed: $e');
   }
