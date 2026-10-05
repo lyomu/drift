@@ -55,6 +55,10 @@ function BuildingIcon() {
   return <svg aria-hidden="true" className={styles.inlineIcon} viewBox="0 0 16 16" fill="none"><path d="M3 14V4.5c0-.83.67-1.5 1.5-1.5h7c.83 0 1.5.67 1.5 1.5V14M1.5 14h13M6 6h1M9 6h1M6 9h1M9 9h1M7 14v-2.5h2V14" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>;
 }
 
+function RacketIcon() {
+  return <svg aria-hidden="true" className={styles.racketIcon} viewBox="0 0 24 24" fill="none"><ellipse cx="14" cy="9" rx="6" ry="7.5" stroke="currentColor" strokeWidth="1.8" transform="rotate(30 14 9)" /><path d="M10.2 14.6 4 21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>;
+}
+
 function PlayIcon({ kind }: { kind: "match" | "book" | "grow" }) {
   if (kind === "book") return <svg aria-hidden="true" className={styles.cardIcon} viewBox="0 0 16 16" fill="none"><rect x="2.5" y="3" width="11" height="10.5" rx="1.5" stroke="currentColor" strokeWidth="1.5" /><path d="M5 1.8v2.4M11 1.8v2.4M2.5 6.2h11M5.2 9h.1M8 9h.1M10.8 9h.1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>;
   if (kind === "grow") return <svg aria-hidden="true" className={styles.cardIcon} viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="currentColor" strokeWidth="1.5" /><circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.5" /><path d="m10 6 3.5-3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>;
@@ -107,7 +111,7 @@ function Button({ href, children, inverse = false }: { href: string; children: R
 }
 
 function Kicker({ children, lime = false }: { children: ReactNode; lime?: boolean }) {
-  return <p className={`${styles.kicker} ${lime ? styles.kickerLime : ""}`}>{children}</p>;
+  return <div className={`${styles.kicker} ${lime ? styles.kickerLime : ""}`}>{children}</div>;
 }
 
 function SectionTitle({ children }: { children: ReactNode }) {
@@ -213,33 +217,22 @@ export function LandingPage({ locale }: LandingPageProps) {
         <div className={styles.heroShade} />
         <header className={styles.header}>
           <a className={styles.brand} href="#top" aria-label="Drift home">
-            <Image src="/images/logo.png" alt="" width={1600} height={495} className={styles.brandMark} priority />
+            <Image src="/images/logo-white.png" alt="" width={1600} height={802} className={styles.brandMark} priority />
           </a>
           <nav className={styles.nav} aria-label="Primary navigation">
             <a href="#play">FOR PLAYERS</a>
             <a href="#clubs">FOR CLUBS</a>
             <a href="#training">FOR COACHES</a>
           </nav>
-          <a
-            className={styles.appLink}
-            href="#download"
-            aria-label="Go to the Get the App section"
-            onClick={(event) => {
-              event.preventDefault();
-              document.getElementById("download")?.scrollIntoView({
-                behavior: "smooth",
-                block: "start",
-              });
-            }}
-          >
-            GET THE APP <Arrow />
+          <a className={styles.appLink} href={waitlist}>
+            JOIN WAITING LIST
           </a>
         </header>
         <div className={`${styles.inner} ${styles.heroContent}`}>
           <h1>{heroSlides[heroSlide].title.map((line) => <span key={line}>{line}</span>)}</h1>
           <p>{heroSlides[heroSlide].description}</p>
           <div className={styles.heroActions}>
-            <Button href={waitlist}>START PLAYING</Button>
+            <Button href={waitlist}>JOIN WAITING LIST</Button>
             <a className={styles.textAction} href="#clubs"><BuildingIcon /> FOR CLUBS / COACHES</a>
           </div>
         </div>
@@ -261,7 +254,7 @@ export function LandingPage({ locale }: LandingPageProps) {
         <div className={styles.inner}>
           <div className={styles.aboutTop}>
             <div>
-              <Kicker lime>ABOUT DRIFT</Kicker>
+              <Kicker>ABOUT DRIFT</Kicker>
               <SectionTitle>Built around the people who power the game.</SectionTitle>
               <SectionBody>Drift is a connected tennis platform built for players, coaches, clubs and communities. We make it easier for players to find opponents, discover local coaches, organise matches, join competitions, discover courts and track their progress, while giving coaches a platform to connect with players and support their development. For clubs, Drift simplifies the management of members, competitions, fixtures, results, standings, courts and communication. By bringing every part of the tennis community into one ecosystem, Drift helps create more opportunities to <strong>play, compete, connect and grow the game.</strong></SectionBody>
               <Button href={waitlist}>JOIN THE WAITLIST</Button>
@@ -319,7 +312,7 @@ export function LandingPage({ locale }: LandingPageProps) {
       <section className={styles.padelFeature} id="padel">
         <div className={styles.padelFeatureImage} aria-hidden="true" />
         <div className={`${styles.inner} ${styles.padelFeatureContent}`}>
-          <Kicker lime>PADEL IS PART OF THE DRIFT</Kicker>
+          <Kicker>PADEL IS PART OF THE DRIFT</Kicker>
           <SectionTitle>A new game to play. More people to meet.</SectionTitle>
           <SectionBody>Padel is fast, social and easy to get into. Find players who match your energy, discover courts near you and organise your next game without the group-chat scramble.</SectionBody>
           <SectionBody>Whether you are picking up a racket for the first time or already hooked, Drift helps you play more, meet more people and keep improving.</SectionBody>
@@ -328,13 +321,16 @@ export function LandingPage({ locale }: LandingPageProps) {
       </section>
 
       <section className={styles.training} id="training">
-        <div className={styles.trainingPhoto} aria-hidden="true" />
-        <div className={styles.trainingPhotoShade} aria-hidden="true" />
-        <div className={`${styles.inner} ${styles.trainingCopy}`}>
-          <Kicker lime>FOR COACHES</Kicker>
-          <SectionTitle>Grow your coaching. Find more players.</SectionTitle>
-          <SectionBody>Join Drift and put your coaching services in front of players actively looking to improve their game. Build your coaching profile, showcase your experience and specialities, connect with players at different levels, manage coaching opportunities and grow your presence within the tennis community.</SectionBody>
-          <Button href={waitlist}>SIGN UP AS A COACH</Button>
+        <div className={`${styles.inner} ${styles.coachesGrid}`}>
+          <div className={styles.trainingCopy}>
+            <Kicker lime>FOR COACHES</Kicker>
+            <SectionTitle>Grow your coaching. Find more players.</SectionTitle>
+            <SectionBody>Join Drift and put your coaching services in front of players actively looking to improve their game. Build your coaching profile, showcase your experience and specialities, connect with players at different levels, manage coaching opportunities and grow your presence within the tennis community.</SectionBody>
+            <Button href={waitlist}>SIGN UP AS A COACH</Button>
+          </div>
+          <div className={styles.trainingMedia} aria-hidden="true">
+            <div className={styles.trainingPhoto} />
+          </div>
         </div>
       </section>
 
@@ -403,7 +399,15 @@ export function LandingPage({ locale }: LandingPageProps) {
         </div>
       </section>
 
-      <footer className={styles.footer} id="footer"><div className={`${styles.inner} ${styles.footerGrid}`}><div><Image src="/images/logo.png" alt="Drift Tennis" width={1600} height={495} className={styles.footerMark} /><p>Find your next rally.</p></div><div><b>LEGAL</b><Link href="/terms">Terms and Conditions</Link><Link href="/privacy-policy">Privacy Policy</Link><Link href="/data-privacy">Data Privacy Notice</Link></div><div><b>CONTACT</b><a href="mailto:serve@driftsports.app">serve@driftsports.app</a></div></div><p className={`${styles.inner} ${styles.copyright}`}>© 2026 Drift Sports. Built for the next point.</p></footer>
+      <footer className={styles.footer} id="footer"><div className={`${styles.inner} ${styles.footerGrid}`}><div><Image src="/images/logo-white.png" alt="Drift Tennis" width={1600} height={802} className={styles.footerMark} /><p>Find your next rally.</p></div><div><b>LEGAL</b><Link href="/terms">Terms and Conditions</Link><Link href="/privacy-policy">Privacy Policy</Link><Link href="/data-privacy">Data Privacy Notice</Link></div><div><b>CONTACT</b><a href="mailto:serve@driftsports.app">serve@driftsports.app</a></div></div><p className={`${styles.inner} ${styles.copyright}`}>© 2026 Drift Sports.</p></footer>
+      <button
+        type="button"
+        className={styles.backToTop}
+        aria-label="Back to top"
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+      >
+        <RacketIcon />
+      </button>
     </main>
   );
 }
