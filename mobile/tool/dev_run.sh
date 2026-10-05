@@ -38,8 +38,12 @@ GOOGLE_SERVER_CLIENT_ID="${DRIFT_GOOGLE_SERVER_CLIENT_ID:-921637855690-mpmeootgo
 # Analytics keys are optional: with none exported the app builds and runs
 # exactly as before, just uninstrumented (core/analytics/analytics.dart).
 DEFINES=("--dart-define=DRIFT_GOOGLE_SERVER_CLIENT_ID=${GOOGLE_SERVER_CLIENT_ID}")
-[[ -n "${DRIFT_CLARITY_PROJECT_ID:-}" ]] && DEFINES+=("--dart-define=DRIFT_CLARITY_PROJECT_ID=$DRIFT_CLARITY_PROJECT_ID")
-[[ -n "${DRIFT_POSTHOG_KEY:-}" ]] && DEFINES+=("--dart-define=DRIFT_POSTHOG_KEY=$DRIFT_POSTHOG_KEY")
+# Clarity's project ID is public (it appears in the SDK setup code), so it is
+# safe to default here for the Drift Sports Mobile project.
+DEFINES+=("--dart-define=DRIFT_CLARITY_PROJECT_ID=${DRIFT_CLARITY_PROJECT_ID:-yswcrvnw99}")
+# PostHog's project token is write-only and meant for public clients, so it is
+# safe to default here, the same way the Google client ID is.
+DEFINES+=("--dart-define=DRIFT_POSTHOG_KEY=${DRIFT_POSTHOG_KEY:-phc_vuzamTmPe6cXuzoArgavhyt9rsZLjMV2NVcQimSakHfB}")
 [[ -n "${DRIFT_POSTHOG_HOST:-}" ]] && DEFINES+=("--dart-define=DRIFT_POSTHOG_HOST=$DRIFT_POSTHOG_HOST")
 
 flutter build apk --debug ${DEFINES[@]+"${DEFINES[@]}"}
