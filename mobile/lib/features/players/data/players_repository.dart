@@ -147,7 +147,11 @@ class PlayerFilters {
     this.stylePreference,
     this.clubName,
     this.timeBlock,
+    this.query,
   });
+
+  /// Name search, used by the new-message picker.
+  final String? query;
 
   final int? maxDistanceKm;
   final double? levelMin;
@@ -201,6 +205,7 @@ class PlayerFilters {
   );
 
   Map<String, dynamic> toQuery() => {
+    if (query != null && query!.trim().isNotEmpty) 'q': query!.trim(),
     if (maxDistanceKm != null) 'maxDistanceKm': maxDistanceKm,
     if (levelMin != null) 'levelMin': levelMin,
     if (levelMax != null) 'levelMax': levelMax,
