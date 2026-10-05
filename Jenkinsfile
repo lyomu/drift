@@ -284,7 +284,7 @@ Review and approve (Jenkins login required):
         stage('Smoke Tests (Prod)') {
             when { branch 'master' }
             steps {
-                withCredentials([usernamePassword(credentialsId: 'drift-basic-auth', usernameVariable: 'BASIC_USER', passwordVariable: 'BASIC_PASS')]) {
+                withCredentials([sshUserPrivateKey(credentialsId: 'drift-deploy-ssh-key', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
                     sh """
                         set -e
                         # Every container just (re)started for this deploy - each one gets
@@ -303,8 +303,21 @@ Review and approve (Jenkins login required):
                         }
                         retry_check api curl -sf https://api.driftsports.app/health
                         retry_check website curl -sf -o /dev/null https://driftsports.app/
-                        retry_check club-admin curl -sf -o /dev/null -u "\$BASIC_USER:\$BASIC_PASS" https://admin.driftsports.app/
-                        retry_check platform-admin curl -sf -o /dev/null -u "\$BASIC_USER:\$BASIC_PASS" https://console.driftsports.app/
+                        retry_check club-admin curl -sf -o /dev/null https://admin.driftsports.app/
+                        # The platform console sits behind nginx basic auth. Checking it
+                        # with a stored password made the smoke test fail whenever that
+                        # password drifted from the box's htpasswd. Instead check both
+                        # halves without it: the public URL must demand a login (nginx is
+                        # up and the gate is on), and the app must answer on the box.
+                        console_gated() {
+                            [ "\$(curl -s -o /dev/null -w '%{http_code}' https://console.driftsports.app/)" = "401" ]
+                        }
+                        console_app_up() {
+                            ssh -o StrictHostKeyChecking=accept-new -i \$SSH_KEY \$SSH_USER@${env.DRIFT_PROD_HOST} \
+                                "curl -sf -o /dev/null http://127.0.0.1:3007/"
+                        }
+                        retry_check platform-admin-gate console_gated
+                        retry_check platform-admin-app console_app_up
                         echo "Smoke tests passed."
                     """
                 }
