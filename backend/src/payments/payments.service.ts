@@ -64,12 +64,22 @@ export class PaymentsService {
     return this.listPlans(BillingAudience.PLAYER);
   }
 
+  /**
+   * Beta: players stay on the free plan until charging starts. While this is
+   * on, plan changes and new payment methods are refused on the server, so
+   * the app hiding them is not the only guard.
+   */
+  billingBeta(): boolean {
+    return this.config.get<string>('BILLING_BETA') === 'true';
+  }
+
   async playerSummary(userId: string) {
     const account = await this.ensureAccount(
       { userId },
       BillingAudience.PLAYER,
     );
-    return this.summary(account.id);
+    const summary = await this.summary(account.id);
+    return { ...summary, betaFree: this.billingBeta() };
   }
 
   async playerMethods(userId: string) {
@@ -81,6 +91,9 @@ export class PaymentsService {
   }
 
   async addPlayerMethod(userId: string, dto: AddPaymentMethodDto) {
+    if (this.billingBeta()) {
+      throw new ForbiddenException('Billing starts after the beta.');
+    }
     const account = await this.ensureAccount(
       { userId },
       BillingAudience.PLAYER,
@@ -97,6 +110,9 @@ export class PaymentsService {
   }
 
   async changePlayerSubscription(userId: string, dto: ChangeSubscriptionDto) {
+    if (this.billingBeta()) {
+      throw new ForbiddenException('Billing starts after the beta.');
+    }
     const account = await this.ensureAccount(
       { userId },
       BillingAudience.PLAYER,
