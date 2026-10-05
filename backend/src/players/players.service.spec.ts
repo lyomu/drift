@@ -8,6 +8,7 @@ type MockPrisma = {
   block: Record<string, jest.Mock>;
   connection: Record<string, jest.Mock>;
   matchParticipant: Record<string, jest.Mock>;
+  match: Record<string, jest.Mock>;
 };
 
 function createMockPrisma(): MockPrisma {
@@ -24,6 +25,8 @@ function createMockPrisma(): MockPrisma {
     // findOne also computes stats (matches/stats.util.ts) alongside the
     // profile itself.
     matchParticipant: { findMany: jest.fn().mockResolvedValue([]) },
+    // findOne checks for an open challenge between the viewer and the player.
+    match: { findFirst: jest.fn().mockResolvedValue(null) },
   };
 }
 

@@ -1,5 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { MatchSport, OnboardingStep, Prisma } from '@prisma/client';
+import {
+  MatchSport,
+  MatchState,
+  OnboardingStep,
+  Prisma,
+} from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { boundingBox, Coordinates, haversineKm } from '../common/distance.util';
 import { demoScope } from '../common/demo-scope';
@@ -17,6 +22,14 @@ import {
 } from './player.mapper';
 import { getPlayerStats } from '../matches/stats.util';
 import { SearchPlayersDto } from './dto/search-players.dto';
+
+/** Match states that count as a challenge still in play between two players. */
+const OPEN_CHALLENGE_STATES: MatchState[] = [
+  MatchState.PROPOSED,
+  MatchState.SCHEDULING,
+  MatchState.SCHEDULED,
+  MatchState.RESCHEDULED,
+];
 
 const DEFAULT_TAKE = 20;
 
@@ -289,11 +302,25 @@ export class PlayersService {
       MatchSport.TENNIS,
     );
 
+    // A match the two players are still playing or arranging. Finished,
+    // cancelled, expired or disputed matches don't count as an open challenge.
+    const openChallenge = await this.prisma.match.findFirst({
+      where: {
+        state: { in: OPEN_CHALLENGE_STATES },
+        AND: [
+          { participants: { some: { userId } } },
+          { participants: { some: { userId: playerId } } },
+        ],
+      },
+      select: { id: true },
+    });
+
     return toPlayerProfile(
       player,
       distanceKm,
       connectionStateFor(userId, connection),
       stats,
+      openChallenge !== null,
     );
   }
 }

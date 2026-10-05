@@ -85,6 +85,9 @@ export function toPlayerProfile(
   // its own DB queries. Not gated by connectionState: ratings/stats aren't
   // in Doc 6 §4's privacy-sensitive list the way skill breakdown is.
   stats: PlayerStats,
+  // Whether an unfinished match is arranged between the viewer and this player.
+  // Lets the client show a message action without a connection.
+  hasOpenChallenge = false,
 ) {
   const profile = player.tennisProfile;
   const isConnected = connectionState === 'CONNECTED';
@@ -103,6 +106,7 @@ export function toPlayerProfile(
     ...toPlayerSummary(player, distanceKm),
     dominantHand: profile?.dominantHand ?? null,
     connectionState,
+    hasOpenChallenge,
     stats,
     // Gated fields. `null` here means "not visible to you", which the client
     // renders as a connect-to-see prompt rather than an empty state.

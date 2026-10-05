@@ -93,6 +93,13 @@ class MessagingRepository {
 
   final Dio _dio;
 
+  /// The thread with another player: the match thread when a challenge is
+  /// open, otherwise the direct thread for connected players. Returns its id.
+  Future<String> openWith(String userId) async {
+    final data = await _send(() => _dio.post('/conversations/with/$userId'));
+    return data['id'] as String;
+  }
+
   Future<List<Conversation>> listConversations() async {
     final data = await _send(() => _dio.get('/conversations'));
     return (data['conversations'] as List<dynamic>)

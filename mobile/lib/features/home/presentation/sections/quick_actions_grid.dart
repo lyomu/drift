@@ -52,6 +52,8 @@ class QuickActionsGrid extends StatelessWidget {
           GridView.count(
             crossAxisCount: 2,
             shrinkWrap: true,
+            primary: false,
+            padding: EdgeInsets.zero,
             physics: const NeverScrollableScrollPhysics(),
             crossAxisSpacing: 10,
             mainAxisSpacing: 10,

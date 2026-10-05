@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/drift_colors.dart';
 import '../../../../shared/widgets/drift_section_header.dart';
+import '../../application/home_feed_provider.dart';
 import '../../data/home_repository.dart';
 
 /// Horizontally-scrolling rail of urgent prompts (redesign 2026-10: each card
@@ -20,7 +22,7 @@ class ActionNeededRail extends StatelessWidget {
       children: [
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 16),
-          child: DriftSectionHeader(title: 'Action needed'),
+          child: DriftSectionHeader(title: 'Needs you'),
         ),
         const SizedBox(height: 10),
         SizedBox(
@@ -38,10 +40,23 @@ class ActionNeededRail extends StatelessWidget {
   }
 }
 
-class _ActionCard extends StatelessWidget {
+class _ActionCard extends ConsumerWidget {
   const _ActionCard({required this.card});
 
   final HomeCard card;
+
+  /// Opens the card's screen. A dismissible card is cleared once it has been
+  /// opened, so it doesn't sit on the rail afterwards. Challenges and results
+  /// are not dismissible on the server (hiding them would leave the other
+  /// player stuck), so they stay until they are resolved.
+  Future<void> _open(BuildContext context, WidgetRef ref) async {
+    // Push before refreshing: the refresh removes this card from the tree.
+    context.push(card.action!.route);
+    if (!card.dismissible) return;
+    await ref.read(homeRepositoryProvider).dismissCard(card.id);
+    ref.invalidate(homeFeedProvider);
+    ref.invalidate(homeSummaryProvider);
+  }
 
   /// The accent already travels with the card from the server, so the colour
   /// says the same thing here as it does anywhere else the card appears.
@@ -56,7 +71,7 @@ class _ActionCard extends StatelessWidget {
   };
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = Theme.of(context).extension<DriftColors>()!;
     final (accent, icon) = _tone(colors);
     final wash = Color.alphaBlend(
@@ -73,7 +88,7 @@ class _ActionCard extends StatelessWidget {
         child: InkWell(
           onTap: card.action == null
               ? null
-              : () => context.push(card.action!.route),
+              : () => _open(context, ref),
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
