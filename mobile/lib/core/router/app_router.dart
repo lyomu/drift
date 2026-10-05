@@ -65,6 +65,7 @@ import '../../features/matches/presentation/match_reflection_screen.dart';
 import '../../features/matches/presentation/ratings_stats_screen.dart';
 import '../../features/matches/data/player_stats.dart';
 import '../../features/messaging/presentation/chat_thread_screen.dart';
+import '../../features/messaging/presentation/new_message_screen.dart';
 import '../../features/messaging/presentation/inbox_screen.dart';
 import '../../features/news/presentation/news_feed_screen.dart';
 import '../../features/news/presentation/news_story_detail_screen.dart';
@@ -442,6 +443,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/messages',
         builder: (context, state) => const InboxScreen(),
+      ),
+      GoRoute(
+        path: '/messages/new',
+        builder: (context, state) => const NewMessageScreen(),
       ),
       GoRoute(
         path: '/messages/:id',

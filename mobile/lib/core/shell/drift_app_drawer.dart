@@ -53,6 +53,12 @@ const _navItems = <_NavItem>[
     route: '/news',
   ),
   (
+    label: 'Messages',
+    activeIcon: Icons.chat_bubble_rounded,
+    idleIcon: Symbols.chat_bubble_rounded,
+    route: '/messages',
+  ),
+  (
     label: 'Notifications',
     activeIcon: DriftSymbolsFilled.notifications,
     idleIcon: Symbols.notifications_rounded,

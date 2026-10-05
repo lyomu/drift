@@ -150,6 +150,14 @@ export class PlayersService {
       where: {
         id: { notIn: excludedIds },
         onboardingStep: OnboardingStep.COMPLETE,
+        ...(dto.q?.trim()
+          ? {
+              OR: [
+                { firstName: { contains: dto.q.trim(), mode: 'insensitive' } },
+                { lastName: { contains: dto.q.trim(), mode: 'insensitive' } },
+              ],
+            }
+          : {}),
         ...scope.user,
         // Wave 8: Padel queries PadelProfile; Tennis (default) queries TennisProfile.
         ...(sport === 'PADEL'

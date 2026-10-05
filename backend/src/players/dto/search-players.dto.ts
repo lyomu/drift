@@ -6,6 +6,7 @@ import {
   IsOptional,
   IsString,
   Max,
+  MaxLength,
   Min,
 } from 'class-validator';
 import { FormatPreference, StylePreference, TimeBlock } from '@prisma/client';
@@ -67,4 +68,10 @@ export class SearchPlayersDto {
   @IsInt()
   @Min(0)
   skip?: number;
+
+  /** Name search: matches first or last name, case-insensitively. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(60)
+  q?: string;
 }
