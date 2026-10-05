@@ -23,7 +23,14 @@ that opens, completes, and then fails on the server.
 | iOS bundle ID | `com.drift.tennis.driftTennis` | `ios/Runner.xcodeproj/project.pbxproj` |
 | Debug keystore SHA-1 | `3A:97:43:C1:1F:3E:16:69:32:21:DE:92:53:5A:8C:38:0A:35:29:90` | `~/.android/debug.keystore` |
 | Preview keystore SHA-1 | `EC:3A:1F:1D:1F:F3:CD:D1:6C:75:EF:29:D2:97:CF:52:E5:27:2C:66` | `android/app/preview.keystore`, alias `preview` |
-| Release keystore SHA-1 | `B1:FF:6E:D1:BE:0F:19:1D:36:CA:18:D5:98:DD:86:5F:3C:46:CE:BF` | `android/app/release-2026.keystore`, alias `drift-release` (rotated 2026-09-03) |
+| Release keystore SHA-1 (Play **upload** key) | `B1:FF:6E:D1:BE:0F:19:1D:36:CA:18:D5:98:DD:86:5F:3C:46:CE:BF` | `android/app/release-2026.keystore`, alias `drift-release` (rotated 2026-09-03) |
+| Play **app signing** key SHA-1 | `35:A1:90:B7:…` (full value: Play Console) | Play Console → Protected with Play → Manage Play app signing → App signing key → SHA-1. OAuth client "Drift Tennis Android Play Signing", added 2026-10-05 |
+
+> **Builds installed from Google Play are re-signed by Play**, not by our
+> release key. Google sign-in on a Play install only works if the **app
+> signing** key's SHA-1 is registered. Without it, the account picker opens
+> and then nothing happens (the failure comes back as a cancel). Every
+> Android OAuth client holds one fingerprint, so this is its own client.
 
 SHA-256 equivalents, if a console asks for them:
 
