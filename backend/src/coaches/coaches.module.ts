@@ -5,6 +5,7 @@ import { CoachesService } from './coaches.service';
 import { CoachApplicationsController } from './coach-applications.controller';
 import { CoachApplicationsAdminController } from './coach-applications-admin.controller';
 import { CoachApplicationsService } from './coach-applications.service';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 /**
  * Public coach discovery plus the apply → review → listed flow behind it.
@@ -23,6 +24,7 @@ import { CoachApplicationsService } from './coach-applications.service';
     CoachApplicationsService,
     PlatformPermissionGuard,
   ],
+  imports: [NotificationsModule],
   exports: [CoachesService],
 })
 export class CoachesModule {}

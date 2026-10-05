@@ -9,6 +9,7 @@ import {
   IsInt,
   IsNumber,
   IsOptional,
+  IsPhoneNumber,
   IsString,
   Max,
   MaxLength,
@@ -64,7 +65,7 @@ export class UpsertPlatformVenueDto {
   longitude?: number | null;
 
   @IsOptional()
-  @IsString()
+  @IsPhoneNumber()
   @MaxLength(80)
   phone?: string | null;
 

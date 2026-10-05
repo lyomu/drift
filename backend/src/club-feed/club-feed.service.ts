@@ -3,8 +3,13 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { ClubRole } from '@prisma/client';
+import {
+  ClubMembershipStatus,
+  ClubRole,
+  NotificationCategory,
+} from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateClubPostDto, ReactionDto } from './dto/club-post.dto';
 
 const DEFAULT_TAKE = 30;
@@ -13,7 +18,10 @@ const MODERATOR_ROLES: ClubRole[] = [ClubRole.OWNER, ClubRole.ADMIN];
 
 @Injectable()
 export class ClubFeedService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications?: NotificationsService,
+  ) {}
 
   async list(clubId: string, viewerId: string) {
     const posts = await this.prisma.clubPost.findMany({
@@ -55,7 +63,51 @@ export class ClubFeedService {
     const post = await this.prisma.clubPost.create({
       data: { clubId, authorId, body: dto.body },
     });
+    if (this.notifications) {
+      await this.notifyMembersOfPost(clubId, authorId, dto.body);
+    }
     return { id: post.id, createdAt: post.createdAt };
+  }
+
+  private async notifyMembersOfPost(
+    clubId: string,
+    authorId: string,
+    body: string,
+  ) {
+    const [club, members, author] = await Promise.all([
+      this.prisma.club.findUnique({
+        where: { id: clubId },
+        select: { name: true },
+      }),
+      this.prisma.clubMembership.findMany({
+        where: {
+          clubId,
+          status: ClubMembershipStatus.ACTIVE,
+          userId: { not: authorId },
+        },
+        select: { userId: true },
+      }),
+      this.prisma.user.findUnique({
+        where: { id: authorId },
+        select: { firstName: true, lastName: true },
+      }),
+    ]);
+    const authorName =
+      [author?.firstName, author?.lastName].filter(Boolean).join(' ') ||
+      'A club member';
+    const preview = body.replaceAll(/\s+/g, ' ').trim();
+    await Promise.all(
+      members.map((member) =>
+        this.notifications!.create(
+          member.userId,
+          NotificationCategory.CLUBS,
+          `New post in ${club?.name ?? 'your club'}`,
+          `${authorName}: ${preview.length > 120 ? '${preview.substring(0, 117)}...' : preview}`,
+          'CLUB',
+          clubId,
+        ),
+      ),
+    );
   }
 
   /**

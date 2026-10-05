@@ -26,6 +26,7 @@ String? notificationDeepLink({
     // club's Announcements list, where the new item sorts to the top.
     'CLUB' when id != null => '/discover/clubs/$id',
     'CLUB_ANNOUNCEMENT' when id != null => '/discover/clubs/$id/announcements',
+    'SETTINGS' => '/settings',
     _ => null,
   };
 }

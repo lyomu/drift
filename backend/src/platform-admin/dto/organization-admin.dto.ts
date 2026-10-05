@@ -3,6 +3,7 @@ import {
   IsEnum,
   IsIn,
   IsOptional,
+  IsPhoneNumber,
   IsString,
   MaxLength,
 } from 'class-validator';
@@ -28,7 +29,7 @@ export class UpdateOrganizationProfileDto {
   address?: string | null;
 
   @IsOptional()
-  @IsString()
+  @IsPhoneNumber()
   @MaxLength(80)
   phone?: string | null;
 

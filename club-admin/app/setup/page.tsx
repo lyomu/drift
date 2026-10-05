@@ -3,12 +3,7 @@
 import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-  api,
-  ApiError,
-  hasToken,
-  setToken,
-} from "@/lib/api-client";
+import { api, ApiError, hasToken, setToken } from "@/lib/api-client";
 import { useClub } from "@/lib/club-context";
 import {
   Button,
@@ -21,6 +16,7 @@ import {
   Textarea,
 } from "@/components/ui";
 import { CourtGroupsEditor } from "@/components/CourtGroupsEditor";
+import { PhoneNumberField } from "@/components/PhoneNumberField";
 import type { CourtGroup, ClubRole, MatchSport, Membership } from "@/lib/types";
 
 type Step = "login" | "profile" | "courts" | "team" | "loading" | "signin";
@@ -260,7 +256,9 @@ function SetupWizard() {
       setStep("profile");
     } catch (err) {
       setError(
-        err instanceof ApiError ? err.message : "Your account could not be set up.",
+        err instanceof ApiError
+          ? err.message
+          : "Your account could not be set up.",
       );
     } finally {
       setBusy(false);
@@ -282,7 +280,11 @@ function SetupWizard() {
       });
       setStep("courts");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "The profile could not be saved.");
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "The profile could not be saved.",
+      );
     } finally {
       setBusy(false);
     }
@@ -301,9 +303,13 @@ function SetupWizard() {
       setAddedCourts((c) => [...c, courtName.trim()]);
       setCourtName("");
       setCourtAddress("");
-      setGroups([{ surface: "HARD", indoor: false, lighting: false, count: 1 }]);
+      setGroups([
+        { surface: "HARD", indoor: false, lighting: false, count: 1 },
+      ]);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "The court could not be added.");
+      setError(
+        err instanceof ApiError ? err.message : "The court could not be added.",
+      );
     } finally {
       setBusy(false);
     }
@@ -331,7 +337,9 @@ function SetupWizard() {
       await refresh();
       router.push("/");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Setup could not be finished.");
+      setError(
+        err instanceof ApiError ? err.message : "Setup could not be finished.",
+      );
       setBusy(false);
     }
   }
@@ -401,7 +409,11 @@ function SetupWizard() {
             onChange={(e) => setConfirm(e.target.value)}
             autoComplete="new-password"
           />
-          <Button type="submit" disabled={busy || !request} className="mt-2 w-full">
+          <Button
+            type="submit"
+            disabled={busy || !request}
+            className="mt-2 w-full"
+          >
             {busy ? "Creating your account…" : "Create account & continue"}
           </Button>
         </form>
@@ -430,14 +442,17 @@ function SetupWizard() {
           <Field label="Address / Location">
             <Input
               value={profile.address}
-              onChange={(e) => setProfile({ ...profile, address: e.target.value })}
+              onChange={(e) =>
+                setProfile({ ...profile, address: e.target.value })
+              }
             />
           </Field>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Phone">
-              <Input
+              <PhoneNumberField
                 value={profile.phone}
-                onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                onChange={(phone) => setProfile({ ...profile, phone })}
+                label="Phone"
               />
             </Field>
             <Field label="Website">

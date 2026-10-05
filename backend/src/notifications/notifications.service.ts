@@ -65,7 +65,7 @@ export class NotificationsService {
       return false;
     }
 
-    await this.prisma.notification.create({
+    const notification = await this.prisma.notification.create({
       data: {
         userId,
         category,
@@ -85,6 +85,7 @@ export class NotificationsService {
     // throws, so this cannot become an unhandled rejection.
     void this.push.sendToUser(userId, title, body, {
       category,
+      ...(notification?.id ? { notificationId: notification.id } : {}),
       relatedEntityType,
       relatedEntityId,
     });

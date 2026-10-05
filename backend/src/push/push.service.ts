@@ -12,6 +12,7 @@ import { PrismaService } from '../prisma/prisma.service';
  * these on tap to open the same screen the in-app row would. */
 export interface PushData {
   category: string;
+  notificationId?: string;
   relatedEntityType?: string;
   relatedEntityId?: string;
 }
@@ -109,6 +110,7 @@ export class PushService {
     // Every value in an FCM data payload must be a string, and undefined
     // entries are rejected outright rather than ignored.
     const payload: Record<string, string> = { category: data.category };
+    if (data.notificationId) payload.notificationId = data.notificationId;
     if (data.relatedEntityType) {
       payload.relatedEntityType = data.relatedEntityType;
     }

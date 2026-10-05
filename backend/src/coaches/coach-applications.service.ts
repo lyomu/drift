@@ -9,9 +9,11 @@ import {
   CoachApplicationStatus,
   ListingVerificationStatus,
   OnboardingStep,
+  NotificationCategory,
   Prisma,
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import {
   CoachApplicationDecision,
   ListCoachApplicationsDto,
@@ -41,7 +43,10 @@ const EDITABLE: CoachApplicationStatus[] = [
 
 @Injectable()
 export class CoachApplicationsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications?: NotificationsService,
+  ) {}
 
   private cleanText(value: string | null | undefined) {
     if (value === undefined) return undefined;
@@ -381,6 +386,29 @@ export class CoachApplicationsService {
         });
       }
     });
+
+    const decisionCopy: Record<CoachApplicationDecision, [string, string]> = {
+      APPROVE: [
+        'Coach application approved',
+        'Your coach profile is now live on Drift Tennis.',
+      ],
+      REJECT: [
+        'Coach application update',
+        'Your coach application was not approved. Open your application to see the review note.',
+      ],
+      REQUEST_CHANGES: [
+        'Coach application needs changes',
+        'Your coach application needs a few updates before it can be approved.',
+      ],
+    };
+    const [title, body] = decisionCopy[dto.decision];
+    await this.notifications?.create(
+      application.userId,
+      NotificationCategory.CLUBS,
+      title,
+      body,
+      'SETTINGS',
+    );
 
     return this.findOne(id);
   }

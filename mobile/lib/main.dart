@@ -8,6 +8,8 @@ import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'features/notifications/application/push_message_handler.dart';
 
+final rootScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -47,7 +49,11 @@ class _DriftTennisAppState extends ConsumerState<DriftTennisApp> {
     super.initState();
     // After the first frame so the router is built and can be navigated.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      PushMessageHandler(ref, ref.read(appRouterProvider)).start();
+      PushMessageHandler(
+        ref,
+        ref.read(appRouterProvider),
+        rootScaffoldMessengerKey,
+      ).start();
     });
   }
 
@@ -61,6 +67,7 @@ class _DriftTennisAppState extends ConsumerState<DriftTennisApp> {
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       routerConfig: router,
+      scaffoldMessengerKey: rootScaffoldMessengerKey,
     );
 
     // Clarity records by wrapping the tree, so it has to sit above the app

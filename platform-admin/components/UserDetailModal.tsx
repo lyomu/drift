@@ -3,7 +3,17 @@
 import { useCallback, useEffect, useState } from "react";
 import { DefinitionList, ModalShell } from "@/components/dashboard-design";
 import { api, ApiError } from "@/lib/api-client";
-import { Badge, Button, ErrorBanner, Field, Input, Select, Textarea, statusTone } from "@/components/ui";
+import {
+  Badge,
+  Button,
+  ErrorBanner,
+  Field,
+  Input,
+  Select,
+  Textarea,
+  statusTone,
+} from "@/components/ui";
+import { PhoneNumberField } from "@/components/PhoneNumberField";
 import {
   USER_CATEGORY_LABEL,
   displayName,
@@ -71,7 +81,9 @@ export function UserDetailModal({
         bio: res.user.bio ?? "",
         phoneOnWhatsApp: res.user.phoneOnWhatsApp ?? false,
       });
-      const history = await api.get<{ events: UserActivityEvent[] }>(`/users/${userId}/activity`);
+      const history = await api.get<{ events: UserActivityEvent[] }>(
+        `/users/${userId}/activity`,
+      );
       setActivity(history.events);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to load user.");
@@ -95,7 +107,6 @@ export function UserDetailModal({
     } finally {
       setBusy(false);
     }
-
   }
 
   async function saveProfile() {
@@ -201,7 +212,9 @@ export function UserDetailModal({
       {user && (
         <div className="grid gap-5">
           <div className="flex flex-wrap gap-2">
-            <Badge tone={statusTone(user.accountStatus)}>{user.accountStatus}</Badge>
+            <Badge tone={statusTone(user.accountStatus)}>
+              {user.accountStatus}
+            </Badge>
             <Badge tone={statusTone(user.verificationStatus)}>
               {label(user.verificationStatus)}
             </Badge>
@@ -219,24 +232,66 @@ export function UserDetailModal({
               </h3>
               <div className="grid gap-3 sm:grid-cols-2">
                 <Field label="First name">
-                  <Input value={form.firstName} onChange={(e) => setForm((current) => ({ ...current, firstName: e.target.value }))} />
+                  <Input
+                    value={form.firstName}
+                    onChange={(e) =>
+                      setForm((current) => ({
+                        ...current,
+                        firstName: e.target.value,
+                      }))
+                    }
+                  />
                 </Field>
                 <Field label="Last name">
-                  <Input value={form.lastName} onChange={(e) => setForm((current) => ({ ...current, lastName: e.target.value }))} />
+                  <Input
+                    value={form.lastName}
+                    onChange={(e) =>
+                      setForm((current) => ({
+                        ...current,
+                        lastName: e.target.value,
+                      }))
+                    }
+                  />
                 </Field>
                 <Field label="Phone">
-                  <Input value={form.phone} onChange={(e) => setForm((current) => ({ ...current, phone: e.target.value }))} />
+                  <PhoneNumberField
+                    value={form.phone}
+                    onChange={(phone) =>
+                      setForm((current) => ({ ...current, phone }))
+                    }
+                  />
                 </Field>
                 <label className="flex items-center gap-2 self-end pb-2 text-sm font-semibold">
-                  <input type="checkbox" checked={form.phoneOnWhatsApp} onChange={(e) => setForm((current) => ({ ...current, phoneOnWhatsApp: e.target.checked }))} />
+                  <input
+                    type="checkbox"
+                    checked={form.phoneOnWhatsApp}
+                    onChange={(e) =>
+                      setForm((current) => ({
+                        ...current,
+                        phoneOnWhatsApp: e.target.checked,
+                      }))
+                    }
+                  />
                   WhatsApp reachable
                 </label>
               </div>
               <Field label="Bio">
-                <Textarea rows={3} value={form.bio} onChange={(e) => setForm((current) => ({ ...current, bio: e.target.value }))} />
+                <Textarea
+                  rows={3}
+                  value={form.bio}
+                  onChange={(e) =>
+                    setForm((current) => ({ ...current, bio: e.target.value }))
+                  }
+                />
               </Field>
               <div className="flex justify-end">
-                <Button variant="primary" disabled={busy || !form.firstName.trim() || !form.lastName.trim()} onClick={() => void saveProfile()}>
+                <Button
+                  variant="primary"
+                  disabled={
+                    busy || !form.firstName.trim() || !form.lastName.trim()
+                  }
+                  onClick={() => void saveProfile()}
+                >
                   {busy ? "Saving..." : "Save profile"}
                 </Button>
               </div>
@@ -312,7 +367,9 @@ export function UserDetailModal({
                   label: "Club memberships",
                   value:
                     user.clubMemberships.length > 0
-                      ? user.clubMemberships.map((membership) => membership.clubName).join(", ")
+                      ? user.clubMemberships
+                          .map((membership) => membership.clubName)
+                          .join(", ")
                       : "-",
                 },
               ]}
@@ -357,7 +414,9 @@ export function UserDetailModal({
                   {
                     label: "Listing status",
                     value: (
-                      <Badge tone={statusTone(user.coachProfile.verificationStatus)}>
+                      <Badge
+                        tone={statusTone(user.coachProfile.verificationStatus)}
+                      >
                         {label(user.coachProfile.verificationStatus)}
                       </Badge>
                     ),
@@ -408,13 +467,20 @@ export function UserDetailModal({
               Activity history
             </h3>
             {activity.length === 0 ? (
-              <p className="text-sm text-drift-text-secondary">No platform-admin activity recorded.</p>
+              <p className="text-sm text-drift-text-secondary">
+                No platform-admin activity recorded.
+              </p>
             ) : (
               <div className="divide-y divide-drift-border rounded-lg border border-drift-border">
                 {activity.map((event) => (
-                  <div key={event.id} className="flex items-start justify-between gap-4 p-3 text-sm">
+                  <div
+                    key={event.id}
+                    className="flex items-start justify-between gap-4 p-3 text-sm"
+                  >
                     <div>
-                      <div className="font-semibold">{event.action.replaceAll(".", " ")}</div>
+                      <div className="font-semibold">
+                        {event.action.replaceAll(".", " ")}
+                      </div>
                       <div className="text-xs text-drift-text-secondary">
                         by {event.actor.name || event.actor.email}
                       </div>

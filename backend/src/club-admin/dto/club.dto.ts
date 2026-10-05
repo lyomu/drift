@@ -3,6 +3,7 @@ import {
   IsEnum,
   IsNumber,
   IsOptional,
+  IsPhoneNumber,
   IsString,
   MaxLength,
 } from 'class-validator';
@@ -55,7 +56,7 @@ export class UpdateClubDto {
   longitude?: number;
 
   @IsOptional()
-  @IsString()
+  @IsPhoneNumber()
   phone?: string;
 
   @IsOptional()

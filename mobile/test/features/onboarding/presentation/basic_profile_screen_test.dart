@@ -71,7 +71,9 @@ void main() {
         ],
       );
 
-      expect(fieldText(tester, 'Phone number (optional)'), '+254700000000');
+      // The field shows local digits next to the selected Kenya flag/code;
+      // its controller still keeps the canonical +254 E.164 value for save.
+      expect(fieldText(tester, 'Phone number (optional)'), '700000000');
       final checkbox = tester.widget<Checkbox>(find.byType(Checkbox));
       expect(checkbox.value, isTrue);
     });

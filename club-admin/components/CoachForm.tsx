@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button, Card, Field, Input, Textarea } from "@/components/ui";
 import { CoachPhotoUpload } from "@/components/CoachPhotoUpload";
+import { PhoneNumberField } from "@/components/PhoneNumberField";
 import { coachApi } from "@/lib/coach-api";
 import { useClub } from "@/lib/club-context";
 import type { CoachAdmin, CoachLevel } from "@/lib/types";
@@ -171,7 +172,11 @@ export function CoachForm({
         }
       >
         {(self || coach) && (
-          <CoachPhotoUpload photoUrl={photoUrl} onUpload={uploadPhoto} onRemove={removePhoto} />
+          <CoachPhotoUpload
+            photoUrl={photoUrl}
+            onUpload={uploadPhoto}
+            onRemove={removePhoto}
+          />
         )}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {!self && (
@@ -271,10 +276,10 @@ export function CoachForm({
             />
           </Field>
           <Field label="Public phone">
-            <Input
-              type="tel"
+            <PhoneNumberField
               value={publicPhone}
-              onChange={(event) => setPublicPhone(event.target.value)}
+              onChange={setPublicPhone}
+              label="Public phone"
             />
           </Field>
           <Field label="Booking URL">

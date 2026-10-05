@@ -3,6 +3,7 @@ import {
   IsIn,
   IsEmail,
   IsOptional,
+  IsPhoneNumber,
   IsString,
   IsBoolean,
   Length,
@@ -76,7 +77,7 @@ export class UpdateUserProfileDto {
   bio?: string | null;
 
   @IsOptional()
-  @IsString()
+  @IsPhoneNumber()
   @MaxLength(32)
   phone?: string | null;
 

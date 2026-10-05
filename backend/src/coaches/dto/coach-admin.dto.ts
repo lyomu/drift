@@ -4,6 +4,7 @@ import {
   IsEnum,
   IsInt,
   IsOptional,
+  IsPhoneNumber,
   IsString,
   IsUrl,
   Max,
@@ -51,7 +52,7 @@ export class CoachFieldsDto {
   publicEmail?: string | null;
 
   @IsOptional()
-  @IsString()
+  @IsPhoneNumber()
   @MaxLength(50)
   publicPhone?: string | null;
 
