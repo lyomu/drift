@@ -25,7 +25,13 @@ describe('Onboarding (e2e)', () => {
   async function signUp(emailAddress: string): Promise<string> {
     const signUpRes = await request(app.getHttpServer())
       .post('/auth/signup')
-      .send({ email: emailAddress, password, firstName: 'Test', lastName: 'User', acceptedAgePolicy: true })
+      .send({
+        email: emailAddress,
+        password,
+        firstName: 'Test',
+        lastName: 'User',
+        acceptedAgePolicy: true,
+      })
       .expect(201);
 
     const verifyRes = await request(app.getHttpServer())
@@ -36,7 +42,14 @@ describe('Onboarding (e2e)', () => {
       })
       .expect(200);
 
-    return verifyRes.body.accessToken;
+    const accessToken = (verifyRes.body as { accessToken?: unknown })
+      .accessToken;
+    if (typeof accessToken !== 'string') {
+      throw new Error(
+        'Expected verification response to contain an access token',
+      );
+    }
+    return accessToken;
   }
 
   async function createSuggestedOpponent() {

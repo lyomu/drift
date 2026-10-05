@@ -9,17 +9,18 @@ import { OAuthService } from './oauth.service';
 // The `mock` prefix is required: jest hoists these factories above the
 // imports, and only out-of-scope names beginning with `mock` are allowed
 // inside them.
-const mockVerifyIdToken = jest.fn();
+const mockVerifyIdToken = jest.fn<Promise<unknown>, [unknown]>();
 jest.mock('google-auth-library', () => ({
   OAuth2Client: jest.fn().mockImplementation(() => ({
-    verifyIdToken: (...args: unknown[]) => mockVerifyIdToken(...args),
+    verifyIdToken: (options: unknown) => mockVerifyIdToken(options),
   })),
 }));
 
-const mockJwtVerify = jest.fn();
+const mockJwtVerify = jest.fn<Promise<unknown>, [unknown, unknown, unknown?]>();
 jest.mock('jose', () => ({
   createRemoteJWKSet: jest.fn(() => 'jwks'),
-  jwtVerify: (...args: unknown[]) => mockJwtVerify(...args),
+  jwtVerify: (token: unknown, jwks: unknown, options?: unknown) =>
+    mockJwtVerify(token, jwks, options),
 }));
 
 function makeService(env: Record<string, string>): OAuthService {
@@ -30,7 +31,8 @@ function makeService(env: Record<string, string>): OAuthService {
 }
 
 const CONFIGURED = {
-  GOOGLE_OAUTH_CLIENT_IDS: 'android-client.apps.googleusercontent.com, web-client.apps.googleusercontent.com',
+  GOOGLE_OAUTH_CLIENT_IDS:
+    'android-client.apps.googleusercontent.com, web-client.apps.googleusercontent.com',
   APPLE_SERVICES_ID: 'com.drift.tennis.service',
   APPLE_BUNDLE_ID: 'com.drift.tennis',
 };
@@ -181,7 +183,9 @@ describe('OAuthService', () => {
     });
 
     it('rejects a token jose refuses', async () => {
-      mockJwtVerify.mockRejectedValue(new Error('signature verification failed'));
+      mockJwtVerify.mockRejectedValue(
+        new Error('signature verification failed'),
+      );
       const service = makeService(CONFIGURED);
 
       await expect(service.verifyAppleIdentityToken('tok')).rejects.toThrow(

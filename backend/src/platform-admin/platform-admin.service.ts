@@ -281,7 +281,9 @@ export class PlatformAdminService {
     });
 
     if (process.env.NODE_ENV !== 'production') {
-      console.info(`[platform-admin] Password reset code for ${email}: ${code}`);
+      console.info(
+        `[platform-admin] Password reset code for ${email}: ${code}`,
+      );
     }
     const sent = await this.mailer.sendVerificationCode(
       email,
@@ -460,47 +462,63 @@ export class PlatformAdminService {
     // not a summary of the current filter. Counting the page instead (what
     // the console used to do client-side) silently under-reports past the
     // first page.
-    const [users, total, active, suspended, deleted, players, coaches, clubStaff] =
-      await this.prisma.$transaction([
-        this.prisma.user.findMany({
-          where,
-          select: USER_SELECT,
-          orderBy: { createdAt: 'desc' },
-          take: Math.min(query.take ?? 50, 200),
-          skip: query.skip ?? 0,
-        }),
-        this.prisma.user.count({ where }),
-        this.prisma.user.count({
-          where: { accountStatus: AccountStatus.ACTIVE },
-        }),
-        this.prisma.user.count({
-          where: { accountStatus: AccountStatus.SUSPENDED },
-        }),
-        this.prisma.user.count({
-          where: { accountStatus: AccountStatus.DELETED },
-        }),
-        this.prisma.user.count({ where: USER_CATEGORY_WHERE.PLAYER }),
-        this.prisma.user.count({ where: USER_CATEGORY_WHERE.COACH }),
-        this.prisma.user.count({ where: USER_CATEGORY_WHERE.CLUB_STAFF }),
-      ]);
+    const [
+      users,
+      total,
+      active,
+      suspended,
+      deleted,
+      players,
+      coaches,
+      clubStaff,
+    ] = await this.prisma.$transaction([
+      this.prisma.user.findMany({
+        where,
+        select: USER_SELECT,
+        orderBy: { createdAt: 'desc' },
+        take: Math.min(query.take ?? 50, 200),
+        skip: query.skip ?? 0,
+      }),
+      this.prisma.user.count({ where }),
+      this.prisma.user.count({
+        where: { accountStatus: AccountStatus.ACTIVE },
+      }),
+      this.prisma.user.count({
+        where: { accountStatus: AccountStatus.SUSPENDED },
+      }),
+      this.prisma.user.count({
+        where: { accountStatus: AccountStatus.DELETED },
+      }),
+      this.prisma.user.count({ where: USER_CATEGORY_WHERE.PLAYER }),
+      this.prisma.user.count({ where: USER_CATEGORY_WHERE.COACH }),
+      this.prisma.user.count({ where: USER_CATEGORY_WHERE.CLUB_STAFF }),
+    ]);
 
     return {
       total,
       counts: { active, suspended, deleted, players, coaches, clubStaff },
-      users: users.map(({ tennisProfile, padelProfile, coachProfile, clubMemberships, ...user }) => ({
-        ...user,
-        categories: categoriesOf({
+      users: users.map(
+        ({
           tennisProfile,
           padelProfile,
           coachProfile,
           clubMemberships,
+          ...user
+        }) => ({
+          ...user,
+          categories: categoriesOf({
+            tennisProfile,
+            padelProfile,
+            coachProfile,
+            clubMemberships,
+          }),
+          clubRoles: clubMemberships.map((membership) => ({
+            role: membership.role,
+            clubId: membership.club.id,
+            clubName: membership.club.name,
+          })),
         }),
-        clubRoles: clubMemberships.map((membership) => ({
-          role: membership.role,
-          clubId: membership.club.id,
-          clubName: membership.club.name,
-        })),
-      })),
+      ),
     };
   }
 
@@ -745,8 +763,7 @@ export class PlatformAdminService {
         stats: {
           matches: _count.matchParticipations,
           reportsReceived: _count.reportsReceived,
-          connections:
-            _count.connectionsRequested + _count.connectionsReceived,
+          connections: _count.connectionsRequested + _count.connectionsReceived,
           activeSessions,
         },
       },
@@ -769,13 +786,9 @@ export class PlatformAdminService {
       data: { revokedAt: new Date() },
     });
 
-    await this.audit.record(
-      actorId,
-      'user.revoke_sessions',
-      'User',
-      userId,
-      { revokedTokens: count },
-    );
+    await this.audit.record(actorId, 'user.revoke_sessions', 'User', userId, {
+      revokedTokens: count,
+    });
 
     return { id: userId, revokedTokens: count };
   }

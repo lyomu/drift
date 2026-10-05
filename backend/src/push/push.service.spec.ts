@@ -2,8 +2,15 @@ import { ConfigService } from '@nestjs/config';
 import { PushService } from './push.service';
 import { PrismaService } from '../prisma/prisma.service';
 
-const mockSendEachForMulticast = jest.fn();
-const mockInitializeApp = jest.fn(() => ({ name: 'drift-push' }));
+type MockMulticastMessage = { data: Record<string, string> };
+
+const mockSendEachForMulticast = jest.fn<
+  Promise<unknown>,
+  [MockMulticastMessage]
+>();
+const mockInitializeApp = jest.fn<{ name: string }, [unknown?, string?]>(
+  () => ({ name: 'drift-push' }),
+);
 
 // Mirrors firebase-admin 14's *modular* entry points. Worth stating plainly:
 // an earlier version of this mock reproduced the legacy `admin.*` namespace,
@@ -11,14 +18,15 @@ const mockInitializeApp = jest.fn(() => ({ name: 'drift-push' }));
 // not exist, and only `tsc` caught it. A mock is only as honest as the shape
 // it copies.
 jest.mock('firebase-admin/app', () => ({
-  initializeApp: (...args: unknown[]) => mockInitializeApp(...args),
+  initializeApp: (options: unknown, name?: string) =>
+    mockInitializeApp(options, name),
   cert: jest.fn((c: unknown) => c),
 }));
 
 jest.mock('firebase-admin/messaging', () => ({
   getMessaging: () => ({
-    sendEachForMulticast: (...args: unknown[]) =>
-      mockSendEachForMulticast(...args),
+    sendEachForMulticast: (message: MockMulticastMessage) =>
+      mockSendEachForMulticast(message),
   }),
 }));
 
@@ -225,7 +233,7 @@ describe('PushService', () => {
       });
     });
 
-    it('removes only the caller\'s own token', async () => {
+    it("removes only the caller's own token", async () => {
       const service = makeService({}, prisma);
 
       await service.removeDevice('user-1', 'tok-a');

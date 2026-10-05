@@ -1,10 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import {
-  MatchSport,
-  MatchState,
-  OnboardingStep,
-  Prisma,
-} from '@prisma/client';
+import { MatchSport, MatchState, OnboardingStep, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { boundingBox, Coordinates, haversineKm } from '../common/distance.util';
 import { demoScope } from '../common/demo-scope';

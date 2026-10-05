@@ -29,7 +29,9 @@ import { VIDEO_ANALYSIS_QUEUE } from './video-analysis.queue';
         // Same REDIS_URL the messaging gateway already uses — one answer to "where is
         // Redis" rather than two that can drift apart.
         const url = config.get<string>('REDIS_URL');
-        return { connection: url ? { url } : { host: '127.0.0.1', port: 6379 } };
+        return {
+          connection: url ? { url } : { host: '127.0.0.1', port: 6379 },
+        };
       },
     }),
     BullModule.registerQueue({ name: VIDEO_ANALYSIS_QUEUE }),

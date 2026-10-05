@@ -72,7 +72,7 @@ describe('ErasureScheduler', () => {
       { id: 'good', userId: 'user-2' },
     ]);
     erasure.eraseUser.mockImplementation(
-      async (_tx: unknown, _userId: string, requestId: string) => {
+      (_tx: unknown, _userId: string, requestId: string) => {
         if (requestId === 'bad') throw new Error('constraint violation');
       },
     );
@@ -82,9 +82,11 @@ describe('ErasureScheduler', () => {
     await expect(scheduler.runDueErasures()).resolves.toBeUndefined();
 
     expect(erasure.eraseUser).toHaveBeenCalledTimes(2);
-    const updated = prisma.privacyRequest.update.mock.calls.map(
-      (c) => c[0].where.id,
-    );
+    const updated = (
+      prisma.privacyRequest.update.mock.calls as Array<
+        [{ where: { id: string } }]
+      >
+    ).map(([args]) => args.where.id);
     // The failed one stays PENDING, so the next run retries it.
     expect(updated).toEqual(['good']);
   });

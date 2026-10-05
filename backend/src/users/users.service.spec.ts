@@ -129,7 +129,7 @@ describe('UsersService', () => {
         service.uploadPhoto('user-1', {
           ...file,
           mimetype: 'application/pdf',
-        } as Express.Multer.File),
+        }),
       ).rejects.toBeInstanceOf(BadRequestException);
       expect(prisma.userPhotoAsset.upsert).not.toHaveBeenCalled();
     });

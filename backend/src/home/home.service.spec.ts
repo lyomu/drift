@@ -67,24 +67,12 @@ function createService(
   const filled = [...contributors];
   while (filled.length < 13) filled.push(stub(`filler-${filled.length}`));
 
-  return new HomeService(
+  // The production constructor asks Nest for concrete contributor classes.
+  // This orchestration spec intentionally supplies interface-only doubles.
+  return Reflect.construct(HomeService, [
     prisma as unknown as PrismaService,
-    ...(filled as unknown as [
-      HomeCardContributor,
-      HomeCardContributor,
-      HomeCardContributor,
-      HomeCardContributor,
-      HomeCardContributor,
-      HomeCardContributor,
-      HomeCardContributor,
-      HomeCardContributor,
-      HomeCardContributor,
-      HomeCardContributor,
-      HomeCardContributor,
-      HomeCardContributor,
-      HomeCardContributor,
-    ]),
-  );
+    ...filled,
+  ]) as HomeService;
 }
 
 const profile = { padelInterest: null, availabilitySlots: [] };

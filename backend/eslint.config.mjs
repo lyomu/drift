@@ -6,7 +6,14 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['eslint.config.mjs'],
+    ignores: [
+      'dist/**',
+      'coverage/**',
+      'eslint.config.mjs',
+      // Standalone operator scripts are plain ESM and intentionally outside
+      // the Nest TypeScript project used by the type-aware rules below.
+      'scripts/**/*.mjs',
+    ],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,

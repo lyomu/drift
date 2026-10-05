@@ -81,13 +81,15 @@ const KEPT: Record<string, string> = {
   Announcement: 'club communication authored on the club behalf',
   ClubAuditLog: 'audit trail must not be rewritable by its subject',
   ClubMediaAsset: 'club-owned asset, not personal data',
-  CourtPhotoAsset: 'club-owned asset, not personal data — same shape as ClubMediaAsset',
+  CourtPhotoAsset:
+    'club-owned asset, not personal data — same shape as ClubMediaAsset',
   CourtInquiry: 'venue-side record with no free text from the user',
   VenueVerificationRequest: 'venue record submitted on the venue behalf',
   BillingAccount: 'financial records carry a statutory retention duty',
   NotificationPreference: 'booleans only, no personal data',
   AssessmentSession: 'skill assessment feeds ratings others are ranked against',
-  PadelAssessmentSession: 'skill assessment feeds ratings others are ranked against',
+  PadelAssessmentSession:
+    'skill assessment feeds ratings others are ranked against',
 };
 
 /** Model names referenced as relations from the `User` block. */
@@ -104,7 +106,7 @@ function userRelationModels(): string[] {
     const m = line.match(/^(\w+)\s+([A-Z]\w*)(\[\])?\??/);
     if (!m) continue;
     const type = m[2];
-    if (new RegExp(`^model ${type} \{$`, 'm').test(SCHEMA)) models.add(type);
+    if (new RegExp(`^model ${type} {$`, 'm').test(SCHEMA)) models.add(type);
   }
   return [...models].sort();
 }

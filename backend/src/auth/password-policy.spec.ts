@@ -123,7 +123,8 @@ describe('PasswordPolicyService', () => {
 
     await makeService({ NODE_ENV: 'production' }).assertAcceptable(password);
 
-    const url = String(fetchMock.mock.calls[0][0]);
+    const url = fetchMock.mock.calls[0][0];
+    if (typeof url !== 'string') throw new Error('Expected fetch URL string');
     expect(url).toBe(
       `https://api.pwnedpasswords.com/range/${sha1.slice(0, 5)}`,
     );

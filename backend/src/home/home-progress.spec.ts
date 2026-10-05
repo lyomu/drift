@@ -1,4 +1,8 @@
-import { activityStreakWeeks, levelProgress, startOfWeek } from './home-progress';
+import {
+  activityStreakWeeks,
+  levelProgress,
+  startOfWeek,
+} from './home-progress';
 
 /** Thursday 1 October 2026, the date on the redesign mocks. */
 const NOW = new Date('2026-10-01T12:00:00.000Z');
@@ -29,7 +33,12 @@ describe('activityStreakWeeks', () => {
 
   it('counts consecutive weeks', () => {
     // This week, and each of the three before it.
-    const dates = [daysBefore(1), daysBefore(8), daysBefore(15), daysBefore(22)];
+    const dates = [
+      daysBefore(1),
+      daysBefore(8),
+      daysBefore(15),
+      daysBefore(22),
+    ];
     expect(activityStreakWeeks(dates, NOW)).toBe(4);
   });
 

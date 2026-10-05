@@ -24,7 +24,10 @@ import {
   StandingRow,
   computeStandings,
 } from './standings';
-import { effectiveCompetitionState, isRegistrationOpen } from './competition-state';
+import {
+  effectiveCompetitionState,
+  isRegistrationOpen,
+} from './competition-state';
 import { NotificationsService } from '../notifications/notifications.service';
 import { sanitizeRichText } from '../common/rich-text.util';
 import { demoScope } from '../common/demo-scope';
@@ -133,7 +136,11 @@ export class CompetitionsService {
           ],
         },
       },
-      include: { league: { include: { rounds: { select: { index: true, closedAt: true } } } } },
+      include: {
+        league: {
+          include: { rounds: { select: { index: true, closedAt: true } } },
+        },
+      },
       orderBy: { league: { startsAt: 'desc' } },
     });
 
@@ -144,7 +151,10 @@ export class CompetitionsService {
         name: r.league.name,
         state: effectiveCompetitionState(
           r.league,
-          this.isFinalRoundClosedFromRounds(r.league.roundCount, r.league.rounds),
+          this.isFinalRoundClosedFromRounds(
+            r.league.roundCount,
+            r.league.rounds,
+          ),
         ),
         registrationStatus: r.status,
       })),

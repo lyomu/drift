@@ -1,4 +1,8 @@
-import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createReadStream } from 'node:fs';
 import { basename } from 'node:path';
@@ -125,7 +129,8 @@ export class CvServiceClient {
     // sits well above the single-clip ceiling. It bounds a hung run; cv-service applies its
     // own TENNIS_VISION_SESSION_TIMEOUT_S independently and neither trusts the other.
     this.sessionTimeoutMs = Number(
-      this.config.get<string>('CV_SERVICE_SESSION_TIMEOUT_MS') ?? 4 * 60 * 60_000,
+      this.config.get<string>('CV_SERVICE_SESSION_TIMEOUT_MS') ??
+        4 * 60 * 60_000,
     );
   }
 
@@ -215,12 +220,16 @@ export class CvServiceClient {
       );
     } catch (error) {
       this.logger.error(`CV service analyze failed: ${String(error)}`);
-      throw new ServiceUnavailableException('The analysis service is unreachable.');
+      throw new ServiceUnavailableException(
+        'The analysis service is unreachable.',
+      );
     }
 
     if (response.status === 503) {
       const retryAfter = Number(response.headers.get('retry-after') ?? 60);
-      throw new CvServiceBusyError(Number.isFinite(retryAfter) ? retryAfter : 60);
+      throw new CvServiceBusyError(
+        Number.isFinite(retryAfter) ? retryAfter : 60,
+      );
     }
 
     if (!response.ok) {
@@ -268,12 +277,16 @@ export class CvServiceClient {
       );
     } catch (error) {
       this.logger.error(`CV service analyze-session failed: ${String(error)}`);
-      throw new ServiceUnavailableException('The analysis service is unreachable.');
+      throw new ServiceUnavailableException(
+        'The analysis service is unreachable.',
+      );
     }
 
     if (response.status === 503) {
       const retryAfter = Number(response.headers.get('retry-after') ?? 300);
-      throw new CvServiceBusyError(Number.isFinite(retryAfter) ? retryAfter : 300);
+      throw new CvServiceBusyError(
+        Number.isFinite(retryAfter) ? retryAfter : 300,
+      );
     }
 
     if (!response.ok) {

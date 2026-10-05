@@ -55,17 +55,29 @@ async function main() {
     // Dedup by proximity (< 50 m) + same name.
     const dup = await prisma.$queryRawUnsafe<{ id: string }[]>(
       `SELECT id FROM courts WHERE name = $1 AND latitude IS NOT NULL AND longitude IS NOT NULL AND (6371000 * acos(least(1, greatest(-1, sin(radians($2)) * sin(radians(latitude)) + cos(radians($2)) * cos(radians(latitude)) * cos(radians(longitude) - radians($3)))))) < 50 LIMIT 1`,
-      name, latitude, longitude,
+      name,
+      latitude,
+      longitude,
     );
-    if (Array.isArray(dup) && dup.length > 0) { skipped++; continue; }
+    if (Array.isArray(dup) && dup.length > 0) {
+      skipped++;
+      continue;
+    }
 
-    const surface = tags.surface === 'clay' ? 'CLAY' : tags.surface === 'grass' ? 'GRASS' : 'HARD';
+    const surface =
+      tags.surface === 'clay'
+        ? 'CLAY'
+        : tags.surface === 'grass'
+          ? 'GRASS'
+          : 'HARD';
     const indoor = tags.indoor === 'yes';
 
     const court = await prisma.court.create({
       data: {
         name,
-        address: [tags['addr:street'], tags['addr:city']].filter(Boolean).join(', ') || null,
+        address:
+          [tags['addr:street'], tags['addr:city']].filter(Boolean).join(', ') ||
+          null,
         latitude,
         longitude,
         verificationStatus: 'UNVERIFIED',
@@ -81,7 +93,9 @@ async function main() {
       },
     });
     created++;
-    console.log(`  + ${court.name} (${latitude?.toFixed(4)}, ${longitude?.toFixed(4)})`);
+    console.log(
+      `  + ${court.name} (${latitude?.toFixed(4)}, ${longitude?.toFixed(4)})`,
+    );
   }
 
   console.log(`\nOSM import: ${created} created, ${skipped} deduped.`);

@@ -145,11 +145,7 @@ export class HomeService {
         where: {
           participants: { some: { userId } },
           state: {
-            in: [
-              MatchState.COMPLETED,
-              MatchState.WALKOVER,
-              MatchState.RETIRED,
-            ],
+            in: [MatchState.COMPLETED, MatchState.WALKOVER, MatchState.RETIRED],
           },
           confirmedTime: { gte: since },
         },

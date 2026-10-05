@@ -80,37 +80,37 @@ export class AuthService {
 
     const user = await this.withUniqueContactGuard(() =>
       this.prisma.$transaction(async (tx) => {
-      const created = await tx.user.create({
-        data: {
-          email: dto.email,
-          passwordHash,
-          firstName: dto.firstName,
-          lastName: dto.lastName,
-          // Optional and unverified: `phoneVerifiedAt` stays null. The flag is
-          // only meaningful with a number, so it is written alongside one.
-          ...(dto.phone
-            ? {
-                phone: dto.phone,
-                phoneOnWhatsApp: dto.phoneOnWhatsApp ?? false,
-              }
-            : {}),
-          agePolicyAcceptedAt: new Date(),
-          onboardingStep: OnboardingStep.VERIFY,
-          tennisProfile: { create: {} },
-        },
-      });
+        const created = await tx.user.create({
+          data: {
+            email: dto.email,
+            passwordHash,
+            firstName: dto.firstName,
+            lastName: dto.lastName,
+            // Optional and unverified: `phoneVerifiedAt` stays null. The flag is
+            // only meaningful with a number, so it is written alongside one.
+            ...(dto.phone
+              ? {
+                  phone: dto.phone,
+                  phoneOnWhatsApp: dto.phoneOnWhatsApp ?? false,
+                }
+              : {}),
+            agePolicyAcceptedAt: new Date(),
+            onboardingStep: OnboardingStep.VERIFY,
+            tennisProfile: { create: {} },
+          },
+        });
 
-      await tx.verificationCode.create({
-        data: {
-          userId: created.id,
-          channel: VerificationChannel.EMAIL,
-          purpose: VerificationPurpose.SIGNUP,
-          codeHash,
-          expiresAt: new Date(Date.now() + CODE_TTL_MS),
-        },
-      });
+        await tx.verificationCode.create({
+          data: {
+            userId: created.id,
+            channel: VerificationChannel.EMAIL,
+            purpose: VerificationPurpose.SIGNUP,
+            codeHash,
+            expiresAt: new Date(Date.now() + CODE_TTL_MS),
+          },
+        });
 
-      return created;
+        return created;
       }),
     );
 

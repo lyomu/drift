@@ -9,13 +9,16 @@ import {
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import type { Queue } from 'bullmq';
-import { VideoAnalysisStatus } from '@prisma/client';
+import { Prisma, VideoAnalysisStatus } from '@prisma/client';
 import { createReadStream } from 'node:fs';
 import { rm } from 'node:fs/promises';
 import { Readable } from 'node:stream';
 import { PrismaService } from '../prisma/prisma.service';
 import { PushService } from '../push/push.service';
-import { VIDEO_STORAGE, type VideoStorage } from '../storage/video-storage.service';
+import {
+  VIDEO_STORAGE,
+  type VideoStorage,
+} from '../storage/video-storage.service';
 import {
   CvServiceBusyError,
   CvServiceClient,
@@ -35,6 +38,10 @@ import {
 export const MAX_VIDEO_BYTES = 512 * 1024 * 1024;
 
 const ACCEPTED_MIME_PREFIX = 'video/';
+
+function asJsonValue(value: object): Prisma.InputJsonValue {
+  return value;
+}
 
 /**
  * Above this many seconds a clip is analysed as a SESSION — segmented into its rallies,
@@ -81,7 +88,13 @@ export class VideoAnalysisService {
    */
   async createFromUpload(
     userId: string,
-    file: { originalname: string; mimetype: string; size: number; path?: string; buffer?: Buffer },
+    file: {
+      originalname: string;
+      mimetype: string;
+      size: number;
+      path?: string;
+      buffer?: Buffer;
+    },
   ) {
     if (!file?.mimetype?.startsWith(ACCEPTED_MIME_PREFIX)) {
       throw new BadRequestException('Only video uploads are supported.');
@@ -136,9 +149,7 @@ export class VideoAnalysisService {
       // The clip is stored and the row exists; the check is what failed. Leaving the
       // job PENDING is the honest record — it is neither accepted nor refused, and it
       // can be retried without the user uploading again.
-      this.logger.error(
-        `Precheck failed for job ${job.id}: ${String(error)}`,
-      );
+      this.logger.error(`Precheck failed for job ${job.id}: ${String(error)}`);
       throw error;
     }
   }
@@ -185,7 +196,7 @@ export class VideoAnalysisService {
           ? VideoAnalysisStatus.REJECTED
           : VideoAnalysisStatus.ACCEPTED,
         storageKey: rejected ? null : storageKey,
-        precheckResult: result as unknown as object,
+        precheckResult: asJsonValue(result),
         rejectionReasons: reasons,
         completedAt: rejected ? new Date() : null,
       },
@@ -269,7 +280,7 @@ export class VideoAnalysisService {
         where: { id: jobId },
         data: {
           status: VideoAnalysisStatus.COMPLETED,
-          analysisResult: result.summary as unknown as object,
+          analysisResult: asJsonValue(result.summary),
           cvServiceVersion: result.pipeline_version,
           completedAt: new Date(),
         },
@@ -290,7 +301,9 @@ export class VideoAnalysisService {
 
       // Out of attempts: record the failure rather than let a retry loop end in
       // silence, leaving the job ANALYZING forever with nobody told.
-      this.logger.error(`Analysis of ${jobId} failed for good: ${String(error)}`);
+      this.logger.error(
+        `Analysis of ${jobId} failed for good: ${String(error)}`,
+      );
       await this.markFailed(
         jobId,
         'The analysis could not be completed. Please try again later.',
@@ -335,26 +348,23 @@ export class VideoAnalysisService {
     if (partial) {
       body = `We measured ${analysed} of the ${found} rallies we found. Tap to see them.`;
     } else if (isSession) {
-      body = `We measured ${analysed} rall${analysed === 1 ? 'y' : 'ies'}. `
-        + 'Tap to see what we found.';
+      body =
+        `We measured ${analysed} rall${analysed === 1 ? 'y' : 'ies'}. ` +
+        'Tap to see what we found.';
     } else if (calibrated) {
       body = 'Tap to see what we found.';
     } else {
-      body = "Tap to see the results — the court wasn't clear enough to measure "
-        + 'distances, so some numbers are missing.';
+      body =
+        "Tap to see the results — the court wasn't clear enough to measure " +
+        'distances, so some numbers are missing.';
     }
 
     try {
-      await this.push.sendToUser(
-        userId,
-        title,
-        body,
-        {
-          category: 'video_analysis',
-          relatedEntityType: 'videoAnalysisJob',
-          relatedEntityId: jobId,
-        },
-      );
+      await this.push.sendToUser(userId, title, body, {
+        category: 'video_analysis',
+        relatedEntityType: 'videoAnalysisJob',
+        relatedEntityId: jobId,
+      });
     } catch (error) {
       // The analysis succeeded; failing the job because a notification did not send
       // would throw away real work.

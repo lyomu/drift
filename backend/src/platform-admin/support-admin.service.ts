@@ -4,7 +4,6 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import {
-  AccountStatus,
   PlatformPermission,
   PrivacyRequestStatus,
   PrivacyRequestType,
@@ -17,7 +16,10 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from './audit.service';
 import { MailerService } from '../mail/mailer.service';
 import { ErasureService } from '../privacy/erasure.service';
-import { plainTextFromRichText, sanitizeRichText } from '../common/rich-text.util';
+import {
+  plainTextFromRichText,
+  sanitizeRichText,
+} from '../common/rich-text.util';
 import {
   AssignSupportTicketDto,
   CloseSupportTicketDto,
@@ -283,10 +285,11 @@ export class SupportAdminService {
     messageId: string,
     attachmentId: string,
   ) {
-    const attachment = await this.prisma.supportTicketMessageAttachment.findFirst({
-      where: { id: attachmentId, messageId, message: { ticketId } },
-      select: { bytes: true, mimeType: true, filename: true },
-    });
+    const attachment =
+      await this.prisma.supportTicketMessageAttachment.findFirst({
+        where: { id: attachmentId, messageId, message: { ticketId } },
+        select: { bytes: true, mimeType: true, filename: true },
+      });
     if (!attachment) throw new NotFoundException('Attachment not found.');
     return attachment;
   }

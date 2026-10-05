@@ -15,7 +15,10 @@ import { diskStorage } from 'multer';
 import { tmpdir } from 'node:os';
 import type { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { MAX_VIDEO_BYTES, VideoAnalysisService } from './video-analysis.service';
+import {
+  MAX_VIDEO_BYTES,
+  VideoAnalysisService,
+} from './video-analysis.service';
 
 @Controller('video-analysis')
 @UseGuards(JwtAuthGuard)
