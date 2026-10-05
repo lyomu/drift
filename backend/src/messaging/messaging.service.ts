@@ -1,13 +1,32 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { ConversationType, MessageKind, Prisma } from '@prisma/client';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  ConnectionStatus,
+  ConversationType,
+  MatchState,
+  MessageKind,
+  Prisma,
+} from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { playerInclude, toPlayerSummary } from '../players/player.mapper';
 import { displayName } from '../common/display-name.util';
+import { blockBetween, connectionBetween } from '../common/relationship.util';
 import { MatchSystemEvent } from './messaging.events';
 import { RealtimePublisher } from './realtime.publisher';
 import { NotificationsService } from '../notifications/notifications.service';
 
 const DEFAULT_PAGE_SIZE = 30;
+
+/** Match states that count as a challenge still in play between two players. */
+const OPEN_CHALLENGE_STATES: MatchState[] = [
+  MatchState.PROPOSED,
+  MatchState.SCHEDULING,
+  MatchState.SCHEDULED,
+  MatchState.RESCHEDULED,
+];
 const NOTIFICATION_PREVIEW_LENGTH = 100;
 
 @Injectable()
@@ -45,6 +64,60 @@ export class MessagingService {
         participants: {
           create: userIds.map((userId) => ({ userId })),
         },
+      },
+    });
+  }
+
+  /**
+   * The thread between the viewer and another player, for the profile's
+   * message action. Allowed when a challenge is still open between them (the
+   * match thread) or when they are connected (a direct thread). Anyone else is
+   * refused, so the action only exists where the product allows talking.
+   */
+  async openWith(userId: string, otherId: string) {
+    const blocked = await this.prisma.block.findFirst({
+      where: blockBetween(userId, otherId),
+    });
+    if (blocked) {
+      throw new NotFoundException('Player not found.');
+    }
+
+    const openMatch = await this.prisma.match.findFirst({
+      where: {
+        state: { in: OPEN_CHALLENGE_STATES },
+        AND: [
+          { participants: { some: { userId } } },
+          { participants: { some: { userId: otherId } } },
+        ],
+      },
+      select: { id: true },
+    });
+    if (openMatch) {
+      return this.ensureMatchConversation(openMatch.id, [userId, otherId]);
+    }
+
+    const connection = await this.prisma.connection.findFirst({
+      where: connectionBetween(userId, otherId),
+    });
+    if (connection?.status !== ConnectionStatus.ACCEPTED) {
+      throw new ForbiddenException('Connect or challenge before messaging.');
+    }
+
+    const direct = await this.prisma.conversation.findFirst({
+      where: {
+        type: ConversationType.DIRECT,
+        AND: [
+          { participants: { some: { userId } } },
+          { participants: { some: { userId: otherId } } },
+        ],
+      },
+    });
+    if (direct) return direct;
+
+    return this.prisma.conversation.create({
+      data: {
+        type: ConversationType.DIRECT,
+        participants: { create: [{ userId }, { userId: otherId }] },
       },
     });
   }

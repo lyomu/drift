@@ -28,6 +28,12 @@ export class MessagingController {
     return this.messaging.listConversations(this.userId(req));
   }
 
+  /** The thread with another player, for the profile's message action. */
+  @Post('with/:userId')
+  openWith(@Req() req: Request, @Param('userId') userId: string) {
+    return this.messaging.openWith(this.userId(req), userId);
+  }
+
   @Get(':id/messages')
   messages(
     @Req() req: Request,

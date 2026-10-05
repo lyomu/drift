@@ -11,6 +11,7 @@ import '../../../shared/widgets/drift_soft_card.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../connections/application/connections_providers.dart';
 import '../../connections/data/connections_repository.dart';
+import '../../messaging/data/messaging_repository.dart';
 import '../../safety/presentation/block_report_sheet.dart';
 import '../application/players_providers.dart';
 import '../data/players_repository.dart';
@@ -148,6 +149,21 @@ class _ProfileBody extends ConsumerWidget {
                 ],
               ),
             ),
+            if (profile.connectionState == PlayerConnectionState.connected ||
+                profile.hasOpenChallenge)
+              IconButton(
+                tooltip: 'Message',
+                icon: Icon(Icons.chat_bubble_outline_rounded, color: colors.primary),
+                onPressed: isSubmitting
+                    ? null
+                    : () => onAction(() async {
+                        final conversationId = await ref
+                            .read(messagingRepositoryProvider)
+                            .openWith(summary.id);
+                        if (!context.mounted) return;
+                        context.push('/messages/$conversationId');
+                      }),
+              ),
           ],
         ),
         const SizedBox(height: 14),

@@ -97,11 +97,17 @@ class PlayerProfile {
     required this.skillBreakdown,
     required this.availabilitySlots,
     required this.stats,
+    this.hasOpenChallenge = false,
   });
 
   final PlayerSummary summary;
   final String? dominantHand;
   final PlayerConnectionState connectionState;
+
+  /// True while a match between the viewer and this player is still open
+  /// (proposed, scheduling or scheduled). Lets the profile offer messaging
+  /// without a connection.
+  final bool hasOpenChallenge;
 
   /// `null` means "not visible to you" — gated to connections — as opposed
   /// to an empty map, which would mean "connected, but no data yet".
@@ -126,6 +132,7 @@ class PlayerProfile {
           ?.map((s) => AvailabilitySlot.fromJson(s as Map<String, dynamic>))
           .toList(),
       stats: PlayerStats.fromJson(json['stats'] as Map<String, dynamic>),
+      hasOpenChallenge: json['hasOpenChallenge'] as bool? ?? false,
     );
   }
 }
