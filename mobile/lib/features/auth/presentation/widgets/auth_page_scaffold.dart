@@ -30,7 +30,7 @@ class AuthPageScaffold extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+              padding: EdgeInsets.fromLTRB(16, 4, 16, 4),
               child: _BackButton(
                 onTap: () {
                   if (context.canPop()) {
@@ -43,7 +43,7 @@ class AuthPageScaffold extends StatelessWidget {
             ),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(28, 0, 28, 32),
+                padding: EdgeInsets.fromLTRB(28, 0, 28, 32),
                 child: child,
               ),
             ),
@@ -63,7 +63,7 @@ class _BackButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<DriftColors>()!;
     return Material(
-      color: const Color(0xFFF3F4F6),
+      color: colors.surfaceRaised,
       shape: const CircleBorder(),
       clipBehavior: Clip.antiAlias,
       child: InkWell(

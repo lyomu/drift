@@ -11,9 +11,6 @@ import '../data/learning_repository.dart';
 /// Drift's official readable text family.
 const _font = 'Outfit';
 
-const _ink = Color(0xFF0F172A);
-const _slate = Color(0xFF64748B);
-const _muted = Color(0xFF94A3B8);
 
 /// The `AssessmentPillar` values a practice session can target. FOOTWORK was
 /// added to the enum for this screen (2026-10) — it has no assessment
@@ -141,7 +138,7 @@ class _AddPracticeSessionScreenState
             const _Header(),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
+                padding: EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 16,
                 ),
@@ -149,7 +146,7 @@ class _AddPracticeSessionScreenState
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _DateRow(date: _occurredAt, onTap: _pickDate),
-                    const SizedBox(height: 20),
+                    SizedBox(height: 20),
                     const _FieldLabel('Skill focus'),
                     _SkillGrid(
                       selected: _skillFocus,
@@ -158,14 +155,14 @@ class _AddPracticeSessionScreenState
                         _errorText = null;
                       }),
                     ),
-                    const SizedBox(height: 20),
+                    SizedBox(height: 20),
                     const _FieldLabel('Duration'),
                     _DurationStepper(
                       minutes: _durationMinutes,
                       onDecrement: () => _stepDuration(-_durationStep),
                       onIncrement: () => _stepDuration(_durationStep),
                     ),
-                    const SizedBox(height: 20),
+                    SizedBox(height: 20),
                     const _FieldLabel('How did it feel?'),
                     _RatingRow(
                       selected: _perceivedPerformance,
@@ -174,14 +171,14 @@ class _AddPracticeSessionScreenState
                         _errorText = null;
                       }),
                     ),
-                    const SizedBox(height: 20),
+                    SizedBox(height: 20),
                     const _FieldLabel('Notes', optional: true),
                     _NotesField(controller: _notesController),
                     if (_errorText != null) ...[
-                      const SizedBox(height: 12),
+                      SizedBox(height: 12),
                       Text(
                         _errorText!,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: _font,
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
@@ -190,13 +187,13 @@ class _AddPracticeSessionScreenState
                         ),
                       ),
                     ],
-                    const SizedBox(height: 20),
+                    SizedBox(height: 20),
                     _SaveButton(
                       enabled: _canSave,
                       loading: _isSubmitting,
                       onPressed: _isSubmitting ? null : _submit,
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                   ],
                 ),
               ),
@@ -216,7 +213,7 @@ class _Header extends StatelessWidget {
     final colors = Theme.of(context).extension<DriftColors>()!;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      padding: EdgeInsets.fromLTRB(16, 12, 16, 12),
       decoration: BoxDecoration(
         color: colors.surface,
         border: Border(bottom: BorderSide(color: _hairline(colors), width: 1)),
@@ -238,23 +235,23 @@ class _Header extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: _tintedBorder(colors), width: 1.5),
                 ),
-                child: const Icon(
+                child: Icon(
                   DriftSymbolsFilled.arrowBack,
                   size: 20,
-                  color: _ink,
+                  color: colors.textPrimary,
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 12),
-          const Text(
+          SizedBox(width: 12),
+          Text(
             'Log Practice',
             style: TextStyle(
               fontFamily: _font,
               fontSize: 22,
               fontWeight: FontWeight.w900,
               height: 1.2,
-              color: _ink,
+              color: colors.textPrimary,
             ),
           ),
         ],
@@ -271,25 +268,26 @@ class _FieldLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<DriftColors>()!;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: EdgeInsets.only(bottom: 10),
       child: Text.rich(
         TextSpan(
           children: [
             TextSpan(text: text),
             if (optional)
-              const TextSpan(
+              TextSpan(
                 text: ' (optional)',
-                style: TextStyle(fontWeight: FontWeight.w400, color: _muted),
+                style: TextStyle(fontWeight: FontWeight.w400, color: Theme.of(context).extension<DriftColors>()!.textSecondary),
               ),
           ],
         ),
-        style: const TextStyle(
+        style: TextStyle(
           fontFamily: _font,
           fontSize: 13,
           fontWeight: FontWeight.w700,
           height: 1.3,
-          color: _ink,
+          color: colors.textPrimary,
         ),
       ),
     );
@@ -315,7 +313,7 @@ class _DateRow extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
@@ -330,7 +328,7 @@ class _DateRow extends StatelessWidget {
                 size: 18,
                 color: colors.primary,
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Text(
                 '${date.day} ${_months[date.month - 1]} ${date.year}',
                 style: TextStyle(
@@ -363,13 +361,13 @@ class _SkillGrid extends StatelessWidget {
     return Column(
       children: [
         for (var row = 0; row < (_skillOptions.length + 1) ~/ 2; row++) ...[
-          if (row > 0) const SizedBox(height: 8),
+          if (row > 0) SizedBox(height: 8),
           IntrinsicHeight(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 for (var col = 0; col < 2; col++) ...[
-                  if (col > 0) const SizedBox(width: 8),
+                  if (col > 0) SizedBox(width: 8),
                   Expanded(
                     child: row * 2 + col < _skillOptions.length
                         ? _SkillChip(
@@ -379,7 +377,7 @@ class _SkillGrid extends StatelessWidget {
                             onTap: () =>
                                 onSelect(_skillOptions[row * 2 + col].value),
                           )
-                        : const SizedBox.shrink(),
+                        : SizedBox.shrink(),
                   ),
                 ],
               ],
@@ -415,7 +413,7 @@ class _SkillChip extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 9),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
@@ -431,7 +429,7 @@ class _SkillChip extends StatelessWidget {
                   size: 14,
                   color: colors.primary,
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
               ],
               Flexible(
                 child: Text(
@@ -441,7 +439,7 @@ class _SkillChip extends StatelessWidget {
                     fontSize: 13,
                     fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
                     height: 1.3,
-                    color: selected ? colors.primary : _ink,
+                    color: selected ? colors.primary : colors.textPrimary,
                   ),
                 ),
               ),
@@ -469,7 +467,7 @@ class _DurationStepper extends StatelessWidget {
     final colors = Theme.of(context).extension<DriftColors>()!;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(12),
@@ -489,22 +487,22 @@ class _DurationStepper extends StatelessWidget {
             children: [
               Text(
                 '$minutes',
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: _font,
                   fontSize: 24,
                   fontWeight: FontWeight.w900,
                   height: 1.2,
-                  color: _ink,
+                  color: colors.textPrimary,
                 ),
               ),
-              const SizedBox(width: 4),
-              const Text(
+              SizedBox(width: 4),
+              Text(
                 'min',
                 style: TextStyle(
                   fontFamily: _font,
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
-                  color: _slate,
+                  color: colors.textSecondary,
                 ),
               ),
             ],
@@ -572,7 +570,7 @@ class _RatingRow extends StatelessWidget {
     return Row(
       children: [
         for (var i = 0; i < _ratings.length; i++) ...[
-          if (i > 0) const SizedBox(width: 8),
+          if (i > 0) SizedBox(width: 8),
           Expanded(
             child: _RatingTile(
               emoji: _ratings[i].emoji,
@@ -614,7 +612,7 @@ class _RatingTile extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10),
+          padding: EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
@@ -625,8 +623,8 @@ class _RatingTile extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(emoji, style: const TextStyle(fontSize: 20, height: 1.2)),
-              const SizedBox(height: 3),
+              Text(emoji, style: TextStyle(fontSize: 20, height: 1.2)),
+              SizedBox(height: 3),
               Text(
                 label,
                 style: TextStyle(
@@ -634,7 +632,7 @@ class _RatingTile extends StatelessWidget {
                   fontSize: 9,
                   fontWeight: FontWeight.w600,
                   height: 1.2,
-                  color: selected ? accent : _muted,
+                  color: selected ? accent : colors.textSecondary,
                 ),
               ),
             ],
@@ -660,28 +658,28 @@ class _NotesField extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: _tintedBorder(colors), width: 1.5),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: TextField(
         controller: controller,
         minLines: 3,
         maxLines: 6,
         textCapitalization: TextCapitalization.sentences,
         cursorColor: colors.primary,
-        style: const TextStyle(
+        style: TextStyle(
           fontFamily: _font,
           fontSize: 13,
           fontWeight: FontWeight.w400,
           height: 1.5,
-          color: _ink,
+          color: colors.textPrimary,
         ),
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
           hintText: 'What did you work on? Any breakthroughs?',
           hintStyle: TextStyle(
             fontFamily: _font,
             fontSize: 13,
             fontWeight: FontWeight.w400,
             height: 1.5,
-            color: _muted,
+            color: colors.textSecondary,
           ),
           isDense: true,
           border: InputBorder.none,
@@ -720,7 +718,7 @@ class _SaveButton extends StatelessWidget {
                 BoxShadow(
                   color: colors.primary.withValues(alpha: 0.25),
                   blurRadius: 24,
-                  offset: const Offset(0, 8),
+                  offset: Offset(0, 8),
                 ),
               ]
             : null,
@@ -734,10 +732,10 @@ class _SaveButton extends StatelessWidget {
           // mock — the old screen let you submit and then showed an error.
           onTap: enabled ? onPressed : null,
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 14),
+            padding: EdgeInsets.symmetric(vertical: 14),
             child: Center(
               child: loading
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
@@ -752,7 +750,7 @@ class _SaveButton extends StatelessWidget {
                         fontSize: 15,
                         fontWeight: FontWeight.w900,
                         height: 1.2,
-                        color: enabled ? Colors.white : _muted,
+                        color: enabled ? Colors.white : colors.textSecondary,
                       ),
                     ),
             ),

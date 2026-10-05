@@ -5,8 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/drift_competition_card.dart';
 import '../data/expansion_repository.dart';
+import '../../../core/theme/drift_colors.dart';
 
-const _muted = Color(0xFF94A3B8);
 
 /// Ladders segment — browse and open the rung standings (redesign 2026-10).
 ///
@@ -24,6 +24,7 @@ class LadderListScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = Theme.of(context).extension<DriftColors>()!;
     final ladders = ref.watch(laddersListProvider);
     final type = Theme.of(context).extension<DriftTypography>()!;
 
@@ -32,15 +33,16 @@ class LadderListScreen extends ConsumerWidget {
       child: switch (ladders) {
         AsyncData(:final value) when value.isEmpty => _message(
           'No ladders yet. Ask your club to start one.',
+          colors,
         ),
         AsyncData(:final value) => ListView.separated(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          padding: EdgeInsets.fromLTRB(16, 12, 16, 24),
           itemCount: value.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 10),
+          separatorBuilder: (_, _) => SizedBox(height: 10),
           itemBuilder: (context, i) => _LadderCard(ladder: value[i], index: i),
         ),
-        AsyncError() => _message("Couldn't load ladders."),
-        _ => const Center(child: CircularProgressIndicator()),
+        AsyncError() => _message("Couldn't load ladders.", colors),
+        _ => Center(child: CircularProgressIndicator()),
       },
     );
 
@@ -50,7 +52,7 @@ class LadderListScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(16),
             child: Text('Ladders', style: type.h2),
           ),
           Expanded(child: content),
@@ -59,15 +61,15 @@ class LadderListScreen extends ConsumerWidget {
     );
   }
 
-  Widget _message(String text) {
+  Widget _message(String text, DriftColors colors) {
     return ListView(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(24, 64, 24, 24),
+          padding: EdgeInsets.fromLTRB(24, 64, 24, 24),
           child: Text(
             text,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 14, height: 1.4, color: _muted),
+            style: TextStyle(fontSize: 14, height: 1.4, color: colors.textSecondary),
           ),
         ),
       ],

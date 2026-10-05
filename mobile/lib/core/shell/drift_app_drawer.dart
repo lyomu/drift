@@ -14,9 +14,6 @@ import '../theme/drift_colors.dart';
 /// Drift's official readable text family.
 const _font = 'Outfit';
 
-const _ink = Color(0xFF0F172A);
-const _slate = Color(0xFF64748B);
-const _idleTile = Color(0xFFF4F6FA);
 const _danger = Color(0xFFEF4444);
 const _dangerFill = Color(0xFFFEF2F2);
 const _dangerBorder = Color(0xFFFECACA);
@@ -96,16 +93,16 @@ class _DriftAppDrawerState extends ConsumerState<DriftAppDrawer> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Log out?'),
-        content: const Text('You can sign back in any time.'),
+        title: Text('Log out?'),
+        content: Text('You can sign back in any time.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
+            child: Text('Cancel'),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Log out'),
+            child: Text('Log out'),
           ),
         ],
       ),
@@ -143,7 +140,7 @@ class _DriftAppDrawerState extends ConsumerState<DriftAppDrawer> {
     return Drawer(
       backgroundColor: colors.surface,
       width: 280,
-      shape: const RoundedRectangleBorder(),
+      shape: RoundedRectangleBorder(),
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -151,7 +148,7 @@ class _DriftAppDrawerState extends ConsumerState<DriftAppDrawer> {
             _DrawerIdentity(onTap: () => _go('/profile/own')),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.all(12),
+                padding: EdgeInsets.all(12),
                 children: [
                   for (final item in _navItems) ...[
                     _DrawerRow(
@@ -161,13 +158,13 @@ class _DriftAppDrawerState extends ConsumerState<DriftAppDrawer> {
                       active: location == item.route,
                       onTap: () => _go(item.route),
                     ),
-                    const SizedBox(height: 2),
+                    SizedBox(height: 2),
                   ],
                 ],
               ),
             ),
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: EdgeInsets.all(12),
               decoration: BoxDecoration(
                 border: Border(
                   top: BorderSide(color: _hairline(colors), width: 1),
@@ -204,7 +201,7 @@ class _DrawerIdentity extends ConsumerWidget {
     return InkWell(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+        padding: EdgeInsets.fromLTRB(20, 20, 20, 20),
         decoration: BoxDecoration(
           border: Border(
             bottom: BorderSide(color: _hairline(colors), width: 1),
@@ -233,7 +230,7 @@ class _DrawerIdentity extends ConsumerWidget {
                     )
                   : _Initials(name: user?.displayName),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -242,25 +239,25 @@ class _DrawerIdentity extends ConsumerWidget {
                     user?.displayName ?? 'My Profile',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: _font,
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
                       height: 1.2,
-                      color: _ink,
+                      color: colors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2),
                   Text(
                     user?.email ?? 'View your profile',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: _font,
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
                       height: 1.3,
-                      color: _slate,
+                      color: colors.textSecondary,
                     ),
                   ),
                 ],
@@ -329,7 +326,7 @@ class _DrawerRow extends StatelessWidget {
         ? _danger
         : active
         ? colors.primary
-        : _ink;
+        : colors.textPrimary;
 
     return Material(
       color: active
@@ -340,7 +337,7 @@ class _DrawerRow extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 11),
           child: Row(
             children: [
               Container(
@@ -351,7 +348,7 @@ class _DrawerRow extends StatelessWidget {
                       ? _dangerFill
                       : active
                       ? colors.primary.withValues(alpha: 0.09)
-                      : _idleTile,
+                      : colors.background,
                   borderRadius: BorderRadius.circular(9),
                   border: Border.all(
                     color: danger
@@ -369,10 +366,10 @@ class _DrawerRow extends StatelessWidget {
                       ? _danger
                       : active
                       ? colors.primary
-                      : _slate,
+                      : colors.textSecondary,
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: Text(
                   label,
@@ -388,7 +385,7 @@ class _DrawerRow extends StatelessWidget {
                 ),
               ),
               if (active) ...[
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Container(
                   width: 6,
                   height: 6,

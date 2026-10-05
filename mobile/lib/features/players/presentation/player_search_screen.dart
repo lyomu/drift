@@ -6,8 +6,8 @@ import '../../../shared/widgets/drift_player_results.dart';
 import '../application/players_providers.dart';
 import '../data/players_repository.dart';
 import 'player_filters_sheet.dart';
+import '../../../core/theme/drift_colors.dart';
 
-const _muted = Color(0xFF94A3B8);
 
 /// Player Search / Discovery — `foundation/04-screen-inventory.md` §A.4
 /// (redesign 2026-10). Results are ranked server-side (proximity + level
@@ -59,7 +59,7 @@ class _PlayerSearchScreenState extends ConsumerState<PlayerSearchScreen> {
             child: switch (results) {
               AsyncData(:final value) => _list(filterPlayers(value, _query)),
               AsyncError() => _message("Couldn't load players. Pull to retry."),
-              _ => const Center(child: CircularProgressIndicator()),
+              _ => Center(child: CircularProgressIndicator()),
             },
           ),
         ),
@@ -79,9 +79,9 @@ class _PlayerSearchScreenState extends ConsumerState<PlayerSearchScreen> {
       );
     }
     return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      padding: EdgeInsets.fromLTRB(16, 12, 16, 24),
       itemCount: players.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      separatorBuilder: (_, _) => SizedBox(height: 10),
       itemBuilder: (context, i) => DriftPlayerResultCard(
         player: players[i],
         action: DriftPlayerActionButton(
@@ -98,11 +98,11 @@ class _PlayerSearchScreenState extends ConsumerState<PlayerSearchScreen> {
     return ListView(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(24, 64, 24, 24),
+          padding: EdgeInsets.fromLTRB(24, 64, 24, 24),
           child: Text(
             text,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 14, height: 1.4, color: _muted),
+            style: TextStyle(fontSize: 14, height: 1.4, color: Theme.of(context).extension<DriftColors>()!.textSecondary),
           ),
         ),
       ],

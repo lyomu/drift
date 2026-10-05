@@ -67,7 +67,7 @@ class _HomeBody extends StatelessWidget {
     // white panel separated by an 8px rule. That split is what makes the top
     // of the page read as a dashboard and the rest as a feed.
     return ColoredBox(
-      color: homeGround,
+      color: Theme.of(context).extension<DriftColors>()!.surfaceRaised,
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
