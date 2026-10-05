@@ -38,7 +38,9 @@ async function main() {
     }
   }
 
-  console.log(`Markets seeded: ${created} created, ${updated} updated, ${MARKET_SEED_DATA.length} total.`);
+  console.log(
+    `Markets seeded: ${created} created, ${updated} updated, ${MARKET_SEED_DATA.length} total.`,
+  );
 }
 
 main()

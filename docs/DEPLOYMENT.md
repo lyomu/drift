@@ -62,6 +62,11 @@ sudo -u drift-deploy ls /srv/harusi-ke  # must fail: Permission denied
 
 Create `/srv/drift/prod/.env.production` on the box (mode `600`):
 
+`scripts/deploy.sh` refuses to deploy when any of these required variables is
+missing or blank: `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`,
+`PUBLIC_API_URL`, `JWT_SECRET`, `CORS_ALLOWED_ORIGINS`, and `BILLING_BETA`.
+The deployment check does not print their values.
+
 ```bash
 POSTGRES_DB=drift_tennis
 POSTGRES_USER=drift
@@ -76,6 +81,10 @@ PLATFORM_ADMIN_JWT_TTL=2h
 PLATFORM_ADMIN_WEB_URL=https://console.driftsports.app
 CLUB_ADMIN_URL=https://admin.driftsports.app
 CORS_ALLOWED_ORIGINS=https://admin.driftsports.app,https://console.driftsports.app
+
+# Required while the free-beta subscription experience is live. Set false
+# only as part of the production billing-launch change.
+BILLING_BETA=true
 
 NEWS_FEED_ALLOWED_HOSTS=feeds.bbci.co.uk,www.atptour.com
 
@@ -120,6 +129,11 @@ PADDLE_API_KEY=
 PADDLE_ENVIRONMENT=production
 PADDLE_WEBHOOK_SECRET=
 ```
+
+`SMTP_*`/`MAIL_FROM`, social-sign-in, Firebase, Google Places, analytics and
+payment-provider variables are optional unless that integration is enabled.
+When a payment provider key is set, its matching webhook secret/challenge is
+required by the API at boot; the API deliberately refuses to start otherwise.
 
 The analytics keys in the table below (`POSTHOG_KEY`, `GA_MEASUREMENT_ID`,
 `CLARITY_PROJECT_ID`) also live in this file.

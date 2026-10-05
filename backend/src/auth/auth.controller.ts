@@ -21,11 +21,7 @@ import { RefreshDto } from './dto/refresh.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
-import {
-  OAuthAppleDto,
-  OAuthGoogleDto,
-  OAuthLinkDto,
-} from './dto/oauth.dto';
+import { OAuthAppleDto, OAuthGoogleDto, OAuthLinkDto } from './dto/oauth.dto';
 
 /**
  * Strict per-route limits for the endpoints an attacker would hammer:

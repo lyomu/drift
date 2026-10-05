@@ -1,4 +1,8 @@
-import { ErasureService, redactionMarker, ERASURE_RETENTION_DAYS } from './erasure.service';
+import {
+  ErasureService,
+  redactionMarker,
+  ERASURE_RETENTION_DAYS,
+} from './erasure.service';
 import { Prisma } from '@prisma/client';
 
 type Tx = Record<string, Record<string, jest.Mock>>;
@@ -56,9 +60,13 @@ describe('ErasureService', () => {
 
   beforeEach(async () => {
     videoStorage = createVideoStorage();
-    service = new ErasureService(videoStorage as never);
+    service = new ErasureService(videoStorage);
     tx = createTx();
-    await service.eraseUser(tx as unknown as Prisma.TransactionClient, USER, REQUEST);
+    await service.eraseUser(
+      tx as unknown as Prisma.TransactionClient,
+      USER,
+      REQUEST,
+    );
   });
 
   it('strips every direct identifier from the user row', () => {
@@ -206,7 +214,7 @@ describe('ErasureService and uploaded video', () => {
       tennisProfile: model(),
       padelProfile: model(),
       coachProfile: model(),
-    coachApplication: model(),
+      coachApplication: model(),
       availabilitySlot: model(),
       message: model(),
       matchReflection: model(),
@@ -243,7 +251,7 @@ describe('ErasureService and uploaded video', () => {
       { storageKey: 'cd/two.mp4' },
     ]);
 
-    await new ErasureService(storage as never).eraseUser(
+    await new ErasureService(storage).eraseUser(
       tx as unknown as Prisma.TransactionClient,
       USER,
       REQUEST,
@@ -261,7 +269,7 @@ describe('ErasureService and uploaded video', () => {
     const storage = storageMock();
     const tx = createTxWithJobs([{ storageKey: null }]);
 
-    await new ErasureService(storage as never).eraseUser(
+    await new ErasureService(storage).eraseUser(
       tx as unknown as Prisma.TransactionClient,
       USER,
       REQUEST,

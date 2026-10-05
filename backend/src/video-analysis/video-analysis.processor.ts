@@ -26,9 +26,7 @@ export class VideoAnalysisProcessor extends WorkerHost {
 
   async process(job: Job<AnalyzeJobData>): Promise<void> {
     const { jobId } = job.data;
-    this.logger.log(
-      `Analysing ${jobId} (attempt ${job.attemptsMade + 1})`,
-    );
+    this.logger.log(`Analysing ${jobId} (attempt ${job.attemptsMade + 1})`);
 
     await this.videoAnalysis.runAnalysis(jobId, {
       isFinalAttempt: job.attemptsMade + 1 >= (job.opts.attempts ?? 1),

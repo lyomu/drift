@@ -83,6 +83,11 @@ licensing caveats on the model weights (not yet cleared for production).
 - Keep `PROGRESS.md` updated at every phase boundary, not just at session end.
 - APK builds, logs, `qa-evidence/`, and `_legacy-mobile-ui/` are git-ignored
   local artifacts.
+- Regenerate Node lockfiles on Linux after dependency changes: run
+  `bash scripts/lockfile.sh <package-dir>...` (for example,
+  `bash scripts/lockfile.sh backend club-admin platform-admin website`). It
+  uses `node:24-bookworm-slim` and verifies each result with `npm ci --dry-run`
+  so Windows-specific optional-dependency resolution cannot break CI.
 
 ## License
 

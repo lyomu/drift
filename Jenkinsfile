@@ -95,22 +95,11 @@ pipeline {
             }
         }
 
-        // Soft gate for now: this is the first time lint has ever run as a CI
-        // check for this repo (.github/workflows/ci.yml has no lint step at
-        // all), and the backend already has real, pre-existing eslint errors
-        // on master unrelated to anything this pipeline changed (confirmed:
-        // build #1 failed here on unsafe-return/no-unused-vars findings in
-        // existing code). Same reasoning as harusi-ke/eqms's first-ever
-        // SonarQube pass: failing every build on untriaged legacy findings
-        // is worse than no gate. Promote back to a hard gate once someone
-        // reviews and clears the current findings.
         stage('Lint') {
             parallel {
                 stage('Backend') {
                     steps {
-                        catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
-                            sh "docker run --rm ${env.API_CI_IMAGE} npm run lint"
-                        }
+                        sh "docker run --rm ${env.API_CI_IMAGE} npx eslint ."
                     }
                 }
                 stage('Club Admin') {
@@ -137,13 +126,6 @@ pipeline {
             }
         }
 
-        // Soft gate for now, same reasoning as Lint above: nest build's
-        // tsconfig.build.json excludes *.spec.ts, so this is the first time
-        // tsc --noEmit has ever checked test files in CI (ci.yml doesn't run
-        // it either), and it surfaced real, pre-existing type errors in
-        // spec files unrelated to this deploy work (confirmed via a real
-        // failed build: home.service.spec.ts, push.service.spec.ts).
-        // Promote back to a hard gate once cleared.
         stage('Typecheck') {
             // Only the backend gets a separate stage — nest build (in the CI
             // image above) already ran the full tsc compile, so re-running
@@ -152,9 +134,7 @@ pipeline {
             // typechecks as part of compiling; there's no separate
             // typecheck script in any of their package.json.
             steps {
-                catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
-                    sh "docker run --rm ${env.API_CI_IMAGE} npx tsc --noEmit"
-                }
+                sh "docker run --rm ${env.API_CI_IMAGE} npx tsc --noEmit"
             }
         }
 
@@ -167,6 +147,18 @@ pipeline {
                 }
                 sh """
                     set -e
+                    # Pull the test services first, with retries. A one-off Docker Hub
+                    # blob error failed build #34 at `docker run` with nothing wrong in
+                    # the code; a pulled image makes the run below local and instant.
+                    pull_with_retry() {
+                        for i in 1 2 3; do
+                            if docker pull "\$1"; then return 0; fi
+                            echo "pull of \$1 failed (attempt \$i), retrying..."; sleep 15
+                        done
+                        return 1
+                    }
+                    pull_with_retry postgres:16-bookworm
+                    pull_with_retry redis:7.4-bookworm
                     docker network create ${env.CI_NET}
                     docker run -d --name ${env.CI_PG} --network ${env.CI_NET} \
                         -e POSTGRES_USER=drift -e POSTGRES_PASSWORD=ci_pw -e POSTGRES_DB=drift_test \

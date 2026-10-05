@@ -43,7 +43,9 @@ describe('Social sign-in (e2e)', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+    app.useGlobalPipes(
+      new ValidationPipe({ whitelist: true, transform: true }),
+    );
     await app.init();
 
     prisma = moduleFixture.get(PrismaService);
@@ -66,7 +68,13 @@ describe('Social sign-in (e2e)', () => {
   async function createPasswordAccount(email: string, verify: boolean) {
     const res = await request(app.getHttpServer())
       .post('/auth/signup')
-      .send({ email, password, firstName: 'Test', lastName: 'User', acceptedAgePolicy: true })
+      .send({
+        email,
+        password,
+        firstName: 'Test',
+        lastName: 'User',
+        acceptedAgePolicy: true,
+      })
       .expect(201);
 
     if (verify) {
@@ -85,7 +93,7 @@ describe('Social sign-in (e2e)', () => {
       emailVerified: true,
       givenName: 'Ada',
       familyName: 'Lovelace',
-    } as SocialLoginClaims;
+    };
 
     await request(app.getHttpServer())
       .post('/auth/oauth/google')
@@ -137,7 +145,7 @@ describe('Social sign-in (e2e)', () => {
       emailVerified: true,
       givenName: null,
       familyName: null,
-    } as SocialLoginClaims;
+    };
 
     await request(app.getHttpServer())
       .post('/auth/oauth/google')
@@ -166,7 +174,7 @@ describe('Social sign-in (e2e)', () => {
       emailVerified: true,
       givenName: null,
       familyName: null,
-    } as SocialLoginClaims;
+    };
 
     const conflict = await request(app.getHttpServer())
       .post('/auth/oauth/google')

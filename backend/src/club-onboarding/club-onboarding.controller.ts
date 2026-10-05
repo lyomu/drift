@@ -41,7 +41,8 @@ export class ClubOnboardingController {
     @Param('token') token: string,
     @Body() dto: CompleteClubSetupDto,
   ) {
-    const userId = (req.user as { userId?: string } | undefined)?.userId;
+    const userId = (req as Request & { user?: { userId?: string } }).user
+      ?.userId;
     return this.onboarding.complete(token, dto, userId);
   }
 }

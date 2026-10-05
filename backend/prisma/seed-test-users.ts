@@ -1,10 +1,19 @@
 import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { DominantHand, OnboardingStep, PrismaClient, VerificationStatus } from '@prisma/client';
+import {
+  DominantHand,
+  OnboardingStep,
+  PrismaClient,
+  VerificationStatus,
+} from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient({
-  adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL || 'postgresql://drift:drift@localhost:5432/drift_tennis' }),
+  adapter: new PrismaPg({
+    connectionString:
+      process.env.DATABASE_URL ||
+      'postgresql://drift:drift@localhost:5432/drift_tennis',
+  }),
 });
 
 export const DEFAULT_PASSWORD = 'Password123!';
@@ -52,7 +61,9 @@ async function seedTestUsers() {
   const passwordHash = await bcrypt.hash(DEFAULT_PASSWORD, 10);
 
   for (const u of TEST_USERS) {
-    const existing = await prisma.user.findUnique({ where: { email: u.email } });
+    const existing = await prisma.user.findUnique({
+      where: { email: u.email },
+    });
 
     if (existing) {
       await prisma.user.update({
@@ -65,7 +76,8 @@ async function seedTestUsers() {
           verificationStatus: u.verificationStatus,
           bio: u.bio,
           emailVerifiedAt: new Date(),
-          onboardingCompletedAt: u.onboardingStep === OnboardingStep.COMPLETE ? new Date() : null,
+          onboardingCompletedAt:
+            u.onboardingStep === OnboardingStep.COMPLETE ? new Date() : null,
         },
       });
       console.log(`Updated test user: ${u.email}`);
@@ -80,7 +92,8 @@ async function seedTestUsers() {
           verificationStatus: u.verificationStatus,
           bio: u.bio,
           emailVerifiedAt: new Date(),
-          onboardingCompletedAt: u.onboardingStep === OnboardingStep.COMPLETE ? new Date() : null,
+          onboardingCompletedAt:
+            u.onboardingStep === OnboardingStep.COMPLETE ? new Date() : null,
           tennisProfile: {
             create: {
               dominantHand: u.dominantHand,

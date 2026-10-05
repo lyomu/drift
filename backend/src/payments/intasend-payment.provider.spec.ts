@@ -23,7 +23,7 @@ describe('IntasendPaymentProvider', () => {
 
   beforeEach(() => {
     fetchMock.mockReset();
-    global.fetch = fetchMock as unknown as typeof fetch;
+    global.fetch = fetchMock;
   });
 
   afterAll(() => {
@@ -205,7 +205,6 @@ describe('IntasendPaymentProvider', () => {
       ).rejects.toBeInstanceOf(ServiceUnavailableException);
     });
 
-
     it('keeps the secret key out of the error the caller sees', async () => {
       // The upstream message can echo the request, key included. What reaches
       // the client must not.
@@ -218,7 +217,9 @@ describe('IntasendPaymentProvider', () => {
           reference: 'DRF-1',
           returnUrl: 'https://drift.einsbrand.com/billing',
         }),
-      ).rejects.toThrow('Could not reach the payment provider. No charge was made.');
+      ).rejects.toThrow(
+        'Could not reach the payment provider. No charge was made.',
+      );
     });
   });
 

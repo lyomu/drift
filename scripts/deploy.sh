@@ -23,6 +23,58 @@ if [ ! -f "${APP_DIR}/.env.production" ]; then
   exit 1
 fi
 
+# Keep this check deliberately independent of `source`: deployment config is
+# data, not shell code, and a malformed value must not be able to execute on
+# the production host. Compose still receives the original file below.
+env_value() {
+  local name="$1"
+  local line key value=""
+
+  while IFS= read -r line || [ -n "$line" ]; do
+    line="${line%$'\r'}"
+    [[ "$line" =~ ^[[:space:]]*# ]] && continue
+    line="${line#export }"
+    line="${line#export$'\t'}"
+    [[ "$line" == *=* ]] || continue
+    key="${line%%=*}"
+    key="${key//[[:space:]]/}"
+    [ "$key" = "$name" ] || continue
+    value="${line#*=}"
+  done < "${APP_DIR}/.env.production"
+
+  # Treat an explicitly empty quoted value as missing too. Required values in
+  # this deployment contain no meaningful leading/trailing whitespace.
+  value="${value#\"}"
+  value="${value%\"}"
+  value="${value#\'}"
+  value="${value%\'}"
+  printf '%s' "$value"
+}
+
+require_env_var() {
+  local name="$1"
+  local value
+  value="$(env_value "$name")"
+  if [ -z "${value//[[:space:]]/}" ]; then
+    echo "Missing or empty required variable ${name} in ${APP_DIR}/.env.production." >&2
+    return 1
+  fi
+}
+
+required_env_vars=(
+  POSTGRES_DB
+  POSTGRES_USER
+  POSTGRES_PASSWORD
+  PUBLIC_API_URL
+  JWT_SECRET
+  CORS_ALLOWED_ORIGINS
+  BILLING_BETA
+)
+
+for required_env_var in "${required_env_vars[@]}"; do
+  require_env_var "$required_env_var"
+done
+
 if [ ! -d "${APP_DIR}/.git" ]; then
   mkdir -p "${APP_DIR}"
   git clone --branch "${BRANCH}" "${REPO_URL}" "${APP_DIR}"
@@ -38,4 +90,3 @@ docker compose -f docker-compose.prod.yml --env-file .env.production pull
 docker compose -f docker-compose.prod.yml --env-file .env.production run --rm api npx prisma migrate deploy
 docker compose -f docker-compose.prod.yml --env-file .env.production up -d
 docker compose -f docker-compose.prod.yml --env-file .env.production ps
-

@@ -73,8 +73,8 @@ export class LocalDiskVideoStorage implements VideoStorage {
     return key;
   }
 
-  async read(key: string): Promise<Readable> {
-    return createReadStream(this.pathFor(key));
+  read(key: string): Promise<Readable> {
+    return Promise.resolve(createReadStream(this.pathFor(key)));
   }
 
   async delete(key: string): Promise<void> {

@@ -474,9 +474,9 @@ describe('CompetitionsService', () => {
       prisma.league.findUnique.mockResolvedValue(
         baseLeague({ startsAt: null, roundCount: null }),
       );
-      await expect(
-        service.adminGenerateFixtures('l1'),
-      ).rejects.toBeInstanceOf(BadRequestException);
+      await expect(service.adminGenerateFixtures('l1')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
     });
 
     it('updateFixture rejects reassigning sides once the fixture has a live match', async () => {

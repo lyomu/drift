@@ -18,7 +18,9 @@ export type EventInput = {
 
 /** Trim an image reference and fold a blank value to null so "clear the image"
  * works from the admin form. `undefined` is left untouched (field omitted). */
-function normaliseImageUrl<T extends { imageUrl?: string | null }>(input: T): T {
+function normaliseImageUrl<T extends { imageUrl?: string | null }>(
+  input: T,
+): T {
   if (input.imageUrl === undefined) return input;
   const trimmed = (input.imageUrl ?? '').trim();
   return { ...input, imageUrl: trimmed === '' ? null : trimmed };

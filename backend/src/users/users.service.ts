@@ -200,7 +200,9 @@ export class UsersService {
 
     return {
       deleted: true,
-      erasureScheduledFor: ErasureService.dueAt(request.createdAt).toISOString(),
+      erasureScheduledFor: ErasureService.dueAt(
+        request.createdAt,
+      ).toISOString(),
       retentionDays: ERASURE_RETENTION_DAYS,
     };
   }

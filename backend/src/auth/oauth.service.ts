@@ -69,8 +69,8 @@ export class OAuthService {
       .filter(Boolean);
     const servicesId = config.get<string>('APPLE_SERVICES_ID')?.trim();
     const bundleId = config.get<string>('APPLE_BUNDLE_ID')?.trim();
-    this.appleClientIds = [servicesId, bundleId].filter(
-      (s): s is string => Boolean(s),
+    this.appleClientIds = [servicesId, bundleId].filter((s): s is string =>
+      Boolean(s),
     );
   }
 
