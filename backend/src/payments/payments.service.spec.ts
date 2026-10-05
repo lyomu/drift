@@ -92,6 +92,25 @@ describe('PaymentsService', () => {
     );
   });
 
+  describe('beta billing', () => {
+    afterEach(() => {
+      config.get.mockReturnValue(undefined);
+    });
+
+    it('refuses plan changes and new payment methods while BILLING_BETA is on', async () => {
+      config.get.mockImplementation((key: string) =>
+        key === 'BILLING_BETA' ? 'true' : undefined,
+      );
+
+      await expect(
+        service.changePlayerSubscription('user-1', {} as never),
+      ).rejects.toThrow('Billing starts after the beta.');
+      await expect(
+        service.addPlayerMethod('user-1', {} as never),
+      ).rejects.toThrow('Billing starts after the beta.');
+    });
+  });
+
   describe('removePlayerMethod', () => {
     it('scopes the lookup to the caller’s own billing account', async () => {
       prisma.paymentMethod.findFirst.mockResolvedValue(null);

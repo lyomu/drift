@@ -55,7 +55,12 @@ class _SubscriptionBody extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Expanded(child: Text(plan.name, style: type.h2)),
+                  Expanded(
+                    child: Text(
+                      summary.betaFree ? 'Free during beta' : plan.name,
+                      style: type.h2,
+                    ),
+                  ),
                   DriftStatusBadge(
                     label: subscription.status.label,
                     tone: subscription.status == BillingStatus.active
@@ -64,21 +69,27 @@ class _SubscriptionBody extends StatelessWidget {
                   ),
                 ],
               ),
+              if (!summary.betaFree) ...[
+                const SizedBox(height: DriftSpacing.s2),
+                Text(
+                  plan.priceLabel,
+                  style: type.statistics.copyWith(color: colors.primaryDark),
+                ),
+              ],
               const SizedBox(height: DriftSpacing.s2),
               Text(
-                plan.priceLabel,
-                style: type.statistics.copyWith(color: colors.primaryDark),
-              ),
-              const SizedBox(height: DriftSpacing.s2),
-              Text(
-                'Current period ends ${billingDate(subscription.currentPeriodEnd)}',
+                summary.betaFree
+                    ? 'No charges during beta.'
+                    : 'Current period ends ${billingDate(subscription.currentPeriodEnd)}',
                 style: type.bodySmall,
               ),
-              const SizedBox(height: DriftSpacing.s5),
-              DriftButton(
-                label: plan.isFree ? 'Upgrade plan' : 'Change plan',
-                onPressed: () => context.push('/settings/subscription/plans'),
-              ),
+              if (!summary.betaFree) ...[
+                const SizedBox(height: DriftSpacing.s5),
+                DriftButton(
+                  label: plan.isFree ? 'Upgrade plan' : 'Change plan',
+                  onPressed: () => context.push('/settings/subscription/plans'),
+                ),
+              ],
             ],
           ),
         ),
@@ -96,26 +107,28 @@ class _SubscriptionBody extends StatelessWidget {
               ],
             ),
           ),
-        const SizedBox(height: DriftSpacing.s6),
-        DriftCard(
-          onTap: () => context.push('/settings/payment-methods'),
-          child: _BillingLink(
-            icon: Icons.credit_card_outlined,
-            title: 'Payment methods',
-            detail: summary.paymentMethods.isEmpty
-                ? 'No payment method saved'
-                : summary.paymentMethods.first.label,
+        if (!summary.betaFree) ...[
+          const SizedBox(height: DriftSpacing.s6),
+          DriftCard(
+            onTap: () => context.push('/settings/payment-methods'),
+            child: _BillingLink(
+              icon: Icons.credit_card_outlined,
+              title: 'Payment methods',
+              detail: summary.paymentMethods.isEmpty
+                  ? 'No payment method saved'
+                  : summary.paymentMethods.first.label,
+            ),
           ),
-        ),
-        const SizedBox(height: DriftSpacing.s3),
-        DriftCard(
-          onTap: () => context.push('/settings/billing-history'),
-          child: const _BillingLink(
-            icon: Icons.receipt_long_outlined,
-            title: 'Billing history',
-            detail: 'Charges and receipts',
+          const SizedBox(height: DriftSpacing.s3),
+          DriftCard(
+            onTap: () => context.push('/settings/billing-history'),
+            child: const _BillingLink(
+              icon: Icons.receipt_long_outlined,
+              title: 'Billing history',
+              detail: 'Charges and receipts',
+            ),
           ),
-        ),
+        ],
       ],
     );
   }

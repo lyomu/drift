@@ -172,13 +172,19 @@ class BillingSummary {
     required this.subscription,
     required this.paymentMethods,
     required this.sandbox,
+    this.betaFree = false,
   });
 
   final BillingSubscription subscription;
   final List<SavedPaymentMethod> paymentMethods;
   final bool sandbox;
 
+  /// True while the app is in beta: everyone is on the free plan and nothing
+  /// is charged, so billing rows are hidden.
+  final bool betaFree;
+
   factory BillingSummary.fromJson(Map<String, dynamic> json) => BillingSummary(
+    betaFree: json['betaFree'] as bool? ?? false,
     subscription: BillingSubscription.fromJson(
       json['subscription'] as Map<String, dynamic>,
     ),
