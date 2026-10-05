@@ -107,7 +107,7 @@ function Button({ href, children, inverse = false }: { href: string; children: R
 }
 
 function Kicker({ children, lime = false }: { children: ReactNode; lime?: boolean }) {
-  return <p className={`${styles.kicker} ${lime ? styles.kickerLime : ""}`}>{children}</p>;
+  return <div className={`${styles.kicker} ${lime ? styles.kickerLime : ""}`}>{children}</div>;
 }
 
 function SectionTitle({ children }: { children: ReactNode }) {
@@ -261,7 +261,7 @@ export function LandingPage({ locale }: LandingPageProps) {
         <div className={styles.inner}>
           <div className={styles.aboutTop}>
             <div>
-              <Kicker lime>ABOUT DRIFT</Kicker>
+              <Kicker>ABOUT DRIFT</Kicker>
               <SectionTitle>Built around the people who power the game.</SectionTitle>
               <SectionBody>Drift is a connected tennis platform built for players, coaches, clubs and communities. We make it easier for players to find opponents, discover local coaches, organise matches, join competitions, discover courts and track their progress, while giving coaches a platform to connect with players and support their development. For clubs, Drift simplifies the management of members, competitions, fixtures, results, standings, courts and communication. By bringing every part of the tennis community into one ecosystem, Drift helps create more opportunities to <strong>play, compete, connect and grow the game.</strong></SectionBody>
               <Button href={waitlist}>JOIN THE WAITLIST</Button>
@@ -319,7 +319,7 @@ export function LandingPage({ locale }: LandingPageProps) {
       <section className={styles.padelFeature} id="padel">
         <div className={styles.padelFeatureImage} aria-hidden="true" />
         <div className={`${styles.inner} ${styles.padelFeatureContent}`}>
-          <Kicker lime>PADEL IS PART OF THE DRIFT</Kicker>
+          <Kicker>PADEL IS PART OF THE DRIFT</Kicker>
           <SectionTitle>A new game to play. More people to meet.</SectionTitle>
           <SectionBody>Padel is fast, social and easy to get into. Find players who match your energy, discover courts near you and organise your next game without the group-chat scramble.</SectionBody>
           <SectionBody>Whether you are picking up a racket for the first time or already hooked, Drift helps you play more, meet more people and keep improving.</SectionBody>
@@ -328,13 +328,16 @@ export function LandingPage({ locale }: LandingPageProps) {
       </section>
 
       <section className={styles.training} id="training">
-        <div className={styles.trainingPhoto} aria-hidden="true" />
-        <div className={styles.trainingPhotoShade} aria-hidden="true" />
-        <div className={`${styles.inner} ${styles.trainingCopy}`}>
-          <Kicker lime>FOR COACHES</Kicker>
-          <SectionTitle>Grow your coaching. Find more players.</SectionTitle>
-          <SectionBody>Join Drift and put your coaching services in front of players actively looking to improve their game. Build your coaching profile, showcase your experience and specialities, connect with players at different levels, manage coaching opportunities and grow your presence within the tennis community.</SectionBody>
-          <Button href={waitlist}>SIGN UP AS A COACH</Button>
+        <div className={`${styles.inner} ${styles.coachesGrid}`}>
+          <div className={styles.trainingCopy}>
+            <Kicker lime>FOR COACHES</Kicker>
+            <SectionTitle>Grow your coaching. Find more players.</SectionTitle>
+            <SectionBody>Join Drift and put your coaching services in front of players actively looking to improve their game. Build your coaching profile, showcase your experience and specialities, connect with players at different levels, manage coaching opportunities and grow your presence within the tennis community.</SectionBody>
+            <Button href={waitlist}>SIGN UP AS A COACH</Button>
+          </div>
+          <div className={styles.trainingMedia} aria-hidden="true">
+            <div className={styles.trainingPhoto} />
+          </div>
         </div>
       </section>
 
