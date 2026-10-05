@@ -5,9 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../application/news_providers.dart';
 import '../data/news_repository.dart';
+import '../../../core/theme/drift_colors.dart';
 
-const _paper = Color(0xFFF2F6F2);
-const _card = Color(0xFFF9FBF8);
 const _ink = Color(0xFF11271E);
 const _muted = Color(0xFF718078);
 const _green = Color(0xFF4D765F);
@@ -36,6 +35,7 @@ class NewsFeedScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = Theme.of(context).extension<DriftColors>()!;
     final feed = ref.watch(newsFeedProvider);
     final category = ref.watch(newsCategoryProvider);
     final type = Theme.of(context).extension<DriftTypography>()!;
@@ -52,7 +52,7 @@ class NewsFeedScreen extends ConsumerWidget {
     }
 
     return Scaffold(
-      backgroundColor: _paper,
+      backgroundColor: colors.surfaceRaised,
       body: SafeArea(
         bottom: false,
         child: RefreshIndicator(
@@ -71,7 +71,7 @@ class NewsFeedScreen extends ConsumerWidget {
                 type,
                 "Couldn't load news. Pull to retry.",
               ),
-            _ => const Center(child: CircularProgressIndicator(color: _ink)),
+            _ => Center(child: CircularProgressIndicator(color: _ink)),
           },
         ),
       ),
@@ -84,7 +84,7 @@ class NewsFeedScreen extends ConsumerWidget {
       physics: const AlwaysScrollableScrollPhysics(),
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(24, 100, 24, 24),
+          padding: EdgeInsets.fromLTRB(24, 100, 24, 24),
           child: Text(
             text,
             style: type.body.copyWith(color: _muted),
@@ -117,21 +117,21 @@ class _FeedContent extends StatelessWidget {
 
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+      padding: EdgeInsets.fromLTRB(16, 0, 16, 32),
       children: [
         if (hasHero) ...[
           _FeaturedStory(story: stories.first, onSave: onSave),
-          const SizedBox(height: 48),
+          SizedBox(height: 48),
         ] else
-          const SizedBox(height: 18),
+          SizedBox(height: 18),
         _SectionHeading(
           categoryLabel: categoryLabel,
           selectedCategory: category,
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
         for (var i = 0; i < visibleStories.length; i++) ...[
           _StoryCard(story: visibleStories[i], onSave: onSave),
-          if (i != visibleStories.length - 1) const SizedBox(height: 16),
+          if (i != visibleStories.length - 1) SizedBox(height: 16),
         ],
       ],
     );
@@ -156,7 +156,7 @@ class _FeaturedStory extends StatelessWidget {
             fit: StackFit.expand,
             children: [
               _StoryImage(url: story.imageUrl ?? _heroFallback),
-              const DecoratedBox(
+              DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
@@ -175,7 +175,7 @@ class _FeaturedStory extends StatelessWidget {
                 top: 18,
                 child: Text(
                   '${_categoryLabel(story.categories.firstOrNull)} · Long read',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.white,
                     fontFamily: 'Outfit',
                     fontSize: 12,
@@ -194,7 +194,7 @@ class _FeaturedStory extends StatelessWidget {
                       story.headline,
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.white,
                         fontFamily: 'Outfit',
                         fontSize: 29,
@@ -202,7 +202,7 @@ class _FeaturedStory extends StatelessWidget {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(height: 18),
+                    SizedBox(height: 18),
                     Row(
                       children: [
                         FilledButton(
@@ -210,25 +210,25 @@ class _FeaturedStory extends StatelessWidget {
                           style: FilledButton.styleFrom(
                             backgroundColor: _lime,
                             foregroundColor: _ink,
-                            padding: const EdgeInsets.fromLTRB(18, 12, 12, 12),
+                            padding: EdgeInsets.fromLTRB(18, 12, 12, 12),
                             shape: const StadiumBorder(),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Text(
+                              Text(
                                 'Read story',
                                 style: TextStyle(fontWeight: FontWeight.w700),
                               ),
-                              const SizedBox(width: 10),
+                              SizedBox(width: 10),
                               Container(
                                 width: 27,
                                 height: 27,
-                                decoration: const BoxDecoration(
+                                decoration: BoxDecoration(
                                   color: _ink,
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.north_east,
                                   size: 16,
                                   color: _lime,
@@ -267,10 +267,11 @@ class _SectionHeading extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = Theme.of(context).extension<DriftColors>()!;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        const Expanded(
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -302,8 +303,8 @@ class _SectionHeading extends ConsumerWidget {
           initialValue: selectedCategory ?? 'LATEST',
           onSelected: (value) => ref.read(newsCategoryProvider.notifier).state =
               value == 'LATEST' ? null : value,
-          offset: const Offset(0, 34),
-          color: _card,
+          offset: Offset(0, 34),
+          color: colors.background,
           itemBuilder: (context) => [
             for (final option in _categoryOptions)
               PopupMenuItem<String>(
@@ -312,21 +313,21 @@ class _SectionHeading extends ConsumerWidget {
               ),
           ],
           child: Padding(
-            padding: const EdgeInsets.only(bottom: 2),
+            padding: EdgeInsets.only(bottom: 2),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   categoryLabel,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: _muted,
                     fontFamily: 'Outfit',
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(width: 3),
-                const Icon(Icons.keyboard_arrow_down, size: 18, color: _muted),
+                SizedBox(width: 3),
+                Icon(Icons.keyboard_arrow_down, size: 18, color: _muted),
               ],
             ),
           ),
@@ -344,15 +345,16 @@ class _StoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<DriftColors>()!;
     return Material(
-      color: _card,
+      color: colors.background,
       borderRadius: BorderRadius.circular(22),
       child: InkWell(
         onTap: () => context.push('/news/${story.id}'),
         borderRadius: BorderRadius.circular(22),
         child: Container(
           constraints: const BoxConstraints(minHeight: 226),
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+          padding: EdgeInsets.fromLTRB(20, 20, 20, 16),
           decoration: BoxDecoration(
             border: Border.all(color: _line),
             borderRadius: BorderRadius.circular(22),
@@ -365,7 +367,7 @@ class _StoryCard extends StatelessWidget {
                 children: [
                   Text(
                     _categoryLabel(story.categories.firstOrNull),
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: _green,
                       fontFamily: 'Outfit',
                       fontSize: 13,
@@ -374,7 +376,7 @@ class _StoryCard extends StatelessWidget {
                   ),
                   Text(
                     _relativeDate(story.publicationDate),
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: _muted,
                       fontFamily: 'Outfit',
                       fontSize: 13,
@@ -382,12 +384,12 @@ class _StoryCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               Text(
                 story.headline,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   color: _ink,
                   fontFamily: 'Outfit',
                   fontSize: 20,
@@ -395,12 +397,12 @@ class _StoryCard extends StatelessWidget {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              const SizedBox(height: 9),
+              SizedBox(height: 9),
               Text(
                 story.highlight,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   color: _muted,
                   fontFamily: 'Outfit',
                   fontSize: 16,
@@ -413,7 +415,7 @@ class _StoryCard extends StatelessWidget {
                 children: [
                   Text(
                     '${story.publisher} · Quick read',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: _muted,
                       fontFamily: 'Outfit',
                       fontSize: 13,
@@ -480,7 +482,7 @@ class _StoryImage extends StatelessWidget {
       errorBuilder: (context, error, stackTrace) => Container(
         color: _deep,
         alignment: Alignment.center,
-        child: const Icon(Icons.sports_tennis, color: _lime, size: 52),
+        child: Icon(Icons.sports_tennis, color: _lime, size: 52),
       ),
     );
   }
@@ -494,7 +496,7 @@ class _NewsBottomNav extends StatelessWidget {
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(22, 8, 22, 12),
+        padding: EdgeInsets.fromLTRB(22, 8, 22, 12),
         child: DecoratedBox(
           decoration: BoxDecoration(
             color: _deep,
@@ -554,7 +556,7 @@ class _NavItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Padding(
-        padding: const EdgeInsets.all(4),
+        padding: EdgeInsets.all(4),
         child: Material(
           color: selected ? _lime : Colors.transparent,
           borderRadius: BorderRadius.circular(22),
@@ -567,7 +569,7 @@ class _NavItem extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(icon, size: 22, color: selected ? _ink : Colors.white70),
-                  const SizedBox(height: 3),
+                  SizedBox(height: 3),
                   Text(
                     label,
                     style: TextStyle(

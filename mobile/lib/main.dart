@@ -7,6 +7,7 @@ import 'core/analytics/analytics.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'features/notifications/application/push_message_handler.dart';
+import 'features/settings/application/theme_mode_provider.dart';
 
 final rootScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
@@ -60,12 +61,14 @@ class _DriftTennisAppState extends ConsumerState<DriftTennisApp> {
   @override
   Widget build(BuildContext context) {
     final router = ref.watch(appRouterProvider);
+    final themeMode = ref.watch(themeModeProvider);
 
     final app = MaterialApp.router(
       title: 'Drift Tennis',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
+      themeMode: themeMode,
       routerConfig: router,
       scaffoldMessengerKey: rootScaffoldMessengerKey,
     );

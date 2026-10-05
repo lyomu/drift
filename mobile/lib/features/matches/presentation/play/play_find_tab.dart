@@ -7,8 +7,8 @@ import '../../../players/application/players_providers.dart';
 import '../../../players/data/players_repository.dart';
 import '../../../players/presentation/player_filters_sheet.dart';
 import '../../../players/presentation/player_search_screen.dart';
+import '../../../../core/theme/drift_colors.dart';
 
-const _muted = Color(0xFF94A3B8);
 
 /// Play → Find (redesign 2026-10). Ranked player search with a "Challenge"
 /// shortcut on each card.
@@ -55,7 +55,7 @@ class _PlayFindTabState extends ConsumerState<PlayFindTab> {
             child: switch (results) {
               AsyncData(:final value) => _list(filterPlayers(value, _query)),
               AsyncError() => _message("Couldn't load players. Pull to retry."),
-              _ => const Center(child: CircularProgressIndicator()),
+              _ => Center(child: CircularProgressIndicator()),
             },
           ),
         ),
@@ -72,9 +72,9 @@ class _PlayFindTabState extends ConsumerState<PlayFindTab> {
       );
     }
     return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      padding: EdgeInsets.fromLTRB(16, 12, 16, 24),
       itemCount: players.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      separatorBuilder: (_, _) => SizedBox(height: 10),
       itemBuilder: (context, i) => DriftPlayerResultCard(
         player: players[i],
         action: DriftPlayerActionButton(
@@ -91,11 +91,11 @@ class _PlayFindTabState extends ConsumerState<PlayFindTab> {
     return ListView(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(24, 64, 24, 24),
+          padding: EdgeInsets.fromLTRB(24, 64, 24, 24),
           child: Text(
             text,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 14, height: 1.4, color: _muted),
+            style: TextStyle(fontSize: 14, height: 1.4, color: Theme.of(context).extension<DriftColors>()!.textSecondary),
           ),
         ),
       ],

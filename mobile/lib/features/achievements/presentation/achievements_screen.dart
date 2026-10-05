@@ -11,9 +11,6 @@ import '../data/achievements_repository.dart';
 /// Drift's official readable text family.
 const _font = 'Outfit';
 
-const _ink = Color(0xFF0F172A);
-const _lockedInk = Color(0xFF94A3B8);
-const _lockedFill = Color(0xFFF1F5F9);
 const _lockedBorder = Color(0xFFE2E8F0);
 const _earnedPillFill = Color(0xFFDCFCE7);
 const _earnedPillInk = Color(0xFF16A34A);
@@ -44,7 +41,7 @@ class AchievementsScreen extends ConsumerWidget {
                 AsyncError() => _LoadFailed(
                   onRetry: () => ref.invalidate(achievementsProvider),
                 ),
-                _ => const Center(child: CircularProgressIndicator()),
+                _ => Center(child: CircularProgressIndicator()),
               },
             ),
           ],
@@ -62,7 +59,7 @@ class _Header extends StatelessWidget {
     final colors = Theme.of(context).extension<DriftColors>()!;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      padding: EdgeInsets.fromLTRB(16, 12, 16, 12),
       decoration: BoxDecoration(
         color: colors.surface,
         border: Border(bottom: BorderSide(color: _hairline(colors), width: 1)),
@@ -84,23 +81,23 @@ class _Header extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: _tintedBorder(colors), width: 1.5),
                 ),
-                child: const Icon(
+                child: Icon(
                   DriftSymbolsFilled.arrowBack,
                   size: 20,
-                  color: _ink,
+                  color: colors.textPrimary,
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 12),
-          const Text(
+          SizedBox(width: 12),
+          Text(
             'Achievements',
             style: TextStyle(
               fontFamily: _font,
               fontSize: 22,
               fontWeight: FontWeight.w900,
               height: 1.2,
-              color: _ink,
+              color: colors.textPrimary,
             ),
           ),
         ],
@@ -117,18 +114,18 @@ class _AchievementList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       children: [
         _SummaryCard(
           earnedCount: response.earnedCount,
           totalCount: response.totalCount,
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         for (final achievement in response.achievements) ...[
           _AchievementCard(achievement: achievement),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
         ],
-        const SizedBox(height: 4),
+        SizedBox(height: 4),
       ],
     );
   }
@@ -146,7 +143,7 @@ class _SummaryCard extends StatelessWidget {
     final pct = totalCount == 0 ? 0.0 : earnedCount / totalCount;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(16),
@@ -162,31 +159,31 @@ class _SummaryCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Your badges',
                       style: TextStyle(
                         fontFamily: _font,
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
                         height: 1.2,
-                        color: _ink,
+                        color: colors.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    SizedBox(height: 2),
                     Text(
                       '$earnedCount of $totalCount earned',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: _font,
                         fontSize: 12,
                         fontWeight: FontWeight.w400,
                         height: 1.3,
-                        color: _ink,
+                        color: colors.textPrimary,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Text(
                 '$earnedCount/$totalCount',
                 style: TextStyle(
@@ -199,7 +196,7 @@ class _SummaryCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           _ProgressBar(value: pct, height: 6, filled: true),
         ],
       ),
@@ -231,11 +228,11 @@ class _AchievementCard extends StatelessWidget {
         child: InkWell(
           onTap: () => _showAchievementDetail(context, achievement),
           child: Container(
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.all(12),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: earned ? _cardBorder(colors) : _lockedFill,
+                color: earned ? _cardBorder(colors) : colors.surfaceRaised,
                 width: 1.5,
               ),
             ),
@@ -248,7 +245,7 @@ class _AchievementCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: earned
                         ? colors.primary.withValues(alpha: 0.08)
-                        : _lockedFill,
+                        : colors.surfaceRaised,
                     borderRadius: BorderRadius.circular(11),
                     border: Border.all(
                       color: earned
@@ -265,13 +262,13 @@ class _AchievementCard extends StatelessWidget {
                           size: 20,
                           color: colors.primary,
                         )
-                      : const Icon(
+                      : Icon(
                           Symbols.lock_rounded,
                           size: 20,
-                          color: _lockedInk,
+                          color: colors.textSecondary,
                         ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -286,40 +283,40 @@ class _AchievementCard extends StatelessWidget {
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
                                 height: 1.2,
-                                color: earned ? _ink : _lockedInk,
+                                color: earned ? colors.textPrimary : colors.textSecondary,
                               ),
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8),
                           _StatePill(earned: earned),
                         ],
                       ),
-                      const SizedBox(height: 2),
+                      SizedBox(height: 2),
                       Text(
                         achievement.description,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: _font,
                           fontSize: 12,
                           fontWeight: FontWeight.w400,
                           height: 1.4,
-                          color: _ink,
+                          color: colors.textPrimary,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       _ProgressBar(
                         value: progress.toDouble(),
                         height: 4,
                         filled: earned,
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       Text(
                         '${achievement.current}/${achievement.target}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: _font,
                           fontSize: 11,
                           fontWeight: FontWeight.w500,
                           height: 1.2,
-                          color: _ink,
+                          color: colors.textPrimary,
                         ),
                       ),
                     ],
@@ -342,7 +339,7 @@ class _StatePill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
         color: earned ? _earnedPillFill : _lockedPillFill,
         borderRadius: BorderRadius.circular(99),
@@ -411,11 +408,11 @@ class _LoadFailed extends StatelessWidget {
 
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
+            Text(
               "Couldn't load achievements.",
               textAlign: TextAlign.center,
               style: TextStyle(
@@ -423,10 +420,10 @@ class _LoadFailed extends StatelessWidget {
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 height: 1.4,
-                color: _ink,
+                color: colors.textPrimary,
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             TextButton(
               onPressed: onRetry,
               child: Text(
@@ -455,7 +452,7 @@ void _showAchievementDetail(BuildContext context, Achievement achievement) {
     backgroundColor: colors.surface,
     builder: (context) => SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+        padding: EdgeInsets.fromLTRB(20, 0, 20, 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -468,7 +465,7 @@ void _showAchievementDetail(BuildContext context, Achievement achievement) {
                   decoration: BoxDecoration(
                     color: achievement.earned
                         ? colors.primary.withValues(alpha: 0.08)
-                        : _lockedFill,
+                        : colors.surfaceRaised,
                     borderRadius: BorderRadius.circular(11),
                     border: Border.all(
                       color: achievement.earned
@@ -483,59 +480,59 @@ void _showAchievementDetail(BuildContext context, Achievement achievement) {
                           size: 20,
                           color: colors.primary,
                         )
-                      : const Icon(
+                      : Icon(
                           Symbols.lock_rounded,
                           size: 20,
-                          color: _lockedInk,
+                          color: colors.textSecondary,
                         ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     achievement.title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: _font,
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
                       height: 1.2,
-                      color: _ink,
+                      color: colors.textPrimary,
                     ),
                   ),
                 ),
                 _StatePill(earned: achievement.earned),
               ],
             ),
-            const SizedBox(height: 14),
+            SizedBox(height: 14),
             Text(
               achievement.description,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: _font,
                 fontSize: 14,
                 fontWeight: FontWeight.w400,
                 height: 1.45,
-                color: _ink,
+                color: colors.textPrimary,
               ),
             ),
-            const SizedBox(height: 14),
-            const Text(
+            SizedBox(height: 14),
+            Text(
               'Criteria',
               style: TextStyle(
                 fontFamily: _font,
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
                 height: 1.3,
-                color: _ink,
+                color: colors.textPrimary,
               ),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: 4),
             Text(
               achievement.criteria,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: _font,
                 fontSize: 13,
                 fontWeight: FontWeight.w400,
                 height: 1.45,
-                color: _lockedInk,
+                color: colors.textSecondary,
               ),
             ),
           ],

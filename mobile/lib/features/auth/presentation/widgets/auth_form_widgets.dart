@@ -47,9 +47,9 @@ class AuthPrimaryButton extends StatelessWidget {
         child: InkWell(
           onTap: enabled ? onPressed : null,
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
+            padding: EdgeInsets.symmetric(vertical: 16),
             child: loading
-                ? const Center(
+                ? Center(
                     child: SizedBox(
                       width: 20,
                       height: 20,
@@ -64,11 +64,11 @@ class AuthPrimaryButton extends StatelessWidget {
                     children: [
                       if (icon != null) ...[
                         Icon(icon, size: 20, color: Colors.white),
-                        const SizedBox(width: 10),
+                        SizedBox(width: 10),
                       ],
                       Text(
                         label,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Outfit',
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
@@ -108,11 +108,12 @@ class AuthSocialButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<DriftColors>()!;
     final enabled = onPressed != null && !loading;
     return Opacity(
       opacity: enabled || loading ? 1 : 0.5,
       child: Material(
-        color: const Color(0xFFF4F4F4),
+        color: colors.surfaceRaised,
         borderRadius: BorderRadius.circular(999),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -122,7 +123,7 @@ class AuthSocialButton extends StatelessWidget {
               borderRadius: BorderRadius.circular(999),
               border: Border.all(color: const Color(0xFFE8E8E8), width: 1.5),
             ),
-            padding: const EdgeInsets.symmetric(vertical: 14),
+            padding: EdgeInsets.symmetric(vertical: 14),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -131,7 +132,7 @@ class AuthSocialButton extends StatelessWidget {
                   height: 20,
                   child: Center(
                     child: loading
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 16,
                             height: 16,
                             child: CircularProgressIndicator(strokeWidth: 2),
@@ -139,14 +140,14 @@ class AuthSocialButton extends StatelessWidget {
                         : icon,
                   ),
                 ),
-                const SizedBox(width: 10),
+                SizedBox(width: 10),
                 Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Outfit',
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF1A1A1A),
+                    color: colors.textPrimary,
                   ),
                 ),
               ],
@@ -185,7 +186,7 @@ class AuthInputField extends StatelessWidget {
     final colors = Theme.of(context).extension<DriftColors>()!;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: colors.border, width: 1.5),
@@ -193,7 +194,7 @@ class AuthInputField extends StatelessWidget {
       child: Row(
         children: [
           Icon(icon, size: 20, color: colors.textSecondary),
-          const SizedBox(width: 10),
+          SizedBox(width: 10),
           Expanded(
             child: TextField(
               controller: controller,
@@ -201,7 +202,7 @@ class AuthInputField extends StatelessWidget {
               keyboardType: keyboardType,
               onSubmitted: onSubmitted,
               cursorColor: colors.primary,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Outfit',
                 fontSize: 15,
                 fontWeight: FontWeight.w400,
@@ -209,7 +210,7 @@ class AuthInputField extends StatelessWidget {
               decoration: InputDecoration(
                 isDense: true,
                 filled: false,
-                contentPadding: const EdgeInsets.symmetric(vertical: 15),
+                contentPadding: EdgeInsets.symmetric(vertical: 15),
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
@@ -288,7 +289,7 @@ class AgePolicyAcceptance extends StatelessWidget {
       borderRadius: BorderRadius.circular(12),
       onTap: () => onChanged(!value),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6),
+        padding: EdgeInsets.symmetric(vertical: 6),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -301,7 +302,7 @@ class AgePolicyAcceptance extends StatelessWidget {
                 onChanged: (checked) => onChanged(checked ?? false),
               ),
             ),
-            const SizedBox(width: 10),
+            SizedBox(width: 10),
             Expanded(
               child: Text(
                 'I confirm I am 18 or older and agree to the Terms & '

@@ -119,7 +119,7 @@ class _SocialAuthButtonsState extends ConsumerState<SocialAuthButtons> {
           loading: _busy == SocialProvider.google,
           onPressed: enabled ? () => _start(SocialProvider.google) : null,
         ),
-        const SizedBox(height: 10),
+        SizedBox(height: 10),
         // Apple stays shimmed out: the flow is written and tested, but it
         // cannot work until the Developer Program enrolment lands (tracker
         // P.6), so a live button would only ever report "not available".
@@ -129,10 +129,10 @@ class _SocialAuthButtonsState extends ConsumerState<SocialAuthButtons> {
             IgnorePointer(
               child: AuthSocialButton(
                 label: 'Continue with Apple',
-                icon: const Icon(
+                icon: Icon(
                   Icons.apple,
                   size: 20,
-                  color: Color(0xFF1A1A1A),
+                  color: colors.textPrimary,
                 ),
                 loading: _busy == SocialProvider.apple,
                 onPressed: enabled ? () => _start(SocialProvider.apple) : null,
@@ -147,7 +147,7 @@ class _SocialAuthButtonsState extends ConsumerState<SocialAuthButtons> {
           ],
         ),
         if (_error != null) ...[
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Text(
             _error!,
             textAlign: TextAlign.center,
@@ -191,7 +191,7 @@ class _LinkAccountDialogState extends State<_LinkAccountDialog> {
     final type = Theme.of(context).extension<DriftTypography>()!;
 
     return AlertDialog(
-      title: const Text('Link your account'),
+      title: Text('Link your account'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -202,7 +202,7 @@ class _LinkAccountDialogState extends State<_LinkAccountDialog> {
             'use either to sign in.',
             style: type.body,
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           TextField(
             controller: _controller,
             obscureText: _obscure,
@@ -226,9 +226,9 @@ class _LinkAccountDialogState extends State<_LinkAccountDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text('Cancel'),
         ),
-        FilledButton(onPressed: _submit, child: const Text('Link')),
+        FilledButton(onPressed: _submit, child: Text('Link')),
       ],
     );
   }

@@ -5,8 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/drift_competition_card.dart';
 import '../data/expansion_repository.dart';
+import '../../../core/theme/drift_colors.dart';
 
-const _muted = Color(0xFF94A3B8);
 
 /// Tournaments segment (redesign 2026-10).
 ///
@@ -21,6 +21,7 @@ class TournamentListScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = Theme.of(context).extension<DriftColors>()!;
     final tournaments = ref.watch(tournamentsListProvider);
     final type = Theme.of(context).extension<DriftTypography>()!;
 
@@ -29,16 +30,17 @@ class TournamentListScreen extends ConsumerWidget {
       child: switch (tournaments) {
         AsyncData(:final value) when value.isEmpty => _message(
           'No tournaments yet. Ask your club to run one.',
+          colors,
         ),
         AsyncData(:final value) => ListView.separated(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          padding: EdgeInsets.fromLTRB(16, 12, 16, 24),
           itemCount: value.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 10),
+          separatorBuilder: (_, _) => SizedBox(height: 10),
           itemBuilder: (context, i) =>
               _TournamentCard(tournament: value[i], index: i),
         ),
-        AsyncError() => _message("Couldn't load tournaments."),
-        _ => const Center(child: CircularProgressIndicator()),
+        AsyncError() => _message("Couldn't load tournaments.", colors),
+        _ => Center(child: CircularProgressIndicator()),
       },
     );
 
@@ -48,7 +50,7 @@ class TournamentListScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(16),
             child: Text('Tournaments', style: type.h2),
           ),
           Expanded(child: content),
@@ -57,15 +59,15 @@ class TournamentListScreen extends ConsumerWidget {
     );
   }
 
-  Widget _message(String text) {
+  Widget _message(String text, DriftColors colors) {
     return ListView(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(24, 64, 24, 24),
+          padding: EdgeInsets.fromLTRB(24, 64, 24, 24),
           child: Text(
             text,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 14, height: 1.4, color: _muted),
+            style: TextStyle(fontSize: 14, height: 1.4, color: colors.textSecondary),
           ),
         ),
       ],

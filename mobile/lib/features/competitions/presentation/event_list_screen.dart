@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/drift_colors.dart';
 
-const _ink = Color(0xFF0F172A);
-const _subdued = Color(0xFF64748B);
 
 /// Events segment (redesign 2026-10).
 ///
@@ -25,7 +23,7 @@ class EventListScreen extends StatelessWidget {
 
     return Center(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(32, 0, 32, 60),
+        padding: EdgeInsets.fromLTRB(32, 0, 32, 60),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -47,22 +45,22 @@ class EventListScreen extends StatelessWidget {
                 color: colors.primary,
               ),
             ),
-            const SizedBox(height: 16),
-            const Text(
+            SizedBox(height: 16),
+            Text(
               'Events coming soon',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
                 height: 1.3,
-                color: _ink,
+                color: colors.textPrimary,
               ),
             ),
-            const SizedBox(height: 6),
-            const Text(
+            SizedBox(height: 6),
+            Text(
               'Club socials, clinics and mixers will appear here once your '
               'club starts running them.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, height: 1.5, color: _subdued),
+              style: TextStyle(fontSize: 13, height: 1.5, color: colors.textSecondary),
             ),
           ],
         ),

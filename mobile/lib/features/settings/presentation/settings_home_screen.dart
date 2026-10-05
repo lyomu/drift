@@ -8,11 +8,11 @@ import '../../../core/network/dio_client.dart';
 import '../../../core/theme/drift_colors.dart';
 import '../../../shared/widgets/drift_symbol.dart';
 import '../../auth/data/auth_repository.dart';
+import '../application/theme_mode_provider.dart';
 
 /// Drift's official readable text family.
 const _font = 'Outfit';
 
-const _ink = Color(0xFF0F172A);
 const _chevron = Color(0xFFCBD5E1);
 const _danger = Color(0xFFEF4444);
 
@@ -23,6 +23,12 @@ const _appVersion = '1.0.0';
 /// Settings Home — `foundation/04-screen-inventory.md` §A.10-11. "Manage
 /// connection requests" links to the existing Pending Requests screen
 /// (built M5/M6) rather than duplicating it.
+const _appearanceLabels = {
+  ThemeMode.system: 'Device',
+  ThemeMode.light: 'Light',
+  ThemeMode.dark: 'Dark',
+};
+
 class SettingsHomeScreen extends ConsumerStatefulWidget {
   const SettingsHomeScreen({super.key});
 
@@ -36,22 +42,49 @@ class _SettingsHomeScreenState extends ConsumerState<SettingsHomeScreen> {
   /// Same flow as the app drawer's: revoke the refresh token, clear local
   /// storage, drop the analytics identity so the next person on this device
   /// isn't recorded as the one who just left.
+  /// Lets the player pick Device, Light or Dark. The choice applies at once and
+  /// is saved for the next launch (see `themeModeProvider`).
+  Future<void> _pickAppearance() async {
+    final current = ref.read(themeModeProvider);
+    final picked = await showDialog<ThemeMode>(
+      context: context,
+      builder: (dialogContext) => SimpleDialog(
+        title: Text('Appearance'),
+        children: [
+          for (final entry in _appearanceLabels.entries)
+            SimpleDialogOption(
+              onPressed: () => Navigator.of(dialogContext).pop(entry.key),
+              child: Row(
+                children: [
+                  Expanded(child: Text(entry.value)),
+                  if (entry.key == current) Icon(Symbols.check),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+    if (picked != null) {
+      await ref.read(themeModeProvider.notifier).select(picked);
+    }
+  }
+
   Future<void> _logout() async {
     if (_isLoggingOut) return;
 
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Log out?'),
-        content: const Text('You can sign back in any time.'),
+        title: Text('Log out?'),
+        content: Text('You can sign back in any time.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
+            child: Text('Cancel'),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Log out'),
+            child: Text('Log out'),
           ),
         ],
       ),
@@ -83,7 +116,7 @@ class _SettingsHomeScreenState extends ConsumerState<SettingsHomeScreen> {
             const _Header(),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(
+                padding: EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 12,
                 ),
@@ -92,6 +125,18 @@ class _SettingsHomeScreenState extends ConsumerState<SettingsHomeScreen> {
                   // a Phase 0 spike that cannot analyse anything yet, and
                   // promoting it to primary navigation would promise a great
                   // deal more than it does.
+                  _Section(
+                    title: 'Appearance',
+                    rows: [
+                      _Row(
+                        icon: Symbols.contrast,
+                        accent: colors.primary,
+                        label:
+                            'Theme: ${_appearanceLabels[ref.watch(themeModeProvider)]}',
+                        onTap: _pickAppearance,
+                      ),
+                    ],
+                  ),
                   _Section(
                     title: 'Labs',
                     rows: [
@@ -179,7 +224,7 @@ class _SettingsHomeScreenState extends ConsumerState<SettingsHomeScreen> {
                       ),
                       _Row(
                         icon: DriftSymbolsFilled.policy,
-                        accent: const Color(0xFF64748B),
+                        accent: colors.textSecondary,
                         label: 'Terms & Privacy Policy',
                         onTap: () => context.push('/settings/legal'),
                       ),
@@ -207,8 +252,8 @@ class _SettingsHomeScreenState extends ConsumerState<SettingsHomeScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  const Padding(
+                  SizedBox(height: 12),
+                  Padding(
                     padding: EdgeInsets.only(bottom: 16),
                     child: Text(
                       'Drift Tennis v$_appVersion',
@@ -240,7 +285,7 @@ class _Header extends StatelessWidget {
     final colors = Theme.of(context).extension<DriftColors>()!;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      padding: EdgeInsets.fromLTRB(16, 12, 16, 12),
       decoration: BoxDecoration(
         color: colors.surface,
         border: Border(bottom: BorderSide(color: _hairline(colors), width: 1)),
@@ -262,23 +307,23 @@ class _Header extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: _tintedBorder(colors), width: 1.5),
                 ),
-                child: const Icon(
+                child: Icon(
                   DriftSymbolsFilled.arrowBack,
                   size: 20,
-                  color: _ink,
+                  color: colors.textPrimary,
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 12),
-          const Text(
+          SizedBox(width: 12),
+          Text(
             'Settings',
             style: TextStyle(
               fontFamily: _font,
               fontSize: 22,
               fontWeight: FontWeight.w900,
               height: 1.2,
-              color: _ink,
+              color: colors.textPrimary,
             ),
           ),
         ],
@@ -299,21 +344,21 @@ class _Section extends StatelessWidget {
     final colors = Theme.of(context).extension<DriftColors>()!;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.only(bottom: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (title != null)
             Padding(
-              padding: const EdgeInsets.only(left: 2, bottom: 4),
+              padding: EdgeInsets.only(left: 2, bottom: 4),
               child: Text(
                 title!,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: _font,
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                   height: 1.3,
-                  color: _ink,
+                  color: colors.textPrimary,
                 ),
               ),
             ),
@@ -361,12 +406,13 @@ class _Row extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<DriftColors>()!;
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Row(
             children: [
               Container(
@@ -382,7 +428,7 @@ class _Row extends StatelessWidget {
                 ),
                 child: Icon(icon, size: 16, color: accent),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: Text(
                   label,
@@ -391,14 +437,14 @@ class _Row extends StatelessWidget {
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
                     height: 1.3,
-                    color: danger ? _danger : _ink,
+                    color: danger ? _danger : colors.textPrimary,
                   ),
                 ),
               ),
               // Straight from the package: the mock draws the chevron at
               // wght 400 / FILL 0, which is this font's default master, so
               // nothing here depends on an axis Impeller would ignore.
-              const Icon(
+              Icon(
                 Symbols.chevron_right_rounded,
                 size: 16,
                 color: _chevron,

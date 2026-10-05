@@ -13,9 +13,6 @@ import '../application/messaging_providers.dart';
 import '../../safety/presentation/message_report_sheet.dart';
 import '../data/messaging_repository.dart';
 
-const _ink = Color(0xFF0F172A);
-const _slate = Color(0xFF64748B);
-const _muted = Color(0xFF94A3B8);
 
 /// Chat Thread — `foundation/04-screen-inventory.md` §A.9. Carries both
 /// player messages and the SYSTEM events the match state machine writes, so
@@ -124,10 +121,10 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
                           onReport: (id) =>
                               showMessageReportSheet(context, ref, messageId: id),
                         ),
-                AsyncError() => const Center(
+                AsyncError() => Center(
                   child: Text("Couldn't load this conversation."),
                 ),
-                _ => const Center(child: CircularProgressIndicator()),
+                _ => Center(child: CircularProgressIndicator()),
               },
             ),
             _Composer(
@@ -162,7 +159,7 @@ class _ChatHeader extends ConsumerWidget {
     final subtitle = _levelLine(counterpart);
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      padding: EdgeInsets.fromLTRB(16, 12, 16, 16),
       decoration: BoxDecoration(
         color: colors.surface,
         border: Border(
@@ -173,14 +170,14 @@ class _ChatHeader extends ConsumerWidget {
         children: [
           _HeaderSquareButton(
             icon: Icons.arrow_back_rounded,
-            iconColor: _ink,
+            iconColor: colors.textPrimary,
             onTap: () {
               if (context.canPop()) context.pop();
             },
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           _Avatar(player: counterpart, size: 40, fontSize: 15, borderWidth: 2),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -190,24 +187,24 @@ class _ChatHeader extends ConsumerWidget {
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                     height: 1.2,
-                    color: _ink,
+                    color: colors.textPrimary,
                   ),
                 ),
                 if (subtitle != null) ...[
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2),
                   Text(
                     subtitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
                       height: 1.2,
-                      color: _slate,
+                      color: colors.textSecondary,
                     ),
                   ),
                 ],
@@ -215,7 +212,7 @@ class _ChatHeader extends ConsumerWidget {
             ),
           ),
           if (counterpart != null) ...[
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             _HeaderSquareButton(
               icon: Icons.person_outline_rounded,
               iconColor: colors.primary,
@@ -365,7 +362,7 @@ class _MessageList extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView.builder(
       controller: scrollController,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       itemCount: messages.length,
       itemBuilder: (context, i) {
         final message = messages[i];
@@ -433,16 +430,17 @@ class _DayStamp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<DriftColors>()!;
     return Padding(
-      padding: const EdgeInsets.only(top: 8, bottom: 8),
+      padding: EdgeInsets.only(top: 8, bottom: 8),
       child: Center(
         child: Text(
           _label(date),
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w500,
             height: 1.2,
-            color: _muted,
+            color: colors.textSecondary,
           ),
         ),
       ),
@@ -478,7 +476,7 @@ class _SystemPill extends StatelessWidget {
     final colors = Theme.of(context).extension<DriftColors>()!;
 
     return Padding(
-      padding: const EdgeInsets.only(top: 4, bottom: 12),
+      padding: EdgeInsets.only(top: 4, bottom: 12),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 320),
@@ -489,7 +487,7 @@ class _SystemPill extends StatelessWidget {
             child: InkWell(
               onTap: () => _showSystemMessageDetail(context, message),
               child: Container(
-                padding: const EdgeInsets.symmetric(
+                padding: EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 8,
                 ),
@@ -545,15 +543,15 @@ class _MessageRow extends StatelessWidget {
     // trailing corner too so a run reads as one block.
     final radius = isMine
         ? BorderRadius.only(
-            topLeft: const Radius.circular(18),
-            topRight: const Radius.circular(6),
+            topLeft: Radius.circular(18),
+            topRight: Radius.circular(6),
             bottomRight: Radius.circular(continuesRun ? 6 : 18),
-            bottomLeft: const Radius.circular(18),
+            bottomLeft: Radius.circular(18),
           )
         : BorderRadius.only(
-            topLeft: const Radius.circular(6),
-            topRight: const Radius.circular(18),
-            bottomRight: const Radius.circular(18),
+            topLeft: Radius.circular(6),
+            topRight: Radius.circular(18),
+            bottomRight: Radius.circular(18),
             bottomLeft: Radius.circular(continuesRun ? 6 : 18),
           );
 
@@ -579,7 +577,7 @@ class _MessageRow extends StatelessWidget {
                       borderWidth: 1.5,
                     ),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
           ],
           Flexible(
             child: Column(
@@ -594,7 +592,7 @@ class _MessageRow extends StatelessWidget {
                       maxWidth: MediaQuery.of(context).size.width * 0.75,
                     ),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
+                      padding: EdgeInsets.symmetric(
                         horizontal: 14,
                         vertical: 10,
                       ),
@@ -608,21 +606,21 @@ class _MessageRow extends StatelessWidget {
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                           height: 1.4,
-                          color: isMine ? Colors.white : _ink,
+                          color: isMine ? Colors.white : colors.textPrimary,
                         ),
                       ),
                     ),
                   ),
                 ),
                 if (endsRun) ...[
-                  const SizedBox(height: 3),
+                  SizedBox(height: 3),
                   Text(
                     _clockTime(message.createdAt),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w500,
                       height: 1.2,
-                      color: _muted,
+                      color: colors.textSecondary,
                     ),
                   ),
                 ],
@@ -654,7 +652,7 @@ void _showSystemMessageDetail(BuildContext context, ChatMessage message) {
     showDragHandle: true,
     builder: (sheetContext) => SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(
+        padding: EdgeInsets.fromLTRB(
           DriftSpacing.s5,
           0,
           DriftSpacing.s5,
@@ -667,7 +665,7 @@ void _showSystemMessageDetail(BuildContext context, ChatMessage message) {
             Row(
               children: [
                 Icon(Icons.info_outline, color: colors.primary),
-                const SizedBox(width: DriftSpacing.s3),
+                SizedBox(width: DriftSpacing.s3),
                 Expanded(
                   child: Text(
                     _systemEventLabel(message.systemEvent),
@@ -676,9 +674,9 @@ void _showSystemMessageDetail(BuildContext context, ChatMessage message) {
                 ),
               ],
             ),
-            const SizedBox(height: DriftSpacing.s3),
+            SizedBox(height: DriftSpacing.s3),
             Text(message.body, style: type.body),
-            const SizedBox(height: DriftSpacing.s4),
+            SizedBox(height: DriftSpacing.s4),
             if (message.relatedMatchId != null) ...[
               _SystemLink(
                 icon: Icons.sports_tennis_outlined,
@@ -688,7 +686,7 @@ void _showSystemMessageDetail(BuildContext context, ChatMessage message) {
                   context.push('/matches/${message.relatedMatchId}');
                 },
               ),
-              const SizedBox(height: DriftSpacing.s2),
+              SizedBox(height: DriftSpacing.s2),
             ],
             if (message.relatedLeagueId != null)
               _SystemLink(
@@ -728,11 +726,11 @@ class _SystemLink extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: DriftSpacing.s2),
+        padding: EdgeInsets.symmetric(vertical: DriftSpacing.s2),
         child: Row(
           children: [
             DriftIcon(icon, color: colors.primary),
-            const SizedBox(width: DriftSpacing.s3),
+            SizedBox(width: DriftSpacing.s3),
             Expanded(child: Text(label, style: type.title)),
             Icon(Icons.chevron_right, color: colors.textSecondary),
           ],
@@ -799,7 +797,7 @@ class _ComposerState extends State<_Composer> {
     final active = _hasText && !widget.isSending;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      padding: EdgeInsets.fromLTRB(16, 12, 16, 12),
       decoration: BoxDecoration(
         color: colors.surface,
         border: Border(top: BorderSide(color: _hairline(colors), width: 1)),
@@ -814,7 +812,7 @@ class _ComposerState extends State<_Composer> {
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: _tintedBorder(colors), width: 1.5),
               ),
-              padding: const EdgeInsets.symmetric(
+              padding: EdgeInsets.symmetric(
                 horizontal: 16,
                 vertical: 10,
               ),
@@ -825,19 +823,19 @@ class _ComposerState extends State<_Composer> {
                 textInputAction: TextInputAction.send,
                 onSubmitted: (_) => widget.onSend(),
                 cursorColor: colors.primary,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   height: 1.4,
-                  color: _ink,
+                  color: colors.textPrimary,
                 ),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: 'Message',
                   hintStyle: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                     height: 1.4,
-                    color: _muted,
+                    color: colors.textSecondary,
                   ),
                   isDense: true,
                   border: InputBorder.none,
@@ -849,7 +847,7 @@ class _ComposerState extends State<_Composer> {
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           _SendButton(
             active: active,
             loading: widget.isSending,
@@ -890,7 +888,7 @@ class _SendButton extends StatelessWidget {
                 BoxShadow(
                   color: colors.primary.withValues(alpha: 0.25),
                   blurRadius: 16,
-                  offset: const Offset(0, 4),
+                  offset: Offset(0, 4),
                 ),
               ]
             : null,
@@ -903,7 +901,7 @@ class _SendButton extends StatelessWidget {
           onTap: onTap,
           child: Center(
             child: loading
-                ? const SizedBox(
+                ? SizedBox(
                     width: 18,
                     height: 18,
                     child: CircularProgressIndicator(
@@ -914,7 +912,7 @@ class _SendButton extends StatelessWidget {
                 : Icon(
                     Icons.send_rounded,
                     size: 20,
-                    color: active ? Colors.white : _muted,
+                    color: active ? Colors.white : colors.textSecondary,
                   ),
           ),
         ),

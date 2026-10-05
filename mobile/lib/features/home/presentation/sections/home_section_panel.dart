@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../shared/widgets/drift_section_header.dart';
+import '../../../../core/theme/drift_colors.dart';
 
 /// Home's banded layout (redesign 2026-10): each section is a white panel,
 /// separated by a thick tinted rule rather than by whitespace.
@@ -10,7 +11,6 @@ import '../../../../shared/widgets/drift_section_header.dart';
 /// what gives the page its "dashboard at the top, feed below" split.
 
 /// The ground between panels, and behind the top of the page.
-const homeGround = Color(0xFFEEF3FC);
 
 /// One white section band. [title] and [actionLabel] render the standard
 /// section header inside it.
@@ -36,20 +36,20 @@ class HomeSectionPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(vertical: 18),
+      color: Theme.of(context).extension<DriftColors>()!.surface,
+      padding: EdgeInsets.symmetric(vertical: 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: EdgeInsets.symmetric(horizontal: 16),
             child: DriftSectionHeader(
               title: title,
               actionLabel: actionLabel,
               onAction: onAction,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Padding(padding: contentPadding, child: child),
         ],
       ),
@@ -63,5 +63,5 @@ class HomeDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) =>
-      const SizedBox(height: 8, child: ColoredBox(color: homeGround));
+      SizedBox(height: 8, child: ColoredBox(color: Theme.of(context).extension<DriftColors>()!.surfaceRaised));
 }

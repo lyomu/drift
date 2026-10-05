@@ -29,7 +29,7 @@ const _padelOptions = [
     label: 'No, just tennis',
     subtitle: 'Sticking to the classics',
     icon: DriftSymbolsFilled.close,
-    accent: Color(0xFF64748B),
+    accent: Color(0xFF94A3B8),
   ),
   (
     value: 'WANT_TO_LEARN',
@@ -109,7 +109,7 @@ class _PadelInterestScreenState extends ConsumerState<PadelInterestScreen> {
       footer: TextButton(
         onPressed: _isSubmitting ? null : () => _submit('NO'),
         style: TextButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           minimumSize: Size.zero,
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
@@ -125,9 +125,9 @@ class _PadelInterestScreenState extends ConsumerState<PadelInterestScreen> {
         ),
       ),
       children: [
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         for (var i = 0; i < _padelOptions.length; i++) ...[
-          if (i > 0) const SizedBox(height: 12),
+          if (i > 0) SizedBox(height: 12),
           _OptionCard(
             option: _padelOptions[i],
             selected: _selected == _padelOptions[i].value,
@@ -197,7 +197,7 @@ class _OptionCard extends StatelessWidget {
           child: InkWell(
             onTap: onTap,
             child: Padding(
-              padding: const EdgeInsets.all(14),
+              padding: EdgeInsets.all(14),
               child: Row(
                 children: [
                   Container(
@@ -215,7 +215,7 @@ class _OptionCard extends StatelessWidget {
                     ),
                     child: Icon(option.icon, size: 22, color: option.accent),
                   ),
-                  const SizedBox(width: 14),
+                  SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -230,7 +230,7 @@ class _OptionCard extends StatelessWidget {
                             color: selected ? colors.primary : colors.textPrimary,
                           ),
                         ),
-                        const SizedBox(height: 2),
+                        SizedBox(height: 2),
                         Text(
                           option.subtitle,
                           style: TextStyle(
@@ -244,7 +244,7 @@ class _OptionCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   _CheckDot(selected: selected, accent: colors.primary),
                 ],
               ),
@@ -278,7 +278,7 @@ class _CheckDot extends StatelessWidget {
         ),
       ),
       child: selected
-          ? const Icon(
+          ? Icon(
               DriftSymbolsFilled600.check,
               size: 11,
               color: Colors.white,

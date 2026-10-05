@@ -82,10 +82,6 @@ const _lessonAccents = <Color>[
 /// so the cap lives here rather than in the query.
 const _featuredCount = 3;
 
-const _ink = Color(0xFF0F172A);
-const _subdued = Color(0xFF64748B);
-const _muted = Color(0xFF94A3B8);
-const _chevron = Color(0xFFCBD5E1);
 
 /// Learning Home — `foundation/04-screen-inventory.md` §A.7. Entry to
 /// structured learning, a browse-by-skill rail, and the featured lessons.
@@ -125,6 +121,7 @@ class _LearningHomeBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     const params = (type: null, targetSkill: null);
     final featured = ref.watch(contentBrowseProvider(params));
+    final colors = Theme.of(context).extension<DriftColors>()!;
 
     return RefreshIndicator(
       onRefresh: () => ref.refresh(contentBrowseProvider(params).future),
@@ -140,7 +137,7 @@ class _LearningHomeBody extends ConsumerWidget {
           const SizedBox(height: 12),
           const _SkillChips(),
           const SizedBox(height: 24),
-          ..._featuredSection(featured),
+          ..._featuredSection(featured, colors),
         ],
       ),
     );
@@ -149,7 +146,10 @@ class _LearningHomeBody extends ConsumerWidget {
   /// The featured strip is additive: it disappears rather than showing an
   /// empty frame when nothing is published, and says so plainly when the
   /// request fails instead of leaving a silent gap.
-  List<Widget> _featuredSection(AsyncValue<List<ContentSummary>> featured) {
+  List<Widget> _featuredSection(
+    AsyncValue<List<ContentSummary>> featured,
+    DriftColors colors,
+  ) {
     return switch (featured) {
       AsyncData(:final value) when value.isEmpty => const [],
       AsyncData(:final value) => [
@@ -163,12 +163,12 @@ class _LearningHomeBody extends ConsumerWidget {
           ),
         ],
       ],
-      AsyncError() => const [
+      AsyncError() => [
         _SectionHeading('Featured lessons'),
         SizedBox(height: 12),
         Text(
           "Couldn't load lessons. Pull down to try again.",
-          style: TextStyle(fontSize: 12, height: 1.4, color: _subdued),
+          style: TextStyle(fontSize: 12, height: 1.4, color: colors.textSecondary),
         ),
       ],
       _ => const [
@@ -187,13 +187,14 @@ class _SectionHeading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<DriftColors>()!;
     return Text(
       label,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w700,
         height: 1.2,
-        color: _ink,
+        color: colors.textPrimary,
       ),
     );
   }
@@ -279,6 +280,7 @@ class _QuickLinkCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<DriftColors>()!;
     return _OutlinedCard(
       onTap: () => context.push(link.route),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -298,27 +300,27 @@ class _QuickLinkCard extends StatelessWidget {
               children: [
                 Text(
                   link.label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     height: 1.3,
-                    color: _ink,
+                    color: colors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 1),
                 Text(
                   link.subtitle,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w400,
                     height: 1.3,
-                    color: _subdued,
+                    color: colors.textSecondary,
                   ),
                 ),
               ],
             ),
           ),
-          const Icon(Icons.chevron_right_rounded, size: 18, color: _chevron),
+          Icon(Icons.chevron_right_rounded, size: 18, color: colors.textSecondary),
         ],
       ),
     );
@@ -364,11 +366,11 @@ class _SkillChips extends StatelessWidget {
                 ),
                 child: Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w400,
                     height: 1.3,
-                    color: _ink,
+                    color: colors.textPrimary,
                   ),
                 ),
               ),
@@ -398,6 +400,7 @@ class _LessonCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final duration = content.durationMinutes;
+    final colors = Theme.of(context).extension<DriftColors>()!;
 
     return _OutlinedCard(
       onTap: () => context.push(
@@ -426,11 +429,11 @@ class _LessonCard extends StatelessWidget {
                   content.title,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     height: 1.3,
-                    color: _ink,
+                    color: colors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -463,11 +466,11 @@ class _LessonCard extends StatelessWidget {
                       const SizedBox(width: 8),
                       Text(
                         '$duration min',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w400,
                           height: 1.4,
-                          color: _muted,
+                          color: colors.textSecondary,
                         ),
                       ),
                     ],
@@ -477,7 +480,7 @@ class _LessonCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          const Icon(Icons.chevron_right_rounded, size: 18, color: _chevron),
+          Icon(Icons.chevron_right_rounded, size: 18, color: colors.textSecondary),
         ],
       ),
     );
