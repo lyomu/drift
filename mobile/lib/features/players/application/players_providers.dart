@@ -12,6 +12,14 @@ final playerFiltersProvider = StateProvider<PlayerFilters>(
   (ref) => const PlayerFilters(),
 );
 
+/// Players whose name matches [query], for the new-message picker.
+final playerNameSearchProvider = FutureProvider.autoDispose
+    .family<List<PlayerSummary>, String>((ref, query) {
+      return ref
+          .watch(playersRepositoryProvider)
+          .search(PlayerFilters(query: query));
+    });
+
 final playerSearchProvider = FutureProvider.autoDispose<List<PlayerSummary>>((
   ref,
 ) {

@@ -21,6 +21,11 @@ class InboxScreen extends ConsumerWidget {
 
     return DriftScaffold(
       title: 'Messages',
+      floatingActionButton: FloatingActionButton(
+        tooltip: 'New message',
+        onPressed: () => context.push('/messages/new'),
+        child: const Icon(Icons.edit_rounded),
+      ),
       body: RefreshIndicator(
         onRefresh: () => ref.refresh(conversationsProvider.future),
         child: switch (conversations) {
