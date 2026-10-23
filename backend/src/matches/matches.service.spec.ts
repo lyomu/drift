@@ -28,6 +28,7 @@ function createMockPrisma(): MockPrisma {
       findMany: jest.fn().mockResolvedValue([]),
       create: jest.fn().mockResolvedValue({ id: 'm1' }),
       update: jest.fn().mockResolvedValue({}),
+      updateMany: jest.fn().mockResolvedValue({ count: 1 }),
     },
     matchParticipant: {
       update: jest.fn().mockResolvedValue({}),
@@ -122,6 +123,93 @@ describe('MatchesService', () => {
       new RealtimePublisher(),
       notifications as unknown as NotificationsService,
     );
+  });
+
+  describe('withdraw', () => {
+    const pending = () =>
+      matchRecord({
+        state: 'PROPOSED',
+        participants: [
+          participant('me'),
+          participant('other', {
+            side: 'B',
+            role: 'OPPONENT',
+            status: 'INVITED',
+          }),
+        ],
+      });
+
+    it('lets the sender undo an unanswered challenge and informs the recipient', async () => {
+      prisma.match.findUnique
+        .mockResolvedValueOnce(pending())
+        .mockResolvedValueOnce(
+          matchRecord({
+            ...pending(),
+            state: 'CANCELLED',
+            cancelReason: 'Challenge withdrawn',
+          }),
+        );
+
+      const result = await service.withdraw('me', 'm1');
+
+      expect(result.state).toBe('CANCELLED');
+      expect(prisma.match.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            id: 'm1',
+            createdById: 'me',
+            state: 'PROPOSED',
+          }),
+          data: expect.objectContaining({
+            state: 'CANCELLED',
+            cancelReason: 'Challenge withdrawn',
+          }),
+        }),
+      );
+      expect(messaging.writeSystemMessage).toHaveBeenCalledWith(
+        'c1',
+        expect.stringContaining('withdrew the challenge'),
+        'match_challenge_withdrawn',
+        'm1',
+      );
+      expect(notifications.create).toHaveBeenCalledWith(
+        'other',
+        'MATCHES',
+        expect.stringContaining('withdrew the challenge'),
+        'This challenge is no longer available.',
+        'MATCH',
+        'm1',
+      );
+    });
+
+    it('rejects anyone other than the sender', async () => {
+      prisma.match.findUnique.mockResolvedValue(pending());
+      await expect(service.withdraw('other', 'm1')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      expect(prisma.match.updateMany).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['an accepted reply', { participants: [participant('me'), participant('other', { side: 'B', role: 'OPPONENT' })] }],
+      ['a scheduled match', { state: 'SCHEDULED' }],
+      ['a competition fixture', { fixture: { id: 'fixture-1' } }],
+    ])('rejects %s', async (_label, changes) => {
+      prisma.match.findUnique.mockResolvedValue(matchRecord({ ...pending(), ...changes }));
+      await expect(service.withdraw('me', 'm1')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      expect(prisma.match.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('rejects a reply that wins the race with withdrawal', async () => {
+      prisma.match.findUnique.mockResolvedValue(pending());
+      prisma.match.updateMany.mockResolvedValue({ count: 0 });
+      await expect(service.withdraw('me', 'm1')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      expect(notifications.create).not.toHaveBeenCalled();
+    });
   });
 
   describe('create', () => {

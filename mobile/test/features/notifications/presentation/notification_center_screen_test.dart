@@ -79,6 +79,46 @@ void main() {
 
       expect(tester.takeException(), isNull);
     });
+
+    testWidgets('offers a confirmed clear-all action', (tester) async {
+      await pumpScreen(
+        tester,
+        const NotificationCenterScreen(),
+        overrides: [
+          notificationsListProvider.overrideWith(
+            (ref) async => notificationsPage(),
+          ),
+        ],
+      );
+
+      await tester.tap(find.byIcon(Icons.delete_outline));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Clear all notifications?'), findsOneWidget);
+      expect(
+        find.textContaining('New notifications will still arrive.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('offers a confirmed delete action for one notification', (
+      tester,
+    ) async {
+      await pumpScreen(
+        tester,
+        const NotificationCenterScreen(),
+        overrides: [
+          notificationsListProvider.overrideWith(
+            (ref) async => notificationsPage(),
+          ),
+        ],
+      );
+
+      await tester.tap(find.byTooltip('Delete notification'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Delete notification?'), findsOneWidget);
+    });
   });
 
   group('NotificationCenterScreen refetch-on-open', () {

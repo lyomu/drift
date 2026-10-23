@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -96,8 +97,26 @@ class _PlayerProfileScreenState extends ConsumerState<PlayerProfileScreen> {
                   onAction: _run,
                   playerId: widget.playerId,
                 ),
-                AsyncError() => const Center(
-                  child: Text('Player not available.'),
+                AsyncError(:final error) => Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        error is DioException &&
+                                error.response?.statusCode == 404
+                            ? 'Player not available.'
+                            : 'Could not load this player right now.',
+                      ),
+                      if (error is! DioException ||
+                          error.response?.statusCode != 404)
+                        TextButton(
+                          onPressed: () => ref.invalidate(
+                            playerProfileProvider(widget.playerId),
+                          ),
+                          child: const Text('Try again'),
+                        ),
+                    ],
+                  ),
                 ),
                 _ => const Center(child: CircularProgressIndicator()),
               },
@@ -153,7 +172,10 @@ class _ProfileBody extends ConsumerWidget {
                 profile.hasOpenChallenge)
               IconButton(
                 tooltip: 'Message',
-                icon: Icon(Icons.chat_bubble_outline_rounded, color: colors.primary),
+                icon: Icon(
+                  Icons.chat_bubble_outline_rounded,
+                  color: colors.primary,
+                ),
                 onPressed: isSubmitting
                     ? null
                     : () => onAction(() async {
@@ -182,6 +204,9 @@ class _ProfileBody extends ConsumerWidget {
               playerName: summary.displayName,
             );
           }),
+          onCancel: profile.connectionId == null
+              ? null
+              : () => onAction(() => repo.remove(profile.connectionId!)),
         ),
 
         // §4.1 allows challenging without connecting first — the connection
@@ -357,11 +382,13 @@ class _ConnectionAction extends StatelessWidget {
     required this.state,
     required this.isSubmitting,
     required this.onConnect,
+    required this.onCancel,
   });
 
   final PlayerConnectionState state;
   final bool isSubmitting;
   final VoidCallback onConnect;
+  final VoidCallback? onCancel;
 
   @override
   Widget build(BuildContext context) {
@@ -375,10 +402,12 @@ class _ConnectionAction extends StatelessWidget {
           ),
         );
       case PlayerConnectionState.pendingOutgoing:
-        return const _Banner(
-          icon: Icons.schedule_send,
-          label: 'Request sent',
-          tone: _BannerTone.info,
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 6),
+          child: DriftPrimaryButton(
+            label: isSubmitting ? 'Cancelling…' : 'Request sent · Cancel',
+            onPressed: isSubmitting ? null : onCancel,
+          ),
         );
       case PlayerConnectionState.pendingIncoming:
         return const _Banner(

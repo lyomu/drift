@@ -40,6 +40,13 @@ void main() {
         expect(find.text('Log out'), findsOneWidget);
         // Learn is a bottom-nav tab now, not a drawer row.
         expect(find.text('Learn'), findsNothing);
+        // The package's Material Symbols font lost several drawer glyphs in
+        // optimized Android builds. Keep every row on the bundled icon font.
+        final icons = tester.widgetList<Icon>(find.byType(Icon)).toList();
+        expect(icons, hasLength(8));
+        for (final icon in icons) {
+          expect(icon.icon?.fontFamily, 'MaterialIcons');
+        }
       });
 
       testWidgets("survives failed profiles without throwing in $label", (

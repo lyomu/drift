@@ -226,17 +226,26 @@ export class ClubsAdminService {
       await this.audit(clubId, actorId, 'team.invite', membership.id, {
         role: membership.role,
       });
+    const club = await this.prisma.club.findUnique({
+      where: { id: clubId },
+      select: { name: true },
+    });
+    const clubName = club?.name ?? 'a club';
+    await this.notifications.create(
+      user.id,
+      'CLUBS',
+      `You've been added to ${clubName}`,
+      'Your club membership is active. Tap to view the club.',
+      'CLUB',
+      clubId,
+    );
     // Best-effort heads-up email (no-op when SMTP is not configured). The
     // member lands ACTIVE immediately, so this is a notification, not an
     // invite they must accept.
     if (this.mailer.enabled && user.email) {
-      const club = await this.prisma.club.findUnique({
-        where: { id: clubId },
-        select: { name: true },
-      });
       await this.mailer.sendClubWelcome(
         user.email,
-        club?.name ?? 'a club',
+        clubName,
         membership.role,
       );
     }

@@ -291,6 +291,16 @@ class DriftMatch {
 
   bool get isDoubles => format == 'DOUBLES';
 
+  bool canWithdraw(String viewerId) =>
+      viewerId.isNotEmpty &&
+      createdById == viewerId &&
+      state == MatchState.proposed &&
+      competitionContext == null &&
+      participants.any((p) => p.userId == viewerId) &&
+      participants
+          .where((p) => p.userId != viewerId)
+          .every((p) => p.status == ParticipantStatus.invited);
+
   /// Everyone except the viewer — who the match is *against* (and with).
   List<MatchParticipant> othersFor(String viewerId) =>
       participants.where((p) => p.userId != viewerId).toList();
@@ -452,6 +462,10 @@ class MatchesRepository {
           ),
         ),
       );
+
+  Future<DriftMatch> withdraw(String id) async => DriftMatch.fromJson(
+    await _send(() => _dio.patch('/matches/$id/withdraw')),
+  );
 
   Future<DriftMatch> submitResult(
     String id, {

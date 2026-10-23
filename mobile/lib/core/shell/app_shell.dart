@@ -109,7 +109,13 @@ class _AppShellState extends ConsumerState<AppShell> {
       ),
       bottomNavigationBar: DriftBottomNav(
         selectedIndex: _index,
-        onSelected: (i) => setState(() => _index = i),
+        onSelected: (i) => context.go(switch (i) {
+          1 => '/home?tab=play',
+          2 => '/home?tab=compete',
+          3 => '/home?tab=discover',
+          4 => '/home?tab=learn',
+          _ => '/home',
+        }),
       ),
     );
   }

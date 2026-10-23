@@ -157,6 +157,56 @@ export class MailerService {
   }
 
   /**
+   * Sent once an account is ready to use. Player and coach accounts share the
+   * same account-creation flow, so the member version deliberately welcomes
+   * both without assuming why someone joined. Club owners receive the club
+   * version after they complete their approved setup.
+   */
+  async sendWelcome(
+    to: string,
+    firstName?: string | null,
+    clubName?: string,
+  ): Promise<boolean> {
+    const greeting = firstName?.trim() ? `Hi ${firstName.trim()},` : 'Hi,';
+    const club = clubName?.trim();
+
+    return this.send(
+      to,
+      club
+        ? `Welcome to Drift Tennis — ${club} is ready`
+        : 'Welcome to Drift Tennis',
+      club
+        ? [
+            greeting,
+            '',
+            `Welcome to Drift Tennis — we’re delighted to have ${club} join the community.`,
+            '',
+            'Your club space is ready. Add the details that help players find you,',
+            'invite your team, and share your first announcement when you are ready.',
+            '',
+            'We’re glad you are here and look forward to seeing your community grow.',
+            '',
+            '— Drift Tennis',
+          ].join('\n')
+        : [
+            greeting,
+            '',
+            'Welcome to Drift Tennis — we’re really glad you are here.',
+            '',
+            'Drift is here to help you find people to play with, develop your game,',
+            'and stay connected to your tennis community.',
+            '',
+            'Complete your profile to get started, then explore players, clubs, and',
+            'matches near you. Whether you are here to play, coach, or build a club',
+            'community, you are part of the Drift community now.',
+            '',
+            'See you on court,',
+            '— Drift Tennis',
+          ].join('\n'),
+    );
+  }
+
+  /**
    * Waitlist confirmation for the public site. Not a `MailPurpose` — that
    * union is for verification-code mails, and this carries no code.
    *

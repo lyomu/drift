@@ -116,10 +116,7 @@ class _SettingsHomeScreenState extends ConsumerState<SettingsHomeScreen> {
             const _Header(),
             Expanded(
               child: ListView(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 children: [
                   // Reachable from Settings rather than a tab: the feature is
                   // a Phase 0 spike that cannot analyse anything yet, and
@@ -178,8 +175,7 @@ class _SettingsHomeScreenState extends ConsumerState<SettingsHomeScreen> {
                         icon: DriftSymbolsFilled.notificationsActive,
                         accent: const Color(0xFF8B5CF6),
                         label: 'Notification Preferences',
-                        onTap: () =>
-                            context.push('/notifications/preferences'),
+                        onTap: () => context.push('/notifications/preferences'),
                       ),
                     ],
                   ),
@@ -201,8 +197,7 @@ class _SettingsHomeScreenState extends ConsumerState<SettingsHomeScreen> {
                         icon: DriftSymbolsFilled.manageAccounts,
                         accent: colors.primary,
                         label: 'Account & Security',
-                        onTap: () =>
-                            context.push('/settings/account-security'),
+                        onTap: () => context.push('/settings/account-security'),
                       ),
                     ],
                   ),
@@ -219,13 +214,12 @@ class _SettingsHomeScreenState extends ConsumerState<SettingsHomeScreen> {
                         icon: DriftSymbolsFilled.supportAgent,
                         accent: colors.primary,
                         label: 'Contact Support',
-                        onTap: () =>
-                            context.push('/settings/contact-support'),
+                        onTap: () => context.push('/settings/contact-support'),
                       ),
                       _Row(
                         icon: DriftSymbolsFilled.policy,
                         accent: colors.textSecondary,
-                        label: 'Terms & Privacy Policy',
+                        label: 'Legal documents',
                         onTap: () => context.push('/settings/legal'),
                       ),
                     ],
@@ -247,8 +241,7 @@ class _SettingsHomeScreenState extends ConsumerState<SettingsHomeScreen> {
                         accent: _danger,
                         label: 'Delete Account',
                         danger: true,
-                        onTap: () =>
-                            context.push('/settings/delete-account'),
+                        onTap: () => context.push('/settings/delete-account'),
                       ),
                     ],
                   ),
@@ -376,7 +369,11 @@ class _Section extends StatelessWidget {
                 children: [
                   for (var i = 0; i < rows.length; i++) ...[
                     if (i > 0)
-                      Divider(height: 1, thickness: 1, color: _hairline(colors)),
+                      Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: _hairline(colors),
+                      ),
                     rows[i],
                   ],
                 ],
@@ -444,11 +441,7 @@ class _Row extends StatelessWidget {
               // Straight from the package: the mock draws the chevron at
               // wght 400 / FILL 0, which is this font's default master, so
               // nothing here depends on an axis Impeller would ignore.
-              Icon(
-                Symbols.chevron_right_rounded,
-                size: 16,
-                color: _chevron,
-              ),
+              Icon(Symbols.chevron_right_rounded, size: 16, color: _chevron),
             ],
           ),
         ),

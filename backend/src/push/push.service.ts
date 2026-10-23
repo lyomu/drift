@@ -15,6 +15,7 @@ export interface PushData {
   notificationId?: string;
   relatedEntityType?: string;
   relatedEntityId?: string;
+  imageUrl?: string;
 }
 
 /**
@@ -122,7 +123,11 @@ export class PushService {
     try {
       const response = await getMessaging(this.app).sendEachForMulticast({
         tokens,
-        notification: { title, body },
+        notification: {
+          title,
+          body,
+          ...(data.imageUrl ? { imageUrl: data.imageUrl } : {}),
+        },
         data: payload,
       });
 

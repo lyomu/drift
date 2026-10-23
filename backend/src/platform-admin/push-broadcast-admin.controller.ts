@@ -1,12 +1,19 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  Param,
   Post,
   Query,
   Req,
+  Res,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import type { Response } from 'express';
 import { PlatformPermission } from '@prisma/client';
 import { RequirePlatformPermission } from './decorators/require-platform-permission.decorator';
 import { PlatformGuard } from './guards/platform.guard';
@@ -34,15 +41,53 @@ export class PushBroadcastAdminController {
   }
 
   @Get('count')
-  count(@Query('country') country?: string) {
-    return this.pushBroadcasts.count(country);
+  count(
+    @Query('country') country?: string,
+    @Query('audience') audience?: string | string[],
+  ) {
+    return this.pushBroadcasts.count(
+      country,
+      (Array.isArray(audience)
+        ? audience
+        : audience
+          ? [audience]
+          : []) as never,
+    );
   }
 
   @Post()
+  @UseInterceptors(
+    FileInterceptor('image', { limits: { fileSize: 5 * 1024 * 1024 } }),
+  )
   send(
     @Req() req: { user: { adminId: string } },
     @Body() dto: SendPushBroadcastDto,
+    @UploadedFile() image?: Express.Multer.File,
   ) {
-    return this.pushBroadcasts.broadcast(req.user.adminId, dto);
+    return this.pushBroadcasts.broadcast(req.user.adminId, dto, image);
+  }
+
+  @Delete(':id')
+  cancel(@Req() req: { user: { adminId: string } }, @Param('id') id: string) {
+    return this.pushBroadcasts.cancel(req.user.adminId, id);
+  }
+}
+
+/** Public, opaque poster route: FCM and the signed-in mobile app both need to
+ * load campaign imagery without a platform-admin bearer token. */
+@Controller('media/push-broadcast-images')
+export class PushBroadcastMediaController {
+  constructor(private readonly pushBroadcasts: PushBroadcastAdminService) {}
+
+  @Get(':id')
+  async content(@Param('id') id: string, @Res() res: Response) {
+    const image = await this.pushBroadcasts.imageContent(id);
+    res.setHeader('Content-Type', image.mimeType);
+    res.setHeader('Cache-Control', 'public, max-age=300');
+    res.setHeader(
+      'Content-Disposition',
+      `inline; filename="${image.filename.replaceAll('"', '')}"`,
+    );
+    res.send(Buffer.from(image.bytes));
   }
 }

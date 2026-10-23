@@ -192,6 +192,15 @@ export class ClubOnboardingService {
       return createdClub;
     });
 
+    // The requested account is now verified and the club has been created.
+    // MailerService handles delivery failures internally, so setup remains
+    // complete even if SMTP is temporarily unavailable.
+    await this.mailer.sendWelcome(
+      request.requesterEmail,
+      existing?.firstName ?? splitName(request.requesterName).firstName,
+      request.clubName,
+    );
+
     return { email: request.requesterEmail, clubId: club.id };
   }
 

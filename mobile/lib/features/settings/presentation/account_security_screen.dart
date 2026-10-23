@@ -29,6 +29,7 @@ class AccountSecurityScreen extends ConsumerStatefulWidget {
 class _AccountSecurityScreenState extends ConsumerState<AccountSecurityScreen> {
   final _currentPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   bool _isChangingPassword = false;
   bool _isLoggingOut = false;
   String? _errorText;
@@ -37,10 +38,16 @@ class _AccountSecurityScreenState extends ConsumerState<AccountSecurityScreen> {
   void dispose() {
     _currentPasswordController.dispose();
     _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
   Future<void> _changePassword() async {
+    if (_newPasswordController.text != _confirmPasswordController.text) {
+      setState(() => _errorText = 'Those passwords don’t match.');
+      return;
+    }
+
     setState(() {
       _isChangingPassword = true;
       _errorText = null;
@@ -61,6 +68,7 @@ class _AccountSecurityScreenState extends ConsumerState<AccountSecurityScreen> {
           );
       _currentPasswordController.clear();
       _newPasswordController.clear();
+      _confirmPasswordController.clear();
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
@@ -125,6 +133,12 @@ class _AccountSecurityScreenState extends ConsumerState<AccountSecurityScreen> {
                 DriftTextField(
                   label: 'New password',
                   controller: _newPasswordController,
+                  obscureText: true,
+                ),
+                const SizedBox(height: DriftSpacing.s3),
+                DriftTextField(
+                  label: 'Confirm new password',
+                  controller: _confirmPasswordController,
                   obscureText: true,
                 ),
                 if (_errorText != null) ...[

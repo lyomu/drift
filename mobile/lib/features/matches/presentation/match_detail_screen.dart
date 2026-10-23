@@ -19,6 +19,7 @@ import '../application/matches_providers.dart';
 import '../data/matches_repository.dart';
 import 'enter_score_screen.dart';
 import 'propose_time_sheet.dart';
+import 'withdraw_challenge_dialog.dart';
 
 /// Challenge Status / Match Detail — `foundation/04-screen-inventory.md`
 /// §A.4 (redesign 2026-08). One screen covers the whole lifecycle; which
@@ -616,6 +617,7 @@ class _Actions extends ConsumerWidget {
         match.state == MatchState.walkover ||
         match.state == MatchState.retired;
     final isDisputed = match.state == MatchState.disputed;
+    final canWithdraw = match.canWithdraw(viewerId);
 
     if (isOver) return const SizedBox.shrink();
 
@@ -644,6 +646,17 @@ class _Actions extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (canWithdraw)
+          DriftPrimaryButton(
+            label: 'Undo challenge',
+            onPressed: isBusy
+                ? null
+                : () async {
+                    if (await confirmWithdrawChallenge(context)) {
+                      await onAction(() => repo.withdraw(match.id));
+                    }
+                  },
+          ),
         if (awaitingMe) ...[
           DriftPrimaryButton(
             label: 'Accept',
@@ -736,7 +749,10 @@ class _Actions extends ConsumerWidget {
           ),
         ],
 
-        if (!awaitingMe && !isDisputed && match.result == null) ...[
+        if (!awaitingMe &&
+            !isDisputed &&
+            !canWithdraw &&
+            match.result == null) ...[
           const SizedBox(height: 2),
           Center(
             child: DriftTextLink(

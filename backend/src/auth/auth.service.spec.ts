@@ -63,6 +63,11 @@ describe('AuthService', () => {
     verifyGoogleIdToken: jest.Mock;
     verifyAppleIdentityToken: jest.Mock;
   };
+  let mailer: {
+    enabled: boolean;
+    sendVerificationCode: jest.Mock;
+    sendWelcome: jest.Mock;
+  };
 
   beforeEach(() => {
     prisma = createMockPrisma();
@@ -81,10 +86,11 @@ describe('AuthService', () => {
       }),
     } as unknown as ConfigService;
 
-    const mailer = {
+    mailer = {
       enabled: false,
       sendVerificationCode: jest.fn().mockResolvedValue(false),
-    } as unknown as MailerService;
+      sendWelcome: jest.fn().mockResolvedValue(false),
+    };
 
     // Token verification is OAuthService's job and is tested there against
     // real signature/audience/nonce failures. Stubbing it here lets these
@@ -102,7 +108,7 @@ describe('AuthService', () => {
       prisma as unknown as PrismaService,
       jwt,
       config,
-      mailer,
+      mailer as unknown as MailerService,
       oauth as unknown as OAuthService,
       passwordPolicy,
     );
@@ -229,6 +235,7 @@ describe('AuthService', () => {
       expect(result.accessToken).toBe('access-token');
       expect(typeof result.refreshToken).toBe('string');
       expect(prisma.user.update).toHaveBeenCalled();
+      expect(mailer.sendWelcome).toHaveBeenCalledWith('a@test.com', undefined);
     });
   });
 
@@ -330,15 +337,32 @@ describe('AuthService', () => {
         expiresAt: new Date(Date.now() + 60_000),
         user: { accountStatus: 'ACTIVE' },
       });
-      prisma.refreshToken.update.mockResolvedValue({});
+      prisma.refreshToken.updateMany.mockResolvedValue({ count: 1 });
       prisma.refreshToken.create.mockResolvedValue({});
 
       const result = await service.refresh('some-refresh-token');
 
-      expect(prisma.refreshToken.update).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { id: 'rt-1' } }),
+      expect(prisma.refreshToken.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ id: 'rt-1', revokedAt: null }),
+        }),
       );
       expect(result.accessToken).toBe('access-token');
+    });
+
+    it('rejects a refresh token consumed concurrently', async () => {
+      prisma.refreshToken.findUnique.mockResolvedValue({
+        id: 'rt-1',
+        userId: 'user-1',
+        revokedAt: null,
+        expiresAt: new Date(Date.now() + 60_000),
+        user: { accountStatus: 'ACTIVE' },
+      });
+      prisma.refreshToken.updateMany.mockResolvedValue({ count: 0 });
+      await expect(
+        service.refresh('some-refresh-token'),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+      expect(prisma.refreshToken.create).not.toHaveBeenCalled();
     });
 
     it('rejects and revokes a refresh token for a suspended account', async () => {
@@ -648,7 +672,11 @@ describe('AuthService', () => {
     it('creates a verified user straight into BASIC_PROFILE for a new email', async () => {
       prisma.socialIdentity.findUnique.mockResolvedValue(null);
       prisma.user.findUnique.mockResolvedValue(null);
-      prisma.user.create.mockResolvedValue({ id: 'user-new' });
+      prisma.user.create.mockResolvedValue({
+        id: 'user-new',
+        email: 'social@test.com',
+        firstName: 'Ada',
+      });
       prisma.socialIdentity.create.mockResolvedValue({});
 
       await service.oauthGoogle({ idToken: 'tok', acceptedAgePolicy: true });
@@ -662,6 +690,7 @@ describe('AuthService', () => {
       // verification screen — landing on VERIFY would be a dead end for them.
       expect(data.onboardingStep).toBe('BASIC_PROFILE');
       expect(data.tennisProfile).toEqual({ create: {} });
+      expect(mailer.sendWelcome).toHaveBeenCalledWith('social@test.com', 'Ada');
     });
 
     it('persists the name on the creating write — Apple never sends it twice', async () => {

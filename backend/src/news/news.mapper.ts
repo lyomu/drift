@@ -1,7 +1,14 @@
 import { Prisma } from '@prisma/client';
+import { safePublisherUrl } from './news-rights';
 
 export const storyInclude = {
-  source: { select: { id: true, name: true } },
+  source: {
+    select: {
+      id: true,
+      name: true,
+      rights: { select: { imageAllowed: true, attributionText: true } },
+    },
+  },
 } satisfies Prisma.NewsStoryInclude;
 
 export type StoryRecord = Prisma.NewsStoryGetPayload<{
@@ -18,8 +25,13 @@ export function toStorySummary(story: StoryRecord, savedByViewer: boolean) {
   return {
     id: story.id,
     headline: story.headline,
-    publisher: story.source.name,
-    imageUrl: story.imageUrl,
+    publisher: story.source.rights?.attributionText || story.source.name,
+    imageUrl:
+      story.source.rights?.imageAllowed &&
+      story.imageUrl &&
+      safePublisherUrl(story.imageUrl)
+        ? story.imageUrl
+        : null,
     highlight: story.highlight,
     publicationDate: story.publicationDate,
     categories: story.categories,

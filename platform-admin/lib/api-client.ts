@@ -13,6 +13,65 @@ export class ApiError extends Error {
   }
 }
 
+type ErrorResponse = { message?: string | string[] } | undefined;
+
+function responseMessage(body: ErrorResponse, fallback: string): string {
+  return Array.isArray(body?.message)
+    ? body.message.join(", ")
+    : (body?.message ?? fallback);
+}
+
+/**
+ * API errors are shown inline throughout the staff console. Keep validation
+ * feedback from the server, but replace transport and authorization jargon
+ * with a clear explanation and a next step.
+ */
+function userFacingMessage(
+  status: number,
+  message: string,
+  hadToken: boolean,
+): string {
+  const generic =
+    /^(unauthorized|forbidden|internal server error|bad request|not found)$/i.test(
+      message.trim(),
+    );
+  if (status === 401) {
+    return hadToken
+      ? "Your session has ended. Please sign in again to continue."
+      : generic
+        ? "We could not sign you in with those details. Check your email and password, then try again."
+        : message;
+  }
+  if (status === 403) {
+    return "You do not have permission to do that. Ask a platform administrator if you need access.";
+  }
+  if (status === 404 && generic) {
+    return "This item is no longer available, or you no longer have access to it.";
+  }
+  if (status === 429) {
+    return "You have made several requests quickly. Please wait a moment and try again.";
+  }
+  if (status >= 500) {
+    return "We could not complete that right now. Please try again in a moment.";
+  }
+  return message;
+}
+
+function connectionError(): ApiError {
+  return new ApiError(
+    0,
+    "We could not reach Drift right now. Check your connection and try again.",
+  );
+}
+
+function parseBody(text: string): unknown {
+  try {
+    return text ? JSON.parse(text) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export function getToken(): string | null {
   if (typeof window === "undefined") return null;
   return window.localStorage.getItem(TOKEN_KEY);
@@ -36,9 +95,12 @@ export type TwoFactorChallenge = {
   devVerificationCode?: string;
 };
 
-export function setTwoFactorChallenge(challenge: TwoFactorChallenge | null): void {
+export function setTwoFactorChallenge(
+  challenge: TwoFactorChallenge | null,
+): void {
   if (typeof window === "undefined") return;
-  if (challenge) window.sessionStorage.setItem(CHALLENGE_KEY, JSON.stringify(challenge));
+  if (challenge)
+    window.sessionStorage.setItem(CHALLENGE_KEY, JSON.stringify(challenge));
   else window.sessionStorage.removeItem(CHALLENGE_KEY);
 }
 
@@ -46,8 +108,12 @@ export function getTwoFactorChallenge(): TwoFactorChallenge | null {
   if (typeof window === "undefined") return null;
   const value = window.sessionStorage.getItem(CHALLENGE_KEY);
   if (!value) return null;
-  try { return JSON.parse(value) as TwoFactorChallenge; }
-  catch { window.sessionStorage.removeItem(CHALLENGE_KEY); return null; }
+  try {
+    return JSON.parse(value) as TwoFactorChallenge;
+  } catch {
+    window.sessionStorage.removeItem(CHALLENGE_KEY);
+    return null;
+  }
 }
 
 async function apiFetch<T>(
@@ -55,25 +121,32 @@ async function apiFetch<T>(
   options: { method?: string; body?: unknown } = {},
 ): Promise<T> {
   const token = getToken();
-  const res = await fetch(`${API_URL}${path}`, {
-    method: options.method ?? "GET",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}${path}`, {
+      method: options.method ?? "GET",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body:
+        options.body !== undefined ? JSON.stringify(options.body) : undefined,
+    });
+  } catch {
+    throw connectionError();
+  }
 
   if (res.status === 204) return undefined as T;
 
   const text = await res.text();
-  const data: unknown = text ? JSON.parse(text) : undefined;
+  const data = parseBody(text);
 
   if (!res.ok) {
-    const body = data as { message?: string | string[] } | undefined;
-    const message = Array.isArray(body?.message)
-      ? body.message.join(", ")
-      : (body?.message ?? res.statusText);
+    const message = userFacingMessage(
+      res.status,
+      responseMessage(data as ErrorResponse, res.statusText),
+      token !== null,
+    );
     // An expired/invalidated staff token means the session is over.
     if (res.status === 401 && typeof window !== "undefined") {
       setToken(null);
@@ -88,15 +161,20 @@ async function rawFetch(path: string, init?: RequestInit): Promise<Response> {
   const token = getToken();
   const headers = new Headers(init?.headers);
   if (token) headers.set("Authorization", `Bearer ${token}`);
-  const res = await fetch(`${API_URL}${path}`, { ...init, headers });
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}${path}`, { ...init, headers });
+  } catch {
+    throw connectionError();
+  }
   if (!res.ok) {
     if (res.status === 401 && typeof window !== "undefined") setToken(null);
-    const body = (await res.json().catch(() => undefined)) as
-      | { message?: string | string[] }
-      | undefined;
-    const message = Array.isArray(body?.message)
-      ? body.message.join(", ")
-      : (body?.message ?? res.statusText);
+    const body = (await res.json().catch(() => undefined)) as ErrorResponse;
+    const message = userFacingMessage(
+      res.status,
+      responseMessage(body, res.statusText),
+      token !== null,
+    );
     throw new ApiError(res.status, message);
   }
   return res;

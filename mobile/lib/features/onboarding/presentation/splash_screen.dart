@@ -8,9 +8,9 @@ import '../../users/data/users_repository.dart';
 
 /// Brand moment + session check (`foundation/04-screen-inventory.md` A.1) —
 /// resumes onboarding at exactly the step `GET /users/me` reports, or lands
-/// on Home if it's already `COMPLETE`. No stored token routes to the intro
-/// carousel; a stored-but-invalid token (expired/revoked) is treated the
-/// same way.
+/// on Home if it's already `COMPLETE`. Temporary network errors keep the
+/// stored session and offer a retry; only a confirmed invalid refresh token
+/// sends the user back to sign-in.
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
@@ -19,6 +19,7 @@ class SplashScreen extends ConsumerStatefulWidget {
 }
 
 class _SplashScreenState extends ConsumerState<SplashScreen> {
+  bool _connectionError = false;
   @override
   void initState() {
     super.initState();
@@ -33,6 +34,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   Future<void> _resume() async {
     final storage = ref.read(secureStorageProvider);
+    if (mounted) setState(() => _connectionError = false);
 
     if (_devAccess.isNotEmpty && _devRefresh.isNotEmpty) {
       await storage.saveTokens(
@@ -63,9 +65,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         replace: true,
       );
     } catch (_) {
-      await storage.clear();
       if (!mounted) return;
-      context.go('/intro');
+      // The network, server, or profile endpoint may be temporarily down.
+      // The Dio session manager clears credentials only after the refresh
+      // endpoint confirms they are invalid.
+      if (await storage.readRefreshToken() == null) {
+        if (mounted) context.go('/login');
+      } else if (mounted) {
+        setState(() => _connectionError = true);
+      }
     }
   }
 
@@ -74,12 +82,33 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     // White rather than the theme background: the mark is drawn for a light
     // surface (a black shape sits on it) and doesn't hold up on colors.primary
     // or a dark background.
-    return const Scaffold(
+    return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
-        child: Image(
-          image: AssetImage('assets/images/branding/drift_logo.png'),
-          width: 160,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(
+              width: 240,
+              height: 240,
+              child: Image(
+                image: AssetImage('assets/images/branding/drift_logo.png'),
+                fit: BoxFit.contain,
+              ),
+            ),
+            if (_connectionError) ...[
+              const SizedBox(height: 24),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 32),
+                child: Text(
+                  'Could not connect. Your session is still saved.',
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextButton(onPressed: _resume, child: const Text('Try again')),
+            ],
+          ],
         ),
       ),
     );

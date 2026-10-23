@@ -315,6 +315,15 @@ export class MatchesService {
     }
 
     await this.prisma.$transaction(async (tx) => {
+      // Serialize acceptance with withdrawal. An acceptance that starts from
+      // a stale PROPOSED read must not revive an already withdrawn challenge.
+      const stillOpen = await tx.match.updateMany({
+        where: { id: matchId, state: MatchState.PROPOSED },
+        data: { updatedAt: new Date() },
+      });
+      if (stillOpen.count !== 1) {
+        throw new BadRequestException('This challenge is no longer open.');
+      }
       await tx.matchParticipant.update({
         where: { matchId_userId: { matchId, userId } },
         data: {
@@ -702,6 +711,63 @@ export class MatchesService {
     );
 
     return toMatchDto(final, userId);
+  }
+
+  async withdraw(userId: string, matchId: string) {
+    const { match } = await this.loadForParticipant(matchId, userId);
+    if (
+      match.createdById !== userId ||
+      match.fixture ||
+      effectiveState(match) !== MatchState.PROPOSED ||
+      match.participants.some(
+        (participant) =>
+          participant.userId !== userId &&
+          participant.status !== ParticipantStatus.INVITED,
+      )
+    ) {
+      throw new BadRequestException(
+        'Only the sender can undo a challenge before someone accepts it.',
+      );
+    }
+
+    // The conditional write also covers a reply arriving after the read.
+    const changed = await this.prisma.match.updateMany({
+      where: {
+        id: matchId,
+        createdById: userId,
+        state: MatchState.PROPOSED,
+        participants: {
+          none: {
+            userId: { not: userId },
+            status: { not: ParticipantStatus.INVITED },
+          },
+        },
+      },
+      data: {
+        state: MatchState.CANCELLED,
+        cancelledById: userId,
+        cancelledAt: new Date(),
+        cancelReason: 'Challenge withdrawn',
+      },
+    });
+    if (changed.count !== 1) {
+      throw new BadRequestException('This challenge is no longer open.');
+    }
+
+    const withdrawn = await this.loadMatch(matchId);
+    const sender = withdrawn.participants.find((p) => p.userId === userId)!;
+    await this.announce(
+      withdrawn,
+      `${this.displayName(sender.user)} withdrew the challenge.`,
+      'match_challenge_withdrawn',
+    );
+    await this.notifyOthers(
+      withdrawn,
+      userId,
+      `${this.displayName(sender.user)} withdrew the challenge`,
+      'This challenge is no longer available.',
+    );
+    return toMatchDto(withdrawn, userId);
   }
 
   // ------------------------------------------------------------------ reads

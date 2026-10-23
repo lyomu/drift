@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { NewsModerationStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { HOME_CARD_PRIORITY, type HomeCard } from '../home-card';
 import type { HomeCardContributor, HomeContext } from './home-contributor';
+import { safePublisherUrl, visibleNewsWhere } from '../../news/news-rights';
 
 /** Older than this and it isn't "news" any more — better to show nothing. */
 const MAX_AGE_DAYS = 14;
@@ -33,15 +33,16 @@ export class NewsHighlightContributor implements HomeCardContributor {
 
     const story = await this.prisma.newsStory.findFirst({
       where: {
-        moderationStatus: NewsModerationStatus.APPROVED,
+        ...visibleNewsWhere(ctx.now),
         publicationDate: { gte: cutoff, lte: ctx.now },
       },
-      orderBy: { publicationDate: 'desc' },
+      orderBy: [{ publicationDate: 'desc' }, { id: 'desc' }],
       select: {
         id: true,
         headline: true,
         highlight: true,
         imageUrl: true,
+        source: { select: { rights: { select: { imageAllowed: true } } } },
       },
     });
     if (!story) return [];
@@ -60,7 +61,12 @@ export class NewsHighlightContributor implements HomeCardContributor {
           kind: 'story',
           storyId: story.id,
           headline: story.headline,
-          imageUrl: story.imageUrl,
+          imageUrl:
+            story.source.rights?.imageAllowed &&
+            story.imageUrl &&
+            safePublisherUrl(story.imageUrl)
+              ? story.imageUrl
+              : null,
         },
       },
     ];

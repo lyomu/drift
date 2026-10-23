@@ -163,10 +163,15 @@ describe('ClubsAdminService', () => {
       await expect(
         service.inviteMember('club-1', { email: 'a@test.com', role: 'ADMIN' }),
       ).rejects.toBeInstanceOf(BadRequestException);
+      expect(notifications.create).not.toHaveBeenCalled();
     });
 
     it('adds an existing user straight into ACTIVE membership', async () => {
-      prisma.user.findUnique.mockResolvedValue({ id: 'user-2' });
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-2',
+        email: 'a@test.com',
+      });
+      prisma.club.findUnique.mockResolvedValue({ name: 'Eastside Tennis' });
       prisma.clubMembership.findUnique.mockResolvedValue(null);
       prisma.clubMembership.create.mockResolvedValue({
         id: 'membership-1',
@@ -186,6 +191,14 @@ describe('ClubsAdminService', () => {
           status: 'ACTIVE',
         },
       });
+      expect(notifications.create).toHaveBeenCalledWith(
+        'user-2',
+        'CLUBS',
+        "You've been added to Eastside Tennis",
+        'Your club membership is active. Tap to view the club.',
+        'CLUB',
+        'club-1',
+      );
     });
   });
 

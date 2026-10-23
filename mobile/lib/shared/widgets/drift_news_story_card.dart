@@ -5,6 +5,7 @@ import '../../core/theme/drift_spacing.dart';
 import '../../core/theme/drift_typography.dart';
 import '../../features/news/data/news_repository.dart';
 import 'drift_card.dart';
+import 'drift_news_image.dart';
 
 /// Story Card — `foundation/05-design-system.md` has no dedicated spec row
 /// for this (only Player/League/Court cards are named), so it follows the
@@ -27,20 +28,11 @@ class DriftNewsStoryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (story.imageUrl != null) ...[
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                story.imageUrl!,
-                height: 140,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) =>
-                    const SizedBox.shrink(),
-              ),
-            ),
-            const SizedBox(height: DriftSpacing.s3),
-          ],
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: DriftNewsImage(url: story.imageUrl, height: 140),
+          ),
+          const SizedBox(height: DriftSpacing.s3),
           Text(story.headline, style: type.title),
           const SizedBox(height: DriftSpacing.s1),
           Text(

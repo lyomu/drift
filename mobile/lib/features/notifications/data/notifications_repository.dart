@@ -38,6 +38,7 @@ class DriftNotification {
     required this.category,
     required this.title,
     required this.body,
+    required this.imageUrl,
     required this.relatedEntityType,
     required this.relatedEntityId,
     required this.readAt,
@@ -48,6 +49,7 @@ class DriftNotification {
   final NotificationCategory category;
   final String title;
   final String body;
+  final String? imageUrl;
   final String? relatedEntityType;
   final String? relatedEntityId;
   final DateTime? readAt;
@@ -61,6 +63,7 @@ class DriftNotification {
         category: NotificationCategory.fromJson(json['category'] as String),
         title: json['title'] as String,
         body: json['body'] as String,
+        imageUrl: json['imageUrl'] as String?,
         relatedEntityType: json['relatedEntityType'] as String?,
         relatedEntityId: json['relatedEntityId'] as String?,
         readAt: json['readAt'] == null
@@ -154,6 +157,11 @@ class NotificationsRepository {
 
   Future<void> markAllRead() =>
       _send(() => _dio.patch('/notifications/read-all'));
+
+  Future<void> remove(String id) =>
+      _send(() => _dio.delete('/notifications/$id'));
+
+  Future<void> clearAll() => _send(() => _dio.delete('/notifications'));
 
   /// Claims this installation's FCM token for the signed-in user. Idempotent:
   /// called on every launch and on token refresh.

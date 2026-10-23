@@ -10,6 +10,61 @@ export class ApiError extends Error {
   }
 }
 
+type ErrorResponse = { message?: string | string[] } | undefined;
+
+function responseMessage(body: ErrorResponse, fallback: string): string {
+  return Array.isArray(body?.message)
+    ? body.message.join(", ")
+    : (body?.message ?? fallback);
+}
+
+/** Maps transport and access-control failures to copy a club team can act on. */
+function userFacingMessage(
+  status: number,
+  message: string,
+  hadToken: boolean,
+): string {
+  const generic =
+    /^(unauthorized|forbidden|internal server error|bad request|not found)$/i.test(
+      message.trim(),
+    );
+  if (status === 401) {
+    return hadToken
+      ? "Your session has ended. Please sign in again to continue."
+      : generic
+        ? "We could not sign you in with those details. Check your email and password, then try again."
+        : message;
+  }
+  if (status === 403) {
+    return "You do not have permission to do that. Ask a club owner or administrator if you need access.";
+  }
+  if (status === 404 && generic) {
+    return "This item is no longer available, or you no longer have access to it.";
+  }
+  if (status === 429) {
+    return "You have made several requests quickly. Please wait a moment and try again.";
+  }
+  if (status >= 500) {
+    return "We could not complete that right now. Please try again in a moment.";
+  }
+  return message;
+}
+
+function connectionError(): ApiError {
+  return new ApiError(
+    0,
+    "We could not reach Drift right now. Check your connection and try again.",
+  );
+}
+
+function parseBody(text: string): unknown {
+  try {
+    return text ? JSON.parse(text) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export function getToken(): string | null {
   if (typeof window === "undefined") return null;
   return window.localStorage.getItem(TOKEN_KEY);
@@ -30,19 +85,25 @@ async function apiFetch<T>(
   options: { method?: string; body?: unknown } = {},
 ): Promise<T> {
   const token = getToken();
-  const res = await fetch(`${API_URL}${path}`, {
-    method: options.method ?? "GET",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}${path}`, {
+      method: options.method ?? "GET",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body:
+        options.body !== undefined ? JSON.stringify(options.body) : undefined,
+    });
+  } catch {
+    throw connectionError();
+  }
 
   if (res.status === 204) return undefined as T;
 
   const text = await res.text();
-  const data: unknown = text ? JSON.parse(text) : undefined;
+  const data = parseBody(text);
 
   if (!res.ok) {
     // A 401 means the stored token is expired or revoked. Dropping it here
@@ -51,10 +112,11 @@ async function apiFetch<T>(
     // fails every request.
     if (res.status === 401) setToken(null);
 
-    const body = data as { message?: string | string[] } | undefined;
-    const message = Array.isArray(body?.message)
-      ? body.message.join(", ")
-      : (body?.message ?? res.statusText);
+    const message = userFacingMessage(
+      res.status,
+      responseMessage(data as ErrorResponse, res.statusText),
+      token !== null,
+    );
     throw new ApiError(res.status, message);
   }
 
@@ -65,14 +127,23 @@ async function rawFetch(path: string, init?: RequestInit): Promise<Response> {
   const token = getToken();
   const headers = new Headers(init?.headers);
   if (token) headers.set("Authorization", `Bearer ${token}`);
-  const res = await fetch(`${API_URL}${path}`, {
-    ...init,
-    headers,
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}${path}`, {
+      ...init,
+      headers,
+    });
+  } catch {
+    throw connectionError();
+  }
   if (!res.ok) {
     if (res.status === 401) setToken(null);
-    const body = await res.json().catch(() => undefined) as { message?: string | string[] } | undefined;
-    const message = Array.isArray(body?.message) ? body.message.join(', ') : (body?.message ?? res.statusText);
+    const body = (await res.json().catch(() => undefined)) as ErrorResponse;
+    const message = userFacingMessage(
+      res.status,
+      responseMessage(body, res.statusText),
+      token !== null,
+    );
     throw new ApiError(res.status, message);
   }
   return res;
@@ -108,7 +179,7 @@ export function mediaUrl(path: string | null | undefined): string | null {
 
 export function downloadBlob(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
+  const anchor = document.createElement("a");
   anchor.href = url;
   anchor.download = filename;
   anchor.click();

@@ -18,6 +18,7 @@ enum AuthSessionStatus { unauthenticated, authenticated }
 class AuthController extends AsyncNotifier<AuthSessionStatus> {
   @override
   FutureOr<AuthSessionStatus> build() async {
+    ref.watch(sessionInvalidationProvider);
     final token = await ref.watch(secureStorageProvider).readAccessToken();
     return token != null
         ? AuthSessionStatus.authenticated

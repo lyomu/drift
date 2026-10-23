@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:material_symbols_icons/symbols.dart';
 
 import '../analytics/analytics.dart';
 import '../../features/auth/data/auth_repository.dart';
 import '../../features/profile/application/profile_providers.dart';
 import '../../features/users/application/current_user_provider.dart';
-import '../../shared/widgets/drift_symbol.dart';
 import '../network/dio_client.dart';
 import '../theme/drift_colors.dart';
 
@@ -18,8 +16,8 @@ const _danger = Color(0xFFEF4444);
 const _dangerFill = Color(0xFFFEF2F2);
 const _dangerBorder = Color(0xFFFECACA);
 
-/// One drawer destination. [activeIcon] is the filled cut, [idleIcon] the
-/// package's outlined default.
+/// One drawer destination. Use Flutter's bundled Material Icons for both
+/// states so optimized Android builds retain every navigation glyph.
 typedef _NavItem = ({
   String label,
   IconData activeIcon,
@@ -30,44 +28,44 @@ typedef _NavItem = ({
 const _navItems = <_NavItem>[
   (
     label: 'My Profile',
-    activeIcon: DriftSymbolsFilled.person,
-    idleIcon: Symbols.person_rounded,
+    activeIcon: Icons.person_rounded,
+    idleIcon: Icons.person_outline_rounded,
     route: '/profile/own',
   ),
   (
     label: 'My Sports Hub',
-    activeIcon: DriftSymbolsFilled.sportsTennis,
-    idleIcon: Symbols.sports_tennis_rounded,
+    activeIcon: Icons.sports_tennis_rounded,
+    idleIcon: Icons.sports_tennis_rounded,
     route: '/profile/sports-hub',
   ),
   (
     label: 'Achievements',
-    activeIcon: DriftSymbolsFilled.emojiEvents,
-    idleIcon: Symbols.emoji_events_rounded,
+    activeIcon: Icons.emoji_events_rounded,
+    idleIcon: Icons.emoji_events_outlined,
     route: '/profile/achievements',
   ),
   (
     label: 'News',
-    activeIcon: DriftSymbolsFilled.newspaper,
-    idleIcon: Symbols.newspaper_rounded,
+    activeIcon: Icons.newspaper_rounded,
+    idleIcon: Icons.newspaper_outlined,
     route: '/news',
   ),
   (
     label: 'Messages',
     activeIcon: Icons.chat_bubble_rounded,
-    idleIcon: Symbols.chat_bubble_rounded,
+    idleIcon: Icons.chat_bubble_outline_rounded,
     route: '/messages',
   ),
   (
     label: 'Notifications',
-    activeIcon: DriftSymbolsFilled.notifications,
-    idleIcon: Symbols.notifications_rounded,
+    activeIcon: Icons.notifications_rounded,
+    idleIcon: Icons.notifications_outlined,
     route: '/notifications',
   ),
   (
     label: 'Settings',
-    activeIcon: DriftSymbolsFilled.settings,
-    idleIcon: Symbols.settings_rounded,
+    activeIcon: Icons.settings_rounded,
+    idleIcon: Icons.settings_outlined,
     route: '/settings',
   ),
 ];
@@ -140,8 +138,9 @@ class _DriftAppDrawerState extends ConsumerState<DriftAppDrawer> {
     // every destination below is pushed on top of it, so the drawer is only
     // ever on screen while the location is `/home`. The comparison is here
     // so the highlight starts working by itself if these become shell tabs.
-    final location =
-        GoRouter.of(context).routeInformationProvider.value.uri.path;
+    final location = GoRouter.of(
+      context,
+    ).routeInformationProvider.value.uri.path;
 
     return Drawer(
       backgroundColor: colors.surface,
@@ -177,8 +176,8 @@ class _DriftAppDrawerState extends ConsumerState<DriftAppDrawer> {
                 ),
               ),
               child: _DrawerRow(
-                activeIcon: DriftSymbolsFilled.logout,
-                idleIcon: DriftSymbolsFilled.logout,
+                activeIcon: Icons.logout_rounded,
+                idleIcon: Icons.logout_rounded,
                 label: _isLoggingOut ? 'Signing out…' : 'Log out',
                 active: false,
                 danger: true,

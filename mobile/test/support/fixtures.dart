@@ -24,6 +24,7 @@ DriftNotification notification({
   NotificationCategory category = NotificationCategory.clubs,
   String title = 'Court closed',
   String body = 'Court 3 is shut for maintenance.',
+  String? imageUrl,
   String? entityType = 'CLUB_ANNOUNCEMENT',
   String? entityId = 'club-1',
   DateTime? readAt,
@@ -32,6 +33,7 @@ DriftNotification notification({
   category: category,
   title: title,
   body: body,
+  imageUrl: imageUrl,
   relatedEntityType: entityType,
   relatedEntityId: entityId,
   readAt: readAt,
@@ -161,6 +163,7 @@ const playerStats = PlayerStats(
 PlayerProfile playerProfile({
   String id = 'u2',
   PlayerConnectionState connectionState = PlayerConnectionState.none,
+  String? connectionId,
   Map<String, num>? skillBreakdown = const {'SERVE': 4, 'FOREHAND': 3},
   List<AvailabilitySlot>? slots = const [
     AvailabilitySlot(dayOfWeek: 2, timeBlock: 'EVENING'),
@@ -169,6 +172,7 @@ PlayerProfile playerProfile({
   summary: playerSummary(id: id),
   dominantHand: 'RIGHT',
   connectionState: connectionState,
+  connectionId: connectionId,
   skillBreakdown: skillBreakdown,
   availabilitySlots: slots,
   stats: playerStats,

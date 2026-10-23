@@ -301,6 +301,7 @@ describe('PlayersService', () => {
         prisma.block.findFirst.mockResolvedValue(null);
         prisma.user.findFirst.mockResolvedValue(playerRecord('other'));
         prisma.connection.findFirst.mockResolvedValue({
+          id: 'connection-1',
           requesterId,
           addresseeId,
           status: 'PENDING',
@@ -308,6 +309,7 @@ describe('PlayersService', () => {
 
         const profile = await service.findOne('viewer', 'other');
         expect(profile.connectionState).toBe(expected);
+        expect(profile.connectionId).toBe('connection-1');
       },
     );
   });

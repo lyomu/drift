@@ -243,7 +243,7 @@ const titleIconMap: Record<string, string> = {
 export function ErrorBanner({ message }: { message: string | null }) {
   if (!message) return null;
   return (
-    <div className="mb-4 rounded-lg border border-drift-error/30 bg-drift-error-surface px-4 py-3 text-sm font-semibold text-drift-error">
+    <div role="alert" className="mb-4 rounded-lg border border-drift-error/30 bg-drift-error-surface px-4 py-3 text-sm font-semibold text-drift-error">
       {message}
     </div>
   );

@@ -36,9 +36,19 @@ export class NotificationsController {
     return this.notifications.markAllRead(this.userId(req));
   }
 
+  @Delete()
+  clearAll(@Req() req: Request) {
+    return this.notifications.clearAll(this.userId(req));
+  }
+
   @Patch(':id/read')
   markRead(@Req() req: Request, @Param('id') id: string) {
     return this.notifications.markRead(this.userId(req), id);
+  }
+
+  @Delete(':id')
+  remove(@Req() req: Request, @Param('id') id: string) {
+    return this.notifications.remove(this.userId(req), id);
   }
 
   /**

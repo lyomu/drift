@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/analytics/analytics.dart';
 import 'core/router/app_router.dart';
+import 'core/network/dio_client.dart';
 import 'core/theme/app_theme.dart';
 import 'features/notifications/application/push_message_handler.dart';
 import 'features/settings/application/theme_mode_provider.dart';
@@ -61,6 +62,9 @@ class _DriftTennisAppState extends ConsumerState<DriftTennisApp> {
   @override
   Widget build(BuildContext context) {
     final router = ref.watch(appRouterProvider);
+    ref.listen<int>(sessionInvalidationProvider, (previous, next) {
+      if (previous != next) router.go('/login');
+    });
     final themeMode = ref.watch(themeModeProvider);
 
     final app = MaterialApp.router(

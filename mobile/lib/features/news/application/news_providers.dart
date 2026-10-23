@@ -6,9 +6,19 @@ import '../data/news_repository.dart';
 
 final newsCategoryProvider = StateProvider<String?>((ref) => null);
 
+final newsCategoriesProvider =
+    FutureProvider.autoDispose<List<NewsCategoryOption>>((ref) {
+      return ref.watch(newsRepositoryProvider).listCategories();
+    });
+
 final newsFeedProvider = FutureProvider.autoDispose<List<StorySummary>>((ref) {
   final category = ref.watch(newsCategoryProvider);
   return ref.watch(newsRepositoryProvider).browse(category: category);
+});
+
+final newsPageProvider = FutureProvider.autoDispose<NewsPage>((ref) {
+  final category = ref.watch(newsCategoryProvider);
+  return ref.watch(newsRepositoryProvider).browsePage(category: category);
 });
 
 final storyDetailProvider = FutureProvider.autoDispose

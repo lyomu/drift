@@ -6,7 +6,6 @@ import {
   CourtSurface,
   LearningContentType,
   MatchSport,
-  NewsCategory,
   PrismaClient,
 } from '@prisma/client';
 
@@ -544,111 +543,6 @@ async function seedLearningContent() {
   );
 }
 
-interface SeedStory {
-  id: string;
-  headline: string;
-  highlight: string;
-  imageUrl: string | null;
-  publicationDate: Date;
-  categories: NewsCategory[];
-  topics: string[];
-  originalUrl: string;
-}
-
-/**
- * No RSS/API ingestion pipeline exists yet — same "no admin surface, seed
- * directly" gap as M9's courts and M10's learning content. The seeded
- * source is deliberately a fictional in-house name ("Drift Tennis Digest"),
- * never a real outlet — inventing headlines and attributing them to a real
- * publisher would misrepresent that publisher's actual reporting, which is
- * a harder line than the "never fabricate" rule Doc 6 §2 applies to venue
- * data. Real source ingestion needs a genuine licensed/RSS integration,
- * tracked as an open dependency in PROGRESS.md.
- */
-async function seedNews() {
-  const source = await prisma.newsSource.upsert({
-    where: { id: 'seed-source-drift-digest' },
-    update: { name: 'Drift Tennis Digest', status: 'ACTIVE' },
-    create: {
-      id: 'seed-source-drift-digest',
-      name: 'Drift Tennis Digest',
-      status: 'ACTIVE',
-    },
-  });
-
-  const now = Date.now();
-  const DAY_MS = 24 * 60 * 60 * 1000;
-
-  const stories: SeedStory[] = [
-    {
-      id: 'seed-story-serve-clinic',
-      headline: 'Weekend serve clinics popping up at local clubs',
-      highlight:
-        'Several community clubs are running free serve-technique clinics this month — a good low-pressure way to get coached feedback outside of lessons.',
-      imageUrl: null,
-      publicationDate: new Date(now - 1 * DAY_MS),
-      categories: [NewsCategory.LATEST, NewsCategory.LOCAL],
-      topics: ['serve', 'coaching'],
-      originalUrl: 'https://example.com/drift-digest/serve-clinics',
-    },
-    {
-      id: 'seed-story-club-league-growth',
-      headline: 'Community leagues see a rise in weekday sign-ups',
-      highlight:
-        'Round-robin club leagues are reporting more weekday registrations as flexible-schedule players look for lower-commitment competitive play.',
-      imageUrl: null,
-      publicationDate: new Date(now - 2 * DAY_MS),
-      categories: [NewsCategory.COMMUNITY, NewsCategory.CLUBS],
-      topics: ['leagues', 'community'],
-      originalUrl: 'https://example.com/drift-digest/league-growth',
-    },
-    {
-      id: 'seed-story-african-tennis-development',
-      headline:
-        'Grassroots programmes expanding access to tennis across Africa',
-      highlight:
-        'A round-up of community coaching initiatives working to make racket sports more accessible in under-served areas.',
-      imageUrl: null,
-      publicationDate: new Date(now - 3 * DAY_MS),
-      categories: [NewsCategory.AFRICA, NewsCategory.COMMUNITY],
-      topics: ['grassroots', 'development'],
-      originalUrl: 'https://example.com/drift-digest/africa-development',
-    },
-    {
-      id: 'seed-story-tour-season-preview',
-      headline: 'What to watch for as the pro tour season heats up',
-      highlight:
-        'A quick preview of the storylines worth following as the professional calendar moves into its next stretch.',
-      imageUrl: null,
-      publicationDate: new Date(now - 4 * DAY_MS),
-      categories: [NewsCategory.PROFESSIONAL_TENNIS, NewsCategory.TOURNAMENTS],
-      topics: ['tour', 'season-preview'],
-      originalUrl: 'https://example.com/drift-digest/tour-preview',
-    },
-    {
-      id: 'seed-story-player-spotlight',
-      headline: 'Player Spotlight: the comeback stories worth following',
-      highlight:
-        'A look at a few players working their way back from injury layoffs this season.',
-      imageUrl: null,
-      publicationDate: new Date(now - 5 * DAY_MS),
-      categories: [NewsCategory.PLAYERS],
-      topics: ['player-spotlight'],
-      originalUrl: 'https://example.com/drift-digest/player-spotlight',
-    },
-  ];
-
-  for (const { id, ...fields } of stories) {
-    await prisma.newsStory.upsert({
-      where: { id },
-      update: { ...fields, sourceId: source.id },
-      create: { id, sourceId: source.id, ...fields },
-    });
-  }
-
-  console.log(`Seeded ${stories.length} news stories from 1 source.`);
-}
-
 async function main() {
   const now = Date.now();
 
@@ -694,7 +588,9 @@ async function main() {
 
   await seedCourtsAndClubs();
   await seedLearningContent();
-  await seedNews();
+  // Fictional news fixtures are deliberately excluded from database seeding.
+  // Keep the historical rows withdrawn via the news seed-retirement migration
+  // so saved-story references remain intact.
 }
 
 main()

@@ -27,6 +27,11 @@ export class NewsController {
     return this.news.browse(this.userId(req), dto);
   }
 
+  @Get('categories')
+  categories() {
+    return this.news.listCategories();
+  }
+
   @Get('saved')
   listSaved(@Req() req: Request) {
     return this.news.listSaved(this.userId(req));

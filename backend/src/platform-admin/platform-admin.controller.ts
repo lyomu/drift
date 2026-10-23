@@ -16,6 +16,7 @@ import { PlatformGuard } from './guards/platform.guard';
 import { PlatformAdminService } from './platform-admin.service';
 import { AccessControlService } from './access-control.service';
 import { PlatformPermission } from '@prisma/client';
+import { NewsIngestionService } from '../news/news-ingestion.service';
 import { PlatformPermissionGuard } from './guards/platform-permission.guard';
 import { RequirePlatformPermission } from './decorators/require-platform-permission.decorator';
 import {
@@ -29,6 +30,11 @@ import {
   UpdateUserProfileDto,
   UpdateUserVerificationDto,
   UpsertNewsSourceDto,
+  UpdateNewsSourceRightsDto,
+  UpdateNewsStoryDto,
+  CreateNewsCategoryDto,
+  UpdateNewsCategoryDto,
+  UpdateNewsSettingsDto,
 } from './dto/platform-admin.dto';
 import {
   AcceptPlatformAdminInviteDto,
@@ -41,6 +47,7 @@ export class PlatformAdminController {
   constructor(
     private readonly platform: PlatformAdminService,
     private readonly access: AccessControlService,
+    private readonly newsIngestion: NewsIngestionService,
   ) {}
 
   @Throttle({ default: { ttl: 60_000, limit: 10 } })
@@ -215,13 +222,23 @@ export class PlatformAdminController {
 
   @UseGuards(PlatformGuard, PlatformPermissionGuard)
   @RequirePlatformPermission(PlatformPermission.CONTENT_MANAGE)
+  @Get('news/overview')
+  newsOverview() {
+    return this.platform.newsOverview();
+  }
+
+  @UseGuards(PlatformGuard, PlatformPermissionGuard)
+  @RequirePlatformPermission(PlatformPermission.CONTENT_MANAGE)
   @Get('news/sources')
   listNewsSources() {
     return this.platform.listNewsSources();
   }
 
   @UseGuards(PlatformGuard, PlatformPermissionGuard)
-  @RequirePlatformPermission(PlatformPermission.CONTENT_MANAGE)
+  @RequirePlatformPermission(
+    PlatformPermission.CONTENT_MANAGE,
+    PlatformPermission.PLATFORM_CONFIG_MANAGE,
+  )
   @Post('news/sources')
   createNewsSource(
     @Req() req: { user: { adminId: string } },
@@ -231,7 +248,10 @@ export class PlatformAdminController {
   }
 
   @UseGuards(PlatformGuard, PlatformPermissionGuard)
-  @RequirePlatformPermission(PlatformPermission.CONTENT_MANAGE)
+  @RequirePlatformPermission(
+    PlatformPermission.CONTENT_MANAGE,
+    PlatformPermission.PLATFORM_CONFIG_MANAGE,
+  )
   @Patch('news/sources/:id')
   updateNewsSource(
     @Req() req: { user: { adminId: string } },
@@ -243,12 +263,89 @@ export class PlatformAdminController {
 
   @UseGuards(PlatformGuard, PlatformPermissionGuard)
   @RequirePlatformPermission(PlatformPermission.CONTENT_MANAGE)
+  @Get('news/sources/:id/rights')
+  getNewsSourceRights(@Param('id') id: string) {
+    return this.platform.getNewsSourceRights(id);
+  }
+
+  @UseGuards(PlatformGuard, PlatformPermissionGuard)
+  @RequirePlatformPermission(
+    PlatformPermission.CONTENT_MANAGE,
+    PlatformPermission.PLATFORM_CONFIG_MANAGE,
+  )
+  @Patch('news/sources/:id/rights')
+  updateNewsSourceRights(
+    @Req() req: { user: { adminId: string } },
+    @Param('id') id: string,
+    @Body() dto: UpdateNewsSourceRightsDto,
+  ) {
+    return this.platform.updateNewsSourceRights(req.user.adminId, id, dto);
+  }
+
+  @UseGuards(PlatformGuard, PlatformPermissionGuard)
+  @RequirePlatformPermission(PlatformPermission.CONTENT_MANAGE)
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
+  @Post('news/sources/:id/test')
+  testNewsSource(@Param('id') id: string) {
+    return this.platform.testNewsSource(id);
+  }
+
+  @UseGuards(PlatformGuard, PlatformPermissionGuard)
+  @RequirePlatformPermission(
+    PlatformPermission.CONTENT_MANAGE,
+    PlatformPermission.PLATFORM_CONFIG_MANAGE,
+  )
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
+  @Post('news/sources/:id/sync')
+  async syncNewsSource(
+    @Req() req: { user: { adminId: string } },
+    @Param('id') id: string,
+  ) {
+    await this.platform.assertNewsSourceCanSync(req.user.adminId, id);
+    return this.newsIngestion.ingestSource(id);
+  }
+
+  @UseGuards(PlatformGuard, PlatformPermissionGuard)
+  @RequirePlatformPermission(PlatformPermission.CONTENT_MANAGE)
+  @Get('news/ingestion-runs')
+  listNewsIngestionRuns(
+    @Query('sourceId') sourceId?: string,
+    @Query('skip') skip?: string,
+  ) {
+    return this.platform.listNewsIngestionRuns(
+      sourceId,
+      skip ? Math.min(10000, Number(skip) || 0) : 0,
+    );
+  }
+
+  @UseGuards(PlatformGuard, PlatformPermissionGuard)
+  @RequirePlatformPermission(PlatformPermission.CONTENT_MANAGE)
   @Get('news/stories')
   listStories(
     @Query('moderation') moderation?: string,
     @Query('sourceId') sourceId?: string,
+    @Query('search') search?: string,
+    @Query('skip') skip?: string,
+    @Query('category') category?: string,
   ) {
-    return this.platform.listStories(moderation, sourceId);
+    return this.platform.listStories(
+      moderation,
+      sourceId,
+      search,
+      skip ? Math.min(10000, Number(skip) || 0) : 0,
+      category,
+    );
+  }
+
+  @UseGuards(PlatformGuard, PlatformPermissionGuard)
+  @RequirePlatformPermission(PlatformPermission.CONTENT_MANAGE)
+  @Patch('news/stories/:id')
+  updateNewsStory(
+    @Req() req: { user: { adminId: string } },
+    @Param('id') id: string,
+    @Body() dto: UpdateNewsStoryDto,
+  ) {
+    return this.platform.updateNewsStory(req.user.adminId, id, dto);
   }
 
   @UseGuards(PlatformGuard, PlatformPermissionGuard)
@@ -263,6 +360,79 @@ export class PlatformAdminController {
       req.user.adminId,
       id,
       dto.moderationStatus,
+      dto.reason,
+    );
+  }
+
+  @UseGuards(PlatformGuard, PlatformPermissionGuard)
+  @RequirePlatformPermission(PlatformPermission.CONTENT_MANAGE)
+  @Get('news/categories')
+  listNewsCategories() {
+    return this.platform.listNewsCategories();
+  }
+
+  @UseGuards(PlatformGuard, PlatformPermissionGuard)
+  @RequirePlatformPermission(
+    PlatformPermission.CONTENT_MANAGE,
+    PlatformPermission.PLATFORM_CONFIG_MANAGE,
+  )
+  @Post('news/categories')
+  createNewsCategory(
+    @Req() req: { user: { adminId: string } },
+    @Body() dto: CreateNewsCategoryDto,
+  ) {
+    return this.platform.createNewsCategory(req.user.adminId, dto);
+  }
+
+  @UseGuards(PlatformGuard, PlatformPermissionGuard)
+  @RequirePlatformPermission(
+    PlatformPermission.CONTENT_MANAGE,
+    PlatformPermission.PLATFORM_CONFIG_MANAGE,
+  )
+  @Patch('news/categories/:slug')
+  updateNewsCategory(
+    @Req() req: { user: { adminId: string } },
+    @Param('slug') slug: string,
+    @Body() dto: UpdateNewsCategoryDto,
+  ) {
+    return this.platform.updateNewsCategory(req.user.adminId, slug, dto);
+  }
+
+  @UseGuards(PlatformGuard, PlatformPermissionGuard)
+  @RequirePlatformPermission(PlatformPermission.CONTENT_MANAGE)
+  @Get('news/settings')
+  getNewsSettings() {
+    return this.platform.getNewsSettings();
+  }
+
+  @UseGuards(PlatformGuard, PlatformPermissionGuard)
+  @RequirePlatformPermission(
+    PlatformPermission.CONTENT_MANAGE,
+    PlatformPermission.PLATFORM_CONFIG_MANAGE,
+  )
+  @Patch('news/settings')
+  updateNewsSettings(
+    @Req() req: { user: { adminId: string } },
+    @Body() dto: UpdateNewsSettingsDto,
+  ) {
+    return this.platform.updateNewsSettings(req.user.adminId, dto);
+  }
+
+  @UseGuards(PlatformGuard, PlatformPermissionGuard)
+  @RequirePlatformPermission(PlatformPermission.AUDIT_READ)
+  @Get('news/audit')
+  listNewsAudit(@Query('skip') skip?: string) {
+    return this.platform.listNewsAudit(
+      skip ? Math.min(10000, Number(skip) || 0) : 0,
+    );
+  }
+
+  @UseGuards(PlatformGuard, PlatformPermissionGuard)
+  @RequirePlatformPermission(PlatformPermission.AUDIT_READ)
+  @Get('news/automation-events')
+  listNewsAutomationEvents(@Query('skip') skip?: string) {
+    return this.platform.listNewsAutomationEvents(
+      skip ? Math.min(10000, Number(skip) || 0) : 0,
     );
   }
 

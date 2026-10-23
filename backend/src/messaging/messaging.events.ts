@@ -23,6 +23,7 @@ export const rooms = {
  */
 export type MatchSystemEvent =
   | 'match_challenge_sent'
+  | 'match_challenge_withdrawn'
   | 'match_challenge_accepted'
   | 'match_challenge_declined'
   | 'match_time_proposed'

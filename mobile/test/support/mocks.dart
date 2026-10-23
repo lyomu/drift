@@ -5,6 +5,7 @@ import 'package:drift_tennis/features/assessment/data/assessment_repository.dart
 import 'package:drift_tennis/features/auth/data/auth_repository.dart';
 import 'package:drift_tennis/features/auth/data/social_auth_service.dart';
 import 'package:drift_tennis/features/clubs/data/clubs_repository.dart';
+import 'package:drift_tennis/features/connections/data/connections_repository.dart';
 import 'package:drift_tennis/features/matches/data/matches_repository.dart';
 import 'package:drift_tennis/features/notifications/data/push_service.dart';
 import 'package:drift_tennis/features/messaging/data/messaging_repository.dart';
@@ -27,6 +28,8 @@ class MockUsersRepository extends Mock implements UsersRepository {}
 class MockSafetyRepository extends Mock implements SafetyRepository {}
 
 class MockClubsRepository extends Mock implements ClubsRepository {}
+
+class MockConnectionsRepository extends Mock implements ConnectionsRepository {}
 
 class MockMessagingRepository extends Mock implements MessagingRepository {}
 
