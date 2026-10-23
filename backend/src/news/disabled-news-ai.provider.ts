@@ -1,5 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { NewsAiProvider, NewsAiProviderError, NewsAiRequest } from './news-ai.provider';
+import {
+  NewsAiProvider,
+  NewsAiProviderError,
+  NewsAiRequest,
+} from './news-ai.provider';
 
 @Injectable()
 export class DisabledNewsAiProvider implements NewsAiProvider {

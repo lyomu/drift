@@ -8,7 +8,11 @@ import { PrismaService } from '../prisma/prisma.service';
 import { safePublisherUrl } from './news-rights';
 import { NewsAiService } from './news-ai.service';
 import { NewsAiProviderError } from './news-ai.provider';
-import { newsIngestionRunsTotal, newsIngestionStoriesTotal, newsSourcesBlocked } from '../metrics/metrics.registry';
+import {
+  newsIngestionRunsTotal,
+  newsIngestionStoriesTotal,
+  newsSourcesBlocked,
+} from '../metrics/metrics.registry';
 
 // One feed may contain 20 AI-eligible items; two bounded provider attempts per
 // item can take about ten minutes. Keep the lease longer than that batch.
@@ -16,14 +20,27 @@ const LEASE_MS = 15 * 60_000;
 const MAX_ITEMS = 20;
 
 function cleanFeedText(value: string | undefined, maxLength: number): string {
-  return (value ?? '').replace(/<[^>]*>/g, ' ').replace(/[\u0000-\u001f\u007f]/g, ' ')
-    .replace(/\s+/g, ' ').trim().slice(0, maxLength);
+  return (value ?? '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/[\u0000-\u001f\u007f]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, maxLength);
 }
 
-export function nextNewsPollAt(intervalMinutes: number, failureCount = 0, now = Date.now()): Date {
+export function nextNewsPollAt(
+  intervalMinutes: number,
+  failureCount = 0,
+  now = Date.now(),
+): Date {
   const base = Math.max(15, Math.min(120, intervalMinutes)) * 60_000;
-  const backoff = Math.min(24 * 60 * 60_000, base * 2 ** Math.min(failureCount, 6));
-  const jitter = Math.floor(Math.random() * Math.min(backoff * 0.1, 5 * 60_000));
+  const backoff = Math.min(
+    24 * 60 * 60_000,
+    base * 2 ** Math.min(failureCount, 6),
+  );
+  const jitter = Math.floor(
+    Math.random() * Math.min(backoff * 0.1, 5 * 60_000),
+  );
   return new Date(now + backoff + jitter);
 }
 
@@ -65,16 +82,22 @@ export class NewsIngestionService {
     try {
       await this.ingest();
     } finally {
-      newsSourcesBlocked.set(await this.prisma.newsSource.count({ where: { status: 'BLOCKED' } }));
+      newsSourcesBlocked.set(
+        await this.prisma.newsSource.count({ where: { status: 'BLOCKED' } }),
+      );
     }
   }
 
   @Cron('15 3 * * *')
   async pruneOldRuns() {
-    const settings = await this.prisma.newsSettings.findUnique({ where: { id: 'default' } });
+    const settings = await this.prisma.newsSettings.findUnique({
+      where: { id: 'default' },
+    });
     const days = Math.max(7, Math.min(365, settings?.runRetentionDays ?? 90));
     return this.prisma.newsIngestionRun.deleteMany({
-      where: { finishedAt: { lt: new Date(Date.now() - days * 24 * 60 * 60_000) } },
+      where: {
+        finishedAt: { lt: new Date(Date.now() - days * 24 * 60 * 60_000) },
+      },
     });
   }
 
@@ -187,14 +210,17 @@ export class NewsIngestionService {
       let finalUrl: string | null = null;
       let redirectCount = 0;
       let latencyMs: number | null = null;
-      const categories = settings?.aiEnabled && source.rights?.aiProcessingAllowed
-        ? await this.prisma.newsCategoryConfig.findMany({
-            where: { enabled: true }, select: { slug: true },
-          })
-        : [];
+      const categories =
+        settings?.aiEnabled && source.rights?.aiProcessingAllowed
+          ? await this.prisma.newsCategoryConfig.findMany({
+              where: { enabled: true },
+              select: { slug: true },
+            })
+          : [];
       try {
         const document = await fetchFeedDocument(source.feedUrl!, {
-          etag: source.feedEtag, lastModified: source.feedLastModified,
+          etag: source.feedEtag,
+          lastModified: source.feedLastModified,
         });
         fetchedHttpStatus = document.httpStatus;
         finalUrl = document.finalUrl;
@@ -203,16 +229,31 @@ export class NewsIngestionService {
         const xml = document.xml;
         if (xml === null) {
           await this.prisma.$transaction([
-            this.prisma.newsIngestionRun.update({ where: { id: run.id }, data: {
-              status: 'SUCCESS', finishedAt: new Date(), httpStatus: 304,
-              finalUrl, redirectCount, latencyMs,
-            } }),
-            this.prisma.newsSource.update({ where: { id: sourceId }, data: {
-              lastSuccessAt: new Date(), consecutiveFailures: 0, lastErrorCode: null,
-              nextPollAt: nextNewsPollAt(source.pollIntervalMinutes),
-            } }),
+            this.prisma.newsIngestionRun.update({
+              where: { id: run.id },
+              data: {
+                status: 'SUCCESS',
+                finishedAt: new Date(),
+                httpStatus: 304,
+                finalUrl,
+                redirectCount,
+                latencyMs,
+              },
+            }),
+            this.prisma.newsSource.update({
+              where: { id: sourceId },
+              data: {
+                lastSuccessAt: new Date(),
+                consecutiveFailures: 0,
+                lastErrorCode: null,
+                nextPollAt: nextNewsPollAt(source.pollIntervalMinutes),
+              },
+            }),
           ]);
-          newsIngestionRunsTotal.inc({ outcome: 'success', http_status: '304' });
+          newsIngestionRunsTotal.inc({
+            outcome: 'success',
+            http_status: '304',
+          });
           return result;
         }
         if (/<!DOCTYPE|<!ENTITY/i.test(xml)) {
@@ -233,11 +274,14 @@ export class NewsIngestionService {
             .digest('hex');
           const guid = cleanFeedText(item.guid, 500) || null;
           const existing = await this.prisma.newsStory.findFirst({
-            where: { sourceId, OR: [
-              { canonicalUrlHash },
-              { originalUrl: { in: [rawUrl, canonicalUrl] } },
-              ...(guid ? [{ externalGuid: guid }] : []),
-            ] },
+            where: {
+              sourceId,
+              OR: [
+                { canonicalUrlHash },
+                { originalUrl: { in: [rawUrl, canonicalUrl] } },
+                ...(guid ? [{ externalGuid: guid }] : []),
+              ],
+            },
             select: { id: true },
           });
           if (existing) {
@@ -247,13 +291,18 @@ export class NewsIngestionService {
           const parsedDate = item.isoDate ? new Date(item.isoDate) : new Date();
           try {
             const excerpt = cleanFeedText(item.contentSnippet, 300);
-            const imageUrl = source.rights?.imageAllowed &&
+            const imageUrl =
+              source.rights?.imageAllowed &&
               item.enclosure?.type?.toLowerCase().startsWith('image/') &&
               safePublisherUrl(item.enclosure.url ?? '')
-                ? item.enclosure.url : null;
+                ? item.enclosure.url
+                : null;
             const similarTitle = await this.prisma.newsStory.findFirst({
-              where: { sourceId, headline: { equals: title, mode: 'insensitive' },
-                canonicalUrlHash: { not: canonicalUrlHash } },
+              where: {
+                sourceId,
+                headline: { equals: title, mode: 'insensitive' },
+                canonicalUrlHash: { not: canonicalUrlHash },
+              },
               select: { id: true },
             });
             const story = await this.prisma.newsStory.create({
@@ -277,11 +326,18 @@ export class NewsIngestionService {
               },
             });
             result.created++;
-            if (settings?.aiEnabled && source.rights?.aiProcessingAllowed && this.ai.configured) {
+            if (
+              settings?.aiEnabled &&
+              source.rights?.aiProcessingAllowed &&
+              this.ai.configured
+            ) {
               try {
                 const processed = await this.ai.process(
-                  title, excerpt, settings.aiSummaryMaxCharacters,
-                  settings.aiDailyRequestLimit, categories.map((c) => c.slug),
+                  title,
+                  excerpt,
+                  settings.aiSummaryMaxCharacters,
+                  settings.aiDailyRequestLimit,
+                  categories.map((c) => c.slug),
                 );
                 if (processed) {
                   await this.prisma.newsStory.update({
@@ -297,44 +353,83 @@ export class NewsIngestionService {
                       aiTournaments: processed.tournaments,
                       aiLanguage: processed.language,
                       aiProcessedAt: new Date(),
-                      categories: ['LATEST', processed.categorySlug].filter((v, i, a) => a.indexOf(v) === i),
+                      categories: ['LATEST', processed.categorySlug].filter(
+                        (v, i, a) => a.indexOf(v) === i,
+                      ),
                       topics: processed.tags,
                     },
                   });
-                  if (source.publicationMode === 'AUTO' &&
-                      settings.automaticPublishingEnabled &&
-                      !similarTitle &&
-                      processed.riskFlags.length === 0 &&
-                      processed.confidence >= 0.9 &&
-                      processed.relevanceScore >= 0.8 &&
-                      processed.language === 'en' && excerpt.length >= 30) {
-                    const published = await this.prisma.$transaction(async (tx) => {
-                      const liveSettings = await tx.newsSettings.findUnique({ where: { id: 'default' } });
-                      if (!liveSettings?.automaticPublishingEnabled || liveSettings.ingestionPaused) return false;
-                      const changed = await tx.newsStory.updateMany({
-                        where: {
-                          id: story.id, moderationStatus: 'PENDING', reviewFlags: { isEmpty: true },
-                          source: {
-                            status: 'ACTIVE', publicationMode: 'AUTO',
-                            rights: { is: {
-                              status: 'APPROVED', commercialUseAllowed: true,
-                              headlineAllowed: true, excerptAllowed: true,
-                              cacheAllowed: true, aiProcessingAllowed: true,
-                              automaticPublishingAllowed: true,
-                              reviewedBy: { not: null }, reviewedAt: { not: null },
-                              permissionReference: { not: null },
-                              OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
-                            } },
+                  if (
+                    source.publicationMode === 'AUTO' &&
+                    settings.automaticPublishingEnabled &&
+                    !similarTitle &&
+                    processed.riskFlags.length === 0 &&
+                    processed.confidence >= 0.9 &&
+                    processed.relevanceScore >= 0.8 &&
+                    processed.language === 'en' &&
+                    excerpt.length >= 30
+                  ) {
+                    const published = await this.prisma.$transaction(
+                      async (tx) => {
+                        const liveSettings = await tx.newsSettings.findUnique({
+                          where: { id: 'default' },
+                        });
+                        if (
+                          !liveSettings?.automaticPublishingEnabled ||
+                          liveSettings.ingestionPaused
+                        )
+                          return false;
+                        const changed = await tx.newsStory.updateMany({
+                          where: {
+                            id: story.id,
+                            moderationStatus: 'PENDING',
+                            reviewFlags: { isEmpty: true },
+                            source: {
+                              status: 'ACTIVE',
+                              publicationMode: 'AUTO',
+                              rights: {
+                                is: {
+                                  status: 'APPROVED',
+                                  commercialUseAllowed: true,
+                                  headlineAllowed: true,
+                                  excerptAllowed: true,
+                                  cacheAllowed: true,
+                                  aiProcessingAllowed: true,
+                                  automaticPublishingAllowed: true,
+                                  reviewedBy: { not: null },
+                                  reviewedAt: { not: null },
+                                  permissionReference: { not: null },
+                                  OR: [
+                                    { expiresAt: null },
+                                    { expiresAt: { gt: new Date() } },
+                                  ],
+                                },
+                              },
+                            },
                           },
-                        },
-                        data: { moderationStatus: 'APPROVED', publishedAt: new Date(), moderationReason: 'Validated automatic publication' },
-                      });
-                      if (changed.count !== 1) return false;
-                      await tx.newsAutomationEvent.create({
-                        data: { sourceId, storyId: story.id, action: 'PUBLISHED', reason: 'AI metadata passed confidence, relevance, language, and risk checks; source excerpt retained' },
-                      });
-                      return true;
-                    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+                          data: {
+                            moderationStatus: 'APPROVED',
+                            publishedAt: new Date(),
+                            moderationReason: 'Validated automatic publication',
+                          },
+                        });
+                        if (changed.count !== 1) return false;
+                        await tx.newsAutomationEvent.create({
+                          data: {
+                            sourceId,
+                            storyId: story.id,
+                            action: 'PUBLISHED',
+                            reason:
+                              'AI metadata passed confidence, relevance, language, and risk checks; source excerpt retained',
+                          },
+                        });
+                        return true;
+                      },
+                      {
+                        isolationLevel:
+                          Prisma.TransactionIsolationLevel.Serializable,
+                      },
+                    );
                     if (published) {
                       autoPublishedCount++;
                     }
@@ -344,7 +439,12 @@ export class NewsIngestionService {
                 aiFailureCount++;
                 await this.prisma.newsStory.update({
                   where: { id: story.id },
-                  data: { aiErrorCode: error instanceof NewsAiProviderError ? `AI_${error.code}` : 'AI_PROCESSING_FAILED' },
+                  data: {
+                    aiErrorCode:
+                      error instanceof NewsAiProviderError
+                        ? `AI_${error.code}`
+                        : 'AI_PROCESSING_FAILED',
+                  },
                 });
               }
             }
@@ -390,13 +490,22 @@ export class NewsIngestionService {
             },
           }),
         ]);
-        newsIngestionRunsTotal.inc({ outcome: 'success', http_status: String(fetchedHttpStatus ?? 0) });
-        if (result.created) newsIngestionStoriesTotal.inc({ result: 'created' }, result.created);
-        if (duplicateCount) newsIngestionStoriesTotal.inc({ result: 'duplicate' }, duplicateCount);
+        newsIngestionRunsTotal.inc({
+          outcome: 'success',
+          http_status: String(fetchedHttpStatus ?? 0),
+        });
+        if (result.created)
+          newsIngestionStoriesTotal.inc({ result: 'created' }, result.created);
+        if (duplicateCount)
+          newsIngestionStoriesTotal.inc(
+            { result: 'duplicate' },
+            duplicateCount,
+          );
       } catch (error) {
         result.errors++;
         const message = error instanceof Error ? error.message : '';
-        const httpStatus = error instanceof FeedUrlError ? error.httpStatus ?? null : null;
+        const httpStatus =
+          error instanceof FeedUrlError ? (error.httpStatus ?? null) : null;
         const blocked = httpStatus === 401 || httpStatus === 403;
         const code = blocked
           ? 'SOURCE_BLOCKED'
@@ -428,11 +537,19 @@ export class NewsIngestionService {
               status: blocked ? 'BLOCKED' : source.status,
               consecutiveFailures: { increment: 1 },
               lastErrorCode: code,
-              nextPollAt: blocked ? null : nextNewsPollAt(settings?.retryBaseMinutes ?? 30, source.consecutiveFailures + 1),
+              nextPollAt: blocked
+                ? null
+                : nextNewsPollAt(
+                    settings?.retryBaseMinutes ?? 30,
+                    source.consecutiveFailures + 1,
+                  ),
             },
           }),
         ]);
-        newsIngestionRunsTotal.inc({ outcome: 'failed', http_status: String(httpStatus ?? 0) });
+        newsIngestionRunsTotal.inc({
+          outcome: 'failed',
+          http_status: String(httpStatus ?? 0),
+        });
         this.logger.warn(`News source ${sourceId} sync failed: ${code}`);
       }
     } finally {

@@ -96,13 +96,7 @@ export class AnnouncementsAdminService {
     });
 
     if (status === AnnouncementStatus.PUBLISHED) {
-      await this.notifyMembers(
-        clubId,
-        authorId,
-        dto.title,
-        dto.body,
-        audience,
-      );
+      await this.notifyMembers(clubId, authorId, dto.title, dto.body, audience);
     }
     return announcement;
   }
@@ -188,7 +182,10 @@ export class AnnouncementsAdminService {
   }
 
   /** Keep lock-screen notifications useful without making them unwieldy. */
-  private notificationBody(clubName: string | undefined, body: string | undefined) {
+  private notificationBody(
+    clubName: string | undefined,
+    body: string | undefined,
+  ) {
     const preview = (body ?? '').replaceAll(/\s+/g, ' ').trim();
     if (preview.length > 180) return `${preview.substring(0, 177)}...`;
     return preview || `New announcement from ${clubName ?? 'your club'}.`;

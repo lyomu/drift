@@ -39,9 +39,13 @@ describe('News (e2e)', () => {
     await app.init();
 
     prisma = moduleFixture.get(PrismaService);
-    await prisma.newsCategoryConfig.create({ data: {
-      slug: categorySlug, label: 'E2E News', enabled: true,
-    } });
+    await prisma.newsCategoryConfig.create({
+      data: {
+        slug: categorySlug,
+        label: 'E2E News',
+        enabled: true,
+      },
+    });
 
     const signUp = await request(app.getHttpServer())
       .post('/auth/signup')
@@ -123,7 +127,9 @@ describe('News (e2e)', () => {
       await prisma.user.delete({ where: { id: record.id } });
     }
     await prisma.newsSource.deleteMany({ where: { id: sourceId } });
-    await prisma.newsCategoryConfig.deleteMany({ where: { slug: categorySlug } });
+    await prisma.newsCategoryConfig.deleteMany({
+      where: { slug: categorySlug },
+    });
     await app.close();
   });
 
@@ -146,17 +152,29 @@ describe('News (e2e)', () => {
   });
 
   it('pages equal publication timestamps once each with a stable cursor', async () => {
-    const clinic = await prisma.newsStory.findUniqueOrThrow({ where: { id: clinicId } });
-    await prisma.newsStory.update({ where: { id: africaId },
-      data: { publicationDate: clinic.publicationDate } });
-    const first = await authed(alice.token, 'get', `/news?category=${categorySlug}&take=1`).expect(200);
+    const clinic = await prisma.newsStory.findUniqueOrThrow({
+      where: { id: clinicId },
+    });
+    await prisma.newsStory.update({
+      where: { id: africaId },
+      data: { publicationDate: clinic.publicationDate },
+    });
+    const first = await authed(
+      alice.token,
+      'get',
+      `/news?category=${categorySlug}&take=1`,
+    ).expect(200);
     expect(first.body.stories).toHaveLength(1);
     expect(first.body.nextCursor).toBeTruthy();
-    const second = await authed(alice.token, 'get',
-      `/news?category=${categorySlug}&take=1&cursor=${encodeURIComponent(first.body.nextCursor)}`).expect(200);
+    const second = await authed(
+      alice.token,
+      'get',
+      `/news?category=${categorySlug}&take=1&cursor=${encodeURIComponent(first.body.nextCursor)}`,
+    ).expect(200);
     expect(second.body.stories).toHaveLength(1);
-    expect(new Set([first.body.stories[0].id, second.body.stories[0].id]))
-      .toEqual(new Set([clinicId, africaId]));
+    expect(
+      new Set([first.body.stories[0].id, second.body.stories[0].id]),
+    ).toEqual(new Set([clinicId, africaId]));
     expect(second.body.nextCursor).toBeNull();
   });
 
@@ -213,6 +231,8 @@ describe('News (e2e)', () => {
     ).toBe(false);
     await authed(alice.token, 'get', `/news/${clinicId}`).expect(404);
     const saved = await authed(alice.token, 'get', '/news/saved').expect(200);
-    expect(saved.body.stories.some((s: { id: string }) => s.id === clinicId)).toBe(false);
+    expect(
+      saved.body.stories.some((s: { id: string }) => s.id === clinicId),
+    ).toBe(false);
   });
 });

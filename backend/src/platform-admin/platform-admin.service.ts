@@ -20,7 +20,11 @@ import { ResultsService } from '../matches/results.service';
 import { AuditService } from './audit.service';
 import { MailerService } from '../mail/mailer.service';
 import { PasswordPolicyService } from '../auth/password-policy';
-import { assertFeedUrlAllowed, FeedUrlError, fetchFeedDocument } from '../news/feed-fetch';
+import {
+  assertFeedUrlAllowed,
+  FeedUrlError,
+  fetchFeedDocument,
+} from '../news/feed-fetch';
 import { safePublisherUrl, visibleNewsWhere } from '../news/news-rights';
 import Parser from 'rss-parser';
 import type {
@@ -1051,19 +1055,24 @@ export class PlatformAdminService {
       data.feedUrl === undefined ? existing.feedUrl : data.feedUrl || null;
     const identityChanged =
       existing.feedUrl !== nextFeedUrl || existing.name !== data.name;
-    if (data.publicationMode === 'AUTO' &&
-        (identityChanged || existing.rights?.status !== 'APPROVED' ||
-         !existing.rights.aiProcessingAllowed ||
-         !existing.rights.automaticPublishingAllowed ||
-         !existing.rights.commercialUseAllowed ||
-         !existing.rights.headlineAllowed ||
-         !existing.rights.excerptAllowed ||
-         !existing.rights.cacheAllowed ||
-         !existing.rights.permissionReference ||
-         !existing.rights.reviewedAt ||
-         !existing.rights.reviewedBy ||
-         (existing.rights.expiresAt && existing.rights.expiresAt <= new Date()))) {
-      throw new BadRequestException('Automatic publishing requires current approved rights for commercial use, AI processing, and automation.');
+    if (
+      data.publicationMode === 'AUTO' &&
+      (identityChanged ||
+        existing.rights?.status !== 'APPROVED' ||
+        !existing.rights.aiProcessingAllowed ||
+        !existing.rights.automaticPublishingAllowed ||
+        !existing.rights.commercialUseAllowed ||
+        !existing.rights.headlineAllowed ||
+        !existing.rights.excerptAllowed ||
+        !existing.rights.cacheAllowed ||
+        !existing.rights.permissionReference ||
+        !existing.rights.reviewedAt ||
+        !existing.rights.reviewedBy ||
+        (existing.rights.expiresAt && existing.rights.expiresAt <= new Date()))
+    ) {
+      throw new BadRequestException(
+        'Automatic publishing requires current approved rights for commercial use, AI processing, and automation.',
+      );
     }
     // Activation is deliberately ungated: an admin may pause or activate any
     // source at will. Rights still gate AUTO publishing above, because letting a
@@ -1072,9 +1081,16 @@ export class PlatformAdminService {
     const source = await this.prisma.$transaction(async (tx) => {
       const updated = await tx.newsSource.update({
         where: { id: sourceId },
-        data: { ...data, status: data.status,
-          publicationMode: identityChanged ? 'MANUAL' : (data.publicationMode ?? existing.publicationMode),
-          ...(identityChanged ? { feedEtag: null, feedLastModified: null, nextPollAt: null } : {}) },
+        data: {
+          ...data,
+          status: data.status,
+          publicationMode: identityChanged
+            ? 'MANUAL'
+            : (data.publicationMode ?? existing.publicationMode),
+          ...(identityChanged
+            ? { feedEtag: null, feedLastModified: null, nextPollAt: null }
+            : {}),
+        },
       });
       if (identityChanged) {
         // The reviewed thing changed, so the review no longer describes it:
@@ -1142,7 +1158,8 @@ export class PlatformAdminService {
       return {
         status: 'FAILED',
         latencyMs: Date.now() - started,
-        httpStatus: error instanceof FeedUrlError ? error.httpStatus ?? null : null,
+        httpStatus:
+          error instanceof FeedUrlError ? (error.httpStatus ?? null) : null,
         errorCode: 'INVALID_OR_UNAVAILABLE_FEED',
       };
     }
@@ -1271,9 +1288,13 @@ export class PlatformAdminService {
           data: { moderationStatus: 'PENDING', publishedAt: null },
         });
       }
-      if (approved && (!dto.aiProcessingAllowed || !dto.automaticPublishingAllowed)) {
+      if (
+        approved &&
+        (!dto.aiProcessingAllowed || !dto.automaticPublishingAllowed)
+      ) {
         await tx.newsSource.update({
-          where: { id: sourceId }, data: { publicationMode: 'MANUAL' },
+          where: { id: sourceId },
+          data: { publicationMode: 'MANUAL' },
         });
       }
       await tx.adminAuditLog.create({
@@ -1466,22 +1487,37 @@ export class PlatformAdminService {
       create: { id: 'default' },
       update: {},
     });
-    const day = new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00.000Z');
-    const usage = await this.prisma.newsAiQuotaDay.findUnique({ where: { day } });
+    const day = new Date(
+      new Date().toISOString().slice(0, 10) + 'T00:00:00.000Z',
+    );
+    const usage = await this.prisma.newsAiQuotaDay.findUnique({
+      where: { day },
+    });
     return {
       ...settings,
-      aiProvider: process.env.NEWS_AI_PROVIDER === 'openai' ? 'openai' : 'disabled',
-      aiProviderConfigured: process.env.NEWS_AI_PROVIDER === 'openai' && Boolean(process.env.OPENAI_API_KEY?.trim()),
+      aiProvider:
+        process.env.NEWS_AI_PROVIDER === 'openai' ? 'openai' : 'disabled',
+      aiProviderConfigured:
+        process.env.NEWS_AI_PROVIDER === 'openai' &&
+        Boolean(process.env.OPENAI_API_KEY?.trim()),
       aiRequestsToday: usage?.attempts ?? 0,
     };
   }
 
   async updateNewsSettings(actorId: string, dto: UpdateNewsSettingsDto) {
-    if (dto.aiEnabled && (process.env.NEWS_AI_PROVIDER !== 'openai' || !process.env.OPENAI_API_KEY?.trim())) {
-      throw new BadRequestException('AI assistance requires an explicitly configured provider and server key.');
+    if (
+      dto.aiEnabled &&
+      (process.env.NEWS_AI_PROVIDER !== 'openai' ||
+        !process.env.OPENAI_API_KEY?.trim())
+    ) {
+      throw new BadRequestException(
+        'AI assistance requires an explicitly configured provider and server key.',
+      );
     }
     if (dto.automaticPublishingEnabled && !dto.aiEnabled) {
-      throw new BadRequestException('Automatic publishing requires enabled AI and a configured provider key.');
+      throw new BadRequestException(
+        'Automatic publishing requires enabled AI and a configured provider key.',
+      );
     }
     const settings = await this.prisma.newsSettings.upsert({
       where: { id: 'default' },
@@ -1522,7 +1558,8 @@ export class PlatformAdminService {
     const [events, total] = await Promise.all([
       this.prisma.newsAutomationEvent.findMany({
         orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-        skip: Math.max(0, skip), take: 50,
+        skip: Math.max(0, skip),
+        take: 50,
       }),
       this.prisma.newsAutomationEvent.count(),
     ]);

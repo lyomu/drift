@@ -158,24 +158,39 @@ describe('fetchFeedXml', () => {
   it('sends validators and treats HTTP 304 as a successful empty poll', async () => {
     handler = (req, res) => {
       expect(req.headers['if-none-match']).toBe('"revision-1"');
-      expect(req.headers['if-modified-since']).toBe('Wed, 21 Oct 2026 08:00:00 GMT');
-      res.writeHead(304); res.end();
+      expect(req.headers['if-modified-since']).toBe(
+        'Wed, 21 Oct 2026 08:00:00 GMT',
+      );
+      res.writeHead(304);
+      res.end();
     };
-    await expect(fetchFeedDocument(`${base}/rss`, {
-      ...allowLocal, etag: '"revision-1"',
-      lastModified: 'Wed, 21 Oct 2026 08:00:00 GMT',
-    })).resolves.toMatchObject({ httpStatus: 304, xml: null, redirectCount: 0 });
+    await expect(
+      fetchFeedDocument(`${base}/rss`, {
+        ...allowLocal,
+        etag: '"revision-1"',
+        lastModified: 'Wed, 21 Oct 2026 08:00:00 GMT',
+      }),
+    ).resolves.toMatchObject({ httpStatus: 304, xml: null, redirectCount: 0 });
   });
 
   it('returns HTTP and redirect diagnostics without importing anything', async () => {
     handler = (req, res) => {
-      if (req.url === '/start') { res.writeHead(301, { location: `${base}/final` }); res.end(); return; }
+      if (req.url === '/start') {
+        res.writeHead(301, { location: `${base}/final` });
+        res.end();
+        return;
+      }
       res.setHeader('content-type', 'application/atom+xml');
       res.setHeader('etag', '"revision-2"');
       res.end(XML);
     };
-    await expect(fetchFeedDocument(`${base}/start`, allowLocal)).resolves.toMatchObject({
-      httpStatus: 200, xml: XML, redirectCount: 1, etag: '"revision-2"',
+    await expect(
+      fetchFeedDocument(`${base}/start`, allowLocal),
+    ).resolves.toMatchObject({
+      httpStatus: 200,
+      xml: XML,
+      redirectCount: 1,
+      etag: '"revision-2"',
       finalUrl: `${base}/final`,
     });
   });
@@ -229,10 +244,18 @@ describe('fetchFeedXml', () => {
     );
   });
 
-  it.each([401, 403, 429, 500])('exposes safe HTTP %s diagnostics', async (status) => {
-    handler = (_req, res) => { res.writeHead(status); res.end('nope'); };
-    await expect(fetchFeedDocument(`${base}/err`, allowLocal)).rejects.toMatchObject({ httpStatus: status });
-  });
+  it.each([401, 403, 429, 500])(
+    'exposes safe HTTP %s diagnostics',
+    async (status) => {
+      handler = (_req, res) => {
+        res.writeHead(status);
+        res.end('nope');
+      };
+      await expect(
+        fetchFeedDocument(`${base}/err`, allowLocal),
+      ).rejects.toMatchObject({ httpStatus: status });
+    },
+  );
 
   it('rejects an HTML page in place of a feed', async () => {
     handler = (_req, res) => {
