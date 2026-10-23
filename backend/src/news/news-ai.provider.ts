@@ -28,8 +28,14 @@ export interface NewsAiProvider {
 
 export class NewsAiProviderError extends Error {
   constructor(
-    readonly code: 'TIMEOUT' | 'RATE_LIMITED' | 'UNAVAILABLE' | 'AUTHENTICATION' |
-      'INVALID_RESPONSE' | 'INVALID_RESULT' | 'REFUSED',
+    readonly code:
+      | 'TIMEOUT'
+      | 'RATE_LIMITED'
+      | 'UNAVAILABLE'
+      | 'AUTHENTICATION'
+      | 'INVALID_RESPONSE'
+      | 'INVALID_RESULT'
+      | 'REFUSED',
     readonly retryable: boolean,
   ) {
     super(`NEWS_AI_${code}`);

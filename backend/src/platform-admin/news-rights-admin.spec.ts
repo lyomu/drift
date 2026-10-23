@@ -66,7 +66,10 @@ describe('news admin rights gate', () => {
       status: 'ACTIVE',
     });
     expect(prisma.newsSource.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({ status: 'ACTIVE', publicationMode: 'MANUAL' }),
+      data: expect.objectContaining({
+        status: 'ACTIVE',
+        publicationMode: 'MANUAL',
+      }),
     });
   });
 

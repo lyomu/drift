@@ -28,7 +28,10 @@ const DEFAULT_MAX_REDIRECTS = 3;
 const USER_AGENT = 'DriftTennisNewsBot/1.0 (+https://drift.tennis)';
 
 export class FeedUrlError extends Error {
-  constructor(message: string, readonly httpStatus?: number) {
+  constructor(
+    message: string,
+    readonly httpStatus?: number,
+  ) {
     super(message);
     this.name = 'FeedUrlError';
   }
@@ -258,8 +261,12 @@ function fetchOnce(
         accept:
           'application/rss+xml, application/atom+xml, application/xml;q=0.9, text/xml;q=0.9, */*;q=0.8',
         'accept-encoding': 'identity',
-        ...(conditionalHeaders.etag ? { 'if-none-match': conditionalHeaders.etag } : {}),
-        ...(conditionalHeaders.lastModified ? { 'if-modified-since': conditionalHeaders.lastModified } : {}),
+        ...(conditionalHeaders.etag
+          ? { 'if-none-match': conditionalHeaders.etag }
+          : {}),
+        ...(conditionalHeaders.lastModified
+          ? { 'if-modified-since': conditionalHeaders.lastModified }
+          : {}),
       },
     };
 
@@ -311,9 +318,17 @@ function fetchOnce(
         chunks.push(chunk);
       });
       res.on('end', () => {
-        done({ status, body: Buffer.concat(chunks).toString('utf8'),
-          etag: typeof res.headers.etag === 'string' ? res.headers.etag.slice(0, 500) : null,
-          lastModified: typeof res.headers['last-modified'] === 'string' ? res.headers['last-modified'].slice(0, 200) : null,
+        done({
+          status,
+          body: Buffer.concat(chunks).toString('utf8'),
+          etag:
+            typeof res.headers.etag === 'string'
+              ? res.headers.etag.slice(0, 500)
+              : null,
+          lastModified:
+            typeof res.headers['last-modified'] === 'string'
+              ? res.headers['last-modified'].slice(0, 200)
+              : null,
         });
       });
       res.on('error', fail);
@@ -353,25 +368,39 @@ export async function fetchFeedDocument(
 
   for (let redirect = 0; redirect <= maxRedirects; redirect++) {
     const remainingMs = timeoutMs - (Date.now() - started);
-    if (remainingMs <= 0) throw new FeedUrlError(`Feed request timed out after ${timeoutMs}ms`);
+    if (remainingMs <= 0)
+      throw new FeedUrlError(`Feed request timed out after ${timeoutMs}ms`);
     const result = await fetchOnce(
       current,
       blocklist,
       remainingMs,
       maxResponseBytes,
-      { etag: redirect === 0 ? options.etag : null,
-        lastModified: redirect === 0 ? options.lastModified : null },
+      {
+        etag: redirect === 0 ? options.etag : null,
+        lastModified: redirect === 0 ? options.lastModified : null,
+      },
     );
     if (result.status === 304) {
-      return { httpStatus: 304, xml: null, finalUrl: current.toString(),
-        redirectCount: redirect, etag: options.etag ?? null,
-        lastModified: options.lastModified ?? null, latencyMs: Date.now() - started };
+      return {
+        httpStatus: 304,
+        xml: null,
+        finalUrl: current.toString(),
+        redirectCount: redirect,
+        etag: options.etag ?? null,
+        lastModified: options.lastModified ?? null,
+        latencyMs: Date.now() - started,
+      };
     }
     if (result.body !== undefined) {
-      return { httpStatus: result.status, xml: result.body,
-        finalUrl: current.toString(), redirectCount: redirect,
-        etag: result.etag ?? null, lastModified: result.lastModified ?? null,
-        latencyMs: Date.now() - started };
+      return {
+        httpStatus: result.status,
+        xml: result.body,
+        finalUrl: current.toString(),
+        redirectCount: redirect,
+        etag: result.etag ?? null,
+        lastModified: result.lastModified ?? null,
+        latencyMs: Date.now() - started,
+      };
     }
     if (!result.location) {
       throw new FeedUrlError(
@@ -386,8 +415,15 @@ export async function fetchFeedDocument(
 }
 
 /** Compatibility wrapper for admin connectivity tests and existing callers. */
-export async function fetchFeedXml(rawUrl: string, options: FetchFeedOptions = {}): Promise<string> {
+export async function fetchFeedXml(
+  rawUrl: string,
+  options: FetchFeedOptions = {},
+): Promise<string> {
   const result = await fetchFeedDocument(rawUrl, options);
-  if (result.xml === null) throw new FeedUrlError('Feed returned HTTP 304 without cached content', 304);
+  if (result.xml === null)
+    throw new FeedUrlError(
+      'Feed returned HTTP 304 without cached content',
+      304,
+    );
   return result.xml;
 }

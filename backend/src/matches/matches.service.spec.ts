@@ -191,11 +191,21 @@ describe('MatchesService', () => {
     });
 
     it.each([
-      ['an accepted reply', { participants: [participant('me'), participant('other', { side: 'B', role: 'OPPONENT' })] }],
+      [
+        'an accepted reply',
+        {
+          participants: [
+            participant('me'),
+            participant('other', { side: 'B', role: 'OPPONENT' }),
+          ],
+        },
+      ],
       ['a scheduled match', { state: 'SCHEDULED' }],
       ['a competition fixture', { fixture: { id: 'fixture-1' } }],
     ])('rejects %s', async (_label, changes) => {
-      prisma.match.findUnique.mockResolvedValue(matchRecord({ ...pending(), ...changes }));
+      prisma.match.findUnique.mockResolvedValue(
+        matchRecord({ ...pending(), ...changes }),
+      );
       await expect(service.withdraw('me', 'm1')).rejects.toBeInstanceOf(
         BadRequestException,
       );

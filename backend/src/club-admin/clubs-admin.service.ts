@@ -243,11 +243,7 @@ export class ClubsAdminService {
     // member lands ACTIVE immediately, so this is a notification, not an
     // invite they must accept.
     if (this.mailer.enabled && user.email) {
-      await this.mailer.sendClubWelcome(
-        user.email,
-        clubName,
-        membership.role,
-      );
+      await this.mailer.sendClubWelcome(user.email, clubName, membership.role);
     }
     return { membershipId: membership.id, role: membership.role };
   }

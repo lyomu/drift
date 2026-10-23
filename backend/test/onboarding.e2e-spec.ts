@@ -254,10 +254,7 @@ describe('Onboarding (e2e)', () => {
     // until a rights-cleared story has been published.
     expect(
       feed.body.cards.slice(0, 2).map((c: { type: string }) => c.type),
-    ).toEqual([
-      'SUGGESTED_OPPONENTS',
-      'DEVELOPMENT_RECOMMENDATION',
-    ]);
+    ).toEqual(['SUGGESTED_OPPONENTS', 'DEVELOPMENT_RECOMMENDATION']);
     expect(feed.body.cards.map((c: { type: string }) => c.type)).not.toContain(
       'NEWS_HIGHLIGHT',
     );

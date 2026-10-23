@@ -122,7 +122,13 @@ describe('news management', () => {
 
   it('audits a global ingestion pause', async () => {
     const { service, prisma, audit } = setup();
-    const settings = { ingestionPaused: true, aiEnabled: false, automaticPublishingEnabled: false, aiDailyRequestLimit: 100, aiSummaryMaxCharacters: 240 };
+    const settings = {
+      ingestionPaused: true,
+      aiEnabled: false,
+      automaticPublishingEnabled: false,
+      aiDailyRequestLimit: 100,
+      aiSummaryMaxCharacters: 240,
+    };
     await service.updateNewsSettings('admin', settings);
     expect(prisma.newsSettings.upsert).toHaveBeenCalledWith(
       expect.objectContaining({ update: settings }),

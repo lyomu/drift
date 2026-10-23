@@ -1,4 +1,10 @@
-import { Counter, Gauge, Histogram, collectDefaultMetrics, register } from 'prom-client';
+import {
+  Counter,
+  Gauge,
+  Histogram,
+  collectDefaultMetrics,
+  register,
+} from 'prom-client';
 
 // Node process metrics (CPU, memory, event loop lag, GC, active handles).
 // prom-client registers these by name against the shared default registry

@@ -49,7 +49,9 @@ function setup() {
       update: jest.fn().mockResolvedValue({}),
       updateMany: jest.fn().mockResolvedValue({ count: 1 }),
     },
-    newsCategoryConfig: { findMany: jest.fn().mockResolvedValue([{ slug: 'LATEST' }]) },
+    newsCategoryConfig: {
+      findMany: jest.fn().mockResolvedValue([{ slug: 'LATEST' }]),
+    },
     newsAutomationEvent: { create: jest.fn().mockResolvedValue({}) },
     $transaction: jest.fn(),
   };
@@ -58,8 +60,16 @@ function setup() {
       ? (value as (tx: typeof prisma) => Promise<unknown>)(prisma)
       : Promise.all(value as Promise<unknown>[]),
   );
-  const ai = { configured: false, model: 'test', providerName: 'test', process: jest.fn() };
-  const service = new NewsIngestionService(prisma as unknown as PrismaService, ai as unknown as NewsAiService);
+  const ai = {
+    configured: false,
+    model: 'test',
+    providerName: 'test',
+    process: jest.fn(),
+  };
+  const service = new NewsIngestionService(
+    prisma as unknown as PrismaService,
+    ai as unknown as NewsAiService,
+  );
   return { service, prisma, ai };
 }
 
@@ -76,7 +86,15 @@ describe('NewsIngestionService', () => {
 
   it('imports a controlled item into manual review and records the run', async () => {
     const { service, prisma } = setup();
-    jest.mocked(fetchFeedDocument).mockResolvedValue({ xml: XML, httpStatus: 200, finalUrl: 'https://publisher.example/feed', redirectCount: 0, latencyMs: 1, etag: null, lastModified: null });
+    jest.mocked(fetchFeedDocument).mockResolvedValue({
+      xml: XML,
+      httpStatus: 200,
+      finalUrl: 'https://publisher.example/feed',
+      redirectCount: 0,
+      latencyMs: 1,
+      etag: null,
+      lastModified: null,
+    });
     await expect(service.ingestSource('source')).resolves.toEqual({
       created: 1,
       skipped: 0,
@@ -100,43 +118,79 @@ describe('NewsIngestionService', () => {
     const { service, prisma } = setup();
     jest.mocked(fetchFeedDocument).mockResolvedValue({
       xml: `<?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom"><title>Tennis feed</title><entry><id>atom-1</id><title>Tennis event announced</title><link href="https://publisher.example/tennis/event"/><summary>A factual event announcement.</summary><updated>2026-10-22T08:00:00Z</updated></entry></feed>`,
-      httpStatus: 200, finalUrl: 'https://publisher.example/atom', redirectCount: 0,
-      latencyMs: 1, etag: null, lastModified: null,
+      httpStatus: 200,
+      finalUrl: 'https://publisher.example/atom',
+      redirectCount: 0,
+      latencyMs: 1,
+      etag: null,
+      lastModified: null,
     });
-    await expect(service.ingestSource('source')).resolves.toMatchObject({ created: 1, errors: 0 });
-    expect(prisma.newsStory.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ originalUrl: 'https://publisher.example/tennis/event' }),
-    }));
+    await expect(service.ingestSource('source')).resolves.toMatchObject({
+      created: 1,
+      errors: 0,
+    });
+    expect(prisma.newsStory.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          originalUrl: 'https://publisher.example/tennis/event',
+        }),
+      }),
+    );
   });
 
   it('stores a publisher enclosure only when image reuse is approved', async () => {
     const { service, prisma } = setup();
     prisma.newsSource.findUniqueOrThrow.mockResolvedValue({
-      id: 'source', feedUrl: 'https://publisher.example/feed',
-      pollIntervalMinutes: 30, status: 'ACTIVE', publicationMode: 'MANUAL',
+      id: 'source',
+      feedUrl: 'https://publisher.example/feed',
+      pollIntervalMinutes: 30,
+      status: 'ACTIVE',
+      publicationMode: 'MANUAL',
       rights: { imageAllowed: true, aiProcessingAllowed: false },
     });
     jest.mocked(fetchFeedDocument).mockResolvedValue({
-      xml: XML.replace('</item>', '<enclosure url="https://publisher.example/photo.jpg" type="image/jpeg"/></item>'),
-      httpStatus: 200, finalUrl: 'https://publisher.example/feed',
-      redirectCount: 0, latencyMs: 1, etag: null, lastModified: null,
+      xml: XML.replace(
+        '</item>',
+        '<enclosure url="https://publisher.example/photo.jpg" type="image/jpeg"/></item>',
+      ),
+      httpStatus: 200,
+      finalUrl: 'https://publisher.example/feed',
+      redirectCount: 0,
+      latencyMs: 1,
+      etag: null,
+      lastModified: null,
     });
     await service.ingestSource('source');
-    expect(prisma.newsStory.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ imageUrl: 'https://publisher.example/photo.jpg' }),
-    }));
+    expect(prisma.newsStory.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          imageUrl: 'https://publisher.example/photo.jpg',
+        }),
+      }),
+    );
   });
 
   it('records a 304 without parsing or importing an item', async () => {
     const { service, prisma } = setup();
-    jest.mocked(fetchFeedDocument).mockResolvedValue({ xml: null, httpStatus: 304,
-      finalUrl: 'https://publisher.example/feed', redirectCount: 0, latencyMs: 1,
-      etag: '"old"', lastModified: null });
-    await expect(service.ingestSource('source')).resolves.toMatchObject({ created: 0, errors: 0 });
+    jest.mocked(fetchFeedDocument).mockResolvedValue({
+      xml: null,
+      httpStatus: 304,
+      finalUrl: 'https://publisher.example/feed',
+      redirectCount: 0,
+      latencyMs: 1,
+      etag: '"old"',
+      lastModified: null,
+    });
+    await expect(service.ingestSource('source')).resolves.toMatchObject({
+      created: 0,
+      errors: 0,
+    });
     expect(prisma.newsStory.create).not.toHaveBeenCalled();
-    expect(prisma.newsIngestionRun.update).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ status: 'SUCCESS', httpStatus: 304 }),
-    }));
+    expect(prisma.newsIngestionRun.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ status: 'SUCCESS', httpStatus: 304 }),
+      }),
+    );
   });
 
   it('prunes only finished ingestion runs after the configured retention period', async () => {
@@ -151,73 +205,144 @@ describe('NewsIngestionService', () => {
   it('counts a repeated GUID or canonical URL as a duplicate', async () => {
     const { service, prisma } = setup();
     prisma.newsStory.findFirst.mockResolvedValueOnce({ id: 'existing' });
-    jest.mocked(fetchFeedDocument).mockResolvedValue({ xml: XML, httpStatus: 200,
-      finalUrl: 'https://publisher.example/feed', redirectCount: 0, latencyMs: 1,
-      etag: null, lastModified: null });
-    await expect(service.ingestSource('source')).resolves.toMatchObject({ created: 0, errors: 0 });
+    jest.mocked(fetchFeedDocument).mockResolvedValue({
+      xml: XML,
+      httpStatus: 200,
+      finalUrl: 'https://publisher.example/feed',
+      redirectCount: 0,
+      latencyMs: 1,
+      etag: null,
+      lastModified: null,
+    });
+    await expect(service.ingestSource('source')).resolves.toMatchObject({
+      created: 0,
+      errors: 0,
+    });
     expect(prisma.newsStory.create).not.toHaveBeenCalled();
-    expect(prisma.newsIngestionRun.update).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ duplicateCount: 1 }),
-    }));
+    expect(prisma.newsIngestionRun.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ duplicateCount: 1 }),
+      }),
+    );
   });
 
   it('flags a similar title on a different URL for human review', async () => {
     const { service, prisma } = setup();
-    prisma.newsStory.findFirst.mockResolvedValueOnce(null).mockResolvedValueOnce({ id: 'similar' });
-    jest.mocked(fetchFeedDocument).mockResolvedValue({ xml: XML, httpStatus: 200,
-      finalUrl: 'https://publisher.example/feed', redirectCount: 0, latencyMs: 1,
-      etag: null, lastModified: null });
+    prisma.newsStory.findFirst
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ id: 'similar' });
+    jest.mocked(fetchFeedDocument).mockResolvedValue({
+      xml: XML,
+      httpStatus: 200,
+      finalUrl: 'https://publisher.example/feed',
+      redirectCount: 0,
+      latencyMs: 1,
+      etag: null,
+      lastModified: null,
+    });
     await service.ingestSource('source');
-    expect(prisma.newsStory.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ reviewFlags: ['SIMILAR_TITLE'], moderationStatus: 'PENDING' }),
-    }));
+    expect(prisma.newsStory.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          reviewFlags: ['SIMILAR_TITLE'],
+          moderationStatus: 'PENDING',
+        }),
+      }),
+    );
   });
 
   it('lets only one concurrent worker claim the same source lease', async () => {
     const { service, prisma } = setup();
-    prisma.newsSource.updateMany.mockResolvedValueOnce({ count: 1 })
+    prisma.newsSource.updateMany
+      .mockResolvedValueOnce({ count: 1 })
       .mockResolvedValueOnce({ count: 0 });
-    jest.mocked(fetchFeedDocument).mockResolvedValue({ xml: XML, httpStatus: 200,
-      finalUrl: 'https://publisher.example/feed', redirectCount: 0, latencyMs: 1,
-      etag: null, lastModified: null });
-    const results = await Promise.all([service.ingestSource('source'), service.ingestSource('source')]);
+    jest.mocked(fetchFeedDocument).mockResolvedValue({
+      xml: XML,
+      httpStatus: 200,
+      finalUrl: 'https://publisher.example/feed',
+      redirectCount: 0,
+      latencyMs: 1,
+      etag: null,
+      lastModified: null,
+    });
+    const results = await Promise.all([
+      service.ingestSource('source'),
+      service.ingestSource('source'),
+    ]);
     expect(results.map((result) => result.created).sort()).toEqual([0, 1]);
     expect(fetchFeedDocument).toHaveBeenCalledTimes(1);
   });
 
   it('rejects malformed XML and never creates a story', async () => {
     const { service, prisma } = setup();
-    jest.mocked(fetchFeedDocument).mockResolvedValue({ xml: '<rss><channel><item>',
-      httpStatus: 200, finalUrl: 'https://publisher.example/feed',
-      redirectCount: 0, latencyMs: 1, etag: null, lastModified: null });
-    await expect(service.ingestSource('source')).resolves.toMatchObject({ errors: 1 });
+    jest.mocked(fetchFeedDocument).mockResolvedValue({
+      xml: '<rss><channel><item>',
+      httpStatus: 200,
+      finalUrl: 'https://publisher.example/feed',
+      redirectCount: 0,
+      latencyMs: 1,
+      etag: null,
+      lastModified: null,
+    });
+    await expect(service.ingestSource('source')).resolves.toMatchObject({
+      errors: 1,
+    });
     expect(prisma.newsStory.create).not.toHaveBeenCalled();
   });
 
   it('removes markup from imported preview text', async () => {
     const { service, prisma } = setup();
     jest.mocked(fetchFeedDocument).mockResolvedValue({
-      xml: XML.replace('A short test description.', '&lt;b&gt;A short&lt;/b&gt; test description.'),
-      httpStatus: 200, finalUrl: 'https://publisher.example/feed',
-      redirectCount: 0, latencyMs: 1, etag: null, lastModified: null,
+      xml: XML.replace(
+        'A short test description.',
+        '&lt;b&gt;A short&lt;/b&gt; test description.',
+      ),
+      httpStatus: 200,
+      finalUrl: 'https://publisher.example/feed',
+      redirectCount: 0,
+      latencyMs: 1,
+      etag: null,
+      lastModified: null,
     });
     await service.ingestSource('source');
-    expect(prisma.newsStory.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ highlight: 'A short test description.' }),
-    }));
+    expect(prisma.newsStory.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          highlight: 'A short test description.',
+        }),
+      }),
+    );
   });
 
-  it.each([403, 429, 500])('records HTTP %s and avoids aggressive retry', async (status) => {
-    const { service, prisma } = setup();
-    jest.mocked(fetchFeedDocument).mockRejectedValue(new FeedUrlError(`Feed responded with HTTP ${status}`, status));
-    await expect(service.ingestSource('source')).resolves.toMatchObject({ errors: 1 });
-    expect(prisma.newsIngestionRun.update).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ httpStatus: status, status: 'FAILED' }),
-    }));
-    expect(prisma.newsSource.update).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ status: status === 403 ? 'BLOCKED' : 'ACTIVE' }),
-    }));
-  });
+  it.each([403, 429, 500])(
+    'records HTTP %s and avoids aggressive retry',
+    async (status) => {
+      const { service, prisma } = setup();
+      jest
+        .mocked(fetchFeedDocument)
+        .mockRejectedValue(
+          new FeedUrlError(`Feed responded with HTTP ${status}`, status),
+        );
+      await expect(service.ingestSource('source')).resolves.toMatchObject({
+        errors: 1,
+      });
+      expect(prisma.newsIngestionRun.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            httpStatus: status,
+            status: 'FAILED',
+          }),
+        }),
+      );
+      expect(prisma.newsSource.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            status: status === 403 ? 'BLOCKED' : 'ACTIVE',
+          }),
+        }),
+      );
+    },
+  );
 
   it('does not claim or fetch sources during a global pause', async () => {
     const { service, prisma } = setup();
@@ -246,8 +371,12 @@ describe('NewsIngestionService', () => {
     const { service, prisma } = setup();
     jest.mocked(fetchFeedDocument).mockResolvedValue({
       xml: '<!DOCTYPE rss [<!ENTITY x SYSTEM "file:///etc/passwd">]><rss/>',
-      httpStatus: 200, finalUrl: 'https://publisher.example/feed',
-      redirectCount: 0, latencyMs: 1, etag: null, lastModified: null,
+      httpStatus: 200,
+      finalUrl: 'https://publisher.example/feed',
+      redirectCount: 0,
+      latencyMs: 1,
+      etag: null,
+      lastModified: null,
     });
     await expect(service.ingestSource('source')).resolves.toEqual({
       created: 0,
@@ -267,36 +396,141 @@ describe('NewsIngestionService', () => {
 
   it('keeps an imported story pending when AI fails', async () => {
     const { service, prisma, ai } = setup();
-    prisma.newsSettings.findUnique.mockResolvedValue({ aiEnabled: true, ingestionPaused: false, aiSummaryMaxCharacters: 240, aiDailyRequestLimit: 100 });
-    prisma.newsSource.findUniqueOrThrow.mockResolvedValue({ id: 'source', feedUrl: 'https://publisher.example/feed', status: 'ACTIVE', pollIntervalMinutes: 30, publicationMode: 'MANUAL', rights: { aiProcessingAllowed: true } });
+    prisma.newsSettings.findUnique.mockResolvedValue({
+      aiEnabled: true,
+      ingestionPaused: false,
+      aiSummaryMaxCharacters: 240,
+      aiDailyRequestLimit: 100,
+    });
+    prisma.newsSource.findUniqueOrThrow.mockResolvedValue({
+      id: 'source',
+      feedUrl: 'https://publisher.example/feed',
+      status: 'ACTIVE',
+      pollIntervalMinutes: 30,
+      publicationMode: 'MANUAL',
+      rights: { aiProcessingAllowed: true },
+    });
     ai.configured = true;
     ai.process.mockRejectedValue(new Error('provider offline'));
-    jest.mocked(fetchFeedDocument).mockResolvedValue({ xml: XML, httpStatus: 200, finalUrl: 'https://publisher.example/feed', redirectCount: 0, latencyMs: 1, etag: null, lastModified: null });
-    await expect(service.ingestSource('source')).resolves.toMatchObject({ created: 1, errors: 0 });
-    expect(prisma.newsStory.update).toHaveBeenCalledWith(expect.objectContaining({ data: { aiErrorCode: 'AI_PROCESSING_FAILED' } }));
+    jest.mocked(fetchFeedDocument).mockResolvedValue({
+      xml: XML,
+      httpStatus: 200,
+      finalUrl: 'https://publisher.example/feed',
+      redirectCount: 0,
+      latencyMs: 1,
+      etag: null,
+      lastModified: null,
+    });
+    await expect(service.ingestSource('source')).resolves.toMatchObject({
+      created: 1,
+      errors: 0,
+    });
+    expect(prisma.newsStory.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: { aiErrorCode: 'AI_PROCESSING_FAILED' },
+      }),
+    );
     expect(prisma.newsStory.updateMany).not.toHaveBeenCalled();
   });
 
   it('publishes only a clean, high confidence item with both automation gates', async () => {
     const { service, prisma, ai } = setup();
-    prisma.newsSettings.findUnique.mockResolvedValue({ aiEnabled: true, automaticPublishingEnabled: true, ingestionPaused: false, aiSummaryMaxCharacters: 240, aiDailyRequestLimit: 100 });
-    prisma.newsSource.findUniqueOrThrow.mockResolvedValue({ id: 'source', feedUrl: 'https://publisher.example/feed', status: 'ACTIVE', pollIntervalMinutes: 30, publicationMode: 'AUTO', rights: { aiProcessingAllowed: true } });
+    prisma.newsSettings.findUnique.mockResolvedValue({
+      aiEnabled: true,
+      automaticPublishingEnabled: true,
+      ingestionPaused: false,
+      aiSummaryMaxCharacters: 240,
+      aiDailyRequestLimit: 100,
+    });
+    prisma.newsSource.findUniqueOrThrow.mockResolvedValue({
+      id: 'source',
+      feedUrl: 'https://publisher.example/feed',
+      status: 'ACTIVE',
+      pollIntervalMinutes: 30,
+      publicationMode: 'AUTO',
+      rights: { aiProcessingAllowed: true },
+    });
     ai.configured = true;
-    ai.process.mockResolvedValue({ summary: 'A tennis clinic was announced.', categorySlug: 'LATEST', tags: [], players: [], tournaments: [], language: 'en', relevanceScore: 0.95, confidence: 0.95, riskFlags: [] });
-    jest.mocked(fetchFeedDocument).mockResolvedValue({ xml: XML.replace('A short test description.', 'A tennis player announced a new clinic for local players next month.'), httpStatus: 200, finalUrl: 'https://publisher.example/feed', redirectCount: 0, latencyMs: 1, etag: null, lastModified: null });
-    await expect(service.ingestSource('source')).resolves.toMatchObject({ created: 1, errors: 0 });
-    expect(prisma.newsStory.updateMany).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ moderationStatus: 'APPROVED' }) }));
+    ai.process.mockResolvedValue({
+      summary: 'A tennis clinic was announced.',
+      categorySlug: 'LATEST',
+      tags: [],
+      players: [],
+      tournaments: [],
+      language: 'en',
+      relevanceScore: 0.95,
+      confidence: 0.95,
+      riskFlags: [],
+    });
+    jest.mocked(fetchFeedDocument).mockResolvedValue({
+      xml: XML.replace(
+        'A short test description.',
+        'A tennis player announced a new clinic for local players next month.',
+      ),
+      httpStatus: 200,
+      finalUrl: 'https://publisher.example/feed',
+      redirectCount: 0,
+      latencyMs: 1,
+      etag: null,
+      lastModified: null,
+    });
+    await expect(service.ingestSource('source')).resolves.toMatchObject({
+      created: 1,
+      errors: 0,
+    });
+    expect(prisma.newsStory.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ moderationStatus: 'APPROVED' }),
+      }),
+    );
     expect(prisma.newsAutomationEvent.create).toHaveBeenCalledTimes(1);
   });
 
   it('routes flagged AI content to review even when automation is enabled', async () => {
     const { service, prisma, ai } = setup();
-    prisma.newsSettings.findUnique.mockResolvedValue({ aiEnabled: true, automaticPublishingEnabled: true, ingestionPaused: false, aiSummaryMaxCharacters: 240, aiDailyRequestLimit: 100 });
-    prisma.newsSource.findUniqueOrThrow.mockResolvedValue({ id: 'source', feedUrl: 'https://publisher.example/feed', status: 'ACTIVE', pollIntervalMinutes: 30, publicationMode: 'AUTO', rights: { aiProcessingAllowed: true } });
+    prisma.newsSettings.findUnique.mockResolvedValue({
+      aiEnabled: true,
+      automaticPublishingEnabled: true,
+      ingestionPaused: false,
+      aiSummaryMaxCharacters: 240,
+      aiDailyRequestLimit: 100,
+    });
+    prisma.newsSource.findUniqueOrThrow.mockResolvedValue({
+      id: 'source',
+      feedUrl: 'https://publisher.example/feed',
+      status: 'ACTIVE',
+      pollIntervalMinutes: 30,
+      publicationMode: 'AUTO',
+      rights: { aiProcessingAllowed: true },
+    });
     ai.configured = true;
-    ai.process.mockResolvedValue({ summary: 'A tennis clinic was announced.', categorySlug: 'LATEST', tags: [], players: [], tournaments: [], language: 'en', relevanceScore: 0.95, confidence: 0.95, riskFlags: ['unverified_claim'] });
-    jest.mocked(fetchFeedDocument).mockResolvedValue({ xml: XML.replace('A short test description.', 'A tennis player announced a new clinic for local players next month.'), httpStatus: 200, finalUrl: 'https://publisher.example/feed', redirectCount: 0, latencyMs: 1, etag: null, lastModified: null });
-    await expect(service.ingestSource('source')).resolves.toMatchObject({ created: 1, errors: 0 });
+    ai.process.mockResolvedValue({
+      summary: 'A tennis clinic was announced.',
+      categorySlug: 'LATEST',
+      tags: [],
+      players: [],
+      tournaments: [],
+      language: 'en',
+      relevanceScore: 0.95,
+      confidence: 0.95,
+      riskFlags: ['unverified_claim'],
+    });
+    jest.mocked(fetchFeedDocument).mockResolvedValue({
+      xml: XML.replace(
+        'A short test description.',
+        'A tennis player announced a new clinic for local players next month.',
+      ),
+      httpStatus: 200,
+      finalUrl: 'https://publisher.example/feed',
+      redirectCount: 0,
+      latencyMs: 1,
+      etag: null,
+      lastModified: null,
+    });
+    await expect(service.ingestSource('source')).resolves.toMatchObject({
+      created: 1,
+      errors: 0,
+    });
     expect(prisma.newsStory.updateMany).not.toHaveBeenCalled();
     expect(prisma.newsAutomationEvent.create).not.toHaveBeenCalled();
   });
