@@ -107,3 +107,5 @@ Keep IDs stable in commits and handovers. Mark an item complete only after its *
 - **Still open:** NEWS-004 (real publisher clearance); NEWS-011 (test from deployed worker network); NEWS-032 (staging smoke); NEWS-033 (staging deploy and rollback rehearsal); NEWS-034 (controlled production rollout). These items remain open until their named evidence exists. No real publisher source or image has been authorized here.
 
 - **Android emulator check:** Pixel 9 Pro / Android 16 at 2× text size displayed the published local QA fixture in News, opened its detail with Drift fallback artwork, and launched the original URL in an in-app browser. The temporary user and source were deleted after verification. This does not substitute for staging or production source checks.
+
+- **Production network check, 23 October 2026:** A read-only request from the running production `api` container to `https://feeds.bbci.co.uk/sport/tennis/rss.xml` returned HTTP 200, 44,225 response characters, and RSS markup from `feeds.bbci.co.uk`. No source was enabled or imported. NEWS-011 still requires the new admin connectivity test to run after deployment and record its full diagnostics.
