@@ -58,7 +58,7 @@ void main() {
     verify(() => usersRepo.getMe()).called(1);
   });
 
-  testWidgets('a stored-but-invalid token falls back to the intro carousel', (
+  testWidgets('a stored token without refresh requires sign-in', (
     tester,
   ) async {
     when(() => usersRepo.getMe()).thenThrow(Exception('expired'));
@@ -68,8 +68,8 @@ void main() {
       const SplashScreen(),
       extraRoutes: [
         GoRoute(
-          path: '/intro',
-          builder: (_, _) => const Center(child: Text('BACK-TO-INTRO')),
+          path: '/login',
+          builder: (_, _) => const Center(child: Text('BACK-TO-LOGIN')),
         ),
         GoRoute(
           path: '/onboarding/goals',
@@ -84,7 +84,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('BACK-TO-INTRO'), findsOneWidget);
+    expect(find.text('BACK-TO-LOGIN'), findsOneWidget);
     // The dead token must have been cleared, not left for the next launch.
     expect(storage.cleared, isTrue);
   });

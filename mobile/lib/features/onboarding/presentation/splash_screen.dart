@@ -70,6 +70,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       // The Dio session manager clears credentials only after the refresh
       // endpoint confirms they are invalid.
       if (await storage.readRefreshToken() == null) {
+        await storage.clear();
         if (mounted) context.go('/login');
       } else if (mounted) {
         setState(() => _connectionError = true);
