@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { useEffect, useId, useRef, type ButtonHTMLAttributes, type ReactNode } from "react";
 
 export function MaterialIcon({
   name,
@@ -197,12 +197,33 @@ export function ModalShell({
   footer?: ReactNode;
   onClose: () => void;
 }) {
+  const titleId = useId();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
+  useEffect(() => {
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const dialog = dialogRef.current;
+    const first = dialog?.querySelector<HTMLElement>("input:not([disabled]), textarea:not([disabled]), select:not([disabled]), button:not([disabled])");
+    (first ?? dialog)?.focus();
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") { event.preventDefault(); closeRef.current(); return; }
+      if (event.key !== "Tab" || !dialog) return;
+      const focusable = [...dialog.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])')];
+      if (focusable.length === 0) { event.preventDefault(); dialog.focus(); return; }
+      const firstItem = focusable[0]; const lastItem = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === firstItem) { event.preventDefault(); lastItem.focus(); }
+      else if (!event.shiftKey && document.activeElement === lastItem) { event.preventDefault(); firstItem.focus(); }
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => { document.removeEventListener("keydown", onKeyDown); previous?.focus(); };
+  }, []);
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4 py-6">
-      <div className="w-full max-w-2xl rounded-lg border border-drift-border bg-drift-surface shadow-[0_24px_80px_rgba(17,24,39,0.18)]">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} className="w-full max-w-2xl rounded-lg border border-drift-border bg-drift-surface shadow-[0_24px_80px_rgba(17,24,39,0.18)]">
         <div className="flex items-start justify-between gap-4 border-b border-drift-border px-6 py-5">
           <div>
-            <h2 className="font-display text-xl font-bold text-drift-text-primary">{title}</h2>
+            <h2 id={titleId} className="font-display text-xl font-bold text-drift-text-primary">{title}</h2>
             {description && <p className="mt-1 text-sm leading-6 text-drift-text-secondary">{description}</p>}
           </div>
           <button type="button" onClick={onClose} className="actionbtn rounded-md p-2 text-drift-text-secondary" aria-label="Close">

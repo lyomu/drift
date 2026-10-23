@@ -28,7 +28,7 @@ const DEFAULT_MAX_REDIRECTS = 3;
 const USER_AGENT = 'DriftTennisNewsBot/1.0 (+https://drift.tennis)';
 
 export class FeedUrlError extends Error {
-  constructor(message: string) {
+  constructor(message: string, readonly httpStatus?: number) {
     super(message);
     this.name = 'FeedUrlError';
   }
@@ -42,6 +42,18 @@ export interface FetchFeedOptions {
   timeoutMs?: number;
   maxResponseBytes?: number;
   maxRedirects?: number;
+  etag?: string | null;
+  lastModified?: string | null;
+}
+
+export interface FeedDocument {
+  httpStatus: number;
+  xml: string | null;
+  finalUrl: string;
+  redirectCount: number;
+  etag: string | null;
+  lastModified: string | null;
+  latencyMs: number;
 }
 
 // ------------------------------------------------------------- address policy
@@ -54,7 +66,7 @@ function isBlockedIpv4(ip: string): boolean {
   ) {
     return true;
   }
-  const [a, b] = parts;
+  const [a, b, c] = parts;
   if (a === 0) return true; // 0.0.0.0/8 "this host"
   if (a === 10) return true; // 10.0.0.0/8 private
   if (a === 127) return true; // loopback
@@ -62,6 +74,10 @@ function isBlockedIpv4(ip: string): boolean {
   if (a === 172 && b >= 16 && b <= 31) return true; // 172.16.0.0/12 private
   if (a === 192 && b === 168) return true; // 192.168.0.0/16 private
   if (a === 100 && b >= 64 && b <= 127) return true; // 100.64.0.0/10 CGNAT
+  if (a === 192 && b === 0 && (c === 0 || c === 2)) return true; // IETF assignments and TEST-NET-1
+  if (a === 198 && (b === 18 || b === 19 || (b === 51 && c === 100)))
+    return true; // benchmarking and TEST-NET-2
+  if (a === 203 && b === 0 && c === 113) return true; // TEST-NET-3
   if (a >= 224) return true; // multicast, reserved, and 255.255.255.255
   return false;
 }
@@ -71,6 +87,8 @@ function isBlockedIpv6(ip: string): boolean {
   const mapped = /^(?:::ffff:)(\d+\.\d+\.\d+\.\d+)$/.exec(addr);
   if (mapped) return isBlockedIpv4(mapped[1]);
   if (addr === '::' || addr === '::1') return true; // unspecified, loopback
+  if (addr.startsWith('ff')) return true; // IPv6 multicast
+  if (addr.startsWith('2001:db8:') || addr === '2001:db8::') return true; // documentation
   const firstHextet = parseInt(addr.split(':')[0] || '0', 16);
   if (!Number.isNaN(firstHextet)) {
     if ((firstHextet & 0xfe00) === 0xfc00) return true; // fc00::/7 unique-local
@@ -122,6 +140,17 @@ export function assertFeedUrlAllowed(
     process.env.NEWS_FEED_ALLOW_INSECURE === 'true';
   if (url.protocol !== 'https:' && !(url.protocol === 'http:' && insecureOk)) {
     throw new FeedUrlError(`Feed URL must use HTTPS: ${rawUrl}`);
+  }
+  if (
+    url.username ||
+    url.password ||
+    (url.port &&
+      !(insecureOk && url.protocol === 'http:') &&
+      url.port !== '443')
+  ) {
+    throw new FeedUrlError(
+      'Feed URL cannot contain credentials or a custom port.',
+    );
   }
 
   const host = url.hostname.toLowerCase().replace(/^\[/, '').replace(/\]$/, '');
@@ -190,6 +219,8 @@ interface SingleFetchResult {
   status: number;
   location?: string;
   body?: string;
+  etag?: string | null;
+  lastModified?: string | null;
 }
 
 function fetchOnce(
@@ -197,17 +228,25 @@ function fetchOnce(
   blocklist: Blocklist,
   timeoutMs: number,
   maxResponseBytes: number,
+  conditionalHeaders: { etag?: string | null; lastModified?: string | null },
 ): Promise<SingleFetchResult> {
   return new Promise((resolve, reject) => {
     let settled = false;
+    const deadline = setTimeout(() => {
+      req.destroy(
+        new FeedUrlError(`Feed request timed out after ${timeoutMs}ms`),
+      );
+    }, timeoutMs);
     const fail = (error: Error) => {
       if (settled) return;
       settled = true;
+      clearTimeout(deadline);
       reject(error);
     };
     const done = (result: SingleFetchResult) => {
       if (settled) return;
       settled = true;
+      clearTimeout(deadline);
       resolve(result);
     };
 
@@ -219,12 +258,19 @@ function fetchOnce(
         accept:
           'application/rss+xml, application/atom+xml, application/xml;q=0.9, text/xml;q=0.9, */*;q=0.8',
         'accept-encoding': 'identity',
+        ...(conditionalHeaders.etag ? { 'if-none-match': conditionalHeaders.etag } : {}),
+        ...(conditionalHeaders.lastModified ? { 'if-modified-since': conditionalHeaders.lastModified } : {}),
       },
     };
 
     const onResponse = (res: IncomingMessage) => {
       const status = res.statusCode ?? 0;
 
+      if (status === 304) {
+        res.resume();
+        done({ status });
+        return;
+      }
       if (status >= 300 && status < 400) {
         res.resume();
         done({ status, location: res.headers.location });
@@ -232,7 +278,20 @@ function fetchOnce(
       }
       if (status < 200 || status >= 300) {
         res.resume();
-        fail(new FeedUrlError(`Feed responded with HTTP ${status}`));
+        fail(new FeedUrlError(`Feed responded with HTTP ${status}`, status));
+        return;
+      }
+
+      const contentType = String(
+        res.headers['content-type'] ?? '',
+      ).toLowerCase();
+      if (
+        !/^(application\/(rss\+xml|atom\+xml|xml)|text\/xml)(\s*;|\s*$)/.test(
+          contentType,
+        )
+      ) {
+        res.resume();
+        fail(new FeedUrlError('Feed response is not XML'));
         return;
       }
 
@@ -252,7 +311,10 @@ function fetchOnce(
         chunks.push(chunk);
       });
       res.on('end', () => {
-        done({ status, body: Buffer.concat(chunks).toString('utf8') });
+        done({ status, body: Buffer.concat(chunks).toString('utf8'),
+          etag: typeof res.headers.etag === 'string' ? res.headers.etag.slice(0, 500) : null,
+          lastModified: typeof res.headers['last-modified'] === 'string' ? res.headers['last-modified'].slice(0, 200) : null,
+        });
       });
       res.on('error', fail);
     };
@@ -276,10 +338,11 @@ function fetchOnce(
  * {@link FeedUrlError} on any policy violation, redirect overflow, oversized
  * body, timeout, or non-2xx status.
  */
-export async function fetchFeedXml(
+export async function fetchFeedDocument(
   rawUrl: string,
   options: FetchFeedOptions = {},
-): Promise<string> {
+): Promise<FeedDocument> {
+  const started = Date.now();
   const blocklist = options.blocklist ?? isBlockedAddress;
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const maxResponseBytes =
@@ -289,14 +352,26 @@ export async function fetchFeedXml(
   let current = assertFeedUrlAllowed(rawUrl, blocklist);
 
   for (let redirect = 0; redirect <= maxRedirects; redirect++) {
+    const remainingMs = timeoutMs - (Date.now() - started);
+    if (remainingMs <= 0) throw new FeedUrlError(`Feed request timed out after ${timeoutMs}ms`);
     const result = await fetchOnce(
       current,
       blocklist,
-      timeoutMs,
+      remainingMs,
       maxResponseBytes,
+      { etag: redirect === 0 ? options.etag : null,
+        lastModified: redirect === 0 ? options.lastModified : null },
     );
+    if (result.status === 304) {
+      return { httpStatus: 304, xml: null, finalUrl: current.toString(),
+        redirectCount: redirect, etag: options.etag ?? null,
+        lastModified: options.lastModified ?? null, latencyMs: Date.now() - started };
+    }
     if (result.body !== undefined) {
-      return result.body;
+      return { httpStatus: result.status, xml: result.body,
+        finalUrl: current.toString(), redirectCount: redirect,
+        etag: result.etag ?? null, lastModified: result.lastModified ?? null,
+        latencyMs: Date.now() - started };
     }
     if (!result.location) {
       throw new FeedUrlError(
@@ -308,4 +383,11 @@ export async function fetchFeedXml(
   }
 
   throw new FeedUrlError(`Feed exceeded ${maxRedirects} redirects`);
+}
+
+/** Compatibility wrapper for admin connectivity tests and existing callers. */
+export async function fetchFeedXml(rawUrl: string, options: FetchFeedOptions = {}): Promise<string> {
+  const result = await fetchFeedDocument(rawUrl, options);
+  if (result.xml === null) throw new FeedUrlError('Feed returned HTTP 304 without cached content', 304);
+  return result.xml;
 }

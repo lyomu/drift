@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -19,7 +20,16 @@ import { ResultsService } from '../matches/results.service';
 import { AuditService } from './audit.service';
 import { MailerService } from '../mail/mailer.service';
 import { PasswordPolicyService } from '../auth/password-policy';
-import { assertFeedUrlAllowed, FeedUrlError } from '../news/feed-fetch';
+import { assertFeedUrlAllowed, FeedUrlError, fetchFeedDocument } from '../news/feed-fetch';
+import { safePublisherUrl, visibleNewsWhere } from '../news/news-rights';
+import Parser from 'rss-parser';
+import type {
+  UpdateNewsSourceRightsDto,
+  UpdateNewsStoryDto,
+  CreateNewsCategoryDto,
+  UpdateNewsCategoryDto,
+  UpdateNewsSettingsDto,
+} from './dto/platform-admin.dto';
 import { randomInt } from 'crypto';
 
 /**
@@ -940,11 +950,47 @@ export class PlatformAdminService {
 
   // ------------------------------------------------------------------ news
 
+  async newsOverview() {
+    const [
+      total,
+      published,
+      pending,
+      rejected,
+      sources,
+      activeSources,
+      failedSources,
+      recentRuns,
+    ] = await Promise.all([
+      this.prisma.newsStory.count(),
+      this.prisma.newsStory.count({ where: visibleNewsWhere() }),
+      this.prisma.newsStory.count({ where: { moderationStatus: 'PENDING' } }),
+      this.prisma.newsStory.count({ where: { moderationStatus: 'REJECTED' } }),
+      this.prisma.newsSource.count(),
+      this.prisma.newsSource.count({ where: { status: 'ACTIVE' } }),
+      this.prisma.newsSource.count({ where: { status: 'BLOCKED' } }),
+      this.prisma.newsIngestionRun.findMany({
+        orderBy: { startedAt: 'desc' },
+        take: 5,
+        include: { source: { select: { name: true } } },
+      }),
+    ]);
+    return {
+      total,
+      published,
+      pending,
+      rejected,
+      sources,
+      activeSources,
+      failedSources,
+      recentRuns,
+    };
+  }
+
   async listNewsSources() {
     return {
       sources: await this.prisma.newsSource.findMany({
         orderBy: { createdAt: 'asc' },
-        include: { _count: { select: { stories: true } } },
+        include: { rights: true, _count: { select: { stories: true } } },
       }),
     };
   }
@@ -955,10 +1001,14 @@ export class PlatformAdminService {
       name: string;
       feedUrl?: string | null;
       status: 'ACTIVE' | 'PAUSED' | 'BLOCKED';
+      pollIntervalMinutes?: number;
+      publicationMode?: 'MANUAL' | 'AUTO';
     },
   ) {
     validateNewsSourceFeedUrl(data.feedUrl);
-    const source = await this.prisma.newsSource.create({ data });
+    const source = await this.prisma.newsSource.create({
+      data: { ...data, status: 'PAUSED', publicationMode: 'MANUAL' },
+    });
     await this.audit.record(
       actorId,
       'news_source.create',
@@ -978,17 +1028,74 @@ export class PlatformAdminService {
       name: string;
       feedUrl?: string | null;
       status: 'ACTIVE' | 'PAUSED' | 'BLOCKED';
+      pollIntervalMinutes?: number;
+      publicationMode?: 'MANUAL' | 'AUTO';
     },
   ) {
     validateNewsSourceFeedUrl(data.feedUrl);
     const existing = await this.prisma.newsSource.findUnique({
       where: { id: sourceId },
+      include: { rights: true },
     });
     if (!existing) throw new NotFoundException('News source not found.');
+    const nextFeedUrl =
+      data.feedUrl === undefined ? existing.feedUrl : data.feedUrl || null;
+    const identityChanged =
+      existing.feedUrl !== nextFeedUrl || existing.name !== data.name;
+    if (identityChanged && data.status === 'ACTIVE') {
+      throw new BadRequestException(
+        'Changed sources must be paused and their rights reviewed again.',
+      );
+    }
+    if (data.publicationMode === 'AUTO' &&
+        (identityChanged || existing.rights?.status !== 'APPROVED' ||
+         !existing.rights.aiProcessingAllowed ||
+         !existing.rights.automaticPublishingAllowed ||
+         !existing.rights.commercialUseAllowed ||
+         !existing.rights.headlineAllowed ||
+         !existing.rights.excerptAllowed ||
+         !existing.rights.cacheAllowed ||
+         !existing.rights.permissionReference ||
+         !existing.rights.reviewedAt ||
+         !existing.rights.reviewedBy ||
+         (existing.rights.expiresAt && existing.rights.expiresAt <= new Date()))) {
+      throw new BadRequestException('Automatic publishing requires current approved rights for commercial use, AI processing, and automation.');
+    }
+    if (
+      data.status === 'ACTIVE' &&
+      (existing.rights?.status !== 'APPROVED' ||
+        !existing.rights.commercialUseAllowed ||
+        !existing.rights.headlineAllowed ||
+        !existing.rights.excerptAllowed ||
+        !existing.rights.cacheAllowed ||
+        !existing.rights.reviewedBy ||
+        !existing.rights.reviewedAt ||
+        !existing.rights.permissionReference ||
+        (existing.rights.expiresAt && existing.rights.expiresAt <= new Date()))
+    ) {
+      throw new BadRequestException(
+        'Source rights must be approved before activation.',
+      );
+    }
 
-    const source = await this.prisma.newsSource.update({
-      where: { id: sourceId },
-      data,
+    const source = await this.prisma.$transaction(async (tx) => {
+      const updated = await tx.newsSource.update({
+        where: { id: sourceId },
+        data: { ...data, status: identityChanged ? 'PAUSED' : data.status,
+          publicationMode: identityChanged ? 'MANUAL' : (data.publicationMode ?? existing.publicationMode),
+          ...(identityChanged ? { feedEtag: null, feedLastModified: null, nextPollAt: null } : {}) },
+      });
+      if (identityChanged) {
+        await tx.newsSourceRights.updateMany({
+          where: { sourceId },
+          data: { status: 'UNREVIEWED', reviewedBy: null, reviewedAt: null },
+        });
+        await tx.newsStory.updateMany({
+          where: { sourceId, moderationStatus: 'APPROVED' },
+          data: { moderationStatus: 'PENDING', publishedAt: null },
+        });
+      }
+      return updated;
     });
     await this.audit.record(
       actorId,
@@ -1000,48 +1107,488 @@ export class PlatformAdminService {
     return source;
   }
 
-  async listStories(moderation?: string, sourceId?: string) {
-    return {
-      stories: await this.prisma.newsStory.findMany({
-        where: {
-          ...(moderation
-            ? {
-                moderationStatus: moderation as NewsModerationStatus,
-              }
-            : {}),
-          ...(sourceId ? { sourceId } : {}),
-        },
-        include: { source: { select: { id: true, name: true } } },
-        orderBy: { publicationDate: 'desc' },
-        take: 200,
+  async getNewsSourceRights(sourceId: string) {
+    const source = await this.prisma.newsSource.findUnique({
+      where: { id: sourceId },
+      include: { rights: true },
+    });
+    if (!source) throw new NotFoundException('News source not found.');
+    return { rights: source.rights };
+  }
+
+  async testNewsSource(sourceId: string) {
+    const source = await this.prisma.newsSource.findUnique({
+      where: { id: sourceId },
+    });
+    if (!source) throw new NotFoundException('News source not found.');
+    if (!source.feedUrl)
+      throw new BadRequestException('Source has no feed URL.');
+    const started = Date.now();
+    try {
+      const document = await fetchFeedDocument(source.feedUrl);
+      const xml = document.xml!;
+      if (/<!DOCTYPE|<!ENTITY/i.test(xml)) {
+        throw new Error('INVALID_XML_DTD');
+      }
+      const feed = await new Parser().parseString(xml);
+      return {
+        status: 'OK',
+        latencyMs: document.latencyMs,
+        httpStatus: document.httpStatus,
+        finalUrl: document.finalUrl,
+        redirectCount: document.redirectCount,
+        feedTitle: feed.title ?? null,
+        itemCount: feed.items.length,
+        sampleItems: feed.items.slice(0, 3).map((item) => ({
+          title: item.title ?? null,
+          hasLink: safePublisherUrl(item.link ?? ''),
+          hasDate: Boolean(item.isoDate || item.pubDate),
+          hasExcerpt: Boolean(item.contentSnippet),
+        })),
+      };
+    } catch (error) {
+      return {
+        status: 'FAILED',
+        latencyMs: Date.now() - started,
+        httpStatus: error instanceof FeedUrlError ? error.httpStatus ?? null : null,
+        errorCode: 'INVALID_OR_UNAVAILABLE_FEED',
+      };
+    }
+  }
+
+  async assertNewsSourceCanSync(actorId: string, sourceId: string) {
+    const settings = await this.prisma.newsSettings.findUnique({
+      where: { id: 'default' },
+    });
+    if (settings?.ingestionPaused) {
+      throw new BadRequestException('News ingestion is paused.');
+    }
+    const source = await this.prisma.newsSource.findUnique({
+      where: { id: sourceId },
+      include: { rights: true },
+    });
+    if (!source) throw new NotFoundException('News source not found.');
+    const rights = source.rights;
+    if (
+      source.status !== 'ACTIVE' ||
+      !source.feedUrl ||
+      rights?.status !== 'APPROVED' ||
+      !rights.commercialUseAllowed ||
+      !rights.headlineAllowed ||
+      !rights.excerptAllowed ||
+      !rights.cacheAllowed ||
+      !rights.reviewedAt ||
+      !rights.reviewedBy ||
+      !rights.permissionReference ||
+      (rights.expiresAt && rights.expiresAt <= new Date())
+    ) {
+      throw new BadRequestException(
+        'Source is not eligible for synchronization.',
+      );
+    }
+    if (source.nextPollAt && source.nextPollAt > new Date()) {
+      throw new BadRequestException('Source sync cooldown is still active.');
+    }
+    await this.audit.record(
+      actorId,
+      'news_source.sync_requested',
+      'NewsSource',
+      sourceId,
+    );
+  }
+
+  async listNewsIngestionRuns(sourceId?: string, skip = 0) {
+    const where = sourceId ? { sourceId } : undefined;
+    const [runs, total] = await Promise.all([
+      this.prisma.newsIngestionRun.findMany({
+        where,
+        orderBy: [{ startedAt: 'desc' }, { id: 'desc' }],
+        skip: Math.max(0, skip),
+        take: 50,
+        include: { source: { select: { name: true } } },
       }),
+      this.prisma.newsIngestionRun.count({ where }),
+    ]);
+    return { runs, total };
+  }
+
+  async updateNewsSourceRights(
+    actorId: string,
+    sourceId: string,
+    dto: UpdateNewsSourceRightsDto,
+  ) {
+    const source = await this.prisma.newsSource.findUnique({
+      where: { id: sourceId },
+    });
+    if (!source) throw new NotFoundException('News source not found.');
+
+    const expiry = dto.expiresAt ? new Date(dto.expiresAt) : null;
+    if (dto.expiresAt && Number.isNaN(expiry!.getTime())) {
+      throw new BadRequestException('Invalid rights expiry date.');
+    }
+    if (dto.termsUrl && !safePublisherUrl(dto.termsUrl)) {
+      throw new BadRequestException('Terms URL must be a safe HTTPS URL.');
+    }
+    if (
+      dto.status === 'APPROVED' &&
+      (!dto.permissionReference?.trim() ||
+        !dto.commercialUseAllowed ||
+        !dto.headlineAllowed ||
+        !dto.excerptAllowed ||
+        !dto.cacheAllowed ||
+        !dto.attributionText?.trim() ||
+        (expiry && expiry <= new Date()))
+    ) {
+      throw new BadRequestException(
+        'Approval requires permission evidence, commercial headline, excerpt and cache rights, attribution, and a future expiry if supplied.',
+      );
+    }
+
+    const approved = dto.status === 'APPROVED';
+    const data = {
+      status: dto.status,
+      termsUrl: dto.termsUrl?.trim() || null,
+      permissionReference: dto.permissionReference?.trim() || null,
+      commercialUseAllowed: dto.commercialUseAllowed,
+      headlineAllowed: dto.headlineAllowed,
+      excerptAllowed: dto.excerptAllowed,
+      imageAllowed: dto.imageAllowed,
+      aiProcessingAllowed: dto.aiProcessingAllowed,
+      automaticPublishingAllowed: dto.automaticPublishingAllowed,
+      cacheAllowed: dto.cacheAllowed,
+      attributionText: dto.attributionText?.trim() || null,
+      notes: dto.notes?.trim() || null,
+      expiresAt: expiry,
+      reviewedBy: approved ? actorId : null,
+      reviewedAt: approved ? new Date() : null,
     };
+
+    return this.prisma.$transaction(async (tx) => {
+      const rights = await tx.newsSourceRights.upsert({
+        where: { sourceId },
+        create: { sourceId, ...data },
+        update: data,
+      });
+      if (!approved) {
+        await tx.newsSource.update({
+          where: { id: sourceId },
+          data: { status: 'PAUSED', publicationMode: 'MANUAL' },
+        });
+        await tx.newsStory.updateMany({
+          where: { sourceId, moderationStatus: 'APPROVED' },
+          data: { moderationStatus: 'PENDING', publishedAt: null },
+        });
+      }
+      if (approved && (!dto.aiProcessingAllowed || !dto.automaticPublishingAllowed)) {
+        await tx.newsSource.update({
+          where: { id: sourceId }, data: { publicationMode: 'MANUAL' },
+        });
+      }
+      await tx.adminAuditLog.create({
+        data: {
+          actorId,
+          action: `news_rights.${dto.status.toLowerCase()}`,
+          entityType: 'NewsSource',
+          entityId: sourceId,
+          metadata: {
+            status: dto.status,
+            commercialUseAllowed: dto.commercialUseAllowed,
+            headlineAllowed: dto.headlineAllowed,
+            excerptAllowed: dto.excerptAllowed,
+            imageAllowed: dto.imageAllowed,
+            aiProcessingAllowed: dto.aiProcessingAllowed,
+            automaticPublishingAllowed: dto.automaticPublishingAllowed,
+          },
+        },
+      });
+      return { rights };
+    });
+  }
+
+  async listStories(
+    moderation?: string,
+    sourceId?: string,
+    search?: string,
+    skip = 0,
+    category?: string,
+  ) {
+    const where: Prisma.NewsStoryWhereInput = {
+      ...(moderation
+        ? { moderationStatus: moderation as NewsModerationStatus }
+        : {}),
+      ...(sourceId ? { sourceId } : {}),
+      ...(category ? { categories: { has: category } } : {}),
+      ...(search
+        ? { headline: { contains: search, mode: 'insensitive' } }
+        : {}),
+    };
+    const [stories, total] = await Promise.all([
+      this.prisma.newsStory.findMany({
+        where,
+        include: {
+          source: {
+            select: {
+              id: true,
+              name: true,
+              status: true,
+              rights: { select: { status: true, expiresAt: true } },
+            },
+          },
+        },
+        orderBy: [{ publicationDate: 'desc' }, { id: 'desc' }],
+        take: 50,
+        skip: Math.max(0, skip),
+      }),
+      this.prisma.newsStory.count({ where }),
+    ]);
+    return {
+      stories,
+      total,
+    };
+  }
+
+  async updateNewsStory(
+    actorId: string,
+    storyId: string,
+    dto: UpdateNewsStoryDto,
+  ) {
+    return this.prisma.$transaction(async (tx) => {
+      const story = await tx.newsStory.findUnique({
+        where: { id: storyId },
+        include: { source: { include: { rights: true } } },
+      });
+      if (!story) throw new NotFoundException('News story not found.');
+      if (story.moderationStatus !== 'PENDING') {
+        throw new BadRequestException(
+          'Unpublish this story before editing it.',
+        );
+      }
+      if (story.editorialVersion !== dto.editorialVersion) {
+        throw new ConflictException('Story changed. Reload before editing.');
+      }
+      if (
+        story.source.rights?.status !== 'APPROVED' ||
+        !story.source.rights.headlineAllowed ||
+        !story.source.rights.excerptAllowed
+      ) {
+        throw new BadRequestException(
+          'Source rights do not permit editing this content.',
+        );
+      }
+      const categoryCount = await tx.newsCategoryConfig.count({
+        where: { slug: { in: dto.categories }, enabled: true },
+      });
+      if (
+        categoryCount !== new Set(dto.categories).size ||
+        categoryCount !== dto.categories.length
+      ) {
+        throw new BadRequestException(
+          'Choose active, distinct news categories.',
+        );
+      }
+      const changed = await tx.newsStory.updateMany({
+        where: {
+          id: storyId,
+          editorialVersion: dto.editorialVersion,
+          moderationStatus: 'PENDING',
+        },
+        data: {
+          headline: dto.headline.trim(),
+          highlight: dto.highlight.trim(),
+          categories: dto.categories,
+          editorialVersion: { increment: 1 },
+        },
+      });
+      if (changed.count !== 1) {
+        throw new ConflictException('Story changed. Reload before editing.');
+      }
+      const updated = await tx.newsStory.findUniqueOrThrow({
+        where: { id: storyId },
+      });
+      await tx.adminAuditLog.create({
+        data: {
+          actorId,
+          action: 'story.edit',
+          entityType: 'NewsStory',
+          entityId: storyId,
+          metadata: {
+            reason: dto.reason.trim(),
+            previousVersion: story.editorialVersion,
+            newVersion: updated.editorialVersion,
+            previousHeadline: story.headline,
+            newHeadline: updated.headline,
+            previousHighlight: story.highlight,
+            newHighlight: updated.highlight,
+            previousCategories: story.categories,
+            newCategories: updated.categories,
+          },
+        },
+      });
+      return updated;
+    });
+  }
+
+  listNewsCategories() {
+    return this.prisma.newsCategoryConfig.findMany({
+      orderBy: [{ sortOrder: 'asc' }, { slug: 'asc' }],
+    });
+  }
+
+  async createNewsCategory(actorId: string, dto: CreateNewsCategoryDto) {
+    const category = await this.prisma.newsCategoryConfig.create({ data: dto });
+    await this.audit.record(
+      actorId,
+      'news_category.create',
+      'NewsCategoryConfig',
+      category.slug,
+      { ...dto },
+    );
+    return category;
+  }
+
+  async updateNewsCategory(
+    actorId: string,
+    slug: string,
+    dto: UpdateNewsCategoryDto,
+  ) {
+    if (slug === 'LATEST' && !dto.enabled) {
+      throw new BadRequestException('The Latest category must remain enabled.');
+    }
+    const category = await this.prisma.newsCategoryConfig.update({
+      where: { slug },
+      data: dto,
+    });
+    await this.audit.record(
+      actorId,
+      'news_category.update',
+      'NewsCategoryConfig',
+      slug,
+      { ...dto },
+    );
+    return category;
+  }
+
+  async getNewsSettings() {
+    const settings = await this.prisma.newsSettings.upsert({
+      where: { id: 'default' },
+      create: { id: 'default' },
+      update: {},
+    });
+    const day = new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00.000Z');
+    const usage = await this.prisma.newsAiQuotaDay.findUnique({ where: { day } });
+    return {
+      ...settings,
+      aiProvider: process.env.NEWS_AI_PROVIDER === 'openai' ? 'openai' : 'disabled',
+      aiProviderConfigured: process.env.NEWS_AI_PROVIDER === 'openai' && Boolean(process.env.OPENAI_API_KEY?.trim()),
+      aiRequestsToday: usage?.attempts ?? 0,
+    };
+  }
+
+  async updateNewsSettings(actorId: string, dto: UpdateNewsSettingsDto) {
+    if (dto.aiEnabled && (process.env.NEWS_AI_PROVIDER !== 'openai' || !process.env.OPENAI_API_KEY?.trim())) {
+      throw new BadRequestException('AI assistance requires an explicitly configured provider and server key.');
+    }
+    if (dto.automaticPublishingEnabled && !dto.aiEnabled) {
+      throw new BadRequestException('Automatic publishing requires enabled AI and a configured provider key.');
+    }
+    const settings = await this.prisma.newsSettings.upsert({
+      where: { id: 'default' },
+      create: { id: 'default', ...dto },
+      update: dto,
+    });
+    await this.audit.record(
+      actorId,
+      'news_settings.update',
+      'NewsSettings',
+      'default',
+      { ...dto },
+    );
+    return settings;
+  }
+
+  async listNewsAudit(skip = 0) {
+    const where: Prisma.AdminAuditLogWhereInput = {
+      OR: [
+        { action: { startsWith: 'news_' } },
+        { action: { startsWith: 'story.' } },
+      ],
+    };
+    const [events, total] = await Promise.all([
+      this.prisma.adminAuditLog.findMany({
+        where,
+        include: { actor: { select: { id: true, name: true, email: true } } },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        skip: Math.max(0, skip),
+        take: 50,
+      }),
+      this.prisma.adminAuditLog.count({ where }),
+    ]);
+    return { events, total };
+  }
+
+  async listNewsAutomationEvents(skip = 0) {
+    const [events, total] = await Promise.all([
+      this.prisma.newsAutomationEvent.findMany({
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        skip: Math.max(0, skip), take: 50,
+      }),
+      this.prisma.newsAutomationEvent.count(),
+    ]);
+    return { events, total };
   }
 
   async moderateStory(
     actorId: string,
     storyId: string,
-    moderationStatus: 'PENDING' | 'APPROVED' | 'REJECTED',
+    moderationStatus: 'PENDING' | 'APPROVED' | 'REJECTED' | 'ARCHIVED',
+    reason = 'Manual editorial action',
   ) {
-    const story = await this.prisma.newsStory.findUnique({
-      where: { id: storyId },
+    return this.prisma.$transaction(async (tx) => {
+      const story = await tx.newsStory.findUnique({
+        where: { id: storyId },
+        include: { source: { include: { rights: true } } },
+      });
+      if (!story) throw new NotFoundException('Story not found.');
+      if (moderationStatus === 'APPROVED') {
+        const rights = story.source.rights;
+        if (
+          story.source.status !== 'ACTIVE' ||
+          rights?.status !== 'APPROVED' ||
+          !rights.commercialUseAllowed ||
+          !rights.headlineAllowed ||
+          !rights.excerptAllowed ||
+          !rights.cacheAllowed ||
+          !rights.reviewedBy ||
+          !rights.reviewedAt ||
+          !rights.permissionReference ||
+          (rights.expiresAt && rights.expiresAt <= new Date()) ||
+          !safePublisherUrl(story.originalUrl) ||
+          !story.headline.trim() ||
+          !story.highlight.trim()
+        ) {
+          throw new BadRequestException(
+            'Story cannot be published without active source rights and valid metadata.',
+          );
+        }
+      }
+      const updated = await tx.newsStory.update({
+        where: { id: storyId },
+        data: {
+          moderationStatus,
+          publishedAt: moderationStatus === 'APPROVED' ? new Date() : null,
+        },
+      });
+      await tx.adminAuditLog.create({
+        data: {
+          actorId,
+          action: `story.${moderationStatus.toLowerCase()}`,
+          entityType: 'NewsStory',
+          entityId: storyId,
+          metadata: { headline: story.headline, reason: reason.trim() },
+        },
+      });
+      return updated;
     });
-    if (!story) throw new NotFoundException('Story not found.');
-
-    const updated = await this.prisma.newsStory.update({
-      where: { id: storyId },
-      data: { moderationStatus },
-    });
-
-    await this.audit.record(
-      actorId,
-      `story.${moderationStatus.toLowerCase()}`,
-      'NewsStory',
-      storyId,
-      { headline: story.headline },
-    );
-
-    return updated;
   }
 
   // -------------------------------------------------------------- disputes

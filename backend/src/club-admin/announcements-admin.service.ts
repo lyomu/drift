@@ -96,7 +96,13 @@ export class AnnouncementsAdminService {
     });
 
     if (status === AnnouncementStatus.PUBLISHED) {
-      await this.notifyMembers(clubId, authorId, dto.title, audience);
+      await this.notifyMembers(
+        clubId,
+        authorId,
+        dto.title,
+        dto.body,
+        audience,
+      );
     }
     return announcement;
   }
@@ -126,6 +132,7 @@ export class AnnouncementsAdminService {
         clubId,
         updated.authorId,
         updated.title,
+        updated.body,
         updated.audience,
       );
     }
@@ -146,6 +153,7 @@ export class AnnouncementsAdminService {
     clubId: string,
     authorId: string,
     title: string,
+    body: string,
     audience: AnnouncementAudience,
   ) {
     const audienceRoles = rolesForAudience(audience);
@@ -171,12 +179,19 @@ export class AnnouncementsAdminService {
           m.userId,
           'CLUBS',
           title,
-          `New announcement from ${club?.name ?? 'your club'}.`,
+          this.notificationBody(club?.name, body),
           'CLUB_ANNOUNCEMENT',
           clubId,
         ),
       ),
     );
+  }
+
+  /** Keep lock-screen notifications useful without making them unwieldy. */
+  private notificationBody(clubName: string | undefined, body: string | undefined) {
+    const preview = (body ?? '').replaceAll(/\s+/g, ' ').trim();
+    if (preview.length > 180) return `${preview.substring(0, 177)}...`;
+    return preview || `New announcement from ${clubName ?? 'your club'}.`;
   }
 
   private async requireAnnouncement(clubId: string, id: string) {

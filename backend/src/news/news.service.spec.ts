@@ -1,14 +1,23 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { NewsService } from './news.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 type MockPrisma = {
+  newsCategoryConfig: Record<string, jest.Mock>;
   newsStory: Record<string, jest.Mock>;
   savedStory: Record<string, jest.Mock>;
 };
 
 function createMockPrisma(): MockPrisma {
   return {
+    newsCategoryConfig: {
+      findMany: jest
+        .fn()
+        .mockResolvedValue([{ slug: 'LATEST', label: 'Latest' }]),
+      findFirst: jest
+        .fn()
+        .mockResolvedValue({ slug: 'PLAYERS', enabled: true }),
+    },
     newsStory: {
       count: jest.fn().mockResolvedValue(0),
       findMany: jest.fn().mockResolvedValue([]),
@@ -27,7 +36,11 @@ function storyRecord(id: string, overrides: Record<string, unknown> = {}) {
   return {
     id,
     sourceId: 'source-1',
-    source: { id: 'source-1', name: 'Drift Tennis Digest' },
+    source: {
+      id: 'source-1',
+      name: 'Drift Tennis Digest',
+      rights: { imageAllowed: false, attributionText: 'Drift Tennis Digest' },
+    },
     headline: `Headline ${id}`,
     imageUrl: null,
     highlight: 'A short highlight.',
@@ -73,6 +86,87 @@ describe('NewsService', () => {
       expect(result.stories[0]).not.toHaveProperty('body');
       expect(result.stories[0]).not.toHaveProperty('fullText');
     });
+  });
+
+  it('queries only rights-cleared sources and hides unlicensed images', async () => {
+    prisma.newsStory.findMany.mockResolvedValue([
+      storyRecord('a', { imageUrl: 'https://publisher.example/image.jpg' }),
+    ]);
+    const result = await service.browse('user-1', {});
+    expect(result.stories[0].imageUrl).toBeNull();
+    expect(prisma.newsStory.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          moderationStatus: 'APPROVED',
+          source: expect.objectContaining({
+            status: 'ACTIVE',
+            rights: expect.objectContaining({
+              is: expect.objectContaining({
+                status: 'APPROVED',
+                cacheAllowed: true,
+              }),
+            }),
+          }),
+        }),
+      }),
+    );
+  });
+
+  it('hides an image URL that fails the publisher URL policy even with image rights', async () => {
+    prisma.newsStory.findMany.mockResolvedValue([
+      storyRecord('a', {
+        imageUrl: 'http://publisher.example/image.jpg',
+        source: {
+          id: 'source-1',
+          name: 'Publisher',
+          rights: { imageAllowed: true, attributionText: 'Publisher' },
+        },
+      }),
+    ]);
+    const result = await service.browse('user-1', {});
+    expect(result.stories[0].imageUrl).toBeNull();
+  });
+
+  it('exposes enabled categories and rejects a disabled category filter', async () => {
+    expect(await service.listCategories()).toEqual({
+      categories: [{ slug: 'LATEST', label: 'Latest' }],
+    });
+    prisma.newsCategoryConfig.findFirst.mockResolvedValueOnce(null);
+    await expect(
+      service.browse('user-1', { category: 'DISABLED' }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('filters saved stories through the same publication policy', async () => {
+    await service.listSaved('user-1');
+    expect(prisma.savedStory.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          userId: 'user-1',
+          story: expect.objectContaining({ moderationStatus: 'APPROVED' }),
+        }),
+      }),
+    );
+  });
+
+  it('returns a stable cursor and rejects malformed cursors', async () => {
+    prisma.newsStory.findMany.mockResolvedValue([
+      storyRecord('b'),
+      storyRecord('a'),
+    ]);
+    const first = await service.browse('user-1', { take: 1 });
+    expect(first.stories.map((s) => s.id)).toEqual(['b']);
+    expect(first.nextCursor).toEqual(expect.any(String));
+    await service.browse('user-1', { take: 1, cursor: first.nextCursor! });
+    expect(prisma.newsStory.findMany).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ AND: expect.any(Array) }),
+        orderBy: [{ publicationDate: 'desc' }, { id: 'desc' }],
+      }),
+    );
+    await expect(
+      service.browse('user-1', { cursor: 'bad' }),
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 
   describe('getStory', () => {

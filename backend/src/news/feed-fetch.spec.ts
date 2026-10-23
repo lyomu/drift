@@ -3,6 +3,7 @@ import { AddressInfo } from 'node:net';
 import {
   assertFeedUrlAllowed,
   fetchFeedXml,
+  fetchFeedDocument,
   FeedUrlError,
   isBlockedAddress,
 } from './feed-fetch';
@@ -16,6 +17,9 @@ describe('isBlockedAddress', () => {
     '192.168.1.1',
     '169.254.169.254',
     '100.64.0.1',
+    '192.0.2.1',
+    '198.51.100.10',
+    '203.0.113.5',
     '0.0.0.0',
     '224.0.0.1',
     '255.255.255.255',
@@ -24,6 +28,8 @@ describe('isBlockedAddress', () => {
     'fc00::1',
     'fd12:3456::1',
     'fe80::1',
+    'ff02::1',
+    '2001:db8::1',
     '::ffff:127.0.0.1',
     'not-an-ip',
   ])('blocks %s', (ip) => {
@@ -65,6 +71,13 @@ describe('assertFeedUrlAllowed', () => {
     expect(assertFeedUrlAllowed('https://feeds.example.com/rss').hostname).toBe(
       'feeds.example.com',
     );
+  });
+
+  it.each([
+    'https://user:secret@feeds.example.com/rss',
+    'https://feeds.example.com:8443/rss',
+  ])('rejects credential or custom-port feed URL %s', (url) => {
+    expect(() => assertFeedUrlAllowed(url)).toThrow(FeedUrlError);
   });
 
   it('enforces NEWS_FEED_ALLOWED_HOSTS when configured', () => {
@@ -136,9 +149,35 @@ describe('fetchFeedXml', () => {
         res.end();
         return;
       }
+      res.setHeader('content-type', 'application/rss+xml');
       res.end(XML);
     };
     await expect(fetchFeedXml(`${base}/start`, allowLocal)).resolves.toBe(XML);
+  });
+
+  it('sends validators and treats HTTP 304 as a successful empty poll', async () => {
+    handler = (req, res) => {
+      expect(req.headers['if-none-match']).toBe('"revision-1"');
+      expect(req.headers['if-modified-since']).toBe('Wed, 21 Oct 2026 08:00:00 GMT');
+      res.writeHead(304); res.end();
+    };
+    await expect(fetchFeedDocument(`${base}/rss`, {
+      ...allowLocal, etag: '"revision-1"',
+      lastModified: 'Wed, 21 Oct 2026 08:00:00 GMT',
+    })).resolves.toMatchObject({ httpStatus: 304, xml: null, redirectCount: 0 });
+  });
+
+  it('returns HTTP and redirect diagnostics without importing anything', async () => {
+    handler = (req, res) => {
+      if (req.url === '/start') { res.writeHead(301, { location: `${base}/final` }); res.end(); return; }
+      res.setHeader('content-type', 'application/atom+xml');
+      res.setHeader('etag', '"revision-2"');
+      res.end(XML);
+    };
+    await expect(fetchFeedDocument(`${base}/start`, allowLocal)).resolves.toMatchObject({
+      httpStatus: 200, xml: XML, redirectCount: 1, etag: '"revision-2"',
+      finalUrl: `${base}/final`,
+    });
   });
 
   it('re-validates the redirect target and rejects a bad scheme', async () => {
@@ -163,6 +202,7 @@ describe('fetchFeedXml', () => {
 
   it('rejects an oversized response', async () => {
     handler = (_req, res) => {
+      res.setHeader('content-type', 'application/rss+xml');
       res.end('x'.repeat(4096));
     };
     await expect(
@@ -186,6 +226,21 @@ describe('fetchFeedXml', () => {
     };
     await expect(fetchFeedXml(`${base}/err`, allowLocal)).rejects.toThrow(
       /HTTP 500/,
+    );
+  });
+
+  it.each([401, 403, 429, 500])('exposes safe HTTP %s diagnostics', async (status) => {
+    handler = (_req, res) => { res.writeHead(status); res.end('nope'); };
+    await expect(fetchFeedDocument(`${base}/err`, allowLocal)).rejects.toMatchObject({ httpStatus: status });
+  });
+
+  it('rejects an HTML page in place of a feed', async () => {
+    handler = (_req, res) => {
+      res.setHeader('content-type', 'text/html');
+      res.end('<html>Blocked</html>');
+    };
+    await expect(fetchFeedXml(`${base}/html`, allowLocal)).rejects.toThrow(
+      /not XML/,
     );
   });
 });

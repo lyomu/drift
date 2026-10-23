@@ -52,9 +52,8 @@ class _NotificationCenterScreenState
 
     return DriftScaffold(
       title: 'Notifications',
-      trailing: DriftHeaderSquareButton(
-        icon: Icons.tune,
-        onTap: () => context.push('/notifications/preferences'),
+      trailing: _NotificationHeaderActions(
+        hasNotifications: page.valueOrNull?.notifications.isNotEmpty ?? false,
       ),
       body: RefreshIndicator(
         onRefresh: () => ref.refresh(notificationsListProvider.future),
@@ -121,6 +120,65 @@ class _NotificationCenterScreenState
         },
       ),
     );
+  }
+}
+
+class _NotificationHeaderActions extends ConsumerWidget {
+  const _NotificationHeaderActions({required this.hasNotifications});
+
+  final bool hasNotifications;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (hasNotifications) ...[
+          DriftHeaderSquareButton(
+            icon: Icons.delete_outline,
+            onTap: () => _confirmClearAll(context, ref),
+          ),
+          const SizedBox(width: DriftSpacing.s2),
+        ],
+        DriftHeaderSquareButton(
+          icon: Icons.tune,
+          onTap: () => context.push('/notifications/preferences'),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _confirmClearAll(BuildContext context, WidgetRef ref) async {
+    final shouldClear = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Clear all notifications?'),
+        content: const Text(
+          'This removes every notification from this list. New notifications will still arrive.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Clear all'),
+          ),
+        ],
+      ),
+    );
+    if (shouldClear != true) return;
+
+    try {
+      await ref.read(notificationsRepositoryProvider).clearAll();
+      ref.invalidate(notificationsListProvider);
+    } on AuthException catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
+    }
   }
 }
 
@@ -196,14 +254,65 @@ class _NotificationTile extends ConsumerWidget {
                         color: colors.textSecondary,
                       ),
                     ),
+                    if (notification.imageUrl != null) ...[
+                      const SizedBox(height: DriftSpacing.s3),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          notification.imageUrl!,
+                          height: 156,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
+              ),
+              IconButton(
+                tooltip: 'Delete notification',
+                onPressed: () => _confirmRemove(context, ref),
+                icon: const Icon(Icons.close),
               ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _confirmRemove(BuildContext context, WidgetRef ref) async {
+    final shouldRemove = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete notification?'),
+        content: const Text(
+          'This notification will be removed from this list.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (shouldRemove != true) return;
+
+    try {
+      await ref.read(notificationsRepositoryProvider).remove(notification.id);
+      ref.invalidate(notificationsListProvider);
+    } on AuthException catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
+    }
   }
 
   Future<void> _open(BuildContext context, WidgetRef ref) async {

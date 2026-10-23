@@ -59,6 +59,7 @@ export class NotificationsService {
     body: string,
     relatedEntityType?: string,
     relatedEntityId?: string,
+    imageUrl?: string,
   ): Promise<boolean> {
     const preference = await this.getOrCreatePreference(userId);
     if (!preference[PREFERENCE_FIELD[category]]) {
@@ -73,6 +74,7 @@ export class NotificationsService {
         body,
         relatedEntityType,
         relatedEntityId,
+        imageUrl,
       },
     });
 
@@ -88,6 +90,7 @@ export class NotificationsService {
       ...(notification?.id ? { notificationId: notification.id } : {}),
       relatedEntityType,
       relatedEntityId,
+      imageUrl,
     });
 
     return true;
@@ -147,6 +150,25 @@ export class NotificationsService {
       data: { readAt: new Date() },
     });
     return { read: true };
+  }
+
+  /** Removes one notification only when it belongs to the signed-in user. */
+  async remove(userId: string, id: string) {
+    const result = await this.prisma.notification.deleteMany({
+      where: { id, userId },
+    });
+    if (result.count === 0) {
+      throw new NotFoundException('Notification not found.');
+    }
+    return { removed: true };
+  }
+
+  /** Clears the caller's Notification Centre without changing preferences. */
+  async clearAll(userId: string) {
+    const result = await this.prisma.notification.deleteMany({
+      where: { userId },
+    });
+    return { cleared: result.count };
   }
 
   async getPreferences(userId: string) {

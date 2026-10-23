@@ -1,0 +1,19 @@
+groups:
+  - name: drift-tennis-news
+    rules:
+      - alert: NewsSourceBlocked
+        expr: max(news_sources_blocked) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: A tennis news publisher source is blocked
+          description: Check News Sources and the last HTTP 401/403 run. Do not bypass the publisher restriction.
+      - alert: NewsIngestionRepeatedFailure
+        expr: sum(increase(news_ingestion_runs_total{outcome="failed"}[30m])) >= 3
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Repeated tennis news feed failures
+          description: Check News Ingestion Runs for the HTTP status and safe error code.

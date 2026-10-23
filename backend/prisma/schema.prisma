@@ -367,6 +367,18 @@ enum NewsSourceStatus {
   BLOCKED
 }
 
+enum NewsRightsStatus {
+  UNREVIEWED
+  APPROVED
+  RESTRICTED
+  REVOKED
+}
+
+enum NewsPublicationMode {
+  MANUAL
+  AUTO
+}
+
 // No Platform Admin moderation queue exists yet (same gap as PlayerReport/
 // CourtReport) — seeded stories are APPROVED by default so the feed has
 // real content; PENDING/REJECTED exist so the column means something once
@@ -375,11 +387,11 @@ enum NewsModerationStatus {
   PENDING
   APPROVED
   REJECTED
+  ARCHIVED
 }
 
-// The starter-doc prompts' fixed category list (Tennis_Platform_Master...
-// Phase 12 AI prompt) — a story can belong to several, hence
-// `NewsStory.categories` being an array rather than a single enum field.
+// Legacy category values retained for seed/test compatibility. Story category
+// slugs are now governed by NewsCategoryConfig.
 enum NewsCategory {
   LATEST
   PROFESSIONAL_TENNIS
@@ -409,6 +421,20 @@ enum NotificationCategory {
   // on, unlike NEWS, since this carries official Drift communication rather
   // than opt-in marketing.
   ANNOUNCEMENTS
+}
+
+enum PushBroadcastAudience {
+  PLAYER
+  COACH
+  CLUB_STAFF
+}
+
+enum PushBroadcastStatus {
+  SCHEDULED
+  SENDING
+  SENT
+  FAILED
+  CANCELLED
 }
 
 // Which push transport a device token belongs to (Phase 6).
@@ -2130,22 +2156,77 @@ model GoalMilestone {
   @@map("goal_milestones")
 }
 
-// foundation/06-domain-technical-architecture.md §1 (NEWS SOURCE / NEWS
-// STORY). No RSS/API ingestion pipeline exists yet — same "no admin
-// surface, seed directly" gap as M9's courts and M10's learning content.
-// `feedUrl` is a schema hook for that future ingestion job, never read by
-// anything this phase.
+// Tennis RSS publisher configuration and editorial controls.
 model NewsSource {
   id      String           @id @default(uuid())
   name    String
   feedUrl String?
-  status  NewsSourceStatus @default(ACTIVE)
+  status  NewsSourceStatus @default(PAUSED)
+  pollIntervalMinutes Int @default(30)
+  publicationMode NewsPublicationMode @default(MANUAL)
+  nextPollAt DateTime?
+  syncLeaseUntil DateTime?
+  lastPolledAt DateTime?
+  lastSuccessAt DateTime?
+  consecutiveFailures Int @default(0)
+  lastErrorCode String?
+  feedEtag String?
+  feedLastModified String?
 
   createdAt DateTime @default(now())
 
   stories NewsStory[]
+  rights  NewsSourceRights?
+  ingestionRuns NewsIngestionRun[]
 
   @@map("news_sources")
+}
+
+model NewsIngestionRun {
+  id String @id @default(uuid())
+  sourceId String
+  source NewsSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  startedAt DateTime @default(now())
+  finishedAt DateTime?
+  status String @default("RUNNING")
+  fetchedCount Int @default(0)
+  createdCount Int @default(0)
+  duplicateCount Int @default(0)
+  skippedCount Int @default(0)
+  aiFailureCount Int @default(0)
+  autoPublishedCount Int @default(0)
+  errorCode String?
+  httpStatus Int?
+  finalUrl String?
+  redirectCount Int @default(0)
+  latencyMs Int?
+
+  @@index([sourceId, startedAt(sort: Desc)])
+  @@map("news_ingestion_runs")
+}
+
+model NewsSourceRights {
+  id                   String           @id @default(uuid())
+  sourceId             String           @unique
+  source               NewsSource       @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  status               NewsRightsStatus @default(UNREVIEWED)
+  termsUrl             String?
+  permissionReference  String?
+  commercialUseAllowed Boolean          @default(false)
+  headlineAllowed      Boolean          @default(false)
+  excerptAllowed       Boolean          @default(false)
+  imageAllowed         Boolean          @default(false)
+  aiProcessingAllowed  Boolean          @default(false)
+  automaticPublishingAllowed Boolean @default(false)
+  cacheAllowed         Boolean          @default(false)
+  attributionText      String?
+  reviewedBy           String?
+  reviewedAt           DateTime?
+  expiresAt            DateTime?
+  notes                String?
+  updatedAt            DateTime         @updatedAt
+
+  @@map("news_source_rights")
 }
 
 // The republication rule (Doc 6 §2, line 116) is enforced by what fields
@@ -2162,22 +2243,89 @@ model NewsStory {
   imageUrl        String?
   highlight       String
   publicationDate DateTime
-  categories      NewsCategory[]
+  categories      String[]
   // Free-form topic tags (Doc 6 has no controlled vocabulary for these,
   // same as Court's `amenities[]`). "Follow Topic" itself is deferred —
   // see PROGRESS.md — so these are stored and shown but not yet
   // subscribable.
   topics          String[]
   originalUrl     String
+  externalGuid    String?
+  canonicalUrlHash String?
+  originalFeedExcerpt String?
+  originalFeedHeadline String?
+  reviewFlags String[] @default([])
 
   moderationStatus NewsModerationStatus @default(APPROVED)
+  publishedAt      DateTime?
+  moderationReason String?
+  editorialVersion Int @default(1)
+  aiSummary String?
+  aiProvider String?
+  aiModel String?
+  aiConfidence Float?
+  aiRelevanceScore Float?
+  aiRiskFlags String[] @default([])
+  aiPlayers String[] @default([])
+  aiTournaments String[] @default([])
+  aiLanguage String?
+  aiProcessedAt DateTime?
+  aiErrorCode String?
+  updatedAt DateTime @updatedAt
 
   createdAt DateTime @default(now())
 
   savedBy SavedStory[]
 
   @@index([moderationStatus, publicationDate])
+  @@unique([sourceId, canonicalUrlHash])
+  @@unique([sourceId, externalGuid])
   @@map("news_stories")
+}
+
+model NewsCategoryConfig {
+  slug String @id
+  label String
+  sortOrder Int @default(0)
+  enabled Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([enabled, sortOrder])
+  @@map("news_category_config")
+}
+
+model NewsSettings {
+  id String @id @default("default")
+  ingestionPaused Boolean @default(false)
+  aiEnabled Boolean @default(false)
+  automaticPublishingEnabled Boolean @default(false)
+  aiDailyRequestLimit Int @default(100)
+  aiSummaryMaxCharacters Int @default(240)
+  retryBaseMinutes Int @default(30)
+  runRetentionDays Int @default(90)
+  updatedAt DateTime @updatedAt
+
+  @@map("news_settings")
+}
+
+model NewsAiQuotaDay {
+  day DateTime @id @db.Date
+  attempts Int @default(0)
+
+  @@map("news_ai_quota_days")
+}
+
+model NewsAutomationEvent {
+  id String @id @default(uuid())
+  sourceId String
+  storyId String
+  action String
+  reason String
+  createdAt DateTime @default(now())
+
+  @@index([sourceId, createdAt(sort: Desc)])
+  @@map("news_automation_events")
 }
 
 model SavedStory {
@@ -2209,6 +2357,7 @@ model Notification {
   category NotificationCategory
   title    String
   body     String
+  imageUrl String?
 
   relatedEntityType String?
   relatedEntityId   String?
@@ -3284,6 +3433,13 @@ model PushBroadcast {
 
   /// ISO-3166-1 alpha-2; null means every country.
   country String?
+  audience PushBroadcastAudience[] @default([])
+  status   PushBroadcastStatus @default(SENT)
+  scheduledFor DateTime?
+  sentAt       DateTime?
+  failureReason String?
+
+  image PushBroadcastImageAsset?
 
   recipientCount Int
   deliveredCount Int
@@ -3295,8 +3451,21 @@ model PushBroadcast {
   createdAt DateTime @default(now())
 
   @@index([createdAt])
+  @@index([status, scheduledFor])
   @@index([sentById])
   @@map("push_broadcasts")
+}
+
+model PushBroadcastImageAsset {
+  id          String @id @default(uuid())
+  broadcastId String @unique
+  broadcast   PushBroadcast @relation(fields: [broadcastId], references: [id], onDelete: Cascade)
+  filename    String
+  mimeType    String
+  bytes       Bytes
+  createdAt   DateTime @default(now())
+
+  @@map("push_broadcast_image_assets")
 }
 
 // ── AI match-video analysis (Phase 1) ───────────────────────────────────────

@@ -88,6 +88,9 @@ export function toPlayerProfile(
   // Whether an unfinished match is arranged between the viewer and this player.
   // Lets the client show a message action without a connection.
   hasOpenChallenge = false,
+  // Returned only to the two participants. The client uses this to allow the
+  // sender to withdraw their still-pending request from the player profile.
+  connectionId: string | null = null,
 ) {
   const profile = player.tennisProfile;
   const isConnected = connectionState === 'CONNECTED';
@@ -106,6 +109,7 @@ export function toPlayerProfile(
     ...toPlayerSummary(player, distanceKm),
     dominantHand: profile?.dominantHand ?? null,
     connectionState,
+    connectionId,
     hasOpenChallenge,
     stats,
     // Gated fields. `null` here means "not visible to you", which the client

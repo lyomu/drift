@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../storage/secure_storage.dart';
+import 'session_manager.dart';
 
 /// Build-time API override, for builds that can't reach the host through
 /// the usual loopback aliases — chiefly a debug APK on a physical phone,
@@ -43,11 +44,23 @@ final baseDioProvider = Provider<Dio>((ref) {
   return Dio(BaseOptions(baseUrl: apiBaseUrl()));
 });
 
+/// Invalidated only when the server confirms that the refresh credential is
+/// unusable. Root navigation and auth state watch this signal.
+final sessionInvalidationProvider = StateProvider<int>((ref) => 0);
+
+final sessionManagerProvider = Provider<SessionManager>((ref) {
+  return SessionManager(
+    ref.watch(secureStorageProvider),
+    ref.watch(baseDioProvider),
+    () => ref.read(sessionInvalidationProvider.notifier).state++,
+  );
+});
+
 /// Authenticated Dio instance — attaches the stored access token to every
 /// request and transparently refreshes + retries once on a 401.
 final dioClientProvider = Provider<Dio>((ref) {
   final storage = ref.watch(secureStorageProvider);
-  final refreshDio = ref.watch(baseDioProvider);
+  final sessions = ref.watch(sessionManagerProvider);
   final dio = Dio(BaseOptions(baseUrl: apiBaseUrl()));
 
   dio.interceptors.add(
@@ -56,35 +69,40 @@ final dioClientProvider = Provider<Dio>((ref) {
         final token = await storage.readAccessToken();
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';
+        } else {
+          options.headers.remove('Authorization');
         }
         handler.next(options);
       },
       onError: (error, handler) async {
         final isUnauthorized = error.response?.statusCode == 401;
-        final refreshToken = await storage.readRefreshToken();
-        if (!isUnauthorized || refreshToken == null) {
+        if (!isUnauthorized ||
+            error.requestOptions.extra['authRetried'] == true) {
           handler.next(error);
           return;
         }
 
+        String newAccessToken;
         try {
-          final response = await refreshDio.post(
-            '/auth/refresh',
-            data: {'refreshToken': refreshToken},
+          newAccessToken = await sessions.refreshAfterUnauthorized(
+            error.requestOptions.headers['Authorization'] as String?,
           );
-          final newAccessToken = response.data['accessToken'] as String;
-          final newRefreshToken = response.data['refreshToken'] as String;
-          await storage.saveTokens(
-            accessToken: newAccessToken,
-            refreshToken: newRefreshToken,
-          );
-
+        } on DioException catch (refreshError) {
+          handler.next(refreshError);
+          return;
+        } catch (_) {
+          handler.next(error);
+          return;
+        }
+        try {
           final retryRequest = error.requestOptions;
           retryRequest.headers['Authorization'] = 'Bearer $newAccessToken';
+          retryRequest.extra['authRetried'] = true;
           final retryResponse = await dio.fetch(retryRequest);
           handler.resolve(retryResponse);
+        } on DioException catch (retryError) {
+          handler.next(retryError);
         } catch (_) {
-          await storage.clear();
           handler.next(error);
         }
       },

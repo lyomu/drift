@@ -7,6 +7,7 @@ import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
 import '../../../shared/widgets/drift_scaffold.dart';
+import '../../../shared/widgets/drift_news_image.dart';
 import '../application/news_providers.dart';
 import '../data/news_repository.dart';
 
@@ -40,6 +41,7 @@ class _NewsStoryDetailScreenState extends ConsumerState<NewsStoryDetailScreen> {
       }
       setState(() => _savedOverride = !currentlySaved);
       ref.invalidate(newsFeedProvider);
+      ref.invalidate(newsPageProvider);
       ref.invalidate(savedStoriesProvider);
     } finally {
       if (mounted) setState(() => _isBusy = false);
@@ -48,12 +50,46 @@ class _NewsStoryDetailScreenState extends ConsumerState<NewsStoryDetailScreen> {
 
   Future<void> _openSource(String url) async {
     final uri = Uri.tryParse(url);
-    if (uri == null) {
+    if (uri == null ||
+        uri.scheme != 'https' ||
+        uri.host.isEmpty ||
+        uri.userInfo.isNotEmpty) {
       _showBroken();
       return;
     }
-    final opened = await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+    var opened = false;
+    try {
+      opened = await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+    } catch (_) {
+      /* external fallback below */
+    }
+    if (!opened) {
+      try {
+        opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } catch (_) {
+        /* show error below */
+      }
+    }
     if (!opened && mounted) _showBroken();
+  }
+
+  Future<void> _openExternal(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null ||
+        uri.scheme != 'https' ||
+        uri.host.isEmpty ||
+        uri.userInfo.isNotEmpty) {
+      _showBroken();
+      return;
+    }
+    try {
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication) &&
+          mounted) {
+        _showBroken();
+      }
+    } catch (_) {
+      if (mounted) _showBroken();
+    }
   }
 
   void _showBroken() {
@@ -77,6 +113,7 @@ class _NewsStoryDetailScreenState extends ConsumerState<NewsStoryDetailScreen> {
           savedOverride: _savedOverride,
           onToggleSave: _toggleSave,
           onOpenSource: () => _openSource(value.originalUrl),
+          onOpenExternal: () => _openExternal(value.originalUrl),
         ),
         AsyncError() => Center(
           child: Text(
@@ -97,6 +134,7 @@ class _Body extends StatelessWidget {
     required this.savedOverride,
     required this.onToggleSave,
     required this.onOpenSource,
+    required this.onOpenExternal,
   });
 
   final StoryDetail story;
@@ -104,6 +142,7 @@ class _Body extends StatelessWidget {
   final bool? savedOverride;
   final Future<void> Function(bool currentlySaved) onToggleSave;
   final VoidCallback onOpenSource;
+  final VoidCallback onOpenExternal;
 
   @override
   Widget build(BuildContext context) {
@@ -115,20 +154,11 @@ class _Body extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(DriftSpacing.s5),
       children: [
-        if (summary.imageUrl != null) ...[
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.network(
-              summary.imageUrl!,
-              height: 180,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) =>
-                  const SizedBox.shrink(),
-            ),
-          ),
-          const SizedBox(height: DriftSpacing.s4),
-        ],
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: DriftNewsImage(url: summary.imageUrl, height: 180),
+        ),
+        const SizedBox(height: DriftSpacing.s4),
         Text(summary.headline, style: type.h2),
         const SizedBox(height: DriftSpacing.s1),
         Text(
@@ -139,6 +169,11 @@ class _Body extends StatelessWidget {
         Text(summary.highlight, style: type.body),
         const SizedBox(height: DriftSpacing.s6),
         DriftButton(label: 'Open Original Source', onPressed: onOpenSource),
+        DriftButton(
+          label: 'Open in browser',
+          variant: DriftButtonVariant.text,
+          onPressed: onOpenExternal,
+        ),
         const SizedBox(height: DriftSpacing.s2),
         DriftButton(
           label: isBusy ? 'Saving…' : (saved ? 'Remove from Saved' : 'Save'),

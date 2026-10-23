@@ -305,8 +305,8 @@ class AgePolicyAcceptance extends StatelessWidget {
             SizedBox(width: 10),
             Expanded(
               child: Text(
-                'I confirm I am 18 or older and agree to the Terms & '
-                'Privacy Policy.',
+                'I confirm I am 18 or older and agree to the Terms and '
+                'Conditions and Privacy Policy.',
                 style: type.caption.copyWith(
                   color: colors.textSecondary,
                   height: 1.35,

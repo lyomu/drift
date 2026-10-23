@@ -1,10 +1,15 @@
 import {
+  IsArray,
+  IsDateString,
+  IsEnum,
   IsOptional,
   IsString,
   Length,
   MaxLength,
   MinLength,
 } from 'class-validator';
+import { PushBroadcastAudience } from '@prisma/client';
+import { Transform } from 'class-transformer';
 
 export class SendPushBroadcastDto {
   @IsString()
@@ -26,4 +31,23 @@ export class SendPushBroadcastDto {
   @IsString()
   @Length(2, 2)
   country?: string | null;
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (Array.isArray(value)) return value;
+    if (typeof value !== 'string') return value;
+    try {
+      return JSON.parse(value);
+    } catch {
+      return [value];
+    }
+  })
+  @IsArray()
+  @IsEnum(PushBroadcastAudience, { each: true })
+  audience?: PushBroadcastAudience[];
+
+  /** Future UTC ISO timestamp. Omit to deliver immediately. */
+  @IsOptional()
+  @IsDateString()
+  scheduledFor?: string;
 }

@@ -9,6 +9,11 @@ export type PushBroadcastRow = {
   body: string;
   /** ISO-3166-1 alpha-2; null = the send covered every country. */
   country: string | null;
+  audience: ("PLAYER" | "COACH" | "CLUB_STAFF")[];
+  status: "SCHEDULED" | "SENDING" | "SENT" | "FAILED" | "CANCELLED";
+  scheduledFor: string | null;
+  sentAt: string | null;
+  imageUrl: string | null;
   recipientCount: number;
   deliveredCount: number;
   skippedCount: number;

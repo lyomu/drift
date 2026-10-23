@@ -3,6 +3,7 @@ export function toNotificationDto(notification: {
   category: string;
   title: string;
   body: string;
+  imageUrl: string | null;
   relatedEntityType: string | null;
   relatedEntityId: string | null;
   readAt: Date | null;
@@ -13,6 +14,7 @@ export function toNotificationDto(notification: {
     category: notification.category,
     title: notification.title,
     body: notification.body,
+    imageUrl: notification.imageUrl,
     relatedEntityType: notification.relatedEntityType,
     relatedEntityId: notification.relatedEntityId,
     readAt: notification.readAt,

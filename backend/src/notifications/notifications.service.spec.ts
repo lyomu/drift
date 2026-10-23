@@ -30,6 +30,7 @@ function createMockPrisma(): MockPrisma {
       findFirst: jest.fn(),
       update: jest.fn(),
       updateMany: jest.fn(),
+      deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
     },
     notificationPreference: {
       findUnique: jest.fn().mockResolvedValue(defaultPreference()),
@@ -156,6 +157,37 @@ describe('NotificationsService', () => {
       expect(prisma.notification.update).toHaveBeenCalledWith({
         where: { id: 'n1' },
         data: { readAt: originalReadAt },
+      });
+    });
+  });
+
+  describe('removal', () => {
+    it('removes one notification only within the caller’s account', async () => {
+      prisma.notification.deleteMany.mockResolvedValue({ count: 1 });
+
+      await expect(service.remove('user-1', 'n1')).resolves.toEqual({
+        removed: true,
+      });
+      expect(prisma.notification.deleteMany).toHaveBeenCalledWith({
+        where: { id: 'n1', userId: 'user-1' },
+      });
+    });
+
+    it('does not reveal another user’s notification through deletion', async () => {
+      await expect(
+        service.remove('user-1', 'someone-elses'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(prisma.notification.deleteMany).toHaveBeenCalledWith({
+        where: { id: 'someone-elses', userId: 'user-1' },
+      });
+    });
+
+    it('clears every notification belonging to the caller', async () => {
+      prisma.notification.deleteMany.mockResolvedValue({ count: 3 });
+
+      await expect(service.clearAll('user-1')).resolves.toEqual({ cleared: 3 });
+      expect(prisma.notification.deleteMany).toHaveBeenCalledWith({
+        where: { userId: 'user-1' },
       });
     });
   });

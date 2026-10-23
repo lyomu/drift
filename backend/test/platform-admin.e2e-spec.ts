@@ -6,6 +6,12 @@ import * as bcrypt from 'bcrypt';
 import { PlatformPermission } from '@prisma/client';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { fetchFeedDocument } from '../src/news/feed-fetch';
+
+jest.mock('../src/news/feed-fetch', () => ({
+  ...jest.requireActual('../src/news/feed-fetch'),
+  fetchFeedDocument: jest.fn(),
+}));
 
 interface TestUser {
   email: string;
@@ -33,6 +39,9 @@ describe('Platform Admin (e2e)', () => {
   };
   const adminEmail = `e2e-pa-staff-${stamp}@test.com`;
   const adminRoleName = `E2E Full Access ${stamp}`;
+  const editorEmail = `e2e-news-editor-${stamp}@test.com`;
+  const editorRoleName = `E2E News Editor ${stamp}`;
+  const newsCategorySlug = `E2E_TENNIS_${stamp}`;
   const adminPassword = 'staff-password-1';
   let adminToken = '';
 
@@ -220,14 +229,24 @@ describe('Platform Admin (e2e)', () => {
     await prisma.adminAuditLog.deleteMany({
       where: { actor: { email: adminEmail } },
     });
+    await prisma.adminAuditLog.deleteMany({ where: { actor: { email: editorEmail } } });
     await prisma.newsStory.deleteMany({
       where: { source: { name: `E2E Source ${stamp}` } },
     });
     await prisma.newsSource.deleteMany({
       where: { name: `E2E Source ${stamp}` },
     });
+    await prisma.newsCategoryConfig.deleteMany({
+      where: { slug: newsCategorySlug },
+    });
+    await prisma.newsSettings.upsert({
+      where: { id: 'default' },
+      create: { id: 'default' },
+      update: { ingestionPaused: false },
+    });
     await prisma.platformAdmin.deleteMany({ where: { email: adminEmail } });
-    await prisma.platformRole.deleteMany({ where: { name: adminRoleName } });
+    await prisma.platformAdmin.deleteMany({ where: { email: editorEmail } });
+    await prisma.platformRole.deleteMany({ where: { name: { in: [adminRoleName, editorRoleName] } } });
     await app.close();
   }, 60_000);
 
@@ -249,6 +268,28 @@ describe('Platform Admin (e2e)', () => {
     await authed(users.alice.token, 'get', '/platform-admin/users').expect(401);
     // ...and a platform token can never open a player route.
     await authed(adminToken, 'get', '/users/me').expect(401);
+  });
+
+  it('allows editorial review but denies source rights, automation, and audit to an editor', async () => {
+    const role = await prisma.platformRole.create({
+      data: { name: editorRoleName, description: 'E2E editorial access only',
+        permissions: { create: [{ permission: PlatformPermission.CONTENT_MANAGE }] } },
+    });
+    await prisma.platformAdmin.create({ data: {
+      email: editorEmail, passwordHash: await bcrypt.hash(adminPassword, 4),
+      name: 'E2E Editor', roleId: role.id,
+    } });
+    const login = await request(app.getHttpServer()).post('/platform-admin/auth/login')
+      .send({ email: editorEmail, password: adminPassword }).expect(200);
+    const token = login.body.accessToken as string;
+    await authed(token, 'get', '/platform-admin/news/stories').expect(200);
+    await authed(token, 'get', '/platform-admin/news/audit').expect(403);
+    await authed(token, 'patch', '/platform-admin/news/settings').send({
+      ingestionPaused: false, aiEnabled: false, automaticPublishingEnabled: true,
+      aiDailyRequestLimit: 100, aiSummaryMaxCharacters: 240,
+    }).expect(403);
+    await authed(token, 'patch', '/platform-admin/news/sources/arbitrary/rights')
+      .send({ status: 'APPROVED' }).expect(403);
   });
 
   it('lists users and suspends one for real', async () => {
@@ -428,16 +469,45 @@ describe('Platform Admin (e2e)', () => {
     expect(after?.status).toBe('RESOLVED');
   });
 
-  it('manages news sources and moderates stories', async () => {
+  it('manages categories, source rights, editorial review, and ingestion pause', async () => {
+    await authed(adminToken, 'post', '/platform-admin/news/categories')
+      .send({ slug: newsCategorySlug, label: 'E2E Tennis', sortOrder: 90 })
+      .expect(201);
+    const publicCategories = await authed(
+      users.bob.token,
+      'get',
+      '/news/categories',
+    ).expect(200);
+    expect(
+      publicCategories.body.categories.some(
+        (c: { slug: string }) => c.slug === newsCategorySlug,
+      ),
+    ).toBe(true);
+
     const sourceName = `E2E Source ${stamp}`;
     const source = await authed(
       adminToken,
       'post',
       '/platform-admin/news/sources',
     )
-      .send({ name: sourceName, feedUrl: null, status: 'ACTIVE' })
+      .send({
+        name: sourceName,
+        feedUrl: 'https://publisher.example/feed',
+        status: 'ACTIVE',
+      })
       .expect(201);
-    expect(source.body.status).toBe('ACTIVE');
+    expect(source.body.status).toBe('PAUSED');
+
+    jest.mocked(fetchFeedDocument).mockResolvedValueOnce({
+      xml: `<?xml version="1.0"?><rss version="2.0"><channel><title>Test tennis publisher</title><item><title>Sample story</title><link>https://publisher.example/story</link><description>Sample excerpt.</description></item></channel></rss>`,
+      httpStatus: 200, finalUrl: 'https://publisher.example/feed',
+      redirectCount: 0, latencyMs: 12, etag: null, lastModified: null,
+    });
+    const connectivity = await authed(adminToken, 'post',
+      `/platform-admin/news/sources/${source.body.id}/test`).expect(201);
+    expect(connectivity.body).toMatchObject({ status: 'OK', httpStatus: 200,
+      feedTitle: 'Test tennis publisher', itemCount: 1, latencyMs: 12 });
+    expect(await prisma.newsStory.count({ where: { sourceId: source.body.id } })).toBe(0);
 
     // SSRF policy: a feed URL pointing at a private/loopback address or a
     // non-HTTPS scheme is rejected at write time.
@@ -449,31 +519,118 @@ describe('Platform Admin (e2e)', () => {
       })
       .expect(400);
 
-    const story = await prisma.newsStory.create({
-      data: {
-        sourceId: source.body.id,
-        headline: `E2E story ${stamp}`,
-        highlight: 'Pending moderation.',
-        originalUrl: 'https://example.test/e2e-story',
-        publicationDate: new Date(),
-        categories: ['LATEST'],
-        topics: [],
-        moderationStatus: 'PENDING',
-      },
+    await authed(
+      adminToken,
+      'patch',
+      `/platform-admin/news/sources/${source.body.id}/rights`,
+    )
+      .send({
+        status: 'APPROVED',
+        permissionReference: 'Controlled e2e fixture',
+        commercialUseAllowed: true,
+        headlineAllowed: true,
+        excerptAllowed: true,
+        imageAllowed: false,
+        aiProcessingAllowed: false,
+        automaticPublishingAllowed: false,
+        cacheAllowed: true,
+        attributionText: sourceName,
+      })
+      .expect(200);
+    await authed(
+      adminToken,
+      'patch',
+      `/platform-admin/news/sources/${source.body.id}`,
+    )
+      .send({
+        name: sourceName,
+        feedUrl: 'https://publisher.example/feed',
+        status: 'ACTIVE',
+        pollIntervalMinutes: 30,
+      })
+      .expect(200);
+    await prisma.newsSource.update({
+      where: { id: source.body.id },
+      data: { nextPollAt: null },
     });
+    jest.mocked(fetchFeedDocument).mockResolvedValueOnce({ xml: `<?xml version="1.0"?><rss version="2.0"><channel><title>Controlled tennis feed</title><item><guid>e2e-${stamp}</guid><title>E2E story ${stamp}</title><link>https://publisher.example/e2e-story</link><description>A controlled tennis preview from a licensed test fixture.</description><pubDate>Thu, 22 Oct 2026 08:00:00 GMT</pubDate></item></channel></rss>`, httpStatus: 200, finalUrl: 'https://publisher.example/feed', redirectCount: 0, latencyMs: 1, etag: null, lastModified: null });
+    const sync = await authed(adminToken, 'post', `/platform-admin/news/sources/${source.body.id}/sync`).expect(201);
+    expect(sync.body.created).toBe(1);
+    const story = await prisma.newsStory.findFirstOrThrow({
+      where: { sourceId: source.body.id, originalUrl: 'https://publisher.example/e2e-story' },
+    });
+    expect(story.moderationStatus).toBe('PENDING');
+    await authed(users.bob.token, 'get', `/news/${story.id}`).expect(404);
+
+    await authed(
+      adminToken,
+      'patch',
+      `/platform-admin/news/stories/${story.id}`,
+    )
+      .send({
+        headline: `Verified E2E story ${stamp}`,
+        highlight: 'A controlled and reviewed tennis preview.',
+        categories: ['LATEST', newsCategorySlug],
+        editorialVersion: 1,
+        reason: 'Verified against the controlled publisher fixture',
+      })
+      .expect(200);
 
     await authed(
       adminToken,
       'patch',
       `/platform-admin/news/stories/${story.id}/moderation`,
     )
-      .send({ moderationStatus: 'APPROVED' })
+      .send({
+        moderationStatus: 'APPROVED',
+        reason: 'Verified original publisher link and preview',
+      })
       .expect(200);
 
     const after = await prisma.newsStory.findUnique({
       where: { id: story.id },
     });
     expect(after?.moderationStatus).toBe('APPROVED');
+    expect(after?.editorialVersion).toBe(2);
+
+    const visible = await authed(
+      users.bob.token,
+      'get',
+      `/news/${story.id}`,
+    ).expect(200);
+    expect(visible.body.headline).toBe(`Verified E2E story ${stamp}`);
+
+    await authed(adminToken, 'patch', '/platform-admin/news/settings')
+      .send({ ingestionPaused: true, aiEnabled: false, automaticPublishingEnabled: false, aiDailyRequestLimit: 100, aiSummaryMaxCharacters: 240 })
+      .expect(200);
+    const settings = await authed(
+      adminToken,
+      'get',
+      '/platform-admin/news/settings',
+    ).expect(200);
+    expect(settings.body.ingestionPaused).toBe(true);
+    await authed(adminToken, 'patch', '/platform-admin/news/settings')
+      .send({ ingestionPaused: false, aiEnabled: false, automaticPublishingEnabled: false, aiDailyRequestLimit: 100, aiSummaryMaxCharacters: 240 })
+      .expect(200);
+
+    await authed(
+      adminToken,
+      'patch',
+      `/platform-admin/news/stories/${story.id}/moderation`,
+    )
+      .send({ moderationStatus: 'ARCHIVED', reason: 'E2E withdrawal check' })
+      .expect(200);
+    await authed(users.bob.token, 'get', `/news/${story.id}`).expect(404);
+    const audit = await authed(
+      adminToken,
+      'get',
+      '/platform-admin/news/audit',
+    ).expect(200);
+    expect(
+      audit.body.events.some(
+        (row: { action: string }) => row.action === 'story.archived',
+      ),
+    ).toBe(true);
 
     // Cleanup of the story happens in afterAll alongside the source.
   });

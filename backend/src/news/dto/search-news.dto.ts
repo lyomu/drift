@@ -1,11 +1,19 @@
 import { Type } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, Max, Min } from 'class-validator';
-import { NewsCategory } from '@prisma/client';
+import {
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  MaxLength,
+  Min,
+  Matches,
+} from 'class-validator';
 
 export class SearchNewsDto {
   @IsOptional()
-  @IsEnum(NewsCategory)
-  category?: NewsCategory;
+  @IsString()
+  @Matches(/^[A-Z][A-Z0-9_]{0,49}$/)
+  category?: string;
 
   @IsOptional()
   @Type(() => Number)
@@ -19,4 +27,9 @@ export class SearchNewsDto {
   @IsInt()
   @Min(0)
   skip?: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(400)
+  cursor?: string;
 }

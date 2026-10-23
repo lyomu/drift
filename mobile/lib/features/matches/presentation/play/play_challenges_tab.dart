@@ -7,10 +7,12 @@ import '../../../../core/theme/drift_typography.dart';
 import '../../../../shared/widgets/drift_pill.dart';
 import '../../../../shared/widgets/drift_player_card.dart';
 import '../../../../shared/widgets/drift_soft_card.dart';
+import '../../../auth/data/auth_repository.dart';
 import '../../../users/application/current_user_provider.dart';
 import '../../application/matches_providers.dart';
 import '../../data/matches_repository.dart';
 import '_play_tab_scaffold.dart';
+import '../withdraw_challenge_dialog.dart';
 
 /// Play → Challenges. Incoming and outgoing challenges still being agreed;
 /// both actions open Match Detail, where accept / decline / propose live.
@@ -34,18 +36,39 @@ class PlayChallengesTab extends ConsumerWidget {
   }
 }
 
-class _ChallengeCard extends StatelessWidget {
+class _ChallengeCard extends ConsumerWidget {
   const _ChallengeCard({required this.match, required this.viewerId});
 
   final DriftMatch match;
   final String viewerId;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final type = Theme.of(context).extension<DriftTypography>()!;
     final colors = Theme.of(context).extension<DriftColors>()!;
     final opponent = match.opponentFor(viewerId)?.player;
     final route = '/matches/${match.id}';
+    final canWithdraw = match.canWithdraw(viewerId);
+
+    Future<void> undo() async {
+      if (!await confirmWithdrawChallenge(context)) return;
+      try {
+        await ref.read(matchesRepositoryProvider).withdraw(match.id);
+        ref.invalidate(matchListProvider(MatchSegment.challenges));
+        ref.invalidate(matchDetailProvider(match.id));
+        if (context.mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Challenge withdrawn.')));
+        }
+      } on AuthException catch (error) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(error.message)));
+        }
+      }
+    }
 
     return DriftSoftCard(
       child: Column(
@@ -89,14 +112,16 @@ class _ChallengeCard extends StatelessWidget {
                   onTap: () => context.push(route),
                 ),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _CardButton(
-                  label: 'Respond',
-                  filled: true,
-                  onTap: () => context.push(route),
+              if (canWithdraw || match.createdById != viewerId) ...[
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _CardButton(
+                    label: canWithdraw ? 'Undo challenge' : 'Respond',
+                    filled: true,
+                    onTap: canWithdraw ? undo : () => context.push(route),
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
         ],

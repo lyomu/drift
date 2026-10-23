@@ -1,59 +1,81 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { AccountStatus, OnboardingStep } from '@prisma/client';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  AccountStatus,
+  ClubMembershipStatus,
+  OnboardingStep,
+  PushBroadcastAudience,
+  PushBroadcastStatus,
+} from '@prisma/client';
 import type { Prisma } from '@prisma/client';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { AuditService } from './audit.service';
 import { SendPushBroadcastDto } from './dto/push-broadcast-admin.dto';
 
-const BROADCAST_INCLUDE = {
+const LIST_TAKE = 250;
+const imageSelect = {
+  id: true,
+  filename: true,
+} satisfies Prisma.PushBroadcastImageAssetSelect;
+const include = {
   sentBy: { select: { id: true, email: true, name: true } },
+  image: { select: imageSelect },
 } satisfies Prisma.PushBroadcastInclude;
 
-/** Matches the waitlist broadcast history's list cap. */
-const LIST_TAKE = 250;
-
-function recipientsWhere(country?: string): Prisma.UserWhereInput {
+function recipientsWhere(
+  country?: string,
+  audience: PushBroadcastAudience[] = [],
+): Prisma.UserWhereInput {
+  const segments: Prisma.UserWhereInput[] = [];
+  if (audience.includes(PushBroadcastAudience.PLAYER))
+    segments.push({ tennisProfile: { isNot: null } });
+  if (audience.includes(PushBroadcastAudience.COACH))
+    segments.push({ coachProfile: { isNot: null } });
+  if (audience.includes(PushBroadcastAudience.CLUB_STAFF))
+    segments.push({
+      clubMemberships: { some: { status: ClubMembershipStatus.ACTIVE } },
+    });
   return {
-    // A broadcast must never reach the seeded demo persona — same rule
-    // every other discovery surface follows (common/demo-scope.ts).
     isDemo: false,
     accountStatus: AccountStatus.ACTIVE,
     onboardingStep: OnboardingStep.COMPLETE,
     ...(country ? { tennisProfile: { is: { country } } } : {}),
+    ...(segments.length ? { OR: segments } : {}),
   };
 }
 
-/**
- * Platform-wide push notifications, sent from platform admin to real app
- * accounts. Distinct from WaitlistAdminService.broadcast, which emails
- * pre-signup leads over SMTP — this reaches signed-up users through
- * NotificationsService/PushService, so it both writes an in-app
- * notification row and fires FCM, and it respects each recipient's own
- * ANNOUNCEMENTS preference rather than ignoring it.
- *
- * Sends sequentially, one NotificationsService.create call per recipient —
- * the same simple, non-queued pattern WaitlistAdminService.broadcast uses
- * for email. Fine at current user counts; worth revisiting (e.g. a BullMQ
- * job, which this codebase already uses for video analysis) if the active
- * user count grows enough that an in-request loop risks a timeout.
- */
 @Injectable()
 export class PushBroadcastAdminService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationsService,
     private readonly audit: AuditService,
+    private readonly config: ConfigService,
   ) {}
 
-  /** The page's single read: send history plus the countries to offer in
-   * the filter — sourced from active supported markets, not a scan over
-   * every user's own country, since that's the canonical "where Drift
-   * actually operates" list. */
+  private imageUrl(id: string) {
+    const base = (this.config.get<string>('PUBLIC_API_URL') ?? '').replace(
+      /\/$/,
+      '',
+    );
+    return `${base}/media/push-broadcast-images/${id}`;
+  }
+
+  private dto(
+    row: Prisma.PushBroadcastGetPayload<{ include: typeof include }>,
+  ) {
+    return { ...row, imageUrl: row.image ? this.imageUrl(row.image.id) : null };
+  }
+
   async overview() {
     const [broadcasts, markets] = await Promise.all([
       this.prisma.pushBroadcast.findMany({
-        include: BROADCAST_INCLUDE,
+        include,
         orderBy: { createdAt: 'desc' },
         take: LIST_TAKE,
       }),
@@ -64,70 +86,186 @@ export class PushBroadcastAdminService {
         orderBy: { countryName: 'asc' },
       }),
     ]);
-    return { broadcasts, countries: markets };
+    return {
+      broadcasts: broadcasts.map((row) => this.dto(row)),
+      countries: markets,
+    };
   }
 
-  /** Live recipient count for the compose form, resolved from the exact
-   * same filter `broadcast()` sends to. */
-  async count(country?: string) {
-    const recipientCount = await this.prisma.user.count({
-      where: recipientsWhere(country),
-    });
-    return { recipientCount };
+  async count(country?: string, audience: PushBroadcastAudience[] = []) {
+    return {
+      recipientCount: await this.prisma.user.count({
+        where: recipientsWhere(country?.toUpperCase(), audience),
+      }),
+    };
   }
 
-  async broadcast(actorId: string, dto: SendPushBroadcastDto) {
+  async broadcast(
+    actorId: string,
+    dto: SendPushBroadcastDto,
+    image?: Express.Multer.File,
+  ) {
+    if (
+      image &&
+      (!['image/jpeg', 'image/png'].includes(image.mimetype) ||
+        image.size > 5 * 1024 * 1024)
+    )
+      throw new BadRequestException('Use a PNG or JPG poster under 5MB.');
     const country = dto.country?.toUpperCase() || undefined;
-    const recipients = await this.prisma.user.findMany({
-      where: recipientsWhere(country),
-      select: { id: true },
+    const audience = [...new Set(dto.audience ?? [])];
+    const scheduledFor = dto.scheduledFor ? new Date(dto.scheduledFor) : null;
+    if (
+      scheduledFor &&
+      (Number.isNaN(scheduledFor.valueOf()) || scheduledFor <= new Date())
+    )
+      throw new BadRequestException('Choose a future send time.');
+    const recipientCount = await this.prisma.user.count({
+      where: recipientsWhere(country, audience),
     });
-
-    if (recipients.length === 0) {
+    if (!recipientCount)
       throw new BadRequestException(
         'No users match this audience, so there is nobody to notify.',
       );
-    }
-
-    let deliveredCount = 0;
-    for (const recipient of recipients) {
-      const delivered = await this.notifications.create(
-        recipient.id,
-        'ANNOUNCEMENTS',
-        dto.title,
-        dto.body,
-      );
-      if (delivered) deliveredCount += 1;
-    }
-    const skippedCount = recipients.length - deliveredCount;
-
     const record = await this.prisma.pushBroadcast.create({
       data: {
         title: dto.title,
         body: dto.body,
         country: country ?? null,
-        recipientCount: recipients.length,
-        deliveredCount,
-        skippedCount,
+        audience,
+        recipientCount,
+        deliveredCount: 0,
+        skippedCount: 0,
         sentById: actorId,
+        status: scheduledFor
+          ? PushBroadcastStatus.SCHEDULED
+          : PushBroadcastStatus.SENDING,
+        scheduledFor,
+        ...(image
+          ? {
+              image: {
+                create: {
+                  filename: image.originalname,
+                  mimeType: image.mimetype,
+                  bytes: new Uint8Array(image.buffer),
+                },
+              },
+            }
+          : {}),
       },
-      include: BROADCAST_INCLUDE,
+      include,
     });
-
     await this.audit.record(
       actorId,
-      'push.broadcast',
+      scheduledFor ? 'push.broadcast.schedule' : 'push.broadcast',
       'PushBroadcast',
       record.id,
-      {
-        title: dto.title,
-        country: country ?? 'ALL',
-        recipientCount: recipients.length,
-        deliveredCount,
-        skippedCount,
-      },
+      { country: country ?? 'ALL', audience, scheduledFor, recipientCount },
     );
+    if (scheduledFor) return this.dto(record);
+    return this.deliver(record.id);
+  }
 
-    return record;
+  async deliver(id: string) {
+    const broadcast = await this.prisma.pushBroadcast.findUnique({
+      where: { id },
+      include,
+    });
+    if (!broadcast) throw new NotFoundException('Push broadcast not found.');
+    const recipients = await this.prisma.user.findMany({
+      where: recipientsWhere(
+        broadcast.country ?? undefined,
+        broadcast.audience,
+      ),
+      select: { id: true },
+    });
+    let deliveredCount = 0;
+    const imageUrl = broadcast.image
+      ? this.imageUrl(broadcast.image.id)
+      : undefined;
+    try {
+      for (const recipient of recipients)
+        if (
+          await this.notifications.create(
+            recipient.id,
+            'ANNOUNCEMENTS',
+            broadcast.title,
+            broadcast.body,
+            undefined,
+            undefined,
+            imageUrl,
+          )
+        )
+          deliveredCount++;
+      const sent = await this.prisma.pushBroadcast.update({
+        where: { id },
+        data: {
+          status: PushBroadcastStatus.SENT,
+          sentAt: new Date(),
+          recipientCount: recipients.length,
+          deliveredCount,
+          skippedCount: recipients.length - deliveredCount,
+        },
+        include,
+      });
+      return this.dto(sent);
+    } catch (error) {
+      await this.prisma.pushBroadcast.update({
+        where: { id },
+        data: {
+          status: PushBroadcastStatus.FAILED,
+          failureReason:
+            error instanceof Error ? error.message : 'Delivery failed.',
+        },
+      });
+      throw error;
+    }
+  }
+
+  async claimDue(limit = 50) {
+    const due = await this.prisma.pushBroadcast.findMany({
+      where: {
+        status: PushBroadcastStatus.SCHEDULED,
+        scheduledFor: { lte: new Date() },
+      },
+      select: { id: true },
+      take: limit,
+      orderBy: { scheduledFor: 'asc' },
+    });
+    const claimed: string[] = [];
+    for (const row of due) {
+      const update = await this.prisma.pushBroadcast.updateMany({
+        where: { id: row.id, status: PushBroadcastStatus.SCHEDULED },
+        data: { status: PushBroadcastStatus.SENDING },
+      });
+      if (update.count) claimed.push(row.id);
+    }
+    return claimed;
+  }
+
+  async cancel(actorId: string, id: string) {
+    const result = await this.prisma.pushBroadcast.updateMany({
+      where: { id, status: PushBroadcastStatus.SCHEDULED },
+      data: { status: PushBroadcastStatus.CANCELLED },
+    });
+    if (!result.count)
+      throw new BadRequestException(
+        'Only a scheduled broadcast can be cancelled.',
+      );
+    await this.audit.record(
+      actorId,
+      'push.broadcast.cancel',
+      'PushBroadcast',
+      id,
+    );
+    return { cancelled: true };
+  }
+
+  async imageContent(id: string) {
+    const image = await this.prisma.pushBroadcastImageAsset.findUnique({
+      where: { id },
+      select: { bytes: true, mimeType: true, filename: true },
+    });
+    if (!image) throw new NotFoundException('Poster not found.');
+    return image;
   }
 }

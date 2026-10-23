@@ -1,51 +1,40 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
-import '../../../shared/widgets/drift_card.dart';
+import '../../../shared/widgets/buttons/drift_button.dart';
 import '../../../shared/widgets/drift_scaffold.dart';
 
-const _faqs = [
-  (
-    'How is my level calculated?',
-    'Your level starts from a short self-assessment during onboarding, '
-        'then adjusts over time based on your confirmed match results.',
-  ),
-  (
-    'Who can see my skill breakdown and availability?',
-    "By default, only your connections. You can open this up to everyone "
-        "in Settings > Privacy Settings.",
-  ),
-  (
-    'How do I challenge someone to a match?',
-    "Open a player's profile and tap Challenge to a match — you don't "
-        'need to be connected first.',
-  ),
-  (
-    'How do I report or block someone?',
-    'Open their profile and use the safety options in the top-right '
-        'corner, or report a specific message from a chat thread.',
-  ),
-  (
-    'What happens when I delete my account?',
-    "Your account is deactivated immediately and you're signed out "
-        'everywhere. A deletion request is filed automatically and runs '
-        'after a 30-day recovery window. Contact support before then if the '
-        'deletion was a mistake.',
-  ),
-  (
-    'Can minors use Drift Tennis?',
-    'Not at launch. Drift Tennis accounts are limited to people who are 18 '
-        'or older until a reviewed guardian-consent flow exists.',
-  ),
-];
+const _faqUrl = 'https://driftsports.app/#faq';
 
-/// Help & FAQ — `foundation/04-screen-inventory.md` §A.11. Static content;
-/// no backend surface (there's no CMS or content-authoring app yet — same
-/// gap as Courts/Learning/News, all of which are seed-only for now).
+/// FAQs are maintained on the public website. Opening the canonical section
+/// keeps Help & FAQ consistent across the app and website as answers change.
 class HelpScreen extends StatelessWidget {
   const HelpScreen({super.key});
+
+  Future<void> _openFaq(BuildContext context) async {
+    final uri = Uri.parse(_faqUrl);
+    var opened = false;
+    try {
+      opened = await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+    } catch (_) {
+      // Some devices do not provide an in-app browser. Try their browser.
+    }
+    if (!opened) {
+      try {
+        opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } catch (_) {
+        // The user-facing fallback is shown below.
+      }
+    }
+    if (!opened && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to open FAQs right now.')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,24 +44,17 @@ class HelpScreen extends StatelessWidget {
     return DriftScaffold(
       title: 'Help & FAQ',
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
         children: [
-          for (final faq in _faqs) ...[
-            DriftCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(faq.$1, style: type.title),
-                  const SizedBox(height: DriftSpacing.s2),
-                  Text(
-                    faq.$2,
-                    style: type.body.copyWith(color: colors.textSecondary),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: DriftSpacing.s3),
-          ],
+          Text('Questions, answered.', style: type.h3),
+          const SizedBox(height: DriftSpacing.s2),
+          Text(
+            'Read the current FAQs for Drift Tennis. This opens the same '
+            'answers published on our website.',
+            style: type.body.copyWith(color: colors.textSecondary),
+          ),
+          const SizedBox(height: DriftSpacing.s6),
+          DriftButton(label: 'Open FAQs', onPressed: () => _openFaq(context)),
         ],
       ),
     );

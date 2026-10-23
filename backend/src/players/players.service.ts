@@ -324,6 +324,7 @@ export class PlayersService {
       connectionStateFor(userId, connection),
       stats,
       openChallenge !== null,
+      connection?.id ?? null,
     );
   }
 }

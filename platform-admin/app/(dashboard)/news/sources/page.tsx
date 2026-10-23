@@ -3,139 +3,302 @@
 import { useCallback, useEffect, useState } from "react";
 import { ModalShell, RowCard, StatBand } from "@/components/dashboard-design";
 import { api, ApiError } from "@/lib/api-client";
-import { Badge, Button, EmptyState, ErrorBanner, Field, Input, PageHeader, plural, statusTone } from "@/components/ui";
+import type { CurrentPlatformAdmin } from "@/lib/access-types";
+import { Badge, Button, Card, EmptyState, ErrorBanner, Field, Input, PageHeader, Select, statusTone } from "@/components/ui";
 
+type RightsStatus = "UNREVIEWED" | "APPROVED" | "RESTRICTED" | "REVOKED";
+type SourceStatus = "ACTIVE" | "PAUSED" | "BLOCKED";
+interface Rights {
+  status: RightsStatus;
+  termsUrl: string | null;
+  permissionReference: string | null;
+  commercialUseAllowed: boolean;
+  headlineAllowed: boolean;
+  excerptAllowed: boolean;
+  imageAllowed: boolean;
+  aiProcessingAllowed: boolean;
+  automaticPublishingAllowed: boolean;
+  cacheAllowed: boolean;
+  attributionText: string | null;
+  expiresAt: string | null;
+  notes: string | null;
+  reviewedAt: string | null;
+}
 interface NewsSource {
   id: string;
   name: string;
   feedUrl: string | null;
-  status: "ACTIVE" | "PAUSED" | "BLOCKED";
+  status: SourceStatus;
+  pollIntervalMinutes: number;
+  publicationMode: "MANUAL" | "AUTO";
+  lastSuccessAt: string | null;
+  lastErrorCode: string | null;
+  nextPollAt: string | null;
+  rights: Rights | null;
   _count?: { stories: number };
 }
+interface FeedTest {
+  status: "OK" | "FAILED";
+  latencyMs: number;
+  httpStatus?: number | null;
+  finalUrl?: string;
+  redirectCount?: number;
+  feedTitle?: string | null;
+  itemCount?: number;
+  errorCode?: string;
+  sampleItems?: { title: string | null; hasLink: boolean; hasDate: boolean; hasExcerpt: boolean }[];
+}
+
+const blankRights: Rights = {
+  status: "UNREVIEWED", termsUrl: "", permissionReference: "",
+  commercialUseAllowed: false, headlineAllowed: false, excerptAllowed: false,
+  imageAllowed: false, aiProcessingAllowed: false, automaticPublishingAllowed: false, cacheAllowed: false,
+  attributionText: "", expiresAt: "", notes: "", reviewedAt: null,
+};
+const rightFields = [
+  ["commercialUseAllowed", "Commercial use"],
+  ["headlineAllowed", "Headlines"],
+  ["excerptAllowed", "Short excerpts"],
+  ["cacheAllowed", "Store excerpts"],
+  ["imageAllowed", "Publisher images"],
+  ["aiProcessingAllowed", "AI processing"],
+  ["automaticPublishingAllowed", "Automatic publishing"],
+] as const;
 
 export default function NewsSourcesPage() {
   const [sources, setSources] = useState<NewsSource[] | null>(null);
+  const [canReviewRights, setCanReviewRights] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [name, setName] = useState("");
   const [feedUrl, setFeedUrl] = useState("");
+  const [selected, setSelected] = useState<NewsSource | null>(null);
+  const [editing, setEditing] = useState<NewsSource | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editUrl, setEditUrl] = useState("");
+  const [editInterval, setEditInterval] = useState(30);
+  const [editMode, setEditMode] = useState<"MANUAL" | "AUTO">("MANUAL");
+  const [rights, setRights] = useState<Rights>(blankRights);
+  const [testResult, setTestResult] = useState<FeedTest | null>(null);
 
   const load = useCallback(async () => {
     try {
       setError(null);
-      const res = await api.get<{ sources: NewsSource[] }>("/news/sources");
-      setSources(res.sources);
+      const [result, admin] = await Promise.all([
+        api.get<{ sources: NewsSource[] }>("/news/sources"),
+        api.get<CurrentPlatformAdmin>("/auth/me"),
+      ]);
+      setSources(result.sources);
+      setCanReviewRights(admin.role.permissions.includes("CONTENT_MANAGE") && admin.role.permissions.includes("PLATFORM_CONFIG_MANAGE"));
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to load sources.");
     }
   }, []);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+  useEffect(() => { void load(); }, [load]);
 
   async function createSource(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim()) return;
     setBusyId("new");
     try {
       await api.post("/news/sources", {
-        name: name.trim(),
-        feedUrl: feedUrl.trim() || null,
-        status: "ACTIVE",
+        name: name.trim(), feedUrl: feedUrl.trim() || null, status: "PAUSED",
       });
-      setName("");
-      setFeedUrl("");
-      setShowCreate(false);
+      setName(""); setFeedUrl(""); setShowCreate(false);
       await load();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Create failed.");
-    } finally {
-      setBusyId(null);
-    }
+    } finally { setBusyId(null); }
   }
 
-  async function cycleStatus(source: NewsSource) {
-    const next = source.status === "ACTIVE" ? "PAUSED" : source.status === "PAUSED" ? "BLOCKED" : "ACTIVE";
+  async function setStatus(source: NewsSource, status: SourceStatus) {
     setBusyId(source.id);
     try {
       await api.patch(`/news/sources/${source.id}`, {
-        name: source.name,
-        feedUrl: source.feedUrl,
-        status: next,
+        name: source.name, feedUrl: source.feedUrl, status,
+        pollIntervalMinutes: source.pollIntervalMinutes,
+        publicationMode: source.publicationMode,
       });
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Update failed.");
-    } finally {
-      setBusyId(null);
-    }
+      setError(err instanceof ApiError ? err.message : "Status update failed.");
+    } finally { setBusyId(null); }
+  }
+
+  function openEdit(source: NewsSource) {
+    setError(null);
+    setEditing(source); setEditName(source.name); setEditUrl(source.feedUrl ?? "");
+    setEditInterval(source.pollIntervalMinutes);
+    setEditMode(source.publicationMode);
+  }
+
+  async function saveSource(e: React.FormEvent) {
+    e.preventDefault(); if (!editing) return;
+    setBusyId(editing.id);
+    try {
+      await api.patch(`/news/sources/${editing.id}`, {
+        name: editName.trim(), feedUrl: editUrl.trim() || null,
+        status: editing.status === "ACTIVE" && (editName.trim() !== editing.name || editUrl.trim() !== editing.feedUrl) ? "PAUSED" : editing.status,
+        pollIntervalMinutes: editInterval,
+        publicationMode: editMode,
+      });
+      setEditing(null); await load();
+    } catch (err) { setError(err instanceof ApiError ? err.message : "Source update failed."); }
+    finally { setBusyId(null); }
+  }
+
+  async function test(source: NewsSource) {
+    setBusyId(source.id);
+    setTestResult(null);
+    try {
+      setTestResult(await api.post<FeedTest>(`/news/sources/${source.id}/test`));
+      setSelected(source);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Connection test failed.");
+    } finally { setBusyId(null); }
+  }
+
+  async function sync(source: NewsSource) {
+    setBusyId(source.id);
+    try {
+      await api.post(`/news/sources/${source.id}/sync`);
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Sync request failed.");
+    } finally { setBusyId(null); }
+  }
+
+  function openRights(source: NewsSource) {
+    setError(null);
+    setSelected(source);
+    setRights({ ...blankRights, ...source.rights });
+    setTestResult(null);
+  }
+
+  async function saveRights(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selected) return;
+    if (rights.status === "REVOKED" && !window.confirm("Revoke rights and withdraw this source’s published stories?")) return;
+    setBusyId(selected.id);
+    try {
+      await api.patch(`/news/sources/${selected.id}/rights`, {
+        ...rights,
+        termsUrl: rights.termsUrl || undefined,
+        permissionReference: rights.permissionReference || undefined,
+        attributionText: rights.attributionText || undefined,
+        expiresAt: rights.expiresAt || undefined,
+        notes: rights.notes || undefined,
+      });
+      setSelected(null);
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Rights update failed.");
+    } finally { setBusyId(null); }
   }
 
   return (
     <div>
-      <PageHeader
-        title="News sources"
-        description="The approved-source list. Ingestion is a later phase - this manages the registry and its lifecycle states."
-        action={<Button variant="secondary" icon="add" onClick={() => setShowCreate(true)}>Add source</Button>}
-      />
+      <PageHeader title="News sources" description="Test feeds and record content permissions before activation. New sources start paused."
+        action={canReviewRights ? <Button variant="secondary" icon="add" onClick={() => { setError(null); setShowCreate(true); }}>Add source</Button> : undefined} />
       <ErrorBanner message={error} />
-
-      <StatBand
-        stats={[
-          { label: "Active", value: sources?.filter((source) => source.status === "ACTIVE").length ?? 0, icon: "rss_feed", tone: "green" },
-          { label: "Paused", value: sources?.filter((source) => source.status === "PAUSED").length ?? 0, icon: "pause_circle", tone: "amber" },
-          { label: "Blocked", value: sources?.filter((source) => source.status === "BLOCKED").length ?? 0, icon: "block", tone: "red" },
-        ]}
-      />
-
-      {sources === null && !error && <EmptyState message="Loading..." />}
+      <StatBand stats={[
+        { label: "Active", value: sources?.filter((s) => s.status === "ACTIVE").length ?? 0, icon: "rss_feed", tone: "green" },
+        { label: "Paused", value: sources?.filter((s) => s.status === "PAUSED").length ?? 0, icon: "pause_circle", tone: "amber" },
+        { label: "Blocked", value: sources?.filter((s) => s.status === "BLOCKED").length ?? 0, icon: "block", tone: "red" },
+      ]} />
+      {sources === null && !error && <EmptyState message="Loading…" />}
       {sources?.length === 0 && <EmptyState message="No sources registered yet." />}
-
-      {sources && sources.length > 0 && (
-        <div className="flex flex-col gap-3">
-          {sources.map((source) => (
-            <RowCard key={source.id}>
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-drift-text-primary">{source.name}</span>
-                    <Badge tone={statusTone(source.status)}>{source.status}</Badge>
-                  </div>
-                  <div className="mt-0.5 text-xs text-drift-text-secondary">
-                    {source.feedUrl ?? "No feed URL yet"} / {source._count?.stories ?? 0} {plural(source._count?.stories ?? 0, "story", "stories")}
-                  </div>
+      <div className="flex flex-col gap-3">
+        {sources?.map((source) => (
+          <RowCard key={source.id}>
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-semibold text-drift-text-primary">{source.name}</span>
+                  <Badge tone={statusTone(source.status)}>{source.status}</Badge>
+                  <Badge tone={statusTone(source.rights?.status ?? "UNREVIEWED")}>{source.rights?.status ?? "UNREVIEWED RIGHTS"}</Badge>
+                  <Badge tone={source.publicationMode === "AUTO" ? "warning" : "info"}>{source.publicationMode === "AUTO" ? "Auto" : "Manual review"}</Badge>
                 </div>
-                <Button variant="secondary" disabled={busyId === source.id} onClick={() => cycleStatus(source)}>
-                  {source.status === "ACTIVE" ? "Pause" : source.status === "PAUSED" ? "Block" : "Re-activate"}
-                </Button>
+                <div className="mt-1 break-all text-xs text-drift-text-secondary">{source.feedUrl ?? "No feed URL"}</div>
+                <div className="mt-1 text-xs text-drift-text-secondary">
+                  {source._count?.stories ?? 0} stories · {source.pollIntervalMinutes} min polling · Last success: {source.lastSuccessAt ? new Date(source.lastSuccessAt).toLocaleString() : "never"}
+                  {source.lastErrorCode ? ` · ${source.lastErrorCode}` : ""}
+                </div>
+                {source.status !== "ACTIVE" && source.rights?.status !== "APPROVED" && <p className="mt-2 text-xs font-semibold text-drift-text-secondary">Record and approve permitted uses in Rights before activating.</p>}
               </div>
-            </RowCard>
-          ))}
-        </div>
-      )}
-
-      {showCreate && (
-        <ModalShell
-          title="Add source"
-          description="Register an approved publisher or feed for the platform news queue."
-          onClose={() => setShowCreate(false)}
-        >
-          <form onSubmit={createSource} className="flex flex-col gap-4">
-            <Field label="Name">
-              <Input required value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Drift Tennis Digest" />
-            </Field>
-            <Field label="Feed URL (optional, for ingestion later)">
-              <Input type="url" value={feedUrl} onChange={(e) => setFeedUrl(e.target.value)} placeholder="https://example.com/feed" />
-            </Field>
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="ghost" onClick={() => setShowCreate(false)}>Cancel</Button>
-              <Button type="submit" icon="add" disabled={busyId === "new"}>Add source</Button>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="secondary" disabled={!source.feedUrl || busyId === source.id} onClick={() => void test(source)}>Test</Button>
+                {canReviewRights && <Button variant="secondary" disabled={busyId === source.id} onClick={() => openEdit(source)}>Edit</Button>}
+                <Button variant="secondary" disabled={busyId === source.id} onClick={() => openRights(source)}>Rights</Button>
+                {canReviewRights && (source.status === "ACTIVE" ? (
+                  <Button variant="secondary" disabled={busyId === source.id} onClick={() => void setStatus(source, "PAUSED")}>Pause</Button>
+                ) : (
+                  <Button variant="secondary" disabled={busyId === source.id || source.rights?.status !== "APPROVED"} onClick={() => void setStatus(source, "ACTIVE")}>Activate</Button>
+                ))}
+                {canReviewRights && <Button variant="secondary" disabled={busyId === source.id || source.status !== "ACTIVE"} onClick={() => void sync(source)}>Sync now</Button>}
+              </div>
             </div>
-          </form>
-        </ModalShell>
-      )}
+          </RowCard>
+        ))}
+      </div>
+
+      {showCreate && <ModalShell title="Add news source" description="A source remains paused until its permissions are reviewed." onClose={() => setShowCreate(false)}>
+        <ErrorBanner message={error} />
+        <form onSubmit={createSource} className="flex flex-col gap-4">
+          <Field label="Publisher name"><Input required maxLength={120} value={name} onChange={(e) => setName(e.target.value)} /></Field>
+          <Field label="RSS or Atom URL"><Input type="url" required value={feedUrl} onChange={(e) => setFeedUrl(e.target.value)} placeholder="https://publisher.example/feed" /></Field>
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="ghost" onClick={() => setShowCreate(false)}>Cancel</Button>
+            <Button type="submit" disabled={busyId === "new"}>Add paused source</Button>
+          </div>
+        </form>
+      </ModalShell>}
+
+      {editing && <ModalShell title={`Edit source · ${editing.name}`} description="Changing publisher identity or feed URL pauses the source and requires a new rights review." onClose={() => setEditing(null)}>
+        <ErrorBanner message={error} />
+        <form onSubmit={saveSource} className="grid gap-4">
+          <Field label="Publisher name"><Input required maxLength={120} value={editName} onChange={(e) => setEditName(e.target.value)} /></Field>
+          <Field label="RSS or Atom URL"><Input type="url" value={editUrl} onChange={(e) => setEditUrl(e.target.value)} /></Field>
+          <Field label="Polling interval (minutes)"><Input type="number" min={15} max={120} value={editInterval} onChange={(e) => setEditInterval(Number(e.target.value))} /></Field>
+          <Field label="Publication mode"><Select value={editMode} onChange={(e) => setEditMode(e.target.value as "MANUAL" | "AUTO")}><option value="MANUAL">Manual review</option><option value="AUTO">Validated automatic publishing</option></Select></Field>
+          {editMode === "AUTO" && <p className="text-sm text-drift-text-secondary">Auto mode requires approved commercial, AI processing, and automatic publishing permissions. Global automation must also be enabled in News Settings.</p>}
+          <div className="flex justify-end gap-2"><Button type="button" variant="ghost" onClick={() => setEditing(null)}>Cancel</Button><Button type="submit" disabled={busyId !== null}>Save source</Button></div>
+        </form>
+      </ModalShell>}
+
+      {selected && <ModalShell title={testResult ? `Connection test · ${selected.name}` : `Source rights · ${selected.name}`}
+        description={testResult ? "This test does not import or publish items." : "Approval requires documented permission for every selected use."}
+        onClose={() => { setSelected(null); setTestResult(null); }}>
+        <ErrorBanner message={error} />
+        {testResult ? <Card>
+          <Badge tone={testResult.status === "OK" ? "success" : "error"}>{testResult.status}</Badge>
+          <div className="mt-3 text-sm text-drift-text-secondary">{testResult.feedTitle ?? testResult.errorCode ?? "Untitled feed"} · HTTP {testResult.httpStatus ?? "unknown"} · {testResult.latencyMs} ms · {testResult.itemCount ?? 0} items · {testResult.redirectCount ?? 0} redirects</div>
+          {testResult.finalUrl && <div className="mt-1 break-all text-xs text-drift-text-secondary">Final feed URL: {testResult.finalUrl}</div>}
+          {testResult.sampleItems?.map((item, i) => <div key={i} className="mt-3 border-t border-drift-border pt-3 text-sm">
+            <div className="font-semibold text-drift-text-primary">{item.title || "Untitled"}</div>
+            <div className="text-xs text-drift-text-secondary">Safe link: {item.hasLink ? "yes" : "no"} · Date: {item.hasDate ? "yes" : "no"} · Excerpt: {item.hasExcerpt ? "yes" : "no"}</div>
+          </div>)}
+        </Card> : <form onSubmit={saveRights} className="flex flex-col gap-4">
+          {!canReviewRights && <p className="text-sm text-drift-text-secondary">Rights approval requires Content and Platform Config permissions.</p>}
+          <Field label="Rights status"><Select disabled={!canReviewRights} value={rights.status} onChange={(e) => setRights({ ...rights, status: e.target.value as RightsStatus })}>
+            <option value="UNREVIEWED">Unreviewed</option><option value="APPROVED">Approved</option><option value="RESTRICTED">Restricted</option><option value="REVOKED">Revoked</option>
+          </Select></Field>
+          <Field label="Permission reference"><Input disabled={!canReviewRights} value={rights.permissionReference ?? ""} onChange={(e) => setRights({ ...rights, permissionReference: e.target.value })} placeholder="Agreement or approval record" /></Field>
+          <Field label="Terms URL"><Input disabled={!canReviewRights} type="url" value={rights.termsUrl ?? ""} onChange={(e) => setRights({ ...rights, termsUrl: e.target.value })} /></Field>
+          <Field label="Attribution text"><Input disabled={!canReviewRights} value={rights.attributionText ?? ""} onChange={(e) => setRights({ ...rights, attributionText: e.target.value })} /></Field>
+          <Field label="Rights expiry"><Input disabled={!canReviewRights} type="date" value={rights.expiresAt?.slice(0, 10) ?? ""} onChange={(e) => setRights({ ...rights, expiresAt: e.target.value ? `${e.target.value}T23:59:59.000Z` : "" })} /></Field>
+          <div className="grid gap-2 sm:grid-cols-2">{rightFields.map(([field, label]) => <label key={field} className="flex items-center gap-2 text-sm text-drift-text-primary">
+            <input type="checkbox" disabled={!canReviewRights} checked={rights[field]} onChange={(e) => setRights({ ...rights, [field]: e.target.checked })} />{label}
+          </label>)}</div>
+          <Field label="Review notes"><Input disabled={!canReviewRights} value={rights.notes ?? ""} onChange={(e) => setRights({ ...rights, notes: e.target.value })} /></Field>
+          {rights.reviewedAt && <p className="text-xs text-drift-text-secondary">Last reviewed: {new Date(rights.reviewedAt).toLocaleString()}</p>}
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="ghost" onClick={() => setSelected(null)}>Close</Button>
+            {canReviewRights && <Button type="submit" disabled={busyId === selected.id}>Save rights</Button>}
+          </div>
+        </form>}
+      </ModalShell>}
     </div>
   );
 }

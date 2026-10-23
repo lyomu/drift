@@ -19,11 +19,18 @@ Future<void> pumpScreen(
   List<Override> overrides = const [],
   Brightness brightness = Brightness.light,
   bool settle = true,
+  TextScaler? textScaler,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
       overrides: overrides,
       child: MaterialApp(
+        builder: textScaler == null
+            ? null
+            : (context, child) => MediaQuery(
+                data: MediaQuery.of(context).copyWith(textScaler: textScaler),
+                child: child!,
+              ),
         theme: brightness == Brightness.dark
             ? AppTheme.dark()
             : AppTheme.light(),

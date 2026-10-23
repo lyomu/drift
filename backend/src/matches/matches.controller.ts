@@ -114,4 +114,9 @@ export class MatchesController {
   ) {
     return this.matches.cancel(this.userId(req), id, dto.reason);
   }
+
+  @Patch(':id/withdraw')
+  withdraw(@Req() req: Request, @Param('id') id: string) {
+    return this.matches.withdraw(this.userId(req), id);
+  }
 }

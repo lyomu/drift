@@ -1,8 +1,13 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { storyInclude, toStoryDetail, toStorySummary } from './news.mapper';
 import { SearchNewsDto } from './dto/search-news.dto';
+import { visibleNewsWhere } from './news-rights';
 
 const DEFAULT_TAKE = 20;
 
@@ -10,21 +15,62 @@ const DEFAULT_TAKE = 20;
 export class NewsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async listCategories() {
+    return {
+      categories: await this.prisma.newsCategoryConfig.findMany({
+        where: { enabled: true },
+        orderBy: [{ sortOrder: 'asc' }, { slug: 'asc' }],
+        select: { slug: true, label: true },
+      }),
+    };
+  }
+
   // ---------------------------------------------------------------- reads
 
   async browse(userId: string, dto: SearchNewsDto) {
-    const where: Prisma.NewsStoryWhereInput = { moderationStatus: 'APPROVED' };
+    const where: Prisma.NewsStoryWhereInput = visibleNewsWhere();
     if (dto.category) {
+      const category = await this.prisma.newsCategoryConfig.findFirst({
+        where: { slug: dto.category, enabled: true },
+      });
+      if (!category) throw new BadRequestException('Unknown news category.');
       where.categories = { has: dto.category };
     }
+    const countWhere = { ...where };
+    if (dto.cursor && dto.skip) {
+      throw new BadRequestException('Use cursor or skip, not both.');
+    }
+    if (dto.cursor) {
+      let decoded: { publicationDate: string; id: string };
+      try {
+        decoded = JSON.parse(
+          Buffer.from(dto.cursor, 'base64url').toString('utf8'),
+        ) as typeof decoded;
+      } catch {
+        throw new BadRequestException('Invalid news cursor.');
+      }
+      const date = new Date(decoded.publicationDate);
+      if (!decoded.id || Number.isNaN(date.getTime())) {
+        throw new BadRequestException('Invalid news cursor.');
+      }
+      where.AND = [
+        {
+          OR: [
+            { publicationDate: { lt: date } },
+            { publicationDate: date, id: { lt: decoded.id } },
+          ],
+        },
+      ];
+    }
+    const take = dto.take ?? DEFAULT_TAKE;
 
     const [total, stories, savedIds] = await Promise.all([
-      this.prisma.newsStory.count({ where }),
+      this.prisma.newsStory.count({ where: countWhere }),
       this.prisma.newsStory.findMany({
         where,
         include: storyInclude,
-        orderBy: { publicationDate: 'desc' },
-        take: dto.take ?? DEFAULT_TAKE,
+        orderBy: [{ publicationDate: 'desc' }, { id: 'desc' }],
+        take: take + 1,
         skip: dto.skip ?? 0,
       }),
       this.savedStoryIds(userId),
@@ -32,13 +78,25 @@ export class NewsService {
 
     return {
       total,
-      stories: stories.map((s) => toStorySummary(s, savedIds.has(s.id))),
+      stories: stories
+        .slice(0, take)
+        .map((s) => toStorySummary(s, savedIds.has(s.id))),
+      nextCursor:
+        stories.length > take
+          ? Buffer.from(
+              JSON.stringify({
+                publicationDate:
+                  stories[take - 1].publicationDate.toISOString(),
+                id: stories[take - 1].id,
+              }),
+            ).toString('base64url')
+          : null,
     };
   }
 
   async getStory(userId: string, id: string) {
     const story = await this.prisma.newsStory.findFirst({
-      where: { id, moderationStatus: 'APPROVED' },
+      where: { id, ...visibleNewsWhere() },
       include: storyInclude,
     });
     if (!story) {
@@ -52,7 +110,7 @@ export class NewsService {
 
   async listSaved(userId: string) {
     const saved = await this.prisma.savedStory.findMany({
-      where: { userId },
+      where: { userId, story: visibleNewsWhere() },
       orderBy: { savedAt: 'desc' },
       include: { story: { include: storyInclude } },
     });
@@ -65,7 +123,7 @@ export class NewsService {
 
   async save(userId: string, storyId: string) {
     const story = await this.prisma.newsStory.findFirst({
-      where: { id: storyId, moderationStatus: 'APPROVED' },
+      where: { id: storyId, ...visibleNewsWhere() },
     });
     if (!story) {
       throw new NotFoundException('Story not found.');

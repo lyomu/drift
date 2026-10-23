@@ -36,6 +36,14 @@ void main() {
           );
 
           expect(tester.takeException(), isNull);
+          if (entry.key == 'LegalScreen') {
+            expect(find.text('Terms and Conditions'), findsOneWidget);
+            expect(find.text('Privacy Policy'), findsOneWidget);
+            expect(find.text('Data Privacy Notice'), findsOneWidget);
+          }
+          if (entry.key == 'HelpScreen') {
+            expect(find.text('Open FAQs'), findsOneWidget);
+          }
         });
       }
     });

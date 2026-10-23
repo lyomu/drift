@@ -94,6 +94,7 @@ class PlayerProfile {
     required this.summary,
     required this.dominantHand,
     required this.connectionState,
+    required this.connectionId,
     required this.skillBreakdown,
     required this.availabilitySlots,
     required this.stats,
@@ -103,6 +104,7 @@ class PlayerProfile {
   final PlayerSummary summary;
   final String? dominantHand;
   final PlayerConnectionState connectionState;
+  final String? connectionId;
 
   /// True while a match between the viewer and this player is still open
   /// (proposed, scheduling or scheduled). Lets the profile offer messaging
@@ -127,6 +129,7 @@ class PlayerProfile {
       connectionState: PlayerConnectionState.fromJson(
         json['connectionState'] as String,
       ),
+      connectionId: json['connectionId'] as String?,
       skillBreakdown: breakdown?.map((k, v) => MapEntry(k, v as num)),
       availabilitySlots: slots
           ?.map((s) => AvailabilitySlot.fromJson(s as Map<String, dynamic>))

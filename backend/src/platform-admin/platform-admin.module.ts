@@ -35,8 +35,13 @@ import { SupportAdminController } from './support-admin.controller';
 import { SupportAdminService } from './support-admin.service';
 import { WaitlistAdminController } from './waitlist-admin.controller';
 import { WaitlistAdminService } from './waitlist-admin.service';
-import { PushBroadcastAdminController } from './push-broadcast-admin.controller';
+import {
+  PushBroadcastAdminController,
+  PushBroadcastMediaController,
+} from './push-broadcast-admin.controller';
+import { PushBroadcastScheduler } from './push-broadcast.scheduler';
 import { PushBroadcastAdminService } from './push-broadcast-admin.service';
+import { NewsModule } from '../news/news.module';
 
 @Module({
   imports: [
@@ -65,6 +70,7 @@ import { PushBroadcastAdminService } from './push-broadcast-admin.service';
     // every in-app event already funnels through, rather than calling
     // PushService directly.
     NotificationsModule,
+    NewsModule,
   ],
   controllers: [
     PlatformAdminController,
@@ -80,6 +86,7 @@ import { PushBroadcastAdminService } from './push-broadcast-admin.service';
     SupportAdminController,
     WaitlistAdminController,
     PushBroadcastAdminController,
+    PushBroadcastMediaController,
   ],
   providers: [
     PlatformAdminService,
@@ -96,6 +103,7 @@ import { PushBroadcastAdminService } from './push-broadcast-admin.service';
     SupportAdminService,
     WaitlistAdminService,
     PushBroadcastAdminService,
+    PushBroadcastScheduler,
     AuditService,
     PlatformJwtStrategy,
     PlatformPermissionGuard,

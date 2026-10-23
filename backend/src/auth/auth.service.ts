@@ -170,6 +170,11 @@ export class AuthService {
       }),
     ]);
 
+    // A completed verification is the first point where a password account is
+    // usable and its address is proven. MailerService absorbs SMTP failures,
+    // so a warm welcome can never hold up sign-in.
+    await this.mailer.sendWelcome(user.email!, user.firstName);
+
     return this.issueTokens(user.id);
   }
 
@@ -412,6 +417,12 @@ export class AuthService {
 
       return created;
     });
+
+    // A first social account is immediately usable. Only mail an address the
+    // provider has itself verified; Apple may withhold one entirely.
+    if (user.email && claims.emailVerified) {
+      await this.mailer.sendWelcome(user.email, user.firstName);
+    }
 
     return this.issueTokens(user.id);
   }
@@ -736,10 +747,13 @@ export class AuthService {
       throw new UnauthorizedException('Invalid refresh token.');
     }
 
-    await this.prisma.refreshToken.update({
-      where: { id: record.id },
+    const consumed = await this.prisma.refreshToken.updateMany({
+      where: { id: record.id, revokedAt: null, expiresAt: { gt: new Date() } },
       data: { revokedAt: new Date() },
     });
+    if (consumed.count !== 1) {
+      throw new UnauthorizedException('Invalid refresh token.');
+    }
 
     return this.issueTokens(record.userId);
   }

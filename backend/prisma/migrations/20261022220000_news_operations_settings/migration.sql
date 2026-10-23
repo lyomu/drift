@@ -1,0 +1,3 @@
+ALTER TABLE "news_settings"
+  ADD COLUMN "retryBaseMinutes" INTEGER NOT NULL DEFAULT 30,
+  ADD COLUMN "runRetentionDays" INTEGER NOT NULL DEFAULT 90;

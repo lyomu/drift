@@ -151,7 +151,7 @@ describe('AnnouncementsAdminService', () => {
         'member-1',
         'CLUBS',
         'Court closed',
-        expect.any(String),
+        'Court 3 is shut.',
         'CLUB_ANNOUNCEMENT',
         'club-1',
       );
