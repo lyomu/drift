@@ -88,7 +88,7 @@ describe('NewsService', () => {
     });
   });
 
-  it('queries only rights-cleared sources and hides unlicensed images', async () => {
+  it('queries only approved stories on active sources and hides unlicensed images', async () => {
     prisma.newsStory.findMany.mockResolvedValue([
       storyRecord('a', { imageUrl: 'https://publisher.example/image.jpg' }),
     ]);
@@ -98,15 +98,7 @@ describe('NewsService', () => {
       expect.objectContaining({
         where: expect.objectContaining({
           moderationStatus: 'APPROVED',
-          source: expect.objectContaining({
-            status: 'ACTIVE',
-            rights: expect.objectContaining({
-              is: expect.objectContaining({
-                status: 'APPROVED',
-                cacheAllowed: true,
-              }),
-            }),
-          }),
+          source: expect.objectContaining({ status: 'ACTIVE' }),
         }),
       }),
     );

@@ -12,6 +12,7 @@ const rights: UpdateNewsSourceRightsDto = {
   excerptAllowed: true,
   imageAllowed: false,
   aiProcessingAllowed: false,
+  automaticPublishingAllowed: false,
   cacheAllowed: true,
   attributionText: 'Test Publisher',
 };
@@ -57,7 +58,7 @@ function setup() {
 }
 
 describe('news admin rights gate', () => {
-  it('creates a new source paused even when the old admin form sends ACTIVE', async () => {
+  it('creates a new source active so it starts fetching immediately', async () => {
     const { service, prisma } = setup();
     await service.createNewsSource('admin', {
       name: 'Test',
@@ -65,17 +66,31 @@ describe('news admin rights gate', () => {
       status: 'ACTIVE',
     });
     expect(prisma.newsSource.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({ status: 'PAUSED' }),
+      data: expect.objectContaining({ status: 'ACTIVE', publicationMode: 'MANUAL' }),
     });
   });
 
-  it('rejects source activation without approved rights', async () => {
+  it('activates a source that has no rights review', async () => {
+    const { service, tx } = setup();
+    await service.updateNewsSource('admin', 'source', {
+      name: 'Test',
+      feedUrl: 'https://publisher.example/feed',
+      status: 'ACTIVE',
+    });
+    expect(tx.newsSource.update).toHaveBeenCalledWith({
+      where: { id: 'source' },
+      data: expect.objectContaining({ status: 'ACTIVE' }),
+    });
+  });
+
+  it('still refuses automatic publishing without approved rights', async () => {
     const { service } = setup();
     await expect(
       service.updateNewsSource('admin', 'source', {
         name: 'Test',
         feedUrl: 'https://publisher.example/feed',
         status: 'ACTIVE',
+        publicationMode: 'AUTO',
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
   });
