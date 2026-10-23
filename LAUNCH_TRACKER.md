@@ -350,10 +350,12 @@ artifact, so a commit or PR can close an item by referencing its ID
   it also required the domain migration: all four URL variables in
   `.env.production` were moved off `135.181.146.130` and both consoles rebuilt.
   A restart alone would not have changed it.
-  **Still blocked:** the ingestion **egress restriction** only. `NEWS_FEED_ALLOWED_HOSTS`
-  pins the application-level allowlist, but nothing constrains outbound traffic at
-  the host, so a compromised dependency could still reach anywhere. That is
-  firewall work on the box, not repository work.
+  **Still blocked:** the ingestion **egress restriction** only, and it now carries
+  more weight: `NEWS_FEED_ALLOWED_HOSTS` was deliberately unset in production on
+  2026-10-23 so admins can add any public HTTPS feed, so the application-level
+  allowlist is no longer pinning anything. Nothing constrains outbound traffic at
+  the host, so a compromised dependency could still reach any public address. That
+  is firewall work on the box, not repository work.
 
 ## Phase 6 — Push notifications 🟡
 

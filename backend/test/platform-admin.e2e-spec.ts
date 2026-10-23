@@ -496,7 +496,7 @@ describe('Platform Admin (e2e)', () => {
         status: 'ACTIVE',
       })
       .expect(201);
-    expect(source.body.status).toBe('PAUSED');
+    expect(source.body.status).toBe('ACTIVE');
 
     jest.mocked(fetchFeedDocument).mockResolvedValueOnce({
       xml: `<?xml version="1.0"?><rss version="2.0"><channel><title>Test tennis publisher</title><item><title>Sample story</title><link>https://publisher.example/story</link><description>Sample excerpt.</description></item></channel></rss>`,

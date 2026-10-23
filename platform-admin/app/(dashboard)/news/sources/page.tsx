@@ -65,12 +65,18 @@ const rightFields = [
   ["automaticPublishingAllowed", "Automatic publishing"],
 ] as const;
 
+/** Host of a feed URL for confirmation copy; falls back to the raw text. */
+function feedHost(url: string): string {
+  try { return new URL(url.trim()).host; } catch { return url.trim(); }
+}
+
 export default function NewsSourcesPage() {
   const [sources, setSources] = useState<NewsSource[] | null>(null);
   const [canReviewRights, setCanReviewRights] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [confirmCreate, setConfirmCreate] = useState(false);
   const [name, setName] = useState("");
   const [feedUrl, setFeedUrl] = useState("");
   const [selected, setSelected] = useState<NewsSource | null>(null);
@@ -98,17 +104,29 @@ export default function NewsSourcesPage() {
 
   useEffect(() => { void load(); }, [load]);
 
-  async function createSource(e: React.FormEvent) {
+  // Adding a source activates it, so the form hands off to a confirmation step
+  // rather than posting straight away.
+  function reviewSource(e: React.FormEvent) {
     e.preventDefault();
+    setError(null);
+    setConfirmCreate(true);
+  }
+
+  function closeCreate() {
+    setShowCreate(false); setConfirmCreate(false);
+  }
+
+  async function createSource() {
     setBusyId("new");
     try {
       await api.post("/news/sources", {
-        name: name.trim(), feedUrl: feedUrl.trim() || null, status: "PAUSED",
+        name: name.trim(), feedUrl: feedUrl.trim() || null, status: "ACTIVE",
       });
-      setName(""); setFeedUrl(""); setShowCreate(false);
+      setName(""); setFeedUrl(""); closeCreate();
       await load();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Create failed.");
+      setConfirmCreate(false);
     } finally { setBusyId(null); }
   }
 
@@ -199,7 +217,7 @@ export default function NewsSourcesPage() {
 
   return (
     <div>
-      <PageHeader title="News sources" description="Test feeds and record content permissions before activation. New sources start paused."
+      <PageHeader title="News sources" description="Sources go live when added and poll on their own. Stories still pass through the review queue."
         action={canReviewRights ? <Button variant="secondary" icon="add" onClick={() => { setError(null); setShowCreate(true); }}>Add source</Button> : undefined} />
       <ErrorBanner message={error} />
       <StatBand stats={[
@@ -225,7 +243,7 @@ export default function NewsSourcesPage() {
                   {source._count?.stories ?? 0} stories · {source.pollIntervalMinutes} min polling · Last success: {source.lastSuccessAt ? new Date(source.lastSuccessAt).toLocaleString() : "never"}
                   {source.lastErrorCode ? ` · ${source.lastErrorCode}` : ""}
                 </div>
-                {source.status !== "ACTIVE" && source.rights?.status !== "APPROVED" && <p className="mt-2 text-xs font-semibold text-drift-text-secondary">Record and approve permitted uses in Rights before activating.</p>}
+                {source.status !== "ACTIVE" && source.rights?.status !== "APPROVED" && <p className="mt-2 text-xs font-semibold text-drift-text-secondary">Record permitted uses in Rights to allow automatic publishing.</p>}
               </div>
               <div className="flex flex-wrap gap-2">
                 <Button variant="secondary" disabled={!source.feedUrl || busyId === source.id} onClick={() => void test(source)}>Test</Button>
@@ -243,19 +261,26 @@ export default function NewsSourcesPage() {
         ))}
       </div>
 
-      {showCreate && <ModalShell title="Add news source" description="A source remains paused until its permissions are reviewed." onClose={() => setShowCreate(false)}>
+      {showCreate && <ModalShell title="Add news source" description={confirmCreate ? "Confirm before this source starts fetching." : "The source goes live as soon as you add it."} onClose={closeCreate}>
         <ErrorBanner message={error} />
-        <form onSubmit={createSource} className="flex flex-col gap-4">
+        {confirmCreate ? <div className="flex flex-col gap-4">
+          <p className="text-sm">Add <strong>{name.trim()}</strong> and start polling <strong>{feedHost(feedUrl)}</strong> every 30 minutes, beginning immediately.</p>
+          <p className="text-sm text-drift-text-secondary">Fetched stories wait in the News Review Queue until you approve them. To let this source publish on its own later, record the publisher&apos;s terms under Rights.</p>
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="ghost" onClick={() => setConfirmCreate(false)}>Back</Button>
+            <Button type="button" disabled={busyId === "new"} onClick={createSource}>Add and activate</Button>
+          </div>
+        </div> : <form onSubmit={reviewSource} className="flex flex-col gap-4">
           <Field label="Publisher name"><Input required maxLength={120} value={name} onChange={(e) => setName(e.target.value)} /></Field>
           <Field label="RSS or Atom URL"><Input type="url" required value={feedUrl} onChange={(e) => setFeedUrl(e.target.value)} placeholder="https://publisher.example/feed" /></Field>
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="ghost" onClick={() => setShowCreate(false)}>Cancel</Button>
-            <Button type="submit" disabled={busyId === "new"}>Add paused source</Button>
+            <Button type="button" variant="ghost" onClick={closeCreate}>Cancel</Button>
+            <Button type="submit">Continue</Button>
           </div>
-        </form>
+        </form>}
       </ModalShell>}
 
-      {editing && <ModalShell title={`Edit source · ${editing.name}`} description="Changing publisher identity or feed URL pauses the source and requires a new rights review." onClose={() => setEditing(null)}>
+      {editing && <ModalShell title={`Edit source · ${editing.name}`} description="Changing the publisher name or feed URL clears the recorded rights review, which turns automatic publishing back off." onClose={() => setEditing(null)}>
         <ErrorBanner message={error} />
         <form onSubmit={saveSource} className="grid gap-4">
           <Field label="Publisher name"><Input required maxLength={120} value={editName} onChange={(e) => setEditName(e.target.value)} /></Field>

@@ -1006,8 +1006,17 @@ export class PlatformAdminService {
     },
   ) {
     validateNewsSourceFeedUrl(data.feedUrl);
+    // A new source goes live as soon as it is added — the console confirms the
+    // action first. What keeps third-party content out of the app is story
+    // moderation (the review queue), not a per-source approval step.
+    // publicationMode stays MANUAL regardless: AUTO requires reviewed rights,
+    // and a source being created has no rights record to check yet.
     const source = await this.prisma.newsSource.create({
-      data: { ...data, status: 'PAUSED', publicationMode: 'MANUAL' },
+      data: {
+        ...data,
+        status: data.status ?? 'ACTIVE',
+        publicationMode: 'MANUAL',
+      },
     });
     await this.audit.record(
       actorId,
@@ -1042,11 +1051,6 @@ export class PlatformAdminService {
       data.feedUrl === undefined ? existing.feedUrl : data.feedUrl || null;
     const identityChanged =
       existing.feedUrl !== nextFeedUrl || existing.name !== data.name;
-    if (identityChanged && data.status === 'ACTIVE') {
-      throw new BadRequestException(
-        'Changed sources must be paused and their rights reviewed again.',
-      );
-    }
     if (data.publicationMode === 'AUTO' &&
         (identityChanged || existing.rights?.status !== 'APPROVED' ||
          !existing.rights.aiProcessingAllowed ||
@@ -1061,38 +1065,26 @@ export class PlatformAdminService {
          (existing.rights.expiresAt && existing.rights.expiresAt <= new Date()))) {
       throw new BadRequestException('Automatic publishing requires current approved rights for commercial use, AI processing, and automation.');
     }
-    if (
-      data.status === 'ACTIVE' &&
-      (existing.rights?.status !== 'APPROVED' ||
-        !existing.rights.commercialUseAllowed ||
-        !existing.rights.headlineAllowed ||
-        !existing.rights.excerptAllowed ||
-        !existing.rights.cacheAllowed ||
-        !existing.rights.reviewedBy ||
-        !existing.rights.reviewedAt ||
-        !existing.rights.permissionReference ||
-        (existing.rights.expiresAt && existing.rights.expiresAt <= new Date()))
-    ) {
-      throw new BadRequestException(
-        'Source rights must be approved before activation.',
-      );
-    }
+    // Activation is deliberately ungated: an admin may pause or activate any
+    // source at will. Rights still gate AUTO publishing above, because letting a
+    // feed publish straight to users unattended is the case that needs cover.
 
     const source = await this.prisma.$transaction(async (tx) => {
       const updated = await tx.newsSource.update({
         where: { id: sourceId },
-        data: { ...data, status: identityChanged ? 'PAUSED' : data.status,
+        data: { ...data, status: data.status,
           publicationMode: identityChanged ? 'MANUAL' : (data.publicationMode ?? existing.publicationMode),
           ...(identityChanged ? { feedEtag: null, feedLastModified: null, nextPollAt: null } : {}) },
       });
       if (identityChanged) {
+        // The reviewed thing changed, so the review no longer describes it:
+        // drop back to UNREVIEWED, which only costs AUTO mode now that
+        // activation is ungated. Stories already approved under the old feed
+        // stay approved — they were published legitimately and un-publishing
+        // them would be a surprise.
         await tx.newsSourceRights.updateMany({
           where: { sourceId },
           data: { status: 'UNREVIEWED', reviewedBy: null, reviewedAt: null },
-        });
-        await tx.newsStory.updateMany({
-          where: { sourceId, moderationStatus: 'APPROVED' },
-          data: { moderationStatus: 'PENDING', publishedAt: null },
         });
       }
       return updated;
