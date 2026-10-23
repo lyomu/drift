@@ -250,14 +250,16 @@ describe('Onboarding (e2e)', () => {
     // suggested-opponents card is reachable even on CI's clean database.
     // NEARBY_COURTS, CLUB_ANNOUNCEMENT and ACHIEVEMENT_PROGRESS depend on
     // seed data this spec doesn't set up (no club, no achievements yet), so
-    // they're absent here rather than asserted on. NEWS_HIGHLIGHT is the next
-    // card that's always reachable, so it's what follows in this environment.
+    // they're absent here rather than asserted on. News also remains absent
+    // until a rights-cleared story has been published.
     expect(
-      feed.body.cards.slice(0, 3).map((c: { type: string }) => c.type),
+      feed.body.cards.slice(0, 2).map((c: { type: string }) => c.type),
     ).toEqual([
       'SUGGESTED_OPPONENTS',
       'DEVELOPMENT_RECOMMENDATION',
-      'NEWS_HIGHLIGHT',
     ]);
+    expect(feed.body.cards.map((c: { type: string }) => c.type)).not.toContain(
+      'NEWS_HIGHLIGHT',
+    );
   });
 });
