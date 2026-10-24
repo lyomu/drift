@@ -200,8 +200,9 @@ export default function NewsSourcesPage() {
     if (rights.status === "REVOKED" && !window.confirm("Revoke rights and withdraw this source’s published stories?")) return;
     setBusyId(selected.id);
     try {
+      const { reviewedAt: _reviewedAt, ...rightsPayload } = rights;
       await api.patch(`/news/sources/${selected.id}/rights`, {
-        ...rights,
+        ...rightsPayload,
         termsUrl: rights.termsUrl || undefined,
         permissionReference: rights.permissionReference || undefined,
         attributionText: rights.attributionText || undefined,
