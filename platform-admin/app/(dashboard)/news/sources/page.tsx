@@ -244,7 +244,6 @@ export default function NewsSourcesPage() {
                   {source._count?.stories ?? 0} stories · {source.pollIntervalMinutes} min polling · Last success: {source.lastSuccessAt ? new Date(source.lastSuccessAt).toLocaleString() : "never"}
                   {source.lastErrorCode ? ` · ${source.lastErrorCode}` : ""}
                 </div>
-                {source.status !== "ACTIVE" && source.rights?.status !== "APPROVED" && <p className="mt-2 text-xs font-semibold text-drift-text-secondary">Record permitted uses in Rights to allow automatic publishing.</p>}
               </div>
               <div className="flex flex-wrap gap-2">
                 <Button variant="secondary" disabled={!source.feedUrl || busyId === source.id} onClick={() => void test(source)}>Test</Button>
@@ -253,7 +252,7 @@ export default function NewsSourcesPage() {
                 {canReviewRights && (source.status === "ACTIVE" ? (
                   <Button variant="secondary" disabled={busyId === source.id} onClick={() => void setStatus(source, "PAUSED")}>Pause</Button>
                 ) : (
-                  <Button variant="secondary" disabled={busyId === source.id || source.rights?.status !== "APPROVED"} onClick={() => void setStatus(source, "ACTIVE")}>Activate</Button>
+                  <Button variant="secondary" disabled={busyId === source.id} onClick={() => void setStatus(source, "ACTIVE")}>Activate</Button>
                 ))}
                 {canReviewRights && <Button variant="secondary" disabled={busyId === source.id || source.status !== "ACTIVE"} onClick={() => void sync(source)}>Sync now</Button>}
               </div>
@@ -288,13 +287,13 @@ export default function NewsSourcesPage() {
           <Field label="RSS or Atom URL"><Input type="url" value={editUrl} onChange={(e) => setEditUrl(e.target.value)} /></Field>
           <Field label="Polling interval (minutes)"><Input type="number" min={15} max={120} value={editInterval} onChange={(e) => setEditInterval(Number(e.target.value))} /></Field>
           <Field label="Publication mode"><Select value={editMode} onChange={(e) => setEditMode(e.target.value as "MANUAL" | "AUTO")}><option value="MANUAL">Manual review</option><option value="AUTO">Validated automatic publishing</option></Select></Field>
-          {editMode === "AUTO" && <p className="text-sm text-drift-text-secondary">Auto mode requires approved commercial, AI processing, and automatic publishing permissions. Global automation must also be enabled in News Settings.</p>}
+          {editMode === "AUTO" && <p className="text-sm text-drift-text-secondary">Global automation must also be enabled in News Settings.</p>}
           <div className="flex justify-end gap-2"><Button type="button" variant="ghost" onClick={() => setEditing(null)}>Cancel</Button><Button type="submit" disabled={busyId !== null}>Save source</Button></div>
         </form>
       </ModalShell>}
 
       {selected && <ModalShell title={testResult ? `Connection test · ${selected.name}` : `Source rights · ${selected.name}`}
-        description={testResult ? "This test does not import or publish items." : "Approval requires documented permission for every selected use."}
+        description={testResult ? "This test does not import or publish items." : "Record this source's rights status."}
         onClose={() => { setSelected(null); setTestResult(null); }}>
         <ErrorBanner message={error} />
         {testResult ? <Card>

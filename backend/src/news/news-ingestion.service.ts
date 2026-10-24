@@ -116,19 +116,6 @@ export class NewsIngestionService {
         status: 'ACTIVE',
         feedUrl: { not: null },
         OR: [{ nextPollAt: null }, { nextPollAt: { lte: now } }],
-        rights: {
-          is: {
-            status: 'APPROVED',
-            commercialUseAllowed: true,
-            headlineAllowed: true,
-            excerptAllowed: true,
-            cacheAllowed: true,
-            reviewedBy: { not: null },
-            reviewedAt: { not: null },
-            permissionReference: { not: null },
-            OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
-          },
-        },
       },
       select: { id: true },
       take: 20,
@@ -168,24 +155,7 @@ export class NewsIngestionService {
         status: 'ACTIVE',
         feedUrl: { not: null },
         OR: [{ syncLeaseUntil: null }, { syncLeaseUntil: { lte: now } }],
-        AND: [
-          { OR: [{ nextPollAt: null }, { nextPollAt: { lte: now } }] },
-          {
-            rights: {
-              is: {
-                status: 'APPROVED',
-                commercialUseAllowed: true,
-                headlineAllowed: true,
-                excerptAllowed: true,
-                cacheAllowed: true,
-                reviewedBy: { not: null },
-                reviewedAt: { not: null },
-                permissionReference: { not: null },
-                OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
-              },
-            },
-          },
-        ],
+        AND: [{ OR: [{ nextPollAt: null }, { nextPollAt: { lte: now } }] }],
       },
       data: {
         syncLeaseUntil: leaseUntil,
@@ -387,24 +357,6 @@ export class NewsIngestionService {
                             source: {
                               status: 'ACTIVE',
                               publicationMode: 'AUTO',
-                              rights: {
-                                is: {
-                                  status: 'APPROVED',
-                                  commercialUseAllowed: true,
-                                  headlineAllowed: true,
-                                  excerptAllowed: true,
-                                  cacheAllowed: true,
-                                  aiProcessingAllowed: true,
-                                  automaticPublishingAllowed: true,
-                                  reviewedBy: { not: null },
-                                  reviewedAt: { not: null },
-                                  permissionReference: { not: null },
-                                  OR: [
-                                    { expiresAt: null },
-                                    { expiresAt: { gt: new Date() } },
-                                  ],
-                                },
-                              },
                             },
                           },
                           data: {
