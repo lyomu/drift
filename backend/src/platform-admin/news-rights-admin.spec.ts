@@ -1,4 +1,3 @@
-import { BadRequestException } from '@nestjs/common';
 import { PlatformAdminService } from './platform-admin.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from './audit.service';
@@ -86,26 +85,27 @@ describe('news admin rights gate', () => {
     });
   });
 
-  it('still refuses automatic publishing without approved rights', async () => {
-    const { service } = setup();
-    await expect(
-      service.updateNewsSource('admin', 'source', {
-        name: 'Test',
-        feedUrl: 'https://publisher.example/feed',
-        status: 'ACTIVE',
-        publicationMode: 'AUTO',
-      }),
-    ).rejects.toBeInstanceOf(BadRequestException);
+  it('allows automatic publishing without a rights review', async () => {
+    const { service, tx } = setup();
+    await service.updateNewsSource('admin', 'source', {
+      name: 'Test',
+      feedUrl: 'https://publisher.example/feed',
+      status: 'ACTIVE',
+      publicationMode: 'AUTO',
+    });
+    expect(tx.newsSource.update).toHaveBeenCalledWith({
+      where: { id: 'source' },
+      data: expect.objectContaining({ publicationMode: 'AUTO' }),
+    });
   });
 
-  it('requires evidence before rights approval', async () => {
-    const { service } = setup();
-    await expect(
-      service.updateNewsSourceRights('admin', 'source', {
-        ...rights,
-        permissionReference: '',
-      }),
-    ).rejects.toBeInstanceOf(BadRequestException);
+  it('approves rights without requiring supporting evidence', async () => {
+    const { service, tx } = setup();
+    await service.updateNewsSourceRights('admin', 'source', {
+      ...rights,
+      permissionReference: '',
+    });
+    expect(tx.newsSourceRights.upsert).toHaveBeenCalled();
   });
 
   it('pauses and withdraws stories in the same transaction when rights are revoked', async () => {
@@ -125,7 +125,7 @@ describe('news admin rights gate', () => {
     expect(tx.adminAuditLog.create).toHaveBeenCalled();
   });
 
-  it('blocks approving an item whose source lacks rights', async () => {
+  it('approves an item even when its source lacks a rights record', async () => {
     const { service, tx } = setup();
     tx.newsStory.findUnique.mockResolvedValue({
       id: 'story',
@@ -134,9 +134,17 @@ describe('news admin rights gate', () => {
       originalUrl: 'https://publisher.example/story',
       source: { status: 'ACTIVE', rights: null },
     });
-    await expect(
-      service.moderateStory('admin', 'story', 'APPROVED'),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    tx.newsStory.update.mockResolvedValue({
+      id: 'story',
+      moderationStatus: 'APPROVED',
+    });
+    await service.moderateStory('admin', 'story', 'APPROVED');
+    expect(tx.newsStory.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'story' },
+        data: expect.objectContaining({ moderationStatus: 'APPROVED' }),
+      }),
+    );
   });
 
   it('archives a story with a reason and clears its publication date', async () => {

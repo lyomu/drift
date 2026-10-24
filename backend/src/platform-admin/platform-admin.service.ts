@@ -1055,29 +1055,6 @@ export class PlatformAdminService {
       data.feedUrl === undefined ? existing.feedUrl : data.feedUrl || null;
     const identityChanged =
       existing.feedUrl !== nextFeedUrl || existing.name !== data.name;
-    if (
-      data.publicationMode === 'AUTO' &&
-      (identityChanged ||
-        existing.rights?.status !== 'APPROVED' ||
-        !existing.rights.aiProcessingAllowed ||
-        !existing.rights.automaticPublishingAllowed ||
-        !existing.rights.commercialUseAllowed ||
-        !existing.rights.headlineAllowed ||
-        !existing.rights.excerptAllowed ||
-        !existing.rights.cacheAllowed ||
-        !existing.rights.permissionReference ||
-        !existing.rights.reviewedAt ||
-        !existing.rights.reviewedBy ||
-        (existing.rights.expiresAt && existing.rights.expiresAt <= new Date()))
-    ) {
-      throw new BadRequestException(
-        'Automatic publishing requires current approved rights for commercial use, AI processing, and automation.',
-      );
-    }
-    // Activation is deliberately ungated: an admin may pause or activate any
-    // source at will. Rights still gate AUTO publishing above, because letting a
-    // feed publish straight to users unattended is the case that needs cover.
-
     const source = await this.prisma.$transaction(async (tx) => {
       const updated = await tx.newsSource.update({
         where: { id: sourceId },
@@ -1174,23 +1151,9 @@ export class PlatformAdminService {
     }
     const source = await this.prisma.newsSource.findUnique({
       where: { id: sourceId },
-      include: { rights: true },
     });
     if (!source) throw new NotFoundException('News source not found.');
-    const rights = source.rights;
-    if (
-      source.status !== 'ACTIVE' ||
-      !source.feedUrl ||
-      rights?.status !== 'APPROVED' ||
-      !rights.commercialUseAllowed ||
-      !rights.headlineAllowed ||
-      !rights.excerptAllowed ||
-      !rights.cacheAllowed ||
-      !rights.reviewedAt ||
-      !rights.reviewedBy ||
-      !rights.permissionReference ||
-      (rights.expiresAt && rights.expiresAt <= new Date())
-    ) {
+    if (source.status !== 'ACTIVE' || !source.feedUrl) {
       throw new BadRequestException(
         'Source is not eligible for synchronization.',
       );
@@ -1238,21 +1201,6 @@ export class PlatformAdminService {
     if (dto.termsUrl && !safePublisherUrl(dto.termsUrl)) {
       throw new BadRequestException('Terms URL must be a safe HTTPS URL.');
     }
-    if (
-      dto.status === 'APPROVED' &&
-      (!dto.permissionReference?.trim() ||
-        !dto.commercialUseAllowed ||
-        !dto.headlineAllowed ||
-        !dto.excerptAllowed ||
-        !dto.cacheAllowed ||
-        !dto.attributionText?.trim() ||
-        (expiry && expiry <= new Date()))
-    ) {
-      throw new BadRequestException(
-        'Approval requires permission evidence, commercial headline, excerpt and cache rights, attribution, and a future expiry if supplied.',
-      );
-    }
-
     const approved = dto.status === 'APPROVED';
     const data = {
       status: dto.status,
@@ -1286,15 +1234,6 @@ export class PlatformAdminService {
         await tx.newsStory.updateMany({
           where: { sourceId, moderationStatus: 'APPROVED' },
           data: { moderationStatus: 'PENDING', publishedAt: null },
-        });
-      }
-      if (
-        approved &&
-        (!dto.aiProcessingAllowed || !dto.automaticPublishingAllowed)
-      ) {
-        await tx.newsSource.update({
-          where: { id: sourceId },
-          data: { publicationMode: 'MANUAL' },
         });
       }
       await tx.adminAuditLog.create({
@@ -1368,7 +1307,6 @@ export class PlatformAdminService {
     return this.prisma.$transaction(async (tx) => {
       const story = await tx.newsStory.findUnique({
         where: { id: storyId },
-        include: { source: { include: { rights: true } } },
       });
       if (!story) throw new NotFoundException('News story not found.');
       if (story.moderationStatus !== 'PENDING') {
@@ -1378,15 +1316,6 @@ export class PlatformAdminService {
       }
       if (story.editorialVersion !== dto.editorialVersion) {
         throw new ConflictException('Story changed. Reload before editing.');
-      }
-      if (
-        story.source.rights?.status !== 'APPROVED' ||
-        !story.source.rights.headlineAllowed ||
-        !story.source.rights.excerptAllowed
-      ) {
-        throw new BadRequestException(
-          'Source rights do not permit editing this content.',
-        );
       }
       const categoryCount = await tx.newsCategoryConfig.count({
         where: { slug: { in: dto.categories }, enabled: true },
@@ -1575,30 +1504,19 @@ export class PlatformAdminService {
     return this.prisma.$transaction(async (tx) => {
       const story = await tx.newsStory.findUnique({
         where: { id: storyId },
-        include: { source: { include: { rights: true } } },
+        include: { source: true },
       });
       if (!story) throw new NotFoundException('Story not found.');
-      if (moderationStatus === 'APPROVED') {
-        const rights = story.source.rights;
-        if (
-          story.source.status !== 'ACTIVE' ||
-          rights?.status !== 'APPROVED' ||
-          !rights.commercialUseAllowed ||
-          !rights.headlineAllowed ||
-          !rights.excerptAllowed ||
-          !rights.cacheAllowed ||
-          !rights.reviewedBy ||
-          !rights.reviewedAt ||
-          !rights.permissionReference ||
-          (rights.expiresAt && rights.expiresAt <= new Date()) ||
+      if (
+        moderationStatus === 'APPROVED' &&
+        (story.source.status !== 'ACTIVE' ||
           !safePublisherUrl(story.originalUrl) ||
           !story.headline.trim() ||
-          !story.highlight.trim()
-        ) {
-          throw new BadRequestException(
-            'Story cannot be published without active source rights and valid metadata.',
-          );
-        }
+          !story.highlight.trim())
+      ) {
+        throw new BadRequestException(
+          'Story cannot be published without valid metadata.',
+        );
       }
       const updated = await tx.newsStory.update({
         where: { id: storyId },
