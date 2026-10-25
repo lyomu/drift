@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:drift_tennis/features/news/application/news_providers.dart';
 import 'package:drift_tennis/features/news/data/news_repository.dart';
 import 'package:drift_tennis/features/news/presentation/news_feed_screen.dart';
+import 'package:drift_tennis/shared/widgets/drift_news_image.dart';
 import 'package:drift_tennis/shared/widgets/drift_scaffold.dart';
 
 import '../../../support/fixtures.dart';
@@ -101,6 +102,53 @@ void main() {
         expect(find.text('No stories in this category yet'), findsOneWidget);
       });
     }
+
+    testWidgets('gives each listing story imagery and a bold compact title', (
+      tester,
+    ) async {
+      await pumpScreen(
+        tester,
+        const NewsFeedScreen(),
+        overrides: [
+          newsCategoriesProvider.overrideWith(
+            (ref) => Future.value(const [
+              NewsCategoryOption(slug: 'LATEST', label: 'Latest'),
+            ]),
+          ),
+          newsPageProvider.overrideWith(
+            (ref) => Future.value(
+              NewsPage(
+                stories: [
+                  storySummary(id: 'featured'),
+                  storySummary(id: 'listed', headline: 'The second story'),
+                ],
+                nextCursor: null,
+                cachedAt: DateTime(2026),
+              ),
+            ),
+          ),
+        ],
+      );
+
+      expect(find.byType(DriftNewsImage), findsNWidgets(2));
+      final title = tester.widget<Text>(find.text('The second story'));
+      expect(title.style?.fontSize, 18);
+      expect(title.style?.fontWeight, FontWeight.w700);
+      final saveControls = find.byTooltip('Save story');
+      final saveIcons = tester
+          .widgetList<Icon>(
+            find.descendant(
+              of: saveControls,
+              matching: find.byIcon(Icons.bookmark_border),
+            ),
+          )
+          .toList();
+      expect(saveIcons, isNotEmpty);
+      expect(saveIcons.every((icon) => icon.size == 18), isTrue);
+      final saveControl = tester.getSize(saveControls.last);
+      expect(saveControl.width, greaterThanOrEqualTo(48));
+      expect(saveControl.height, greaterThanOrEqualTo(48));
+    });
 
     testWidgets('shows a spinner while loading', (tester) async {
       await pumpScreen(

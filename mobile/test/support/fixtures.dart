@@ -583,22 +583,30 @@ Goal goal({
 
 // ------------------------------------------------------- news / messaging
 
-StorySummary storySummary({String id = 'n1', bool saved = false}) =>
-    StorySummary(
-      id: id,
-      headline: 'A big win at Richmond',
-      publisher: 'Drift Wire',
-      imageUrl: null,
-      highlight: 'A short highlight.',
-      publicationDate: DateTime(2026, 8, 23, 8),
-      categories: const ['LATEST'],
-      topics: const ['tennis'],
-      savedByViewer: saved,
-    );
+StorySummary storySummary({
+  String id = 'n1',
+  String headline = 'A big win at Richmond',
+  String? imageUrl,
+  bool saved = false,
+}) => StorySummary(
+  id: id,
+  headline: headline,
+  publisher: 'Drift Wire',
+  imageUrl: imageUrl,
+  highlight: 'A short highlight.',
+  publicationDate: DateTime(2026, 8, 23, 8),
+  categories: const ['LATEST'],
+  topics: const ['tennis'],
+  savedByViewer: saved,
+);
 
-StoryDetail storyDetail({String id = 'n1'}) => StoryDetail(
-  summary: storySummary(id: id),
-  originalUrl: 'https://example.test/story',
+StoryDetail storyDetail({
+  String id = 'n1',
+  String originalUrl = 'https://example.test/story',
+  bool saved = false,
+}) => StoryDetail(
+  summary: storySummary(id: id, saved: saved),
+  originalUrl: originalUrl,
 );
 
 ChatMessage chatMessage({

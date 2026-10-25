@@ -13,11 +13,15 @@ class DriftBackHeader extends StatelessWidget {
     required this.title,
     this.onBack,
     this.trailing,
+    this.titleMaxLines = 1,
+    this.titleStyle,
   });
 
   final String title;
   final VoidCallback? onBack;
   final Widget? trailing;
+  final int titleMaxLines;
+  final TextStyle? titleStyle;
 
   @override
   Widget build(BuildContext context) {
@@ -39,8 +43,8 @@ class DriftBackHeader extends StatelessWidget {
           Expanded(
             child: Text(
               title,
-              style: type.h3,
-              maxLines: 1,
+              style: titleStyle ?? type.h3,
+              maxLines: titleMaxLines,
               overflow: TextOverflow.ellipsis,
             ),
           ),
