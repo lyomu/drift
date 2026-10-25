@@ -55,7 +55,7 @@ class SavedStoriesScreen extends ConsumerWidget {
                     padding: const EdgeInsets.all(DriftSpacing.s4),
                     itemCount: value.length,
                     separatorBuilder: (_, _) =>
-                        const SizedBox(height: DriftSpacing.s3),
+                        const SizedBox(height: DriftSpacing.s5),
                     itemBuilder: (context, index) {
                       final story = value[index];
                       return DriftNewsStoryCard(

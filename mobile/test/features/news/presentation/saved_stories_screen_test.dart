@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:drift_tennis/features/news/application/news_providers.dart';
 import 'package:drift_tennis/features/news/data/news_repository.dart';
 import 'package:drift_tennis/features/news/presentation/saved_stories_screen.dart';
+import 'package:drift_tennis/shared/widgets/drift_news_image.dart';
 
 import '../../../support/fixtures.dart';
 import '../../../support/pump.dart';
@@ -27,6 +28,13 @@ void main() {
 
         expect(find.text('Saved Stories'), findsOneWidget);
         expect(find.text('A big win at Richmond'), findsOneWidget);
+        expect(find.byType(DriftNewsImage), findsOneWidget);
+        final headline = tester.widget<Text>(
+          find.text('A big win at Richmond'),
+        );
+        expect(headline.style?.fontSize, 16);
+        expect(headline.style?.fontWeight, FontWeight.w700);
+        expect(tester.widget<Icon>(find.byIcon(Icons.bookmark)).size, 16);
       });
 
       testWidgets('renders its empty state in $label', (tester) async {

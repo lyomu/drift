@@ -228,7 +228,7 @@ class _FeedContent extends StatelessWidget {
             onSave: onSave,
             categories: categories,
           ),
-          if (i != visibleStories.length - 1) SizedBox(height: 16),
+          if (i != visibleStories.length - 1) SizedBox(height: 20),
         ],
         if (loadError != null)
           Padding(
@@ -318,9 +318,9 @@ class _FeaturedStory extends StatelessWidget {
                       style: TextStyle(
                         color: Colors.white,
                         fontFamily: 'Outfit',
-                        fontSize: 29,
-                        height: 1.08,
-                        fontWeight: FontWeight.w500,
+                        fontSize: 24,
+                        height: 1.16,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                     SizedBox(height: 18),
@@ -497,87 +497,106 @@ class _StoryCard extends StatelessWidget {
     final colors = Theme.of(context).extension<DriftColors>()!;
     return Material(
       color: colors.surface,
-      borderRadius: BorderRadius.circular(22),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: colors.border, width: 1.25),
+      ),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () => context.push('/news/${story.id}'),
-        borderRadius: BorderRadius.circular(22),
-        child: Container(
-          constraints: const BoxConstraints(minHeight: 226),
-          padding: EdgeInsets.fromLTRB(20, 20, 20, 16),
-          decoration: BoxDecoration(
-            border: Border.all(color: colors.border),
-            borderRadius: BorderRadius.circular(22),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        borderRadius: BorderRadius.circular(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              height: 148,
+              width: double.infinity,
+              child: _StoryImage(url: story.imageUrl),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 16, 12, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          _categoryLabel(
+                            story.categories.firstOrNull,
+                            categories,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: colors.primaryDark,
+                            fontFamily: 'Outfit',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        _relativeDate(story.publicationDate),
+                        style: TextStyle(
+                          color: colors.textSecondary,
+                          fontFamily: 'Outfit',
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
                   Text(
-                    _categoryLabel(story.categories.firstOrNull, categories),
+                    story.headline,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: colors.primaryDark,
+                      color: colors.textPrimary,
                       fontFamily: 'Outfit',
-                      fontSize: 13,
+                      fontSize: 18,
+                      height: 1.28,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
+                  const SizedBox(height: 8),
                   Text(
-                    _relativeDate(story.publicationDate),
+                    story.highlight,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: colors.textSecondary,
                       fontFamily: 'Outfit',
-                      fontSize: 13,
+                      fontSize: 14,
+                      height: 1.45,
                     ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '${story.publisher} · Quick read',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: colors.textSecondary,
+                            fontFamily: 'Outfit',
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                      _SaveButton(
+                        saved: story.savedByViewer,
+                        onPressed: () => onSave(story),
+                      ),
+                    ],
                   ),
                 ],
               ),
-              SizedBox(height: 20),
-              Text(
-                story.headline,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: colors.textPrimary,
-                  fontFamily: 'Outfit',
-                  fontSize: 20,
-                  height: 1.25,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              SizedBox(height: 9),
-              Text(
-                story.highlight,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: colors.textSecondary,
-                  fontFamily: 'Outfit',
-                  fontSize: 16,
-                  height: 1.45,
-                ),
-              ),
-              const Spacer(),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '${story.publisher} · Quick read',
-                    style: TextStyle(
-                      color: colors.textSecondary,
-                      fontFamily: 'Outfit',
-                      fontSize: 13,
-                    ),
-                  ),
-                  _SaveButton(
-                    saved: story.savedByViewer,
-                    onPressed: () => onSave(story),
-                  ),
-                ],
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -603,7 +622,7 @@ class _SaveButton extends StatelessWidget {
       tooltip: saved ? 'Remove from saved' : 'Save story',
       icon: Icon(
         saved ? Icons.bookmark : Icons.bookmark_border,
-        size: 22,
+        size: 18,
         color: light ? Colors.white : colors.textSecondary,
       ),
       style: IconButton.styleFrom(
