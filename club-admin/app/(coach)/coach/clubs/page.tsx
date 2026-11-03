@@ -11,6 +11,7 @@ import { MaterialIcon } from "@/components/dashboard-design";
 import { ApiError } from "@/lib/api-client";
 import { coachApi } from "@/lib/coach-api";
 import type { CoachClub } from "@/lib/types";
+import { useT } from "@/lib/i18n/i18n-context";
 
 /**
  * Read-only. Club membership is granted from the club's own console, and
@@ -18,6 +19,7 @@ import type { CoachClub } from "@/lib/types";
  * What a coach needs is to see where they are listed.
  */
 export default function CoachClubsPage() {
+  const t = useT();
   const [clubs, setClubs] = useState<CoachClub[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,29 +31,29 @@ export default function CoachClubsPage() {
         setClubs(res.clubs);
       } catch (err) {
         setError(
-          err instanceof ApiError ? err.message : "Something went wrong.",
+          err instanceof ApiError ? err.message : t("a.somethingWentWrong"),
         );
       } finally {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [t]);
 
   return (
     <>
       <PageHeader
-        title="Clubs"
-        description="The clubs your coaching profile is listed at."
+        title={t("a.clubs")}
+        description={t("a.theClubsYourCoachingProfile")}
       />
       <ErrorBanner message={error} />
 
       {loading ? (
-        <EmptyState message="Loading…" />
+        <EmptyState message={t("a.loading")} />
       ) : clubs.length === 0 ? (
         <EmptyState
           icon="groups"
-          title="Not linked to a club"
-          description="A club administrator adds you from their own console using your Drift account email. You do not need a club to be listed as a coach."
+          title={t("a.notLinkedToAClub")}
+          description={t("a.aClubAdministratorAddsYou")}
         />
       ) : (
         <div className="flex flex-col gap-3">

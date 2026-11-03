@@ -31,6 +31,7 @@ import {
 import { NotificationsService } from '../notifications/notifications.service';
 import { sanitizeRichText } from '../common/rich-text.util';
 import { demoScope } from '../common/demo-scope';
+import { msg } from '../common/i18n';
 
 const MINUTE_MS = 60 * 1000;
 
@@ -243,8 +244,8 @@ export class CompetitionsService {
       await this.notifications.create(
         userId,
         'COMPETITIONS',
-        "You're registered",
-        `${league.name}. We'll let you know when your first round opens.`,
+        msg('league.registered.title'),
+        msg('league.registered.body', { league: league.name }),
         'LEAGUE',
         leagueId,
       );
@@ -252,8 +253,8 @@ export class CompetitionsService {
       await this.notifications.create(
         userId,
         'COMPETITIONS',
-        "You're on the waitlist",
-        `${league.name} is full. You move in automatically if a spot opens.`,
+        msg('league.waitlisted.title'),
+        msg('league.waitlisted.body', { league: league.name }),
         'LEAGUE',
         leagueId,
       );
@@ -290,8 +291,8 @@ export class CompetitionsService {
         await this.notifications.create(
           nextWaiting.userId,
           'COMPETITIONS',
-          "You're in",
-          `A spot opened up in ${league.name}. You've been enrolled.`,
+          msg('league.promoted.title'),
+          msg('league.promoted.body', { league: league.name }),
           'LEAGUE',
           leagueId,
         );
@@ -974,8 +975,8 @@ export class CompetitionsService {
         this.notifications.create(
           r.userId,
           'COMPETITIONS',
-          `Round ${roundIndex} is now open`,
-          `${leagueName} — check your fixture and get a time agreed.`,
+          msg('league.roundOpen.title', { round: roundIndex }),
+          msg('league.roundOpen.body', { league: leagueName }),
           'LEAGUE',
           leagueId,
         ),

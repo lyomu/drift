@@ -4,11 +4,13 @@ import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../core/analytics/analytics.dart';
+import '../../../core/l10n/l10n.dart';
 import '../../../core/network/dio_client.dart';
 import '../../../core/theme/drift_colors.dart';
 import '../../../shared/widgets/drift_symbol.dart';
 import '../../auth/data/auth_repository.dart';
 import '../application/theme_mode_provider.dart';
+import 'language_sheet.dart';
 
 /// Drift's official readable text family.
 const _font = 'Outfit';
@@ -18,16 +20,17 @@ const _danger = Color(0xFFEF4444);
 
 /// Shown in the footer. `pubspec.yaml` is not readable at runtime without
 /// `package_info_plus`, so this tracks the `version:` field by hand.
-const _appVersion = '1.0.0';
+const _appVersion = '0.8.3';
 
 /// Settings Home — `foundation/04-screen-inventory.md` §A.10-11. "Manage
 /// connection requests" links to the existing Pending Requests screen
 /// (built M5/M6) rather than duplicating it.
-const _appearanceLabels = {
-  ThemeMode.system: 'Device',
-  ThemeMode.light: 'Light',
-  ThemeMode.dark: 'Dark',
-};
+String _appearanceLabel(AppLocalizations l10n, ThemeMode mode) =>
+    switch (mode) {
+      ThemeMode.system => l10n.settingsThemeDevice,
+      ThemeMode.light => l10n.settingsThemeLight,
+      ThemeMode.dark => l10n.settingsThemeDark,
+    };
 
 class SettingsHomeScreen extends ConsumerStatefulWidget {
   const SettingsHomeScreen({super.key});
@@ -49,15 +52,15 @@ class _SettingsHomeScreenState extends ConsumerState<SettingsHomeScreen> {
     final picked = await showDialog<ThemeMode>(
       context: context,
       builder: (dialogContext) => SimpleDialog(
-        title: Text('Appearance'),
+        title: Text(context.l10n.settingsAppearance),
         children: [
-          for (final entry in _appearanceLabels.entries)
+          for (final mode in ThemeMode.values)
             SimpleDialogOption(
-              onPressed: () => Navigator.of(dialogContext).pop(entry.key),
+              onPressed: () => Navigator.of(dialogContext).pop(mode),
               child: Row(
                 children: [
-                  Expanded(child: Text(entry.value)),
-                  if (entry.key == current) Icon(Symbols.check),
+                  Expanded(child: Text(_appearanceLabel(context.l10n, mode))),
+                  if (mode == current) Icon(Symbols.check),
                 ],
               ),
             ),
@@ -75,16 +78,16 @@ class _SettingsHomeScreenState extends ConsumerState<SettingsHomeScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text('Log out?'),
-        content: Text('You can sign back in any time.'),
+        title: Text(context.l10n.settingsLogoutConfirmTitle),
+        content: Text(context.l10n.settingsLogoutConfirmBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: Text('Cancel'),
+            child: Text(context.l10n.commonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: Text('Log out'),
+            child: Text(context.l10n.settingsLogout),
           ),
         ],
       ),
@@ -106,6 +109,8 @@ class _SettingsHomeScreenState extends ConsumerState<SettingsHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<DriftColors>()!;
+    final l10n = context.l10n;
+    final language = AppLanguage.of(Localizations.localeOf(context));
 
     return Scaffold(
       backgroundColor: colors.surface,
@@ -123,103 +128,111 @@ class _SettingsHomeScreenState extends ConsumerState<SettingsHomeScreen> {
                   // promoting it to primary navigation would promise a great
                   // deal more than it does.
                   _Section(
-                    title: 'Appearance',
+                    title: l10n.settingsAppearance,
                     rows: [
                       _Row(
                         icon: Symbols.contrast,
                         accent: colors.primary,
-                        label:
-                            'Theme: ${_appearanceLabels[ref.watch(themeModeProvider)]}',
+                        label: l10n.settingsThemeValue(
+                          _appearanceLabel(l10n, ref.watch(themeModeProvider)),
+                        ),
                         onTap: _pickAppearance,
+                      ),
+                      _Row(
+                        icon: Symbols.translate,
+                        accent: colors.primary,
+                        label: l10n.settingsLanguage,
+                        value: '${language.flag} ${language.nativeName}',
+                        onTap: () => showLanguageSheet(context),
                       ),
                     ],
                   ),
                   _Section(
-                    title: 'Labs',
+                    title: l10n.settingsLabs,
                     rows: [
                       _Row(
                         icon: DriftSymbolsFilled.videocam,
                         accent: colors.primary,
-                        label: 'Analyse a clip',
+                        label: l10n.settingsAnalyseClip,
                         onTap: () => context.push('/video-analysis'),
                       ),
                     ],
                   ),
                   _Section(
-                    title: 'Privacy & Safety',
+                    title: l10n.settingsPrivacySafety,
                     rows: [
                       _Row(
                         icon: DriftSymbolsFilled.verifiedUser,
                         accent: colors.primary,
-                        label: 'Privacy Settings',
+                        label: l10n.settingsPrivacySettings,
                         onTap: () => context.push('/settings/privacy'),
                       ),
                       _Row(
                         icon: DriftSymbolsFilled.doNotDisturbOn,
                         accent: const Color(0xFFF97316),
-                        label: 'Blocked Users',
+                        label: l10n.settingsBlockedUsers,
                         onTap: () => context.push('/settings/blocked-users'),
                       ),
                       _Row(
                         icon: DriftSymbolsFilled.groupAdd,
                         accent: const Color(0xFF22C55E),
-                        label: 'Manage Connection Requests',
+                        label: l10n.settingsManageConnectionRequests,
                         onTap: () => context.push('/connections/pending'),
                       ),
                     ],
                   ),
                   _Section(
-                    title: 'Notifications',
+                    title: l10n.settingsNotifications,
                     rows: [
                       _Row(
                         icon: DriftSymbolsFilled.notificationsActive,
                         accent: const Color(0xFF8B5CF6),
-                        label: 'Notification Preferences',
+                        label: l10n.settingsNotificationPreferences,
                         onTap: () => context.push('/notifications/preferences'),
                       ),
                     ],
                   ),
                   _Section(
-                    title: 'Plan & Billing',
+                    title: l10n.settingsPlanBilling,
                     rows: [
                       _Row(
                         icon: DriftSymbolsFilled.cardMembership,
                         accent: const Color(0xFFEAB308),
-                        label: 'Subscription & Plan',
+                        label: l10n.settingsSubscriptionPlan,
                         onTap: () => context.push('/settings/subscription'),
                       ),
                     ],
                   ),
                   _Section(
-                    title: 'Account',
+                    title: l10n.settingsAccount,
                     rows: [
                       _Row(
                         icon: DriftSymbolsFilled.manageAccounts,
                         accent: colors.primary,
-                        label: 'Account & Security',
+                        label: l10n.settingsAccountSecurity,
                         onTap: () => context.push('/settings/account-security'),
                       ),
                     ],
                   ),
                   _Section(
-                    title: 'Support',
+                    title: l10n.settingsSupport,
                     rows: [
                       _Row(
                         icon: DriftSymbolsFilled.contactSupport,
                         accent: const Color(0xFF22C55E),
-                        label: 'Help & FAQ',
+                        label: l10n.settingsHelpFaq,
                         onTap: () => context.push('/settings/help'),
                       ),
                       _Row(
                         icon: DriftSymbolsFilled.supportAgent,
                         accent: colors.primary,
-                        label: 'Contact Support',
+                        label: l10n.settingsContactSupport,
                         onTap: () => context.push('/settings/contact-support'),
                       ),
                       _Row(
                         icon: DriftSymbolsFilled.policy,
                         accent: colors.textSecondary,
-                        label: 'Legal documents',
+                        label: l10n.settingsLegalDocuments,
                         onTap: () => context.push('/settings/legal'),
                       ),
                     ],
@@ -232,14 +245,14 @@ class _SettingsHomeScreenState extends ConsumerState<SettingsHomeScreen> {
                       _Row(
                         icon: DriftSymbolsFilled.logout,
                         accent: _danger,
-                        label: 'Log Out',
+                        label: l10n.settingsLogOutRow,
                         danger: true,
                         onTap: _logout,
                       ),
                       _Row(
                         icon: DriftSymbolsFilled.delete,
                         accent: _danger,
-                        label: 'Delete Account',
+                        label: l10n.settingsDeleteAccount,
                         danger: true,
                         onTap: () => context.push('/settings/delete-account'),
                       ),
@@ -249,7 +262,7 @@ class _SettingsHomeScreenState extends ConsumerState<SettingsHomeScreen> {
                   Padding(
                     padding: EdgeInsets.only(bottom: 16),
                     child: Text(
-                      'Drift Tennis v$_appVersion',
+                      l10n.settingsVersion(_appVersion),
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontFamily: _font,
@@ -310,7 +323,7 @@ class _Header extends StatelessWidget {
           ),
           SizedBox(width: 12),
           Text(
-            'Settings',
+            context.l10n.settingsTitle,
             style: TextStyle(
               fontFamily: _font,
               fontSize: 22,
@@ -392,12 +405,16 @@ class _Row extends StatelessWidget {
     required this.accent,
     required this.label,
     required this.onTap,
+    this.value,
     this.danger = false,
   });
 
   final IconData icon;
   final Color accent;
   final String label;
+
+  /// The current setting, shown muted before the chevron.
+  final String? value;
   final VoidCallback onTap;
   final bool danger;
 
@@ -438,6 +455,20 @@ class _Row extends StatelessWidget {
                   ),
                 ),
               ),
+              if (value != null)
+                Padding(
+                  padding: EdgeInsets.only(right: 6),
+                  child: Text(
+                    value!,
+                    style: TextStyle(
+                      fontFamily: _font,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w400,
+                      height: 1.3,
+                      color: colors.textSecondary,
+                    ),
+                  ),
+                ),
               // Straight from the package: the mock draws the chevron at
               // wght 400 / FILL 0, which is this font's default master, so
               // nothing here depends on an axis Impeller would ignore.

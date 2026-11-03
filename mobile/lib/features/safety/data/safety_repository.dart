@@ -4,20 +4,29 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/dio_client.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../players/data/players_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Mirrors the backend `ReportReason` enum.
 enum ReportReason {
-  harassment('HARASSMENT', 'Harassment or abuse'),
-  spam('SPAM', 'Spam'),
-  fakeProfile('FAKE_PROFILE', 'Fake profile'),
-  inappropriateContent('INAPPROPRIATE_CONTENT', 'Inappropriate content'),
-  cheating('CHEATING', 'Cheating'),
-  other('OTHER', 'Something else');
+  harassment('HARASSMENT'),
+  spam('SPAM'),
+  fakeProfile('FAKE_PROFILE'),
+  inappropriateContent('INAPPROPRIATE_CONTENT'),
+  cheating('CHEATING'),
+  other('OTHER');
 
-  const ReportReason(this.wireValue, this.label);
+  const ReportReason(this.wireValue);
 
   final String wireValue;
-  final String label;
+
+  String get label => switch (this) {
+    ReportReason.harassment => l10nNow.reasonHarassment,
+    ReportReason.spam => l10nNow.reasonSpam,
+    ReportReason.fakeProfile => l10nNow.reasonFakeProfile,
+    ReportReason.inappropriateContent => l10nNow.reportInappropriate,
+    ReportReason.cheating => l10nNow.reasonCheating,
+    ReportReason.other => l10nNow.reasonOther,
+  };
 }
 
 class BlockedPlayer {
@@ -88,7 +97,7 @@ class SafetyRepository {
       final body = e.response?.data;
       final message = body is Map ? body['message'] as Object? : null;
       final text = message is List ? message.join(' ') : message?.toString();
-      throw AuthException(text ?? 'Something went wrong. Please try again.');
+      throw AuthException(text ?? l10nNow.commonErrorGeneric);
     }
   }
 
@@ -99,7 +108,7 @@ class SafetyRepository {
       final body = e.response?.data;
       final message = body is Map ? body['message'] as Object? : null;
       final text = message is List ? message.join(' ') : message?.toString();
-      throw AuthException(text ?? 'Something went wrong. Please try again.');
+      throw AuthException(text ?? l10nNow.commonErrorGeneric);
     }
   }
 }

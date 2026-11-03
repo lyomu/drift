@@ -16,8 +16,11 @@ import { ApiError } from "@/lib/api-client";
 import { APPLICATION_COPY, coachApi } from "@/lib/coach-api";
 import { useWorkspace } from "@/lib/workspace-context";
 import type { CoachApplication, CoachClub } from "@/lib/types";
+import { useI18n, useT } from "@/lib/i18n/i18n-context";
 
 export default function CoachOverviewPage() {
+  const t = useT();
+  const { formatDate } = useI18n();
   const { refresh } = useWorkspace();
   const [application, setApplication] = useState<CoachApplication | null>(null);
   const [clubs, setClubs] = useState<CoachClub[]>([]);
@@ -38,13 +41,13 @@ export default function CoachOverviewPage() {
         setClubs(mine.clubs);
       } catch (err) {
         setError(
-          err instanceof ApiError ? err.message : "Something went wrong.",
+          err instanceof ApiError ? err.message : t("a.somethingWentWrong"),
         );
       } finally {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     // Keep the sidebar badge honest if the status moved since login.
@@ -54,8 +57,8 @@ export default function CoachOverviewPage() {
   if (loading) {
     return (
       <>
-        <PageHeader title="Coach workspace" />
-        <EmptyState message="Loading…" />
+        <PageHeader title={t("a.coachWorkspace")} />
+        <EmptyState message={t("a.loading")} />
       </>
     );
   }
@@ -64,17 +67,17 @@ export default function CoachOverviewPage() {
     return (
       <>
         <PageHeader
-          title="Coach workspace"
-          description="Apply once, and players can find you in the Drift app."
+          title={t("a.coachWorkspace")}
+          description={t("a.applyOnceAndPlayersCan")}
         />
         <ErrorBanner message={error} />
         <EmptyState
           icon="sports_tennis"
-          title="Start your coach application"
-          description="Tell players about your background, what you teach, and how to reach you. Our team reviews every application before a profile goes live."
+          title={t("a.startYourCoachApplication")}
+          description={t("a.tellPlayersAboutYourBackground")}
           action={
             <Link href="/coach/application">
-              <Button>Start application</Button>
+              <Button>{t("a.startApplication")}</Button>
             </Link>
           }
         />
@@ -92,19 +95,19 @@ export default function CoachOverviewPage() {
   return (
     <>
       <PageHeader
-        title="Coach workspace"
-        description="Your application, your public profile, and the clubs you coach at."
+        title={t("a.coachWorkspace")}
+        description={t("a.yourApplicationYourPublicProfile")}
         action={
           approved ? (
             <Link href="/coach/profile">
-              <Button>Edit public profile</Button>
+              <Button>{t("a.editPublicProfile")}</Button>
             </Link>
           ) : editable ? (
             <Link href="/coach/application">
               <Button>
                 {application.status === "DRAFT"
-                  ? "Continue application"
-                  : "Update application"}
+                  ? t("a.continueApplication")
+                  : t("a.updateApplication")}
               </Button>
             </Link>
           ) : undefined
@@ -116,9 +119,7 @@ export default function CoachOverviewPage() {
         <Card>
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h2 className="font-display text-base font-bold text-drift-text-primary">
-                Application status
-              </h2>
+              <h2 className="font-display text-base font-bold text-drift-text-primary">{t("a.applicationStatus")}</h2>
               <p className="mt-1 max-w-[560px] text-[13px] text-drift-text-secondary">
                 {copy.blurb}
               </p>
@@ -130,9 +131,7 @@ export default function CoachOverviewPage() {
               cannot act on "changes requested" alone. */}
           {application.decisionReason && (
             <div className="mt-4 rounded-md border border-drift-border bg-drift-background px-4 py-3">
-              <p className="text-[12px] font-bold uppercase tracking-wide text-drift-text-secondary">
-                From the review team
-              </p>
+              <p className="text-[12px] font-bold uppercase tracking-wide text-drift-text-secondary">{t("a.fromTheReviewTeam")}</p>
               <p className="mt-1 text-sm text-drift-text-primary">
                 {application.decisionReason}
               </p>
@@ -141,22 +140,18 @@ export default function CoachOverviewPage() {
 
           <dl className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <dt className="text-[12px] font-bold uppercase tracking-wide text-drift-text-secondary">
-                Submitted
-              </dt>
+              <dt className="text-[12px] font-bold uppercase tracking-wide text-drift-text-secondary">{t("a.submitted")}</dt>
               <dd className="mt-0.5 text-sm text-drift-text-primary">
                 {application.submittedAt
-                  ? new Date(application.submittedAt).toLocaleDateString()
-                  : "Not submitted yet"}
+                  ? formatDate(application.submittedAt)
+                  : t("a.notSubmittedYet")}
               </dd>
             </div>
             <div>
-              <dt className="text-[12px] font-bold uppercase tracking-wide text-drift-text-secondary">
-                Reviewed
-              </dt>
+              <dt className="text-[12px] font-bold uppercase tracking-wide text-drift-text-secondary">{t("a.reviewed")}</dt>
               <dd className="mt-0.5 text-sm text-drift-text-primary">
                 {application.reviewedAt
-                  ? new Date(application.reviewedAt).toLocaleDateString()
+                  ? formatDate(application.reviewedAt)
                   : "—"}
               </dd>
             </div>
@@ -164,9 +159,7 @@ export default function CoachOverviewPage() {
         </Card>
 
         <Card>
-          <h2 className="font-display text-base font-bold text-drift-text-primary">
-            Visibility in the Drift app
-          </h2>
+          <h2 className="font-display text-base font-bold text-drift-text-primary">{t("a.visibilityInTheDriftApp")}</h2>
           <div className="mt-3 flex items-start gap-2.5">
             <MaterialIcon
               name={approved ? "visibility" : "visibility_off"}
@@ -176,28 +169,23 @@ export default function CoachOverviewPage() {
             />
             <p className="text-sm text-drift-text-secondary">
               {approved
-                ? "Players can find you under Coaches in Discover."
-                : "Your profile is hidden from players until an application is approved."}
+                ? t("a.coachProfileVisible")
+                : t("a.coachProfileHidden")}
             </p>
           </div>
         </Card>
 
         <Card>
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <h2 className="font-display text-base font-bold text-drift-text-primary">
-              Clubs
-            </h2>
+            <h2 className="font-display text-base font-bold text-drift-text-primary">{t("a.clubs")}</h2>
             <Link
               href="/coach/clubs"
               className="text-[13px] font-extrabold text-drift-primary-dark hover:underline"
-            >
-              View all
-            </Link>
+            >{t("a.viewAll")}</Link>
           </div>
           {clubs.length === 0 ? (
             <p className="mt-2 text-sm text-drift-text-secondary">
-              You are not linked to a club yet. A club administrator adds you
-              from their own console.
+              {t("a.youAreNotLinkedTo")}
             </p>
           ) : (
             <ul className="mt-3 flex flex-wrap gap-2">

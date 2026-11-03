@@ -5,6 +5,12 @@ import { PushService } from '../push/push.service';
 import { toNotificationDto, toPreferencesDto } from './notifications.mapper';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
 import { RegisterDeviceDto } from './dto/register-device.dto';
+import {
+  DEFAULT_LOCALE,
+  type Localizable,
+  localeOf,
+  render,
+} from '../common/i18n';
 
 const DEFAULT_TAKE = 30;
 
@@ -55,8 +61,8 @@ export class NotificationsService {
   async create(
     userId: string,
     category: NotificationCategory,
-    title: string,
-    body: string,
+    titleText: Localizable,
+    bodyText: Localizable,
     relatedEntityType?: string,
     relatedEntityId?: string,
     imageUrl?: string,
@@ -65,6 +71,23 @@ export class NotificationsService {
     if (!preference[PREFERENCE_FIELD[category]]) {
       return false;
     }
+
+    // Rendered once, in the recipient's language, and stored that way: the
+    // Notification Centre row and the push carry the same text. Literal text
+    // (an announcement, a chat preview) skips the lookup entirely.
+    const locale =
+      typeof titleText === 'string' && typeof bodyText === 'string'
+        ? DEFAULT_LOCALE
+        : localeOf(
+            (
+              await this.prisma.user.findUnique({
+                where: { id: userId },
+                select: { preferredLocale: true },
+              })
+            )?.preferredLocale,
+          );
+    const title = render(locale, titleText);
+    const body = render(locale, bodyText);
 
     const notification = await this.prisma.notification.create({
       data: {

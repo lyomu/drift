@@ -5,6 +5,7 @@ import { IconChip, MaterialIcon, Panel, RowCard } from "@/components/dashboard-d
 import { Button, EmptyState, ErrorBanner, Input, PageHeader, Select } from "@/components/ui";
 import { api, ApiError, downloadBlob } from "@/lib/api-client";
 import { useClub } from "@/lib/club-context";
+import { useI18n, useT } from "@/lib/i18n/i18n-context";
 
 type AuditRow = {
   id: string;
@@ -26,6 +27,8 @@ function actorName(log: AuditRow) {
 }
 
 export default function AuditPage() {
+  const t = useT();
+  const { formatDate } = useI18n();
   const { clubId } = useClub();
   const [logs, setLogs] = useState<AuditRow[] | null>(null);
   const [action, setAction] = useState("");
@@ -40,9 +43,9 @@ export default function AuditPage() {
       if (actorId) query.set("actorId", actorId);
       setLogs((await api.get<{ logs: AuditRow[] }>(`/clubs/${clubId}/audit-log?${query}`)).logs);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "The audit log could not be loaded.");
+      setError(err instanceof ApiError ? err.message : t("a.theAuditLogCouldNot"));
     }
-  }, [clubId, action, actorId]);
+  }, [clubId, action, actorId, t]);
 
   useEffect(() => {
     void load();
@@ -68,13 +71,11 @@ export default function AuditPage() {
   return (
     <div>
       <PageHeader
-        title="Club audit log"
-        description="A durable history of consequential club administration actions."
+        title={t("a.clubAuditLog")}
+        description={t("a.aDurableHistoryOfConsequential")}
         action={
           <Button variant="secondary" disabled={!logs?.length} onClick={exportCsv}>
-            <MaterialIcon name="download" className="text-[18px]" />
-            Export CSV
-          </Button>
+            <MaterialIcon name="download" className="text-[18px]" />{t("a.exportCsv")}</Button>
         }
       />
       <ErrorBanner message={error} />
@@ -84,11 +85,11 @@ export default function AuditPage() {
           <Input
             value={action}
             onChange={(e) => setAction(e.target.value)}
-            placeholder="Filter by action"
-            aria-label="Filter by action"
+            placeholder={t("a.filterByAction")}
+            aria-label={t("a.filterByAction")}
           />
-          <Select value={actorId} onChange={(e) => setActorId(e.target.value)} aria-label="Filter by user">
-            <option value="">All users</option>
+          <Select value={actorId} onChange={(e) => setActorId(e.target.value)} aria-label={t("a.filterByUser")}>
+            <option value="">{t("a.allUsers")}</option>
             {actors.map((actor) => (
               <option key={actor.id} value={actor.id}>
                 {`${actor.firstName ?? ""} ${actor.lastName ?? ""}`.trim() || actor.email}
@@ -100,9 +101,9 @@ export default function AuditPage() {
 
       <Panel>
         {logs === null ? (
-          <EmptyState message="Loading..." />
+          <EmptyState message={t("a.loading2")} />
         ) : logs.length === 0 ? (
-          <EmptyState message="No audited actions yet." />
+          <EmptyState message={t("a.noAuditedActionsYet")} />
         ) : (
           <div className="space-y-2">
             {logs.map((log) => (
@@ -121,7 +122,7 @@ export default function AuditPage() {
                     </div>
                   </div>
                   <time className="shrink-0 text-[13px] font-semibold text-drift-text-secondary">
-                    {new Date(log.createdAt).toLocaleString()}
+                    {formatDate(log.createdAt, { dateStyle: "medium", timeStyle: "short" })}
                   </time>
                 </div>
               </RowCard>

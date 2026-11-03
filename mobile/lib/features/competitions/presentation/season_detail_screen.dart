@@ -12,6 +12,7 @@ import '../../../shared/widgets/drift_soft_card.dart';
 import '../../auth/data/auth_repository.dart';
 import '../application/competitions_providers.dart';
 import '../data/competitions_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// League Competition Detail — `foundation/04-screen-inventory.md` §A.5
 /// (redesign 2026-08). Since M15 a league *is* the competition: registration
@@ -59,7 +60,7 @@ class _SeasonDetailScreenState extends ConsumerState<SeasonDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const DriftBackHeader(title: 'League'),
+            DriftBackHeader(title: context.l10n.competeLeague),
             Expanded(
               child: RefreshIndicator(
                 onRefresh: () async {
@@ -127,14 +128,14 @@ class _SeasonDetailScreenState extends ConsumerState<SeasonDetailScreen> {
                         onTap: () => context.push(
                           '/compete/leagues/${widget.seasonId}/rules',
                         ),
-                        child: const _LinkRow(label: 'Rules'),
+                        child: _LinkRow(label: context.l10n.competeRules),
                       ),
                       const SizedBox(height: 12),
                       DriftSoftCard(
                         onTap: () => context.push(
                           '/compete/leagues/${widget.seasonId}/players',
                         ),
-                        child: const _LinkRow(label: 'Registered Players'),
+                        child: _LinkRow(label: context.l10n.competeRegisteredPlayers),
                       ),
                       if (currentRound.valueOrNull != null) ...[
                         const SizedBox(height: 12),
@@ -143,7 +144,7 @@ class _SeasonDetailScreenState extends ConsumerState<SeasonDetailScreen> {
                             '/compete/leagues/${widget.seasonId}/rounds/'
                             '${currentRound.value!.id}',
                           ),
-                          child: const _LinkRow(label: 'Current Round'),
+                          child: _LinkRow(label: context.l10n.competeCurrentRound),
                         ),
                       ],
                       const SizedBox(height: 12),
@@ -151,12 +152,12 @@ class _SeasonDetailScreenState extends ConsumerState<SeasonDetailScreen> {
                         onTap: () => context.push(
                           '/compete/leagues/${widget.seasonId}/standings',
                         ),
-                        child: const _LinkRow(label: 'Standings'),
+                        child: _LinkRow(label: context.l10n.competeStandings),
                       ),
                     ],
                   ),
-                  AsyncError() => const Center(
-                    child: Text('League not available.'),
+                  AsyncError() => Center(
+                    child: Text(context.l10n.competeLeagueUnavailable),
                   ),
                   _ => const Center(child: CircularProgressIndicator()),
                 },
@@ -223,14 +224,14 @@ class _RegistrationCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "You're registered",
+              context.l10n.competeYoureRegistered,
               style: type.title.copyWith(fontWeight: FontWeight.w700),
             ),
             if (season.state == SeasonState.registrationOpen ||
                 season.state == SeasonState.draft) ...[
               const SizedBox(height: 4),
               DriftTextLink(
-                label: 'Withdraw',
+                label: context.l10n.competeWithdraw,
                 onPressed: isBusy
                     ? null
                     : () => _confirmWithdraw(context, onWithdraw),
@@ -248,17 +249,17 @@ class _RegistrationCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'On the waitlist',
+              context.l10n.competeOnWaitlist,
               style: type.title.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 2),
             Text(
-              "We'll move you in automatically if a spot opens up.",
+              context.l10n.competeWaitlistBody,
               style: type.bodySmall.copyWith(color: colors.textSecondary),
             ),
             const SizedBox(height: 4),
             DriftTextLink(
-              label: 'Leave waitlist',
+              label: context.l10n.competeLeaveWaitlist,
               onPressed: isBusy
                   ? null
                   : () => _confirmWithdraw(context, onWithdraw),
@@ -272,8 +273,8 @@ class _RegistrationCard extends StatelessWidget {
       return DriftSoftCard(
         child: Text(
           season.state == SeasonState.draft
-              ? 'Registration opens soon.'
-              : 'Registration is closed for this league.',
+              ? context.l10n.competeRegistrationOpensSoon
+              : context.l10n.competeRegistrationClosed,
           style: type.body.copyWith(color: colors.textSecondary),
         ),
       );
@@ -287,7 +288,7 @@ class _RegistrationCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Registration open',
+            context.l10n.seasonRegistrationOpen,
             style: type.title.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 2),
@@ -299,7 +300,9 @@ class _RegistrationCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           DriftPrimaryButton(
-            label: isFull ? 'Join Waitlist' : 'Register',
+            label: isFull
+                ? context.l10n.competeJoinWaitlist
+                : context.l10n.competeRegister,
             onPressed: isBusy
                 ? null
                 : () => _confirmRegister(context, isFull, onRegister),
@@ -318,23 +321,27 @@ class _RegistrationCard extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(
-          isFull ? 'Join the waitlist?' : 'Register for this league?',
+          isFull
+              ? context.l10n.competeJoinWaitlistQ
+              : context.l10n.competeRegisterQ,
         ),
         content: Text(
           isFull
-              ? "You'll be added to the waitlist and enrolled automatically "
-                    'if a spot opens up.'
-              : "You'll be paired with other registered players once the "
-                    'league starts.',
+              ? context.l10n.competeJoinWaitlistBody
+              : context.l10n.competeRegisterBody,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.commonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text(isFull ? 'Join Waitlist' : 'Register'),
+            child: Text(
+              isFull
+                  ? context.l10n.competeJoinWaitlist
+                  : context.l10n.competeRegister,
+            ),
           ),
         ],
       ),
@@ -349,19 +356,18 @@ class _RegistrationCard extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Withdraw from this league?'),
-        content: const Text(
-          'You can register again later, as long as registration is still '
-          'open.',
+        title: Text(context.l10n.competeWithdrawQ),
+        content: Text(
+          context.l10n.competeWithdrawBody,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.commonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Withdraw'),
+            child: Text(context.l10n.competeWithdraw),
           ),
         ],
       ),

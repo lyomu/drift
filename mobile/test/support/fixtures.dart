@@ -620,19 +620,26 @@ ChatMessage chatMessage({
   createdAt: DateTime(2026, 8, 23, 10),
 );
 
-Conversation conversation({String id = 'conv-1', int unread = 2}) =>
-    Conversation(
-      id: id,
-      type: 'MATCH',
-      matchId: 'match-1',
-      unreadCount: unread,
-      lastMessage: chatMessage(),
-      participants: [
+Conversation conversation({
+  String id = 'conv-1',
+  int unread = 2,
+  List<PlayerSummary>? participants,
+  DateTime? lastMessageAt,
+  ChatMessage? lastMessage,
+}) => Conversation(
+  id: id,
+  type: 'MATCH',
+  matchId: 'match-1',
+  unreadCount: unread,
+  lastMessage: lastMessage ?? chatMessage(),
+  participants:
+      participants ??
+      [
         playerSummary(id: 'u1'),
         playerSummary(id: 'u2'),
       ],
-      lastMessageAt: DateTime(2026, 8, 23, 10),
-    );
+  lastMessageAt: lastMessageAt ?? DateTime(2026, 8, 23, 10),
+);
 
 // ------------------------------------------------------ home / connections
 

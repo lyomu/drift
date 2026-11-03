@@ -5,6 +5,7 @@ import '../../../../core/theme/drift_colors.dart';
 import '../../../../core/theme/drift_typography.dart';
 import '../../../../shared/widgets/drift_icon.dart';
 import '../../data/matches_repository.dart';
+import '../../../../core/l10n/l10n.dart';
 
 /// Shared list body for the Play → Challenges / Active / History tabs:
 /// pull-to-refresh, loading / error / empty states, and 16px padding.
@@ -98,12 +99,15 @@ class _ErrorState extends StatelessWidget {
           child: Column(
             children: [
               Text(
-                "Couldn't load your matches.",
+                context.l10n.matchLoadMatchesFailed,
                 textAlign: TextAlign.center,
                 style: type.body.copyWith(color: colors.textSecondary),
               ),
               const SizedBox(height: 12),
-              TextButton(onPressed: onRetry, child: const Text('Retry')),
+              TextButton(
+                onPressed: onRetry,
+                child: Text(context.l10n.commonRetry),
+              ),
             ],
           ),
         ),

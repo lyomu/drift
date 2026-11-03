@@ -23,6 +23,7 @@ import { SelectEditControl } from "@/components/EditFieldModal";
 import { api, ApiError } from "@/lib/api-client";
 import { useClub } from "@/lib/club-context";
 import type { ClubRole, Member } from "@/lib/types";
+import { useT } from "@/lib/i18n/i18n-context";
 
 const ADMIN_ROLES: ClubRole[] = ["OWNER", "ADMIN", "COMPETITION_MANAGER", "COACH", "CONTENT_MANAGER", "READ_ONLY"];
 
@@ -31,6 +32,7 @@ function memberName(member: Member) {
 }
 
 export default function TeamPage() {
+  const t = useT();
   const { clubId, role } = useClub();
   const canManage = role === "OWNER" || role === "ADMIN";
   const [members, setMembers] = useState<Member[] | null>(null);
@@ -45,9 +47,9 @@ export default function TeamPage() {
     try {
       setMembers((await api.get<{ members: Member[] }>(`/clubs/${clubId}/members`)).members);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Team roles could not be loaded.");
+      setError(err instanceof ApiError ? err.message : t("a.teamRolesCouldNotBe"));
     }
-  }, [clubId]);
+  }, [clubId, t]);
 
   useEffect(() => {
     void load();
@@ -65,7 +67,7 @@ export default function TeamPage() {
       setShowInvite(false);
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "The administrator could not be invited.");
+      setError(err instanceof ApiError ? err.message : t("a.theAdministratorCouldNotBe"));
     } finally {
       setInviting(false);
     }
@@ -84,7 +86,7 @@ export default function TeamPage() {
       await api.delete(`/clubs/${clubId}/members/${id}`);
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "The administrator could not be removed.");
+      setError(err instanceof ApiError ? err.message : t("a.theAdministratorCouldNotBe2"));
     }
   }
 
@@ -93,33 +95,31 @@ export default function TeamPage() {
   return (
     <div>
       <PageHeader
-        title="Team roles"
-        description="Invite administrators and keep operational access aligned with each person's responsibilities."
+        title={t("a.teamRoles")}
+        description={t("a.inviteAdministratorsAndKeepOperational")}
         action={
           canManage ? (
             <Button onClick={() => setShowInvite(true)}>
-              <MaterialIcon name="person_add" className="text-[18px]" />
-              Invite admin
-            </Button>
+              <MaterialIcon name="person_add" className="text-[18px]" />{t("a.inviteAdmin")}</Button>
           ) : undefined
         }
       />
       <ErrorBanner message={error} />
 
       {showInvite && (
-        <ModalShell title="Invite an admin" onClose={() => setShowInvite(false)}>
+        <ModalShell title={t("a.inviteAnAdmin")} onClose={() => setShowInvite(false)}>
           <form onSubmit={invite} className="flex flex-col gap-4">
-            <Field label="Existing Drift account email">
+            <Field label={t("a.existingDriftAccountEmail")}>
               <Input
                 type="email"
                 required
                 autoFocus
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Must already have a Drift account"
+                placeholder={t("a.mustAlreadyHaveADrift")}
               />
             </Field>
-            <Field label="Role">
+            <Field label={t("a.role")}>
               <Select
                 value={inviteRole}
                 onChange={(e) => setInviteRole(e.target.value as ClubRole)}
@@ -140,7 +140,7 @@ export default function TeamPage() {
                 Cancel
               </Button>
               <Button type="submit" disabled={inviting}>
-                {inviting ? "Inviting…" : "Invite admin"}
+                {inviting ? t("a.inviting") : t("a.inviteAdmin")}
               </Button>
             </div>
           </form>
@@ -149,14 +149,14 @@ export default function TeamPage() {
 
       <Panel>
         <SectionTitle
-          title="Administrators"
+          title={t("a.administrators")}
           action={<span className="text-[13px] font-semibold text-drift-text-secondary">{team.length} people</span>}
         />
         <div className="mt-4">
           {members === null ? (
-            <EmptyState message="Loading..." />
+            <EmptyState message={t("a.loading2")} />
           ) : team.length === 0 ? (
-            <EmptyState message="No administrators have been added." />
+            <EmptyState message={t("a.noAdministratorsHaveBeenAdded")} />
           ) : (
             <div className="space-y-2">
               {team.map((member) => (
@@ -185,10 +185,10 @@ export default function TeamPage() {
                           onSave={(next) =>
                             change(member.membershipId, next as ClubRole)
                           }
-                          title="Change role"
+                          title={t("a.changeRole")}
                           description={`${memberName(member)} · ${member.email}`}
-                          fieldLabel="Role"
-                          confirmLabel="Save role"
+                          fieldLabel={t("a.role")}
+                          confirmLabel={t("a.saveRole")}
                         />
                       ) : (
                         <span className="text-sm font-semibold text-drift-text-primary">
@@ -198,7 +198,7 @@ export default function TeamPage() {
                       <StatusBadge status={member.status} />
                       {canManage && (
                         <Button variant="ghost" onClick={() => void remove(member.membershipId)}>
-                          Remove
+                          {t("a.remove")}
                         </Button>
                       )}
                     </div>

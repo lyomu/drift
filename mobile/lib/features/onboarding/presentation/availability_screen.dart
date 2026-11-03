@@ -9,12 +9,18 @@ import '../../../shared/widgets/buttons/drift_button.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../users/data/users_repository.dart';
 import 'widgets/onboarding_scaffold.dart';
+import '../../../core/l10n/l10n.dart';
+import 'package:intl/intl.dart';
 
-const _days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const _timeBlocks = [
-  ('MORNING', 'AM'),
-  ('AFTERNOON', 'Mid'),
-  ('EVENING', 'PM'),
+/// Short day name for the grid's Sunday-first row index, in the active
+/// language. 2023-12-31 was a Sunday.
+String _dayLabel(String localeTag, int day) =>
+    DateFormat.E(localeTag).format(DateTime(2023, 12, 31 + day));
+
+final _timeBlocks = [
+  ('MORNING', (AppLocalizations l) => l.onbTimeBlockAm),
+  ('AFTERNOON', (AppLocalizations l) => l.onbTimeBlockMid),
+  ('EVENING', (AppLocalizations l) => l.onbTimeBlockPm),
 ];
 
 /// Availability — `foundation/03-user-journeys.md` §2. Day x time-block
@@ -58,15 +64,14 @@ class _AvailabilityScreenState extends ConsumerState<AvailabilityScreen> {
 
     return DriftOnboardingScaffold(
       step: OnboardingStepIndex.availability,
-      title: 'When can you play?',
-      highlight: 'play?',
-      subtitle: 'Tap the slots you are usually free. You can change these '
-          'any time.',
+      title: context.l10n.onbAvailabilityTitle,
+      highlight: context.l10n.onbAvailabilityHighlight,
+      subtitle: context.l10n.onbAvailabilitySubtitle,
       loading: _isSubmitting,
       onContinue: _isSubmitting ? null : _submit,
       errorText: _errorText,
       footer: DriftButton(
-        label: 'Skip',
+        label: context.l10n.commonSkip,
         variant: DriftButtonVariant.text,
         onPressed: _isSubmitting ? null : _submit,
       ),
@@ -83,7 +88,7 @@ class _AvailabilityScreenState extends ConsumerState<AvailabilityScreen> {
                               vertical: DriftSpacing.s2,
                             ),
                             child: Center(
-                              child: Text(block.$2, style: type.label),
+                              child: Text(block.$2(context.l10n), style: type.label),
                             ),
                           ),
                       ],
@@ -95,7 +100,10 @@ class _AvailabilityScreenState extends ConsumerState<AvailabilityScreen> {
                             padding: const EdgeInsets.symmetric(
                               vertical: DriftSpacing.s1,
                             ),
-                            child: Text(_days[day], style: type.body),
+                            child: Text(
+                              _dayLabel(context.localeTag, day),
+                              style: type.body,
+                            ),
                           ),
                           for (final block in _timeBlocks)
                             Padding(

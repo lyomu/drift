@@ -15,6 +15,7 @@ import {
   ERASURE_RETENTION_DAYS,
   ErasureService,
 } from '../privacy/erasure.service';
+import type { LocaleCode } from '../common/i18n';
 
 /** Public read route for uploaded profile photos. Stored on `User.photoUrl`
  * as a relative path so it survives an API origin change; clients resolve it
@@ -34,6 +35,14 @@ export class UsersService {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { passwordHash, ...safeUser } = user;
     return safeUser;
+  }
+
+  async updateLocale(userId: string, locale: LocaleCode) {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { preferredLocale: locale },
+    });
+    return { locale };
   }
 
   /** Edit Profile — a post-onboarding partial update, distinct from the

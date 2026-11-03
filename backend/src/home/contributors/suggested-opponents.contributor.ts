@@ -2,6 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { PlayersService } from '../../players/players.service';
 import { HOME_CARD_PRIORITY, type HomeCard } from '../home-card';
 import type { HomeCardContributor, HomeContext } from './home-contributor';
+import {
+  DEFAULT_LOCALE,
+  type MessageKey,
+  type MessageParam,
+  t,
+} from '../../common/i18n';
 
 /** Kept tight — Home is a prompt, and the full search is one tap away. */
 const SUGGESTION_COUNT = 3;
@@ -29,6 +35,8 @@ export class SuggestedOpponentsContributor implements HomeCardContributor {
   constructor(private readonly players: PlayersService) {}
 
   async contribute(ctx: HomeContext): Promise<HomeCard[]> {
+    const tr = (key: MessageKey, params?: Record<string, MessageParam>) =>
+      t(ctx.locale ?? DEFAULT_LOCALE, key, params);
     const { players } = await this.players.search(ctx.userId, {
       take: SUGGESTION_COUNT,
     });
@@ -39,13 +47,16 @@ export class SuggestedOpponentsContributor implements HomeCardContributor {
         id: 'suggested-opponents',
         type: 'SUGGESTED_OPPONENTS',
         priority: HOME_CARD_PRIORITY.SUGGESTED_OPPONENTS,
-        title: 'Players near your level',
+        title: tr('home.opponents.title'),
         body:
           players.length === 1
-            ? 'One player nearby looks like a good match.'
-            : `${players.length} players nearby look like a good match.`,
+            ? tr('home.opponents.one')
+            : tr('home.opponents.many', { count: players.length }),
         accent: 'neutral',
-        action: { label: 'Find players', route: '/home?tab=play&play=find' },
+        action: {
+          label: tr('home.action.findPlayers'),
+          route: '/home?tab=play&play=find',
+        },
         dismissible: true,
         data: { kind: 'players', players },
       },

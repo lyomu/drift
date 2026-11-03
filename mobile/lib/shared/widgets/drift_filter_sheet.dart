@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/drift_colors.dart';
+import '../../core/l10n/l10n.dart';
 
 /// How much of the screen the scrolling section list may take before it
 /// scrolls. The header, the Apply button and the safe-area inset sit outside
@@ -51,14 +52,15 @@ Future<T?> showDriftFilterSheet<T>({
 class DriftFilterSheet extends StatelessWidget {
   const DriftFilterSheet({
     super.key,
-    this.title = 'Filters',
+    this.title,
     required this.sections,
     required this.activeCount,
     required this.onClear,
     required this.onApply,
   });
 
-  final String title;
+  /// Defaults to the translated "Filters".
+  final String? title;
   final List<Widget> sections;
 
   /// Shown on the Apply button and used to grey out "Clear all" at zero. The
@@ -117,7 +119,7 @@ class DriftFilterSheet extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      title,
+                      title ?? context.l10n.filterTitle,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
@@ -180,7 +182,7 @@ class _ClearAllButton extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           child: Text(
-            'Clear all',
+            context.l10n.notifClearAll,
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
@@ -204,8 +206,8 @@ class _ApplyButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<DriftColors>()!;
     final label = activeCount > 0
-        ? 'Apply filters ($activeCount)'
-        : 'Apply filters';
+        ? context.l10n.filterApplyCount(activeCount)
+        : context.l10n.filterApply;
 
     return DecoratedBox(
       decoration: BoxDecoration(

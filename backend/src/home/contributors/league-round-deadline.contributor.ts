@@ -4,6 +4,17 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { effectiveState, HISTORY_STATES } from '../../matches/match-state';
 import { HOME_CARD_PRIORITY, type HomeCard } from '../home-card';
 import type { HomeCardContributor, HomeContext } from './home-contributor';
+import {
+  DEFAULT_LOCALE,
+  type MessageKey,
+  type MessageParam,
+  t,
+} from '../../common/i18n';
+
+type Translate = (
+  key: MessageKey,
+  params?: Record<string, MessageParam>,
+) => string;
 
 const MS_PER_HOUR = 60 * 60 * 1000;
 
@@ -23,6 +34,8 @@ export class LeagueRoundDeadlineContributor implements HomeCardContributor {
   constructor(private readonly prisma: PrismaService) {}
 
   async contribute(ctx: HomeContext): Promise<HomeCard[]> {
+    const tr = (key: MessageKey, params?: Record<string, MessageParam>) =>
+      t(ctx.locale ?? DEFAULT_LOCALE, key, params);
     const fixtures = await this.prisma.fixture.findMany({
       where: {
         OR: [{ sideAUserId: ctx.userId }, { sideBUserId: ctx.userId }],
@@ -66,8 +79,12 @@ export class LeagueRoundDeadlineContributor implements HomeCardContributor {
           id: `league-round-deadline:${fixture.id}`,
           type: 'LEAGUE_ROUND_DEADLINE' as const,
           priority: HOME_CARD_PRIORITY.LEAGUE_ROUND_DEADLINE,
-          title: `Round ${round.index} closes ${this.relative(hoursLeft)}`,
+          title: tr('home.round.title', {
+            round: round.index,
+            when: this.relative(tr, hoursLeft),
+          }),
           body: this.body(
+            tr,
             league.name,
             state === MatchState.SCHEDULED && fixture.match.confirmedTime
               ? 'scheduled'
@@ -75,7 +92,7 @@ export class LeagueRoundDeadlineContributor implements HomeCardContributor {
           ),
           accent: 'urgent' as const,
           action: {
-            label: 'Open fixture',
+            label: tr('home.action.openFixture'),
             route: `/compete/leagues/${league.id}/rounds/${round.id}`,
           },
           dismissible: false,
@@ -85,16 +102,23 @@ export class LeagueRoundDeadlineContributor implements HomeCardContributor {
     });
   }
 
-  private relative(hoursLeft: number): string {
-    if (hoursLeft <= 1) return 'within the hour';
-    if (hoursLeft < 24) return `in ${hoursLeft} hours`;
+  private relative(tr: Translate, hoursLeft: number): string {
+    if (hoursLeft <= 1) return tr('home.round.withinHour');
+    if (hoursLeft < 24) return tr('home.round.inHours', { hours: hoursLeft });
     const days = Math.ceil(hoursLeft / 24);
-    return days === 1 ? 'tomorrow' : `in ${days} days`;
+    return days === 1
+      ? tr('home.round.tomorrow')
+      : tr('home.round.inDays', { days });
   }
 
-  private body(leagueName: string, stage: 'scheduled' | 'unscheduled'): string {
-    return stage === 'scheduled'
-      ? `Play your ${leagueName} fixture and record the score before the deadline, or it's recorded as a walkover.`
-      : `You haven't agreed a time for your ${leagueName} fixture yet. Unplayed fixtures are recorded as a walkover.`;
+  private body(
+    tr: Translate,
+    leagueName: string,
+    stage: 'scheduled' | 'unscheduled',
+  ): string {
+    return tr(
+      stage === 'scheduled' ? 'home.round.scheduled' : 'home.round.unscheduled',
+      { league: leagueName },
+    );
   }
 }

@@ -1,6 +1,8 @@
 import { EventForm } from "@/components/EventForm";
 import { PageHeader } from "@/components/ui";
+import { useT } from "@/lib/i18n/i18n-context";
 
 export default function NewEventPage() {
-  return <div><PageHeader title="Create event" description="Publish now or keep the event in draft until details are final." /><EventForm /></div>;
+  const t = useT();
+  return <div><PageHeader title={t("a.createEvent")} description={t("a.publishNowOrKeepThe")} /><EventForm /></div>;
 }

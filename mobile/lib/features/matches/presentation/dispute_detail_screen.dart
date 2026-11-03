@@ -13,6 +13,7 @@ import '../../auth/data/auth_repository.dart';
 import '../application/matches_providers.dart';
 import '../data/matches_repository.dart';
 import 'enter_score_screen.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Dispute Detail — `foundation/04-screen-inventory.md` §A.4. Both submitted
 /// versions, side by side, so the two players can see exactly where they
@@ -89,27 +90,28 @@ class _DisputeDetailScreenState extends ConsumerState<DisputeDetailScreen> {
         : _Version(result.outcome, result.sets, result.winningSide);
 
     return DriftScaffold(
-      title: 'Dispute',
+      title: context.l10n.matchDispute,
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
         children: [
           Text(
-            "You and your opponent submitted different results. Accept "
-            "their version if it's right, or revise yours.",
+            context.l10n.matchDisputeIntro,
             style: type.body,
           ),
           const SizedBox(height: DriftSpacing.s5),
-          _VersionCard(title: 'Your version', version: mine),
+          _VersionCard(title: context.l10n.matchYourVersion, version: mine),
           const SizedBox(height: DriftSpacing.s3),
-          _VersionCard(title: 'Their version', version: theirs),
+          _VersionCard(title: context.l10n.matchTheirVersion, version: theirs),
           const SizedBox(height: DriftSpacing.s6),
           DriftButton(
-            label: _isSubmitting ? 'Saving…' : 'Accept their version',
+            label: _isSubmitting
+                ? context.l10n.commonSaving
+                : context.l10n.matchAcceptTheirVersion,
             onPressed: _isSubmitting ? null : () => _acceptTheirVersion(theirs),
           ),
           const SizedBox(height: DriftSpacing.s2),
           DriftButton(
-            label: 'Revise your version',
+            label: context.l10n.matchReviseVersion,
             variant: DriftButtonVariant.text,
             onPressed: _isSubmitting
                 ? null
@@ -157,9 +159,9 @@ class _VersionCard extends StatelessWidget {
             DriftMatchScoreDisplay(sets: version.sets!)
           else
             Text(switch (version.outcome) {
-              ResultOutcome.walkover => 'Walkover',
-              ResultOutcome.retirement => 'Retirement',
-              ResultOutcome.score => 'Score',
+              ResultOutcome.walkover => context.l10n.matchStateWalkover,
+              ResultOutcome.retirement => context.l10n.matchRetirement,
+              ResultOutcome.score => context.l10n.matchScore,
             }, style: type.body.copyWith(color: colors.textSecondary)),
         ],
       ),

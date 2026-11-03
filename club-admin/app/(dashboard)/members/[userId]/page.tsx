@@ -10,6 +10,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { InitialsAvatar, MaterialIcon } from "@/components/dashboard-design";
 import { SelectEditControl } from "@/components/EditFieldModal";
 import type { ClubRole, Member } from "@/lib/types";
+import { useI18n, useT } from "@/lib/i18n/i18n-context";
 
 const ROLES: ClubRole[] = [
   "OWNER",
@@ -29,6 +30,8 @@ function formatRole(role: string) {
 }
 
 export default function MemberDetailPage() {
+  const t = useT();
+  const { formatDate } = useI18n();
   const { userId } = useParams<{ userId: string }>();
   const { clubId, role: myRole } = useClub();
   const router = useRouter();
@@ -49,7 +52,7 @@ export default function MemberDetailPage() {
       setError(
         reason instanceof ApiError
           ? reason.message
-          : "Member details could not be loaded.",
+          : t("a.memberDetailsCouldNotBe"),
       );
     }
   }
@@ -83,34 +86,32 @@ export default function MemberDetailPage() {
       router.push("/members");
     } catch (reason) {
       setError(
-        reason instanceof ApiError ? reason.message : "The member could not be removed.",
+        reason instanceof ApiError ? reason.message : t("a.theMemberCouldNotBe"),
       );
       setBusy(false);
     }
   }
 
   if (!members && !error) {
-    return <EmptyState message="Loading..." />;
+    return <EmptyState message={t("a.loading2")} />;
   }
 
   return (
     <div>
       <PageHeader
-        title={member ? memberName(member) : "Member"}
-        description="Club membership profile and access."
+        title={member ? memberName(member) : t("a.member")}
+        description={t("a.clubMembershipProfileAndAccess")}
         action={
           <Link href="/members">
             <Button variant="secondary">
-              <MaterialIcon name="arrow_back" className="text-[16px]" />
-              All members
-            </Button>
+              <MaterialIcon name="arrow_back" className="text-[16px]" />{t("a.allMembers")}</Button>
           </Link>
         }
       />
       <ErrorBanner message={error} />
 
       {!member ? (
-        <EmptyState message="Member not found." />
+        <EmptyState message={t("a.memberNotFound")} />
       ) : (
         <div className="flex flex-col gap-5">
           <Card>
@@ -142,17 +143,17 @@ export default function MemberDetailPage() {
                       label: formatRole(r),
                     }))}
                     onSave={(next) => handleRoleChange(next as ClubRole)}
-                    title="Change role"
+                    title={t("a.changeRole")}
                     description={`${memberName(member)} · ${member.email}`}
-                    fieldLabel="Role"
-                    confirmLabel="Save role"
+                    fieldLabel={t("a.role")}
+                    confirmLabel={t("a.saveRole")}
                   />
                   <Button
                     variant="destructive"
                     disabled={busy}
                     onClick={() => void handleRemove()}
                   >
-                    {busy ? "Removing…" : "Remove member"}
+                    {busy ? t("a.removing") : t("a.removeMember")}
                   </Button>
                 </div>
               )}
@@ -160,13 +161,13 @@ export default function MemberDetailPage() {
           </Card>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <DetailTile label="Role" value={formatRole(member.role)} />
-            <DetailTile label="Membership" value={formatRole(member.status)} />
+            <DetailTile label={t("a.role")} value={formatRole(member.role)} />
+            <DetailTile label={t("a.membership")} value={formatRole(member.status)} />
             <DetailTile
-              label="Joined"
-              value={new Date(member.joinedAt).toLocaleDateString()}
+              label={t("a.joined")}
+              value={formatDate(member.joinedAt)}
             />
-            <DetailTile label="User ID" value={member.userId} mono />
+            <DetailTile label={t("a.userId")} value={member.userId} mono />
           </div>
         </div>
       )}

@@ -10,6 +10,7 @@ import '../../../shared/widgets/drift_scaffold.dart';
 import '../../../shared/widgets/drift_recent_form.dart';
 import '../../users/application/current_user_provider.dart';
 import '../application/padel_providers.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Padel Match History & Stats — `foundation/04-screen-inventory.md` §A.10.
 /// Reuses `DriftMatchCard`/`DriftRecentForm` as-is, sport-scoped — same
@@ -25,7 +26,7 @@ class PadelMatchHistoryScreen extends ConsumerWidget {
     final type = Theme.of(context).extension<DriftTypography>()!;
 
     return DriftScaffold(
-      title: 'Padel Match History',
+      title: context.l10n.padelMatchHistory,
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(padelMatchHistoryProvider);
@@ -41,7 +42,7 @@ class PadelMatchHistoryScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Your Padel stats', style: type.h4),
+                      Text(context.l10n.padelYourStats, style: type.h4),
                       const SizedBox(height: DriftSpacing.s2),
                       DriftRecentForm(results: stats.value!.recentForm),
                     ],
@@ -63,8 +64,8 @@ class PadelMatchHistoryScreen extends ConsumerWidget {
                   ),
             ],
           ),
-          AsyncError() => const Center(
-            child: Text("Couldn't load your Padel match history."),
+          AsyncError() => Center(
+            child: Text(context.l10n.padelHistoryFailed),
           ),
           _ => const Center(child: CircularProgressIndicator()),
         },
@@ -86,7 +87,7 @@ class _EmptyState extends StatelessWidget {
         children: [
           const SizedBox(height: DriftSpacing.s12),
           Text(
-            'Play your first Padel match to start building history',
+            context.l10n.padelHistoryEmpty,
             style: type.body,
             textAlign: TextAlign.center,
           ),

@@ -11,6 +11,7 @@ import { displayName } from '../common/display-name.util';
 import { demoScope } from '../common/demo-scope';
 import { playerInclude, toPlayerSummary } from '../players/player.mapper';
 import { NotificationsService } from '../notifications/notifications.service';
+import { msg } from '../common/i18n';
 
 @Injectable()
 export class ConnectionsService {
@@ -201,8 +202,8 @@ export class ConnectionsService {
     await this.notifications.create(
       addresseeId,
       'CONNECTIONS',
-      `${displayName(requester)} wants to connect`,
-      'Review their request to accept or decline.',
+      msg('connection.request.title', { name: displayName(requester) }),
+      msg('connection.request.body'),
       'CONNECTION',
       addresseeId,
     );
@@ -217,8 +218,8 @@ export class ConnectionsService {
     await this.notifications.create(
       requesterId,
       'CONNECTIONS',
-      `${displayName(accepter)} accepted your connection request`,
-      "You're now connected.",
+      msg('connection.accepted.title', { name: displayName(accepter) }),
+      msg('connection.accepted.body'),
       'CONNECTION',
       requesterId,
     );

@@ -6,6 +6,7 @@ import { hasToken } from "@/lib/api-client";
 import { useWorkspace } from "@/lib/workspace-context";
 import { CoachSidebar } from "@/components/CoachSidebar";
 import { CoachHeader } from "@/components/CoachHeader";
+import { useT } from "@/lib/i18n/i18n-context";
 
 /**
  * The coach workspace shell. Deliberately a sibling of `(dashboard)` rather
@@ -20,6 +21,7 @@ export default function CoachLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const t = useT();
   const router = useRouter();
   const { loading, authed } = useWorkspace();
 
@@ -33,9 +35,7 @@ export default function CoachLayout({
 
   if (!hasToken() || loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-drift-background text-sm text-drift-text-secondary">
-        Loading…
-      </div>
+      <div className="flex min-h-screen items-center justify-center bg-drift-background text-sm text-drift-text-secondary">{t("a.loading")}</div>
     );
   }
 

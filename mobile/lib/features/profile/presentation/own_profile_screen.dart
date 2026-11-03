@@ -4,25 +4,14 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_typography.dart';
-import '../../../shared/widgets/buttons/drift_primary_button.dart';
 import '../../../shared/widgets/drift_soft_card.dart';
+import '../../../shared/widgets/drift_profile_highlights.dart';
 import '../../matches/data/player_stats.dart';
 import '../../players/data/players_repository.dart';
 import '../application/profile_providers.dart';
+import '../../../core/l10n/l10n.dart';
+import '../../../core/l10n/enum_labels.dart';
 
-const _pillarLabels = {
-  'FOREHAND': 'Forehand',
-  'BACKHAND': 'Backhand',
-  'SERVE': 'Serve',
-  'RETURN': 'Return',
-  'NET_PLAY': 'Net Play',
-  'MOVEMENT': 'Movement',
-  'MATCH_PLAY': 'Match Play',
-  'FOOTWORK': 'Footwork',
-  'COMPETITION_EXPERIENCE': 'Competition Experience',
-};
-
-const _dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 /// Own Profile — `foundation/04-screen-inventory.md` §A.10 (redesign 2026-08:
 /// `App.tsx` `ProfileDetailView`). `GET /players/me` never gates skill
@@ -42,11 +31,11 @@ class OwnProfileScreen extends ConsumerWidget {
           AsyncData(:final value) => _ProfileBody(profile: value),
           AsyncError() => ListView(
             children: [
-              const _GradientHeader(name: 'My Profile', location: null),
+              _GradientHeader(name: context.l10n.navMyProfile, location: null, initials: '?'),
               Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
-                  "Couldn't load your profile.",
+                  context.l10n.profileLoadFailed,
                   style: type.body,
                   textAlign: TextAlign.center,
                 ),
@@ -76,37 +65,45 @@ class _ProfileBody extends StatelessWidget {
     final facts = <(String, String)>[
       if (summary.level != null)
         (
-          'Level',
-          '${summary.level!.toStringAsFixed(1)} · ${summary.levelLabel}',
+          context.l10n.filterLevel,
+          '${summary.level!.toStringAsFixed(1)} · '
+              '${levelLabelText(context.l10n, summary.levelLabel ?? '')}',
         ),
       if (profile.dominantHand != null)
-        ('Plays', '${_titleCase(profile.dominantHand!)} handed'),
+        (
+          context.l10n.playerPlays,
+          handednessLabel(context.l10n, profile.dominantHand!),
+        ),
       if (summary.formatPreference != null)
-        ('Format', _titleCase(summary.formatPreference!)),
+        (
+          context.l10n.onbFormat,
+          formatPrefLabel(context.l10n, summary.formatPreference!),
+        ),
       if (summary.stylePreference != null)
-        ('Style', _titleCase(summary.stylePreference!)),
+        (
+          context.l10n.onbStyle,
+          stylePrefLabel(context.l10n, summary.stylePreference!),
+        ),
     ];
 
     return ListView(
       padding: EdgeInsets.zero,
       children: [
-        _GradientHeader(
-          name: summary.displayName,
-          location: summary.generalLocation,
-          initials: _initials(summary),
-        ),
+        const _ProfileTopBar(),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              DriftProfileHighlights(profile: profile),
+              const SizedBox(height: 18),
               DriftSoftCard(
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'AT A GLANCE',
+                      context.l10n.playerAtAGlance,
                       style: type.caption.copyWith(
                         fontWeight: FontWeight.w700,
                         color: colors.textSecondary,
@@ -122,9 +119,9 @@ class _ProfileBody extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 4),
-              _ViewStatsLink(stats: profile.stats),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
+              _ProfileActions(stats: profile.stats),
+              const SizedBox(height: 18),
 
               if (breakdown.isNotEmpty) ...[
                 DriftSoftCard(
@@ -133,13 +130,13 @@ class _ProfileBody extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Development areas',
+                        context.l10n.playerDevelopmentAreas,
                         style: type.title.copyWith(fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(height: 14),
                       for (final entry in breakdown.entries) ...[
                         Text(
-                          _pillarLabels[entry.key] ?? entry.key,
+                          pillarLabel(context.l10n, entry.key),
                           style: type.caption.copyWith(
                             color: colors.textPrimary,
                           ),
@@ -163,7 +160,7 @@ class _ProfileBody extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Availability',
+                        context.l10n.commonAvailability,
                         style: type.title.copyWith(fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(height: 12),
@@ -182,7 +179,8 @@ class _ProfileBody extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(999),
                               ),
                               child: Text(
-                                '${_dayNames[slot.dayOfWeek]} · ${_titleCase(slot.timeBlock)}',
+                                '${shortDayOfWeek(context.localeTag, slot.dayOfWeek)} · '
+                                '${timeBlockLabel(context.l10n, slot.timeBlock)}',
                                 style: type.caption.copyWith(
                                   color: colors.primary,
                                   fontWeight: FontWeight.w600,
@@ -202,11 +200,43 @@ class _ProfileBody extends StatelessWidget {
   }
 }
 
+class _ProfileTopBar extends StatelessWidget {
+  const _ProfileTopBar();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<DriftColors>()!;
+    final type = Theme.of(context).extension<DriftTypography>()!;
+    return SafeArea(
+      bottom: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+        child: Row(
+          children: [
+            IconButton(
+              tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+              onPressed: () { if (context.canPop()) context.pop(); },
+              icon: Icon(Icons.arrow_back_ios_new, color: colors.textPrimary),
+            ),
+            Expanded(child: Text(context.l10n.navMyProfile,
+                textAlign: TextAlign.center, style: type.title)),
+            IconButton(
+              tooltip: context.l10n.profileEdit,
+              onPressed: () => context.push('/profile/edit'),
+              icon: Icon(Icons.edit_outlined, color: colors.primary),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _GradientHeader extends StatelessWidget {
   const _GradientHeader({
     required this.name,
     required this.location,
-    this.initials = 'AR',
+    required this.initials,
   });
 
   final String name;
@@ -245,7 +275,7 @@ class _GradientHeader extends StatelessWidget {
               ),
               const Spacer(),
               Text(
-                'My Profile',
+                context.l10n.navMyProfile,
                 style: type.title.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
@@ -358,19 +388,47 @@ class _SkillBar extends StatelessWidget {
   }
 }
 
-class _ViewStatsLink extends StatelessWidget {
-  const _ViewStatsLink({required this.stats});
+class _ProfileActions extends StatelessWidget {
+  const _ProfileActions({required this.stats});
 
   final PlayerStats stats;
 
   @override
   Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.center,
-      child: DriftTextLink(
-        label: 'View Stats',
-        onPressed: () =>
-            context.push('/stats', extra: (title: 'My Stats', stats: stats)),
+    final colors = Theme.of(context).extension<DriftColors>()!;
+    final type = Theme.of(context).extension<DriftTypography>()!;
+    return DriftSoftCard(
+      padding: EdgeInsets.zero,
+      child: Column(
+        children: [
+          _action(context, Icons.edit_outlined, context.l10n.profileEdit,
+              () => context.push('/profile/edit'), colors, type),
+          Divider(height: 1, indent: 58, color: colors.border),
+          _action(context, Icons.bar_chart_outlined, context.l10n.playerViewStats,
+              () => context.push('/stats', extra: (title: context.l10n.profileMyStats, stats: stats)), colors, type),
+          Divider(height: 1, indent: 58, color: colors.border),
+          _action(context, Icons.settings_outlined, context.l10n.navSettings,
+              () => context.push('/settings'), colors, type),
+        ],
+      ),
+    );
+  }
+
+  Widget _action(BuildContext context, IconData icon, String label,
+      VoidCallback onTap, DriftColors colors, DriftTypography type) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          child: Row(children: [
+            Icon(icon, size: 21, color: colors.primary),
+            const SizedBox(width: 18),
+            Expanded(child: Text(label, style: type.bodySmall.copyWith(fontWeight: FontWeight.w700))),
+            Icon(Icons.chevron_right, color: colors.textSecondary),
+          ]),
+        ),
       ),
     );
   }
@@ -412,21 +470,4 @@ class _Fact extends StatelessWidget {
       ),
     );
   }
-}
-
-String _titleCase(String enumValue) {
-  return enumValue
-      .split('_')
-      .map((w) => w.isEmpty ? w : w[0] + w.substring(1).toLowerCase())
-      .join(' ');
-}
-
-String _initials(PlayerSummary summary) {
-  final parts = [summary.firstName, summary.lastName]
-      .whereType<String>()
-      .where((p) => p.isNotEmpty)
-      .map((p) => p[0].toUpperCase())
-      .take(2)
-      .join();
-  return parts.isEmpty ? '?' : parts;
 }

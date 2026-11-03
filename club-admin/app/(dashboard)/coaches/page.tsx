@@ -9,12 +9,14 @@ import { Listing } from "@/components/Listing";
 import { api, ApiError } from "@/lib/api-client";
 import { useClub } from "@/lib/club-context";
 import type { CoachAdmin } from "@/lib/types";
+import { useT } from "@/lib/i18n/i18n-context";
 
 function coachName(coach: CoachAdmin) {
   return [coach.firstName, coach.lastName].filter(Boolean).join(" ") || "Coach";
 }
 
 export default function CoachesPage() {
+  const t = useT();
   const { clubId, role } = useClub();
   const canManage = role === "OWNER" || role === "ADMIN";
   const [coaches, setCoaches] = useState<CoachAdmin[] | null>(null);
@@ -35,7 +37,7 @@ export default function CoachesPage() {
       .catch((reason: unknown) => {
         if (!cancelled) {
           setError(
-            reason instanceof ApiError ? reason.message : "Failed to load coaches.",
+            reason instanceof ApiError ? reason.message : t("a.failedToLoadCoaches"),
           );
           setCoaches([]);
         }
@@ -43,7 +45,7 @@ export default function CoachesPage() {
     return () => {
       cancelled = true;
     };
-  }, [clubId]);
+  }, [clubId, t]);
 
   const visible = useMemo(() => {
     if (!coaches) return null;
@@ -65,12 +67,12 @@ export default function CoachesPage() {
   return (
     <div>
       <PageHeader
-        title="Coaches"
-        description="Public coaching profiles affiliated with this club."
+        title={t("a.coaches")}
+        description={t("a.publicCoachingProfilesAffiliatedWith")}
         action={
           canManage ? (
             <Link href="/coaches/new">
-              <Button>Add coach</Button>
+              <Button>{t("a.addCoach")}</Button>
             </Link>
           ) : undefined
         }
@@ -79,31 +81,31 @@ export default function CoachesPage() {
 
       <div className="mb-4 max-w-sm">
         <Input
-          aria-label="Filter coaches"
-          placeholder="Filter by name or specialisation..."
+          aria-label={t("a.filterCoaches")}
+          placeholder={t("a.filterByNameOrSpecialisation")}
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />
       </div>
 
       <Listing
-        title="Coaches"
+        title={t("a.coaches")}
         count={visible?.length ?? null}
         loading={visible === null}
         empty={{
           icon: "sports",
           title: query
-            ? "No coaches match that filter"
+            ? t("a.noCoachesMatchFilter")
             : canManage
-              ? "No coaches yet"
-              : "No coaches affiliated yet",
+              ? t("a.noCoachesYet")
+              : t("a.noCoachesAffiliated"),
           description: query
-            ? "Try a different name, specialisation or level."
-            : "Coach profiles you add here are public and show on the club's page in the Drift app.",
+            ? t("a.tryDifferentCoachFilter")
+            : t("a.coachProfilesPublic"),
           action:
             canManage && !query ? (
               <Link href="/coaches/new">
-                <Button>Add coach</Button>
+                <Button>{t("a.addCoach")}</Button>
               </Link>
             ) : undefined,
         }}
@@ -118,7 +120,7 @@ export default function CoachesPage() {
                       {coachName(coach)}
                     </div>
                     <div className="truncate text-xs text-drift-text-secondary">
-                      {coach.accountEmail ?? "No account email"}
+                      {coach.accountEmail ?? t("a.noAccountEmail")}
                     </div>
                   </div>
                   <div className="flex min-w-0 flex-[1.3] flex-wrap gap-1.5">

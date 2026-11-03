@@ -5,6 +5,12 @@ import { playerInclude, toPlayerSummary } from '../../players/player.mapper';
 import { displayName } from '../../common/display-name.util';
 import { HOME_CARD_PRIORITY, type HomeCard } from '../home-card';
 import type { HomeCardContributor, HomeContext } from './home-contributor';
+import {
+  DEFAULT_LOCALE,
+  type MessageKey,
+  type MessageParam,
+  t,
+} from '../../common/i18n';
 
 /**
  * Incoming connection requests awaiting an answer.
@@ -24,6 +30,8 @@ export class PendingConnectionContributor implements HomeCardContributor {
   constructor(private readonly prisma: PrismaService) {}
 
   async contribute(ctx: HomeContext): Promise<HomeCard[]> {
+    const tr = (key: MessageKey, params?: Record<string, MessageParam>) =>
+      t(ctx.locale ?? DEFAULT_LOCALE, key, params);
     const [requests, blocks] = await Promise.all([
       this.prisma.connection.findMany({
         where: { addresseeId: ctx.userId, status: ConnectionStatus.PENDING },
@@ -53,14 +61,17 @@ export class PendingConnectionContributor implements HomeCardContributor {
         priority: HOME_CARD_PRIORITY.PENDING_CONNECTION,
         title:
           visible.length === 1
-            ? `${firstName} wants to connect`
-            : `${visible.length} people want to connect`,
+            ? tr('home.connections.one', { name: firstName })
+            : tr('home.connections.many', { count: visible.length }),
         body:
           visible.length === 1
-            ? 'Connecting unlocks their full profile and lets you message each other.'
-            : `Including ${firstName}. Connecting unlocks full profiles and messaging.`,
+            ? tr('home.connections.oneBody')
+            : tr('home.connections.manyBody', { name: firstName }),
         accent: 'info',
-        action: { label: 'View requests', route: '/connections/pending' },
+        action: {
+          label: tr('home.action.viewRequests'),
+          route: '/connections/pending',
+        },
         dismissible: true,
         data: {
           kind: 'players',

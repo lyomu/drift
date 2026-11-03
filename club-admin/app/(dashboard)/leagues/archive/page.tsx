@@ -6,6 +6,7 @@ import { useClub } from "@/lib/club-context";
 import { Button, Card, EmptyState, ErrorBanner, Field, Input, PageHeader, Select } from "@/components/ui";
 import { DataTable } from "@/components/DataTable";
 import { StatusBadge } from "@/components/StatusBadge";
+import { useT } from "@/lib/i18n/i18n-context";
 
 type ArchivedLeague = {
   id: string;
@@ -17,6 +18,7 @@ type ArchivedLeague = {
 };
 
 export default function LeagueArchivePage() {
+  const t = useT();
   const { clubId, role } = useClub();
   const canManage = role === "OWNER" || role === "ADMIN";
   const [leagues, setLeagues] = useState<ArchivedLeague[] | null>(null);
@@ -33,9 +35,9 @@ export default function LeagueArchivePage() {
         (await api.get<{ leagues: ArchivedLeague[] }>(`/clubs/${clubId}/leagues/archive`)).leagues,
       );
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Archive could not be loaded.");
+      setError(err instanceof ApiError ? err.message : t("a.archiveCouldNotBeLoaded"));
     }
-  }, [clubId]);
+  }, [clubId, t]);
 
   useEffect(() => {
     void load();
@@ -54,21 +56,21 @@ export default function LeagueArchivePage() {
       setNotes("");
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "The award could not be issued.");
+      setError(err instanceof ApiError ? err.message : t("a.theAwardCouldNotBe"));
     }
   }
 
   return (
     <div>
       <PageHeader
-        title="League archive & awards"
-        description="Review final standings and recognise completed-league achievements."
+        title={t("a.leagueArchiveAwards")}
+        description={t("a.reviewFinalStandingsAndRecognise")}
       />
       <ErrorBanner message={error} />
       {leagues === null ? (
-        <EmptyState message="Loading…" />
+        <EmptyState message={t("a.loading")} />
       ) : leagues.length === 0 ? (
-        <EmptyState message="No completed leagues yet" />
+        <EmptyState message={t("a.noCompletedLeaguesYet")} />
       ) : (
         <div className="flex flex-col gap-4">
           {leagues.map((league) => (
@@ -90,15 +92,15 @@ export default function LeagueArchivePage() {
                   <DataTable
                     rows={league.standings}
                     rowKey={(s) => s.userId}
-                    emptyMessage="No final standings were recorded."
+                    emptyMessage={t("a.noFinalStandingsWereRecorded")}
                     columns={[
-                      { header: "Rank", cell: (s) => s.rank },
+                      { header: t("a.rank"), cell: (s) => s.rank },
                       {
-                        header: "Player",
+                        header: t("a.player"),
                         cell: (s) =>
                           `${s.user.firstName ?? ""} ${s.user.lastName ?? ""}`.trim() || "—",
                       },
-                      { header: "Points", cell: (s) => s.points },
+                      { header: t("a.points"), cell: (s) => s.points },
                       { header: "W-L", cell: (s) => `${s.wins}-${s.losses}` },
                     ]}
                   />
@@ -119,13 +121,13 @@ export default function LeagueArchivePage() {
                       onSubmit={(e) => void award(e, league.id)}
                       className="mt-5 grid grid-cols-1 gap-3 border-t border-drift-border pt-5 sm:grid-cols-[1fr_1fr_1fr_auto]"
                     >
-                      <Field label="Recipient">
+                      <Field label={t("a.recipient")}>
                         <Select
                           required
                           value={recipientId}
                           onChange={(e) => setRecipientId(e.target.value)}
                         >
-                          <option value="">Select player</option>
+                          <option value="">{t("a.selectPlayer")}</option>
                           {league.standings.map((s) => (
                             <option key={s.userId} value={s.userId}>
                               {`${s.user.firstName ?? ""} ${s.user.lastName ?? ""}`.trim()}
@@ -133,20 +135,18 @@ export default function LeagueArchivePage() {
                           ))}
                         </Select>
                       </Field>
-                      <Field label="Award">
+                      <Field label={t("a.award")}>
                         <Input
                           required
                           value={title}
                           onChange={(e) => setTitle(e.target.value)}
-                          placeholder="League champion"
+                          placeholder={t("a.leagueChampion")}
                         />
                       </Field>
-                      <Field label="Notes">
+                      <Field label={t("a.notes")}>
                         <Input value={notes} onChange={(e) => setNotes(e.target.value)} />
                       </Field>
-                      <Button type="submit" className="self-end">
-                        Issue award
-                      </Button>
+                      <Button type="submit" className="self-end">{t("a.issueAward")}</Button>
                     </form>
                   )}
                 </div>

@@ -8,6 +8,7 @@ import '../application/courts_providers.dart';
 import 'court_filters_sheet.dart';
 import 'court_list_view.dart';
 import 'court_map_view.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Court Finder Hub — `foundation/04-screen-inventory.md` §A.6. Map/List
 /// toggle over one shared search (redesign 2026-08: `App.tsx`
@@ -25,7 +26,6 @@ class CourtFinderHubScreen extends ConsumerStatefulWidget {
 class _CourtFinderHubScreenState extends ConsumerState<CourtFinderHubScreen> {
   int _segment = 0;
 
-  static const _labels = ['Map', 'List'];
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +41,7 @@ class _CourtFinderHubScreenState extends ConsumerState<CourtFinderHubScreen> {
             children: [
               Expanded(
                 child: DriftPillTabs(
-                  labels: _labels,
+                  labels: [context.l10n.courtMap, context.l10n.courtList],
                   selected: _segment,
                   onChanged: (i) => setState(() => _segment = i),
                 ),
@@ -71,7 +71,7 @@ class _CourtFinderHubScreenState extends ConsumerState<CourtFinderHubScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-            child: Text('Courts', style: type.h2),
+            child: Text(context.l10n.discoverCourts, style: type.h2),
           ),
           Expanded(child: body),
         ],

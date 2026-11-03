@@ -7,6 +7,7 @@ import '../../../../core/theme/drift_colors.dart';
 import '../../../players/data/players_repository.dart';
 import '../../../users/application/current_user_provider.dart';
 import 'home_empty_state.dart';
+import '../../../../core/l10n/l10n.dart';
 
 /// Avatar gradients, picked by a stable hash of the player id so a player
 /// keeps the same colour between rebuilds — the API sends no colour, and
@@ -34,8 +35,8 @@ class PlayersNearYouSection extends ConsumerWidget {
     if (shown.isEmpty) {
       return HomeEmptyState(
         icon: Icons.person_search_outlined,
-        message: 'No players nearby yet.',
-        actionLabel: 'Search',
+        message: context.l10n.homeNoPlayers,
+        actionLabel: context.l10n.commonSearch,
         onAction: () => context.go('/home?tab=play&play=find'),
       );
     }

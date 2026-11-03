@@ -1,4 +1,5 @@
 import { EmptyState } from "@/components/ui";
+import { useT } from "@/lib/i18n/i18n-context";
 
 export type Column<T> = {
   header: string;
@@ -10,7 +11,7 @@ export function DataTable<T>({
   columns,
   rows,
   rowKey,
-  emptyMessage = "Nothing here yet",
+  emptyMessage,
   emptyDescription,
   emptyIcon,
   emptyAction,
@@ -23,6 +24,7 @@ export function DataTable<T>({
   emptyIcon?: string;
   emptyAction?: React.ReactNode;
 }) {
+  const t = useT();
   return (
     <div className="overflow-x-auto rounded-lg border border-drift-border bg-drift-surface">
       <table className="w-full min-w-[720px] border-separate border-spacing-0 text-left text-sm">
@@ -46,7 +48,7 @@ export function DataTable<T>({
                   bare
                   compact
                   icon={emptyIcon}
-                  title={emptyMessage}
+                  title={emptyMessage ?? t("common.nothingHere")}
                   description={emptyDescription}
                   action={emptyAction}
                 />

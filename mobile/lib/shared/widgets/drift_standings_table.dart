@@ -4,6 +4,7 @@ import '../../core/theme/drift_colors.dart';
 import '../../core/theme/drift_typography.dart';
 import '../../features/competitions/data/competitions_repository.dart';
 import 'drift_soft_card.dart';
+import '../../core/l10n/l10n.dart';
 
 /// Standings Table — `DESIGN_SPEC.md` §4. White card, ranked rows with
 /// MP / W / L / Pts columns; the viewer's row is tinted, top-3 ranks are
@@ -58,10 +59,10 @@ class DriftStandingsTable extends StatelessWidget {
                   children: [
                     const SizedBox(width: _wRank),
                     const Expanded(child: SizedBox()),
-                    headCell('MP', _wStat, colors.primary),
-                    headCell('W', _wStat, colors.primary),
-                    headCell('L', _wStat, colors.primary),
-                    headCell('Pts', _wPts, colors.textPrimary),
+                    headCell(context.l10n.standingsPlayed, _wStat, colors.primary),
+                    headCell(context.l10n.formWin, _wStat, colors.primary),
+                    headCell(context.l10n.formLoss, _wStat, colors.primary),
+                    headCell(context.l10n.standingsPoints, _wPts, colors.textPrimary),
                   ],
                 ),
               ),
@@ -79,7 +80,7 @@ class DriftStandingsTable extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         Text(
-          'W = win · L = loss · Pts = points (3 per win)',
+          context.l10n.standingsLegend,
           textAlign: TextAlign.center,
           style: type.caption.copyWith(color: colors.textSecondary),
         ),

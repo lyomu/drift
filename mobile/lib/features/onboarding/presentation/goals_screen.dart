@@ -8,16 +8,17 @@ import '../../../shared/widgets/drift_filter_chip.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../users/data/users_repository.dart';
 import 'widgets/onboarding_scaffold.dart';
+import '../../../core/l10n/l10n.dart';
 
-const _goalOptions = [
-  ('play_more', 'Play more often'),
-  ('meet_people', 'Meet new players'),
-  ('improve_skills', 'Improve my skills'),
-  ('compete', 'Compete in leagues/tournaments'),
-  ('get_fit', 'Get fitter'),
-  ('track_progress', 'Track my progress'),
-  ('have_fun', 'Just have fun'),
-  ('coaching', 'Find a coach'),
+final _goalOptions = [
+  ('play_more', (AppLocalizations l) => l.goalPlayMore),
+  ('meet_people', (AppLocalizations l) => l.goalMeetPeople),
+  ('improve_skills', (AppLocalizations l) => l.goalImproveSkills),
+  ('compete', (AppLocalizations l) => l.goalCompete),
+  ('get_fit', (AppLocalizations l) => l.goalGetFit),
+  ('track_progress', (AppLocalizations l) => l.goalTrackProgress),
+  ('have_fun', (AppLocalizations l) => l.goalHaveFun),
+  ('coaching', (AppLocalizations l) => l.goalCoaching),
 ];
 
 /// Goals — `foundation/03-user-journeys.md` §2, multi-select.
@@ -55,16 +56,16 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
   Widget build(BuildContext context) {
     return DriftOnboardingScaffold(
       step: OnboardingStepIndex.goals,
-      title: 'What brings you to Drift?',
-      highlight: 'Drift?',
-      subtitle: 'Pick as many as you like. This only shapes what we suggest.',
+      title: context.l10n.onbGoalsTitle,
+      highlight: context.l10n.onbGoalsHighlight,
+      subtitle: context.l10n.onbGoalsSubtitle,
       loading: _isSubmitting,
       onContinue: _isSubmitting ? null : _submit,
       errorText: _errorText,
       // Goals are optional, and submitting an empty set is what Skip has
       // always done — the API takes a list, not a null.
       footer: DriftButton(
-        label: 'Skip',
+        label: context.l10n.commonSkip,
         variant: DriftButtonVariant.text,
         onPressed: _isSubmitting ? null : _submit,
       ),
@@ -75,7 +76,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
           children: _goalOptions
               .map(
                 (goal) => DriftFilterChip(
-                  label: goal.$2,
+                  label: goal.$2(context.l10n),
                   selected: _selected.contains(goal.$1),
                   onTap: () => setState(() {
                     if (!_selected.remove(goal.$1)) {

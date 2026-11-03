@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/drift_colors.dart';
 import '../../../../core/theme/drift_typography.dart';
 import '../../data/home_repository.dart';
+import '../../../../core/l10n/l10n.dart';
 
 /// The gradient identity card at the top of Home — Level / Singles / Doubles,
 /// with a bar showing how far through the current level band the player is.
@@ -69,29 +70,29 @@ class HomeStatCard extends StatelessWidget {
                     children: [
                       Expanded(
                         child: _Stat(
-                          label: 'LEVEL',
+                          label: context.l10n.homeStatLevel,
                           value: rating(summary?.level),
-                          caption: summary?.levelLabel ?? 'Unrated',
+                          caption: summary?.levelLabel ?? context.l10n.commonUnrated,
                         ),
                       ),
                       const _Divider(),
                       Expanded(
                         child: _Stat(
-                          label: 'SINGLES',
+                          label: context.l10n.homeStatSingles,
                           value: rating(summary?.singlesRating),
                           caption: summary?.singlesRating == null
-                              ? 'Unrated'
-                              : 'Rating',
+                              ? context.l10n.commonUnrated
+                              : context.l10n.homeRating,
                         ),
                       ),
                       const _Divider(),
                       Expanded(
                         child: _Stat(
-                          label: 'DOUBLES',
+                          label: context.l10n.homeStatDoubles,
                           value: rating(summary?.doublesRating),
                           caption: summary?.doublesRating == null
-                              ? 'Unrated'
-                              : 'Rating',
+                              ? context.l10n.commonUnrated
+                              : context.l10n.homeRating,
                         ),
                       ),
                     ],
@@ -205,7 +206,9 @@ class _ProgressBar extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Progress to ${progress.nextLevel.toStringAsFixed(1)}',
+                context.l10n.homeProgressTo(
+                  progress.nextLevel.toStringAsFixed(1),
+                ),
                 style: const TextStyle(fontSize: 10, color: _dim),
               ),
               Text(

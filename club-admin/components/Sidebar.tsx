@@ -6,72 +6,74 @@ import { usePathname } from "next/navigation";
 import { useClub } from "@/lib/club-context";
 import { BrandIcon } from "@/components/BrandIcon";
 import { MaterialIcon } from "@/components/dashboard-design";
+import { useT } from "@/lib/i18n/i18n-context";
+import type { MessageKey } from "@/lib/i18n/messages/en";
 
 const NAV_GROUPS: {
   key: string;
-  label: string;
+  label: MessageKey;
   icon: string;
-  items: { href: string; label: string; ownerOnly?: boolean; roles?: string[] }[];
+  items: { href: string; label: MessageKey; ownerOnly?: boolean; roles?: string[] }[];
 }[] = [
   {
     key: "members",
-    label: "Members",
+    label: "nav.members",
     icon: "groups",
     items: [
-      { href: "/members", label: "Members" },
-      { href: "/coaches", label: "Coaches" },
+      { href: "/members", label: "nav.members" },
+      { href: "/coaches", label: "nav.coaches" },
     ],
   },
   {
     key: "competitions",
-    label: "Competitions",
+    label: "nav.competitions",
     icon: "emoji_events",
     items: [
-      { href: "/leagues", label: "Leagues" },
-      { href: "/tournaments", label: "Tournaments" },
-      { href: "/ladders", label: "Ladders" },
-      { href: "/leagues/archive", label: "League Archive" },
+      { href: "/leagues", label: "nav.leagues" },
+      { href: "/tournaments", label: "nav.tournaments" },
+      { href: "/ladders", label: "nav.ladders" },
+      { href: "/leagues/archive", label: "nav.leagueArchive" },
     ],
   },
   {
     key: "community",
-    label: "Community",
+    label: "nav.community",
     icon: "campaign",
     items: [
-      { href: "/events", label: "Events" },
-      { href: "/announcements", label: "Announcements" },
+      { href: "/events", label: "nav.events" },
+      { href: "/announcements", label: "nav.announcements" },
       {
         href: "/media",
-        label: "Media Library",
+        label: "nav.media",
         roles: ["OWNER", "ADMIN", "CONTENT_MANAGER"],
       },
       {
         href: "/moderation",
-        label: "Moderation",
+        label: "nav.moderation",
         roles: ["OWNER", "ADMIN", "CONTENT_MANAGER"],
       },
     ],
   },
   {
     key: "operations",
-    label: "Operations",
+    label: "nav.operations",
     icon: "sports_tennis",
     items: [
-      { href: "/courts", label: "Courts" },
-      { href: "/disputes", label: "Disputes" },
-      { href: "/reports", label: "Reports" },
+      { href: "/courts", label: "nav.courts" },
+      { href: "/disputes", label: "nav.disputes" },
+      { href: "/reports", label: "nav.reports" },
     ],
   },
   {
     key: "settings",
-    label: "Settings",
+    label: "nav.settings",
     icon: "settings",
     items: [
-      { href: "/settings", label: "Club Settings" },
-      { href: "/team", label: "Team Roles", roles: ["OWNER", "ADMIN"] },
-      { href: "/notifications", label: "Notifications", roles: ["OWNER", "ADMIN"] },
-      { href: "/audit", label: "Audit Log", roles: ["OWNER", "ADMIN"] },
-      { href: "/billing", label: "Billing", ownerOnly: true },
+      { href: "/settings", label: "nav.clubSettings" },
+      { href: "/team", label: "nav.teamRoles", roles: ["OWNER", "ADMIN"] },
+      { href: "/notifications", label: "nav.notifications", roles: ["OWNER", "ADMIN"] },
+      { href: "/audit", label: "nav.auditLog", roles: ["OWNER", "ADMIN"] },
+      { href: "/billing", label: "nav.billing", ownerOnly: true },
     ],
   },
 ];
@@ -84,6 +86,7 @@ export function Sidebar({
   role: string | null;
 }) {
   const pathname = usePathname();
+  const t = useT();
   const { logout } = useClub();
   const [expanded, setExpanded] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(
@@ -131,7 +134,7 @@ export function Sidebar({
           }`}
         >
           <MaterialIcon name="home" filled={pathname === "/"} className="text-xl" />
-          <span>Overview</span>
+          <span>{t("nav.overview")}</span>
         </Link>
 
         {NAV_GROUPS.map((group) => {
@@ -151,7 +154,7 @@ export function Sidebar({
               >
                 <MaterialIcon name={group.icon} className="text-xl text-drift-text-secondary" />
                 <span className="flex-1 text-sm font-semibold text-drift-text-primary">
-                  {group.label}
+                  {t(group.label)}
                 </span>
                 <MaterialIcon
                   name="expand_more"
@@ -174,7 +177,7 @@ export function Sidebar({
                             : "font-normal text-drift-text-primary"
                         }`}
                       >
-                        {item.label}
+                        {t(item.label)}
                       </Link>
                     );
                   })}
@@ -191,7 +194,7 @@ export function Sidebar({
         className="navitem mt-4 flex shrink-0 items-center gap-2.5 rounded-md px-2.5 py-[9px] text-left text-sm font-semibold text-drift-text-secondary transition-colors"
       >
         <MaterialIcon name="logout" className="text-xl" />
-        <span>Log out</span>
+        <span>{t("common.logOut")}</span>
       </button>
     </aside>
   );

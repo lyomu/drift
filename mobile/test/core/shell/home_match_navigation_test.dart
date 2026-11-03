@@ -14,6 +14,7 @@ import 'package:drift_tennis/features/players/application/players_providers.dart
 import 'package:drift_tennis/features/players/data/players_repository.dart';
 import 'package:drift_tennis/features/users/application/current_user_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:drift_tennis/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -59,6 +60,8 @@ void main() {
           playerSearchProvider.overrideWith((ref) async => <PlayerSummary>[]),
         ],
         child: MaterialApp.router(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           theme: AppTheme.light(),
           routerConfig: router,
         ),
@@ -71,7 +74,7 @@ void main() {
       tester.widget<DriftBottomNav>(find.byType(DriftBottomNav)).selectedIndex,
       0,
     );
-    await tester.tap(find.text('Find Match'));
+    await tester.tap(find.text('Find a match').first);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
     expect(
@@ -89,7 +92,7 @@ void main() {
       tester.widget<DriftBottomNav>(find.byType(DriftBottomNav)).selectedIndex,
       0,
     );
-    await tester.tap(find.text('Find Match'));
+    await tester.tap(find.text('Find a match').first);
     await tester.pump();
     expect(
       tester.widget<DriftBottomNav>(find.byType(DriftBottomNav)).selectedIndex,
@@ -115,7 +118,7 @@ void main() {
     await tester.pump();
     await tester.drag(find.byType(HomeScreen), const Offset(0, -100));
     await tester.pump();
-    await tester.tap(find.text('Find a match'));
+    await tester.tap(find.text('Find a match').last);
     await tester.pump();
     expect(
       tester.widget<DriftBottomNav>(find.byType(DriftBottomNav)).selectedIndex,

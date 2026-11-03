@@ -11,6 +11,7 @@ import '../../auth/data/auth_repository.dart';
 import '../../courts/data/courts_repository.dart';
 import '../application/clubs_providers.dart';
 import '../data/clubs_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Club List — `foundation/04-screen-inventory.md` §A.6 (redesign 2026-08:
 /// `App.tsx` `DiscoverClubsTab`). Browse + request-to-join; the feed and
@@ -32,7 +33,7 @@ class ClubListScreen extends ConsumerWidget {
         if (!embedded)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-            child: Text('Clubs', style: type.h2),
+            child: Text(context.l10n.discoverClubs, style: type.h2),
           ),
         Expanded(
           child: RefreshIndicator(
@@ -44,7 +45,7 @@ class ClubListScreen extends ConsumerWidget {
                         colors,
                         type,
                         Icons.groups_outlined,
-                        'No clubs nearby yet',
+                        context.l10n.clubNoneNearby,
                       )
                     : ListView.separated(
                         padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
@@ -57,7 +58,7 @@ class ClubListScreen extends ConsumerWidget {
                 colors,
                 type,
                 Icons.error_outline,
-                "Couldn't load clubs. Pull to retry.",
+                context.l10n.clubLoadFailed,
               ),
               _ => const Center(child: CircularProgressIndicator()),
             },
@@ -112,11 +113,12 @@ class _ClubRowState extends ConsumerState<_ClubRow> {
   Future<void> _join() async {
     setState(() => _busy = true);
     final messenger = ScaffoldMessenger.of(context);
+    final sentText = context.l10n.clubJoinRequestSent;
     try {
       await ref.read(clubsRepositoryProvider).requestToJoin(widget.club.id);
       if (mounted) setState(() => _requested = true);
       messenger.showSnackBar(
-        const SnackBar(content: Text('Join request sent.')),
+        SnackBar(content: Text(sentText)),
       );
     } on AuthException catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(e.message)));
@@ -171,8 +173,8 @@ class _ClubRowState extends ConsumerState<_ClubRow> {
                     ),
                     if (verified) ...[
                       const SizedBox(width: 6),
-                      const DriftPill(
-                        label: 'Verified',
+                      DriftPill(
+                        label: context.l10n.commonVerified,
                         tone: DriftPillTone.success,
                       ),
                     ],
@@ -220,7 +222,7 @@ class _JoinButton extends StatelessWidget {
 
     if (requested) {
       return Text(
-        'Requested',
+        context.l10n.clubRequested,
         style: type.caption.copyWith(
           color: colors.textSecondary,
           fontWeight: FontWeight.w600,
@@ -246,7 +248,7 @@ class _JoinButton extends StatelessWidget {
                   ),
                 )
               : Text(
-                  'Join',
+                  context.l10n.clubJoin,
                   style: type.caption.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w700,

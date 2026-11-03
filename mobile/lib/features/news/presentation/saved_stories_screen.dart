@@ -8,6 +8,7 @@ import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/drift_news_story_card.dart';
 import '../../../shared/widgets/drift_scaffold.dart';
 import '../application/news_providers.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Saved Stories — `foundation/04-screen-inventory.md` §A.8.
 class SavedStoriesScreen extends ConsumerWidget {
@@ -20,7 +21,7 @@ class SavedStoriesScreen extends ConsumerWidget {
     final colors = Theme.of(context).extension<DriftColors>()!;
 
     return DriftScaffold(
-      title: 'Saved Stories',
+      title: context.l10n.newsSavedStoriesTitle,
       body: RefreshIndicator(
         onRefresh: () => ref.refresh(savedStoriesProvider.future),
         child: switch (saved) {
@@ -40,7 +41,7 @@ class SavedStoriesScreen extends ConsumerWidget {
                             ),
                             const SizedBox(height: DriftSpacing.s3),
                             Text(
-                              'Save stories to read later',
+                              context.l10n.newsSaveForLater,
                               style: type.body.copyWith(
                                 color: colors.textSecondary,
                               ),
@@ -64,8 +65,8 @@ class SavedStoriesScreen extends ConsumerWidget {
                       );
                     },
                   ),
-          AsyncError() => const Center(
-            child: Text("Couldn't load saved stories."),
+          AsyncError() => Center(
+            child: Text(context.l10n.newsLoadSavedFailed),
           ),
           _ => const Center(child: CircularProgressIndicator()),
         },

@@ -2,6 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { CourtsService } from '../../courts/courts.service';
 import { HOME_CARD_PRIORITY, type HomeCard } from '../home-card';
 import type { HomeCardContributor, HomeContext } from './home-contributor';
+import {
+  DEFAULT_LOCALE,
+  type MessageKey,
+  type MessageParam,
+  t,
+} from '../../common/i18n';
 
 const SUGGESTION_COUNT = 3;
 const NEARBY_RADIUS_KM = 15;
@@ -22,6 +28,8 @@ export class NearbyCourtsContributor implements HomeCardContributor {
   constructor(private readonly courts: CourtsService) {}
 
   async contribute(ctx: HomeContext): Promise<HomeCard[]> {
+    const tr = (key: MessageKey, params?: Record<string, MessageParam>) =>
+      t(ctx.locale ?? DEFAULT_LOCALE, key, params);
     const { latitude, longitude } = ctx.profile;
     if (latitude === null || longitude === null) return [];
 
@@ -43,14 +51,17 @@ export class NearbyCourtsContributor implements HomeCardContributor {
         id: 'nearby-courts',
         type: 'NEARBY_COURTS',
         priority: HOME_CARD_PRIORITY.NEARBY_COURTS,
-        title: 'Courts near you',
+        title: tr('home.courts.title'),
         body:
           nearest.distanceKm !== null
-            ? `${nearest.name} is about ${nearest.distanceKm.toFixed(1)} km away.`
-            : `${nearest.name} and others are nearby.`,
+            ? tr('home.courts.distance', {
+                name: nearest.name,
+                km: nearest.distanceKm.toFixed(1),
+              })
+            : tr('home.courts.nearby', { name: nearest.name }),
         accent: 'neutral',
         action: {
-          label: 'Find courts',
+          label: tr('home.action.findCourts'),
           route: '/home?tab=discover&discover=courts',
         },
         dismissible: true,

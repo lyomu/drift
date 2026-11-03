@@ -3,6 +3,7 @@
 import { useEditor, EditorContent, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { MaterialIcon } from "./dashboard-design";
+import { useT } from "@/lib/i18n/i18n-context";
 
 /**
  * The one rich-text surface in the console — league rules. Output is HTML,
@@ -62,6 +63,7 @@ function ToolbarButton({
 }
 
 function Toolbar({ editor }: { editor: Editor }) {
+  const t = useT();
   const promptLink = () => {
     const prev = editor.getAttributes("link").href as string | undefined;
     const url = window.prompt("Link URL", prev ?? "https://");
@@ -82,32 +84,32 @@ function Toolbar({ editor }: { editor: Editor }) {
     <div className="flex flex-wrap items-center gap-0.5 border-b border-drift-border bg-drift-background px-1.5 py-1">
       <ToolbarButton
         icon="format_bold"
-        label="Bold"
+        label={t("editor.bold")}
         active={editor.isActive("bold")}
         onClick={() => editor.chain().focus().toggleBold().run()}
       />
       <ToolbarButton
         icon="format_italic"
-        label="Italic"
+        label={t("editor.italic")}
         active={editor.isActive("italic")}
         onClick={() => editor.chain().focus().toggleItalic().run()}
       />
       <ToolbarButton
         icon="format_underlined"
-        label="Underline"
+        label={t("editor.underline")}
         active={editor.isActive("underline")}
         onClick={() => editor.chain().focus().toggleUnderline().run()}
       />
       <ToolbarButton
         icon="strikethrough_s"
-        label="Strikethrough"
+        label={t("editor.strike")}
         active={editor.isActive("strike")}
         onClick={() => editor.chain().focus().toggleStrike().run()}
       />
       <span className="mx-1 h-5 w-px bg-drift-border" />
       <ToolbarButton
         icon="title"
-        label="Heading"
+        label={t("editor.heading")}
         active={editor.isActive("heading", { level: 2 })}
         onClick={() =>
           editor.chain().focus().toggleHeading({ level: 2 }).run()
@@ -115,7 +117,7 @@ function Toolbar({ editor }: { editor: Editor }) {
       />
       <ToolbarButton
         icon="format_h3"
-        label="Subheading"
+        label={t("editor.subheading")}
         active={editor.isActive("heading", { level: 3 })}
         onClick={() =>
           editor.chain().focus().toggleHeading({ level: 3 }).run()
@@ -124,32 +126,32 @@ function Toolbar({ editor }: { editor: Editor }) {
       <span className="mx-1 h-5 w-px bg-drift-border" />
       <ToolbarButton
         icon="format_list_bulleted"
-        label="Bullet list"
+        label={t("editor.bullets")}
         active={editor.isActive("bulletList")}
         onClick={() => editor.chain().focus().toggleBulletList().run()}
       />
       <ToolbarButton
         icon="format_list_numbered"
-        label="Numbered list"
+        label={t("editor.numbers")}
         active={editor.isActive("orderedList")}
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
       />
       <ToolbarButton
         icon="format_quote"
-        label="Quote"
+        label={t("editor.quote")}
         active={editor.isActive("blockquote")}
         onClick={() => editor.chain().focus().toggleBlockquote().run()}
       />
       <span className="mx-1 h-5 w-px bg-drift-border" />
       <ToolbarButton
         icon="link"
-        label="Link"
+        label={t("editor.link")}
         active={editor.isActive("link")}
         onClick={promptLink}
       />
       <ToolbarButton
         icon="format_clear"
-        label="Clear formatting"
+        label={t("editor.clear")}
         onClick={() =>
           editor.chain().focus().unsetAllMarks().clearNodes().run()
         }

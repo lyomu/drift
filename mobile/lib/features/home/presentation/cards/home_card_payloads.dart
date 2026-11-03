@@ -7,6 +7,7 @@ import '../../../../core/theme/drift_typography.dart';
 import '../../../courts/data/courts_repository.dart';
 import '../../../players/data/players_repository.dart';
 import '../../data/home_repository.dart';
+import '../../../../core/l10n/l10n.dart';
 
 /// Renders the typed payload of a Home card, dispatching on `data.kind`.
 ///
@@ -156,7 +157,7 @@ class _CourtList extends StatelessWidget {
                   // "Distance unknown" rather than a fabricated number — the
                   // same never-fabricate rule the court mapper applies.
                   court.distanceKm == null
-                      ? 'Distance unknown'
+                      ? context.l10n.commonDistanceUnknown
                       : '${court.distanceKm!.toStringAsFixed(1)} km',
                   style: type.caption.copyWith(color: colors.textSecondary),
                 ),

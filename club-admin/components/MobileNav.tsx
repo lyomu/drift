@@ -4,33 +4,37 @@ import { usePathname, useRouter } from "next/navigation";
 import { useClub } from "@/lib/club-context";
 import { BrandIcon } from "@/components/BrandIcon";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useT } from "@/lib/i18n/i18n-context";
+import type { MessageKey } from "@/lib/i18n/messages/en";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
-const NAV: { href: string; label: string; ownerOnly?: boolean; roles?: string[] }[] = [
-  { href: "/", label: "Overview" },
-  { href: "/members", label: "Members" },
-  { href: "/coaches", label: "Coaches" },
-  { href: "/leagues", label: "Leagues" },
-  { href: "/tournaments", label: "Tournaments" },
-  { href: "/ladders", label: "Ladders" },
-  { href: "/leagues/archive", label: "League Archive" },
-  { href: "/events", label: "Events" },
-  { href: "/announcements", label: "Announcements" },
-  { href: "/media", label: "Media Library", roles: ["OWNER", "ADMIN", "CONTENT_MANAGER"] },
-  { href: "/moderation", label: "Moderation", roles: ["OWNER", "ADMIN", "CONTENT_MANAGER"] },
-  { href: "/courts", label: "Courts" },
-  { href: "/disputes", label: "Disputes" },
-  { href: "/reports", label: "Reports" },
-  { href: "/settings", label: "Club Settings" },
-  { href: "/team", label: "Team Roles", roles: ["OWNER", "ADMIN"] },
-  { href: "/notifications", label: "Notifications", roles: ["OWNER", "ADMIN"] },
-  { href: "/audit", label: "Audit Log", roles: ["OWNER", "ADMIN"] },
-  { href: "/billing", label: "Billing", ownerOnly: true },
+const NAV: { href: string; label: MessageKey; ownerOnly?: boolean; roles?: string[] }[] = [
+  { href: "/", label: "nav.overview" },
+  { href: "/members", label: "nav.members" },
+  { href: "/coaches", label: "nav.coaches" },
+  { href: "/leagues", label: "nav.leagues" },
+  { href: "/tournaments", label: "nav.tournaments" },
+  { href: "/ladders", label: "nav.ladders" },
+  { href: "/leagues/archive", label: "nav.leagueArchive" },
+  { href: "/events", label: "nav.events" },
+  { href: "/announcements", label: "nav.announcements" },
+  { href: "/media", label: "nav.media", roles: ["OWNER", "ADMIN", "CONTENT_MANAGER"] },
+  { href: "/moderation", label: "nav.moderation", roles: ["OWNER", "ADMIN", "CONTENT_MANAGER"] },
+  { href: "/courts", label: "nav.courts" },
+  { href: "/disputes", label: "nav.disputes" },
+  { href: "/reports", label: "nav.reports" },
+  { href: "/settings", label: "nav.clubSettings" },
+  { href: "/team", label: "nav.teamRoles", roles: ["OWNER", "ADMIN"] },
+  { href: "/notifications", label: "nav.notifications", roles: ["OWNER", "ADMIN"] },
+  { href: "/audit", label: "nav.auditLog", roles: ["OWNER", "ADMIN"] },
+  { href: "/billing", label: "nav.billing", ownerOnly: true },
 ];
 
 export function MobileNav({ clubName }: { clubName: string | null }) {
   const router = useRouter();
   const pathname = usePathname();
   const { logout, role } = useClub();
+  const t = useT();
   const visible = NAV.filter(
     (item) =>
       (!item.ownerOnly || role === "OWNER") &&
@@ -53,17 +57,18 @@ export function MobileNav({ clubName }: { clubName: string | null }) {
       >
         {visible.map((item) => (
           <option key={item.href} value={item.href}>
-            {item.label}
+            {t(item.label)}
           </option>
         ))}
       </select>
+      <LanguageSwitcher className="h-9 w-9" />
       <ThemeToggle className="h-9 w-9" />
       <button
         type="button"
         onClick={logout}
         className="shrink-0 text-xs font-bold text-drift-text-secondary"
       >
-        Log out
+        {t("common.logOut")}
       </button>
     </div>
   );

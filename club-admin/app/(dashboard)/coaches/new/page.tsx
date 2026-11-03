@@ -6,8 +6,10 @@ import { CoachForm, type CoachFormPayload } from "@/components/CoachForm";
 import { ErrorBanner, PageHeader } from "@/components/ui";
 import { api, ApiError } from "@/lib/api-client";
 import { useClub } from "@/lib/club-context";
+import { useT } from "@/lib/i18n/i18n-context";
 
 export default function NewCoachPage() {
+  const t = useT();
   const router = useRouter();
   const { clubId, role } = useClub();
   const canManage = role === "OWNER" || role === "ADMIN";
@@ -23,7 +25,7 @@ export default function NewCoachPage() {
       router.push("/coaches");
     } catch (reason) {
       setError(
-        reason instanceof ApiError ? reason.message : "Failed to add coach.",
+        reason instanceof ApiError ? reason.message : t("a.failedToAddCoach"),
       );
     } finally {
       setSaving(false);
@@ -33,8 +35,8 @@ export default function NewCoachPage() {
   if (!canManage) {
     return (
       <div>
-        <PageHeader title="Add coach" />
-        <ErrorBanner message="Only club owners and admins can add coaches." />
+        <PageHeader title={t("a.addCoach")} />
+        <ErrorBanner message={t("a.onlyClubOwnersAndAdmins")} />
       </div>
     );
   }
@@ -42,8 +44,8 @@ export default function NewCoachPage() {
   return (
     <div>
       <PageHeader
-        title="Add coach"
-        description="Link an existing, onboarded Drift account and publish its coaching profile."
+        title={t("a.addCoach")}
+        description={t("a.linkAnExistingOnboardedDrift")}
       />
       <ErrorBanner message={error} />
       <CoachForm saving={saving} onSubmit={create} />

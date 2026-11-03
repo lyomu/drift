@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useI18n, useT } from "@/lib/i18n/i18n-context";
 
 export function MaterialIcon({
   name,
@@ -159,13 +160,14 @@ export function SmallActionLink({
 }
 
 export function DateChip({ value }: { value: Date }) {
+  const { formatDate } = useI18n();
   return (
     <div className="w-[46px] shrink-0 text-center">
       <div className="text-[11px] font-bold uppercase text-drift-text-secondary">
-        {value.toLocaleDateString(undefined, { month: "short" })}
+        {formatDate(value, { month: "short" })}
       </div>
       <div className="text-lg font-extrabold leading-6 text-drift-text-primary tabular">
-        {value.toLocaleDateString(undefined, { day: "2-digit" })}
+        {formatDate(value, { day: "2-digit" })}
       </div>
     </div>
   );
@@ -182,6 +184,7 @@ export function ModalShell({
   onClose: () => void;
   size?: "md" | "lg";
 }) {
+  const t = useT();
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-drift-text-primary/45 px-4 py-8"
@@ -195,7 +198,7 @@ export function ModalShell({
           <h2 className="text-lg font-extrabold text-drift-text-primary">
             {title}
           </h2>
-          <button type="button" onClick={onClose} aria-label="Close">
+          <button type="button" onClick={onClose} aria-label={t("common.close")}>
             <MaterialIcon name="close" className="text-xl text-drift-text-secondary" />
           </button>
         </div>

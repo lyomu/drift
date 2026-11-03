@@ -9,6 +9,7 @@ import '../../../shared/widgets/drift_text_field.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../users/data/users_repository.dart';
 import 'widgets/onboarding_scaffold.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Location — `foundation/04-screen-inventory.md` A.2. "Use current
 /// location" resolves GPS coordinates to a city/area string; a denied
@@ -64,7 +65,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
     } catch (_) {
       setState(
         () => _errorText =
-            "Couldn't determine your location. Enter it manually below.",
+            context.l10n.onbLocateFailed,
       );
     } finally {
       if (mounted) setState(() => _isLocating = false);
@@ -73,7 +74,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
 
   Future<void> _submit() async {
     if (_locationController.text.trim().isEmpty) {
-      setState(() => _errorText = 'Enter your general location to continue.');
+      setState(() => _errorText = context.l10n.onbEnterLocation);
       return;
     }
 
@@ -104,15 +105,15 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
   Widget build(BuildContext context) {
     return DriftOnboardingScaffold(
       step: OnboardingStepIndex.location,
-      title: 'Where are you based?',
-      highlight: 'based?',
-      subtitle: 'We use this to find players and courts near you.',
+      title: context.l10n.onbLocationTitle,
+      highlight: context.l10n.onbLocationHighlight,
+      subtitle: context.l10n.onbLocationSubtitle,
       loading: _isSubmitting,
       onContinue: _isSubmitting ? null : _submit,
       errorText: _errorText,
       children: [
         DriftTextField(
-          label: 'General location / city',
+          label: context.l10n.onbGeneralLocation,
           controller: _locationController,
           onChanged: (_) => setState(() {
             _locationSource = 'MANUAL';
@@ -121,7 +122,9 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
         ),
         const SizedBox(height: DriftSpacing.s3),
         DriftButton(
-          label: _isLocating ? 'Locating…' : 'Use current location',
+          label: _isLocating
+              ? context.l10n.onbLocating
+              : context.l10n.onbUseCurrentLocation,
           variant: DriftButtonVariant.text,
           onPressed: _isLocating ? null : _useCurrentLocation,
         ),

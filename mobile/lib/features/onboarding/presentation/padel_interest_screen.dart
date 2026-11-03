@@ -9,6 +9,7 @@ import '../../../shared/widgets/drift_symbol.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../users/data/users_repository.dart';
 import 'widgets/onboarding_scaffold.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Drift's official readable text family.
 const _font = 'Outfit';
@@ -16,25 +17,25 @@ const _font = 'Outfit';
 /// Padel Interest is the last onboarding step — see
 /// `core/onboarding/onboarding_step_route.dart`.
 
-const _padelOptions = [
+final _padelOptions = [
   (
     value: 'YES',
-    label: 'Yes, I play padel',
-    subtitle: 'Already on the court',
+    label: (AppLocalizations l) => l.onbPadelYes,
+    subtitle: (AppLocalizations l) => l.onbPadelYesSub,
     icon: DriftSymbolsFilled.sportsTennis,
     accent: Color(0xFF22C55E),
   ),
   (
     value: 'NO',
-    label: 'No, just tennis',
-    subtitle: 'Sticking to the classics',
+    label: (AppLocalizations l) => l.onbPadelNo,
+    subtitle: (AppLocalizations l) => l.onbPadelNoSub,
     icon: DriftSymbolsFilled.close,
     accent: Color(0xFF94A3B8),
   ),
   (
     value: 'WANT_TO_LEARN',
-    label: "I'd like to learn",
-    subtitle: 'Open to picking it up',
+    label: (AppLocalizations l) => l.onbPadelLearn,
+    subtitle: (AppLocalizations l) => l.onbPadelLearnSub,
     icon: DriftSymbolsFilled.school,
     accent: Color(0xFF8B5CF6),
   ),
@@ -83,7 +84,7 @@ class _PadelInterestScreenState extends ConsumerState<PadelInterestScreen> {
 
   void _continue() {
     if (_selected == null) {
-      setState(() => _errorText = 'Please choose an option to continue.');
+      setState(() => _errorText = context.l10n.onbChooseOption);
       return;
     }
     _submit(_selected!);
@@ -95,11 +96,10 @@ class _PadelInterestScreenState extends ConsumerState<PadelInterestScreen> {
 
     return DriftOnboardingScaffold(
       step: OnboardingStepIndex.padelInterest,
-      title: 'Do you also play padel?',
-      highlight: 'padel?',
+      title: context.l10n.onbPadelTitle,
+      highlight: context.l10n.onbPadelHighlight,
       subtitle:
-          'Padel is coming to Drift soon — let us know if you play or want '
-          'to learn.',
+          context.l10n.onbPadelSubtitle,
       ctaActive: _selected != null,
       loading: _isSubmitting,
       onContinue: _isSubmitting ? null : _continue,
@@ -114,7 +114,7 @@ class _PadelInterestScreenState extends ConsumerState<PadelInterestScreen> {
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
         child: Text(
-          'Skip',
+          context.l10n.commonSkip,
           style: TextStyle(
             fontFamily: _font,
             fontSize: 14,
@@ -154,8 +154,8 @@ class _OptionCard extends StatelessWidget {
 
   final ({
     String value,
-    String label,
-    String subtitle,
+    String Function(AppLocalizations) label,
+    String Function(AppLocalizations) subtitle,
     IconData icon,
     Color accent,
   })
@@ -221,7 +221,7 @@ class _OptionCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          option.label,
+                          option.label(context.l10n),
                           style: TextStyle(
                             fontFamily: _font,
                             fontSize: 15,
@@ -232,7 +232,7 @@ class _OptionCard extends StatelessWidget {
                         ),
                         SizedBox(height: 2),
                         Text(
-                          option.subtitle,
+                          option.subtitle(context.l10n),
                           style: TextStyle(
                             fontFamily: _font,
                             fontSize: 12,

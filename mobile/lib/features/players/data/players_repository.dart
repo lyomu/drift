@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/dio_client.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../matches/data/player_stats.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// How the viewer stands relative to a player. Mirrors the backend's
 /// `ConnectionState` union in `players/player.mapper.ts` — named with a
@@ -57,7 +58,7 @@ class PlayerSummary {
       firstName,
       lastName,
     ].whereType<String>().where((p) => p.isNotEmpty);
-    return parts.isEmpty ? 'Player' : parts.join(' ');
+    return parts.isEmpty ? l10nNow.commonPlayer : parts.join(' ');
   }
 
   factory PlayerSummary.fromJson(Map<String, dynamic> json) => PlayerSummary(
@@ -98,6 +99,7 @@ class PlayerProfile {
     required this.skillBreakdown,
     required this.availabilitySlots,
     required this.stats,
+    this.joinedAt,
     this.hasOpenChallenge = false,
   });
 
@@ -119,6 +121,7 @@ class PlayerProfile {
   /// Not gated — ratings/stats aren't in Doc 6 §4's privacy-sensitive list
   /// the way skill breakdown is.
   final PlayerStats stats;
+  final DateTime? joinedAt;
 
   factory PlayerProfile.fromJson(Map<String, dynamic> json) {
     final breakdown = json['skillBreakdown'] as Map<String, dynamic>?;
@@ -135,6 +138,7 @@ class PlayerProfile {
           ?.map((s) => AvailabilitySlot.fromJson(s as Map<String, dynamic>))
           .toList(),
       stats: PlayerStats.fromJson(json['stats'] as Map<String, dynamic>),
+      joinedAt: DateTime.tryParse(json['joinedAt'] as String? ?? ''),
       hasOpenChallenge: json['hasOpenChallenge'] as bool? ?? false,
     );
   }
@@ -256,7 +260,7 @@ class PlayersRepository {
       final body = e.response?.data;
       final message = body is Map ? body['message'] as Object? : null;
       final text = message is List ? message.join(' ') : message?.toString();
-      throw AuthException(text ?? 'Something went wrong. Please try again.');
+      throw AuthException(text ?? l10nNow.commonErrorGeneric);
     }
   }
 }

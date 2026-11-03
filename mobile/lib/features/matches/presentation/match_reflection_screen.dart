@@ -10,6 +10,7 @@ import '../../../shared/widgets/drift_scaffold.dart';
 import '../../../shared/widgets/drift_text_field.dart';
 import '../../auth/data/auth_repository.dart';
 import '../data/matches_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Match Reflection — `foundation/04-screen-inventory.md` §A.2. Optional,
 /// lightweight, Skip is always available. Stored but not consumed by
@@ -63,9 +64,9 @@ class _MatchReflectionScreenState extends ConsumerState<MatchReflectionScreen> {
     final colors = Theme.of(context).extension<DriftColors>()!;
 
     return DriftScaffold(
-      title: 'How did it feel?',
+      title: context.l10n.matchHowDidItFeel,
       trailing: DriftButton(
-        label: 'Skip',
+        label: context.l10n.commonSkip,
         variant: DriftButtonVariant.text,
         onPressed: _isSubmitting ? null : () => context.pop(),
       ),
@@ -74,7 +75,7 @@ class _MatchReflectionScreenState extends ConsumerState<MatchReflectionScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Confidence', style: type.label),
+            Text(context.l10n.matchConfidence, style: type.label),
             const SizedBox(height: DriftSpacing.s2),
             Row(
               children: [
@@ -92,13 +93,15 @@ class _MatchReflectionScreenState extends ConsumerState<MatchReflectionScreen> {
             ),
             const SizedBox(height: DriftSpacing.s5),
             DriftTextField(
-              label: 'Notes (optional)',
+              label: context.l10n.commonNotesOptional,
               controller: _notesController,
               maxLines: 4,
             ),
             const SizedBox(height: DriftSpacing.s6),
             DriftButton(
-              label: _isSubmitting ? 'Saving…' : 'Save',
+              label: _isSubmitting
+                  ? context.l10n.commonSaving
+                  : context.l10n.commonSave,
               onPressed: _isSubmitting ? null : _save,
             ),
           ],

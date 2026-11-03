@@ -21,6 +21,7 @@ import { NearbyCourtsContributor } from './contributors/nearby-courts.contributo
 import { NewsHighlightContributor } from './contributors/news-highlight.contributor';
 import { ClubAnnouncementContributor } from './contributors/club-announcement.contributor';
 import { AchievementProgressContributor } from './contributors/achievement-progress.contributor';
+import { DEFAULT_LOCALE, type LocaleCode, t } from '../common/i18n';
 
 /**
  * Home Dashboard — `foundation/04-screen-inventory.md` §A.3.
@@ -161,7 +162,10 @@ export class HomeService {
     ]);
   }
 
-  async getFeed(userId: string): Promise<{ cards: HomeCard[] }> {
+  async getFeed(
+    userId: string,
+    locale: LocaleCode = DEFAULT_LOCALE,
+  ): Promise<{ cards: HomeCard[] }> {
     const profile = await this.prisma.tennisProfile.findUnique({
       where: { userId },
       include: { availabilitySlots: true },
@@ -173,7 +177,7 @@ export class HomeService {
     // Captured once and shared, so two contributors can't disagree about
     // whether a deadline has passed mid-build.
     const now = new Date();
-    const ctx: HomeContext = { userId, now, profile };
+    const ctx: HomeContext = { userId, now, profile, locale };
 
     const [results, hidden] = await Promise.all([
       Promise.all(
@@ -205,10 +209,13 @@ export class HomeService {
         id: 'empty-fallback',
         type: 'EMPTY_FALLBACK',
         priority: HOME_CARD_PRIORITY.EMPTY_FALLBACK,
-        title: "You're all caught up",
-        body: 'Nothing needs you right now. Find a player nearby and set up your next match.',
+        title: t(locale, 'home.empty.title'),
+        body: t(locale, 'home.empty.body'),
         accent: 'neutral',
-        action: { label: 'Find players', route: '/home?tab=play&play=find' },
+        action: {
+          label: t(locale, 'home.action.findPlayers'),
+          route: '/home?tab=play&play=find',
+        },
         dismissible: false,
         data: null,
       });

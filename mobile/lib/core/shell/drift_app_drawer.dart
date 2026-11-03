@@ -8,6 +8,7 @@ import '../../features/profile/application/profile_providers.dart';
 import '../../features/users/application/current_user_provider.dart';
 import '../network/dio_client.dart';
 import '../theme/drift_colors.dart';
+import '../l10n/l10n.dart';
 
 /// Drift's official readable text family.
 const _font = 'Outfit';
@@ -19,51 +20,51 @@ const _dangerBorder = Color(0xFFFECACA);
 /// One drawer destination. Use Flutter's bundled Material Icons for both
 /// states so optimized Android builds retain every navigation glyph.
 typedef _NavItem = ({
-  String label,
+  String Function(AppLocalizations) label,
   IconData activeIcon,
   IconData idleIcon,
   String route,
 });
 
-const _navItems = <_NavItem>[
+final _navItems = <_NavItem>[
   (
-    label: 'My Profile',
+    label: (l) => l.navMyProfile,
     activeIcon: Icons.person_rounded,
     idleIcon: Icons.person_outline_rounded,
     route: '/profile/own',
   ),
   (
-    label: 'My Sports Hub',
+    label: (l) => l.navMySportsHub,
     activeIcon: Icons.sports_tennis_rounded,
     idleIcon: Icons.sports_tennis_rounded,
     route: '/profile/sports-hub',
   ),
   (
-    label: 'Achievements',
+    label: (l) => l.navAchievements,
     activeIcon: Icons.emoji_events_rounded,
     idleIcon: Icons.emoji_events_outlined,
     route: '/profile/achievements',
   ),
   (
-    label: 'News',
+    label: (l) => l.navNews,
     activeIcon: Icons.newspaper_rounded,
     idleIcon: Icons.newspaper_outlined,
     route: '/news',
   ),
   (
-    label: 'Messages',
-    activeIcon: Icons.chat_bubble_rounded,
-    idleIcon: Icons.chat_bubble_outline_rounded,
+    label: (l) => l.navMessages,
+    activeIcon: Icons.forum_rounded,
+    idleIcon: Icons.forum_outlined,
     route: '/messages',
   ),
   (
-    label: 'Notifications',
+    label: (l) => l.navNotifications,
     activeIcon: Icons.notifications_rounded,
     idleIcon: Icons.notifications_outlined,
     route: '/notifications',
   ),
   (
-    label: 'Settings',
+    label: (l) => l.navSettings,
     activeIcon: Icons.settings_rounded,
     idleIcon: Icons.settings_outlined,
     route: '/settings',
@@ -97,16 +98,16 @@ class _DriftAppDrawerState extends ConsumerState<DriftAppDrawer> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text('Log out?'),
-        content: Text('You can sign back in any time.'),
+        title: Text(context.l10n.settingsLogoutConfirmTitle),
+        content: Text(context.l10n.settingsLogoutConfirmBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: Text('Cancel'),
+            child: Text(context.l10n.commonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: Text('Log out'),
+            child: Text(context.l10n.settingsLogout),
           ),
         ],
       ),
@@ -159,7 +160,7 @@ class _DriftAppDrawerState extends ConsumerState<DriftAppDrawer> {
                     _DrawerRow(
                       activeIcon: item.activeIcon,
                       idleIcon: item.idleIcon,
-                      label: item.label,
+                      label: item.label(context.l10n),
                       active: location == item.route,
                       onTap: () => _go(item.route),
                     ),
@@ -178,7 +179,9 @@ class _DriftAppDrawerState extends ConsumerState<DriftAppDrawer> {
               child: _DrawerRow(
                 activeIcon: Icons.logout_rounded,
                 idleIcon: Icons.logout_rounded,
-                label: _isLoggingOut ? 'Signing out…' : 'Log out',
+                label: _isLoggingOut
+                    ? context.l10n.drawerSigningOut
+                    : context.l10n.settingsLogout,
                 active: false,
                 danger: true,
                 onTap: _isLoggingOut ? null : _logout,
@@ -241,7 +244,7 @@ class _DrawerIdentity extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    user?.displayName ?? 'My Profile',
+                    user?.displayName ?? context.l10n.navMyProfile,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -254,7 +257,7 @@ class _DrawerIdentity extends ConsumerWidget {
                   ),
                   SizedBox(height: 2),
                   Text(
-                    user?.email ?? 'View your profile',
+                    user?.email ?? context.l10n.drawerViewProfile,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(

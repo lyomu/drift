@@ -9,6 +9,7 @@ import '../../../shared/widgets/drift_scaffold.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../safety/data/safety_repository.dart';
 import '../application/settings_providers.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Blocked Users — `foundation/04-screen-inventory.md` §A.10. No new
 /// backend surface — reuses `SafetyService.listBlocks`/`unblock`, both real
@@ -22,7 +23,7 @@ class BlockedUsersScreen extends ConsumerWidget {
     final type = Theme.of(context).extension<DriftTypography>()!;
 
     return DriftScaffold(
-      title: 'Blocked Users',
+      title: context.l10n.settingsBlockedUsers,
       body: RefreshIndicator(
         onRefresh: () => ref.refresh(blockedUsersProvider.future),
         child: switch (blocks) {
@@ -36,7 +37,7 @@ class BlockedUsersScreen extends ConsumerWidget {
                           children: [
                             const SizedBox(height: DriftSpacing.s12),
                             Text(
-                              "You haven't blocked anyone.",
+                              context.l10n.blockedNone,
                               style: type.body,
                               textAlign: TextAlign.center,
                             ),
@@ -59,7 +60,7 @@ class BlockedUsersScreen extends ConsumerWidget {
                     },
                   ),
           AsyncError() => Center(
-            child: Text("Couldn't load your blocked users.", style: type.body),
+            child: Text(context.l10n.blockedLoadFailed, style: type.body),
           ),
           _ => const Center(child: CircularProgressIndicator()),
         },
@@ -99,7 +100,9 @@ class _UnblockButtonState extends ConsumerState<_UnblockButton> {
   @override
   Widget build(BuildContext context) {
     return DriftButton(
-      label: _isSubmitting ? 'Unblocking…' : 'Unblock',
+      label: _isSubmitting
+          ? context.l10n.blockedUnblocking
+          : context.l10n.blockedUnblock,
       variant: DriftButtonVariant.text,
       onPressed: _isSubmitting ? null : _unblock,
     );

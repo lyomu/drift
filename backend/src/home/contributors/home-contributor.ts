@@ -1,5 +1,6 @@
 import type { Prisma } from '@prisma/client';
 import type { HomeCard } from '../home-card';
+import type { LocaleCode } from '../../common/i18n';
 
 export type HomeProfile = Prisma.TennisProfileGetPayload<{
   include: { availabilitySlots: true };
@@ -16,6 +17,9 @@ export interface HomeContext {
   userId: string;
   now: Date;
   profile: HomeProfile;
+  /** The app's language (`Accept-Language`), for card copy. English when
+   * absent, which is also what the specs build. */
+  locale?: LocaleCode;
 }
 
 /**

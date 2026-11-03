@@ -9,6 +9,7 @@ import { demoScope } from '../common/demo-scope';
 import { MatchesService } from '../matches/matches.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { canChallenge, resolvePositions } from './ladder-rules';
+import { msg } from '../common/i18n';
 
 @Injectable()
 export class LaddersService {
@@ -175,8 +176,8 @@ export class LaddersService {
     await this.notifications.create(
       defenderUserId,
       'COMPETITIONS',
-      'Ladder challenge',
-      `You've been challenged on ${ladder.name}. Accept to schedule the match.`,
+      msg('ladder.challenge.title'),
+      msg('ladder.challenge.body', { ladder: ladder.name }),
       'LADDER',
       ladderId,
     );

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/network/dio_client.dart';
 import '../../../core/onboarding/onboarding_step_route.dart';
 import '../../users/data/users_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Brand moment + session check (`foundation/04-screen-inventory.md` A.1) —
 /// resumes onboarding at exactly the step `GET /users/me` reports, or lands
@@ -99,15 +100,18 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
             ),
             if (_connectionError) ...[
               const SizedBox(height: 24),
-              const Padding(
+              Padding(
                 padding: EdgeInsets.symmetric(horizontal: 32),
                 child: Text(
-                  'Could not connect. Your session is still saved.',
+                  context.l10n.splashConnectFailed,
                   textAlign: TextAlign.center,
                 ),
               ),
               const SizedBox(height: 12),
-              TextButton(onPressed: _resume, child: const Text('Try again')),
+              TextButton(
+                onPressed: _resume,
+                child: Text(context.l10n.commonTryAgain),
+              ),
             ],
           ],
         ),

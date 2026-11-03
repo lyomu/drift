@@ -5,6 +5,7 @@ import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Onboarding Complete — `foundation/04-screen-inventory.md` A.2. Generic
 /// next-actions only, per the screen's own documented fallback rule — real
@@ -28,20 +29,19 @@ class OnboardingCompleteScreen extends StatelessWidget {
               Icon(Icons.check_circle_rounded, color: colors.success, size: 56),
               const SizedBox(height: DriftSpacing.s4),
               Text(
-                "You're all set!",
+                context.l10n.onbAllSet,
                 style: type.display,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: DriftSpacing.s2),
               Text(
-                'Your Tennis Profile is ready. Start exploring players, courts, and '
-                "matches near you.",
+                context.l10n.onbAllSetBody,
                 style: type.body.copyWith(color: colors.textSecondary),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: DriftSpacing.s8),
               DriftButton(
-                label: 'Go to Home',
+                label: context.l10n.onbGoHome,
                 onPressed: () => context.go('/home'),
               ),
             ],

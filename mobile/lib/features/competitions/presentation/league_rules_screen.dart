@@ -8,6 +8,7 @@ import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/drift_back_header.dart';
 import '../application/competitions_providers.dart';
 import '../data/competitions_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// League Rules — `foundation/04-screen-inventory.md` §A.5. `rulesText` is
 /// sanitised HTML from the Club Admin editor (backend
@@ -27,7 +28,7 @@ class LeagueRulesScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const DriftBackHeader(title: 'Rules'),
+            DriftBackHeader(title: context.l10n.competeRules),
             Expanded(
               child: RefreshIndicator(
                 onRefresh: () async {
@@ -36,8 +37,8 @@ class LeagueRulesScreen extends ConsumerWidget {
                 },
                 child: switch (league) {
                   AsyncData(:final value) => _RulesBody(league: value),
-                  AsyncError() => const Center(
-                    child: Text('Rules not available.'),
+                  AsyncError() => Center(
+                    child: Text(context.l10n.competeRulesUnavailable),
                   ),
                   _ => const Center(child: CircularProgressIndicator()),
                 },
@@ -62,9 +63,9 @@ class _RulesBody extends StatelessWidget {
 
     final hasRules = league.rulesText?.isNotEmpty == true;
     final policies = <(String, String?)>[
-      ('Scoring format', league.scoringFormat),
-      ('Walkovers', league.walkoverRule),
-      ('Unfinished matches', league.unfinishedMatchPolicy),
+      (context.l10n.competeScoringFormat, league.scoringFormat),
+      (context.l10n.competeWalkovers, league.walkoverRule),
+      (context.l10n.competeUnfinishedMatches, league.unfinishedMatchPolicy),
     ].where((e) => e.$2?.isNotEmpty == true).toList();
 
     if (!hasRules && policies.isEmpty) {
@@ -72,7 +73,7 @@ class _RulesBody extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
         children: [
           Text(
-            'No rules have been published for this league yet.',
+            context.l10n.competeNoRules,
             style: type.body.copyWith(
               height: 1.65,
               color: colors.textSecondary,

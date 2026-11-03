@@ -8,8 +8,10 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { MaterialIcon, ModalShell, Panel } from "@/components/dashboard-design";
 import { Listing } from "@/components/Listing";
 import type { LadderAdmin, MatchSport } from "@/lib/types";
+import { useT } from "@/lib/i18n/i18n-context";
 
 export default function LaddersPage() {
+  const t = useT();
   const { clubId, role } = useClub();
   const canManage = role === "OWNER" || role === "ADMIN";
   const [ladders, setLadders] = useState<LadderAdmin[] | null>(null);
@@ -28,9 +30,9 @@ export default function LaddersPage() {
       );
       setLadders(response.ladders);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Ladders could not be loaded.");
+      setError(err instanceof ApiError ? err.message : t("a.laddersCouldNotBeLoaded"));
     }
-  }, [clubId]);
+  }, [clubId, t]);
 
   useEffect(() => {
     void load();
@@ -51,7 +53,7 @@ export default function LaddersPage() {
       setShowForm(false);
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "The ladder could not be created.");
+      setError(err instanceof ApiError ? err.message : t("a.theLadderCouldNotBe"));
     }
   }
 
@@ -63,7 +65,7 @@ export default function LaddersPage() {
       );
       setSelected(res.ladder);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "The ladder could not be opened.");
+      setError(err instanceof ApiError ? err.message : t("a.theLadderCouldNotBe2"));
     }
   }
 
@@ -90,7 +92,7 @@ export default function LaddersPage() {
       });
       await open(selected.id);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Positions could not be saved.");
+      setError(err instanceof ApiError ? err.message : t("a.positionsCouldNotBeSaved"));
     }
   }
 
@@ -101,34 +103,33 @@ export default function LaddersPage() {
       setSelected(null);
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "The ladder could not be archived.");
+      setError(err instanceof ApiError ? err.message : t("a.theLadderCouldNotBe3"));
     }
   }
 
   return (
     <div>
       <PageHeader
-        title="Ladder management"
-        description="Create rolling ladders and adjust positions when an administrative ruling requires it."
+        title={t("a.ladderManagement")}
+        description={t("a.createRollingLaddersAndAdjust")}
         action={
           canManage ? (
-            <Button onClick={() => setShowForm(true)}>Create ladder</Button>
+            <Button onClick={() => setShowForm(true)}>{t("a.createLadder")}</Button>
           ) : undefined
         }
       />
       <ErrorBanner message={error} />
       <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(260px,0.7fr)_minmax(0,1.3fr)]">
         <Listing
-          title="Ladders"
+          title={t("a.ladders")}
           count={ladders?.length ?? null}
           loading={ladders === null}
           empty={{
             icon: "leaderboard",
-            title: "No ladders yet",
-            description:
-              "A ladder is a rolling ranking — players climb by challenging opponents a few rungs above them.",
+            title: t("a.noLaddersYet"),
+            description: t("a.aLadderIsARolling"),
             action: canManage ? (
-              <Button onClick={() => setShowForm(true)}>Create ladder</Button>
+              <Button onClick={() => setShowForm(true)}>{t("a.createLadder")}</Button>
             ) : undefined,
           }}
         >
@@ -157,8 +158,8 @@ export default function LaddersPage() {
             {!selected ? (
               <EmptyState
                 icon="ads_click"
-                title="No ladder selected"
-                description="Choose a ladder on the left to review its rungs and adjust positions after a ruling."
+                title={t("a.noLadderSelected")}
+                description={t("a.chooseALadderOnThe")}
               />
             ) : (
               <Panel>
@@ -167,13 +168,11 @@ export default function LaddersPage() {
                     <h2 className="text-base font-bold text-drift-text-primary">
                       {selected.name}
                     </h2>
-                    <p className="mt-0.5 text-[12.5px] text-drift-text-secondary">
-                      Rung 1 is the top position.
-                    </p>
+                    <p className="mt-0.5 text-[12.5px] text-drift-text-secondary">{t("a.rung1IsTheTop")}</p>
                   </div>
                   {canManage && (
                     <Button variant="ghost" onClick={() => void archive()}>
-                      Archive
+                      {t("a.archive")}
                     </Button>
                   )}
                 </div>
@@ -182,8 +181,8 @@ export default function LaddersPage() {
                     bare
                     compact
                     icon="group_add"
-                    title="No players on this ladder yet"
-                    description="Members join a ladder from the Drift app. Once they do, their rungs appear here."
+                    title={t("a.noPlayersOnThisLadder")}
+                    description={t("a.membersJoinALadderFrom")}
                   />
                 ) : (
                   <div className="flex flex-col gap-2">
@@ -209,7 +208,7 @@ export default function LaddersPage() {
                               type="button"
                               disabled={index === 0}
                               onClick={() => move(index, -1)}
-                              aria-label="Move up"
+                              aria-label={t("a.moveUp")}
                               className="text-drift-text-secondary disabled:opacity-30"
                             >
                               <MaterialIcon name="arrow_upward" className="text-lg" />
@@ -218,7 +217,7 @@ export default function LaddersPage() {
                               type="button"
                               disabled={index === selected.entries!.length - 1}
                               onClick={() => move(index, 1)}
-                              aria-label="Move down"
+                              aria-label={t("a.moveDown")}
                               className="text-drift-text-secondary disabled:opacity-30"
                             >
                               <MaterialIcon name="arrow_downward" className="text-lg" />
@@ -229,7 +228,7 @@ export default function LaddersPage() {
                     ))}
                     {canManage && (
                       <Button onClick={() => void saveOrder()} className="mt-3 self-start">
-                        Save positions
+                        {t("a.savePositions")}
                       </Button>
                     )}
                   </div>
@@ -240,26 +239,26 @@ export default function LaddersPage() {
       </div>
 
       {showForm && (
-        <ModalShell title="Create ladder" onClose={() => setShowForm(false)}>
+        <ModalShell title={t("a.createLadder")} onClose={() => setShowForm(false)}>
           <form onSubmit={create} className="flex flex-col gap-4">
-            <Field label="Ladder name">
+            <Field label={t("a.ladderName")}>
               <Input
                 required
-                placeholder="e.g. Club Singles Ladder"
+                placeholder={t("a.eGClubSinglesLadder")}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
             </Field>
-            <Field label="Sport">
+            <Field label={t("a.sport")}>
               <Select
                 value={sport}
                 onChange={(e) => setSport(e.target.value as MatchSport)}
               >
-                <option value="TENNIS">Tennis</option>
-                <option value="PADEL">Padel</option>
+                <option value="TENNIS">{t("a.tennis")}</option>
+                <option value="PADEL">{t("a.padel")}</option>
               </Select>
             </Field>
-            <Field label="Challenge range (rungs)">
+            <Field label={t("a.challengeRangeRungs")}>
               <Input
                 type="number"
                 min={1}
@@ -269,14 +268,13 @@ export default function LaddersPage() {
               />
             </Field>
             <p className="-mt-1 text-[12px] leading-4 text-drift-text-secondary">
-              How many positions above themselves a player may challenge. A
-              range of 2 means rung 5 can challenge rungs 3 and 4.
+              {t("a.howManyPositionsAboveThemselves")}
             </p>
             <div className="mt-2 flex justify-end gap-3">
               <Button type="button" variant="secondary" onClick={() => setShowForm(false)}>
-                Cancel
+                {t("a.cancel")}
               </Button>
-              <Button type="submit">Create ladder</Button>
+              <Button type="submit">{t("a.createLadder")}</Button>
             </div>
           </form>
         </ModalShell>

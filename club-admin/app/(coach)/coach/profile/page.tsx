@@ -15,6 +15,7 @@ import { CoachForm, type CoachFormPayload } from "@/components/CoachForm";
 import { ApiError } from "@/lib/api-client";
 import { coachApi } from "@/lib/coach-api";
 import type { CoachAdmin } from "@/lib/types";
+import { useT } from "@/lib/i18n/i18n-context";
 
 /**
  * The live listing, which only exists once an application is approved. Edits
@@ -22,6 +23,7 @@ import type { CoachAdmin } from "@/lib/types";
  * coach correcting a phone number should not go dark for a day.
  */
 export default function CoachProfilePage() {
+  const t = useT();
   const [coach, setCoach] = useState<CoachAdmin | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -38,14 +40,14 @@ export default function CoachProfilePage() {
         if (err instanceof ApiError && err.status === 404) setMissing(true);
         else {
           setError(
-            err instanceof ApiError ? err.message : "Something went wrong.",
+            err instanceof ApiError ? err.message : t("a.somethingWentWrong"),
           );
         }
       } finally {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [t]);
 
   async function save(payload: CoachFormPayload) {
     setSaving(true);
@@ -67,7 +69,7 @@ export default function CoachProfilePage() {
       );
       setSaved(true);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Something went wrong.");
+      setError(err instanceof ApiError ? err.message : t("a.somethingWentWrong"));
     } finally {
       setSaving(false);
     }
@@ -76,8 +78,8 @@ export default function CoachProfilePage() {
   if (loading) {
     return (
       <>
-        <PageHeader title="Public profile" />
-        <EmptyState message="Loading…" />
+        <PageHeader title={t("a.publicProfile")} />
+        <EmptyState message={t("a.loading")} />
       </>
     );
   }
@@ -85,15 +87,15 @@ export default function CoachProfilePage() {
   if (missing || !coach) {
     return (
       <>
-        <PageHeader title="Public profile" />
+        <PageHeader title={t("a.publicProfile")} />
         <ErrorBanner message={error} />
         <EmptyState
           icon="badge"
-          title="No public profile yet"
-          description="Your profile is created when your application is approved. Until then, your application is the place to edit your details."
+          title={t("a.noPublicProfileYet")}
+          description={t("a.yourProfileIsCreatedWhen")}
           action={
             <Link href="/coach/application">
-              <Button>Go to application</Button>
+              <Button>{t("a.goToApplication")}</Button>
             </Link>
           }
         />
@@ -107,8 +109,8 @@ export default function CoachProfilePage() {
   return (
     <>
       <PageHeader
-        title="Public profile"
-        description="This is what players see in the Drift app. Changes take effect straight away."
+        title={t("a.publicProfile")}
+        description={t("a.thisIsWhatPlayersSee")}
         action={
           <Badge tone={statusTone(coach.verificationStatus)}>
             {coach.verificationStatus}
@@ -125,12 +127,10 @@ export default function CoachProfilePage() {
           <p className="mt-1 text-[13px] text-drift-text-secondary">
             {coach.clubs.length > 0
               ? `Listed at ${coach.clubs.map((club) => club.name).join(", ")}.`
-              : "Not linked to a club."}
+              : t("a.notLinkedClub")}
           </p>
           {saved && (
-            <p className="mt-2 text-[13px] font-semibold text-drift-success">
-              Profile saved. Players will see the update immediately.
-            </p>
+            <p className="mt-2 text-[13px] font-semibold text-drift-success">{t("a.profileSavedPlayersWillSee")}</p>
           )}
         </Card>
       </div>

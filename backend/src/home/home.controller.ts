@@ -11,6 +11,7 @@ import type { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { HomeService } from './home.service';
 import { DismissCardDto } from './dto/dismiss-card.dto';
+import { requestLocale } from '../common/i18n/request-locale';
 
 @Controller('home')
 @UseGuards(JwtAuthGuard)
@@ -20,7 +21,7 @@ export class HomeController {
   @Get('feed')
   feed(@Req() req: Request) {
     const { userId } = req.user as { userId: string };
-    return this.homeService.getFeed(userId);
+    return this.homeService.getFeed(userId, requestLocale(req));
   }
 
   /** The identity header above the feed — see `HomeService.getSummary`. */

@@ -11,8 +11,11 @@ import { EventImage } from "@/components/EventImage";
 import { EventImageUpload, uploadEventImage } from "@/components/EventImageUpload";
 import { Listing } from "@/components/Listing";
 import type { ClubEvent } from "@/lib/types";
+import { useI18n, useT } from "@/lib/i18n/i18n-context";
 
 export default function EventsPage() {
+  const t = useT();
+  const { formatDate } = useI18n();
   const { clubId } = useClub();
   const [events, setEvents] = useState<ClubEvent[] | null>(null);
   const [date, setDate] = useState("");
@@ -38,9 +41,9 @@ export default function EventsPage() {
       );
       setEvents(res.events);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Events could not be loaded.");
+      setError(err instanceof ApiError ? err.message : t("a.eventsCouldNotBeLoaded"));
     }
-  }, [clubId, date]);
+  }, [clubId, date, t]);
 
   useEffect(() => {
     void load();
@@ -74,7 +77,7 @@ export default function EventsPage() {
       setShowForm(false);
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "The event could not be saved.");
+      setError(err instanceof ApiError ? err.message : t("a.theEventCouldNotBe2"));
     } finally {
       setBusy(false);
     }
@@ -83,29 +86,28 @@ export default function EventsPage() {
   return (
     <div>
       <PageHeader
-        title="Events calendar"
-        description="Plan club-run sessions and manage turnout from one calendar."
-        action={<Button onClick={() => setShowForm(true)}>Create event</Button>}
+        title={t("a.eventsCalendar")}
+        description={t("a.planClubRunSessionsAnd")}
+        action={<Button onClick={() => setShowForm(true)}>{t("a.createEvent")}</Button>}
       />
       <ErrorBanner message={error} />
       <div className="mb-5 max-w-xs">
         <Input
           type="date"
-          aria-label="Filter events by date"
+          aria-label={t("a.filterEventsByDate")}
           value={date}
           onChange={(e) => setDate(e.target.value)}
         />
       </div>
       <Listing
-        title="Events"
+        title={t("a.events")}
         count={events?.length ?? null}
         loading={events === null}
         empty={{
           icon: "event",
-          title: date ? "No events on this date" : "No events scheduled",
-          description:
-            "Create an event to plan a club session and track turnout in one place.",
-          action: <Button onClick={() => setShowForm(true)}>Create event</Button>,
+          title: date ? t("a.noEventsOnDate") : t("a.noEventsScheduled"),
+          description: t("a.createAnEventToPlan"),
+          action: <Button onClick={() => setShowForm(true)}>{t("a.createEvent")}</Button>,
         }}
       >
         {events?.map((event) => (
@@ -125,7 +127,7 @@ export default function EventsPage() {
                   {event.name}
                 </div>
                 <div className="mt-1 text-[12.5px] text-drift-text-secondary">
-                  {new Date(event.startsAt).toLocaleString()} / {event._count?.registrations ?? 0}
+                  {formatDate(event.startsAt, { dateStyle: "medium", timeStyle: "short" })} / {event._count?.registrations ?? 0}
                   {event.capacity ? `/${event.capacity}` : ""} registered
                 </div>
               </div>
@@ -136,7 +138,7 @@ export default function EventsPage() {
       </Listing>
 
       {showForm && (
-        <ModalShell title="Create event" onClose={() => setShowForm(false)}>
+        <ModalShell title={t("a.createEvent")} onClose={() => setShowForm(false)}>
           <form
             onSubmit={(event) => {
               event.preventDefault();
@@ -144,21 +146,21 @@ export default function EventsPage() {
             }}
             className="flex flex-col gap-4"
           >
-            <Field label="Event name">
+            <Field label={t("a.eventName")}>
               <Input required value={name} onChange={(e) => setName(e.target.value)} />
             </Field>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="Starts">
+              <Field label={t("a.starts")}>
                 <Input type="datetime-local" required value={startsAt} onChange={(e) => setStartsAt(e.target.value)} />
               </Field>
-              <Field label="Ends">
+              <Field label={t("a.ends")}>
                 <Input type="datetime-local" value={endsAt} onChange={(e) => setEndsAt(e.target.value)} />
               </Field>
             </div>
-            <Field label="Capacity">
+            <Field label={t("a.capacity")}>
               <Input type="number" min={1} value={capacity} onChange={(e) => setCapacity(e.target.value)} />
             </Field>
-            <Field label="Description">
+            <Field label={t("a.description")}>
               <Textarea rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
             </Field>
             <EventImageUpload
@@ -182,7 +184,7 @@ export default function EventsPage() {
                 Save draft
               </Button>
               <Button type="submit" disabled={busy}>
-                {busy ? "Saving..." : "Save & publish"}
+                {busy ? t("common.saving") : t("a.savePublish")}
               </Button>
             </div>
           </form>

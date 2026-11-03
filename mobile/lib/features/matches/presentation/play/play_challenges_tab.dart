@@ -13,6 +13,7 @@ import '../../application/matches_providers.dart';
 import '../../data/matches_repository.dart';
 import '_play_tab_scaffold.dart';
 import '../withdraw_challenge_dialog.dart';
+import '../../../../core/l10n/l10n.dart';
 
 /// Play → Challenges. Incoming and outgoing challenges still being agreed;
 /// both actions open Match Detail, where accept / decline / propose live.
@@ -29,7 +30,7 @@ class PlayChallengesTab extends ConsumerWidget {
           ref.refresh(matchListProvider(MatchSegment.challenges).future),
       state: matches,
       emptyIcon: Icons.sports_tennis_outlined,
-      emptyMessage: 'No open challenges — find a player and send one.',
+      emptyMessage: context.l10n.playChallengesEmpty,
       onRetry: () => ref.invalidate(matchListProvider(MatchSegment.challenges)),
       itemBuilder: (match) => _ChallengeCard(match: match, viewerId: viewerId),
     );
@@ -59,7 +60,9 @@ class _ChallengeCard extends ConsumerWidget {
         if (context.mounted) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(const SnackBar(content: Text('Challenge withdrawn.')));
+          ).showSnackBar(
+            SnackBar(content: Text(context.l10n.playChallengeWithdrawn)),
+          );
         }
       } on AuthException catch (error) {
         if (context.mounted) {
@@ -85,14 +88,14 @@ class _ChallengeCard extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      opponent?.displayName ?? 'Challenge',
+                      opponent?.displayName ?? context.l10n.matchChallenge,
                       style: type.title.copyWith(fontWeight: FontWeight.w700),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      match.isDoubles ? 'Doubles' : 'Singles',
+                      match.isDoubles ? context.l10n.optDoubles : context.l10n.optSingles,
                       style: type.caption.copyWith(color: colors.textSecondary),
                     ),
                   ],
@@ -107,7 +110,7 @@ class _ChallengeCard extends ConsumerWidget {
             children: [
               Expanded(
                 child: _CardButton(
-                  label: 'View details',
+                  label: context.l10n.commonViewDetails,
                   filled: false,
                   onTap: () => context.push(route),
                 ),
@@ -116,7 +119,9 @@ class _ChallengeCard extends ConsumerWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: _CardButton(
-                    label: canWithdraw ? 'Undo challenge' : 'Respond',
+                    label: canWithdraw
+                      ? context.l10n.matchUndoChallenge
+                      : context.l10n.playRespond,
                     filled: true,
                     onTap: canWithdraw ? undo : () => context.push(route),
                   ),

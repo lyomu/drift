@@ -27,7 +27,8 @@ export class WaitlistService {
   ) {}
 
   async join(dto: CreateWaitlistSignupDto): Promise<{ ok: true }> {
-    const { email, firstName, audience, country, city, level, source } = dto;
+    const { email, firstName, audience, country, city, level, source, locale } =
+      dto;
 
     // Only overwrite optional detail when this submission actually carried
     // it: someone who signs up again from a shorter form should not have
@@ -54,7 +55,7 @@ export class WaitlistService {
 
     // Only on the first join — re-submitting a form should not re-send mail.
     if (!existing) {
-      await this.mailer.sendWaitlistConfirmation(email, firstName);
+      await this.mailer.sendWaitlistConfirmation(email, firstName, locale);
       this.logger.log(`Waitlist signup recorded (source: ${source ?? 'none'})`);
     }
 

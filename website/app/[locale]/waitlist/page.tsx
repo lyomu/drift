@@ -46,7 +46,7 @@ export default async function WaitlistPage({ params }: PageProps) {
           <p className={styles.eyebrow}>PLAY MORE. BELONG MORE.</p>
           <h1 id="waitlist-title">Your next rally is waiting.</h1>
           <p className={styles.description}>Drift helps you find compatible players, join real seasons, and keep your tennis life moving forward.</p>
-          <WaitlistForm t={t.waitlist} />
+          <WaitlistForm t={t.waitlist} locale={locale} />
           <p className={styles.footnote}>A better way to play tennis starts with one honest match.</p>
         </section>
 

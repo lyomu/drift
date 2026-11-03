@@ -2,8 +2,10 @@ import { NotFoundException } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { PushService } from '../push/push.service';
+import { msg } from '../common/i18n';
 
 type MockPrisma = {
+  user: Record<string, jest.Mock>;
   notification: Record<string, jest.Mock>;
   notificationPreference: Record<string, jest.Mock>;
 };
@@ -23,6 +25,9 @@ function defaultPreference(overrides: Record<string, unknown> = {}) {
 
 function createMockPrisma(): MockPrisma {
   return {
+    user: {
+      findUnique: jest.fn().mockResolvedValue({ preferredLocale: 'en' }),
+    },
     notification: {
       create: jest.fn(),
       count: jest.fn().mockResolvedValue(0),
@@ -65,6 +70,7 @@ describe('NotificationsService', () => {
           body: 'Body',
           relatedEntityType: undefined,
           relatedEntityId: undefined,
+          imageUrl: undefined,
         },
       });
     });
@@ -75,6 +81,25 @@ describe('NotificationsService', () => {
       );
       await service.create('user-1', 'NEWS', 'Title', 'Body');
       expect(prisma.notification.create).not.toHaveBeenCalled();
+    });
+
+    it('renders stored and pushed copy in the recipient locale', async () => {
+      prisma.user.findUnique.mockResolvedValue({ preferredLocale: 'fr' });
+      await service.create(
+        'user-1',
+        'CONNECTIONS',
+        msg('connection.request.title', { name: 'Alex' }),
+        msg('connection.request.body'),
+      );
+      const stored = prisma.notification.create.mock.calls[0][0].data;
+      expect(stored.title).toContain('Alex');
+      expect(stored.title).not.toBe('connection.request.title');
+      expect(push.sendToUser).toHaveBeenCalledWith(
+        'user-1',
+        stored.title,
+        stored.body,
+        expect.any(Object),
+      );
     });
 
     it('pushes the same notification it just wrote', async () => {

@@ -6,6 +6,7 @@ import '../../../../core/theme/drift_colors.dart';
 import '../../../../shared/widgets/drift_section_header.dart';
 import '../../application/home_feed_provider.dart';
 import '../../data/home_repository.dart';
+import '../../../../core/l10n/l10n.dart';
 
 /// Horizontally-scrolling rail of urgent prompts (redesign 2026-10: each card
 /// washed in its own accent rather than plain white). Each links to the screen
@@ -20,9 +21,9 @@ class ActionNeededRail extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Padding(
+        Padding(
           padding: EdgeInsets.symmetric(horizontal: 16),
-          child: DriftSectionHeader(title: 'Needs you'),
+          child: DriftSectionHeader(title: context.l10n.homeNeedsYou),
         ),
         const SizedBox(height: 10),
         SizedBox(
@@ -147,7 +148,7 @@ class _ActionCard extends ConsumerWidget {
                   const Spacer(),
                 const SizedBox(height: 8),
                 Text(
-                  '${card.action?.label ?? 'Review'} →',
+                  '${card.action?.label ?? context.l10n.homeReview} →',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(

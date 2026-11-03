@@ -2,6 +2,7 @@
 
 import { IconChip, Panel } from "@/components/dashboard-design";
 import { PageHeader } from "@/components/ui";
+import { useT } from "@/lib/i18n/i18n-context";
 
 /**
  * Drift is free during beta — no plans, payment methods or invoices to
@@ -9,16 +10,15 @@ import { PageHeader } from "@/components/ui";
  * ready to come back; this page is a deliberate, temporary stand-in.
  */
 export default function BillingPage() {
+  const t = useT();
   return (
     <div>
-      <PageHeader title="Billing" />
+      <PageHeader title={t("a.billing")} />
       <Panel>
         <div className="flex items-start gap-4">
           <IconChip icon="celebration" tone="info" />
           <div>
-            <h2 className="text-lg font-extrabold text-drift-text-primary">
-              Drift is free during beta
-            </h2>
+            <h2 className="text-lg font-extrabold text-drift-text-primary">{t("a.driftIsFreeDuringBeta")}</h2>
             <p className="mt-2 max-w-xl text-sm leading-6 text-drift-text-secondary">
               There&apos;s nothing to manage here right now — every club runs
               on Drift at no cost while we&apos;re in beta. If you&apos;d like

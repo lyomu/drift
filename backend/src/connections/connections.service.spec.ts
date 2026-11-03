@@ -86,8 +86,8 @@ describe('ConnectionsService', () => {
       expect(notifications.create).toHaveBeenCalledWith(
         'other',
         'CONNECTIONS',
-        expect.stringContaining('wants to connect'),
-        expect.any(String),
+        expect.objectContaining({ key: 'connection.request.title' }),
+        expect.objectContaining({ key: 'connection.request.body' }),
         'CONNECTION',
         'other',
       );
@@ -214,8 +214,8 @@ describe('ConnectionsService', () => {
       expect(notifications.create).toHaveBeenCalledWith(
         'other',
         'CONNECTIONS',
-        expect.stringContaining('accepted your connection request'),
-        expect.any(String),
+        expect.objectContaining({ key: 'connection.accepted.title' }),
+        expect.objectContaining({ key: 'connection.accepted.body' }),
         'CONNECTION',
         'other',
       );

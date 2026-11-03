@@ -11,6 +11,7 @@ import '../../../shared/widgets/drift_pill_tabs.dart';
 import '../../../shared/widgets/drift_scaffold.dart';
 import '../application/global_search_providers.dart';
 import '../data/global_search_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Global Search - `foundation/04-screen-inventory.md` A.3. Cross-entity
 /// results are all real backend records, and each row carries its own deep
@@ -51,14 +52,14 @@ class _GlobalSearchScreenState extends ConsumerState<GlobalSearchScreen> {
         : ref.watch(globalSearchProvider((query: trimmed, filter: _filter)));
 
     return DriftScaffold(
-      title: 'Search',
+      title: context.l10n.commonSearch,
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
         children: [
           SearchBar(
             controller: _controller,
             leading: const Icon(Icons.search),
-            hintText: 'Players, courts, clubs, competitions',
+            hintText: context.l10n.searchHint,
             onChanged: (value) => setState(() => _query = value),
             onSubmitted: (value) => setState(() => _query = value),
           ),
@@ -150,7 +151,7 @@ class _SearchHint extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(DriftSpacing.s6),
       child: Text(
-        'Type at least two characters to search across Drift.',
+        context.l10n.searchMinChars,
         style: type.body.copyWith(color: colors.textSecondary),
         textAlign: TextAlign.center,
       ),
@@ -174,7 +175,7 @@ class _EmptySearch extends StatelessWidget {
           Icon(Icons.search_off, color: colors.textSecondary, size: 40),
           const SizedBox(height: DriftSpacing.s3),
           Text(
-            "No results for '$query'. Try a broader search or another filter.",
+            context.l10n.searchNoResults(query),
             style: type.body.copyWith(color: colors.textSecondary),
             textAlign: TextAlign.center,
           ),
@@ -200,12 +201,15 @@ class _SearchError extends StatelessWidget {
           Icon(Icons.error_outline, color: colors.error, size: 36),
           const SizedBox(height: DriftSpacing.s3),
           Text(
-            "Couldn't load search results.",
+            context.l10n.searchResultsFailed,
             style: type.body.copyWith(color: colors.error),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: DriftSpacing.s3),
-          TextButton(onPressed: onRetry, child: const Text('Retry')),
+          TextButton(
+            onPressed: onRetry,
+            child: Text(context.l10n.commonRetry),
+          ),
         ],
       ),
     );
@@ -221,11 +225,11 @@ IconData _iconFor(String type) => switch (type) {
 };
 
 String _labelFor(String type) => switch (type) {
-  'PLAYER' => 'Player',
-  'COURT' => 'Court',
-  'CLUB' => 'Club',
-  'LEAGUE' => 'League',
-  'TOURNAMENT' => 'Tournament',
-  'LADDER' => 'Ladder',
-  _ => 'Result',
+  'PLAYER' => l10nNow.commonPlayer,
+  'COURT' => l10nNow.matchCourt,
+  'CLUB' => l10nNow.clubTitle,
+  'LEAGUE' => l10nNow.competeLeague,
+  'TOURNAMENT' => l10nNow.competeTournament,
+  'LADDER' => l10nNow.competeLadder,
+  _ => l10nNow.searchResult,
 };

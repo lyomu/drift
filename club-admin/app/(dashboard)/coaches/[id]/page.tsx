@@ -10,8 +10,10 @@ import { InitialsAvatar, MaterialIcon } from "@/components/dashboard-design";
 import { api, ApiError } from "@/lib/api-client";
 import { useClub } from "@/lib/club-context";
 import type { CoachAdmin } from "@/lib/types";
+import { useT } from "@/lib/i18n/i18n-context";
 
 export default function EditCoachPage() {
+  const t = useT();
   const { id } = useParams<{ id: string }>();
   const { clubId, role } = useClub();
   const canManage = role === "OWNER" || role === "ADMIN";
@@ -31,14 +33,14 @@ export default function EditCoachPage() {
       .catch((reason: unknown) => {
         if (!cancelled) {
           setError(
-            reason instanceof ApiError ? reason.message : "Failed to load coach.",
+            reason instanceof ApiError ? reason.message : t("a.failedToLoadCoach"),
           );
         }
       });
     return () => {
       cancelled = true;
     };
-  }, [clubId, id]);
+  }, [clubId, id, t]);
 
   async function update(payload: CoachFormPayload) {
     if (!clubId || !canManage) return;
@@ -54,7 +56,7 @@ export default function EditCoachPage() {
       setSaved(true);
     } catch (reason) {
       setError(
-        reason instanceof ApiError ? reason.message : "Failed to save coach.",
+        reason instanceof ApiError ? reason.message : t("a.failedToSaveCoach"),
       );
     } finally {
       setSaving(false);
@@ -62,8 +64,8 @@ export default function EditCoachPage() {
   }
 
   const name = coach
-    ? [coach.firstName, coach.lastName].filter(Boolean).join(" ") || "Coach"
-    : "Coach";
+    ? [coach.firstName, coach.lastName].filter(Boolean).join(" ") || t("a.coach")
+    : t("a.coach");
 
   const contact = coach
     ? [
@@ -79,15 +81,13 @@ export default function EditCoachPage() {
         title={name}
         description={
           canManage
-            ? "Edit the public coaching profile and contact details."
-            : "Public coaching profile — read-only for your role."
+            ? t("a.editCoachDescription")
+            : t("a.readOnlyCoachDescription")
         }
         action={
           <Link href="/coaches">
             <Button variant="secondary">
-              <MaterialIcon name="arrow_back" className="text-[16px]" />
-              All coaches
-            </Button>
+              <MaterialIcon name="arrow_back" className="text-[16px]" />{t("a.allCoaches")}</Button>
           </Link>
         }
       />
@@ -96,13 +96,11 @@ export default function EditCoachPage() {
         <p
           role="status"
           className="mb-4 rounded-md border border-drift-success/30 bg-drift-success-surface px-4 py-3 text-sm font-medium text-drift-success"
-        >
-          Coach profile saved.
-        </p>
+        >{t("a.coachProfileSaved")}</p>
       )}
 
       {!coach ? (
-        !error && <p className="text-sm text-drift-text-secondary">Loading…</p>
+        !error && <p className="text-sm text-drift-text-secondary">{t("a.loading")}</p>
       ) : (
         <div className="flex flex-col gap-5">
           <Card>
@@ -117,7 +115,7 @@ export default function EditCoachPage() {
                     <StatusBadge status={coach.verificationStatus} />
                   </div>
                   <p className="mt-0.5 truncate text-sm text-drift-text-secondary">
-                    {coach.accountEmail ?? "No linked account email"}
+                    {coach.accountEmail ?? t("a.noLinkedAccountEmail")}
                     {coach.yearsExperience != null &&
                       ` · ${coach.yearsExperience} yrs coaching`}
                   </p>
@@ -137,9 +135,7 @@ export default function EditCoachPage() {
               </div>
               {contact.length > 0 && (
                 <div className="text-right text-[12.5px] text-drift-text-secondary">
-                  <div className="font-bold uppercase">
-                    Public contact
-                  </div>
+                  <div className="font-bold uppercase">{t("a.publicContact")}</div>
                   {contact.map((line) => (
                     <div key={line} className="mt-0.5 break-all">
                       {line}
@@ -159,17 +155,13 @@ export default function EditCoachPage() {
               </p>
               <dl className="mt-4 grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
                 <div>
-                  <dt className="font-semibold text-drift-text-primary">
-                    Specialisations
-                  </dt>
+                  <dt className="font-semibold text-drift-text-primary">{t("a.specialisations")}</dt>
                   <dd className="text-drift-text-secondary">
                     {coach.specialisations.join(", ") || "—"}
                   </dd>
                 </div>
                 <div>
-                  <dt className="font-semibold text-drift-text-primary">
-                    Availability
-                  </dt>
+                  <dt className="font-semibold text-drift-text-primary">{t("a.availability")}</dt>
                   <dd className="text-drift-text-secondary">
                     {coach.availabilityNote || "—"}
                   </dd>

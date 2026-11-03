@@ -10,6 +10,7 @@ import '../../../shared/widgets/buttons/drift_button.dart';
 import '../../../shared/widgets/drift_scaffold.dart';
 import '../application/video_analysis_providers.dart';
 import '../data/video_analysis_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Record or pick a clip, upload it, and find out straight away whether it can
 /// be analysed.
@@ -29,7 +30,7 @@ class VideoUploadScreen extends ConsumerWidget {
     final serviceStatus = ref.watch(cvServiceStatusProvider);
 
     return DriftScaffold(
-      title: 'Analyse a clip',
+      title: context.l10n.settingsAnalyseClip,
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
         children: [
@@ -67,11 +68,11 @@ class _Intro extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('For the best chance of a usable clip', style: type.subtitle),
+        Text(context.l10n.videoTipsHeading, style: type.subtitle),
         const SizedBox(height: DriftSpacing.s3),
         // Every line here is something that actually caused a refusal on the
         // first batch of real footage, in the order it cost us clips.
-        ..._tips.map(
+        ..._tips(context.l10n).map(
           (tip) => Padding(
             padding: const EdgeInsets.only(bottom: DriftSpacing.s2),
             child: Row(
@@ -93,12 +94,12 @@ class _Intro extends StatelessWidget {
     );
   }
 
-  static const _tips = [
-    'Hold the phone sideways — landscape, not upright',
-    'Prop it against the fence or use a tripod, and keep it still',
-    'Get as much of the court in frame as you can',
-    'Courts with clear, visible line markings work best',
-    'One continuous take — no cuts or edits',
+  static List<String> _tips(AppLocalizations l) => [
+    l.videoTip1,
+    l.videoTip2,
+    l.videoTip3,
+    l.videoTip4,
+    l.videoTip5,
   ];
 }
 
@@ -121,12 +122,12 @@ class _Picker extends ConsumerWidget {
     return Column(
       children: [
         DriftButton(
-          label: 'Record a clip',
+          label: context.l10n.videoRecord,
           onPressed: () => _pick(ref, ImageSource.camera),
         ),
         const SizedBox(height: DriftSpacing.s3),
         DriftButton(
-          label: 'Choose from library',
+          label: context.l10n.videoChooseLibrary,
           variant: DriftButtonVariant.text,
           onPressed: () => _pick(ref, ImageSource.gallery),
         ),
@@ -150,7 +151,9 @@ class _UploadProgress extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          checking ? 'Checking your clip…' : 'Uploading…',
+          checking
+              ? context.l10n.videoChecking
+              : context.l10n.videoUploading,
           style: type.subtitle,
         ),
         const SizedBox(height: DriftSpacing.s3),
@@ -167,13 +170,13 @@ class _UploadProgress extends ConsumerWidget {
         const SizedBox(height: DriftSpacing.s3),
         Text(
           checking
-              ? 'This takes a couple of seconds.'
+              ? context.l10n.videoCoupleSeconds
               : '${(state.progress * 100).round()}%',
           style: type.bodySmall.copyWith(color: colors.textSecondary),
         ),
         const SizedBox(height: DriftSpacing.s5),
         DriftButton(
-          label: 'Cancel',
+          label: context.l10n.commonCancel,
           variant: DriftButtonVariant.text,
           onPressed: () => ref.read(uploadControllerProvider.notifier).cancel(),
         ),
@@ -202,14 +205,13 @@ class _Verdict extends ConsumerWidget {
           color: rejected ? colors.error : colors.success,
           surface: rejected ? colors.errorSurface : colors.successSurface,
           title: rejected
-              ? "This clip can't be analysed"
-              : 'This clip looks usable',
+              ? context.l10n.videoClipRejected
+              : context.l10n.videoClipUsable,
           // Not "we'll analyse it shortly": nothing analyses it yet, and the
           // honest version costs nothing here.
           subtitle: rejected
-              ? 'Here’s what to change before filming again.'
-              : 'It passed every check we can run today. Analysis itself is '
-                    'still being built — we’ll let you know when it lands.',
+              ? context.l10n.videoWhatToChange
+              : context.l10n.videoPassedChecks,
         ),
         if (rejected) ...[
           const SizedBox(height: DriftSpacing.s5),
@@ -229,7 +231,7 @@ class _Verdict extends ConsumerWidget {
         ],
         if (!rejected && warnings.isNotEmpty) ...[
           const SizedBox(height: DriftSpacing.s5),
-          Text('Worth knowing', style: type.subtitle),
+          Text(context.l10n.videoWorthKnowing, style: type.subtitle),
           const SizedBox(height: DriftSpacing.s2),
           ...warnings.map(
             (finding) => Padding(
@@ -246,15 +248,14 @@ class _Verdict extends ConsumerWidget {
           // A pass with the court unchecked is not a pass on the court. Saying
           // "looks good" flatly would overstate what was actually verified.
           Text(
-            'Note: we couldn’t check the court markings on this one, so we '
-            'can’t promise the court itself will read correctly.',
+            context.l10n.videoCourtUnchecked,
             style: type.bodySmall.copyWith(color: colors.textSecondary),
           ),
         ],
         const SizedBox(height: DriftSpacing.s6),
         if (!rejected) ...[
           DriftButton(
-            label: 'Analyse this clip',
+            label: context.l10n.videoAnalyseThis,
             onPressed: () {
               // Reset first: coming back to a screen still showing the previous
               // verdict, with its own "analyse" button, is how the same clip
@@ -266,7 +267,9 @@ class _Verdict extends ConsumerWidget {
           const SizedBox(height: DriftSpacing.s3),
         ],
         DriftButton(
-          label: rejected ? 'Try another clip' : 'Upload another',
+          label: rejected
+              ? context.l10n.videoTryAnother
+              : context.l10n.videoUploadAnother,
           variant: rejected
               ? DriftButtonVariant.primary
               : DriftButtonVariant.text,
@@ -341,7 +344,7 @@ class _ErrorNotice extends StatelessWidget {
         icon: Icons.error_outline,
         color: colors.error,
         surface: colors.errorSurface,
-        title: "That didn't work",
+        title: context.l10n.videoDidntWork,
         subtitle: message,
       ),
     );
@@ -360,10 +363,10 @@ class _ServiceDownNotice extends StatelessWidget {
         icon: Icons.cloud_off,
         color: colors.warning,
         surface: colors.warningSurface,
-        title: 'Clip checking is offline',
+        title: context.l10n.videoCheckingOffline,
         // Said before they pick a file, because the alternative is uploading a
         // few hundred MB on mobile data and learning it afterwards.
-        subtitle: "You can still upload, but we can't check the clip right now.",
+        subtitle: context.l10n.videoCheckingOfflineBody,
       ),
     );
   }

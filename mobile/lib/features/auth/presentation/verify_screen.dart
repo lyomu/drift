@@ -12,6 +12,7 @@ import '../../../shared/widgets/drift_text_field.dart';
 import '../../users/data/users_repository.dart';
 import '../application/auth_controller.dart';
 import '../data/auth_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 const _resendCooldown = Duration(seconds: 60);
 
@@ -102,17 +103,17 @@ class _VerifyScreenState extends ConsumerState<VerifyScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const DriftBackHeader(title: 'Verify'),
+            DriftBackHeader(title: context.l10n.authVerify),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text('Enter the 6-digit code we sent to ${widget.email}.'),
+                    Text(context.l10n.authVerifyIntro(widget.email)),
                     const SizedBox(height: DriftSpacing.s4),
                     DriftTextField(
-                      label: 'Code',
+                      label: context.l10n.authCode,
                       controller: _codeController,
                       keyboardType: TextInputType.number,
                     ),
@@ -122,17 +123,19 @@ class _VerifyScreenState extends ConsumerState<VerifyScreen> {
                     ],
                     const SizedBox(height: DriftSpacing.s6),
                     DriftButton(
-                      label: _isSubmitting ? 'Verifying…' : 'Verify',
+                      label: _isSubmitting
+                          ? context.l10n.authVerifying
+                          : context.l10n.authVerify,
                       onPressed: _isSubmitting ? null : _submit,
                     ),
                     const SizedBox(height: DriftSpacing.s2),
                     Center(
                       child: DriftButton(
                         label: canResend
-                            ? 'Resend code'
+                            ? context.l10n.authResendCode
                             : _isResending
-                            ? 'Sending…'
-                            : 'Resend in ${_cooldownSeconds}s',
+                            ? context.l10n.commonSending
+                            : context.l10n.authResendIn(_cooldownSeconds),
                         variant: DriftButtonVariant.text,
                         onPressed: canResend ? _resend : null,
                       ),

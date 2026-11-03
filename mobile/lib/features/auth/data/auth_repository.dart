@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/dio_client.dart';
+import '../../../core/l10n/l10n.dart';
 
 class AuthTokens {
   const AuthTokens({required this.accessToken, required this.refreshToken});
@@ -73,6 +74,8 @@ class AuthRepository {
       'firstName': firstName,
       'lastName': lastName,
       'acceptedAgePolicy': acceptedAgePolicy,
+      // The device language, so the verification email is already in it.
+      'locale': CurrentAppLocale.code,
       if (phone != null && phone.isNotEmpty) ...{
         'phone': phone,
         'phoneOnWhatsApp': phoneOnWhatsApp,
@@ -123,6 +126,7 @@ class AuthRepository {
       'idToken': idToken,
       if (nonce != null) 'nonce': nonce,
       if (acceptedAgePolicy) 'acceptedAgePolicy': true,
+      'locale': CurrentAppLocale.code,
     });
   }
 
@@ -137,6 +141,7 @@ class AuthRepository {
       'identityToken': identityToken,
       if (nonce != null) 'nonce': nonce,
       if (acceptedAgePolicy) 'acceptedAgePolicy': true,
+      'locale': CurrentAppLocale.code,
       // Apple sends this once and never again; dropping it here loses the
       // name permanently.
       if (firstName != null || lastName != null)
@@ -267,7 +272,7 @@ class AuthRepository {
         ? (e.response?.data['message'] as Object?)
         : null;
     final text = message is List ? message.join(' ') : message?.toString();
-    return text ?? 'Something went wrong. Please try again.';
+    return text ?? l10nNow.commonErrorGeneric;
   }
 }
 

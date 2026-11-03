@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../../core/theme/drift_colors.dart';
 import '../../../../core/theme/drift_typography.dart';
+import '../../../../core/l10n/l10n.dart';
 
 /// Filled brand-blue pill CTA for the redesigned auth screens
 /// ("Continue with Email", "Login"). Glows softly by default.
@@ -305,8 +306,7 @@ class AgePolicyAcceptance extends StatelessWidget {
             SizedBox(width: 10),
             Expanded(
               child: Text(
-                'I confirm I am 18 or older and agree to the Terms and '
-                'Conditions and Privacy Policy.',
+                context.l10n.authAgePolicy,
                 style: type.caption.copyWith(
                   color: colors.textSecondary,
                   height: 1.35,

@@ -9,6 +9,7 @@ import '../../../shared/widgets/drift_player_card.dart';
 import '../../../shared/widgets/drift_scaffold.dart';
 import '../application/connections_providers.dart';
 import '../data/connections_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Connections List — `foundation/04-screen-inventory.md` §A.4.
 class ConnectionsListScreen extends ConsumerWidget {
@@ -21,7 +22,7 @@ class ConnectionsListScreen extends ConsumerWidget {
     final incomingCount = pending.valueOrNull?.incoming.length ?? 0;
 
     return DriftScaffold(
-      title: 'Connections',
+      title: context.l10n.connectionsTitle,
       trailing: _RequestsButton(
         count: incomingCount,
         onPressed: () => context.push('/connections/pending'),
@@ -34,8 +35,8 @@ class ConnectionsListScreen extends ConsumerWidget {
         child: switch (connections) {
           AsyncData(:final value) =>
             value.isEmpty ? const _EmptyConnections() : _List(entries: value),
-          AsyncError() => const Center(
-            child: Text("Couldn't load your connections."),
+          AsyncError() => Center(
+            child: Text(context.l10n.matchLoadConnectionsFailed),
           ),
           _ => const Center(child: CircularProgressIndicator()),
         },
@@ -54,7 +55,7 @@ class _RequestsButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return IconButton(
       onPressed: onPressed,
-      tooltip: 'Pending requests',
+      tooltip: context.l10n.connectionsPending,
       icon: Badge(
         isLabelVisible: count > 0,
         label: Text('$count'),
@@ -104,7 +105,7 @@ class _EmptyConnections extends StatelessWidget {
               Icon(Icons.people_outline, size: 40, color: colors.textSecondary),
               const SizedBox(height: DriftSpacing.s3),
               Text(
-                'Connect with players to build your Tennis network',
+                context.l10n.connectionsEmpty,
                 style: type.body.copyWith(color: colors.textSecondary),
                 textAlign: TextAlign.center,
               ),

@@ -11,18 +11,9 @@ import '../../assessment/data/assessment_repository.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../users/data/users_repository.dart';
 import 'widgets/onboarding_scaffold.dart';
+import '../../../core/l10n/l10n.dart';
+import '../../../core/l10n/enum_labels.dart';
 
-const _pillarLabels = {
-  'FOREHAND': 'Forehand',
-  'BACKHAND': 'Backhand',
-  'SERVE': 'Serve',
-  'RETURN': 'Return',
-  'NET_PLAY': 'Net Play',
-  'MOVEMENT': 'Movement',
-  'MATCH_PLAY': 'Match Play',
-  'FOOTWORK': 'Footwork',
-  'COMPETITION_EXPERIENCE': 'Competition Experience',
-};
 
 /// Suggested Level Review — `foundation/03-user-journeys.md` §3.3.4.
 class SuggestedLevelReviewScreen extends ConsumerStatefulWidget {
@@ -77,23 +68,22 @@ class _SuggestedLevelReviewScreenState
 
     return DriftOnboardingScaffold(
       step: OnboardingStepIndex.levelReview,
-      title: 'Your suggested level',
-      highlight: 'level',
+      title: context.l10n.onbSuggestedTitle,
+      highlight: context.l10n.onbSuggestedHighlight,
       subtitle:
-          'Based on your answers, this is where we think you fit. You can '
-          'adjust it any time from your profile.',
-      ctaLabel: 'Confirm level',
+          context.l10n.onbSuggestedSubtitle,
+      ctaLabel: context.l10n.onbConfirmLevel,
       loading: _isSubmitting,
       onContinue: _isSubmitting ? null : _confirm,
       errorText: _errorText,
       footer: DriftButton(
-        label: 'Adjust level',
+        label: context.l10n.onbAdjustLevel,
         variant: DriftButtonVariant.text,
         onPressed: _isSubmitting ? null : _adjust,
       ),
       children: [
         Text(
-          'Level ${widget.result.level.toStringAsFixed(1)}',
+          context.l10n.commonLevel(widget.result.level.toStringAsFixed(1)),
           style: type.display,
         ),
         Text(
@@ -109,7 +99,7 @@ class _SuggestedLevelReviewScreenState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _pillarLabels[entry.key] ?? entry.key,
+                  pillarLabel(context.l10n, entry.key),
                   style: type.label,
                 ),
                 const SizedBox(height: DriftSpacing.s1),

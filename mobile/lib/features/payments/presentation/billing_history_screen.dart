@@ -12,6 +12,7 @@ import '../../auth/data/auth_repository.dart';
 import '../application/payments_providers.dart';
 import '../data/payments_repository.dart';
 import 'widgets/billing_widgets.dart';
+import '../../../core/l10n/l10n.dart';
 
 class BillingHistoryScreen extends ConsumerWidget {
   const BillingHistoryScreen({super.key});
@@ -20,7 +21,7 @@ class BillingHistoryScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final history = ref.watch(billingHistoryProvider);
     return DriftScaffold(
-      title: 'Billing history',
+      title: context.l10n.payBillingHistory,
       body: RefreshIndicator(
         onRefresh: () => ref.refresh(billingHistoryProvider.future),
         child: switch (history) {
@@ -38,7 +39,7 @@ class BillingHistoryScreen extends ConsumerWidget {
                     ),
                   ),
           AsyncError() => BillingLoadError(
-            message: "Couldn't load your billing history.",
+            message: context.l10n.payBillingHistoryFailed,
             retry: () => ref.invalidate(billingHistoryProvider),
           ),
           _ => const Center(child: CircularProgressIndicator()),
@@ -61,13 +62,13 @@ class _EmptyBillingHistory extends StatelessWidget {
         const Icon(Icons.receipt_long_outlined, size: 42),
         const SizedBox(height: DriftSpacing.s3),
         Text(
-          'No billing history yet',
+          context.l10n.payNoBillingHistory,
           style: type.body,
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: DriftSpacing.s2),
         Text(
-          'Receipts will appear here after your first paid plan change.',
+          context.l10n.payReceiptsAppear,
           style: type.bodySmall,
           textAlign: TextAlign.center,
         ),
@@ -147,7 +148,9 @@ Future<void> _showReceipt(
             if (!sheetContext.mounted) return;
             ScaffoldMessenger.of(
               sheetContext,
-            ).showSnackBar(SnackBar(content: Text('Receipt saved to $path')));
+            ).showSnackBar(
+              SnackBar(content: Text(context.l10n.payReceiptSaved(path))),
+            );
           } on AuthException catch (error) {
             if (!sheetContext.mounted) return;
             ScaffoldMessenger.of(
@@ -156,8 +159,8 @@ Future<void> _showReceipt(
           } catch (_) {
             if (!sheetContext.mounted) return;
             ScaffoldMessenger.of(sheetContext).showSnackBar(
-              const SnackBar(
-                content: Text('Could not save the receipt. Please retry.'),
+              SnackBar(
+                content: Text(context.l10n.payReceiptSaveFailed),
               ),
             );
           }
@@ -194,7 +197,9 @@ class _ReceiptSheet extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Expanded(child: Text('Receipt', style: type.h3)),
+                  Expanded(
+                    child: Text(context.l10n.payReceipt, style: type.h3),
+                  ),
                   DriftStatusBadge(
                     label: receipt.status.label,
                     tone: invoiceTone(receipt.status),
@@ -202,19 +207,24 @@ class _ReceiptSheet extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: DriftSpacing.s5),
-              _ReceiptLine(label: 'Invoice', value: receipt.number),
-              _ReceiptLine(label: 'Plan', value: receipt.planName),
-              _ReceiptLine(label: 'Amount', value: receipt.amountLabel),
+              _ReceiptLine(label: context.l10n.payInvoice, value: receipt.number),
+              _ReceiptLine(label: context.l10n.payPlan, value: receipt.planName),
               _ReceiptLine(
-                label: 'Payment method',
-                value: receipt.paymentMethodLabel ?? 'Not available',
+                label: context.l10n.payAmount,
+                value: receipt.amountLabel,
               ),
               _ReceiptLine(
-                label: 'Provider reference',
-                value: receipt.providerReference ?? 'Not available',
+                label: context.l10n.payPaymentMethod,
+                value:
+                    receipt.paymentMethodLabel ?? context.l10n.payNotAvailable,
               ),
               _ReceiptLine(
-                label: 'Date',
+                label: context.l10n.payProviderReference,
+                value:
+                    receipt.providerReference ?? context.l10n.payNotAvailable,
+              ),
+              _ReceiptLine(
+                label: context.l10n.payDate,
                 value: billingDate(receipt.createdAt),
               ),
               if (receipt.failureReason != null) ...[
@@ -223,7 +233,7 @@ class _ReceiptSheet extends StatelessWidget {
               ],
               const SizedBox(height: DriftSpacing.s5),
               DriftButton(
-                label: 'Download receipt',
+                label: context.l10n.payDownloadReceipt,
                 variant: DriftButtonVariant.text,
                 onPressed: download,
               ),

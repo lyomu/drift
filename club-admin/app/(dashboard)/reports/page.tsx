@@ -8,6 +8,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { SelectEditControl } from "@/components/EditFieldModal";
 import { IconChip, RowCard } from "@/components/dashboard-design";
 import type { CourtReport, ReportStatus } from "@/lib/types";
+import { useI18n, useT } from "@/lib/i18n/i18n-context";
 
 const TABS = ["Engagement", "Court inquiries", "Events", "Members", "Listing reports"] as const;
 type Tab = typeof TABS[number];
@@ -25,6 +26,8 @@ const ENGAGEMENT_ICONS: Record<string, string> = {
 };
 
 export default function ReportsPage() {
+  const t = useT();
+  const { formatDate } = useI18n();
   const { clubId, role } = useClub();
   const canManage = role === "OWNER" || role === "ADMIN";
   const [tab, setTab] = useState<Tab>("Engagement");
@@ -52,9 +55,9 @@ export default function ReportsPage() {
       if (tab === "Events") setEvents((await api.get<{ events: EventMetric[] }>(`/clubs/${clubId}/analytics/events?${query()}`)).events);
       if (tab === "Listing reports") setListingReports((await api.get<{ reports: CourtReport[] }>(`/clubs/${clubId}/reports`)).reports);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Report data could not be loaded.");
+      setError(err instanceof ApiError ? err.message : t("a.reportDataCouldNotBe"));
     }
-  }, [clubId, tab, query]);
+  }, [clubId, tab, query, t]);
 
   useEffect(() => {
     void load();
@@ -74,7 +77,7 @@ export default function ReportsPage() {
   async function exportMembers() {
     if (!clubId) return;
     try { downloadBlob(await api.blob(`/clubs/${clubId}/members.csv`), "members.csv"); }
-    catch (err) { setError(err instanceof ApiError ? err.message : "Member export failed. Try again."); }
+    catch (err) { setError(err instanceof ApiError ? err.message : t("a.memberExportFailedTryAgain")); }
   }
 
   async function updateStatus(id: string, status: ReportStatus) {
@@ -89,9 +92,9 @@ export default function ReportsPage() {
   return (
     <div>
       <PageHeader
-        title="Reports"
-        description="Operational performance, facility interest, event turnout, and portable club data."
-        action={hasExport ? <Button variant="secondary" onClick={exportCurrent}>Export report</Button> : undefined}
+        title={t("a.reports")}
+        description={t("a.operationalPerformanceFacilityInterestEvent")}
+        action={hasExport ? <Button variant="secondary" onClick={exportCurrent}>{t("a.exportReport")}</Button> : undefined}
       />
       <ErrorBanner message={error} />
       <div className="mb-5 flex gap-1 overflow-x-auto border-b border-drift-border">
@@ -112,14 +115,14 @@ export default function ReportsPage() {
       </div>
       {hasExport && (
         <div className="mb-5 flex flex-wrap gap-3">
-          <Input type="date" aria-label="Report start date" value={from} onChange={(e) => setFrom(e.target.value)} className="max-w-52" />
-          <Input type="date" aria-label="Report end date" value={to} onChange={(e) => setTo(e.target.value)} className="max-w-52" />
+          <Input type="date" aria-label={t("a.reportStartDate")} value={from} onChange={(e) => setFrom(e.target.value)} className="max-w-52" />
+          <Input type="date" aria-label={t("a.reportEndDate")} value={to} onChange={(e) => setTo(e.target.value)} className="max-w-52" />
         </div>
       )}
 
       {tab === "Engagement" && (
-        engagement === null ? <EmptyState message="Loading..." /> :
-        Object.values(engagement).every((v) => v === 0) ? <EmptyState message="Reports build up as activity accrues." /> :
+        engagement === null ? <EmptyState message={t("a.loading2")} /> :
+        Object.values(engagement).every((v) => v === 0) ? <EmptyState message={t("a.reportsBuildUpAsActivity")} /> :
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
           {Object.entries(engagement).map(([label, value]) => (
             <Card key={label} className="flex items-center gap-3 px-[18px] py-4">
@@ -134,33 +137,33 @@ export default function ReportsPage() {
       )}
 
       {tab === "Court inquiries" && (
-        courts === null ? <EmptyState message="Loading..." /> :
-        courts.length === 0 ? <EmptyState message="No courts are linked to this club." /> :
+        courts === null ? <EmptyState message={t("a.loading2")} /> :
+        courts.length === 0 ? <EmptyState message={t("a.noCourtsAreLinkedTo")} /> :
         <Card className="p-2">
           {courts.map((row) => (
             <RowCard key={row.id} className="flex flex-wrap items-center gap-4">
               <div className="min-w-[180px] flex-1 text-[14px] font-bold text-drift-text-primary">{row.name}</div>
-              <Metric label="Views" value={row.profileViews} />
-              <Metric label="Contacts" value={row.contacts} />
-              <Metric label="Bookings" value={row.bookings} />
+              <Metric label={t("a.views")} value={row.profileViews} />
+              <Metric label={t("a.contacts")} value={row.contacts} />
+              <Metric label={t("a.bookings")} value={row.bookings} />
             </RowCard>
           ))}
         </Card>
       )}
 
       {tab === "Events" && (
-        events === null ? <EmptyState message="Loading..." /> :
-        events.length === 0 ? <EmptyState message="No event activity in this period." /> :
+        events === null ? <EmptyState message={t("a.loading2")} /> :
+        events.length === 0 ? <EmptyState message={t("a.noEventActivityInThis")} /> :
         <Card className="p-2">
           {events.map((row) => (
             <RowCard key={row.id} className="flex flex-wrap items-center gap-4">
               <div className="min-w-[220px] flex-1">
                 <div className="text-[14px] font-bold text-drift-text-primary">{row.name}</div>
-                <div className="text-[12.5px] text-drift-text-secondary">{new Date(row.startsAt).toLocaleDateString()}</div>
+                <div className="text-[12.5px] text-drift-text-secondary">{formatDate(row.startsAt)}</div>
               </div>
-              <Metric label="Registered" value={row.registrations} />
-              <Metric label="Attended" value={row.attended} />
-              <Metric label="Turnout" value={row.registrations ? `${Math.round((row.attended / row.registrations) * 100)}%` : "-"} />
+              <Metric label={t("a.registered")} value={row.registrations} />
+              <Metric label={t("a.attended")} value={row.attended} />
+              <Metric label={t("a.turnout")} value={row.registrations ? `${Math.round((row.attended / row.registrations) * 100)}%` : "-"} />
             </RowCard>
           ))}
         </Card>
@@ -168,17 +171,15 @@ export default function ReportsPage() {
 
       {tab === "Members" && (
         <Card>
-          <h2 className="font-display text-lg font-extrabold text-drift-text-primary">Member export</h2>
-          <p className="mt-2 max-w-[65ch] text-sm leading-6 text-drift-text-secondary">
-            Download the current member directory with role, status, and join date as a CSV file.
-          </p>
-          <Button className="mt-5" onClick={() => void exportMembers()}>Export members CSV</Button>
+          <h2 className="font-display text-lg font-extrabold text-drift-text-primary">{t("a.memberExport")}</h2>
+          <p className="mt-2 max-w-[65ch] text-sm leading-6 text-drift-text-secondary">{t("a.downloadTheCurrentMemberDirectory")}</p>
+          <Button className="mt-5" onClick={() => void exportMembers()}>{t("a.exportMembersCsv")}</Button>
         </Card>
       )}
 
       {tab === "Listing reports" && (
-        listingReports === null ? <EmptyState message="Loading..." /> :
-        listingReports.length === 0 ? <EmptyState message="No court listing reports." /> :
+        listingReports === null ? <EmptyState message={t("a.loading2")} /> :
+        listingReports.length === 0 ? <EmptyState message={t("a.noCourtListingReports")} /> :
         <Card className="p-2">
           {listingReports.map((row) => (
             <RowCard key={row.id} className="flex flex-wrap items-center gap-4">
@@ -192,10 +193,10 @@ export default function ReportsPage() {
                   value={row.status}
                   options={STATUSES.map((status) => ({ value: status, label: status }))}
                   onSave={(next) => updateStatus(row.id, next as ReportStatus)}
-                  title="Update report status"
+                  title={t("a.updateReportStatus")}
                   description={`${row.courtName} · ${row.reason.replaceAll("_", " ")}`}
-                  fieldLabel="Status"
-                  confirmLabel="Save status"
+                  fieldLabel={t("a.status")}
+                  confirmLabel={t("a.saveStatus")}
                 />
               ) : (
                 <StatusBadge status={row.status} />

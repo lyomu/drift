@@ -24,32 +24,27 @@ import type {
   LeagueSummary,
   Member,
 } from "@/lib/types";
+import { useI18n, useT, type Translate } from "@/lib/i18n/i18n-context";
 
 function displayName(member: Member) {
   return `${member.firstName ?? ""} ${member.lastName ?? ""}`.trim() || member.email;
 }
 
-function playerName(player: Dispute["sideA"]) {
-  if (!player) return "Player";
-  return `${player.firstName ?? ""} ${player.lastName ?? ""}`.trim() || "Player";
+function playerName(player: Dispute["sideA"], t: Translate) {
+  if (!player) return t("a.player");
+  return `${player.firstName ?? ""} ${player.lastName ?? ""}`.trim() || t("a.player");
 }
 
-function formatDate(value: Date) {
-  return value.toLocaleDateString(undefined, {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
-}
-
-function greeting() {
+function greeting(t: Translate) {
   const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 17) return "Good afternoon";
-  return "Good evening";
+  if (hour < 12) return t("a.goodMorning");
+  if (hour < 17) return t("a.goodAfternoon");
+  return t("a.goodEvening");
 }
 
 export default function OverviewPage() {
+  const t = useT();
+  const { formatDate } = useI18n();
   const { clubId, clubName } = useClub();
   const [club, setClub] = useState<ClubProfile | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
@@ -100,7 +95,7 @@ export default function OverviewPage() {
           setError(
             err instanceof ApiError
               ? err.message
-              : "Dashboard data could not be loaded.",
+              : t("a.dashboardDataCouldNotBe"),
           );
         }
       } finally {
@@ -110,7 +105,7 @@ export default function OverviewPage() {
     return () => {
       cancelled = true;
     };
-  }, [clubId]);
+  }, [clubId, t]);
 
   const activeMembers = members.filter((member) => member.status === "ACTIVE");
   const activeLeagues = leagues.filter(
@@ -145,37 +140,37 @@ export default function OverviewPage() {
         icon: "person_add",
         tone: "success" as const,
         text: `${displayName(member)} joined the club`,
-        time: new Date(member.joinedAt).toLocaleDateString(),
+        time: formatDate(member.joinedAt),
       })),
       ...announcements.slice(0, 2).map((announcement) => ({
         id: `announcement-${announcement.id}`,
         icon: "campaign",
         tone: "info" as const,
         text: `Announcement "${announcement.title}" ${announcement.status.toLowerCase()}`,
-        time: new Date(announcement.updatedAt).toLocaleDateString(),
+        time: formatDate(announcement.updatedAt),
       })),
     ];
     return items.slice(0, 4);
-  }, [announcements, members]);
+  }, [announcements, members, t, formatDate]);
 
   return (
     <div>
       <div className="flex items-start justify-between gap-6">
         <div>
           <h1 className="font-display text-[28px] font-extrabold leading-[34px] text-drift-text-primary">
-            {greeting()}, {activeMembers[0]?.firstName ?? "Admin"}
+            {greeting(t)}, {activeMembers[0]?.firstName ?? t("a.admin")}
           </h1>
           <p className="mt-1 text-sm text-drift-text-secondary">
-            {formatDate(new Date())} / {clubName ?? "Club dashboard"}
+            {formatDate(new Date(), { weekday: "long", day: "numeric", month: "long" })} / {clubName ?? t("a.clubDashboard")}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2.5">
-          <HeaderIconButton icon="search" href="/members" label="Search" />
+          <HeaderIconButton icon="search" href="/members" label={t("a.search")} />
           <HeaderIconButton
             icon="notifications"
             href="/notifications"
             dot={disputes.length > 0}
-            label="Notifications"
+            label={t("a.notifications")}
           />
           <InitialsAvatar
             name={activeMembers[0] ? displayName(activeMembers[0]) : clubName ?? "Drift"}
@@ -189,7 +184,7 @@ export default function OverviewPage() {
       </div>
 
       {loading ? (
-        <EmptyState message="Loading..." />
+        <EmptyState message={t("a.loading2")} />
       ) : (
         <>
           {club?.verificationStatus === "UNVERIFIED" && (
@@ -198,17 +193,11 @@ export default function OverviewPage() {
                 <MaterialIcon name="verified" className="text-[21px] text-drift-warning" />
               </span>
               <div className="min-w-0 flex-1">
-                <div className="text-sm font-bold text-drift-text-primary">
-                  Your club is not verified yet
-                </div>
-                <div className="text-[13px] text-drift-text-secondary">
-                  Verification adds a badge to your club profile and unlocks native court booking.
-                </div>
+                <div className="text-sm font-bold text-drift-text-primary">{t("a.yourClubIsNotVerified")}</div>
+                <div className="text-[13px] text-drift-text-secondary">{t("a.verificationAddsABadgeTo")}</div>
               </div>
               <Link href="/settings">
-                <Button className="bg-drift-warning hover:bg-drift-warning">
-                  Verify now
-                </Button>
+                <Button className="bg-drift-warning hover:bg-drift-warning">{t("a.verifyNow")}</Button>
               </Link>
             </div>
           )}
@@ -217,28 +206,28 @@ export default function OverviewPage() {
             <StatCard
               href="/members"
               icon="groups"
-              label="Members"
+              label={t("a.members")}
               value={members.length}
               detail={`${activeMembers.length} active`}
             />
             <StatCard
               href="/leagues"
               icon="emoji_events"
-              label="Active leagues"
+              label={t("a.activeLeagues")}
               value={activeLeagues.length}
               tone="success"
             />
             <StatCard
               href="/disputes"
               icon="gavel"
-              label="Open disputes"
+              label={t("a.openDisputes")}
               value={disputes.length}
               tone="error"
             />
             <StatCard
               href="/events"
               icon="event"
-              label="Upcoming event"
+              label={t("a.upcomingEvent")}
               value={nextEvent ? 1 : 0}
             />
           </div>
@@ -247,14 +236,12 @@ export default function OverviewPage() {
             <div className="flex min-w-0 flex-col gap-5">
               <Panel>
                 <SectionTitle
-                  title="Needs your attention"
-                  action={<SmallActionLink href="/disputes">View disputes</SmallActionLink>}
+                  title={t("a.needsYourAttention")}
+                  action={<SmallActionLink href="/disputes">{t("a.viewDisputes")}</SmallActionLink>}
                 />
                 <div className="mt-3.5 flex flex-col gap-2.5">
                   {disputes.length === 0 ? (
-                    <div className="rounded-md border border-drift-border bg-drift-background px-3 py-4 text-sm text-drift-text-secondary">
-                      No open disputes.
-                    </div>
+                    <div className="rounded-md border border-drift-border bg-drift-background px-3 py-4 text-sm text-drift-text-secondary">{t("a.noOpenDisputes2")}</div>
                   ) : (
                     disputes.slice(0, 3).map((dispute) => (
                       <div
@@ -264,18 +251,14 @@ export default function OverviewPage() {
                         <IconChip icon="gavel" tone="error" round />
                         <div className="min-w-0 flex-1">
                           <div className="text-[13.5px] font-bold leading-snug text-drift-text-primary">
-                            {playerName(dispute.sideA)} vs. {playerName(dispute.sideB)} - score disputed
+                            {t("a.disputedScoreBetween", { first: playerName(dispute.sideA, t), second: playerName(dispute.sideB, t) })}
                           </div>
-                          <div className="text-xs text-drift-text-secondary">
-                            Fixture awaiting admin ruling
-                          </div>
+                          <div className="text-xs text-drift-text-secondary">{t("a.fixtureAwaitingAdminRuling")}</div>
                         </div>
                         <Link
                           href="/disputes"
                           className="shrink-0 rounded-md border border-drift-border bg-drift-surface px-3.5 py-[7px] text-[12.5px] font-bold text-drift-text-primary"
-                        >
-                          Review
-                        </Link>
+                        >{t("a.review")}</Link>
                       </div>
                     ))
                   )}
@@ -284,14 +267,12 @@ export default function OverviewPage() {
 
               <Panel>
                 <SectionTitle
-                  title="Coming up"
-                  action={<SmallActionLink href="/events">View calendar</SmallActionLink>}
+                  title={t("a.comingUp")}
+                  action={<SmallActionLink href="/events">{t("a.viewCalendar")}</SmallActionLink>}
                 />
                 <div className="mt-3.5 flex flex-col gap-1">
                   {comingUp.length === 0 ? (
-                    <div className="rounded-md border border-drift-border bg-drift-background px-3 py-4 text-sm text-drift-text-secondary">
-                      No events scheduled.
-                    </div>
+                    <div className="rounded-md border border-drift-border bg-drift-background px-3 py-4 text-sm text-drift-text-secondary">{t("a.noEventsScheduled")}</div>
                   ) : (
                     comingUp.map((item, index) => (
                       <Link
@@ -318,22 +299,20 @@ export default function OverviewPage() {
 
             <div className="flex min-w-0 flex-col gap-5">
               <Panel>
-                <SectionTitle title="Quick actions" />
+                <SectionTitle title={t("a.quickActions")} />
                 <div className="mt-3.5 grid grid-cols-2 gap-2.5">
-                  <QuickAction href="/members" icon="person_add" label="Invite member" />
-                  <QuickAction href="/announcements" icon="campaign" label="New announcement" />
-                  <QuickAction href="/events/new" icon="event" label="Create event" />
-                  <QuickAction href="/ladders" icon="emoji_events" label="New ladder" />
+                  <QuickAction href="/members" icon="person_add" label={t("a.inviteMember")} />
+                  <QuickAction href="/announcements" icon="campaign" label={t("a.newAnnouncement")} />
+                  <QuickAction href="/events/new" icon="event" label={t("a.createEvent")} />
+                  <QuickAction href="/ladders" icon="emoji_events" label={t("a.newLadder")} />
                 </div>
               </Panel>
 
               <Panel>
-                <SectionTitle title="Recent activity" />
+                <SectionTitle title={t("a.recentActivity")} />
                 <div className="mt-3.5 flex flex-col gap-3">
                   {recentActivity.length === 0 ? (
-                    <p className="text-sm text-drift-text-secondary">
-                      Activity will appear as members, events, and announcements change.
-                    </p>
+                    <p className="text-sm text-drift-text-secondary">{t("a.activityWillAppearAsMembers")}</p>
                   ) : (
                     recentActivity.map((item) => (
                       <div key={item.id} className="flex gap-2.5">
@@ -356,10 +335,10 @@ export default function OverviewPage() {
               </Panel>
 
               <Panel>
-                <SectionTitle title="Club status" />
+                <SectionTitle title={t("a.clubStatus")} />
                 <div className="mt-3 flex items-center justify-between gap-3">
-                  <span className="text-sm text-drift-text-secondary">Verification</span>
-                  {club ? <StatusBadge status={club.verificationStatus} /> : <Badge>Unknown</Badge>}
+                  <span className="text-sm text-drift-text-secondary">{t("a.verification")}</span>
+                  {club ? <StatusBadge status={club.verificationStatus} /> : <Badge>{t("a.unknown")}</Badge>}
                 </div>
               </Panel>
             </div>

@@ -7,6 +7,8 @@ import '../../../../shared/widgets/buttons/drift_button.dart';
 import '../../../../shared/widgets/drift_card.dart';
 import '../../../../shared/widgets/drift_status_badge.dart';
 import '../../data/payments_repository.dart';
+import '../../../../core/l10n/l10n.dart';
+import 'package:intl/intl.dart';
 
 class PaymentPlanCard extends StatelessWidget {
   const PaymentPlanCard({
@@ -35,8 +37,8 @@ class PaymentPlanCard extends StatelessWidget {
             children: [
               Expanded(child: Text(plan.name, style: type.h3)),
               if (current)
-                const DriftStatusBadge(
-                  label: 'Current',
+                DriftStatusBadge(
+                  label: context.l10n.payCurrent,
                   tone: DriftStatusTone.success,
                 ),
             ],
@@ -70,12 +72,12 @@ class PaymentPlanCard extends StatelessWidget {
           const SizedBox(height: DriftSpacing.s3),
           DriftButton(
             label: current
-                ? 'Current plan'
+                ? context.l10n.payCurrentPlan
                 : loading
-                ? 'Processing…'
+                ? context.l10n.payProcessing
                 : plan.isFree
-                ? 'Choose Free'
-                : 'Select and pay',
+                ? context.l10n.payChooseFree
+                : context.l10n.paySelectAndPay,
             onPressed: current || loading ? null : onSelect,
           ),
         ],
@@ -103,7 +105,7 @@ class BillingLoadError extends StatelessWidget {
         Text(message, textAlign: TextAlign.center),
         const SizedBox(height: DriftSpacing.s3),
         DriftButton(
-          label: 'Retry',
+          label: context.l10n.commonRetry,
           variant: DriftButtonVariant.text,
           onPressed: retry,
         ),
@@ -119,20 +121,5 @@ DriftStatusTone invoiceTone(InvoiceStatus status) => switch (status) {
   InvoiceStatus.voided => DriftStatusTone.neutral,
 };
 
-String billingDate(DateTime date) {
-  const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-  return '${date.day} ${months[date.month - 1]} ${date.year}';
-}
+String billingDate(DateTime date) =>
+    DateFormat.yMMMd(localeTagNow).format(date);

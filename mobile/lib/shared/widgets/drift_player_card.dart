@@ -6,6 +6,8 @@ import '../../core/theme/drift_spacing.dart';
 import '../../core/theme/drift_typography.dart';
 import '../../features/players/data/players_repository.dart';
 import 'drift_card.dart';
+import '../../core/l10n/l10n.dart';
+import '../../core/l10n/enum_labels.dart';
 
 /// Player Card — `foundation/05-design-system.md` §7. Compact summary for
 /// discovery and connection lists: photo, name, level, distance band,
@@ -30,8 +32,11 @@ class DriftPlayerCard extends StatelessWidget {
 
     final meta = [
       if (player.levelLabel != null && player.level != null)
-        'Level ${player.level!.toStringAsFixed(1)} · ${player.levelLabel}',
-      player.distanceBand ?? 'Distance unknown',
+        context.l10n.profileLevelWithLabel(
+          player.level!.toStringAsFixed(1),
+          levelLabelText(context.l10n, player.levelLabel!),
+        ),
+      player.distanceBand ?? context.l10n.commonDistanceUnknown,
       if (player.generalLocation != null) player.generalLocation!,
     ].join(' • ');
 

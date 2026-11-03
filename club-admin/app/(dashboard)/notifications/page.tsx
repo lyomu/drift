@@ -5,6 +5,7 @@ import { api, ApiError } from "@/lib/api-client";
 import { useClub } from "@/lib/club-context";
 import { Button, Card, EmptyState, ErrorBanner, PageHeader } from "@/components/ui";
 import { ToggleSwitch } from "@/components/dashboard-design";
+import { useT } from "@/lib/i18n/i18n-context";
 
 type Settings = {
   membershipChanges: boolean;
@@ -14,35 +15,37 @@ type Settings = {
   weeklyDigest: boolean;
 };
 
-const OPTIONS: { key: keyof Settings; label: string; detail: string }[] = [
+function options(t: ReturnType<typeof useT>): { key: keyof Settings; label: string; detail: string }[] { return [
   {
     key: "membershipChanges",
-    label: "Membership changes",
-    detail: "Join requests, approvals, and team access updates.",
+    label: t("a.membershipChanges"),
+    detail: t("a.membershipChangesDetail"),
   },
   {
     key: "competitionUpdates",
-    label: "Competition updates",
-    detail: "Registrations, disputes, draws, and league milestones.",
+    label: t("a.competitionUpdates"),
+    detail: t("a.competitionUpdatesDetail"),
   },
   {
     key: "eventRegistrations",
-    label: "Event registrations",
-    detail: "New sign-ups, cancellations, and attendance changes.",
+    label: t("a.eventRegistrations"),
+    detail: t("a.eventRegistrationsDetail"),
   },
   {
     key: "moderationAlerts",
-    label: "Moderation alerts",
-    detail: "New reports and escalated community content.",
+    label: t("a.moderationAlerts"),
+    detail: t("a.moderationAlertsDetail"),
   },
   {
     key: "weeklyDigest",
-    label: "Weekly digest",
-    detail: "A consolidated operational summary each week.",
+    label: t("a.weeklyDigest"),
+    detail: t("a.weeklyDigestDetail"),
   },
-];
+]; }
 
 export default function NotificationSettingsPage() {
+  const t = useT();
+  const OPTIONS = options(t);
   const { clubId } = useClub();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [busy, setBusy] = useState(false);
@@ -57,10 +60,10 @@ export default function NotificationSettingsPage() {
         setError(
           err instanceof ApiError
             ? err.message
-            : "Notification defaults could not be loaded.",
+            : t("a.notificationDefaultsCouldNotBe"),
         ),
       );
-  }, [clubId]);
+  }, [clubId, t]);
 
   async function save() {
     if (!clubId || !settings) return;
@@ -78,7 +81,7 @@ export default function NotificationSettingsPage() {
       setError(
         err instanceof ApiError
           ? err.message
-          : "Notification defaults could not be saved.",
+          : t("a.notificationDefaultsCouldNotBe2"),
       );
     } finally {
       setBusy(false);
@@ -88,12 +91,12 @@ export default function NotificationSettingsPage() {
   return (
     <div>
       <PageHeader
-        title="Notification settings"
-        description="Choose the default operational alerts sent to club administrators."
+        title={t("a.notificationSettings")}
+        description={t("a.chooseTheDefaultOperationalAlerts")}
       />
       <ErrorBanner message={error} />
       {!settings ? (
-        <EmptyState message="Loading..." />
+        <EmptyState message={t("a.loading2")} />
       ) : (
         <Card>
           <div className="divide-y divide-drift-border">
@@ -121,7 +124,7 @@ export default function NotificationSettingsPage() {
             ))}
           </div>
           <Button className="mt-6" disabled={busy} onClick={() => void save()}>
-            {busy ? "Saving..." : "Save defaults"}
+            {busy ? t("common.saving") : t("a.saveDefaults")}
           </Button>
         </Card>
       )}

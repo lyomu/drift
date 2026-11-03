@@ -62,6 +62,7 @@ describe('WaitlistService', () => {
     expect(mailer.sendWaitlistConfirmation).toHaveBeenCalledWith(
       'player@example.com',
       'Njeri',
+      undefined,
     );
   });
 
@@ -113,6 +114,7 @@ describe('WaitlistService', () => {
 
     expect(mailer.sendWaitlistConfirmation).toHaveBeenCalledWith(
       'player@example.com',
+      undefined,
       undefined,
     );
   });

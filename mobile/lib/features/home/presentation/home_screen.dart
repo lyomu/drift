@@ -17,6 +17,7 @@ import 'sections/players_near_you_rail.dart';
 import 'sections/progress_card.dart';
 import 'sections/quick_actions_grid.dart';
 import 'sections/tennis_news_rail.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Home Dashboard — `foundation/04-screen-inventory.md` §A.3 (redesign 2026-08).
 ///
@@ -84,8 +85,8 @@ class _HomeBody extends StatelessWidget {
           const SizedBox(height: 16),
           const HomeDivider(),
           HomeSectionPanel(
-            title: 'Next match',
-            actionLabel: 'View all',
+            title: context.l10n.homeNextMatch,
+            actionLabel: context.l10n.commonViewAll,
             onAction: () => context.go('/home?tab=play&play=active'),
             child: NextMatchSection(
               matchId: sections.nextMatch?.data?.matchId,
@@ -93,8 +94,8 @@ class _HomeBody extends StatelessWidget {
           ),
           const HomeDivider(),
           HomeSectionPanel(
-            title: 'Players near you',
-            actionLabel: 'Find more',
+            title: context.l10n.homePlayersNearYou,
+            actionLabel: context.l10n.homeFindMore,
             onAction: () => context.go('/home?tab=play&play=find'),
             child: PlayersNearYouSection(
               players: sections.players?.data?.players ?? const [],
@@ -102,8 +103,8 @@ class _HomeBody extends StatelessWidget {
           ),
           const HomeDivider(),
           HomeSectionPanel(
-            title: 'Courts near you',
-            actionLabel: 'Map view',
+            title: context.l10n.homeCourtsNearYou,
+            actionLabel: context.l10n.homeMapView,
             onAction: () => context.go('/home?tab=discover&discover=courts'),
             child: CourtsNearYouSection(
               courts: sections.courts?.data?.courts ?? const [],
@@ -111,8 +112,8 @@ class _HomeBody extends StatelessWidget {
           ),
           const HomeDivider(),
           HomeSectionPanel(
-            title: 'Your progress',
-            actionLabel: 'View all',
+            title: context.l10n.homeYourProgress,
+            actionLabel: context.l10n.commonViewAll,
             onAction: () => context.push('/profile/achievements'),
             child: const ProgressSection(),
           ),
@@ -120,8 +121,8 @@ class _HomeBody extends StatelessWidget {
           // The news rail bleeds to the screen edge, so the panel adds no
           // horizontal inset and the rail pads its own scroll view.
           HomeSectionPanel(
-            title: 'Tennis news',
-            actionLabel: 'See all',
+            title: context.l10n.homeTennisNews,
+            actionLabel: context.l10n.commonSeeAll,
             onAction: () => context.push('/news'),
             contentPadding: EdgeInsets.zero,
             child: const TennisNewsRail(),
@@ -173,13 +174,13 @@ class _HomeError extends StatelessWidget {
           child: Column(
             children: [
               Text(
-                "Couldn't load your Home feed. Please try again.",
+                context.l10n.homeLoadFailed,
                 style: type.body.copyWith(color: colors.textSecondary),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
               DriftButton(
-                label: 'Retry',
+                label: context.l10n.commonRetry,
                 variant: DriftButtonVariant.text,
                 onPressed: onRetry,
               ),

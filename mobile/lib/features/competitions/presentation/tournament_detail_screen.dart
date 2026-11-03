@@ -9,6 +9,7 @@ import '../../../shared/widgets/buttons/drift_button.dart';
 import '../../../shared/widgets/drift_racket_icon.dart';
 import '../../../shared/widgets/drift_scaffold.dart';
 import '../data/expansion_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Tournament bracket detail (Wave 6) — rounds top-down with fixture names,
 /// winners bolded, and a Join action while registration is open.
@@ -17,10 +18,10 @@ class TournamentDetailScreen extends ConsumerWidget {
 
   final String tournamentId;
 
-  String _roundName(int index, int totalRounds) {
-    if (index == totalRounds) return 'Final';
-    if (index == totalRounds - 1) return 'Semi-finals';
-    return 'Round $index';
+  String _roundName(AppLocalizations l10n, int index, int totalRounds) {
+    if (index == totalRounds) return l10n.competeFinal;
+    if (index == totalRounds - 1) return l10n.competeSemiFinals;
+    return l10n.competeRoundNumber(index);
   }
 
   @override
@@ -30,7 +31,7 @@ class TournamentDetailScreen extends ConsumerWidget {
     final colors = Theme.of(context).extension<DriftColors>()!;
 
     return DriftScaffold(
-      title: 'Tournament',
+      title: context.l10n.competeTournament,
       body: switch (detail) {
         AsyncData(:final value) => Builder(
           builder: (context) {
@@ -51,7 +52,7 @@ class TournamentDetailScreen extends ConsumerWidget {
                 const SizedBox(height: DriftSpacing.s4),
                 if (canJoin)
                   DriftButton(
-                    label: 'Join tournament',
+                    label: context.l10n.competeJoinTournament,
                     onPressed: () async {
                       final dio = ref.read(dioClientProvider);
                       try {
@@ -62,7 +63,7 @@ class TournamentDetailScreen extends ConsumerWidget {
                   ),
                 if (canJoin) const SizedBox(height: DriftSpacing.s4),
                 for (final round in value.rounds) ...[
-                  Text(_roundName(round.index, totalRounds), style: type.h4),
+                  Text(_roundName(context.l10n, round.index, totalRounds), style: type.h4),
                   const SizedBox(height: DriftSpacing.s2),
                   for (final f in round.fixtures)
                     Padding(
@@ -72,8 +73,15 @@ class TournamentDetailScreen extends ConsumerWidget {
                           Expanded(
                             child: Text(
                               f.isBye
-                                  ? '${f.sideAName ?? f.sideBName ?? "Bye"} — bye'
-                                  : '${f.sideAName ?? "?"} vs ${f.sideBName ?? "?"}',
+                                  ? context.l10n.competeByeFixture(
+                                      f.sideAName ??
+                                          f.sideBName ??
+                                          context.l10n.competeBye,
+                                    )
+                                  : context.l10n.competeVsFixture(
+                                      f.sideAName ?? '?',
+                                      f.sideBName ?? '?',
+                                    ),
                               style: type.body.copyWith(
                                 fontWeight: f.winnerUserId != null
                                     ? FontWeight.w600
@@ -97,7 +105,7 @@ class TournamentDetailScreen extends ConsumerWidget {
         ),
         AsyncError() => Center(
           child: Text(
-            'Tournament not available.',
+            context.l10n.competeTournamentUnavailable,
             style: type.body.copyWith(color: colors.textSecondary),
           ),
         ),

@@ -7,6 +7,9 @@ import '../../../shared/widgets/drift_symbol.dart';
 import '../../auth/data/auth_repository.dart';
 import '../application/learning_providers.dart';
 import '../data/learning_repository.dart';
+import '../../../core/l10n/l10n.dart';
+import '../../../core/l10n/enum_labels.dart';
+import 'package:intl/intl.dart';
 
 /// Drift's official readable text family.
 const _font = 'Outfit';
@@ -16,29 +19,33 @@ const _font = 'Outfit';
 /// added to the enum for this screen (2026-10) — it has no assessment
 /// questions, so it scores from practice alone.
 const _skillOptions = [
-  (value: 'FOREHAND', label: 'Forehand'),
-  (value: 'BACKHAND', label: 'Backhand'),
-  (value: 'SERVE', label: 'Serve'),
-  (value: 'RETURN', label: 'Return'),
-  (value: 'NET_PLAY', label: 'Net Play'),
-  (value: 'MOVEMENT', label: 'Movement'),
-  (value: 'MATCH_PLAY', label: 'Match Play'),
-  (value: 'FOOTWORK', label: 'Footwork'),
+  (value: 'FOREHAND'),
+  (value: 'BACKHAND'),
+  (value: 'SERVE'),
+  (value: 'RETURN'),
+  (value: 'NET_PLAY'),
+  (value: 'MOVEMENT'),
+  (value: 'MATCH_PLAY'),
+  (value: 'FOOTWORK'),
 ];
 
 /// 1–5 self-rating. `accent: null` takes the theme's brand colour, which is
 /// what the mock gives the top rating.
 const _ratings = [
-  (emoji: '😣', label: 'Rough', accent: Color(0xFFEF4444)),
-  (emoji: '😕', label: 'Okay', accent: Color(0xFFF97316)),
-  (emoji: '😐', label: 'Good', accent: Color(0xFFEAB308)),
-  (emoji: '😊', label: 'Great', accent: Color(0xFF22C55E)),
-  (emoji: '🤩', label: 'Peak', accent: null),
+  (emoji: '😣', accent: Color(0xFFEF4444)),
+  (emoji: '😕', accent: Color(0xFFF97316)),
+  (emoji: '😐', accent: Color(0xFFEAB308)),
+  (emoji: '😊', accent: Color(0xFF22C55E)),
+  (emoji: '🤩', accent: null),
 ];
 
-const _months = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+/// Labels for [_ratings], same order.
+List<String> _ratingLabels(AppLocalizations l) => [
+  l.rateRough,
+  l.rateOkay,
+  l.rateGood,
+  l.rateGreat,
+  l.ratePeak,
 ];
 
 const _durationStep = 5;
@@ -147,7 +154,7 @@ class _AddPracticeSessionScreenState
                   children: [
                     _DateRow(date: _occurredAt, onTap: _pickDate),
                     SizedBox(height: 20),
-                    const _FieldLabel('Skill focus'),
+                    _FieldLabel(context.l10n.practiceSkillFocus),
                     _SkillGrid(
                       selected: _skillFocus,
                       onSelect: (value) => setState(() {
@@ -156,14 +163,14 @@ class _AddPracticeSessionScreenState
                       }),
                     ),
                     SizedBox(height: 20),
-                    const _FieldLabel('Duration'),
+                    _FieldLabel(context.l10n.practiceDuration),
                     _DurationStepper(
                       minutes: _durationMinutes,
                       onDecrement: () => _stepDuration(-_durationStep),
                       onIncrement: () => _stepDuration(_durationStep),
                     ),
                     SizedBox(height: 20),
-                    const _FieldLabel('How did it feel?'),
+                    _FieldLabel(context.l10n.matchHowDidItFeel),
                     _RatingRow(
                       selected: _perceivedPerformance,
                       onSelect: (value) => setState(() {
@@ -172,7 +179,7 @@ class _AddPracticeSessionScreenState
                       }),
                     ),
                     SizedBox(height: 20),
-                    const _FieldLabel('Notes', optional: true),
+                    _FieldLabel(context.l10n.practiceNotes, optional: true),
                     _NotesField(controller: _notesController),
                     if (_errorText != null) ...[
                       SizedBox(height: 12),
@@ -245,7 +252,7 @@ class _Header extends StatelessWidget {
           ),
           SizedBox(width: 12),
           Text(
-            'Log Practice',
+            context.l10n.quickLogPractice,
             style: TextStyle(
               fontFamily: _font,
               fontSize: 22,
@@ -277,7 +284,7 @@ class _FieldLabel extends StatelessWidget {
             TextSpan(text: text),
             if (optional)
               TextSpan(
-                text: ' (optional)',
+                text: context.l10n.commonOptionalSuffix,
                 style: TextStyle(fontWeight: FontWeight.w400, color: Theme.of(context).extension<DriftColors>()!.textSecondary),
               ),
           ],
@@ -330,7 +337,7 @@ class _DateRow extends StatelessWidget {
               ),
               SizedBox(width: 12),
               Text(
-                '${date.day} ${_months[date.month - 1]} ${date.year}',
+                DateFormat.yMMMMd(context.localeTag).format(date),
                 style: TextStyle(
                   fontFamily: _font,
                   fontSize: 14,
@@ -396,7 +403,7 @@ class _SkillChip extends StatelessWidget {
     required this.onTap,
   });
 
-  final ({String value, String label}) option;
+  final ({String value}) option;
   final bool selected;
   final VoidCallback onTap;
 
@@ -433,7 +440,7 @@ class _SkillChip extends StatelessWidget {
               ],
               Flexible(
                 child: Text(
-                  option.label,
+                  pillarLabel(context.l10n, option.value),
                   style: TextStyle(
                     fontFamily: _font,
                     fontSize: 13,
@@ -497,7 +504,7 @@ class _DurationStepper extends StatelessWidget {
               ),
               SizedBox(width: 4),
               Text(
-                'min',
+                context.l10n.practiceMinutesShort,
                 style: TextStyle(
                   fontFamily: _font,
                   fontSize: 12,
@@ -574,7 +581,7 @@ class _RatingRow extends StatelessWidget {
           Expanded(
             child: _RatingTile(
               emoji: _ratings[i].emoji,
-              label: _ratings[i].label,
+              label: _ratingLabels(context.l10n)[i],
               accent: _ratings[i].accent ?? colors.primary,
               selected: selected == i + 1,
               onTap: () => onSelect(i + 1),
@@ -673,7 +680,7 @@ class _NotesField extends StatelessWidget {
           color: colors.textPrimary,
         ),
         decoration: InputDecoration(
-          hintText: 'What did you work on? Any breakthroughs?',
+          hintText: context.l10n.practiceNotesHint,
           hintStyle: TextStyle(
             fontFamily: _font,
             fontSize: 13,
@@ -744,7 +751,7 @@ class _SaveButton extends StatelessWidget {
                       ),
                     )
                   : Text(
-                      'Save Practice',
+                      context.l10n.practiceSave,
                       style: TextStyle(
                         fontFamily: _font,
                         fontSize: 15,

@@ -1,13 +1,16 @@
 import 'package:clarity_flutter/clarity_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/analytics/analytics.dart';
+import 'core/l10n/l10n.dart';
 import 'core/router/app_router.dart';
 import 'core/network/dio_client.dart';
 import 'core/theme/app_theme.dart';
 import 'features/notifications/application/push_message_handler.dart';
+import 'features/settings/application/locale_provider.dart';
 import 'features/settings/application/theme_mode_provider.dart';
 
 final rootScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
@@ -34,6 +37,8 @@ Future<void> main() async {
   } catch (e) {
     debugPrint('[analytics] not configured in this build: $e');
   }
+
+  await LocaleController.preload();
 
   runApp(const ProviderScope(child: DriftTennisApp()));
 }
@@ -66,6 +71,7 @@ class _DriftTennisAppState extends ConsumerState<DriftTennisApp> {
       if (previous != next) router.go('/login');
     });
     final themeMode = ref.watch(themeModeProvider);
+    final locale = ref.watch(localeProvider);
 
     final app = MaterialApp.router(
       title: 'Drift Tennis',
@@ -73,6 +79,18 @@ class _DriftTennisAppState extends ConsumerState<DriftTennisApp> {
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: themeMode,
+      // null until the person picks a language in Settings — then the device
+      // language decides, via the resolution callback below.
+      locale: locale,
+      supportedLocales: supportedAppLocales,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      localeListResolutionCallback: (deviceLocales, _) =>
+          resolveFromDeviceList(deviceLocales),
       routerConfig: router,
       scaffoldMessengerKey: rootScaffoldMessengerKey,
     );

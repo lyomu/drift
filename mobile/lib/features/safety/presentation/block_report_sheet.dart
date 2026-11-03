@@ -8,6 +8,7 @@ import '../../../shared/widgets/buttons/drift_button.dart';
 import '../../../shared/widgets/drift_text_field.dart';
 import '../../auth/data/auth_repository.dart';
 import '../data/safety_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Block / Report Sheet — `foundation/04-screen-inventory.md` §A.4. Safety
 /// actions are required wherever a player is surfaced
@@ -69,19 +70,18 @@ class _BlockReportSheetState extends ConsumerState<_BlockReportSheet> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Block this player?'),
-        content: const Text(
-          "They won't be able to find you or contact you, and any existing "
-          'connection between you will be removed.',
+        title: Text(context.l10n.safetyBlockQ),
+        content: Text(
+          context.l10n.safetyBlockBody,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.commonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Block'),
+            child: Text(context.l10n.safetyBlock),
           ),
         ],
       ),
@@ -91,7 +91,7 @@ class _BlockReportSheetState extends ConsumerState<_BlockReportSheet> {
 
     await _submit(
       () => ref.read(safetyRepositoryProvider).block(widget.playerId),
-      'Player blocked.',
+      context.l10n.safetyPlayerBlocked,
     );
     widget.onBlocked();
   }
@@ -106,7 +106,7 @@ class _BlockReportSheetState extends ConsumerState<_BlockReportSheet> {
             reason: _reason!,
             notes: _notesController.text.trim(),
           ),
-      'Report submitted. Thank you.',
+      context.l10n.safetyReportSubmitted,
     );
   }
 
@@ -137,14 +137,14 @@ class _BlockReportSheetState extends ConsumerState<_BlockReportSheet> {
   }
 
   List<Widget> _actionList(DriftTypography type, DriftColors colors) => [
-    Text('Safety', style: type.h2),
+    Text(context.l10n.safetyTitle, style: type.h2),
     const SizedBox(height: DriftSpacing.s4),
     ListTile(
       contentPadding: EdgeInsets.zero,
       leading: Icon(Icons.flag_outlined, color: colors.textSecondary),
-      title: Text('Report player', style: type.body),
+      title: Text(context.l10n.safetyReportPlayer, style: type.body),
       subtitle: Text(
-        'Tell us what went wrong',
+        context.l10n.safetyTellUs,
         style: type.caption.copyWith(color: colors.textSecondary),
       ),
       onTap: () => setState(() => _isReporting = true),
@@ -153,11 +153,11 @@ class _BlockReportSheetState extends ConsumerState<_BlockReportSheet> {
       contentPadding: EdgeInsets.zero,
       leading: Icon(Icons.block, color: colors.error),
       title: Text(
-        'Block player',
+        context.l10n.safetyBlockPlayer,
         style: type.body.copyWith(color: colors.error),
       ),
       subtitle: Text(
-        'They can no longer find or contact you',
+        context.l10n.safetyBlockSub,
         style: type.caption.copyWith(color: colors.textSecondary),
       ),
       onTap: _isSubmitting ? null : _confirmBlock,
@@ -165,11 +165,10 @@ class _BlockReportSheetState extends ConsumerState<_BlockReportSheet> {
   ];
 
   List<Widget> _reportForm(DriftTypography type, DriftColors colors) => [
-    Text('Report player', style: type.h2),
+    Text(context.l10n.safetyReportPlayer, style: type.h2),
     const SizedBox(height: DriftSpacing.s2),
     Text(
-      "Reports go to our moderation team. They're never shared with the "
-      'player you report.',
+      context.l10n.safetyReportPrivacy,
       style: type.bodySmall.copyWith(color: colors.textSecondary),
     ),
     const SizedBox(height: DriftSpacing.s4),
@@ -189,19 +188,21 @@ class _BlockReportSheetState extends ConsumerState<_BlockReportSheet> {
     ),
     const SizedBox(height: DriftSpacing.s3),
     DriftTextField(
-      label: 'Anything else? (optional)',
+      label: context.l10n.safetyAnythingElse,
       controller: _notesController,
       maxLines: 3,
     ),
     const SizedBox(height: DriftSpacing.s5),
     DriftButton(
-      label: _isSubmitting ? 'Submitting…' : 'Submit report',
+      label: _isSubmitting
+          ? context.l10n.commonSubmitting
+          : context.l10n.safetySubmitReport,
       onPressed: _reason == null || _isSubmitting ? null : _submitReport,
     ),
     const SizedBox(height: DriftSpacing.s2),
     Center(
       child: DriftButton(
-        label: 'Back',
+        label: context.l10n.commonBack,
         variant: DriftButtonVariant.text,
         onPressed: _isSubmitting
             ? null

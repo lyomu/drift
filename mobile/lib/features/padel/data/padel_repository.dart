@@ -3,17 +3,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/dio_client.dart';
 import '../../auth/data/auth_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Mirrors the backend `PadelSide` enum.
 enum PadelSide {
-  left('LEFT', 'Left'),
-  right('RIGHT', 'Right'),
-  either('EITHER', 'Either');
+  left('LEFT'),
+  right('RIGHT'),
+  either('EITHER');
 
-  const PadelSide(this.wireValue, this.label);
+  const PadelSide(this.wireValue);
 
   final String wireValue;
-  final String label;
+
+  String get label => switch (this) {
+    PadelSide.left => l10nNow.onbHandLeft,
+    PadelSide.right => l10nNow.onbHandRight,
+    PadelSide.either => l10nNow.optEither,
+  };
 
   static PadelSide? fromJson(String? value) => switch (value) {
     'LEFT' => PadelSide.left,
@@ -130,7 +136,7 @@ class PadelRepository {
     final body = e.response?.data;
     final message = body is Map ? body['message'] as Object? : null;
     final text = message is List ? message.join(' ') : message?.toString();
-    return AuthException(text ?? 'Something went wrong. Please try again.');
+    return AuthException(text ?? l10nNow.commonErrorGeneric);
   }
 }
 

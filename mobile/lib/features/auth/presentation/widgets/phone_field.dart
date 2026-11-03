@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import '../../../../core/theme/drift_colors.dart';
 import '../../../../core/theme/drift_spacing.dart';
 import '../../../../core/theme/drift_typography.dart';
+import '../../../../core/l10n/l10n.dart';
 
 /// Which input chrome to wear. The auth and onboarding forms have deliberately
 /// different density, but country selection must work identically in both.
@@ -95,8 +96,8 @@ class _PhoneFieldState extends State<PhoneField> {
       customFlagBuilder: (country) => _CircularFlag(country: country),
       countryListTheme: CountryListThemeData(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        inputDecoration: const InputDecoration(
-          labelText: 'Search countries',
+        inputDecoration: InputDecoration(
+          labelText: context.l10n.authSearchCountries,
           prefixIcon: Icon(Icons.search),
         ),
       ),
@@ -131,15 +132,18 @@ class _PhoneFieldState extends State<PhoneField> {
               keyboardType: TextInputType.phone,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               decoration: InputDecoration(
-                labelText: auth ? null : 'Phone number (optional)',
+                labelText: auth ? null : context.l10n.authPhoneOptional,
                 hintText: _country.example.isEmpty
-                    ? 'Phone number'
+                    ? context.l10n.authPhone
                     : _country.example,
                 prefixIconConstraints: const BoxConstraints(minWidth: 0),
                 prefixIcon: Semantics(
                   button: true,
                   label:
-                      'Select country, currently ${_country.name}, plus ${_country.phoneCode}',
+                      context.l10n.authSelectCountry(
+                        _country.name,
+                        _country.phoneCode,
+                      ),
                   child: TextButton(
                     onPressed: _selectCountry,
                     style: TextButton.styleFrom(
@@ -232,7 +236,7 @@ class _WhatsAppCheckbox extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                'This number is on WhatsApp',
+                context.l10n.authOnWhatsApp,
                 style: type.caption.copyWith(
                   color: enabled
                       ? colors.textSecondary

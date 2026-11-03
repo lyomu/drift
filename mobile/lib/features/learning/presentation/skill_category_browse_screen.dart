@@ -8,17 +8,9 @@ import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/drift_card.dart';
 import '../../../shared/widgets/drift_scaffold.dart';
 import '../application/learning_providers.dart';
+import '../../../core/l10n/l10n.dart';
+import '../../../core/l10n/enum_labels.dart';
 
-const _skillLabels = {
-  'FOREHAND': 'Forehand',
-  'BACKHAND': 'Backhand',
-  'SERVE': 'Serve',
-  'RETURN': 'Return',
-  'NET_PLAY': 'Net Play',
-  'MOVEMENT': 'Movement',
-  'MATCH_PLAY': 'Match Play',
-  'FOOTWORK': 'Footwork',
-};
 
 /// Skill Category Browse — `foundation/04-screen-inventory.md` §A.7.
 class SkillCategoryBrowseScreen extends ConsumerWidget {
@@ -35,7 +27,7 @@ class SkillCategoryBrowseScreen extends ConsumerWidget {
     final colors = Theme.of(context).extension<DriftColors>()!;
 
     return DriftScaffold(
-      title: _skillLabels[skill] ?? skill,
+      title: pillarLabel(context.l10n, skill),
       body: RefreshIndicator(
         onRefresh: () => ref.refresh(
           contentBrowseProvider((type: null, targetSkill: skill)).future,
@@ -51,7 +43,7 @@ class SkillCategoryBrowseScreen extends ConsumerWidget {
                           children: [
                             const SizedBox(height: DriftSpacing.s12),
                             Text(
-                              'No content yet for this filter',
+                              context.l10n.learnNoContentFilter,
                               style: type.body.copyWith(
                                 color: colors.textSecondary,
                               ),
@@ -105,7 +97,7 @@ class SkillCategoryBrowseScreen extends ConsumerWidget {
                       );
                     },
                   ),
-          AsyncError() => const Center(child: Text("Couldn't load content.")),
+          AsyncError() => Center(child: Text(context.l10n.learnContentLoadFailed)),
           _ => const Center(child: CircularProgressIndicator()),
         },
       ),

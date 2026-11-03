@@ -24,6 +24,7 @@ import type {
   RoundDto,
   StandingRow,
 } from "@/lib/types";
+import { useI18n, useT } from "@/lib/i18n/i18n-context";
 
 type RegisteredPlayer = {
   registrationId: string;
@@ -39,6 +40,7 @@ function toLocalInput(iso: string | null) {
 }
 
 export default function LeagueDetailPage() {
+  const t = useT();
   const { id } = useParams<{ id: string }>();
   const { role: myRole } = useClub();
   const canManage = myRole === "OWNER" || myRole === "ADMIN";
@@ -106,7 +108,7 @@ export default function LeagueDetailPage() {
       await api.patch(`/leagues/${id}`, body);
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Something went wrong.");
+      setError(err instanceof ApiError ? err.message : t("a.somethingWentWrong"));
       throw err;
     } finally {
       setSaving(false);
@@ -142,7 +144,7 @@ export default function LeagueDetailPage() {
       });
       await Promise.all([loadPlayers(), load()]);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Something went wrong.");
+      setError(err instanceof ApiError ? err.message : t("a.somethingWentWrong"));
     }
   }
 
@@ -156,7 +158,7 @@ export default function LeagueDetailPage() {
       );
       setRound(res.round);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Something went wrong.");
+      setError(err instanceof ApiError ? err.message : t("a.somethingWentWrong"));
     } finally {
       setGenerating(false);
     }
@@ -169,13 +171,13 @@ export default function LeagueDetailPage() {
       await load();
     } catch (err) {
       setError(
-        err instanceof ApiError ? err.message : "The league could not be archived.",
+        err instanceof ApiError ? err.message : t("a.theLeagueCouldNotBe"),
       );
     }
   }
 
   if (loading || !league) {
-    return <p className="text-sm text-drift-text-secondary">Loading…</p>;
+    return <p className="text-sm text-drift-text-secondary">{t("a.loading")}</p>;
   }
 
   const started =
@@ -198,26 +200,26 @@ export default function LeagueDetailPage() {
             {canManage && (
               <>
                 <Link href={`/leagues/${id}/rules`}>
-                  <Button variant="secondary">Rules &amp; scoring</Button>
+                  <Button variant="secondary">{t("a.rulesScoring")}</Button>
                 </Link>
                 <SelectEditControl
                   value={league.state}
                   options={[
-                    { value: "DRAFT", label: "Draft" },
-                    { value: "PUBLISHED", label: "Published" },
-                    { value: "CANCELLED", label: "Cancelled" },
+                    { value: "DRAFT", label: t("a.draft") },
+                    { value: "PUBLISHED", label: t("a.published") },
+                    { value: "CANCELLED", label: t("a.cancelled") },
                   ]}
                   onSave={(next) =>
                     patchLeague({ state: next as LeagueState }).then(() => {})
                   }
-                  title="Change league status"
+                  title={t("a.changeLeagueStatus")}
                   description={league.name}
-                  fieldLabel="Status"
-                  confirmLabel="Save status"
+                  fieldLabel={t("a.status")}
+                  confirmLabel={t("a.saveStatus")}
                 />
                 {!closed && (
                   <Button variant="secondary" onClick={() => void handleComplete()}>
-                    Complete &amp; archive
+                    {t("a.completeArchive")}
                   </Button>
                 )}
               </>
@@ -229,9 +231,7 @@ export default function LeagueDetailPage() {
 
       {league.rulesText && (
         <Card className="mb-6">
-          <h2 className="mb-2 text-[13px] font-semibold text-drift-text-secondary">
-            Rules
-          </h2>
+          <h2 className="mb-2 text-[13px] font-semibold text-drift-text-secondary">{t("a.rules")}</h2>
           <RichText html={league.rulesText} />
         </Card>
       )}
@@ -239,11 +239,11 @@ export default function LeagueDetailPage() {
       <Card className="mb-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <dl className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm sm:grid-cols-4">
-            <ScheduleItem label="Registration opens" value={league.registrationOpensAt} />
-            <ScheduleItem label="Registration closes" value={league.registrationClosesAt} />
-            <ScheduleItem label="Starts" value={league.startsAt} />
+            <ScheduleItem label={t("a.registrationOpens")} value={league.registrationOpensAt} />
+            <ScheduleItem label={t("a.registrationCloses")} value={league.registrationClosesAt} />
+            <ScheduleItem label={t("a.starts")} value={league.startsAt} />
             <div>
-              <dt className="font-semibold text-drift-text-secondary">Rounds</dt>
+              <dt className="font-semibold text-drift-text-secondary">{t("a.rounds")}</dt>
               <dd className="mt-1 font-bold text-drift-text-primary">
                 {league.roundCount ?? "—"}
               </dd>
@@ -251,7 +251,7 @@ export default function LeagueDetailPage() {
           </dl>
           {canManage && !started && (
             <Button variant="secondary" onClick={() => setShowSchedule((s) => !s)}>
-              {showSchedule ? "Cancel" : "Edit schedule"}
+              {showSchedule ? t("a.cancel") : t("a.editSchedule")}
             </Button>
           )}
         </div>
@@ -262,7 +262,7 @@ export default function LeagueDetailPage() {
             className="mt-5 flex flex-col gap-4 border-t border-drift-border pt-5"
           >
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <Field label="Registration opens">
+              <Field label={t("a.registrationOpens")}>
                 <Input
                   type="datetime-local"
                   required
@@ -272,7 +272,7 @@ export default function LeagueDetailPage() {
                   }
                 />
               </Field>
-              <Field label="Registration closes">
+              <Field label={t("a.registrationCloses")}>
                 <Input
                   type="datetime-local"
                   required
@@ -282,7 +282,7 @@ export default function LeagueDetailPage() {
                   }
                 />
               </Field>
-              <Field label="Starts">
+              <Field label={t("a.starts")}>
                 <Input
                   type="datetime-local"
                   required
@@ -294,7 +294,7 @@ export default function LeagueDetailPage() {
               </Field>
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="Number of rounds">
+              <Field label={t("a.numberOfRounds")}>
                 <Input
                   type="number"
                   min={1}
@@ -306,7 +306,7 @@ export default function LeagueDetailPage() {
                   }
                 />
               </Field>
-              <Field label="Capacity (optional)">
+              <Field label={t("a.capacityOptional")}>
                 <Input
                   type="number"
                   min={2}
@@ -318,7 +318,7 @@ export default function LeagueDetailPage() {
               </Field>
             </div>
             <Button type="submit" disabled={saving} className="self-start">
-              {saving ? "Saving…" : "Save schedule"}
+              {saving ? t("common.saving") : t("a.saveSchedule")}
             </Button>
           </form>
         )}
@@ -344,15 +344,15 @@ export default function LeagueDetailPage() {
         <DataTable
           rows={players}
           rowKey={(p) => p.registrationId}
-          emptyMessage="No one has registered yet."
+          emptyMessage={t("a.noOneHasRegisteredYet")}
           columns={[
             {
-              header: "Player",
+              header: t("a.player"),
               cell: (p) =>
                 `${p.player?.firstName ?? ""} ${p.player?.lastName ?? ""}`.trim() ||
                 "—",
             },
-            { header: "Status", cell: (p) => <StatusBadge status={p.status} /> },
+            { header: t("a.status"), cell: (p) => <StatusBadge status={p.status} /> },
             {
               header: "",
               cell: (p) =>
@@ -398,12 +398,12 @@ export default function LeagueDetailPage() {
           {canManage && (
             <div className="mb-4">
               <Button onClick={handleGenerateFixtures} disabled={generating}>
-                {generating ? "Generating…" : "Generate fixtures"}
+                {generating ? t("a.generating") : t("a.generateFixtures")}
               </Button>
             </div>
           )}
           {!round ? (
-            <p className="text-sm text-drift-text-secondary">No round open yet.</p>
+            <p className="text-sm text-drift-text-secondary">{t("a.noRoundOpenYet")}</p>
           ) : (
             <Card>
               <div className="mb-3 text-sm font-semibold text-drift-text-primary">
@@ -421,7 +421,7 @@ export default function LeagueDetailPage() {
                         : "TBD"}
                       {" vs "}
                       {f.isBye
-                        ? "Bye"
+                        ? t("a.bye")
                         : f.sideB
                           ? `${f.sideB.firstName ?? ""} ${f.sideB.lastName ?? ""}`
                           : "TBD"}
@@ -439,13 +439,13 @@ export default function LeagueDetailPage() {
         <DataTable
           rows={standings}
           rowKey={(s) => s.userId}
-          emptyMessage="No standings yet."
+          emptyMessage={t("a.noStandingsYet")}
           columns={[
-            { header: "Rank", cell: (s) => s.rank },
-            { header: "Player", cell: (s) => s.displayName },
-            { header: "Points", cell: (s) => s.points },
+            { header: t("a.rank"), cell: (s) => s.rank },
+            { header: t("a.player"), cell: (s) => s.displayName },
+            { header: t("a.points"), cell: (s) => s.points },
             { header: "W-L", cell: (s) => `${s.wins}-${s.losses}` },
-            { header: "Prev. rank", cell: (s) => s.previousRank ?? "—" },
+            { header: t("a.prevRank"), cell: (s) => s.previousRank ?? "—" },
           ]}
         />
       )}
@@ -454,11 +454,12 @@ export default function LeagueDetailPage() {
 }
 
 function ScheduleItem({ label, value }: { label: string; value: string | null }) {
+  const { formatDate } = useI18n();
   return (
     <div>
       <dt className="font-semibold text-drift-text-secondary">{label}</dt>
       <dd className="mt-1 font-bold text-drift-text-primary">
-        {value ? new Date(value).toLocaleString() : "—"}
+        {value ? formatDate(value, { dateStyle: "medium", timeStyle: "short" }) : "—"}
       </dd>
     </div>
   );

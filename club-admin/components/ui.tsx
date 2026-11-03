@@ -2,6 +2,7 @@
 
 import { useId, useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
 import { MaterialIcon } from "@/components/dashboard-design";
+import { useT } from "@/lib/i18n/i18n-context";
 
 const focusRing =
   "focus:outline-none focus-visible:ring-2 focus-visible:ring-drift-primary focus-visible:ring-offset-1";
@@ -56,6 +57,7 @@ export function PasswordField({
   toggleVariant?: "icon" | "text";
   toggleClassName?: string;
 }) {
+  const t = useT();
   const generatedId = useId();
   const id = props.id ?? generatedId;
   const [visible, setVisible] = useState(false);
@@ -83,7 +85,7 @@ export function PasswordField({
         />
         <button
           type="button"
-          aria-label={visible ? "Hide password" : "Show password"}
+          aria-label={visible ? t("common.hidePassword") : t("common.showPassword")}
           aria-pressed={visible}
           disabled={props.disabled}
           onClick={() => setVisible((current) => !current)}
@@ -94,7 +96,7 @@ export function PasswordField({
           }
         >
           {toggleVariant === "text" ? (
-            visible ? "Hide" : "Show"
+            visible ? t("common.hide") : t("common.show")
           ) : (
             <MaterialIcon
               name={visible ? "visibility_off" : "visibility"}
@@ -218,8 +220,10 @@ export function EmptyState({
   /** Drop the border/background — the parent already provides the frame. */
   bare?: boolean;
 }) {
-  const heading = title ?? message ?? "Nothing here yet";
-  const loading = /^(loading|loading…|loading\.\.\.)/i.test(heading.trim());
+  const t = useT();
+  const heading = title ?? message ?? t("common.nothingHere");
+  // Matches the translated "Loading…" too, so the spinner shows in every language.
+  const loading = /^(loading|chargement|cargando)/i.test(heading.trim());
 
   return (
     <div

@@ -18,16 +18,22 @@ import {
 import { api, ApiError } from "@/lib/api-client";
 import { useClub } from "@/lib/club-context";
 import type { ClubProfile, MatchSport, MediaAsset } from "@/lib/types";
+import { useT } from "@/lib/i18n/i18n-context";
+import { useI18n } from "@/lib/i18n/i18n-context";
+import { LANGUAGES, type Locale } from "@/lib/i18n/locales";
 
 const TABS = ["Profile", "Branding", "Booking & Policies", "Danger zone"] as const;
 type Tab = (typeof TABS)[number];
 
-const SPORTS: { value: MatchSport; label: string }[] = [
-  { value: "TENNIS", label: "Tennis" },
-  { value: "PADEL", label: "Padel" },
-];
+function sports(t: ReturnType<typeof useT>): { value: MatchSport; label: string }[] { return [
+  { value: "TENNIS", label: t("a.tennis") },
+  { value: "PADEL", label: t("a.padel") },
+]; }
 
 export default function SettingsPage() {
+  const t = useT();
+  const { locale, setLocale } = useI18n();
+  const SPORTS = sports(t);
   const { clubId, role: myRole, refresh } = useClub();
   const router = useRouter();
   const canManage = myRole === "OWNER" || myRole === "ADMIN";
@@ -85,10 +91,10 @@ export default function SettingsPage() {
       setMediaUrls(next);
     } catch (err) {
       setMediaError(
-        err instanceof ApiError ? err.message : "Photos could not be loaded.",
+        err instanceof ApiError ? err.message : t("a.photosCouldNotBeLoaded"),
       );
     }
-  }, [clubId]);
+  }, [clubId, t]);
 
   useEffect(() => {
     void loadMedia();
@@ -100,11 +106,11 @@ export default function SettingsPage() {
   async function uploadPhoto(file: File | null | undefined) {
     if (!clubId || !file) return;
     if (!["image/png", "image/jpeg"].includes(file.type)) {
-      setMediaError("Choose a PNG or JPG image.");
+      setMediaError(t("a.choosePngJpg"));
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      setMediaError("That image is over 5MB.");
+      setMediaError(t("a.imageOver5Mb"));
       return;
     }
     setMediaBusy(true);
@@ -115,7 +121,7 @@ export default function SettingsPage() {
       await api.upload(`/clubs/${clubId}/media`, fd);
       await loadMedia();
     } catch (err) {
-      setMediaError(err instanceof ApiError ? err.message : "Upload failed.");
+      setMediaError(err instanceof ApiError ? err.message : t("a.uploadFailed"));
     } finally {
       setMediaBusy(false);
     }
@@ -128,7 +134,7 @@ export default function SettingsPage() {
       await loadMedia();
     } catch (err) {
       setMediaError(
-        err instanceof ApiError ? err.message : "The photo could not be deleted.",
+        err instanceof ApiError ? err.message : t("a.thePhotoCouldNotBe"),
       );
     }
   }
@@ -157,10 +163,10 @@ export default function SettingsPage() {
         setLoading(false);
       })
       .catch((err) => {
-        setError(err instanceof ApiError ? err.message : "Club could not be loaded.");
+        setError(err instanceof ApiError ? err.message : t("a.clubCouldNotBeLoaded"));
         setLoading(false);
       });
-  }, [clubId]);
+  }, [clubId, t]);
 
   async function save(patch: Partial<typeof form>) {
     if (!clubId) return;
@@ -174,7 +180,7 @@ export default function SettingsPage() {
       await refresh();
       setSaved(true);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Something went wrong.");
+      setError(err instanceof ApiError ? err.message : t("a.somethingWentWrong"));
     } finally {
       setSaving(false);
     }
@@ -210,7 +216,7 @@ export default function SettingsPage() {
           : prev,
       );
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Something went wrong.");
+      setError(err instanceof ApiError ? err.message : t("a.somethingWentWrong"));
     } finally {
       setRequesting(false);
     }
@@ -218,7 +224,7 @@ export default function SettingsPage() {
 
   async function leaveClub() {
     if (!clubId) return;
-    if (!window.confirm("Leave this club? You'll lose admin access immediately.")) {
+    if (!window.confirm(t("a.leaveThisClubYouLl"))) {
       return;
     }
     setError(null);
@@ -229,7 +235,7 @@ export default function SettingsPage() {
       router.push("/");
     } catch (err) {
       setError(
-        err instanceof ApiError ? err.message : "You could not leave this club.",
+        err instanceof ApiError ? err.message : t("a.youCouldNotLeaveThis"),
       );
       setLeaving(false);
     }
@@ -244,31 +250,48 @@ export default function SettingsPage() {
     }));
   }
 
-  if (loading) return <EmptyState message="Loading..." />;
+  if (loading) return <EmptyState message={t("a.loading2")} />;
 
   return (
     <div>
       <PageHeader
-        title="Club Settings"
-        description="Your club's public profile."
+        title={t("a.clubSettings")}
+        description={t("a.yourClubSPublicProfile")}
         action={
           myRole === "OWNER" ? (
             <Link href="/billing">
-              <Button>Manage billing</Button>
+              <Button>{t("a.manageBilling")}</Button>
             </Link>
           ) : undefined
         }
       />
 
+      <Card className="mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <div className="text-sm font-bold text-drift-text-primary">{t("language.label")}</div>
+            <p className="mt-1 text-sm text-drift-text-secondary">{t("a.languageHint")}</p>
+          </div>
+          <select
+            aria-label={t("language.label")}
+            value={locale}
+            onChange={(event) => setLocale(event.target.value as Locale)}
+            className="min-h-10 rounded-md border border-drift-border bg-drift-surface px-3 text-sm font-semibold text-drift-text-primary"
+          >
+            {LANGUAGES.map((language) => <option key={language.code} value={language.code}>{language.flag} {language.name}</option>)}
+          </select>
+        </div>
+      </Card>
+
       <div className="mb-6 flex flex-wrap gap-1 border-b border-drift-border">
-        {TABS.map((t) => {
-          const active = tab === t;
-          const danger = t === "Danger zone";
+        {TABS.map((item) => {
+          const active = tab === item;
+          const danger = item === "Danger zone";
           return (
             <button
-              key={t}
+              key={item}
               type="button"
-              onClick={() => setTab(t)}
+              onClick={() => setTab(item)}
               className={`px-4 py-2.5 text-sm font-bold transition-colors ${
                 active
                   ? danger
@@ -279,7 +302,7 @@ export default function SettingsPage() {
                     : "text-drift-text-secondary hover:text-drift-text-primary"
               }`}
             >
-              {t}
+              {{ Profile: t("a.profile"), Branding: t("a.branding"), "Booking & Policies": t("a.bookingPolicies"), "Danger zone": t("a.dangerZone") }[item]}
             </button>
           );
         })}
@@ -290,9 +313,7 @@ export default function SettingsPage() {
         <p
           role="status"
           className="mb-4 rounded-md border border-drift-success/30 bg-drift-success-surface px-4 py-3 text-sm font-medium text-drift-success"
-        >
-          Changes saved.
-        </p>
+        >{t("a.changesSaved")}</p>
       )}
 
       {tab === "Profile" && (
@@ -300,9 +321,7 @@ export default function SettingsPage() {
           <Card>
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
-                <div className="text-xs font-bold uppercase text-drift-text-secondary">
-                  Verification
-                </div>
+                <div className="text-xs font-bold uppercase text-drift-text-secondary">{t("a.verification")}</div>
                 <div className="mt-2">
                   {club && (
                     <Badge
@@ -325,7 +344,7 @@ export default function SettingsPage() {
                   onClick={requestVerification}
                   disabled={requesting}
                 >
-                  {requesting ? "Submitting..." : "Submit verification request"}
+                  {requesting ? t("a.submitting") : t("a.submitVerificationRequest")}
                 </Button>
               )}
             </div>
@@ -333,9 +352,9 @@ export default function SettingsPage() {
 
           <Card>
             <form onSubmit={saveProfile} className="flex flex-col gap-5">
-              <SectionTitle title="Club identity" />
+              <SectionTitle title={t("a.clubIdentity")} />
 
-              <Field label="Club name">
+              <Field label={t("a.clubName")}>
                 <Input
                   disabled={!canManage}
                   value={form.name}
@@ -344,9 +363,7 @@ export default function SettingsPage() {
               </Field>
 
               <div>
-                <span className="mb-1.5 block text-[13px] font-semibold text-drift-text-secondary">
-                  Sports offered
-                </span>
+                <span className="mb-1.5 block text-[13px] font-semibold text-drift-text-secondary">{t("a.sportsOffered")}</span>
                 <div className="flex flex-wrap gap-3">
                   {SPORTS.map((sport) => {
                     const on = form.sports.includes(sport.value);
@@ -373,7 +390,7 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <Field label="Description">
+              <Field label={t("a.description")}>
                 <Textarea
                   rows={4}
                   disabled={!canManage}
@@ -384,7 +401,7 @@ export default function SettingsPage() {
                 />
               </Field>
 
-              <Field label="Address">
+              <Field label={t("a.address")}>
                 <Input
                   disabled={!canManage}
                   value={form.address}
@@ -393,14 +410,14 @@ export default function SettingsPage() {
               </Field>
 
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                <Field label="Phone">
+                <Field label={t("a.phone")}>
                   <Input
                     disabled={!canManage}
                     value={form.phone}
                     onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   />
                 </Field>
-                <Field label="Website">
+                <Field label={t("a.website")}>
                   <Input
                     disabled={!canManage}
                     value={form.website}
@@ -411,7 +428,7 @@ export default function SettingsPage() {
                 </Field>
               </div>
 
-              <Field label="Opening hours note">
+              <Field label={t("a.openingHoursNote")}>
                 <Input
                   disabled={!canManage}
                   value={form.openingHoursNote}
@@ -423,7 +440,7 @@ export default function SettingsPage() {
 
               {canManage && (
                 <Button type="submit" disabled={saving} className="self-start">
-                  {saving ? "Saving..." : "Save changes"}
+                  {saving ? t("common.saving") : t("a.saveChanges")}
                 </Button>
               )}
             </form>
@@ -433,16 +450,14 @@ export default function SettingsPage() {
 
       {tab === "Branding" && (
         <Card>
-          <SectionTitle title="Club photos" />
+          <SectionTitle title={t("a.clubPhotos")} />
           <p className="mt-1 max-w-[560px] text-sm text-drift-text-secondary">
             Public imagery shown on your club profile. These are the same
             images as your{" "}
             <Link
               href="/media"
               className="font-semibold text-drift-primary hover:underline"
-            >
-              Media library
-            </Link>
+            >{t("a.mediaLibrary")}</Link>
             .
           </p>
 
@@ -481,20 +496,16 @@ export default function SettingsPage() {
               }`}
             >
               <span className="text-sm font-bold text-drift-text-primary">
-                {mediaBusy ? "Uploading…" : "Drop an image or click to browse"}
+                {mediaBusy ? t("a.uploading") : t("a.dropImageBrowse")}
               </span>
-              <span className="text-[12.5px] text-drift-text-secondary">
-                PNG or JPG, up to 5MB
-              </span>
+              <span className="text-[12.5px] text-drift-text-secondary">{t("a.pngOrJpgUpTo")}</span>
             </div>
           )}
 
           {media === null ? (
-            <p className="mt-5 text-sm text-drift-text-secondary">Loading…</p>
+            <p className="mt-5 text-sm text-drift-text-secondary">{t("a.loading")}</p>
           ) : media.length === 0 ? (
-            <p className="mt-5 text-sm text-drift-text-secondary">
-              No photos yet.
-            </p>
+            <p className="mt-5 text-sm text-drift-text-secondary">{t("a.noPhotosYet")}</p>
           ) : (
             <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
               {media.map((asset) => (
@@ -532,15 +543,11 @@ export default function SettingsPage() {
       {tab === "Booking & Policies" && (
         <div className="flex flex-col gap-6">
           <Card>
-            <SectionTitle title="Facilities & amenities" />
-            <p className="mt-1 text-sm text-drift-text-secondary">
-              Shown on your public profile so players know what to expect on site.
-            </p>
+            <SectionTitle title={t("a.facilitiesAmenities")} />
+            <p className="mt-1 text-sm text-drift-text-secondary">{t("a.shownOnYourPublicProfile")}</p>
             <div className="mt-4 flex flex-wrap gap-2">
               {form.amenities.length === 0 && (
-                <p className="text-sm text-drift-text-secondary">
-                  No amenities listed.
-                </p>
+                <p className="text-sm text-drift-text-secondary">{t("a.noAmenitiesListed")}</p>
               )}
               {form.amenities.map((a) => (
                 <span
@@ -574,32 +581,30 @@ export default function SettingsPage() {
                   void save({ amenities: [...form.amenities, value] });
                 }}
               >
-                <Field label="Add an amenity">
+                <Field label={t("a.addAnAmenity")}>
                   <Input
-                    placeholder="e.g. Floodlights, Parking, Café"
+                    placeholder={t("a.eGFloodlightsParkingCaf")}
                     value={amenityDraft}
                     onChange={(e) => setAmenityDraft(e.target.value)}
                     className="sm:w-[320px]"
                   />
                 </Field>
                 <Button type="submit" variant="secondary" disabled={saving}>
-                  Add
+                  {t("a.add")}
                 </Button>
               </form>
             )}
           </Card>
 
           <Card>
-            <SectionTitle title="Court booking" />
+            <SectionTitle title={t("a.courtBooking")} />
             <p className="mt-1 text-sm text-drift-text-secondary">
               Booking links and policies are configured per court. Manage them on
               the{" "}
               <Link
                 href="/courts"
                 className="font-semibold text-drift-primary hover:underline"
-              >
-                Courts
-              </Link>{" "}
+              >{t("a.courts")}</Link>{" "}
               page.
             </p>
           </Card>
@@ -608,7 +613,7 @@ export default function SettingsPage() {
 
       {tab === "Danger zone" && (
         <Card className="border-drift-error/30">
-          <SectionTitle title="Danger zone" />
+          <SectionTitle title={t("a.dangerZone")} />
           {myRole === "OWNER" ? (
             <p className="mt-2 text-sm text-drift-text-secondary">
               You&apos;re the club owner. Closing a club or transferring
@@ -624,8 +629,7 @@ export default function SettingsPage() {
           ) : (
             <>
               <p className="mt-2 text-sm text-drift-text-secondary">
-                Leaving removes your admin access to this club immediately. An
-                owner or admin would need to re-invite you.
+                {t("a.leavingRemovesYourAdminAccess")}
               </p>
               <Button
                 variant="destructive"
@@ -633,7 +637,7 @@ export default function SettingsPage() {
                 disabled={leaving}
                 className="mt-4"
               >
-                {leaving ? "Leaving…" : "Leave this club"}
+                {leaving ? t("a.leaving") : t("a.leaveThisClub")}
               </Button>
             </>
           )}

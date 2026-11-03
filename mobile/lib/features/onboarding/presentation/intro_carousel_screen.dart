@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/l10n/l10n.dart';
 
 
 /// Pre-auth intro carousel — three full-bleed slides shown to every
@@ -28,33 +29,27 @@ class _IntroCarouselScreenState extends State<IntroCarouselScreen> {
   static const _brandBlue = Color(0xFF3399CC);
   static const _shellNavy = Color(0xFF080C28);
 
-  static const List<_Slide> _slides = [
+  static final List<_Slide> _slides = [
     _Slide(
       image: 'assets/images/onboarding/intro_game_never_stops.jpg',
       // objectPosition: center top
       alignment: Alignment(0, -1),
-      title: 'The Game\nNever Stops',
-      body:
-          'Stay connected to every match, result, and tournament update as '
-          'your tennis community keeps moving.',
+      title: (l) => l.introSlide1Title,
+      body: (l) => l.introSlide1Body,
     ),
     _Slide(
       image: 'assets/images/onboarding/intro_advance_your_game.jpg',
       // objectPosition: center 30%
       alignment: Alignment(0, -0.4),
-      title: 'Advance\nYour Game',
-      body:
-          'Track your progress, sharpen your skills, and build better habits '
-          'with insights made for your tennis journey.',
+      title: (l) => l.introSlide2Title,
+      body: (l) => l.introSlide2Body,
     ),
     _Slide(
       image: 'assets/images/onboarding/intro_tennis_journey.jpg',
       // objectPosition: center 20%
       alignment: Alignment(0, -0.6),
-      title: 'Start Your\nTennis Journey',
-      body:
-          'Discover players, clubs, and competitions near you, then step onto '
-          'the court with confidence.',
+      title: (l) => l.introSlide3Title,
+      body: (l) => l.introSlide3Body,
     ),
   ];
 
@@ -140,7 +135,10 @@ class _IntroCarouselScreenState extends State<IntroCarouselScreen> {
                       alignment: Alignment.centerRight,
                       child: isLast
                           ? const SizedBox.shrink()
-                          : _GlassPill(label: 'Skip', onTap: _toWelcome),
+                          : _GlassPill(
+                              label: context.l10n.commonSkip,
+                              onTap: _toWelcome,
+                            ),
                     ),
                   ),
                 ),
@@ -163,8 +161,8 @@ class _Slide {
 
   final String image;
   final Alignment alignment;
-  final String title;
-  final String body;
+  final String Function(AppLocalizations) title;
+  final String Function(AppLocalizations) body;
 }
 
 class _SlideView extends StatelessWidget {
@@ -225,7 +223,7 @@ class _SlideView extends StatelessWidget {
                         curve: Curves.easeOutCubic,
                         alignment: Alignment.bottomLeft,
                         child: Text(
-                          slide.title,
+                          slide.title(context.l10n),
                           style: const TextStyle(
                             fontFamily: 'Outfit',
                             fontSize: 44,
@@ -246,7 +244,7 @@ class _SlideView extends StatelessWidget {
                   ),
                   const SizedBox(height: 14),
                   Text(
-                    slide.body,
+                    slide.body(context.l10n),
                     style: const TextStyle(
                       fontFamily: 'Outfit',
                       fontSize: 15,
@@ -257,7 +255,9 @@ class _SlideView extends StatelessWidget {
                   ),
                   const SizedBox(height: 32),
                   _CtaButton(
-                    label: isLast ? 'Get Started' : 'Continue',
+                    label: isLast
+                        ? context.l10n.introGetStarted
+                        : context.l10n.commonContinue,
                     color: brandBlue,
                     onTap: onContinue,
                   ),

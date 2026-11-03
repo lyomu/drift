@@ -5,6 +5,9 @@ import { usePathname } from "next/navigation";
 import { MaterialIcon } from "@/components/dashboard-design";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useWorkspace } from "@/lib/workspace-context";
+import { useT } from "@/lib/i18n/i18n-context";
+import type { MessageKey } from "@/lib/i18n/messages/en";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 /**
  * The coach shell's top bar. Deliberately not `SiteHeader`: that one points at
@@ -15,13 +18,14 @@ import { useWorkspace } from "@/lib/workspace-context";
  * and four destinations do not justify a drawer.
  */
 const NAV = [
-  { href: "/coach", label: "Overview", exact: true },
-  { href: "/coach/application", label: "Application" },
-  { href: "/coach/profile", label: "Profile" },
-  { href: "/coach/clubs", label: "Clubs" },
+  { href: "/coach", label: "nav.overview", exact: true },
+  { href: "/coach/application", label: "nav.application" },
+  { href: "/coach/profile", label: "nav.profile" },
+  { href: "/coach/clubs", label: "nav.clubs" },
 ];
 
 export function CoachHeader() {
+  const t = useT();
   const pathname = usePathname();
   const { logout } = useWorkspace();
 
@@ -36,6 +40,7 @@ export function CoachHeader() {
         </Link>
 
         <div className="flex items-center gap-2.5">
+          <LanguageSwitcher />
           <ThemeToggle />
           <button
             type="button"
@@ -43,7 +48,7 @@ export function CoachHeader() {
             className="flex items-center gap-2 rounded-md px-3 py-2 text-[13px] font-semibold text-drift-text-secondary transition-colors hover:bg-drift-primary-light hover:text-drift-text-primary"
           >
             <MaterialIcon name="logout" className="text-[18px]" />
-            <span>Log out</span>
+            <span>{t("common.logOut")}</span>
           </button>
         </div>
       </div>
@@ -63,7 +68,7 @@ export function CoachHeader() {
                   : "font-semibold text-drift-text-secondary"
               }`}
             >
-              {item.label}
+              {t(item.label as MessageKey)}
             </Link>
           );
         })}

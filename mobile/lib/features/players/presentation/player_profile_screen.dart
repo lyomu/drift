@@ -7,8 +7,8 @@ import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/buttons/drift_primary_button.dart';
 import '../../../shared/widgets/drift_back_header.dart';
-import '../../../shared/widgets/drift_player_card.dart';
 import '../../../shared/widgets/drift_soft_card.dart';
+import '../../../shared/widgets/drift_profile_highlights.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../connections/application/connections_providers.dart';
 import '../../connections/data/connections_repository.dart';
@@ -16,20 +16,9 @@ import '../../messaging/data/messaging_repository.dart';
 import '../../safety/presentation/block_report_sheet.dart';
 import '../application/players_providers.dart';
 import '../data/players_repository.dart';
+import '../../../core/l10n/l10n.dart';
+import '../../../core/l10n/enum_labels.dart';
 
-const _pillarLabels = {
-  'FOREHAND': 'Forehand',
-  'BACKHAND': 'Backhand',
-  'SERVE': 'Serve',
-  'RETURN': 'Return',
-  'NET_PLAY': 'Net Play',
-  'MOVEMENT': 'Movement',
-  'MATCH_PLAY': 'Match Play',
-  'FOOTWORK': 'Footwork',
-  'COMPETITION_EXPERIENCE': 'Competition Experience',
-};
-
-const _dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 /// Player Profile (other player) — `foundation/04-screen-inventory.md` §A.4
 /// (redesign 2026-08: `App.tsx` `PlayerProfileScreen`).
@@ -78,7 +67,7 @@ class _PlayerProfileScreenState extends ConsumerState<PlayerProfileScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             DriftBackHeader(
-              title: 'Player',
+              title: context.l10n.commonPlayer,
               trailing: DriftHeaderSquareButton(
                 icon: Icons.more_vert,
                 onTap: () => showBlockReportSheet(
@@ -104,8 +93,8 @@ class _PlayerProfileScreenState extends ConsumerState<PlayerProfileScreen> {
                       Text(
                         error is DioException &&
                                 error.response?.statusCode == 404
-                            ? 'Player not available.'
-                            : 'Could not load this player right now.',
+                            ? context.l10n.playerUnavailable
+                            : context.l10n.playerLoadFailed,
                       ),
                       if (error is! DioException ||
                           error.response?.statusCode != 404)
@@ -113,7 +102,7 @@ class _PlayerProfileScreenState extends ConsumerState<PlayerProfileScreen> {
                           onPressed: () => ref.invalidate(
                             playerProfileProvider(widget.playerId),
                           ),
-                          child: const Text('Try again'),
+                          child: Text(context.l10n.commonTryAgain),
                         ),
                     ],
                   ),
@@ -151,42 +140,24 @@ class _ProfileBody extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
       children: [
-        Row(
-          children: [
-            DriftPlayerAvatar(player: summary, radius: 32),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(summary.displayName, style: type.h2),
-                  const SizedBox(height: 3),
-                  Text(
-                    summary.distanceBand ?? 'Distance unknown',
-                    style: type.bodySmall.copyWith(color: colors.textSecondary),
-                  ),
-                ],
-              ),
-            ),
-            if (profile.connectionState == PlayerConnectionState.connected ||
-                profile.hasOpenChallenge)
-              IconButton(
-                tooltip: 'Message',
-                icon: Icon(
-                  Icons.chat_bubble_outline_rounded,
-                  color: colors.primary,
-                ),
-                onPressed: isSubmitting
-                    ? null
-                    : () => onAction(() async {
-                        final conversationId = await ref
-                            .read(messagingRepositoryProvider)
-                            .openWith(summary.id);
-                        if (!context.mounted) return;
-                        context.push('/messages/$conversationId');
-                      }),
-              ),
-          ],
+        DriftProfileHighlights(
+          profile: profile,
+          trailing: profile.connectionState == PlayerConnectionState.connected ||
+                  profile.hasOpenChallenge
+              ? IconButton(
+                  tooltip: context.l10n.playerMessage,
+                  icon: const Icon(Icons.forum_outlined, color: Colors.white),
+                  onPressed: isSubmitting
+                      ? null
+                      : () => onAction(() async {
+                          final conversationId = await ref
+                              .read(messagingRepositoryProvider)
+                              .openWith(summary.id);
+                          if (!context.mounted) return;
+                          context.push('/messages/$conversationId');
+                        }),
+                )
+              : null,
         ),
         const SizedBox(height: 14),
 
@@ -212,7 +183,7 @@ class _ProfileBody extends ConsumerWidget {
         // §4.1 allows challenging without connecting first — the connection
         // is created implicitly when the challenge is accepted.
         DriftTextLink(
-          label: 'Challenge to a match',
+          label: context.l10n.playerChallengeToMatch,
           onPressed: isSubmitting
               ? null
               : () => context.push('/challenge', extra: summary),
@@ -225,7 +196,7 @@ class _ProfileBody extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'AT A GLANCE',
+                context.l10n.playerAtAGlance,
                 style: type.caption.copyWith(
                   fontWeight: FontWeight.w700,
                   color: colors.textSecondary,
@@ -239,11 +210,11 @@ class _ProfileBody extends ConsumerWidget {
         const SizedBox(height: 4),
 
         DriftTextLink(
-          label: 'View Stats',
+          label: context.l10n.playerViewStats,
           onPressed: () => context.push(
             '/stats',
             extra: (
-              title: '${summary.displayName}\'s Stats',
+              title: context.l10n.playerStatsOf(summary.displayName),
               stats: profile.stats,
             ),
           ),
@@ -262,21 +233,31 @@ class _ProfileBody extends ConsumerWidget {
     final rows = <(String, String)>[
       if (summary.level != null)
         (
-          'Level',
-          '${summary.level!.toStringAsFixed(1)} · ${summary.levelLabel}',
+          l10nNow.filterLevel,
+          '${summary.level!.toStringAsFixed(1)} · '
+              '${levelLabelText(l10nNow, summary.levelLabel ?? '')}',
         ),
       if (summary.generalLocation != null)
-        ('Location', summary.generalLocation!),
+        (l10nNow.playerLocation, summary.generalLocation!),
       if (summary.preferredClubName != null)
-        ('Club', summary.preferredClubName!),
+        (l10nNow.clubTitle, summary.preferredClubName!),
       if (profile.dominantHand != null)
-        ('Plays', '${_titleCase(profile.dominantHand!)} handed'),
+        (
+          l10nNow.playerPlays,
+          handednessLabel(l10nNow, profile.dominantHand!),
+        ),
       if (summary.formatPreference != null)
-        ('Format', _titleCase(summary.formatPreference!)),
+        (
+          l10nNow.onbFormat,
+          formatPrefLabel(l10nNow, summary.formatPreference!),
+        ),
       if (summary.stylePreference != null)
-        ('Style', _titleCase(summary.stylePreference!)),
+        (
+          l10nNow.onbStyle,
+          stylePrefLabel(l10nNow, summary.stylePreference!),
+        ),
       if (summary.availabilitySummary != null)
-        ('Availability', summary.availabilitySummary!),
+        (l10nNow.commonAvailability, summary.availabilitySummary!),
     ];
 
     return Column(
@@ -318,23 +299,29 @@ void _showRequestSentSheet(
                 children: [
                   Icon(Icons.schedule_send, color: colors.primary),
                   const SizedBox(width: 12),
-                  Expanded(child: Text('Request sent', style: type.h3)),
+                  Expanded(
+                    child: Text(
+                      context.l10n.playerRequestSent,
+                      style: type.h3,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 12),
               Text(
-                '$playerName will see your connection request. You can cancel '
-                'it while it is still pending.',
+                context.l10n.playerRequestSentBody(playerName),
                 style: type.body.copyWith(color: colors.textSecondary),
               ),
               const SizedBox(height: 20),
               DriftPrimaryButton(
-                label: 'Done',
+                label: context.l10n.commonDone,
                 onPressed: () => Navigator.of(sheetContext).pop(),
               ),
               const SizedBox(height: 4),
               DriftTextLink(
-                label: isCancelling ? 'Cancelling…' : 'Cancel Request',
+                label: isCancelling
+                    ? context.l10n.commonCancelling
+                    : context.l10n.playerCancelRequest,
                 onPressed: isCancelling
                     ? null
                     : () async {
@@ -370,13 +357,6 @@ void _showRequestSentSheet(
   );
 }
 
-String _titleCase(String enumValue) {
-  return enumValue
-      .split('_')
-      .map((w) => w.isEmpty ? w : w[0] + w.substring(1).toLowerCase())
-      .join(' ');
-}
-
 class _ConnectionAction extends StatelessWidget {
   const _ConnectionAction({
     required this.state,
@@ -397,7 +377,9 @@ class _ConnectionAction extends StatelessWidget {
         return Padding(
           padding: const EdgeInsets.only(bottom: 6),
           child: DriftPrimaryButton(
-            label: isSubmitting ? 'Sending…' : 'Connect',
+            label: isSubmitting
+                ? context.l10n.commonSending
+                : context.l10n.playerConnect,
             onPressed: isSubmitting ? null : onConnect,
           ),
         );
@@ -405,20 +387,22 @@ class _ConnectionAction extends StatelessWidget {
         return Padding(
           padding: const EdgeInsets.only(bottom: 6),
           child: DriftPrimaryButton(
-            label: isSubmitting ? 'Cancelling…' : 'Request sent · Cancel',
+            label: isSubmitting
+                ? context.l10n.commonCancelling
+                : context.l10n.playerRequestSentCancel,
             onPressed: isSubmitting ? null : onCancel,
           ),
         );
       case PlayerConnectionState.pendingIncoming:
-        return const _Banner(
+        return _Banner(
           icon: Icons.mark_email_unread_outlined,
-          label: 'Wants to connect — respond in Requests',
+          label: context.l10n.playerWantsToConnect,
           tone: _BannerTone.warning,
         );
       case PlayerConnectionState.connected:
-        return const _Banner(
+        return _Banner(
           icon: Icons.link,
-          label: 'Connected',
+          label: context.l10n.playerConnected,
           tone: _BannerTone.success,
         );
     }
@@ -521,9 +505,9 @@ class _SkillBreakdown extends StatelessWidget {
     final colors = Theme.of(context).extension<DriftColors>()!;
 
     if (breakdown == null) {
-      return const _LockCard(
-        title: 'Development areas',
-        message: 'Connect with this player to see their skill breakdown.',
+      return _LockCard(
+        title: context.l10n.playerDevelopmentAreas,
+        message: context.l10n.playerConnectToSeeSkills,
       );
     }
     if (breakdown!.isEmpty) {
@@ -533,12 +517,12 @@ class _SkillBreakdown extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Development areas',
+              context.l10n.playerDevelopmentAreas,
               style: type.title.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 8),
             Text(
-              "This player hasn't completed an assessment yet.",
+              context.l10n.playerNoAssessment,
               style: type.bodySmall.copyWith(color: colors.textSecondary),
             ),
           ],
@@ -552,12 +536,12 @@ class _SkillBreakdown extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Development areas',
+            context.l10n.playerDevelopmentAreas,
             style: type.title.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 12),
           for (final entry in breakdown!.entries) ...[
-            Text(_pillarLabels[entry.key] ?? entry.key, style: type.caption),
+            Text(pillarLabel(context.l10n, entry.key), style: type.caption),
             const SizedBox(height: 5),
             ClipRRect(
               borderRadius: BorderRadius.circular(3),
@@ -587,9 +571,9 @@ class _DetailedAvailability extends StatelessWidget {
     final colors = Theme.of(context).extension<DriftColors>()!;
 
     if (slots == null) {
-      return const _LockCard(
-        title: 'Availability',
-        message: 'Connect to see when this player is usually free.',
+      return _LockCard(
+        title: context.l10n.commonAvailability,
+        message: context.l10n.playerConnectToSeeAvailability,
       );
     }
     if (slots!.isEmpty) return const SizedBox.shrink();
@@ -600,7 +584,7 @@ class _DetailedAvailability extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Availability',
+            context.l10n.commonAvailability,
             style: type.title.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 10),
@@ -619,7 +603,8 @@ class _DetailedAvailability extends StatelessWidget {
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
-                    '${_dayNames[slot.dayOfWeek]} · ${_titleCase(slot.timeBlock)}',
+                    '${shortDayOfWeek(context.localeTag, slot.dayOfWeek)} · '
+                    '${timeBlockLabel(context.l10n, slot.timeBlock)}',
                     style: type.caption.copyWith(
                       color: colors.primary,
                       fontWeight: FontWeight.w600,

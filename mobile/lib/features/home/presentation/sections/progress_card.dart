@@ -6,6 +6,7 @@ import '../../../../core/theme/drift_colors.dart';
 import '../../../../core/theme/drift_typography.dart';
 import '../../../achievements/application/achievements_providers.dart';
 import 'home_empty_state.dart';
+import '../../../../core/l10n/l10n.dart';
 
 /// "Your progress" — achievements earned so far and the next one to chase.
 /// Reads the achievements list directly (always available) rather than the
@@ -32,8 +33,8 @@ class ProgressSection extends ConsumerWidget {
       return HomeEmptyState(
         icon: Icons.emoji_events_outlined,
         message:
-            'Play matches and log practice to start earning achievements.',
-        actionLabel: 'View',
+            context.l10n.homeProgressEmpty,
+        actionLabel: context.l10n.commonView,
         onAction: () => context.push('/profile/achievements'),
       );
     }
@@ -91,7 +92,7 @@ class ProgressSection extends ConsumerWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Achievements',
+                      context.l10n.navAchievements,
                       style: type.body.copyWith(fontWeight: FontWeight.w700),
                     ),
                   ),
@@ -133,7 +134,7 @@ class ProgressSection extends ConsumerWidget {
                 Text.rich(
                   TextSpan(
                     children: [
-                      const TextSpan(text: 'Next: '),
+                      TextSpan(text: context.l10n.homeNextPrefix),
                       TextSpan(
                         text: nextLocked.title,
                         style: TextStyle(

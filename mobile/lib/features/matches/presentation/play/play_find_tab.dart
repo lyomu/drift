@@ -8,6 +8,7 @@ import '../../../players/data/players_repository.dart';
 import '../../../players/presentation/player_filters_sheet.dart';
 import '../../../players/presentation/player_search_screen.dart';
 import '../../../../core/theme/drift_colors.dart';
+import '../../../../core/l10n/l10n.dart';
 
 
 /// Play → Find (redesign 2026-10). Ranked player search with a "Challenge"
@@ -54,7 +55,7 @@ class _PlayFindTabState extends ConsumerState<PlayFindTab> {
             onRefresh: () => ref.refresh(playerSearchProvider.future),
             child: switch (results) {
               AsyncData(:final value) => _list(filterPlayers(value, _query)),
-              AsyncError() => _message("Couldn't load players. Pull to retry."),
+              AsyncError() => _message(context.l10n.playLoadPlayersFailed),
               _ => Center(child: CircularProgressIndicator()),
             },
           ),
@@ -67,8 +68,8 @@ class _PlayFindTabState extends ConsumerState<PlayFindTab> {
     if (players.isEmpty) {
       return _message(
         _query.trim().isEmpty
-            ? 'No players match. Try widening your filters.'
-            : 'No players found.',
+            ? context.l10n.playNoPlayersMatch
+            : context.l10n.playNoPlayersFound,
       );
     }
     return ListView.separated(
@@ -78,7 +79,7 @@ class _PlayFindTabState extends ConsumerState<PlayFindTab> {
       itemBuilder: (context, i) => DriftPlayerResultCard(
         player: players[i],
         action: DriftPlayerActionButton(
-          label: 'Challenge',
+          label: context.l10n.matchChallenge,
           // Opens the composer with this player pre-filled; the challenge is
           // not sent until it is submitted there.
           onTap: () => context.push('/challenge', extra: players[i]),

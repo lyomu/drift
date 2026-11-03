@@ -16,6 +16,7 @@ import { ApiError } from "@/lib/api-client";
 import { APPLICATION_COPY, coachApi } from "@/lib/coach-api";
 import { useWorkspace } from "@/lib/workspace-context";
 import type { CoachAdmin, CoachApplication } from "@/lib/types";
+import { useT } from "@/lib/i18n/i18n-context";
 
 /**
  * The application draft is stored separately from the live profile, so this
@@ -43,6 +44,7 @@ function asFormValue(application: CoachApplication): CoachAdmin {
 }
 
 export default function CoachApplicationPage() {
+  const t = useT();
   const router = useRouter();
   const { refresh } = useWorkspace();
   const [application, setApplication] = useState<CoachApplication | null>(null);
@@ -59,13 +61,13 @@ export default function CoachApplicationPage() {
         setApplication(res.application);
       } catch (err) {
         setError(
-          err instanceof ApiError ? err.message : "Something went wrong.",
+          err instanceof ApiError ? err.message : t("a.somethingWentWrong"),
         );
       } finally {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [t]);
 
   async function save(payload: CoachFormPayload) {
     setSaving(true);
@@ -89,7 +91,7 @@ export default function CoachApplicationPage() {
       // hear about it or the sidebar stays blank until a reload.
       await refresh();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Something went wrong.");
+      setError(err instanceof ApiError ? err.message : t("a.somethingWentWrong"));
     } finally {
       setSaving(false);
     }
@@ -106,7 +108,7 @@ export default function CoachApplicationPage() {
     } catch (err) {
       // The completeness check lives on the server, so a missing-field message
       // arrives here as a 400 and is shown verbatim.
-      setError(err instanceof ApiError ? err.message : "Something went wrong.");
+      setError(err instanceof ApiError ? err.message : t("a.somethingWentWrong"));
     } finally {
       setSubmitting(false);
     }
@@ -115,8 +117,8 @@ export default function CoachApplicationPage() {
   if (loading) {
     return (
       <>
-        <PageHeader title="Coach application" />
-        <EmptyState message="Loading…" />
+        <PageHeader title={t("a.coachApplication")} />
+        <EmptyState message={t("a.loading")} />
       </>
     );
   }
@@ -128,8 +130,8 @@ export default function CoachApplicationPage() {
   return (
     <>
       <PageHeader
-        title="Coach application"
-        description="Players see this once your application is approved."
+        title={t("a.coachApplication")}
+        description={t("a.playersSeeThisOnceYour")}
         action={<Badge tone={statusTone(status)}>{copy.label}</Badge>}
       />
       <ErrorBanner message={error} />
@@ -139,9 +141,7 @@ export default function CoachApplicationPage() {
           <p className="text-sm text-drift-text-secondary">{copy.blurb}</p>
           {application?.decisionReason && (
             <div className="mt-3 rounded-md border border-drift-border bg-drift-background px-4 py-3">
-              <p className="text-[12px] font-bold uppercase tracking-wide text-drift-text-secondary">
-                From the review team
-              </p>
+              <p className="text-[12px] font-bold uppercase tracking-wide text-drift-text-secondary">{t("a.fromTheReviewTeam")}</p>
               <p className="mt-1 text-sm text-drift-text-primary">
                 {application.decisionReason}
               </p>
@@ -155,18 +155,18 @@ export default function CoachApplicationPage() {
           icon={status === "APPROVED" ? "verified" : "hourglass_top"}
           title={
             status === "APPROVED"
-              ? "Your application is approved"
-              : "Your application is with our review team"
+              ? t("a.applicationApproved")
+              : t("a.applicationInReview")
           }
           description={
             status === "APPROVED"
-              ? "Edit your live details on the public profile page instead — changes there take effect straight away."
-              : "You will be able to edit it again once a reviewer responds."
+              ? t("a.editLiveCoachDetails")
+              : t("a.editAfterReview")
           }
           action={
             status === "APPROVED" ? (
               <Button onClick={() => router.push("/coach/profile")}>
-                Edit public profile
+                {t("a.editPublicProfile")}
               </Button>
             ) : undefined
           }
@@ -182,25 +182,19 @@ export default function CoachApplicationPage() {
           />
 
           <Card>
-            <h2 className="font-display text-base font-bold text-drift-text-primary">
-              Submit for review
-            </h2>
+            <h2 className="font-display text-base font-bold text-drift-text-primary">{t("a.submitForReview")}</h2>
             <p className="mt-1 text-[13px] text-drift-text-secondary">
-              Save your draft first. Once submitted you cannot edit it until a
-              reviewer responds, and your profile stays hidden from players
-              until it is approved.
+              {t("a.saveYourDraftFirstOnce")}
             </p>
             {saved && (
-              <p className="mt-2 text-[13px] font-semibold text-drift-success">
-                Draft saved.
-              </p>
+              <p className="mt-2 text-[13px] font-semibold text-drift-success">{t("a.draftSaved")}</p>
             )}
             <Button
               className="mt-4 self-start"
               disabled={submitting || !application}
               onClick={submit}
             >
-              {submitting ? "Submitting…" : "Submit for review"}
+              {submitting ? t("a.submitting") : t("a.submitForReview")}
             </Button>
           </Card>
         </div>

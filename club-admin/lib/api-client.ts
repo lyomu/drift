@@ -1,3 +1,4 @@
+import { translateNow } from "@/lib/i18n/translate";
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3009";
 
 const TOKEN_KEY = "driftAccessToken";
@@ -30,22 +31,22 @@ function userFacingMessage(
     );
   if (status === 401) {
     return hadToken
-      ? "Your session has ended. Please sign in again to continue."
+      ? translateNow("error.sessionEnded")
       : generic
-        ? "We could not sign you in with those details. Check your email and password, then try again."
+        ? translateNow("error.badCredentials")
         : message;
   }
   if (status === 403) {
-    return "You do not have permission to do that. Ask a club owner or administrator if you need access.";
+    return translateNow("error.forbidden");
   }
   if (status === 404 && generic) {
-    return "This item is no longer available, or you no longer have access to it.";
+    return translateNow("error.notFound");
   }
   if (status === 429) {
-    return "You have made several requests quickly. Please wait a moment and try again.";
+    return translateNow("error.rateLimited");
   }
   if (status >= 500) {
-    return "We could not complete that right now. Please try again in a moment.";
+    return translateNow("error.server");
   }
   return message;
 }
@@ -53,7 +54,7 @@ function userFacingMessage(
 function connectionError(): ApiError {
   return new ApiError(
     0,
-    "We could not reach Drift right now. Check your connection and try again.",
+    translateNow("error.offline"),
   );
 }
 

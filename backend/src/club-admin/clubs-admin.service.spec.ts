@@ -194,8 +194,8 @@ describe('ClubsAdminService', () => {
       expect(notifications.create).toHaveBeenCalledWith(
         'user-2',
         'CLUBS',
-        "You've been added to Eastside Tennis",
-        'Your club membership is active. Tap to view the club.',
+        expect.objectContaining({ key: 'club.added.title' }),
+        expect.objectContaining({ key: 'club.added.body' }),
         'CLUB',
         'club-1',
       );
@@ -321,8 +321,8 @@ describe('ClubsAdminService', () => {
       expect(notifications.create).toHaveBeenCalledWith(
         'owner-1',
         'CLUBS',
-        'Ana Diaz asked to join Test Club',
-        expect.any(String),
+        expect.objectContaining({ key: 'club.joinRequest.title' }),
+        expect.objectContaining({ key: 'club.joinRequest.body' }),
         'CLUB',
         'club-1',
       );
@@ -417,8 +417,8 @@ describe('ClubsAdminService', () => {
       expect(notifications.create).toHaveBeenCalledWith(
         'user-1',
         'CLUBS',
-        "You've joined Test Club",
-        expect.any(String),
+        expect.objectContaining({ key: 'club.joined.title' }),
+        expect.objectContaining({ key: 'club.joined.body' }),
         'CLUB',
         'club-1',
       );

@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ResultsService } from './results.service';
+import { render, type Localizable } from '../common/i18n';
 import { PrismaService } from '../prisma/prisma.service';
 import { MatchesService } from './matches.service';
 
@@ -547,7 +548,9 @@ describe('ResultsService', () => {
 
   describe('notification triggers', () => {
     const callFor = (index: number) =>
-      matches.notifyOthers!.mock.calls[index] as unknown[];
+      (matches.notifyOthers!.mock.calls[index] as unknown[]).map((value, i) =>
+        i >= 2 && i <= 3 ? render('en', value as Localizable) : value,
+      );
 
     const scheduled = () => matchRecord();
 

@@ -11,6 +11,7 @@ import '../../../shared/widgets/drift_scaffold.dart';
 import '../../auth/data/auth_repository.dart';
 import '../application/connections_providers.dart';
 import '../data/connections_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Pending Requests — `foundation/04-screen-inventory.md` §A.4. Incoming
 /// requests can be accepted or declined; outgoing ones can be cancelled.
@@ -49,7 +50,7 @@ class _PendingRequestsScreenState extends ConsumerState<PendingRequestsScreen> {
     final repo = ref.read(connectionsRepositoryProvider);
 
     return DriftScaffold(
-      title: 'Requests',
+      title: context.l10n.connectionsRequests,
       body: RefreshIndicator(
         onRefresh: () => ref.refresh(pendingRequestsProvider.future),
         child: switch (pending) {
@@ -60,7 +61,7 @@ class _PendingRequestsScreenState extends ConsumerState<PendingRequestsScreen> {
                     padding: const EdgeInsets.all(DriftSpacing.s4),
                     children: [
                       if (value.incoming.isNotEmpty) ...[
-                        Text('Incoming', style: type.h4),
+                        Text(context.l10n.connectionsIncoming, style: type.h4),
                         const SizedBox(height: DriftSpacing.s3),
                         for (final entry in value.incoming)
                           Padding(
@@ -70,8 +71,8 @@ class _PendingRequestsScreenState extends ConsumerState<PendingRequestsScreen> {
                             child: _RequestCard(
                               entry: entry,
                               isBusy: _busyId == entry.connectionId,
-                              primaryLabel: 'Accept',
-                              secondaryLabel: 'Decline',
+                              primaryLabel: context.l10n.commonAccept,
+                              secondaryLabel: context.l10n.commonDecline,
                               onPrimary: () => _act(
                                 entry.connectionId,
                                 () => repo.accept(entry.connectionId),
@@ -85,7 +86,7 @@ class _PendingRequestsScreenState extends ConsumerState<PendingRequestsScreen> {
                         const SizedBox(height: DriftSpacing.s4),
                       ],
                       if (value.outgoing.isNotEmpty) ...[
-                        Text('Sent', style: type.h4),
+                        Text(context.l10n.connectionsSent, style: type.h4),
                         const SizedBox(height: DriftSpacing.s3),
                         for (final entry in value.outgoing)
                           Padding(
@@ -95,7 +96,7 @@ class _PendingRequestsScreenState extends ConsumerState<PendingRequestsScreen> {
                             child: _RequestCard(
                               entry: entry,
                               isBusy: _busyId == entry.connectionId,
-                              secondaryLabel: 'Cancel request',
+                              secondaryLabel: context.l10n.connectionsCancelRequest,
                               onSecondary: () => _act(
                                 entry.connectionId,
                                 () => repo.remove(entry.connectionId),
@@ -105,8 +106,8 @@ class _PendingRequestsScreenState extends ConsumerState<PendingRequestsScreen> {
                       ],
                     ],
                   ),
-          AsyncError() => const Center(
-            child: Text("Couldn't load your requests."),
+          AsyncError() => Center(
+            child: Text(context.l10n.connectionsLoadRequestsFailed),
           ),
           _ => const Center(child: CircularProgressIndicator()),
         },
@@ -147,7 +148,7 @@ class _RequestCard extends StatelessWidget {
             if (primaryLabel != null) ...[
               Expanded(
                 child: DriftButton(
-                  label: isBusy ? 'Working…' : primaryLabel!,
+                  label: isBusy ? context.l10n.commonWorking : primaryLabel!,
                   onPressed: isBusy ? null : onPrimary,
                 ),
               ),
@@ -183,7 +184,7 @@ class _EmptyRequests extends StatelessWidget {
             children: [
               const SizedBox(height: DriftSpacing.s12),
               Text(
-                'No pending requests',
+                context.l10n.connectionsNoPending,
                 style: type.body.copyWith(color: colors.textSecondary),
                 textAlign: TextAlign.center,
               ),

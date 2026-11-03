@@ -1,4 +1,5 @@
 import { EmptyState } from "@/components/ui";
+import { useT } from "@/lib/i18n/i18n-context";
 
 /**
  * Frame for a card / row listing. Always renders a header strip — so a list
@@ -26,6 +27,7 @@ export function Listing({
   };
   children?: React.ReactNode;
 }) {
+  const t = useT();
   const isEmpty = !loading && !count;
 
   return (
@@ -45,7 +47,7 @@ export function Listing({
       </div>
 
       {loading ? (
-        <EmptyState bare compact title="Loading…" />
+        <EmptyState bare compact title={t("common.loading")} />
       ) : isEmpty ? (
         <EmptyState
           bare

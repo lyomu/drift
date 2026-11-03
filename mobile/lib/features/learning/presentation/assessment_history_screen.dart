@@ -7,6 +7,7 @@ import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/drift_card.dart';
 import '../../../shared/widgets/drift_scaffold.dart';
 import '../application/learning_providers.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Assessment History — `foundation/04-screen-inventory.md` §A.7. A plain
 /// list of past completed assessments; there's no separate historical
@@ -22,13 +23,13 @@ class AssessmentHistoryScreen extends ConsumerWidget {
     final colors = Theme.of(context).extension<DriftColors>()!;
 
     return DriftScaffold(
-      title: 'Assessment History',
+      title: context.l10n.assessmentHistory,
       body: switch (report) {
         AsyncData(:final value) =>
           value.assessmentHistory.isEmpty
               ? Center(
                   child: Text(
-                    'Only one assessment so far',
+                    context.l10n.assessmentOnlyOne,
                     style: type.body.copyWith(color: colors.textSecondary),
                   ),
                 )
@@ -46,13 +47,16 @@ class AssessmentHistoryScreen extends ConsumerWidget {
                             child: Text(
                               entry.completedAt != null
                                   ? '${entry.completedAt!.day}/${entry.completedAt!.month}/${entry.completedAt!.year}'
-                                  : 'Unknown date',
+                                  : context.l10n.commonUnknownDate,
                               style: type.body,
                             ),
                           ),
                           if (entry.resultSystemSuggestedLevel != null)
                             Text(
-                              'Level ${entry.resultSystemSuggestedLevel!.toStringAsFixed(1)}',
+                              context.l10n.commonLevel(
+                                entry.resultSystemSuggestedLevel!
+                                    .toStringAsFixed(1),
+                              ),
                               style: type.label,
                             ),
                         ],
@@ -60,7 +64,7 @@ class AssessmentHistoryScreen extends ConsumerWidget {
                     );
                   },
                 ),
-        AsyncError() => const Center(child: Text('Not available.')),
+        AsyncError() => Center(child: Text(context.l10n.commonNotAvailable)),
         _ => const Center(child: CircularProgressIndicator()),
       },
     );

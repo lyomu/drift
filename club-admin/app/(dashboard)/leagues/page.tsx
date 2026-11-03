@@ -14,16 +14,17 @@ import type {
   MatchFormat,
   MatchSport,
 } from "@/lib/types";
+import { useT } from "@/lib/i18n/i18n-context";
 
 /** Empty string is "All levels" in the form; it posts as `undefined`. */
 type LevelBandChoice = AssessmentBranch | "";
 
-export const LEVEL_BAND_LABELS: Record<AssessmentBranch, string> = {
-  BEGINNER: "Beginner",
-  FOUNDATIONAL: "Foundational",
-  INTERMEDIATE: "Intermediate",
-  ADVANCED: "Advanced",
-};
+const levelBandLabels = (t: ReturnType<typeof useT>): Record<AssessmentBranch, string> => ({
+  BEGINNER: t("a.beginner"),
+  FOUNDATIONAL: t("a.foundational"),
+  INTERMEDIATE: t("a.intermediate"),
+  ADVANCED: t("a.advanced"),
+});
 
 type LeagueForm = {
   name: string;
@@ -54,6 +55,8 @@ const EMPTY_FORM: LeagueForm = {
 };
 
 export default function LeaguesPage() {
+  const t = useT();
+  const LEVEL_BAND_LABELS = levelBandLabels(t);
   const { clubId, role: myRole } = useClub();
   const canManage = myRole === "OWNER" || myRole === "ADMIN";
   const [leagues, setLeagues] = useState<LeagueSummary[]>([]);
@@ -85,11 +88,11 @@ export default function LeaguesPage() {
     const closes = new Date(form.registrationClosesAt);
     const starts = new Date(form.startsAt);
     if (opens >= closes) {
-      setError("Registration must open before it closes.");
+      setError(t("a.registrationMustOpenBeforeIt"));
       return;
     }
     if (closes > starts) {
-      setError("Registration must close on or before the league starts.");
+      setError(t("a.registrationMustCloseOnOr"));
       return;
     }
     setCreating(true);
@@ -113,7 +116,7 @@ export default function LeaguesPage() {
       setShowForm(false);
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Something went wrong.");
+      setError(err instanceof ApiError ? err.message : t("a.somethingWentWrong"));
     } finally {
       setCreating(false);
     }
@@ -124,16 +127,16 @@ export default function LeaguesPage() {
       <PageTitle
         action={
           canManage ? (
-            <Button onClick={() => setShowForm(true)}>New league</Button>
+            <Button onClick={() => setShowForm(true)}>{t("a.newLeague")}</Button>
           ) : undefined
         }
       />
       <ErrorBanner message={error} />
 
       {loading ? (
-        <EmptyState message="Loading..." />
+        <EmptyState message={t("a.loading2")} />
       ) : leagues.length === 0 ? (
-        <EmptyState message="Create your first league" />
+        <EmptyState message={t("a.createYourFirstLeague")} />
       ) : (
         <div className="flex flex-col gap-3">
           {leagues.map((league) => (
@@ -151,15 +154,13 @@ export default function LeaguesPage() {
                     {league.sport.replace("_", " ")} / {league.format.replace("_", " ")} /{" "}
                     {league.levelBand
                       ? LEVEL_BAND_LABELS[league.levelBand]
-                      : "All levels"}{" "}
+                      : t("a.allLevels")}{" "}
                     / {league.enrolledCount} enrolled
                     {league.roundCount ? ` / ${league.roundCount} rounds` : ""}
                   </div>
                 </div>
                 <StatusBadge status={league.competitionState} />
-                <span className="shrink-0 text-[13px] font-semibold text-drift-primary">
-                  Manage
-                </span>
+                <span className="shrink-0 text-[13px] font-semibold text-drift-primary">{t("a.manage")}</span>
               </div>
             </Link>
           ))}
@@ -167,16 +168,16 @@ export default function LeaguesPage() {
       )}
 
       {showForm && (
-        <ModalShell title="New league" size="lg" onClose={() => setShowForm(false)}>
+        <ModalShell title={t("a.newLeague")} size="lg" onClose={() => setShowForm(false)}>
           <form onSubmit={handleCreate} className="flex flex-col gap-4">
-            <Field label="League name">
+            <Field label={t("a.leagueName")}>
               <Input
                 required
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
               />
             </Field>
-            <Field label="Description">
+            <Field label={t("a.description")}>
               <Textarea
                 rows={3}
                 value={form.description}
@@ -186,30 +187,30 @@ export default function LeaguesPage() {
               />
             </Field>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="Sport">
+              <Field label={t("a.sport")}>
                 <Select
                   value={form.sport}
                   onChange={(e) =>
                     setForm({ ...form, sport: e.target.value as MatchSport })
                   }
                 >
-                  <option value="TENNIS">Tennis</option>
-                  <option value="PADEL">Padel</option>
+                  <option value="TENNIS">{t("a.tennis")}</option>
+                  <option value="PADEL">{t("a.padel")}</option>
                 </Select>
               </Field>
-              <Field label="Format">
+              <Field label={t("a.format")}>
                 <Select
                   value={form.format}
                   onChange={(e) =>
                     setForm({ ...form, format: e.target.value as MatchFormat })
                   }
                 >
-                  <option value="SINGLES">Singles</option>
-                  <option value="DOUBLES">Doubles</option>
+                  <option value="SINGLES">{t("a.singles")}</option>
+                  <option value="DOUBLES">{t("a.doubles")}</option>
                 </Select>
               </Field>
             </div>
-            <Field label="Level">
+            <Field label={t("a.level")}>
               <Select
                 value={form.levelBand}
                 onChange={(e) =>
@@ -219,7 +220,7 @@ export default function LeaguesPage() {
                   })
                 }
               >
-                <option value="">All levels</option>
+                <option value="">{t("a.allLevels")}</option>
                 {(
                   Object.keys(LEVEL_BAND_LABELS) as AssessmentBranch[]
                 ).map((band) => (
@@ -229,12 +230,11 @@ export default function LeaguesPage() {
                 ))}
               </Select>
               <p className="mt-1 text-[12px] text-drift-text-secondary">
-                Guidance for players browsing leagues. It does not stop anyone
-                registering.
+                {t("a.guidanceForPlayersBrowsingLeagues")}
               </p>
             </Field>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <Field label="Registration opens">
+              <Field label={t("a.registrationOpens")}>
                 <Input
                   type="datetime-local"
                   required
@@ -244,7 +244,7 @@ export default function LeaguesPage() {
                   }
                 />
               </Field>
-              <Field label="Registration closes">
+              <Field label={t("a.registrationCloses")}>
                 <Input
                   type="datetime-local"
                   required
@@ -254,7 +254,7 @@ export default function LeaguesPage() {
                   }
                 />
               </Field>
-              <Field label="League starts">
+              <Field label={t("a.leagueStarts")}>
                 <Input
                   type="datetime-local"
                   required
@@ -266,7 +266,7 @@ export default function LeaguesPage() {
               </Field>
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="Number of rounds">
+              <Field label={t("a.numberOfRounds")}>
                 <Input
                   type="number"
                   min={1}
@@ -278,7 +278,7 @@ export default function LeaguesPage() {
                   }
                 />
               </Field>
-              <Field label="Capacity (optional)">
+              <Field label={t("a.capacityOptional")}>
                 <Input
                   type="number"
                   min={2}
@@ -289,19 +289,19 @@ export default function LeaguesPage() {
                 />
               </Field>
             </div>
-            <Field label="Rules">
+            <Field label={t("a.rules")}>
               <RichTextEditor
                 value={form.rulesText}
                 onChange={(html) => setForm({ ...form, rulesText: html })}
-                placeholder="Scoring, scheduling, conduct — anything players should know before they register."
+                placeholder={t("a.scoringSchedulingConductAnythingPlayers")}
               />
             </Field>
             <div className="mt-2 flex justify-end gap-3">
               <Button type="button" variant="secondary" onClick={() => setShowForm(false)}>
-                Cancel
+                {t("a.cancel")}
               </Button>
               <Button type="submit" disabled={creating}>
-                {creating ? "Creating..." : "Create league"}
+                {creating ? t("a.creating") : t("a.createLeague")}
               </Button>
             </div>
           </form>
@@ -312,15 +312,12 @@ export default function LeaguesPage() {
 }
 
 function PageTitle({ action }: { action?: React.ReactNode }) {
+  const t = useT();
   return (
     <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
       <div>
-        <h1 className="font-display text-[26px] font-extrabold leading-8 text-drift-text-primary">
-          Leagues
-        </h1>
-        <p className="mt-1 max-w-[560px] text-sm text-drift-text-secondary">
-          Create and manage your club competitions.
-        </p>
+        <h1 className="font-display text-[26px] font-extrabold leading-8 text-drift-text-primary">{t("a.leagues")}</h1>
+        <p className="mt-1 max-w-[560px] text-sm text-drift-text-secondary">{t("a.createAndManageYourClub")}</p>
       </div>
       {action}
     </div>

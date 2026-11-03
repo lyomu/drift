@@ -13,6 +13,7 @@ import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/drift_card.dart';
 import '../application/courts_providers.dart';
 import '../data/courts_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Fallback map center used only when the device's location can't be
 /// resolved (permission denied, services off) — the seed dataset's
@@ -128,7 +129,7 @@ class _CourtMapViewState extends ConsumerState<CourtMapView> {
             right: DriftSpacing.s4,
             child: DriftCard(
               child: Text(
-                'Map tiles unavailable — switch to List to browse results.',
+                context.l10n.courtMapUnavailable,
                 style: Theme.of(
                   context,
                 ).extension<DriftTypography>()!.bodySmall,
@@ -155,7 +156,7 @@ class _CourtMapViewState extends ConsumerState<CourtMapView> {
                 if (court.distanceKm != null) ...[
                   const SizedBox(height: DriftSpacing.s1),
                   Text(
-                    '${court.distanceKm!.toStringAsFixed(1)} km away',
+                    context.l10n.commonKmAway(court.distanceKm!.toStringAsFixed(1)),
                     style: type.bodySmall,
                   ),
                 ],
@@ -165,7 +166,7 @@ class _CourtMapViewState extends ConsumerState<CourtMapView> {
                     Navigator.of(sheetContext).pop();
                     context.push('/discover/courts/${court.id}');
                   },
-                  child: const Text('View Profile'),
+                  child: Text(context.l10n.commonViewProfile),
                 ),
               ],
             ),

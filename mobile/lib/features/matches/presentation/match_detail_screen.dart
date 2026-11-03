@@ -20,6 +20,7 @@ import '../data/matches_repository.dart';
 import 'enter_score_screen.dart';
 import 'propose_time_sheet.dart';
 import 'withdraw_challenge_dialog.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Challenge Status / Match Detail — `foundation/04-screen-inventory.md`
 /// §A.4 (redesign 2026-08). One screen covers the whole lifecycle; which
@@ -67,11 +68,11 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             DriftBackHeader(
-              title: 'Match',
+              title: context.l10n.matchTitle,
               trailing: conversationId == null
                   ? null
                   : DriftHeaderSquareButton(
-                      icon: Icons.chat_bubble_outline,
+                      icon: Icons.forum_outlined,
                       onTap: () => context.push('/messages/$conversationId'),
                     ),
             ),
@@ -84,7 +85,7 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
                   onAction: _run,
                 ),
                 AsyncError() => DriftErrorRetry(
-                  message: "Couldn't load this match.",
+                  message: context.l10n.matchLoadFailed,
                   onRetry: () =>
                       ref.invalidate(matchDetailProvider(widget.matchId)),
                 ),
@@ -155,7 +156,7 @@ class _Body extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _cardLabel(context, 'Players'),
+              _cardLabel(context, context.l10n.matchPlayers),
               const SizedBox(height: 10),
               for (var i = 0; i < match.participants.length; i++)
                 Container(
@@ -177,7 +178,7 @@ class _Body extends ConsumerWidget {
                       Expanded(
                         child: Text(
                           '${match.participants[i].player.displayName}'
-                          '${match.participants[i].userId == viewerId ? ' (you)' : ''}',
+                          '${match.participants[i].userId == viewerId ? context.l10n.matchYouSuffix : ''}',
                           style: type.body.copyWith(
                             fontWeight: FontWeight.w600,
                           ),
@@ -185,9 +186,9 @@ class _Body extends ConsumerWidget {
                       ),
                       Text(
                         switch (match.participants[i].status) {
-                          ParticipantStatus.accepted => 'In',
-                          ParticipantStatus.declined => 'Declined',
-                          ParticipantStatus.invited => 'Invited',
+                          ParticipantStatus.accepted => context.l10n.matchParticipantIn,
+                          ParticipantStatus.declined => context.l10n.matchParticipantDeclined,
+                          ParticipantStatus.invited => context.l10n.matchParticipantInvited,
                         },
                         style: type.caption.copyWith(
                           fontWeight: FontWeight.w600,
@@ -211,7 +212,7 @@ class _Body extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _cardLabel(context, 'Court'),
+                _cardLabel(context, context.l10n.matchCourt),
                 const SizedBox(height: 8),
                 Text(
                   match.courtName!,
@@ -306,14 +307,14 @@ class _OpponentCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      opponent?.displayName ?? 'Match',
+                      opponent?.displayName ?? context.l10n.matchTitle,
                       style: type.title.copyWith(fontWeight: FontWeight.w700),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      match.isDoubles ? 'Doubles' : 'Singles',
+                      match.isDoubles ? context.l10n.optDoubles : context.l10n.optSingles,
                       style: type.caption.copyWith(color: colors.textSecondary),
                     ),
                   ],
@@ -379,12 +380,17 @@ class _ProposalCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _cardLabel(context, isMine ? 'Your proposed times' : 'Pick a time'),
+          _cardLabel(
+            context,
+            isMine
+                ? context.l10n.matchYourProposedTimes
+                : context.l10n.matchPickATime,
+          ),
           const SizedBox(height: 4),
           Text(
             isMine
-                ? 'Waiting for them to choose.'
-                : 'Tap a time to confirm the match.',
+                ? context.l10n.matchWaitingChoose
+                : context.l10n.matchTapToConfirm,
             style: type.bodySmall.copyWith(color: colors.textSecondary),
           ),
           const SizedBox(height: 12),
@@ -403,8 +409,7 @@ class _ProposalCard extends StatelessWidget {
             ),
           if (match.roundsRemaining == 0)
             Text(
-              "You've used all your proposal rounds — sort the rest out in "
-              "chat.",
+              context.l10n.matchRoundsUsed,
               style: type.caption.copyWith(color: colors.warning),
             ),
         ],
@@ -447,11 +452,14 @@ class _ResultCard extends StatelessWidget {
           sets: result.sets!,
           viewerSide: viewer.side,
           opponentLabel:
-              match.opponentFor(viewerId)?.player.displayName ?? 'Them',
+              match.opponentFor(viewerId)?.player.displayName ??
+              context.l10n.commonThem,
         );
       }
       return Text(
-        result.outcome == ResultOutcome.walkover ? 'Walkover' : 'Retirement',
+        result.outcome == ResultOutcome.walkover
+            ? context.l10n.matchStateWalkover
+            : context.l10n.matchRetirement,
         style: type.body,
       );
     }
@@ -461,20 +469,20 @@ class _ResultCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _cardLabel(context, 'Result'),
+            _cardLabel(context, context.l10n.matchResult),
             const SizedBox(height: 8),
             Text(
-              'Result disputed',
+              context.l10n.matchResultDisputed,
               style: type.h4.copyWith(color: colors.error),
             ),
             const SizedBox(height: 2),
             Text(
-              'You and your opponent submitted different results.',
+              context.l10n.matchDifferentResults,
               style: type.bodySmall.copyWith(color: colors.textSecondary),
             ),
             const SizedBox(height: 12),
             DriftPrimaryButton(
-              label: 'View dispute',
+              label: context.l10n.matchViewDispute,
               onPressed: () => context.push(
                 '/matches/${match.id}/dispute',
                 extra: (match: match, viewerId: viewerId),
@@ -490,24 +498,24 @@ class _ResultCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _cardLabel(context, 'Result'),
+            _cardLabel(context, context.l10n.matchResult),
             const SizedBox(height: 14),
             scoreOrOutcome(),
             const SizedBox(height: 16),
             if (isSubmitter)
               Text(
-                'Waiting for them to confirm.',
+                context.l10n.matchWaitingConfirm,
                 style: type.bodySmall.copyWith(color: colors.textSecondary),
               )
             else ...[
               DriftPrimaryButton(
-                label: 'Confirm',
+                label: context.l10n.commonConfirm,
                 onPressed: isBusy ? null : onConfirm,
               ),
               const SizedBox(height: 6),
               Center(
                 child: DriftTextLink(
-                  label: 'Dispute',
+                  label: context.l10n.matchDispute,
                   onPressed: isBusy ? null : onDispute,
                 ),
               ),
@@ -521,7 +529,7 @@ class _ResultCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _cardLabel(context, 'Result'),
+          _cardLabel(context, context.l10n.matchResult),
           const SizedBox(height: 14),
           scoreOrOutcome(),
         ],
@@ -580,7 +588,7 @@ class _Score extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        row('You', mine, true),
+        row(context.l10n.commonYou, mine, true),
         const SizedBox(height: 2),
         row(opponentLabel, theirs, false),
       ],
@@ -628,14 +636,14 @@ class _Actions extends ConsumerWidget {
         children: [
           if (opponent != null)
             DriftPrimaryButton(
-              label: 'Rematch',
+              label: context.l10n.matchRematch,
               onPressed: () =>
                   context.push('/challenge', extra: opponent.player),
             ),
           const SizedBox(height: 2),
           Center(
             child: DriftTextLink(
-              label: 'How did it feel?',
+              label: context.l10n.matchHowDidItFeel,
               onPressed: () => context.push('/matches/${match.id}/reflection'),
             ),
           ),
@@ -648,7 +656,7 @@ class _Actions extends ConsumerWidget {
       children: [
         if (canWithdraw)
           DriftPrimaryButton(
-            label: 'Undo challenge',
+            label: context.l10n.matchUndoChallenge,
             onPressed: isBusy
                 ? null
                 : () async {
@@ -659,13 +667,13 @@ class _Actions extends ConsumerWidget {
           ),
         if (awaitingMe) ...[
           DriftPrimaryButton(
-            label: 'Accept',
+            label: context.l10n.commonAccept,
             onPressed: isBusy ? null : () => _accept(context, ref, repo),
           ),
           const SizedBox(height: 2),
           Center(
             child: DriftTextLink(
-              label: 'Decline',
+              label: context.l10n.commonDecline,
               onPressed: isBusy
                   ? null
                   : () => onAction(() => repo.decline(match.id)),
@@ -675,7 +683,7 @@ class _Actions extends ConsumerWidget {
 
         if (canProposeTime && !proposalPending && match.roundsRemaining > 0)
           DriftPrimaryButton(
-            label: 'Propose Times',
+            label: context.l10n.matchProposeTimes,
             onPressed: isBusy
                 ? null
                 : () async {
@@ -693,7 +701,7 @@ class _Actions extends ConsumerWidget {
           const SizedBox(height: 2),
           Center(
             child: DriftTextLink(
-              label: 'Suggest different times',
+              label: context.l10n.matchSuggestDifferentTimes,
               onPressed: isBusy
                   ? null
                   : () async {
@@ -710,7 +718,7 @@ class _Actions extends ConsumerWidget {
 
         if (match.state == MatchState.scheduled && match.result == null) ...[
           DriftPrimaryButton(
-            label: 'Enter Result',
+            label: context.l10n.matchEnterResult,
             onPressed: isBusy
                 ? null
                 : () async {
@@ -731,7 +739,7 @@ class _Actions extends ConsumerWidget {
           const SizedBox(height: 2),
           Center(
             child: DriftTextLink(
-              label: 'Reschedule',
+              label: context.l10n.matchReschedule,
               onPressed: isBusy
                   ? null
                   : () => onAction(() => repo.reschedule(match.id)),
@@ -741,7 +749,7 @@ class _Actions extends ConsumerWidget {
           const SizedBox(height: 2),
           Center(
             child: DriftTextLink(
-              label: 'Reschedule',
+              label: context.l10n.matchReschedule,
               onPressed: isBusy
                   ? null
                   : () => onAction(() => repo.reschedule(match.id)),
@@ -756,7 +764,7 @@ class _Actions extends ConsumerWidget {
           const SizedBox(height: 2),
           Center(
             child: DriftTextLink(
-              label: 'Suggest court',
+              label: context.l10n.matchSuggestCourt,
               onPressed: isBusy
                   ? null
                   : () async {
@@ -771,7 +779,7 @@ class _Actions extends ConsumerWidget {
           ),
           Center(
             child: DriftTextLink(
-              label: 'Cancel match',
+              label: context.l10n.matchCancelMatch,
               onPressed: isBusy
                   ? null
                   : () => onAction(() => repo.cancel(match.id)),
@@ -816,8 +824,8 @@ class _Actions extends ConsumerWidget {
 
     if (connections.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Connect with a player first to partner with them.'),
+        SnackBar(
+          content: Text(context.l10n.matchConnectFirst),
         ),
       );
       return null;
@@ -826,7 +834,7 @@ class _Actions extends ConsumerWidget {
     return showDialog<String>(
       context: context,
       builder: (context) => SimpleDialog(
-        title: const Text('Choose your partner'),
+        title: Text(context.l10n.matchChooseYourPartner),
         children: [
           for (final c in connections)
             SimpleDialogOption(
@@ -843,16 +851,19 @@ class _Actions extends ConsumerWidget {
     return showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Suggest a court'),
-        content: DriftTextField(label: 'Court name', controller: controller),
+        title: Text(context.l10n.matchSuggestACourt),
+        content: DriftTextField(
+          label: context.l10n.matchCourtName,
+          controller: controller,
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.commonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(controller.text.trim()),
-            child: const Text('Suggest'),
+            child: Text(context.l10n.matchSuggest),
           ),
         ],
       ),
@@ -883,7 +894,10 @@ class _CompetitionBanner extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Round ${context.roundIndex} · ${context.leagueName}',
+              buildContext.l10n.matchRoundBanner(
+                context.roundIndex,
+                context.leagueName,
+              ),
               style: type.caption.copyWith(
                 color: colors.primary,
                 fontWeight: FontWeight.w600,
@@ -909,11 +923,10 @@ class _UnplayedWalkoverCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _cardLabel(context, 'Unplayed — walkover'),
+          _cardLabel(context, context.l10n.matchUnplayedWalkover),
           const SizedBox(height: 6),
           Text(
-            'The round deadline passed before this fixture was played. '
-            "It's recorded as a walkover in favour of neither player.",
+            context.l10n.matchUnplayedWalkoverBody,
             style: type.bodySmall.copyWith(color: colors.textSecondary),
           ),
         ],

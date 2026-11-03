@@ -6,6 +6,7 @@ import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
 import '../../../shared/widgets/drift_scaffold.dart';
+import '../../../core/l10n/l10n.dart';
 
 const _supportEmail = String.fromEnvironment(
   'DRIFT_SUPPORT_EMAIL',
@@ -28,7 +29,9 @@ class ContactSupportScreen extends StatelessWidget {
     if (!opened && context.mounted) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Email us at $_supportEmail')));
+      ).showSnackBar(
+        SnackBar(content: Text(context.l10n.supportEmailUs(_supportEmail))),
+      );
     }
   }
 
@@ -38,23 +41,21 @@ class ContactSupportScreen extends StatelessWidget {
     final colors = Theme.of(context).extension<DriftColors>()!;
 
     return DriftScaffold(
-      title: 'Contact Support',
+      title: context.l10n.settingsContactSupport,
       body: Padding(
         padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Need help?', style: type.h3),
+            Text(context.l10n.supportNeedHelp, style: type.h3),
             const SizedBox(height: DriftSpacing.s2),
             Text(
-              "Send us an email and we'll get back to you as soon as we "
-              'can. Use this address for account recovery, erasure requests, '
-              'billing questions, reports, and technical issues.',
+              context.l10n.supportBody,
               style: type.body.copyWith(color: colors.textSecondary),
             ),
             const SizedBox(height: DriftSpacing.s5),
             DriftButton(
-              label: 'Email $_supportEmail',
+              label: context.l10n.supportEmailButton(_supportEmail),
               onPressed: () => _sendEmail(context),
             ),
           ],

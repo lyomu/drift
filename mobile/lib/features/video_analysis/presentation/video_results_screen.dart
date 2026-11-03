@@ -8,6 +8,7 @@ import '../../../shared/widgets/buttons/drift_button.dart';
 import '../../../shared/widgets/drift_scaffold.dart';
 import '../application/video_analysis_providers.dart';
 import '../data/video_analysis_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// What the pipeline found in one clip.
 ///
@@ -31,11 +32,11 @@ class VideoResultsScreen extends ConsumerWidget {
     final job = ref.watch(jobWatcherProvider(jobId));
 
     return DriftScaffold(
-      title: 'Clip analysis',
+      title: context.l10n.videoClipAnalysis,
       body: job.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => _Message(
-          title: "Couldn't load this clip",
+          title: context.l10n.videoLoadClipFailed,
           body: error.toString(),
         ),
         data: (job) => ListView(
@@ -64,10 +65,10 @@ class _Body extends ConsumerWidget {
         return const _Working();
       case VideoAnalysisStatus.failed:
         return _Message(
-          title: "That analysis didn't finish",
+          title: context.l10n.videoAnalysisUnfinished,
           body:
               job.failureReason ??
-              'Something went wrong while analysing this clip.',
+              context.l10n.videoAnalysisError,
         );
       case VideoAnalysisStatus.completed:
         // A session and a single rally are different screens, not one screen with extra
@@ -92,8 +93,8 @@ class _Rejected extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _Message(
-          title: "This clip couldn't be analysed",
-          body: 'Here’s what to change before filming again.',
+          title: context.l10n.videoClipRejected,
+          body: context.l10n.videoWhatToChange,
           tone: _Tone.error,
         ),
         const SizedBox(height: DriftSpacing.s5),
@@ -152,26 +153,31 @@ class _ReadyToAnalyseState extends ConsumerState<_ReadyToAnalyse> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const _Message(
-          title: 'This clip passed its checks',
-          body: 'It’s ready to analyse whenever you are.',
+        _Message(
+          title: context.l10n.videoClipPassed,
+          body: context.l10n.videoReadyToAnalyse,
           tone: _Tone.success,
         ),
         const SizedBox(height: DriftSpacing.s4),
         Text(
           // Said before they commit to it: analysis is minutes of scarce GPU
           // time, and a person who knows that will not tap it twice.
-          'Analysing takes a few minutes. We’ll notify you when it’s done — you '
-          'don’t need to stay on this screen.',
+          context.l10n.videoTakesMinutes,
           style: type.bodySmall.copyWith(color: colors.textSecondary),
         ),
         if (_error != null) ...[
           const SizedBox(height: DriftSpacing.s4),
-          _Message(title: "That didn't work", body: _error!, tone: _Tone.error),
+          _Message(
+            title: context.l10n.videoDidntWork,
+            body: _error!,
+            tone: _Tone.error,
+          ),
         ],
         const SizedBox(height: DriftSpacing.s6),
         DriftButton(
-          label: _requesting ? 'Starting…' : 'Analyse this clip',
+          label: _requesting
+              ? context.l10n.videoStarting
+              : context.l10n.videoAnalyseThis,
           onPressed: _requesting ? null : _analyse,
         ),
       ],
@@ -192,11 +198,10 @@ class _Working extends StatelessWidget {
         const SizedBox(height: DriftSpacing.s8),
         const CircularProgressIndicator(),
         const SizedBox(height: DriftSpacing.s5),
-        Text('Analysing your clip…', style: type.subtitle),
+        Text(context.l10n.videoAnalysingYourClip, style: type.subtitle),
         const SizedBox(height: DriftSpacing.s2),
         Text(
-          'This takes a few minutes. We’ll notify you when it’s ready, so you '
-          'can leave this screen.',
+          context.l10n.videoTakesMinutesLeave,
           textAlign: TextAlign.center,
           style: type.bodySmall.copyWith(color: colors.textSecondary),
         ),
@@ -228,33 +233,38 @@ class _Results extends StatelessWidget {
       children: [
         if (!calibrated)
           _Message(
-            title: 'Distances and speeds aren’t available for this clip',
+            title: context.l10n.videoNoDistances,
             // The pipeline's own words where it gave them, because they are more
             // precise than anything restated here.
             body:
                 job.analysisWarning ??
-                'The court lines couldn’t be read clearly enough to measure '
-                    'distances, so speeds and court positions would not be '
-                    'real measurements. Shot counts below are still accurate.',
+                context.l10n.videoNoDistancesBody,
             tone: _Tone.warning,
           ),
 
         const SizedBox(height: DriftSpacing.s5),
-        Text('Shots', style: type.subtitle),
+        Text(context.l10n.videoShots, style: type.subtitle),
         const SizedBox(height: DriftSpacing.s3),
         // Counts come from ball-contact detection, which does not depend on the
         // court fit — so they survive an uncalibrated clip intact.
         Row(
           children: [
-            Expanded(child: _Stat(label: 'You', value: '${shotsP1 ?? 0}')),
+            Expanded(
+              child: _Stat(label: context.l10n.commonYou, value: '${shotsP1 ?? 0}'),
+            ),
             const SizedBox(width: DriftSpacing.s3),
-            Expanded(child: _Stat(label: 'Opponent', value: '${shotsP2 ?? 0}')),
+            Expanded(
+              child: _Stat(
+                label: context.l10n.videoOpponent,
+                value: '${shotsP2 ?? 0}',
+              ),
+            ),
           ],
         ),
 
         if (shotTypes != null && shotTypes.isNotEmpty) ...[
           const SizedBox(height: DriftSpacing.s5),
-          Text('Shot types', style: type.subtitle),
+          Text(context.l10n.videoShotTypes, style: type.subtitle),
           const SizedBox(height: DriftSpacing.s2),
           ...shotTypes.entries.map(
             (entry) => Padding(
@@ -273,23 +283,21 @@ class _Results extends StatelessWidget {
             // Stroke typing is the least reliable thing in the pipeline and is
             // explicitly unproven on Drift footage. Saying so beats letting a
             // tidy list imply otherwise.
-            'Shot types are an early feature and are often wrong. Treat them as '
-            'a rough guide.',
+            context.l10n.videoShotTypesNote,
             style: type.caption.copyWith(color: colors.textSecondary),
           ),
         ],
 
         if (calibrated) ...[
           const SizedBox(height: DriftSpacing.s5),
-          Text('Speed', style: type.subtitle),
+          Text(context.l10n.videoSpeed, style: type.subtitle),
           const SizedBox(height: DriftSpacing.s3),
           _SpeedRows(summary: summary),
         ],
 
         const SizedBox(height: DriftSpacing.s6),
         Text(
-          'Analysis is an early feature. Numbers here come from a single camera '
-          'and are estimates, not radar readings.',
+          context.l10n.videoEarlyNote,
           style: type.caption.copyWith(color: colors.textSecondary),
         ),
       ],
@@ -318,13 +326,13 @@ class _SpeedRows extends StatelessWidget {
       }
     }
 
-    addSpeed('avg_shot_speed_p1_kmh', 'Your average shot');
-    addSpeed('avg_shot_speed_p2_kmh', 'Opponent average shot');
-    addSpeed('serve_avg_flight_speed_kmh', 'Serve (average over flight)');
+    addSpeed('avg_shot_speed_p1_kmh', context.l10n.videoYourAvgShot);
+    addSpeed('avg_shot_speed_p2_kmh', context.l10n.videoOpponentAvgShot);
+    addSpeed('serve_avg_flight_speed_kmh', context.l10n.videoServeAvg);
 
     if (rows.isEmpty) {
       return Text(
-        'No speeds could be measured from this clip.',
+        context.l10n.videoNoSpeeds,
         style: type.bodySmall.copyWith(color: colors.textSecondary),
       );
     }
@@ -348,8 +356,7 @@ class _SpeedRows extends StatelessWidget {
           // Named for what it is. The pipeline is explicit that this is an
           // average over the ball's flight, which is below what a radar reads at
           // contact, and presenting it as the latter would be wrong.
-          'Averaged over the ball’s flight, so lower than a radar reading at '
-          'contact.',
+          context.l10n.videoSpeedNote,
           style: type.caption.copyWith(color: colors.textSecondary),
         ),
       ],
@@ -390,54 +397,51 @@ class _SessionResults extends StatelessWidget {
       children: [
         if (job.isPartialSession)
           _Message(
-            title:
-                'We measured ${job.segmentsAnalysed} of '
-                '${job.segmentsFound} rallies',
-            body:
-                'Analysing video is slow, so we work through as much of a session as '
-                'we can. The totals below cover the ${job.segmentsAnalysed} rallies '
-                'we measured — not the whole session. Every rally we found is listed '
-                'further down.',
+            title: context.l10n.videoMeasuredSome(
+              job.segmentsAnalysed,
+              job.segmentsFound,
+            ),
+            body: context.l10n.videoMeasuredSomeBody(job.segmentsAnalysed),
             tone: _Tone.warning,
           )
         else
           _Message(
-            title:
-                'We measured all ${job.segmentsAnalysed} '
-                'rall${job.segmentsAnalysed == 1 ? 'y' : 'ies'} we found',
-            body: 'The totals below cover the whole session.',
+            title: context.l10n.videoMeasuredAll(job.segmentsAnalysed),
+            body: context.l10n.videoMeasuredAllBody,
             tone: _Tone.success,
           ),
 
         if (job.segmentsUncalibrated > 0) ...[
           const SizedBox(height: DriftSpacing.s3),
           _Message(
-            title: 'Some rallies could not be measured for speed',
+            title: context.l10n.videoSomeUncalibrated,
             // The pipeline's own sentence where it gave one: it knows how many and why.
             body:
                 job.analysisWarning ??
-                '${job.segmentsUncalibrated} of the rallies we measured did not have '
-                    'clear enough court lines, so they add to the shot counts but not '
-                    'to the speeds.',
+                context.l10n.videoSomeUncalibratedBody(
+                  job.segmentsUncalibrated,
+                ),
             tone: _Tone.warning,
           ),
         ],
 
         const SizedBox(height: DriftSpacing.s5),
-        Text('Session totals', style: type.subtitle),
+        Text(context.l10n.videoSessionTotals, style: type.subtitle),
         const SizedBox(height: DriftSpacing.s3),
         Row(
           children: [
             Expanded(
               child: _Stat(
-                label: 'Rallies measured',
+                label: context.l10n.videoRalliesMeasured,
                 value: '${job.segmentsAnalysed}',
               ),
             ),
             const SizedBox(width: DriftSpacing.s3),
             // Shot counts come from contact detection, which does not depend on the court
             // fit, so they survive uncalibrated rallies intact — same as a single clip.
-            Expanded(child: _Stat(label: 'Shots', value: '${shots ?? 0}')),
+            Expanded(
+              child: _Stat(label: context.l10n.videoShots, value: '${shots ?? 0}'),
+            ),
           ],
         ),
 
@@ -445,10 +449,18 @@ class _SessionResults extends StatelessWidget {
           const SizedBox(height: DriftSpacing.s3),
           Row(
             children: [
-              Expanded(child: _Stat(label: 'You', value: '${shotsP1 ?? 0}')),
+              Expanded(
+                child: _Stat(
+                  label: context.l10n.commonYou,
+                  value: '${shotsP1 ?? 0}',
+                ),
+              ),
               const SizedBox(width: DriftSpacing.s3),
               Expanded(
-                child: _Stat(label: 'Opponent', value: '${shotsP2 ?? 0}'),
+                child: _Stat(
+                  label: context.l10n.videoOpponent,
+                  value: '${shotsP2 ?? 0}',
+                ),
               ),
             ],
           ),
@@ -456,7 +468,7 @@ class _SessionResults extends StatelessWidget {
 
         if (shotTypes.isNotEmpty) ...[
           const SizedBox(height: DriftSpacing.s5),
-          Text('Shot types', style: type.subtitle),
+          Text(context.l10n.videoShotTypes, style: type.subtitle),
           const SizedBox(height: DriftSpacing.s2),
           ...shotTypes.entries.map(
             (entry) => Padding(
@@ -472,15 +484,14 @@ class _SessionResults extends StatelessWidget {
           ),
           const SizedBox(height: DriftSpacing.s2),
           Text(
-            'Shot types are an early feature and are often wrong. Treat them as '
-            'a rough guide.',
+            context.l10n.videoShotTypesNote,
             style: type.caption.copyWith(color: colors.textSecondary),
           ),
         ],
 
         if (job.courtCalibrated) ...[
           const SizedBox(height: DriftSpacing.s5),
-          Text('Speed', style: type.subtitle),
+          Text(context.l10n.videoSpeed, style: type.subtitle),
           const SizedBox(height: DriftSpacing.s3),
           // Fed the session totals rather than a single summary. Those averages are
           // weighted by the shots that produced them, not a mean of per-rally means,
@@ -490,15 +501,14 @@ class _SessionResults extends StatelessWidget {
 
         if (segments.isNotEmpty) ...[
           const SizedBox(height: DriftSpacing.s6),
-          Text('Rally by rally', style: type.subtitle),
+          Text(context.l10n.videoRallyByRally, style: type.subtitle),
           const SizedBox(height: DriftSpacing.s3),
           ...segments.map((segment) => _SegmentRow(segment: segment)),
         ],
 
         const SizedBox(height: DriftSpacing.s6),
         Text(
-          'Analysis is an early feature. Numbers here come from a single camera '
-          'and are estimates, not radar readings.',
+          context.l10n.videoEarlyNote,
           style: type.caption.copyWith(color: colors.textSecondary),
         ),
       ],
@@ -525,23 +535,23 @@ class _SegmentRow extends StatelessWidget {
         Icons.check_circle_outline,
         colors.success,
         segment.courtCalibrated
-            ? '${segment.shots} shots'
-            : '${segment.shots} shots · no court fit, so no speeds',
+            ? context.l10n.videoShotCount(segment.shots)
+            : context.l10n.videoShotCountNoCourt(segment.shots),
       ),
       'skipped_budget' => (
         Icons.schedule,
         colors.textSecondary,
-        'Not measured — we ran out of analysis time for this session',
+        context.l10n.videoSkippedBudget,
       ),
       'skipped_too_short' => (
         Icons.straighten,
         colors.textSecondary,
-        'Too short to measure',
+        context.l10n.videoTooShort,
       ),
       _ => (
         Icons.error_outline,
         colors.error,
-        segment.reason ?? 'This rally could not be analysed',
+        segment.reason ?? context.l10n.videoRallyFailed,
       ),
     };
 

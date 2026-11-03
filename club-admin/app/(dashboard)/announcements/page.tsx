@@ -16,19 +16,19 @@ import {
 import { StatusBadge } from "@/components/StatusBadge";
 import { MaterialIcon, ModalShell, Panel } from "@/components/dashboard-design";
 import type { Announcement, AnnouncementAudience } from "@/lib/types";
+import { useT } from "@/lib/i18n/i18n-context";
 
-const AUDIENCES: { value: AnnouncementAudience; label: string; hint: string }[] = [
-  { value: "EVERYONE", label: "Everyone", hint: "All active members" },
-  { value: "MEMBERS", label: "Members", hint: "Regular members only" },
-  { value: "COACHES", label: "Coaches", hint: "Members with the Coach role" },
-  { value: "ADMINS", label: "Admins & managers", hint: "Owner, admin and manager roles" },
-];
-
-function audienceLabel(a: AnnouncementAudience) {
-  return AUDIENCES.find((x) => x.value === a)?.label ?? a;
-}
+function audiences(t: ReturnType<typeof useT>): { value: AnnouncementAudience; label: string; hint: string }[] { return [
+  { value: "EVERYONE", label: t("a.everyone"), hint: t("a.allActiveMembers") },
+  { value: "MEMBERS", label: t("a.members"), hint: t("a.regularMembersOnly") },
+  { value: "COACHES", label: t("a.coaches"), hint: t("a.membersWithTheCoachRole") },
+  { value: "ADMINS", label: t("a.adminsManagers"), hint: t("a.ownerAdminAndManagerRoles") },
+]; }
 
 export default function AnnouncementsPage() {
+  const t = useT();
+  const AUDIENCES = audiences(t);
+  const audienceLabel = (a: AnnouncementAudience) => AUDIENCES.find((x) => x.value === a)?.label ?? a;
   const { clubId, role: myRole } = useClub();
   const canManage = myRole === "OWNER" || myRole === "ADMIN";
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -75,7 +75,7 @@ export default function AnnouncementsPage() {
       setShowForm(false);
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Something went wrong.");
+      setError(err instanceof ApiError ? err.message : t("a.somethingWentWrong"));
     } finally {
       setCreating(false);
     }
@@ -90,7 +90,7 @@ export default function AnnouncementsPage() {
       });
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Something went wrong.");
+      setError(err instanceof ApiError ? err.message : t("a.somethingWentWrong"));
     }
   }
 
@@ -103,27 +103,27 @@ export default function AnnouncementsPage() {
       });
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Something went wrong.");
+      setError(err instanceof ApiError ? err.message : t("a.somethingWentWrong"));
     }
   }
 
   return (
     <div>
       <PageHeader
-        title="Announcements"
-        description="Published announcements surface on members' mobile Home feed."
+        title={t("a.announcements")}
+        description={t("a.publishedAnnouncementsSurfaceOnMembers")}
         action={
           canManage && (
-            <Button onClick={() => setShowForm(true)}>New announcement</Button>
+            <Button onClick={() => setShowForm(true)}>{t("a.newAnnouncement")}</Button>
           )
         }
       />
       <ErrorBanner message={error} />
 
       {loading ? (
-        <EmptyState message="Loading..." />
+        <EmptyState message={t("a.loading2")} />
       ) : announcements.length === 0 ? (
-        <EmptyState message="No announcements yet." />
+        <EmptyState message={t("a.noAnnouncementsYet")} />
       ) : (
         <div className="flex flex-col gap-3">
           {announcements.map((a) => (
@@ -151,14 +151,14 @@ export default function AnnouncementsPage() {
                       onClick={() => void handlePin(a)}
                       className="text-[13px] font-semibold text-drift-text-secondary hover:text-drift-text-primary"
                     >
-                      {a.pinned ? "Unpin" : "Pin"}
+                      {a.pinned ? t("a.unpin") : t("a.pin")}
                     </button>
                     <button
                       type="button"
                       onClick={() => void handlePublish(a)}
                       className="text-[13px] font-semibold text-drift-primary hover:text-drift-primary-dark"
                     >
-                      {a.status === "PUBLISHED" ? "Unpublish" : "Publish"}
+                      {a.status === "PUBLISHED" ? t("a.unpublish") : t("a.publish")}
                     </button>
                   </div>
                 )}
@@ -170,19 +170,19 @@ export default function AnnouncementsPage() {
       )}
 
       {showForm && (
-        <ModalShell title="New announcement" onClose={() => setShowForm(false)}>
+        <ModalShell title={t("a.newAnnouncement")} onClose={() => setShowForm(false)}>
           <form
             className="flex flex-col gap-4"
             onSubmit={(e) => handleCreate(e, publishIntent.current)}
           >
-            <Field label="Title">
+            <Field label={t("a.title")}>
               <Input
                 required
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
               />
             </Field>
-            <Field label="Body">
+            <Field label={t("a.body")}>
               <Textarea
                 required
                 rows={4}
@@ -190,7 +190,7 @@ export default function AnnouncementsPage() {
                 onChange={(e) => setForm({ ...form, body: e.target.value })}
               />
             </Field>
-            <Field label="Send to">
+            <Field label={t("a.sendTo")}>
               <Select
                 value={form.audience}
                 onChange={(e) =>
@@ -233,7 +233,7 @@ export default function AnnouncementsPage() {
                   publishIntent.current = true;
                 }}
               >
-                {creating ? "Publishing..." : "Publish"}
+                {creating ? t("a.publishing") : t("a.publish")}
               </Button>
             </div>
           </form>

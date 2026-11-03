@@ -24,6 +24,7 @@ import { applyDoublesResult, applyResult, seedRating } from './rating';
 import { matchWinner, SetScore } from './score';
 import { ReflectionDto } from './dto/reflection.dto';
 import { ResultVersionDto } from './dto/result-version.dto';
+import { msg } from '../common/i18n';
 
 /** The Match.state a confirmed outcome settles into. */
 const SETTLED_STATE: Record<MatchResultOutcome, MatchState> = {
@@ -287,8 +288,10 @@ export class ResultsService {
     await this.matches.notifyOthers(
       final,
       userId,
-      `${this.matches.displayName(submitter.user)} submitted a result`,
-      'Review it to confirm or dispute.',
+      msg('result.submitted.title', {
+        name: this.matches.displayName(submitter.user),
+      }),
+      msg('result.submitted.body'),
     );
     return final;
   }
@@ -321,8 +324,10 @@ export class ResultsService {
     await this.matches.notifyOthers(
       final,
       userId,
-      `${this.matches.displayName(confirmer.user)} confirmed your result`,
-      'Your rating and stats are updated.',
+      msg('result.confirmed.title', {
+        name: this.matches.displayName(confirmer.user),
+      }),
+      msg('result.confirmed.body'),
     );
     return final;
   }
@@ -368,8 +373,10 @@ export class ResultsService {
     await this.matches.notifyOthers(
       final,
       userId,
-      `${this.matches.displayName(disputer.user)} disputed the result`,
-      'Open the dispute to submit your version.',
+      msg('result.disputed.title', {
+        name: this.matches.displayName(disputer.user),
+      }),
+      msg('result.disputed.body'),
     );
     return final;
   }
@@ -427,8 +434,8 @@ export class ResultsService {
       await this.matches.notifyOthers(
         final,
         userId,
-        'Your dispute is resolved',
-        'Both versions match — ratings are updated.',
+        msg('result.resolved.title'),
+        msg('result.resolved.body'),
       );
       return final;
     }
@@ -458,8 +465,10 @@ export class ResultsService {
     await this.matches.notifyOthers(
       final,
       userId,
-      `${this.matches.displayName(actor.user)} revised their version`,
-      'It still doesn’t match yours — take another look.',
+      msg('result.revised.title', {
+        name: this.matches.displayName(actor.user),
+      }),
+      msg('result.revised.body'),
     );
     return final;
   }
@@ -523,8 +532,8 @@ export class ResultsService {
     await this.matches.notifyOthers(
       final,
       null,
-      'A club admin ruled on your dispute',
-      'The result is final and ratings are updated.',
+      msg('result.ruled.title'),
+      msg('result.ruled.body'),
     );
     return final;
   }

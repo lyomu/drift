@@ -6,6 +6,7 @@ import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
 import '../data/courts_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Booking Options Sheet — `foundation/04-screen-inventory.md` §A.6.
 /// Branches on [CourtProfile.summary]'s bookingType; never fabricates a
@@ -38,7 +39,7 @@ class _BookingOptionsSheet extends StatelessWidget {
         profile.bookingUrl != null) {
       actions.add(
         DriftButton(
-          label: 'Book Online',
+          label: context.l10n.courtBookOnline,
           onPressed: () => _launch(
             Uri.parse(profile.bookingUrl!),
             mode: LaunchMode.inAppBrowserView,
@@ -50,7 +51,7 @@ class _BookingOptionsSheet extends StatelessWidget {
     if (bookingType == CourtBookingType.nativePartner) {
       actions.add(
         Text(
-          "Native booking isn't available for this court yet.",
+          context.l10n.courtNativeBookingUnavailable,
           style: type.body.copyWith(color: colors.textSecondary),
         ),
       );
@@ -59,14 +60,14 @@ class _BookingOptionsSheet extends StatelessWidget {
     if (profile.phone != null) {
       actions.add(
         DriftButton(
-          label: 'Call ${profile.phone}',
+          label: context.l10n.commonCallNumber(profile.phone!),
           variant: DriftButtonVariant.text,
           onPressed: () => _launch(Uri(scheme: 'tel', path: profile.phone)),
         ),
       );
       actions.add(
         DriftButton(
-          label: 'Message on WhatsApp',
+          label: context.l10n.courtWhatsApp,
           variant: DriftButtonVariant.text,
           onPressed: () => _launch(
             Uri.parse(
@@ -81,7 +82,7 @@ class _BookingOptionsSheet extends StatelessWidget {
     if (profile.website != null) {
       actions.add(
         DriftButton(
-          label: 'Visit Website',
+          label: context.l10n.courtVisitWebsite,
           variant: DriftButtonVariant.text,
           onPressed: () => _launch(
             Uri.parse(profile.website!),
@@ -103,11 +104,11 @@ class _BookingOptionsSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Booking options', style: type.h3),
+            Text(context.l10n.courtBookingOptionsLower, style: type.h3),
             const SizedBox(height: DriftSpacing.s4),
             if (actions.isEmpty)
               Text(
-                'No booking info available — try contacting directly',
+                context.l10n.courtNoBookingInfo,
                 style: type.body.copyWith(color: colors.textSecondary),
               )
             else

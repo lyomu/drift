@@ -8,6 +8,7 @@ import '../../../shared/widgets/drift_scaffold.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../users/data/users_repository.dart';
 import '../application/settings_providers.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Privacy Settings — `foundation/04-screen-inventory.md` §A.10. Closes the
 /// open dependency M5's PROGRESS.md entry named: skill breakdown and
@@ -22,11 +23,11 @@ class PrivacySettingsScreen extends ConsumerWidget {
     final type = Theme.of(context).extension<DriftTypography>()!;
 
     return DriftScaffold(
-      title: 'Privacy Settings',
+      title: context.l10n.settingsPrivacySettings,
       body: switch (settings) {
         AsyncData(:final value) => _PrivacyForm(settings: value),
         AsyncError() => Center(
-          child: Text("Couldn't load your privacy settings.", style: type.body),
+          child: Text(context.l10n.privacyLoadFailed, style: type.body),
         ),
         _ => const Center(child: CircularProgressIndicator()),
       },
@@ -98,14 +99,13 @@ class _PrivacyFormState extends ConsumerState<_PrivacyForm> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Development areas', style: type.title),
+              Text(context.l10n.playerDevelopmentAreas, style: type.title),
               const SizedBox(height: DriftSpacing.s1),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Show to everyone'),
-                subtitle: const Text(
-                  'Off means only your connections can see your skill '
-                  'breakdown',
+                title: Text(context.l10n.privacyShowEveryone),
+                subtitle: Text(
+                  context.l10n.privacySkillsNote,
                 ),
                 value: _skillBreakdownVisibility == FieldVisibility.everyone,
                 onChanged: _isSaving
@@ -124,14 +124,13 @@ class _PrivacyFormState extends ConsumerState<_PrivacyForm> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Availability', style: type.title),
+              Text(context.l10n.commonAvailability, style: type.title),
               const SizedBox(height: DriftSpacing.s1),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Show to everyone'),
-                subtitle: const Text(
-                  'Off means only your connections can see your detailed '
-                  'availability',
+                title: Text(context.l10n.privacyShowEveryone),
+                subtitle: Text(
+                  context.l10n.privacyAvailabilityNote,
                 ),
                 value: _availabilityVisibility == FieldVisibility.everyone,
                 onChanged: _isSaving

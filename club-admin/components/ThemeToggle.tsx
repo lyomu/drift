@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { MaterialIcon } from "@/components/dashboard-design";
+import { useT } from "@/lib/i18n/i18n-context";
 
 type Theme = "light" | "dark";
 const STORAGE_KEY = "drift-theme";
@@ -21,6 +22,7 @@ function currentTheme(): Theme {
 }
 
 export function ThemeToggle({ className = "" }: { className?: string }) {
+  const t = useT();
   const [theme, setTheme] = useState<Theme>("light");
 
   useEffect(() => {
@@ -44,8 +46,8 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
     <button
       type="button"
       onClick={toggle}
-      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      title={isDark ? "Light mode" : "Dark mode"}
+      aria-label={isDark ? t("theme.toLight") : t("theme.toDark")}
+      title={isDark ? t("theme.light") : t("theme.dark")}
       className={`flex h-10 w-10 items-center justify-center rounded-full border border-drift-border bg-drift-background text-drift-text-primary transition-colors hover:border-drift-primary ${className}`}
     >
       <MaterialIcon

@@ -15,6 +15,7 @@ import { MailerService } from '../mail/mailer.service';
 import { clubInclude, toClubProfile } from '../clubs/club.mapper';
 import { CreateClubDto, UpdateClubDto } from './dto/club.dto';
 import { InviteMemberDto, UpdateMembershipDto } from './dto/membership.dto';
+import { localeOf, msg, t } from '../common/i18n';
 
 @Injectable()
 export class ClubsAdminService {
@@ -230,12 +231,15 @@ export class ClubsAdminService {
       where: { id: clubId },
       select: { name: true },
     });
-    const clubName = club?.name ?? 'a club';
+    const locale = localeOf(user.preferredLocale);
+    const clubName = club?.name ?? t(locale, 'common.aClub');
     await this.notifications.create(
       user.id,
       'CLUBS',
-      `You've been added to ${clubName}`,
-      'Your club membership is active. Tap to view the club.',
+      msg('club.added.title', {
+        club: club?.name ?? { key: 'common.aClub' },
+      }),
+      msg('club.added.body'),
       'CLUB',
       clubId,
     );
@@ -243,7 +247,12 @@ export class ClubsAdminService {
     // member lands ACTIVE immediately, so this is a notification, not an
     // invite they must accept.
     if (this.mailer.enabled && user.email) {
-      await this.mailer.sendClubWelcome(user.email, clubName, membership.role);
+      await this.mailer.sendClubWelcome(
+        user.email,
+        clubName,
+        membership.role,
+        locale,
+      );
     }
     return { membershipId: membership.id, role: membership.role };
   }
@@ -289,8 +298,10 @@ export class ClubsAdminService {
       await this.notifications.create(
         updated.userId,
         'CLUBS',
-        `You've joined ${club?.name ?? 'the club'}`,
-        'Announcements and the club feed are now open to you.',
+        msg('club.joined.title', {
+          club: club?.name ?? { key: 'common.theClub' },
+        }),
+        msg('club.joined.body'),
         'CLUB',
         clubId,
       );
@@ -391,15 +402,15 @@ export class ClubsAdminService {
 
     const name =
       [requester?.firstName, requester?.lastName].filter(Boolean).join(' ') ||
-      'A player';
+      ({ key: 'common.aPlayer' } as const);
 
     await Promise.all(
       admins.map((a) =>
         this.notifications.create(
           a.userId,
           'CLUBS',
-          `${name} asked to join ${clubName}`,
-          'Review the request in Members.',
+          msg('club.joinRequest.title', { name, club: clubName }),
+          msg('club.joinRequest.body'),
           'CLUB',
           clubId,
         ),

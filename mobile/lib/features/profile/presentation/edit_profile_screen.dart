@@ -13,11 +13,12 @@ import '../../auth/data/auth_repository.dart';
 import '../../users/application/current_user_provider.dart';
 import '../../users/data/users_repository.dart';
 import '../application/profile_providers.dart';
+import '../../../core/l10n/l10n.dart';
 
-const _dominantHands = [
-  ('LEFT', 'Left'),
-  ('RIGHT', 'Right'),
-  ('AMBIDEXTROUS', 'Ambidextrous'),
+final _dominantHands = [
+  ('LEFT', (AppLocalizations l) => l.onbHandLeft),
+  ('RIGHT', (AppLocalizations l) => l.onbHandRight),
+  ('AMBIDEXTROUS', (AppLocalizations l) => l.onbHandAmbidextrous),
 ];
 
 /// Edit Profile — `foundation/04-screen-inventory.md` §A.10. Name, bio,
@@ -32,7 +33,7 @@ class EditProfileScreen extends ConsumerWidget {
     final ownProfile = ref.watch(ownProfileProvider);
 
     if (user.hasError || ownProfile.hasError) {
-      return const Center(child: Text("Couldn't load your profile."));
+      return Center(child: Text(context.l10n.profileLoadFailed));
     }
     final userValue = user.valueOrNull;
     final ownProfileValue = ownProfile.valueOrNull;
@@ -41,7 +42,7 @@ class EditProfileScreen extends ConsumerWidget {
     }
 
     return DriftScaffold(
-      title: 'Edit Profile',
+      title: context.l10n.profileEdit,
       body: _EditForm(
         user: userValue,
         dominantHand: ownProfileValue.dominantHand,
@@ -119,18 +120,27 @@ class _EditFormState extends ConsumerState<_EditForm> {
         children: [
           const Center(child: _PhotoField()),
           const SizedBox(height: DriftSpacing.s6),
-          DriftTextField(label: 'First name', controller: _firstNameController),
-          const SizedBox(height: DriftSpacing.s4),
-          DriftTextField(label: 'Last name', controller: _lastNameController),
+          DriftTextField(
+            label: context.l10n.authFirstName,
+            controller: _firstNameController,
+          ),
           const SizedBox(height: DriftSpacing.s4),
           DriftTextField(
-            label: 'Bio',
+            label: context.l10n.authLastName,
+            controller: _lastNameController,
+          ),
+          const SizedBox(height: DriftSpacing.s4),
+          DriftTextField(
+            label: context.l10n.profileBio,
             controller: _bioController,
             maxLines: 4,
-            hintText: 'Tell other players a bit about yourself',
+            hintText: context.l10n.profileBioHint,
           ),
           const SizedBox(height: DriftSpacing.s6),
-          Text('Playing hand', style: Theme.of(context).textTheme.labelLarge),
+          Text(
+            context.l10n.onbPlayingHand,
+            style: Theme.of(context).textTheme.labelLarge,
+          ),
           const SizedBox(height: DriftSpacing.s3),
           Wrap(
             spacing: DriftSpacing.s3,
@@ -138,7 +148,7 @@ class _EditFormState extends ConsumerState<_EditForm> {
             children: _dominantHands
                 .map(
                   (hand) => DriftFilterChip(
-                    label: hand.$2,
+                    label: hand.$2(context.l10n),
                     selected: _dominantHand == hand.$1,
                     onTap: () => setState(() => _dominantHand = hand.$1),
                   ),
@@ -151,7 +161,9 @@ class _EditFormState extends ConsumerState<_EditForm> {
           ],
           const SizedBox(height: DriftSpacing.s6),
           DriftButton(
-            label: _isSubmitting ? 'Saving…' : 'Save',
+            label: _isSubmitting
+                ? context.l10n.commonSaving
+                : context.l10n.commonSave,
             onPressed: _isSubmitting ? null : _submit,
           ),
         ],
@@ -268,7 +280,9 @@ class _PhotoFieldState extends ConsumerState<_PhotoField> {
         ),
         const SizedBox(height: DriftSpacing.s2),
         DriftButton(
-          label: hasPhoto ? 'Remove photo' : 'Add a photo',
+          label: hasPhoto
+              ? context.l10n.profileRemovePhoto
+              : context.l10n.profileAddPhoto,
           variant: DriftButtonVariant.text,
           foregroundColor: hasPhoto ? colors.error : null,
           onPressed: _isBusy ? null : (hasPhoto ? _remove : _pick),

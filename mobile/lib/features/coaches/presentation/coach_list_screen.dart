@@ -12,6 +12,7 @@ import '../../../shared/widgets/drift_soft_card.dart';
 import '../application/coaches_providers.dart';
 import '../data/coaches_repository.dart';
 import 'coach_filters_sheet.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Coach List — `foundation/04-screen-inventory.md` §A.6 (redesign 2026-08:
 /// `App.tsx` `DiscoverCoachesTab`).
@@ -59,7 +60,7 @@ class _CoachListScreenState extends ConsumerState<CoachListScreen> {
             children: [
               Expanded(
                 child: Text(
-                  'Coaches',
+                  context.l10n.discoverCoaches,
                   style: type.title.copyWith(fontWeight: FontWeight.w700),
                 ),
               ),
@@ -76,7 +77,7 @@ class _CoachListScreenState extends ConsumerState<CoachListScreen> {
             child: switch (results) {
               AsyncData(:final value) =>
                 value.isEmpty
-                    ? _message(colors, type, 'No coaches listed near you yet')
+                    ? _message(colors, type, context.l10n.coachNoneNearby)
                     : ListView.separated(
                         padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                         itemCount: value.length,
@@ -87,7 +88,7 @@ class _CoachListScreenState extends ConsumerState<CoachListScreen> {
               AsyncError() => _message(
                 colors,
                 type,
-                "Couldn't load coaches. Pull to retry.",
+                context.l10n.coachLoadFailed,
               ),
               _ => const Center(child: CircularProgressIndicator()),
             },
@@ -102,7 +103,7 @@ class _CoachListScreenState extends ConsumerState<CoachListScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const DriftBackHeader(title: 'Coaches'),
+            DriftBackHeader(title: context.l10n.discoverCoaches),
             Expanded(child: content),
           ],
         ),
@@ -272,7 +273,7 @@ class _CoachCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 child: Center(
                   child: Text(
-                    'View profile',
+                    context.l10n.commonViewProfile,
                     style: type.button.copyWith(
                       color: colors.primary,
                       fontWeight: FontWeight.w600,

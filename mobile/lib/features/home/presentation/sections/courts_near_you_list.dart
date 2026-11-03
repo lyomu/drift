@@ -5,6 +5,7 @@ import '../../../../core/network/media_url.dart';
 import '../../../../core/theme/drift_colors.dart';
 import '../../../courts/data/courts_repository.dart';
 import 'home_empty_state.dart';
+import '../../../../core/l10n/l10n.dart';
 
 /// Surface accents, so the badge over the photo matches the court's surface.
 /// Falls back to the brand colour for anything unrecognised.
@@ -33,8 +34,8 @@ class CourtsNearYouSection extends StatelessWidget {
     if (courts.isEmpty) {
       return HomeEmptyState(
         icon: Icons.place_outlined,
-        message: 'No courts nearby yet.',
-        actionLabel: 'Browse',
+        message: context.l10n.homeNoCourts,
+        actionLabel: context.l10n.homeBrowse,
         onAction: () => context.go('/home?tab=discover&discover=courts'),
       );
     }
@@ -77,7 +78,7 @@ class _CourtCard extends StatelessWidget {
 
     final footer = [
       if (court.courtCount != null && court.courtCount! > 0)
-        '${court.courtCount} ${court.courtCount == 1 ? 'court' : 'courts'}',
+        context.l10n.commonCourtCount(court.courtCount!),
       if (court.openingHoursNote != null) court.openingHoursNote!,
     ].join(' · ');
 
@@ -273,10 +274,10 @@ class _BookButton extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () => context.push('/discover/courts/${court.id}'),
-        child: const Padding(
+        child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 12, vertical: 5),
           child: Text(
-            'Book',
+            context.l10n.homeBook,
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,

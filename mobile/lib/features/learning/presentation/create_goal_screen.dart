@@ -11,16 +11,19 @@ import '../../../shared/widgets/drift_text_field.dart';
 import '../../auth/data/auth_repository.dart';
 import '../application/learning_providers.dart';
 import '../data/learning_repository.dart';
+import '../../../core/l10n/l10n.dart';
+import '../../../core/l10n/enum_labels.dart';
+import 'package:intl/intl.dart';
 
 const _skillOptions = [
-  (value: 'FOREHAND', label: 'Forehand'),
-  (value: 'BACKHAND', label: 'Backhand'),
-  (value: 'SERVE', label: 'Serve'),
-  (value: 'RETURN', label: 'Return'),
-  (value: 'NET_PLAY', label: 'Net Play'),
-  (value: 'MOVEMENT', label: 'Movement'),
-  (value: 'MATCH_PLAY', label: 'Match Play'),
-  (value: 'FOOTWORK', label: 'Footwork'),
+  (value: 'FOREHAND'),
+  (value: 'BACKHAND'),
+  (value: 'SERVE'),
+  (value: 'RETURN'),
+  (value: 'NET_PLAY'),
+  (value: 'MOVEMENT'),
+  (value: 'MATCH_PLAY'),
+  (value: 'FOOTWORK'),
 ];
 
 /// Create Goal — `foundation/04-screen-inventory.md` §A.7. Milestones are
@@ -71,7 +74,7 @@ class _CreateGoalScreenState extends ConsumerState<CreateGoalScreen> {
 
   Future<void> _submit() async {
     if (_skill == null) {
-      setState(() => _errorText = 'Choose which skill this goal targets.');
+      setState(() => _errorText = context.l10n.goalChooseSkill);
       return;
     }
     setState(() {
@@ -103,13 +106,13 @@ class _CreateGoalScreenState extends ConsumerState<CreateGoalScreen> {
     final colors = Theme.of(context).extension<DriftColors>()!;
 
     return DriftScaffold(
-      title: 'New Goal',
+      title: context.l10n.goalNew,
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Skill', style: type.label),
+            Text(context.l10n.goalSkill, style: type.label),
             const SizedBox(height: DriftSpacing.s2),
             Wrap(
               spacing: DriftSpacing.s2,
@@ -117,14 +120,17 @@ class _CreateGoalScreenState extends ConsumerState<CreateGoalScreen> {
               children: [
                 for (final option in _skillOptions)
                   DriftFilterChip(
-                    label: option.label,
+                    label: pillarLabel(context.l10n, option.value),
                     selected: _skill == option.value,
                     onTap: () => setState(() => _skill = option.value),
                   ),
               ],
             ),
             const SizedBox(height: DriftSpacing.s4),
-            Text('Target: ${_target.toStringAsFixed(1)}/6', style: type.label),
+            Text(
+              context.l10n.goalTargetLabel(_target.toStringAsFixed(1)),
+              style: type.label,
+            ),
             Slider(
               value: _target,
               min: 0,
@@ -136,13 +142,15 @@ class _CreateGoalScreenState extends ConsumerState<CreateGoalScreen> {
             const SizedBox(height: DriftSpacing.s2),
             DriftButton(
               label: _deadline == null
-                  ? 'Set a deadline (optional)'
-                  : 'Deadline: ${_deadline!.day}/${_deadline!.month}/${_deadline!.year}',
+                  ? context.l10n.goalSetDeadline
+                  : context.l10n.goalDeadlineValue(
+                      DateFormat.yMd(context.localeTag).format(_deadline!),
+                    ),
               variant: DriftButtonVariant.text,
               onPressed: _pickDeadline,
             ),
             const SizedBox(height: DriftSpacing.s4),
-            Text('Milestones (optional)', style: type.label),
+            Text(context.l10n.goalMilestonesOptional, style: type.label),
             const SizedBox(height: DriftSpacing.s2),
             for (final milestone in _milestones)
               Padding(
@@ -162,7 +170,7 @@ class _CreateGoalScreenState extends ConsumerState<CreateGoalScreen> {
               children: [
                 Expanded(
                   child: DriftTextField(
-                    label: 'Add a milestone',
+                    label: context.l10n.goalAddMilestone,
                     controller: _milestoneController,
                   ),
                 ),
@@ -179,7 +187,9 @@ class _CreateGoalScreenState extends ConsumerState<CreateGoalScreen> {
             ],
             const SizedBox(height: DriftSpacing.s6),
             DriftButton(
-              label: _isSubmitting ? 'Saving…' : 'Save',
+              label: _isSubmitting
+                  ? context.l10n.commonSaving
+                  : context.l10n.commonSave,
               onPressed: _isSubmitting ? null : _submit,
             ),
           ],

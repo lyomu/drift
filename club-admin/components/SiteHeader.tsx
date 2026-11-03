@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useClub } from "@/lib/club-context";
 import { HeaderIconButton, MaterialIcon } from "@/components/dashboard-design";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useT } from "@/lib/i18n/i18n-context";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 /**
  * Persistent top bar for the console — sits above every page's own title.
@@ -12,6 +14,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
  */
 export function SiteHeader() {
   const { clubName, role, logout } = useClub();
+  const t = useT();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -43,16 +46,17 @@ export function SiteHeader() {
       </Link>
 
       <div className="flex items-center gap-2.5">
+        <LanguageSwitcher />
         <ThemeToggle />
         <HeaderIconButton
           icon="notifications"
           href="/notifications"
-          label="Notifications"
+          label={t("nav.notifications")}
         />
         <HeaderIconButton
           icon="settings"
           href="/settings"
-          label="Club settings"
+          label={t("header.clubSettings")}
         />
 
         <div ref={menuRef} className="relative">
@@ -61,7 +65,7 @@ export function SiteHeader() {
             onClick={() => setMenuOpen((open) => !open)}
             aria-haspopup="menu"
             aria-expanded={menuOpen}
-            aria-label="Account menu"
+            aria-label={t("header.accountMenu")}
             className="flex h-10 w-10 items-center justify-center rounded-full border border-drift-border bg-drift-primary-light text-drift-primary-dark transition-colors hover:border-drift-primary"
           >
             <MaterialIcon name="person" className="text-[20px]" />
@@ -86,28 +90,28 @@ export function SiteHeader() {
               <HeaderMenuLink
                 href="/settings"
                 icon="settings"
-                label="Club settings"
+                label={t("header.clubSettings")}
                 onNavigate={() => setMenuOpen(false)}
               />
               {canManage && (
                 <HeaderMenuLink
                   href="/team"
                   icon="badge"
-                  label="Team roles"
+                  label={t("header.teamRoles")}
                   onNavigate={() => setMenuOpen(false)}
                 />
               )}
               <HeaderMenuLink
                 href="/notifications"
                 icon="notifications"
-                label="Notification settings"
+                label={t("header.notificationSettings")}
                 onNavigate={() => setMenuOpen(false)}
               />
               {canManage && (
                 <HeaderMenuLink
                   href="/audit"
                   icon="history"
-                  label="Audit log"
+                  label={t("header.auditLog")}
                   onNavigate={() => setMenuOpen(false)}
                 />
               )}
@@ -122,7 +126,7 @@ export function SiteHeader() {
                 className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-[13px] font-semibold text-drift-text-secondary transition-colors hover:bg-drift-primary-light hover:text-drift-text-primary"
               >
                 <MaterialIcon name="logout" className="text-[18px]" />
-                Log out
+                {t("common.logOut")}
               </button>
             </div>
           )}

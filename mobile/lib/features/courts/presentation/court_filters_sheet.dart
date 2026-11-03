@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/widgets/drift_filter_sheet.dart';
 import '../application/courts_providers.dart';
 import '../data/courts_repository.dart';
+import '../../../core/l10n/l10n.dart';
+import '../../../core/l10n/enum_labels.dart';
 
 /// Court Filters — `foundation/03-user-journeys.md` §6: "distance, surface,
 /// indoor/outdoor, lighting, public/private, amenities, booking
@@ -20,12 +22,7 @@ Future<void> showCourtFiltersSheet(BuildContext context, WidgetRef ref) {
   );
 }
 
-const _surfaceOptions = <(String, String)>[
-  ('HARD', 'Hard'),
-  ('CLAY', 'Clay'),
-  ('GRASS', 'Grass'),
-  ('ARTIFICIAL_GRASS', 'Artificial'),
-];
+const _surfaceOptions = ['HARD', 'CLAY', 'GRASS', 'ARTIFICIAL_GRASS'];
 
 class _CourtFiltersSheet extends ConsumerStatefulWidget {
   const _CourtFiltersSheet();
@@ -72,13 +69,13 @@ class _CourtFiltersSheetState extends ConsumerState<_CourtFiltersSheet> {
       onApply: _apply,
       sections: [
         DriftFilterSection(
-          title: 'Distance',
+          title: context.l10n.filterDistance,
           child: DriftFilterSegments<int?>(
-            options: const [
+            options: [
               DriftFilterOption(value: 5, label: '<5 km'),
               DriftFilterOption(value: 10, label: '<10 km'),
               DriftFilterOption(value: 25, label: '<25 km'),
-              DriftFilterOption(value: null, label: 'Any'),
+              DriftFilterOption(value: null, label: context.l10n.filterAny),
             ],
             // "Any" is the absence of a distance filter, so it reads as
             // selected whenever none is set.
@@ -91,23 +88,26 @@ class _CourtFiltersSheetState extends ConsumerState<_CourtFiltersSheet> {
           ),
         ),
         DriftFilterSection(
-          title: 'Surface',
+          title: context.l10n.filterSurface,
           child: DriftFilterPills<String>(
             options: [
-              for (final (value, label) in _surfaceOptions)
-                DriftFilterOption(value: value, label: label),
+              for (final value in _surfaceOptions)
+                DriftFilterOption(
+                  value: value,
+                  label: surfaceLabel(context.l10n, value),
+                ),
             ],
             isSelected: _draft.surfaces.contains,
             onTap: _toggleSurface,
           ),
         ),
         DriftFilterSection(
-          title: 'Indoor / Outdoor',
+          title: context.l10n.filterIndoorOutdoor,
           child: DriftFilterSegments<bool?>(
-            options: const [
-              DriftFilterOption(value: true, label: 'Indoor'),
-              DriftFilterOption(value: false, label: 'Outdoor'),
-              DriftFilterOption(value: null, label: 'Either'),
+            options: [
+              DriftFilterOption(value: true, label: context.l10n.courtIndoor),
+              DriftFilterOption(value: false, label: context.l10n.courtOutdoor),
+              DriftFilterOption(value: null, label: context.l10n.optEither),
             ],
             isSelected: (v) => _draft.indoor == v,
             onTap: (v) => setState(() {
@@ -118,12 +118,12 @@ class _CourtFiltersSheetState extends ConsumerState<_CourtFiltersSheet> {
           ),
         ),
         DriftFilterSection(
-          title: 'Access',
+          title: context.l10n.courtAccess,
           child: DriftFilterSegments<bool?>(
-            options: const [
-              DriftFilterOption(value: true, label: 'Public'),
-              DriftFilterOption(value: false, label: 'Private'),
-              DriftFilterOption(value: null, label: 'Either'),
+            options: [
+              DriftFilterOption(value: true, label: context.l10n.courtPublic),
+              DriftFilterOption(value: false, label: context.l10n.courtPrivate),
+              DriftFilterOption(value: null, label: context.l10n.optEither),
             ],
             isSelected: (v) => _draft.isPublic == v,
             onTap: (v) => setState(() {
@@ -134,11 +134,17 @@ class _CourtFiltersSheetState extends ConsumerState<_CourtFiltersSheet> {
           ),
         ),
         DriftFilterSection(
-          title: 'Features',
+          title: context.l10n.filterFeatures,
           child: DriftFilterPills<String>(
-            options: const [
-              DriftFilterOption(value: 'lighting', label: 'Floodlit'),
-              DriftFilterOption(value: 'booking', label: 'Has booking info'),
+            options: [
+              DriftFilterOption(
+                value: 'lighting',
+                label: context.l10n.filterFloodlit,
+              ),
+              DriftFilterOption(
+                value: 'booking',
+                label: context.l10n.filterHasBooking,
+              ),
             ],
             isSelected: (v) => v == 'lighting'
                 ? _draft.lighting == true

@@ -12,6 +12,9 @@ import '../../users/application/current_user_provider.dart';
 import '../application/messaging_providers.dart';
 import '../../safety/presentation/message_report_sheet.dart';
 import '../data/messaging_repository.dart';
+import '../../../core/l10n/l10n.dart';
+import '../../../core/l10n/enum_labels.dart';
+import 'package:intl/intl.dart';
 
 
 /// Chat Thread — `foundation/04-screen-inventory.md` §A.9. Carries both
@@ -105,7 +108,7 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
         child: Column(
           children: [
             _ChatHeader(
-              title: conversation?.title ?? 'Chat',
+              title: conversation?.title ?? context.l10n.messagingChat,
               counterpart: counterpart,
             ),
             Expanded(
@@ -122,7 +125,7 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
                               showMessageReportSheet(context, ref, messageId: id),
                         ),
                 AsyncError() => Center(
-                  child: Text("Couldn't load this conversation."),
+                  child: Text(context.l10n.messagingLoadConversationFailed),
                 ),
                 _ => Center(child: CircularProgressIndicator()),
               },
@@ -231,11 +234,15 @@ String? _levelLine(PlayerSummary? player) {
   if (player == null) return null;
   final level = player.level;
   final label = player.levelLabel;
+  final l10n = l10nNow;
   if (level != null && label != null) {
-    return 'Level ${level.toStringAsFixed(1)} · $label';
+    return l10n.profileLevelWithLabel(
+      level.toStringAsFixed(1),
+      levelLabelText(l10n, label),
+    );
   }
-  if (level != null) return 'Level ${level.toStringAsFixed(1)}';
-  return label;
+  if (level != null) return l10n.commonLevel(level.toStringAsFixed(1));
+  return label == null ? null : levelLabelText(l10n, label);
 }
 
 /// 36×36 rounded square, brand-tinted fill and hairline (mock: #F7F9FF on a
@@ -449,18 +456,13 @@ class _DayStamp extends StatelessWidget {
 
   static String _label(DateTime date) {
     final now = DateTime.now();
-    if (_isSameDay(date, now)) return 'Today';
+    if (_isSameDay(date, now)) return l10nNow.commonToday;
     if (_isSameDay(date, now.subtract(const Duration(days: 1)))) {
-      return 'Yesterday';
+      return l10nNow.commonYesterday;
     }
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-    ];
-    final month = months[date.month - 1];
     return date.year == now.year
-        ? '${date.day} $month'
-        : '${date.day} $month ${date.year}';
+        ? DateFormat.MMMd(localeTagNow).format(date)
+        : DateFormat.yMMMd(localeTagNow).format(date);
   }
 }
 
@@ -633,11 +635,7 @@ class _MessageRow extends StatelessWidget {
   }
 }
 
-String _clockTime(DateTime t) {
-  final hour = t.hour % 12 == 0 ? 12 : t.hour % 12;
-  final minute = t.minute.toString().padLeft(2, '0');
-  return '$hour:$minute ${t.hour < 12 ? 'AM' : 'PM'}';
-}
+String _clockTime(DateTime t) => DateFormat.jm(localeTagNow).format(t);
 
 // ---------------------------------------------------------------------------
 // System message detail
@@ -680,7 +678,7 @@ void _showSystemMessageDetail(BuildContext context, ChatMessage message) {
             if (message.relatedMatchId != null) ...[
               _SystemLink(
                 icon: Icons.sports_tennis_outlined,
-                label: 'View related match',
+                label: context.l10n.messagingViewRelatedMatch,
                 onTap: () {
                   Navigator.of(sheetContext).pop();
                   context.push('/matches/${message.relatedMatchId}');
@@ -692,8 +690,10 @@ void _showSystemMessageDetail(BuildContext context, ChatMessage message) {
               _SystemLink(
                 icon: Icons.emoji_events_outlined,
                 label: message.relatedLeagueName == null
-                    ? 'View related league'
-                    : 'View ${message.relatedLeagueName}',
+                    ? context.l10n.messagingViewRelatedLeague
+                    : context.l10n.messagingViewNamed(
+                        message.relatedLeagueName!,
+                      ),
                 onTap: () {
                   Navigator.of(sheetContext).pop();
                   context.push('/compete/leagues/${message.relatedLeagueId}');
@@ -741,8 +741,29 @@ class _SystemLink extends StatelessWidget {
 }
 
 String _systemEventLabel(String? event) {
-  if (event == null) return 'System message';
-  return event
+  final l = l10nNow;
+  final known = switch (event) {
+    null => l.messagingSystemMessage,
+    'match_challenge_sent' => l.sysChallengeSent,
+    'match_challenge_withdrawn' => l.sysChallengeWithdrawn,
+    'match_challenge_accepted' => l.sysChallengeAccepted,
+    'match_challenge_declined' => l.sysChallengeDeclined,
+    'match_time_proposed' => l.sysTimeProposed,
+    'match_time_accepted' => l.sysTimeAccepted,
+    'match_court_suggested' => l.sysCourtSuggested,
+    'match_confirmed' => l.sysMatchConfirmed,
+    'match_rescheduled' => l.sysMatchRescheduled,
+    'match_cancelled' => l.sysMatchCancelled,
+    'result_submitted' => l.sysResultSubmitted,
+    'result_confirmed' => l.sysResultConfirmed,
+    'result_disputed' => l.sysResultDisputed,
+    'dispute_resolved' => l.sysDisputeResolved,
+    'fixture_scheduled' => l.sysFixtureScheduled,
+    'fixture_unplayed_walkover' => l.sysFixtureWalkover,
+    _ => null,
+  };
+  if (known != null) return known;
+  return event!
       .split('_')
       .map(
         (word) =>
@@ -830,7 +851,7 @@ class _ComposerState extends State<_Composer> {
                   color: colors.textPrimary,
                 ),
                 decoration: InputDecoration(
-                  hintText: 'Message',
+                  hintText: context.l10n.playerMessage,
                   hintStyle: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -931,7 +952,7 @@ class _SayHello extends StatelessWidget {
 
     return Center(
       child: Text(
-        'Say hello',
+        context.l10n.messagingSayHello,
         style: type.body.copyWith(color: colors.textSecondary),
       ),
     );

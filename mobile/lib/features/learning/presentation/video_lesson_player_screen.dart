@@ -10,6 +10,7 @@ import '../../../shared/widgets/drift_card.dart';
 import '../../../shared/widgets/drift_scaffold.dart';
 import '../application/learning_providers.dart';
 import '../data/learning_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Video Lesson Player - `foundation/04-screen-inventory.md` A.7.
 class VideoLessonPlayerScreen extends ConsumerStatefulWidget {
@@ -60,7 +61,7 @@ class _VideoLessonPlayerScreenState
     } catch (_) {
       await controller.dispose();
       if (mounted) {
-        setState(() => _playbackError = 'Playback error. Please retry.');
+        setState(() => _playbackError = context.l10n.videoPlaybackError);
       }
     } finally {
       if (mounted) setState(() => _isInitializing = false);
@@ -97,7 +98,9 @@ class _VideoLessonPlayerScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Lesson marked complete.')));
+      ).showSnackBar(
+        SnackBar(content: Text(context.l10n.videoLessonComplete)),
+      );
     } finally {
       if (mounted) setState(() => _isMarking = false);
     }
@@ -108,7 +111,7 @@ class _VideoLessonPlayerScreenState
     final content = ref.watch(contentDetailProvider(widget.contentId));
 
     return DriftScaffold(
-      title: 'Video lesson',
+      title: context.l10n.videoLesson,
       body: switch (content) {
         AsyncData(:final value) => _Body(
           content: value,
@@ -127,7 +130,7 @@ class _VideoLessonPlayerScreenState
             setState(() {});
           },
         ),
-        AsyncError() => const Center(child: Text('Video lesson not found.')),
+        AsyncError() => Center(child: Text(context.l10n.videoLessonNotFound)),
         _ => const Center(child: CircularProgressIndicator()),
       },
     );
@@ -218,7 +221,7 @@ class _BodyState extends State<_Body> {
                 const SizedBox(width: DriftSpacing.s3),
                 Expanded(
                   child: Text(
-                    'Playback completed. Mark the lesson complete when you are ready.',
+                    context.l10n.videoPlaybackCompleted,
                     style: type.body,
                   ),
                 ),
@@ -227,7 +230,9 @@ class _BodyState extends State<_Body> {
           ),
         const SizedBox(height: DriftSpacing.s4),
         DriftButton(
-          label: widget.isMarking ? 'Marking...' : 'Mark Complete',
+          label: widget.isMarking
+              ? context.l10n.learnMarking
+              : context.l10n.learnMarkComplete,
           onPressed: widget.isMarking ? null : widget.onMarkComplete,
         ),
       ],
@@ -245,7 +250,7 @@ class _BodyState extends State<_Body> {
     if (url == null) {
       return Center(
         child: Text(
-          'No video asset is attached to this lesson.',
+          context.l10n.videoNoAsset,
           style: type.body.copyWith(color: Colors.white),
           textAlign: TextAlign.center,
         ),
@@ -263,7 +268,7 @@ class _BodyState extends State<_Body> {
             const SizedBox(height: DriftSpacing.s3),
             TextButton(
               onPressed: () => widget.onRetry(url),
-              child: const Text('Retry'),
+              child: Text(context.l10n.commonRetry),
             ),
           ],
         ),
@@ -277,7 +282,7 @@ class _BodyState extends State<_Body> {
             const CircularProgressIndicator(),
             const SizedBox(height: DriftSpacing.s3),
             Text(
-              'Buffering video...',
+              context.l10n.videoBuffering,
               style: type.body.copyWith(color: Colors.white),
             ),
           ],
@@ -301,7 +306,9 @@ class _BodyState extends State<_Body> {
               controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
             ),
             color: colors.primaryDark,
-            tooltip: controller.value.isPlaying ? 'Pause' : 'Play',
+            tooltip: controller.value.isPlaying
+                ? context.l10n.videoPause
+                : context.l10n.videoPlay,
           ),
       ],
     );

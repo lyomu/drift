@@ -17,13 +17,9 @@ import '../application/courts_providers.dart';
 import '../data/courts_repository.dart';
 import 'booking_options_sheet.dart';
 import 'report_court_sheet.dart';
+import '../../../core/l10n/l10n.dart';
+import '../../../core/l10n/enum_labels.dart';
 
-const _surfaceLabels = {
-  'HARD': 'Hard',
-  'CLAY': 'Clay',
-  'GRASS': 'Grass',
-  'ARTIFICIAL_GRASS': 'Artificial Grass',
-};
 
 /// Court Profile — `foundation/04-screen-inventory.md` §A.6. Every field
 /// with no verified source renders as "Unknown", never fabricated
@@ -38,7 +34,7 @@ class CourtProfileScreen extends ConsumerWidget {
     final profile = ref.watch(courtDetailProvider(courtId));
 
     return DriftScaffold(
-      title: 'Court',
+      title: context.l10n.matchCourt,
       trailing: DriftHeaderSquareButton(
         icon: Icons.flag_outlined,
         onTap: () => showReportCourtSheet(context, ref, courtId),
@@ -50,7 +46,7 @@ class CourtProfileScreen extends ConsumerWidget {
         },
         child: switch (profile) {
           AsyncData(:final value) => _ProfileBody(profile: value),
-          AsyncError() => const Center(child: Text('Court not available.')),
+          AsyncError() => Center(child: Text(context.l10n.courtUnavailable)),
           _ => const Center(child: CircularProgressIndicator()),
         },
       ),
@@ -95,8 +91,8 @@ class _ProfileBody extends StatelessWidget {
         const SizedBox(height: DriftSpacing.s1),
         Text(
           summary.distanceKm != null
-              ? '${summary.distanceKm!.toStringAsFixed(1)} km away'
-              : (summary.address ?? 'Location unknown'),
+              ? context.l10n.commonKmAway(summary.distanceKm!.toStringAsFixed(1))
+              : (summary.address ?? context.l10n.courtLocationUnknown),
           style: type.bodySmall.copyWith(color: colors.textSecondary),
         ),
         const SizedBox(height: DriftSpacing.s4),
@@ -117,34 +113,46 @@ class _ProfileBody extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Details', style: type.h4),
+              Text(context.l10n.courtDetails, style: type.h4),
               const SizedBox(height: DriftSpacing.s3),
-              _Fact(label: 'Address', value: summary.address ?? 'Unknown'),
               _Fact(
-                label: 'Access',
+                label: context.l10n.courtAddress,
+                value: summary.address ?? context.l10n.commonUnknown,
+              ),
+              _Fact(
+                label: context.l10n.courtAccess,
                 value: switch (profile.isPublic) {
-                  true => 'Public',
-                  false => 'Private',
-                  null => 'Unknown',
+                  true => context.l10n.courtPublic,
+                  false => context.l10n.courtPrivate,
+                  null => context.l10n.commonUnknown,
                 },
               ),
               _Fact(
-                label: 'Hours',
-                value: profile.openingHoursNote ?? 'Unknown',
+                label: context.l10n.courtHours,
+                value: profile.openingHoursNote ?? context.l10n.commonUnknown,
               ),
-              _Fact(label: 'Phone', value: profile.phone ?? 'Unknown'),
-              _Fact(label: 'Website', value: profile.website ?? 'Unknown'),
+              _Fact(
+                label: context.l10n.courtPhone,
+                value: profile.phone ?? context.l10n.commonUnknown,
+              ),
+              _Fact(
+                label: context.l10n.courtWebsite,
+                value: profile.website ?? context.l10n.commonUnknown,
+              ),
               if (profile.amenities.isNotEmpty)
-                _Fact(label: 'Amenities', value: profile.amenities.join(', ')),
+                _Fact(
+                  label: context.l10n.courtAmenities,
+                  value: profile.amenities.join(', '),
+                ),
               if (profile.courtGroups.isNotEmpty)
                 _Fact(
-                  label: 'Courts',
+                  label: context.l10n.discoverCourts,
                   value: profile.courtGroups
                       .map(
                         (g) =>
-                            '${g.count} ${_surfaceLabels[g.surface] ?? g.surface}'
-                            '${g.indoor ? ' (indoor)' : ''}'
-                            '${g.lighting ? ' · lit' : ''}',
+                            '${g.count} ${surfaceLabel(context.l10n, g.surface)}'
+                            '${g.indoor ? context.l10n.courtIndoorSuffix : ''}'
+                            '${g.lighting ? context.l10n.courtLitSuffix : ''}',
                       )
                       .join(', '),
                 ),
@@ -169,7 +177,7 @@ class _ProfileBody extends StatelessWidget {
 
         if (profile.photoUrls.isNotEmpty)
           DriftButton(
-            label: 'View Photos',
+            label: context.l10n.courtViewPhotos,
             variant: DriftButtonVariant.text,
             onPressed: () => context.push(
               '/discover/courts/${summary.id}/photos',
@@ -179,7 +187,7 @@ class _ProfileBody extends StatelessWidget {
         const SizedBox(height: DriftSpacing.s2),
 
         DriftButton(
-          label: 'Booking Options',
+          label: context.l10n.courtBookingOptions,
           onPressed: () => showBookingOptionsSheet(context, profile),
         ),
         const SizedBox(height: DriftSpacing.s2),
@@ -187,7 +195,7 @@ class _ProfileBody extends StatelessWidget {
           builder: (context) {
             final url = _directionsUrl(profile);
             return DriftButton(
-              label: 'Get Directions',
+              label: context.l10n.courtGetDirections,
               variant: DriftButtonVariant.text,
               onPressed: url == null
                   ? null

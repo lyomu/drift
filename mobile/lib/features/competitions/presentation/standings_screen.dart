@@ -8,6 +8,7 @@ import '../../../shared/widgets/drift_back_header.dart';
 import '../../../shared/widgets/drift_standings_table.dart';
 import '../../users/application/current_user_provider.dart';
 import '../application/competitions_providers.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Standings — `foundation/04-screen-inventory.md` §A.5 (redesign 2026-08).
 class StandingsScreen extends ConsumerWidget {
@@ -28,14 +29,14 @@ class StandingsScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const DriftBackHeader(title: 'Standings'),
+            DriftBackHeader(title: context.l10n.competeStandings),
             Expanded(
               child: switch (standings) {
                 AsyncData(:final value) when value.isEmpty => Center(
                   child: Padding(
                     padding: const EdgeInsets.all(24),
                     child: Text(
-                      'Standings appear once the first round is played.',
+                      context.l10n.competeStandingsEmpty,
                       textAlign: TextAlign.center,
                       style: type.body.copyWith(color: colors.textSecondary),
                     ),
@@ -66,8 +67,8 @@ class StandingsScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
-                AsyncError() => const Center(
-                  child: Text("Couldn't load standings."),
+                AsyncError() => Center(
+                  child: Text(context.l10n.competeLoadStandingsFailed),
                 ),
                 _ => const Center(child: CircularProgressIndicator()),
               },

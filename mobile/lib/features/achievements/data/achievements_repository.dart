@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/dio_client.dart';
 import '../../auth/data/auth_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 class Achievement {
   const Achievement({
@@ -75,7 +76,7 @@ class AchievementsRepository {
       final body = e.response?.data;
       final message = body is Map ? body['message'] as Object? : null;
       final text = message is List ? message.join(' ') : message?.toString();
-      throw AuthException(text ?? 'Achievements could not be loaded.');
+      throw AuthException(text ?? l10nNow.achievementsLoadFailed);
     }
   }
 }

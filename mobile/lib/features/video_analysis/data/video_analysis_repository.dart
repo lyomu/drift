@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http_parser/http_parser.dart';
 
 import '../../../core/network/dio_client.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Mirrors the backend's `VideoAnalysisStatus`.
 enum VideoAnalysisStatus {
@@ -29,11 +30,11 @@ enum VideoAnalysisStatus {
   /// label like "Analysed" would be a straightforward lie to the user.
   String get label => switch (this) {
     VideoAnalysisStatus.pending => 'Checking…',
-    VideoAnalysisStatus.rejected => "Can't be analysed",
-    VideoAnalysisStatus.accepted => 'Ready to analyse',
-    VideoAnalysisStatus.analyzing => 'Analysing…',
-    VideoAnalysisStatus.completed => 'Analysed',
-    VideoAnalysisStatus.failed => 'Something went wrong',
+    VideoAnalysisStatus.rejected => l10nNow.videoStatusRejected,
+    VideoAnalysisStatus.accepted => l10nNow.videoStatusAccepted,
+    VideoAnalysisStatus.analyzing => l10nNow.videoStatusAnalysing,
+    VideoAnalysisStatus.completed => l10nNow.videoStatusAnalysed,
+    VideoAnalysisStatus.failed => l10nNow.videoStatusFailed,
   };
 
   bool get isRejected => this == VideoAnalysisStatus.rejected;
@@ -388,14 +389,13 @@ class VideoAnalysisRepository {
     if (error.type == DioExceptionType.sendTimeout ||
         error.type == DioExceptionType.receiveTimeout ||
         error.type == DioExceptionType.connectionTimeout) {
-      return const VideoAnalysisException(
-        'The upload timed out. Check your connection and try again — a shorter '
-        'clip will upload faster.',
+      return VideoAnalysisException(
+        l10nNow.videoUploadTimeout,
       );
     }
     if (error.type == DioExceptionType.connectionError) {
-      return const VideoAnalysisException(
-        "Couldn't reach Drift. Check your connection and try again.",
+      return VideoAnalysisException(
+        l10nNow.videoUnreachable,
       );
     }
 
@@ -403,7 +403,7 @@ class VideoAnalysisRepository {
     final message = data is Map<String, dynamic> ? data['message'] : null;
     final text = message is List ? message.join(' ') : message?.toString();
     return VideoAnalysisException(
-      text ?? 'Something went wrong uploading that video. Please try again.',
+      text ?? l10nNow.videoUploadFailed,
     );
   }
 }

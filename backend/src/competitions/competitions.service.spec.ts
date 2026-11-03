@@ -172,8 +172,8 @@ describe('CompetitionsService', () => {
       expect(notifications.create).toHaveBeenCalledWith(
         'u1',
         'COMPETITIONS',
-        "You're registered",
-        expect.any(String),
+        expect.objectContaining({ key: 'league.registered.title' }),
+        expect.objectContaining({ key: 'league.registered.body' }),
         'LEAGUE',
         'l1',
       );
@@ -205,8 +205,8 @@ describe('CompetitionsService', () => {
       expect(notifications.create).toHaveBeenCalledWith(
         'u1',
         'COMPETITIONS',
-        "You're on the waitlist",
-        expect.any(String),
+        expect.objectContaining({ key: 'league.waitlisted.title' }),
+        expect.objectContaining({ key: 'league.waitlisted.body' }),
         'LEAGUE',
         'l1',
       );
@@ -247,8 +247,8 @@ describe('CompetitionsService', () => {
       expect(notifications.create).toHaveBeenCalledWith(
         'u-waiting',
         'COMPETITIONS',
-        "You're in",
-        expect.stringContaining('enrolled'),
+        expect.objectContaining({ key: 'league.promoted.title' }),
+        expect.objectContaining({ key: 'league.promoted.body' }),
         'LEAGUE',
         'l1',
       );
@@ -334,8 +334,8 @@ describe('CompetitionsService', () => {
       expect(notifications.create).toHaveBeenCalledWith(
         'a',
         'COMPETITIONS',
-        expect.stringContaining('Round 1 is now open'),
-        expect.any(String),
+        expect.objectContaining({ key: 'league.roundOpen.title' }),
+        expect.objectContaining({ key: 'league.roundOpen.body' }),
         'LEAGUE',
         'l1',
       );

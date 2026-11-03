@@ -90,10 +90,11 @@ uploaded.
 
 ### Version numbers
 
-`pubspec.yaml` carries `1.0.0+1`. The `+N` becomes Android's `versionCode`. Play
-permanently refuses a code it has already accepted, **including one burned by an upload
-that failed review**, so increment it on every artifact handed to the store and never
-reuse or decrement it.
+`pubspec.yaml` carries a pre-1.0 version (currently `0.8.3+3`) while the app is still in
+development; `1.0.0` is reserved for the actual first public release, not the starting
+point. The `+N` becomes Android's `versionCode`. Play permanently refuses a code it has
+already accepted, **including one burned by an upload that failed review**, so increment
+it on every artifact handed to the store and never reuse or decrement it.
 
 ### Back up the keystore now
 

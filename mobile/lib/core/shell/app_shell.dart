@@ -12,6 +12,7 @@ import '../../features/learning/presentation/learning_home_screen.dart';
 import '../../features/matches/presentation/play_hub_screen.dart';
 import '../../features/players/presentation/player_filters_sheet.dart';
 import '../../shared/widgets/drift_back_header.dart';
+import '../l10n/l10n.dart';
 
 /// Bottom-navigation shell — Home / Play / Compete / Discover / Learn, per
 /// `foundation/02-information-architecture.md` §1.2. Plain [IndexedStack] is
@@ -58,10 +59,10 @@ class _AppShellState extends ConsumerState<AppShell> {
 
   /// Home shows the greeting instead of a title.
   String? get _title => switch (_index) {
-    1 => 'Play',
-    2 => 'Compete',
-    3 => 'Discover',
-    4 => 'Learn',
+    1 => context.l10n.navPlay,
+    2 => context.l10n.navCompete,
+    3 => context.l10n.navDiscover,
+    4 => context.l10n.navLearn,
     _ => null,
   };
 

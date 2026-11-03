@@ -17,6 +17,7 @@ import { blockBetween, connectionBetween } from '../common/relationship.util';
 import { MatchSystemEvent } from './messaging.events';
 import { RealtimePublisher } from './realtime.publisher';
 import { NotificationsService } from '../notifications/notifications.service';
+import { msg } from '../common/i18n';
 
 const DEFAULT_PAGE_SIZE = 30;
 
@@ -224,7 +225,7 @@ export class MessagingService {
         this.notifications.create(
           p.userId,
           'MESSAGES',
-          `New message from ${displayName(sender)}`,
+          msg('message.new.title', { name: displayName(sender) }),
           preview,
           'CONVERSATION',
           conversationId,

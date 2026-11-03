@@ -7,6 +7,7 @@ import '../application/players_providers.dart';
 import '../data/players_repository.dart';
 import 'player_filters_sheet.dart';
 import '../../../core/theme/drift_colors.dart';
+import '../../../core/l10n/l10n.dart';
 
 
 /// Player Search / Discovery — `foundation/04-screen-inventory.md` §A.4
@@ -58,7 +59,7 @@ class _PlayerSearchScreenState extends ConsumerState<PlayerSearchScreen> {
             onRefresh: () => ref.refresh(playerSearchProvider.future),
             child: switch (results) {
               AsyncData(:final value) => _list(filterPlayers(value, _query)),
-              AsyncError() => _message("Couldn't load players. Pull to retry."),
+              AsyncError() => _message(context.l10n.playLoadPlayersFailed),
               _ => Center(child: CircularProgressIndicator()),
             },
           ),
@@ -73,9 +74,8 @@ class _PlayerSearchScreenState extends ConsumerState<PlayerSearchScreen> {
     if (players.isEmpty) {
       return _message(
         _query.trim().isEmpty
-            ? 'No players match these filters. Try widening distance or level '
-                  'range.'
-            : 'No players found.',
+            ? context.l10n.playerNoMatchFilters
+            : context.l10n.playNoPlayersFound,
       );
     }
     return ListView.separated(
@@ -85,7 +85,7 @@ class _PlayerSearchScreenState extends ConsumerState<PlayerSearchScreen> {
       itemBuilder: (context, i) => DriftPlayerResultCard(
         player: players[i],
         action: DriftPlayerActionButton(
-          label: 'Connect',
+          label: context.l10n.playerConnect,
           // The connect action itself lives on the profile, which is also
           // where the current relationship state is known.
           onTap: () => context.push('/players/${players[i].id}'),

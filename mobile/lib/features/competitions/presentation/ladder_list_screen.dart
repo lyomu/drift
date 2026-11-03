@@ -6,6 +6,7 @@ import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/drift_competition_card.dart';
 import '../data/expansion_repository.dart';
 import '../../../core/theme/drift_colors.dart';
+import '../../../core/l10n/l10n.dart';
 
 
 /// Ladders segment — browse and open the rung standings (redesign 2026-10).
@@ -32,7 +33,7 @@ class LadderListScreen extends ConsumerWidget {
       onRefresh: () => ref.refresh(laddersListProvider.future),
       child: switch (ladders) {
         AsyncData(:final value) when value.isEmpty => _message(
-          'No ladders yet. Ask your club to start one.',
+          context.l10n.competeNoLadders,
           colors,
         ),
         AsyncData(:final value) => ListView.separated(
@@ -41,7 +42,7 @@ class LadderListScreen extends ConsumerWidget {
           separatorBuilder: (_, _) => SizedBox(height: 10),
           itemBuilder: (context, i) => _LadderCard(ladder: value[i], index: i),
         ),
-        AsyncError() => _message("Couldn't load ladders.", colors),
+        AsyncError() => _message(context.l10n.competeLoadLaddersFailed, colors),
         _ => Center(child: CircularProgressIndicator()),
       },
     );
@@ -53,7 +54,7 @@ class LadderListScreen extends ConsumerWidget {
         children: [
           Padding(
             padding: EdgeInsets.all(16),
-            child: Text('Ladders', style: type.h2),
+            child: Text(context.l10n.competeLadders, style: type.h2),
           ),
           Expanded(child: content),
         ],
@@ -102,13 +103,11 @@ class _LadderCard extends StatelessWidget {
           ),
         DriftCompetitionDetail(
           icon: Icons.group,
-          label:
-              '${ladder.entryCount} '
-              '${ladder.entryCount == 1 ? 'player' : 'players'}',
+          label: context.l10n.commonPlayerCount(ladder.entryCount),
         ),
       ],
       action: DriftCompetitionActionButton(
-        label: 'View',
+        label: context.l10n.commonView,
         style: DriftCompetitionActionStyle.filled,
         accent: accent,
         onTap: () => context.push('/compete/ladders/${ladder.id}'),

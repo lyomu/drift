@@ -637,6 +637,14 @@ model SocialIdentity {
   @@map("social_identities")
 }
 
+/// The languages the apps ship in. Lowercase so the values are the locale codes
+/// every client already uses (`en`, `fr`, `es`).
+enum AppLocale {
+  en
+  fr
+  es
+}
+
 model User {
   id              String  @id @default(uuid())
   email           String? @unique
@@ -670,6 +678,11 @@ model User {
   // Launch policy P.2: Drift Tennis is 18+ until a guardian-consent flow exists.
   // Store the consent timestamp, not date of birth, to avoid collecting extra PII.
   agePolicyAcceptedAt DateTime?
+  // The language the person uses the apps in. Set from the device language at
+  // signup and kept in sync by the mobile Language setting / club-admin
+  // switcher. Push notifications and emails are rendered in it; null (an
+  // account that predates the setting) reads as English.
+  preferredLocale     AppLocale?
 
   onboardingStep        OnboardingStep @default(SIGN_UP)
   onboardingCompletedAt DateTime?

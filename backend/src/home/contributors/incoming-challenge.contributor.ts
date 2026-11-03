@@ -5,6 +5,12 @@ import { matchInclude, toMatchDto } from '../../matches/match.mapper';
 import { displayName } from '../../common/display-name.util';
 import { HOME_CARD_PRIORITY, type HomeCard } from '../home-card';
 import type { HomeCardContributor, HomeContext } from './home-contributor';
+import {
+  DEFAULT_LOCALE,
+  type MessageKey,
+  type MessageParam,
+  t,
+} from '../../common/i18n';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -26,6 +32,8 @@ export class IncomingChallengeContributor implements HomeCardContributor {
   constructor(private readonly prisma: PrismaService) {}
 
   async contribute(ctx: HomeContext): Promise<HomeCard[]> {
+    const tr = (key: MessageKey, params?: Record<string, MessageParam>) =>
+      t(ctx.locale ?? DEFAULT_LOCALE, key, params);
     const matches = await this.prisma.match.findMany({
       where: {
         state: MatchState.PROPOSED,
@@ -56,10 +64,13 @@ export class IncomingChallengeContributor implements HomeCardContributor {
           id: `incoming-challenge:${match.id}`,
           type: 'INCOMING_CHALLENGE' as const,
           priority: HOME_CARD_PRIORITY.INCOMING_CHALLENGE,
-          title: `${challengerName} challenged you`,
-          body: this.body(match.format, dto.expiresAt, ctx.now),
+          title: tr('home.challenge.title', { name: challengerName }),
+          body: this.body(tr, match.format, dto.expiresAt, ctx.now),
           accent: 'urgent' as const,
-          action: { label: 'View challenge', route: `/matches/${match.id}` },
+          action: {
+            label: tr('home.action.viewChallenge'),
+            route: `/matches/${match.id}`,
+          },
           dismissible: false,
           data: { kind: 'match' as const, match: dto },
         },
@@ -67,15 +78,26 @@ export class IncomingChallengeContributor implements HomeCardContributor {
     });
   }
 
-  private body(format: string, expiresAt: Date | null, now: Date): string {
-    const base = `A ${format.toLowerCase()} match.`;
-    if (!expiresAt) return `${base} Accept or decline to let them know.`;
+  private body(
+    tr: (key: MessageKey, params?: Record<string, MessageParam>) => string,
+    format: string,
+    expiresAt: Date | null,
+    now: Date,
+  ): string {
+    const base = tr(
+      format === 'DOUBLES'
+        ? 'home.challenge.doubles'
+        : 'home.challenge.singles',
+    );
+    if (!expiresAt) return `${base} ${tr('home.challenge.respond')}`;
 
     const daysLeft = Math.ceil(
       (expiresAt.getTime() - now.getTime()) / MS_PER_DAY,
     );
-    if (daysLeft <= 0) return `${base} It expires today.`;
-    if (daysLeft === 1) return `${base} Expires tomorrow.`;
-    return `${base} Expires in ${daysLeft} days.`;
+    if (daysLeft <= 0) return `${base} ${tr('home.challenge.expiresToday')}`;
+    if (daysLeft === 1) {
+      return `${base} ${tr('home.challenge.expiresTomorrow')}`;
+    }
+    return `${base} ${tr('home.challenge.expiresInDays', { days: daysLeft })}`;
   }
 }

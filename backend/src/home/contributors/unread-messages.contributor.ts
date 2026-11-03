@@ -2,6 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { HOME_CARD_PRIORITY, type HomeCard } from '../home-card';
 import type { HomeCardContributor, HomeContext } from './home-contributor';
+import {
+  DEFAULT_LOCALE,
+  type MessageKey,
+  type MessageParam,
+  t,
+} from '../../common/i18n';
 
 /**
  * Unread messages, counted the same way `MessagingService.listConversations`
@@ -25,6 +31,8 @@ export class UnreadMessagesContributor implements HomeCardContributor {
   constructor(private readonly prisma: PrismaService) {}
 
   async contribute(ctx: HomeContext): Promise<HomeCard[]> {
+    const tr = (key: MessageKey, params?: Record<string, MessageParam>) =>
+      t(ctx.locale ?? DEFAULT_LOCALE, key, params);
     const memberships = await this.prisma.conversationParticipant.findMany({
       where: { userId: ctx.userId },
       select: { conversationId: true, lastReadAt: true },
@@ -59,13 +67,15 @@ export class UnreadMessagesContributor implements HomeCardContributor {
         type: 'UNREAD_MESSAGES',
         priority: HOME_CARD_PRIORITY.UNREAD_MESSAGES,
         title:
-          total === 1 ? 'You have a new message' : `${total} unread messages`,
+          total === 1
+            ? tr('home.messages.one')
+            : tr('home.messages.many', { count: total }),
         body:
           threads === 1
-            ? 'In one conversation.'
-            : `Across ${threads} conversations.`,
+            ? tr('home.messages.oneThread')
+            : tr('home.messages.manyThreads', { count: threads }),
         accent: 'info',
-        action: { label: 'Open inbox', route: '/messages' },
+        action: { label: tr('home.action.openInbox'), route: '/messages' },
         dismissible: true,
         data: { kind: 'counts', count: total },
       },

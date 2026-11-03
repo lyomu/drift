@@ -8,8 +8,10 @@ import { Button, Card, ErrorBanner, Field, Input, PageHeader } from "@/component
 import { CourtGroupsEditor } from "@/components/CourtGroupsEditor";
 import { CourtPhotoUpload } from "@/components/CourtPhotoUpload";
 import type { CourtGroup } from "@/lib/types";
+import { useT } from "@/lib/i18n/i18n-context";
 
 export default function NewCourtPage() {
+  const t = useT();
   const router = useRouter();
   const { clubId } = useClub();
   const [name, setName] = useState("");
@@ -37,7 +39,7 @@ export default function NewCourtPage() {
       });
       router.push("/courts");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Something went wrong.");
+      setError(err instanceof ApiError ? err.message : t("a.somethingWentWrong"));
     } finally {
       setSaving(false);
     }
@@ -45,17 +47,17 @@ export default function NewCourtPage() {
 
   return (
     <div>
-      <PageHeader title="New court" />
+      <PageHeader title={t("a.newCourt")} />
       <ErrorBanner message={error} />
       <Card>
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-          <Field label="Name">
+          <Field label={t("a.name")}>
             <Input required value={name} onChange={(e) => setName(e.target.value)} />
           </Field>
-          <Field label="Address / Location">
-            <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Street, area, city" />
+          <Field label={t("a.addressLocation")}>
+            <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder={t("a.streetAreaCity")} />
           </Field>
-          <Field label="Google Maps link (optional)">
+          <Field label={t("a.googleMapsLinkOptional")}>
             <Input type="url" inputMode="url" placeholder="https://maps.google.com/…" value={mapsUrl} onChange={(e) => setMapsUrl(e.target.value)} />
           </Field>
           {clubId && (
@@ -63,7 +65,7 @@ export default function NewCourtPage() {
           )}
           <CourtGroupsEditor groups={groups} onChange={setGroups} />
           <Button type="submit" disabled={saving} className="self-start">
-            {saving ? "Creating…" : "Create court"}
+            {saving ? t("a.creating") : t("a.createCourt")}
           </Button>
         </form>
       </Card>

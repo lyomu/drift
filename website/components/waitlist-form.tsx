@@ -5,6 +5,7 @@ import { useId, useRef, useState } from "react";
 
 import type { Dictionary } from "@/lib/content";
 import { countryOptions } from "@/lib/countries";
+import type { Locale } from "@/lib/locales";
 
 import styles from "./waitlist-form.module.css";
 
@@ -14,7 +15,14 @@ function looksLikeEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 }
 
-export function WaitlistForm({ t }: { t: Dictionary["waitlist"] }) {
+export function WaitlistForm({
+  t,
+  locale,
+}: {
+  t: Dictionary["waitlist"];
+  /** Sent along so the confirmation email arrives in the page's language. */
+  locale: Locale;
+}) {
   const [status, setStatus] = useState<Status>("idle");
   const [firstName, setFirstName] = useState("");
   const [email, setEmail] = useState("");
@@ -58,6 +66,7 @@ export function WaitlistForm({ t }: { t: Dictionary["waitlist"] }) {
           country: country || undefined,
           city: city.trim() || undefined,
           level: level || undefined,
+          locale,
         }),
       });
       if (!response.ok) {

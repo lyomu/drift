@@ -10,6 +10,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { InitialsAvatar, MaterialIcon, ModalShell } from "@/components/dashboard-design";
 import { SelectEditControl } from "@/components/EditFieldModal";
 import type { ClubRole, Member } from "@/lib/types";
+import { useI18n, useT } from "@/lib/i18n/i18n-context";
 
 const ROLES: ClubRole[] = [
   "OWNER",
@@ -25,6 +26,8 @@ function memberName(member: Member) {
 }
 
 export default function MembersPage() {
+  const t = useT();
+  const { formatDate } = useI18n();
   const { clubId, role: myRole } = useClub();
   const canManage = myRole === "OWNER" || myRole === "ADMIN";
   const [members, setMembers] = useState<Member[]>([]);
@@ -70,7 +73,7 @@ export default function MembersPage() {
       setShowInvite(false);
       await loadMembers();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Something went wrong.");
+      setError(err instanceof ApiError ? err.message : t("a.somethingWentWrong"));
     } finally {
       setInviting(false);
     }
@@ -82,7 +85,7 @@ export default function MembersPage() {
     try {
       downloadBlob(await api.blob(`/clubs/${clubId}/members.csv`), "members.csv");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Member export failed. Try again.");
+      setError(err instanceof ApiError ? err.message : t("a.memberExportFailedTryAgain"));
     }
   }
 
@@ -109,7 +112,7 @@ export default function MembersPage() {
     if (!clubId) return;
     const rows = parseCsv(importText);
     if (rows.length === 0) {
-      setError("No valid rows found. Use one line per member: email,role");
+      setError(t("a.noValidRowsFoundUse"));
       return;
     }
     setImporting(true);
@@ -146,7 +149,7 @@ export default function MembersPage() {
       await api.delete(`/clubs/${clubId}/members/${membershipId}`);
       await loadMembers();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Something went wrong.");
+      setError(err instanceof ApiError ? err.message : t("a.somethingWentWrong"));
     }
   }
 
@@ -163,7 +166,7 @@ export default function MembersPage() {
       }
       await loadMembers();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Something went wrong.");
+      setError(err instanceof ApiError ? err.message : t("a.somethingWentWrong"));
     }
   }
 
@@ -173,12 +176,12 @@ export default function MembersPage() {
   return (
     <div>
       <PageHeader
-        title="Members"
-        description="Everyone with admin access to this club."
+        title={t("a.members")}
+        description={t("a.everyoneWithAdminAccessTo")}
         action={
           <div className="flex flex-wrap gap-2">
             <Button variant="secondary" onClick={() => void handleExport()}>
-              Export CSV
+              {t("a.exportCsv")}
             </Button>
             {canManage && (
               <Button
@@ -194,9 +197,7 @@ export default function MembersPage() {
             )}
             {canManage && (
               <Button onClick={() => setShowInvite(true)}>
-                <MaterialIcon name="person_add" className="text-[18px]" />
-                Invite member
-              </Button>
+                <MaterialIcon name="person_add" className="text-[18px]" />{t("a.inviteMember")}</Button>
             )}
           </div>
         }
@@ -204,7 +205,7 @@ export default function MembersPage() {
       <ErrorBanner message={error} />
 
       {showImport && (
-        <ModalShell title="Import members from CSV" onClose={() => setShowImport(false)}>
+        <ModalShell title={t("a.importMembersFromCsv")} onClose={() => setShowImport(false)}>
           {importResult ? (
             <div className="flex flex-col gap-4">
               <p className="text-sm text-drift-text-primary">
@@ -236,17 +237,15 @@ export default function MembersPage() {
                 </div>
               )}
               <div className="flex justify-end">
-                <Button onClick={() => setShowImport(false)}>Done</Button>
+                <Button onClick={() => setShowImport(false)}>{t("a.done")}</Button>
               </div>
             </div>
           ) : (
             <form onSubmit={handleImport} className="flex flex-col gap-4">
               <p className="text-[13px] text-drift-text-secondary">
-                One member per line: <code>email,role</code>. Role is optional
-                and defaults to READ ONLY. A header row is ignored. Everyone must
-                already have a Drift account.
+                {t("a.memberImportInstructions")}
               </p>
-              <Field label="Paste CSV, or">
+              <Field label={t("a.pasteCsvOr")}>
                 <Textarea
                   rows={7}
                   autoFocus
@@ -266,7 +265,7 @@ export default function MembersPage() {
                     e.target.value = "";
                   }}
                 />
-                <span className="cursor-pointer hover:underline">Choose a .csv file</span>
+                <span className="cursor-pointer hover:underline">{t("a.chooseACsvFile")}</span>
               </label>
               <div className="mt-1 flex justify-end gap-3">
                 <Button
@@ -277,7 +276,7 @@ export default function MembersPage() {
                   Cancel
                 </Button>
                 <Button type="submit" disabled={importing || !importText.trim()}>
-                  {importing ? "Importing…" : "Import members"}
+                  {importing ? t("a.importing") : t("a.importMembers")}
                 </Button>
               </div>
             </form>
@@ -286,21 +285,20 @@ export default function MembersPage() {
       )}
 
       {showInvite && (
-        <ModalShell title="Invite a member" onClose={() => setShowInvite(false)}>
+        <ModalShell title={t("a.inviteAMember")} onClose={() => setShowInvite(false)}>
           <form onSubmit={handleInvite} className="flex flex-col gap-4">
-            <Field label="Email">
+            <Field label={t("a.email")}>
               <Input
                 type="email"
                 required
                 autoFocus
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
-                placeholder="Must already have a Drift account"
+                placeholder={t("a.mustAlreadyHaveADrift")}
               />
             </Field>
             <p className="text-[12.5px] text-drift-text-secondary">
-              They join with read-only access — change it any time from the
-              Role column.
+              {t("a.theyJoinWithReadOnly")}
             </p>
             <div className="mt-1 flex justify-end gap-3">
               <Button
@@ -311,7 +309,7 @@ export default function MembersPage() {
                 Cancel
               </Button>
               <Button type="submit" disabled={inviting}>
-                {inviting ? "Inviting..." : "Invite"}
+                {inviting ? t("a.inviting") : t("a.invite")}
               </Button>
             </div>
           </form>
@@ -328,21 +326,21 @@ export default function MembersPage() {
             rowKey={(member) => member.membershipId}
             columns={[
               {
-                header: "Member",
+                header: t("a.member"),
                 cell: (member) => (
                   <MemberIdentity member={member} avatarClassName="h-9 w-9" />
                 ),
               },
               {
-                header: "Requested",
-                cell: (member) => new Date(member.joinedAt).toLocaleDateString(),
+                header: t("a.requested"),
+                cell: (member) => formatDate(member.joinedAt),
               },
               {
-                header: "Status",
+                header: t("a.status"),
                 cell: (member) => <StatusBadge status={member.status} />,
               },
               {
-                header: "Actions",
+                header: t("a.actions"),
                 className: "text-right",
                 cell: (member) => (
                   <div className="flex justify-end gap-2">
@@ -371,20 +369,20 @@ export default function MembersPage() {
       )}
 
       {loading ? (
-        <EmptyState message="Loading..." />
+        <EmptyState message={t("a.loading2")} />
       ) : active.length === 0 ? (
-        <EmptyState message="No members yet." />
+        <EmptyState message={t("a.noMembersYet")} />
       ) : (
         <DataTable
           rows={active}
           rowKey={(member) => member.membershipId}
           columns={[
             {
-              header: "Member",
+              header: t("a.member"),
               cell: (member) => <MemberIdentity member={member} />,
             },
             {
-              header: "Role",
+              header: t("a.role"),
               cell: (member) =>
                 canManage ? (
                   <SelectEditControl
@@ -396,10 +394,10 @@ export default function MembersPage() {
                     onSave={(next) =>
                       handleRoleChange(member.membershipId, next as ClubRole)
                     }
-                    title="Change role"
+                    title={t("a.changeRole")}
                     description={`${memberName(member)} · ${member.email}`}
-                    fieldLabel="Role"
-                    confirmLabel="Save role"
+                    fieldLabel={t("a.role")}
+                    confirmLabel={t("a.saveRole")}
                   />
                 ) : (
                   <span className="text-sm font-semibold text-drift-text-primary">
@@ -408,15 +406,15 @@ export default function MembersPage() {
                 ),
             },
             {
-              header: "Status",
+              header: t("a.status"),
               cell: (member) => <StatusBadge status={member.status} />,
             },
             {
-              header: "Joined",
-              cell: (member) => new Date(member.joinedAt).toLocaleDateString(),
+              header: t("a.joined"),
+              cell: (member) => formatDate(member.joinedAt),
             },
             {
-              header: "Actions",
+              header: t("a.actions"),
               className: "text-right",
               cell: (member) =>
                 canManage ? (

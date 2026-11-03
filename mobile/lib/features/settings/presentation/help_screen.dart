@@ -6,6 +6,7 @@ import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
 import '../../../shared/widgets/drift_scaffold.dart';
+import '../../../core/l10n/l10n.dart';
 
 const _faqUrl = 'https://driftsports.app/#faq';
 
@@ -31,7 +32,7 @@ class HelpScreen extends StatelessWidget {
     }
     if (!opened && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unable to open FAQs right now.')),
+        SnackBar(content: Text(context.l10n.helpOpenFailed)),
       );
     }
   }
@@ -42,19 +43,21 @@ class HelpScreen extends StatelessWidget {
     final colors = Theme.of(context).extension<DriftColors>()!;
 
     return DriftScaffold(
-      title: 'Help & FAQ',
+      title: context.l10n.settingsHelpFaq,
       body: ListView(
         padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
         children: [
-          Text('Questions, answered.', style: type.h3),
+          Text(context.l10n.helpTitle, style: type.h3),
           const SizedBox(height: DriftSpacing.s2),
           Text(
-            'Read the current FAQs for Drift Tennis. This opens the same '
-            'answers published on our website.',
+            context.l10n.helpBody,
             style: type.body.copyWith(color: colors.textSecondary),
           ),
           const SizedBox(height: DriftSpacing.s6),
-          DriftButton(label: 'Open FAQs', onPressed: () => _openFaq(context)),
+          DriftButton(
+            label: context.l10n.helpOpenFaqs,
+            onPressed: () => _openFaq(context),
+          ),
         ],
       ),
     );

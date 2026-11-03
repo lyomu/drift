@@ -11,11 +11,9 @@ import '../../../users/application/current_user_provider.dart';
 import '../../application/matches_providers.dart';
 import '../../data/matches_repository.dart';
 import '_play_tab_scaffold.dart';
+import '../../../../core/l10n/l10n.dart';
+import 'package:intl/intl.dart';
 
-const _months = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', //
-];
 
 /// Play → Active. Scheduled and in-flight matches; tap a row for Match Detail.
 class PlayActiveTab extends ConsumerWidget {
@@ -31,7 +29,7 @@ class PlayActiveTab extends ConsumerWidget {
           ref.refresh(matchListProvider(MatchSegment.active).future),
       state: matches,
       emptyIcon: Icons.sports_tennis_outlined,
-      emptyMessage: 'No upcoming matches — challenge someone to get started.',
+      emptyMessage: context.l10n.playActiveEmpty,
       onRetry: () => ref.invalidate(matchListProvider(MatchSegment.active)),
       itemBuilder: (match) => _ActiveRow(match: match, viewerId: viewerId),
     );
@@ -51,7 +49,7 @@ class _ActiveRow extends StatelessWidget {
     final opponent = match.opponentFor(viewerId)?.player;
 
     final parts = <String>[
-      match.isDoubles ? 'Doubles' : 'Singles',
+      match.isDoubles ? context.l10n.optDoubles : context.l10n.optSingles,
       if (match.confirmedTime != null) _short(match.confirmedTime!),
       if (match.courtName != null && match.courtName!.isNotEmpty)
         match.courtName!,
@@ -71,7 +69,7 @@ class _ActiveRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  opponent?.displayName ?? 'Match',
+                  opponent?.displayName ?? context.l10n.matchTitle,
                   style: type.title.copyWith(fontWeight: FontWeight.w700),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -95,9 +93,8 @@ class _ActiveRow extends StatelessWidget {
 
   static String _short(DateTime t) {
     final l = t.toLocal();
-    return '${l.day} ${_months[l.month - 1]} · '
-        '${l.hour.toString().padLeft(2, '0')}:'
-        '${l.minute.toString().padLeft(2, '0')}';
+    return '${DateFormat.MMMd(localeTagNow).format(l)} · '
+        '${DateFormat.Hm(localeTagNow).format(l)}';
   }
 
   static DriftPillTone _tone(MatchState state) => switch (state) {

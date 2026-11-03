@@ -6,11 +6,14 @@ import { Button, EmptyState, ErrorBanner, Field, Input, PageHeader } from "@/com
 import { api, ApiError } from "@/lib/api-client";
 import { useClub } from "@/lib/club-context";
 import type { MediaAsset } from "@/lib/types";
+import { useI18n, useT } from "@/lib/i18n/i18n-context";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const ACCEPTED = ["image/png", "image/jpeg"];
 
 export default function MediaPage() {
+  const t = useT();
+  const { formatDate } = useI18n();
   const { clubId, role } = useClub();
   const canManage =
     role === "OWNER" || role === "ADMIN" || role === "CONTENT_MANAGER";
@@ -51,10 +54,10 @@ export default function MediaPage() {
       setError(
         err instanceof ApiError
           ? err.message
-          : "Media could not be loaded. Retry the page.",
+          : t("a.mediaCouldNotBeLoaded"),
       );
     }
-  }, [clubId]);
+  }, [clubId, t]);
 
   useEffect(() => {
     void load();
@@ -74,11 +77,11 @@ export default function MediaPage() {
   function pickFile(next: File | null) {
     if (!next) return;
     if (!ACCEPTED.includes(next.type)) {
-      setFormError("Choose a PNG or JPG image.");
+      setFormError(t("a.choosePngJpg"));
       return;
     }
     if (next.size > MAX_BYTES) {
-      setFormError("That image is over 5MB. Choose a smaller file.");
+      setFormError(t("a.imageOver5Mb"));
       return;
     }
     setFormError(null);
@@ -101,7 +104,7 @@ export default function MediaPage() {
       setFormError(
         err instanceof ApiError
           ? err.message
-          : "Upload failed. Choose the image and retry.",
+          : t("a.uploadFailedChooseTheImage"),
       );
     } finally {
       setBusy(false);
@@ -110,7 +113,7 @@ export default function MediaPage() {
 
   async function remove(id: string) {
     if (!clubId) return;
-    if (!window.confirm("Delete this photo? It will be removed everywhere it's used.")) {
+    if (!window.confirm(t("a.deleteThisPhotoItWill"))) {
       return;
     }
     try {
@@ -118,7 +121,7 @@ export default function MediaPage() {
       await load();
     } catch (err) {
       setError(
-        err instanceof ApiError ? err.message : "The image could not be deleted.",
+        err instanceof ApiError ? err.message : t("a.theImageCouldNotBe"),
       );
     }
   }
@@ -126,20 +129,20 @@ export default function MediaPage() {
   return (
     <div>
       <PageHeader
-        title="Media library"
-        description="Club imagery used across announcements, events, and public surfaces."
+        title={t("a.mediaLibrary")}
+        description={t("a.clubImageryUsedAcrossAnnouncements")}
         action={
           canManage ? (
-            <Button onClick={() => setShowUpload(true)}>Upload photo</Button>
+            <Button onClick={() => setShowUpload(true)}>{t("a.uploadPhoto")}</Button>
           ) : undefined
         }
       />
       <ErrorBanner message={error} />
 
       {assets === null ? (
-        <EmptyState message="Loading..." />
+        <EmptyState message={t("a.loading2")} />
       ) : assets.length === 0 ? (
-        <EmptyState message="Upload your first photo" />
+        <EmptyState message={t("a.uploadYourFirstPhoto")} />
       ) : (
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {assets.map((asset) => (
@@ -178,7 +181,7 @@ export default function MediaPage() {
                   {asset.caption || asset.filename}
                 </div>
                 <div className="mt-1 text-[12.5px] text-drift-text-secondary">
-                  {new Date(asset.createdAt).toLocaleDateString(undefined, {
+                  {formatDate(asset.createdAt, {
                     day: "numeric",
                     month: "short",
                     year: "numeric",
@@ -191,7 +194,7 @@ export default function MediaPage() {
       )}
 
       {showUpload && (
-        <ModalShell title="Upload photo" onClose={closeUpload}>
+        <ModalShell title={t("a.uploadPhoto")} onClose={closeUpload}>
           <form onSubmit={upload} className="flex flex-col gap-5">
             <input
               ref={fileInput}
@@ -223,7 +226,7 @@ export default function MediaPage() {
                 className="text-[30px] text-drift-primary"
               />
               <div className="text-sm font-bold text-drift-text-primary">
-                {file ? file.name : "Drop an image or click to browse"}
+                {file ? file.name : t("a.dropImageBrowse")}
               </div>
               <div className="text-[12.5px] text-drift-text-secondary">
                 {file
@@ -239,15 +242,15 @@ export default function MediaPage() {
                   fileInput.current?.click();
                 }}
               >
-                {file ? "Choose a different file" : "Choose file"}
+                {file ? t("a.chooseDifferentFile") : t("a.chooseFile")}
               </Button>
             </div>
 
-            <Field label="Caption">
+            <Field label={t("a.caption")}>
               <Input
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
-                placeholder="Optional display caption"
+                placeholder={t("a.optionalDisplayCaption")}
               />
             </Field>
 
@@ -259,10 +262,10 @@ export default function MediaPage() {
 
             <div className="flex justify-end gap-3">
               <Button type="button" variant="secondary" onClick={closeUpload}>
-                Cancel
+                {t("a.cancel")}
               </Button>
               <Button type="submit" disabled={busy || !file}>
-                {busy ? "Uploading..." : "Upload photo"}
+                {busy ? t("a.uploading") : t("a.uploadPhoto")}
               </Button>
             </div>
           </form>

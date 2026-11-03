@@ -140,7 +140,7 @@ describe('MessagingService', () => {
       expect(notifications.create).toHaveBeenCalledWith(
         'other',
         'MESSAGES',
-        expect.stringContaining('New message from'),
+        expect.objectContaining({ key: 'message.new.title' }),
         expect.any(String),
         'CONVERSATION',
         'c1',

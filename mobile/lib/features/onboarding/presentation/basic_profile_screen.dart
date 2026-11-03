@@ -11,11 +11,12 @@ import '../../auth/presentation/widgets/phone_field.dart';
 import '../../users/application/current_user_provider.dart';
 import '../../users/data/users_repository.dart';
 import 'widgets/onboarding_scaffold.dart';
+import '../../../core/l10n/l10n.dart';
 
-const _dominantHands = [
-  ('LEFT', 'Left'),
-  ('RIGHT', 'Right'),
-  ('AMBIDEXTROUS', 'Ambidextrous'),
+final _dominantHands = [
+  ('LEFT', (AppLocalizations l) => l.onbHandLeft),
+  ('RIGHT', (AppLocalizations l) => l.onbHandRight),
+  ('AMBIDEXTROUS', (AppLocalizations l) => l.onbHandAmbidextrous),
 ];
 
 /// Basic Profile — `foundation/04-screen-inventory.md` A.2.
@@ -65,13 +66,13 @@ class _LoadFailed extends ConsumerWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text(
-            "Couldn't load your details. Please try again.",
+          Text(
+            context.l10n.onbLoadDetailsFailed,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: DriftSpacing.s4),
           DriftButton(
-            label: 'Retry',
+            label: context.l10n.commonRetry,
             variant: DriftButtonVariant.text,
             onPressed: () => ref.invalidate(currentUserProvider),
           ),
@@ -115,7 +116,7 @@ class _BasicProfileFormState extends ConsumerState<_BasicProfileForm> {
 
   Future<void> _submit() async {
     if (_dominantHand == null) {
-      setState(() => _errorText = 'Choose your playing hand to continue.');
+      setState(() => _errorText = context.l10n.onbChooseHand);
       return;
     }
 
@@ -150,17 +151,23 @@ class _BasicProfileFormState extends ConsumerState<_BasicProfileForm> {
   Widget build(BuildContext context) {
     return DriftOnboardingScaffold(
       step: OnboardingStepIndex.basicProfile,
-      title: 'Tell us about you',
-      highlight: 'you',
-      subtitle: 'Just the basics. You can change any of it later.',
+      title: context.l10n.onbBasicTitle,
+      highlight: context.l10n.onbBasicHighlight,
+      subtitle: context.l10n.onbBasicSubtitle,
       ctaActive: _dominantHand != null,
       loading: _isSubmitting,
       onContinue: _isSubmitting ? null : _submit,
       errorText: _errorText,
       children: [
-        DriftTextField(label: 'First name', controller: _firstNameController),
+        DriftTextField(
+          label: context.l10n.authFirstName,
+          controller: _firstNameController,
+        ),
         const SizedBox(height: DriftSpacing.s4),
-        DriftTextField(label: 'Last name', controller: _lastNameController),
+        DriftTextField(
+          label: context.l10n.authLastName,
+          controller: _lastNameController,
+        ),
         const SizedBox(height: DriftSpacing.s4),
         PhoneField(
           controller: _phoneController,
@@ -168,7 +175,10 @@ class _BasicProfileFormState extends ConsumerState<_BasicProfileForm> {
           onWhatsAppChanged: (v) => setState(() => _phoneOnWhatsApp = v),
         ),
         const SizedBox(height: DriftSpacing.s6),
-        Text('Playing hand', style: Theme.of(context).textTheme.labelLarge),
+        Text(
+          context.l10n.onbPlayingHand,
+          style: Theme.of(context).textTheme.labelLarge,
+        ),
         const SizedBox(height: DriftSpacing.s3),
         Wrap(
           spacing: DriftSpacing.s3,
@@ -176,7 +186,7 @@ class _BasicProfileFormState extends ConsumerState<_BasicProfileForm> {
           children: _dominantHands
               .map(
                 (hand) => DriftFilterChip(
-                  label: hand.$2,
+                  label: hand.$2(context.l10n),
                   selected: _dominantHand == hand.$1,
                   onTap: () => setState(() {
                     _dominantHand = hand.$1;

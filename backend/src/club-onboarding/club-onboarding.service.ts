@@ -23,6 +23,7 @@ import {
   ReviewClubRequestDto,
   SubmitClubRequestDto,
 } from './dto/club-onboarding.dto';
+import { localeOf } from '../common/i18n';
 
 const BCRYPT_ROUNDS = 10;
 const SETUP_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -199,6 +200,7 @@ export class ClubOnboardingService {
       request.requesterEmail,
       existing?.firstName ?? splitName(request.requesterName).firstName,
       request.clubName,
+      localeOf(existing?.preferredLocale),
     );
 
     return { email: request.requesterEmail, clubId: club.id };

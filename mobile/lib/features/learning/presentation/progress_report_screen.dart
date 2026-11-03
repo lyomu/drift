@@ -8,17 +8,9 @@ import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
 import '../../../shared/widgets/drift_scaffold.dart';
 import '../application/learning_providers.dart';
+import '../../../core/l10n/l10n.dart';
+import '../../../core/l10n/enum_labels.dart';
 
-const _skillLabels = {
-  'FOREHAND': 'Forehand',
-  'BACKHAND': 'Backhand',
-  'SERVE': 'Serve',
-  'RETURN': 'Return',
-  'NET_PLAY': 'Net Play',
-  'MOVEMENT': 'Movement',
-  'MATCH_PLAY': 'Match Play',
-  'FOOTWORK': 'Footwork',
-};
 
 /// Progress Report — `foundation/04-screen-inventory.md` §A.7.
 class ProgressReportScreen extends ConsumerWidget {
@@ -31,7 +23,7 @@ class ProgressReportScreen extends ConsumerWidget {
     final colors = Theme.of(context).extension<DriftColors>()!;
 
     return DriftScaffold(
-      title: 'Progress Report',
+      title: context.l10n.learnProgressReport,
       body: RefreshIndicator(
         onRefresh: () => ref.refresh(progressReportProvider.future),
         child: switch (report) {
@@ -45,7 +37,7 @@ class ProgressReportScreen extends ConsumerWidget {
                           children: [
                             const SizedBox(height: DriftSpacing.s12),
                             Text(
-                              'Your progress report builds up as you play and practice',
+                              context.l10n.progressEmpty,
                               style: type.body.copyWith(
                                 color: colors.textSecondary,
                               ),
@@ -69,7 +61,7 @@ class ProgressReportScreen extends ConsumerWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  _skillLabels[skill.skill] ?? skill.skill,
+                                  pillarLabel(context.l10n, skill.skill),
                                   style: type.label,
                                 ),
                                 const SizedBox(height: DriftSpacing.s1),
@@ -85,13 +77,13 @@ class ProgressReportScreen extends ConsumerWidget {
                           ),
                       const SizedBox(height: DriftSpacing.s4),
                       DriftButton(
-                        label: 'Assessment History',
+                        label: context.l10n.assessmentHistory,
                         variant: DriftButtonVariant.text,
                         onPressed: () => context.push('/learn/assessments'),
                       ),
                     ],
                   ),
-          AsyncError() => const Center(child: Text('Not available.')),
+          AsyncError() => Center(child: Text(context.l10n.commonNotAvailable)),
           _ => const Center(child: CircularProgressIndicator()),
         },
       ),

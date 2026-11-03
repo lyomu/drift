@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../theme/drift_colors.dart';
+import '../l10n/l10n.dart';
 
 /// Bottom navigation — a verbatim port of `App.tsx` `BottomNav`: a flat white
 /// bar with a 1px top border, five `flex: 1` tabs, a 22px outline icon and a
@@ -20,14 +21,14 @@ class DriftBottomNav extends StatelessWidget {
 
   static const _inactive = Color(0xFF9CA3AF);
 
-  static const _tabs = [
-    (label: 'Home', svg: _homeSvg),
-    (label: 'Play', svg: _playSvg),
-    (label: 'Compete', svg: _competeSvg),
-    (label: 'Discover', svg: _discoverSvg),
+  static final _tabs = <({String Function(AppLocalizations) label, String svg})>[
+    (label: (l) => l.navHome, svg: _homeSvg),
+    (label: (l) => l.navPlay, svg: _playSvg),
+    (label: (l) => l.navCompete, svg: _competeSvg),
+    (label: (l) => l.navDiscover, svg: _discoverSvg),
     // Learn took this slot from Profile in the 2026-09 redesign — profile
     // navigation moved into the app drawer (`DriftAppDrawer`).
-    (label: 'Learn', svg: _learnSvg),
+    (label: (l) => l.navLearn, svg: _learnSvg),
   ];
 
   @override
@@ -48,7 +49,7 @@ class DriftBottomNav extends StatelessWidget {
               for (var i = 0; i < _tabs.length; i++)
                 Expanded(
                   child: _Tab(
-                    label: _tabs[i].label,
+                    label: _tabs[i].label(context.l10n),
                     svg: _tabs[i].svg,
                     color: i == selectedIndex ? colors.primary : _inactive,
                     active: i == selectedIndex,

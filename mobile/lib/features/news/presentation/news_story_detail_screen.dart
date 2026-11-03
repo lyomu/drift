@@ -10,6 +10,7 @@ import '../../../shared/widgets/drift_scaffold.dart';
 import '../../../shared/widgets/drift_news_image.dart';
 import '../application/news_providers.dart';
 import '../data/news_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// News Story Detail / Highlight — `foundation/04-screen-inventory.md`
 /// §A.8. There is no article body to render — the schema itself only
@@ -94,7 +95,7 @@ class _NewsStoryDetailScreenState extends ConsumerState<NewsStoryDetailScreen> {
 
   void _showBroken() {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('That source link looks broken.')),
+      SnackBar(content: Text(context.l10n.newsBrokenLink)),
     );
   }
 
@@ -105,7 +106,7 @@ class _NewsStoryDetailScreenState extends ConsumerState<NewsStoryDetailScreen> {
     final colors = Theme.of(context).extension<DriftColors>()!;
 
     return DriftScaffold(
-      title: 'Story',
+      title: context.l10n.newsStory,
       body: switch (story) {
         AsyncData(:final value) => _Body(
           story: value,
@@ -117,7 +118,7 @@ class _NewsStoryDetailScreenState extends ConsumerState<NewsStoryDetailScreen> {
         ),
         AsyncError() => Center(
           child: Text(
-            'Story not available.',
+            context.l10n.newsStoryUnavailable,
             style: type.body.copyWith(color: colors.textSecondary),
           ),
         ),
@@ -168,15 +169,22 @@ class _Body extends StatelessWidget {
         const SizedBox(height: DriftSpacing.s4),
         Text(summary.highlight, style: type.body),
         const SizedBox(height: DriftSpacing.s6),
-        DriftButton(label: 'Open Original Source', onPressed: onOpenSource),
         DriftButton(
-          label: 'Open in browser',
+          label: context.l10n.newsOpenSource,
+          onPressed: onOpenSource,
+        ),
+        DriftButton(
+          label: context.l10n.newsOpenInBrowser,
           variant: DriftButtonVariant.text,
           onPressed: onOpenExternal,
         ),
         const SizedBox(height: DriftSpacing.s2),
         DriftButton(
-          label: isBusy ? 'Saving…' : (saved ? 'Remove from Saved' : 'Save'),
+          label: isBusy
+              ? context.l10n.commonSaving
+              : (saved
+                    ? context.l10n.newsRemoveFromSavedTitle
+                    : context.l10n.commonSave),
           variant: DriftButtonVariant.text,
           onPressed: isBusy ? null : () => onToggleSave(saved),
         ),

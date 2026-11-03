@@ -12,6 +12,7 @@ import '../../auth/data/auth_repository.dart';
 import '../../courts/data/courts_repository.dart';
 import '../application/clubs_providers.dart';
 import '../data/clubs_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Club Profile — `foundation/04-screen-inventory.md` §A.6 (redesign 2026-08:
 /// `App.tsx` `ClubDetailScreen`). Read-only: name, description, contact,
@@ -31,7 +32,7 @@ class ClubProfileScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const DriftBackHeader(title: 'Club'),
+            DriftBackHeader(title: context.l10n.clubTitle),
             Expanded(
               child: RefreshIndicator(
                 onRefresh: () async {
@@ -40,8 +41,8 @@ class ClubProfileScreen extends ConsumerWidget {
                 },
                 child: switch (profile) {
                   AsyncData(:final value) => _ProfileBody(profile: value),
-                  AsyncError() => const Center(
-                    child: Text('Club not available.'),
+                  AsyncError() => Center(
+                    child: Text(context.l10n.clubUnavailable),
                   ),
                   _ => const Center(child: CircularProgressIndicator()),
                 },
@@ -100,10 +101,10 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
             if (summary.verificationStatus ==
                 ListingVerificationStatus.verified) ...[
               const SizedBox(width: 8),
-              const Padding(
+              Padding(
                 padding: EdgeInsets.only(top: 4),
                 child: DriftPill(
-                  label: 'Verified',
+                  label: context.l10n.commonVerified,
                   tone: DriftPillTone.success,
                 ),
               ),
@@ -149,7 +150,7 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
         const SizedBox(height: 8),
 
         DriftTextLink(
-          label: 'View coaches',
+          label: context.l10n.clubViewCoaches,
           onPressed: () => context.push(
             Uri(
               path: '/discover/coaches',
@@ -166,7 +167,7 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Contact',
+                  context.l10n.commonContact,
                   style: type.title.copyWith(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 8),
@@ -180,11 +181,11 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
         ],
 
         const SizedBox(height: 18),
-        Text('Courts', style: type.h4),
+        Text(context.l10n.discoverCourts, style: type.h4),
         const SizedBox(height: 10),
         if (profile.courts.isEmpty)
           Text(
-            'No courts found',
+            context.l10n.courtNoneFound,
             style: type.bodySmall.copyWith(color: colors.textSecondary),
           )
         else
@@ -291,7 +292,9 @@ class _MembershipActions extends StatelessWidget {
 
     return switch (membership) {
       ClubMembership.none => DriftPrimaryButton(
-        label: isBusy ? 'Requesting…' : 'Request to join',
+        label: isBusy
+            ? context.l10n.clubRequesting
+            : context.l10n.clubRequestToJoin,
         onPressed: isBusy ? null : onJoin,
       ),
       ClubMembership.pending || ClubMembership.invited => Column(
@@ -299,12 +302,14 @@ class _MembershipActions extends StatelessWidget {
         children: [
           Text(
             membership == ClubMembership.pending
-                ? 'Your request is waiting for a club admin.'
-                : 'You have been invited to this club.',
+                ? context.l10n.clubRequestPending
+                : context.l10n.clubInvited,
             style: type.bodySmall.copyWith(color: colors.textSecondary),
           ),
           DriftTextLink(
-            label: isBusy ? 'Working…' : 'Withdraw request',
+            label: isBusy
+                ? context.l10n.commonWorking
+                : context.l10n.clubWithdrawRequest,
             onPressed: isBusy ? null : onLeave,
           ),
         ],
@@ -313,23 +318,25 @@ class _MembershipActions extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           DriftPrimaryButton(
-            label: 'Announcements',
+            label: context.l10n.clubAnnouncements,
             onPressed: () =>
                 context.push('/discover/clubs/$clubId/announcements'),
           ),
           const SizedBox(height: 4),
           DriftTextLink(
-            label: 'Club Feed',
+            label: context.l10n.clubFeed,
             onPressed: () => context.push('/discover/clubs/$clubId/feed'),
           ),
           DriftTextLink(
-            label: isBusy ? 'Working…' : 'Leave club',
+            label: isBusy
+                ? context.l10n.commonWorking
+                : context.l10n.clubLeave,
             onPressed: isBusy ? null : onLeave,
           ),
         ],
       ),
       ClubMembership.suspended => Text(
-        'Your membership of this club is suspended.',
+        context.l10n.clubSuspended,
         style: type.bodySmall.copyWith(color: colors.textSecondary),
       ),
     };

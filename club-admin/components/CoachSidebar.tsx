@@ -6,6 +6,8 @@ import { BrandIcon } from "@/components/BrandIcon";
 import { MaterialIcon } from "@/components/dashboard-design";
 import { APPLICATION_COPY } from "@/lib/coach-api";
 import { useWorkspace } from "@/lib/workspace-context";
+import { useT } from "@/lib/i18n/i18n-context";
+import type { MessageKey } from "@/lib/i18n/messages/en";
 
 /**
  * Flat by design. The club sidebar groups a large console; a coach has four
@@ -13,13 +15,14 @@ import { useWorkspace } from "@/lib/workspace-context";
  * behind a click.
  */
 const NAV = [
-  { href: "/coach", label: "Overview", icon: "home", exact: true },
-  { href: "/coach/application", label: "Application", icon: "assignment" },
-  { href: "/coach/profile", label: "Public profile", icon: "badge" },
-  { href: "/coach/clubs", label: "Clubs", icon: "groups" },
+  { href: "/coach", label: "nav.overview", icon: "home", exact: true },
+  { href: "/coach/application", label: "nav.application", icon: "assignment" },
+  { href: "/coach/profile", label: "nav.publicProfile", icon: "badge" },
+  { href: "/coach/clubs", label: "nav.clubs", icon: "groups" },
 ];
 
 export function CoachSidebar() {
+  const t = useT();
   const pathname = usePathname();
   const { coach, memberships, hasBoth, logout } = useWorkspace();
   const status = coach?.applicationStatus ?? null;
@@ -29,11 +32,11 @@ export function CoachSidebar() {
       <div className="flex flex-col px-2 pb-5">
         <BrandIcon className="h-6" />
         <div className="mt-2.5 truncate text-sm font-bold text-drift-text-primary">
-          Coach workspace
+          {t("coach.workspace")}
         </div>
         {status && (
           <div className="mt-1 inline-flex self-start rounded-full bg-drift-primary-light px-[9px] py-0.5 text-[11px] font-bold uppercase text-drift-primary-dark">
-            {APPLICATION_COPY[status].label}
+            {t(APPLICATION_COPY[status].label)}
           </div>
         )}
       </div>
@@ -58,7 +61,7 @@ export function CoachSidebar() {
                 filled={active}
                 className="text-xl"
               />
-              <span>{item.label}</span>
+              <span>{t(item.label as MessageKey)}</span>
             </Link>
           );
         })}
@@ -74,7 +77,7 @@ export function CoachSidebar() {
         >
           <MaterialIcon name="swap_horiz" className="text-xl" />
           <span className="truncate">
-            {memberships[0]?.clubName ?? "Club admin"}
+            {memberships[0]?.clubName ?? t("coach.clubAdmin")}
           </span>
         </Link>
       )}
@@ -85,7 +88,7 @@ export function CoachSidebar() {
         className="navitem mt-1 flex shrink-0 items-center gap-2.5 rounded-md px-2.5 py-[9px] text-left text-sm font-semibold text-drift-text-secondary transition-colors"
       >
         <MaterialIcon name="logout" className="text-xl" />
-        <span>Log out</span>
+        <span>{t("common.logOut")}</span>
       </button>
     </aside>
   );

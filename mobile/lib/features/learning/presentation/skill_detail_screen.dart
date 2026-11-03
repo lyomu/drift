@@ -9,17 +9,9 @@ import '../../../shared/widgets/buttons/drift_button.dart';
 import '../../../shared/widgets/drift_card.dart';
 import '../../../shared/widgets/drift_scaffold.dart';
 import '../application/learning_providers.dart';
+import '../../../core/l10n/l10n.dart';
+import '../../../core/l10n/enum_labels.dart';
 
-const _skillLabels = {
-  'FOREHAND': 'Forehand',
-  'BACKHAND': 'Backhand',
-  'SERVE': 'Serve',
-  'RETURN': 'Return',
-  'NET_PLAY': 'Net Play',
-  'MOVEMENT': 'Movement',
-  'MATCH_PLAY': 'Match Play',
-  'FOOTWORK': 'Footwork',
-};
 
 /// Skill Detail — `foundation/04-screen-inventory.md` §A.7. "Historical
 /// trend, contributing signals" is shown as the actual list of logged
@@ -39,7 +31,7 @@ class SkillDetailScreen extends ConsumerWidget {
     final colors = Theme.of(context).extension<DriftColors>()!;
 
     return DriftScaffold(
-      title: _skillLabels[skill] ?? skill,
+      title: pillarLabel(context.l10n, skill),
       body: RefreshIndicator(
         onRefresh: () => ref.refresh(skillDetailProvider(skill).future),
         child: switch (detail) {
@@ -53,7 +45,7 @@ class SkillDetailScreen extends ConsumerWidget {
                           children: [
                             const SizedBox(height: DriftSpacing.s12),
                             Text(
-                              'Not enough data yet — complete a few practice sessions or matches',
+                              context.l10n.skillNotEnoughData,
                               style: type.body.copyWith(
                                 color: colors.textSecondary,
                               ),
@@ -61,7 +53,7 @@ class SkillDetailScreen extends ConsumerWidget {
                             ),
                             const SizedBox(height: DriftSpacing.s4),
                             DriftButton(
-                              label: 'Set a Goal',
+                              label: context.l10n.skillSetGoal,
                               variant: DriftButtonVariant.text,
                               onPressed: () => context.push(
                                 '/learn/goals/create',
@@ -79,7 +71,7 @@ class SkillDetailScreen extends ConsumerWidget {
                       if (value.score != null) ...[
                         Text(
                           value.maturity == 'DIRECTIONAL'
-                              ? 'Building'
+                              ? context.l10n.skillBuilding
                               : '${(value.score! / 6 * 100).round()}%',
                           style: type.display,
                         ),
@@ -94,13 +86,13 @@ class SkillDetailScreen extends ConsumerWidget {
                         const SizedBox(height: DriftSpacing.s4),
                       ],
                       DriftButton(
-                        label: 'Set a Goal',
+                        label: context.l10n.skillSetGoal,
                         onPressed: () =>
                             context.push('/learn/goals/create', extra: skill),
                       ),
                       if (value.recommendations.isNotEmpty) ...[
                         const SizedBox(height: DriftSpacing.s5),
-                        Text('Recommended', style: type.h4),
+                        Text(context.l10n.skillRecommended, style: type.h4),
                         const SizedBox(height: DriftSpacing.s3),
                         for (final rec in value.recommendations)
                           Padding(
@@ -126,7 +118,7 @@ class SkillDetailScreen extends ConsumerWidget {
                       ],
                       if (value.practiceSessions.isNotEmpty) ...[
                         const SizedBox(height: DriftSpacing.s5),
-                        Text('Contributing signals', style: type.h4),
+                        Text(context.l10n.skillSignals, style: type.h4),
                         const SizedBox(height: DriftSpacing.s3),
                         if (value.assessmentBaseline != null)
                           DriftCard(
@@ -134,7 +126,7 @@ class SkillDetailScreen extends ConsumerWidget {
                               children: [
                                 Expanded(
                                   child: Text(
-                                    'Onboarding assessment',
+                                    context.l10n.skillOnboardingAssessment,
                                     style: type.body,
                                   ),
                                 ),
@@ -184,7 +176,7 @@ class SkillDetailScreen extends ConsumerWidget {
                       ],
                     ],
                   ),
-          AsyncError() => const Center(child: Text('Not available.')),
+          AsyncError() => Center(child: Text(context.l10n.commonNotAvailable)),
           _ => const Center(child: CircularProgressIndicator()),
         },
       ),

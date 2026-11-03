@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/drift_colors.dart';
+import '../../core/l10n/l10n.dart';
 
 /// Drift-owned, code-rendered artwork used whenever publisher imagery is not
 /// licensed, missing, or unavailable. The API is the authority for image use.
@@ -27,7 +28,7 @@ class DriftNewsImage extends StatelessWidget {
         Icons.sports_tennis,
         color: Theme.of(context).colorScheme.onPrimary,
         size: 64,
-        semanticLabel: 'Tennis news artwork',
+        semanticLabel: context.l10n.newsArtwork,
       ),
     );
     final uri = Uri.tryParse(url ?? '');

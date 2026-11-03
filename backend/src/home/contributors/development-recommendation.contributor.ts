@@ -2,16 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { LearningService } from '../../learning/learning.service';
 import { HOME_CARD_PRIORITY, type HomeCard } from '../home-card';
 import type { HomeCardContributor, HomeContext } from './home-contributor';
-
-const SKILL_LABEL: Record<string, string> = {
-  FOREHAND: 'forehand',
-  BACKHAND: 'backhand',
-  SERVE: 'serve',
-  RETURN: 'return',
-  NET_PLAY: 'net play',
-  MOVEMENT: 'movement',
-  MATCH_PLAY: 'match play',
-};
+import {
+  DEFAULT_LOCALE,
+  type MessageKey,
+  type MessageParam,
+  t,
+} from '../../common/i18n';
 
 /**
  * The weakest-skill recommendation from M10's skill-score blend. Carried over
@@ -31,6 +27,8 @@ export class DevelopmentRecommendationContributor implements HomeCardContributor
   constructor(private readonly learning: LearningService) {}
 
   async contribute(ctx: HomeContext): Promise<HomeCard[]> {
+    const tr = (key: MessageKey, params?: Record<string, MessageParam>) =>
+      t(ctx.locale ?? DEFAULT_LOCALE, key, params);
     const skillProfile = await this.learning.getSkillProfile(ctx.userId);
     if (
       !skillProfile.weakestSkill ||
@@ -40,19 +38,30 @@ export class DevelopmentRecommendationContributor implements HomeCardContributor
     }
 
     const top = skillProfile.recommendations[0];
+    const skillKey = `home.skill.${skillProfile.weakestSkill}` as MessageKey;
+    const translatedSkill = tr(skillKey);
     const skill =
-      SKILL_LABEL[skillProfile.weakestSkill] ??
-      skillProfile.weakestSkill.toLowerCase();
+      translatedSkill === skillKey
+        ? skillProfile.weakestSkill.toLowerCase()
+        : translatedSkill;
 
     return [
       {
         id: `development-recommendation:${top.id}`,
         type: 'DEVELOPMENT_RECOMMENDATION',
         priority: HOME_CARD_PRIORITY.DEVELOPMENT_RECOMMENDATION,
-        title: `Work on your ${skill}`,
-        body: `"${top.title}" is a ${top.type === 'DRILL' ? 'drill' : 'lesson'} picked for your level.`,
+        title: tr('home.recommendation.title', { skill }),
+        body: tr(
+          top.type === 'DRILL'
+            ? 'home.recommendation.drill'
+            : 'home.recommendation.lesson',
+          { title: top.title },
+        ),
         accent: 'neutral',
-        action: { label: 'Open', route: `/learn/content/${top.id}` },
+        action: {
+          label: tr('home.action.open'),
+          route: `/learn/content/${top.id}`,
+        },
         dismissible: true,
         data: {
           kind: 'content',

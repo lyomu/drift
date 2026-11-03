@@ -8,6 +8,7 @@ import '../../../shared/widgets/drift_card.dart';
 import '../../../shared/widgets/drift_scaffold.dart';
 import '../application/clubs_providers.dart';
 import '../data/clubs_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Announcements — `foundation/04-screen-inventory.md` §A.9. Official club
 /// posts, deliberately separate from the conversational Club Feed.
@@ -25,7 +26,7 @@ class ClubAnnouncementsScreen extends ConsumerWidget {
     final announcements = ref.watch(clubAnnouncementsProvider(clubId));
 
     return DriftScaffold(
-      title: 'Announcements',
+      title: context.l10n.clubAnnouncements,
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(clubAnnouncementsProvider(clubId));
@@ -102,7 +103,7 @@ class _Empty extends StatelessWidget {
         const SizedBox(height: DriftSpacing.s8),
         Center(
           child: Text(
-            'No announcements yet',
+            context.l10n.clubNoAnnouncements,
             style: TextStyle(color: colors.textSecondary),
           ),
         ),
@@ -123,7 +124,7 @@ class _NotAvailable extends StatelessWidget {
         const SizedBox(height: DriftSpacing.s8),
         Center(
           child: Text(
-            'Join this club to see its announcements.',
+            context.l10n.clubJoinToSeeAnnouncements,
             textAlign: TextAlign.center,
             style: TextStyle(color: colors.textSecondary),
           ),

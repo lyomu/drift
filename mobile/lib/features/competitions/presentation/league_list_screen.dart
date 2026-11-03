@@ -8,6 +8,7 @@ import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
 import '../../../shared/widgets/drift_league_card.dart';
 import '../application/competitions_providers.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// League Discovery / List — `foundation/04-screen-inventory.md` §A.5.
 class LeagueListScreen extends ConsumerWidget {
@@ -54,7 +55,7 @@ class LeagueListScreen extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.all(DriftSpacing.s4),
             child: Text(
-              'Leagues',
+              context.l10n.competeLeagues,
               style: Theme.of(context).extension<DriftTypography>()!.display,
             ),
           ),
@@ -87,7 +88,7 @@ class _EmptyState extends StatelessWidget {
               ),
               const SizedBox(height: DriftSpacing.s3),
               Text(
-                'No leagues near you yet — try widening your search',
+                context.l10n.competeNoLeagues,
                 style: type.body.copyWith(color: colors.textSecondary),
                 textAlign: TextAlign.center,
               ),
@@ -116,13 +117,13 @@ class _ErrorState extends StatelessWidget {
             children: [
               const SizedBox(height: DriftSpacing.s12),
               Text(
-                "Couldn't load leagues. Please try again.",
+                context.l10n.competeLoadLeaguesFailed,
                 style: type.body,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: DriftSpacing.s4),
               DriftButton(
-                label: 'Retry',
+                label: context.l10n.commonRetry,
                 variant: DriftButtonVariant.text,
                 onPressed: onRetry,
               ),

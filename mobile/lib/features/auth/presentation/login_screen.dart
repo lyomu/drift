@@ -11,6 +11,7 @@ import '../data/auth_repository.dart';
 import 'widgets/auth_form_widgets.dart';
 import 'widgets/auth_page_scaffold.dart';
 import 'widgets/social_auth_buttons.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Login — `foundation/04-screen-inventory.md` A.1 (redesign 2026-08).
 class LoginScreen extends ConsumerStatefulWidget {
@@ -68,21 +69,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         children: [
           const SizedBox(height: 32),
           Text(
-            'Login',
+            context.l10n.authLogin,
             textAlign: TextAlign.center,
             style: type.h1.copyWith(fontSize: 30),
           ),
           const SizedBox(height: 32),
           AuthInputField(
             controller: _emailController,
-            hintText: 'Email',
+            hintText: context.l10n.authEmail,
             icon: Icons.mail_outline,
             keyboardType: TextInputType.emailAddress,
           ),
           const SizedBox(height: 12),
           AuthInputField(
             controller: _passwordController,
-            hintText: 'Password',
+            hintText: context.l10n.authPassword,
             icon: Icons.lock_outline,
             obscureText: _obscure,
             onSubmitted: (_) => _isSubmitting ? null : _submit(),
@@ -103,7 +104,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             child: GestureDetector(
               onTap: () => context.push('/forgot-password'),
               child: Text(
-                'Forgot Password?',
+                context.l10n.authForgotPasswordLink,
                 style: type.body.copyWith(
                   color: colors.textSecondary,
                   decoration: TextDecoration.underline,
@@ -121,7 +122,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ],
           const SizedBox(height: 22),
           AuthPrimaryButton(
-            label: 'Login',
+            label: context.l10n.authLogin,
             loading: _isSubmitting,
             onPressed: _isSubmitting ? null : _submit,
           ),
@@ -129,8 +130,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           const SocialAuthButtons(),
           const SizedBox(height: 24),
           AuthFooterPrompt(
-            lead: 'Need an account? ',
-            action: 'Sign up',
+            lead: context.l10n.authNeedAccount,
+            action: context.l10n.authSignUp,
             onTap: () => context.push('/sign-up'),
           ),
         ],

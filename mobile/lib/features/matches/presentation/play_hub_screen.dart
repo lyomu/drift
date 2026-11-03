@@ -7,6 +7,7 @@ import 'play/play_active_tab.dart';
 import 'play/play_challenges_tab.dart';
 import 'play/play_find_tab.dart';
 import 'play/play_history_tab.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Play Hub — `foundation/04-screen-inventory.md` §A.4 (redesign 2026-08).
 /// Scrollable pill tabs: Find / Challenges / Active / History.
@@ -22,7 +23,6 @@ class PlayHubScreen extends ConsumerStatefulWidget {
 class _PlayHubScreenState extends ConsumerState<PlayHubScreen> {
   late int _segment;
 
-  static const _labels = ['Find', 'Challenges', 'Active', 'History'];
 
   @override
   void initState() {
@@ -50,7 +50,12 @@ class _PlayHubScreenState extends ConsumerState<PlayHubScreen> {
       children: [
         const SizedBox(height: 4),
         DriftPillTabs(
-          labels: _labels,
+          labels: [
+            context.l10n.playTabFind,
+            context.l10n.playTabChallenges,
+            context.l10n.playTabActive,
+            context.l10n.playTabHistory,
+          ],
           selected: _segment,
           onChanged: (i) => setState(() => _segment = i),
         ),

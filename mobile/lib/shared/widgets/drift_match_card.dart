@@ -8,6 +8,8 @@ import 'drift_card.dart';
 import 'drift_detail_row.dart';
 import 'drift_player_card.dart';
 import 'drift_status_badge.dart';
+import '../../core/l10n/l10n.dart';
+import 'package:intl/intl.dart';
 
 /// Match Card — `foundation/05-design-system.md` §7. Opponent, time, court,
 /// and a state badge that is always icon + label, never colour alone (§9).
@@ -45,11 +47,13 @@ class DriftMatchCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      opponent?.player.displayName ?? 'Match',
+                      opponent?.player.displayName ?? context.l10n.matchTitle,
                       style: type.title,
                     ),
                     Text(
-                      match.isDoubles ? 'Doubles' : 'Singles',
+                      match.isDoubles
+                          ? context.l10n.optDoubles
+                          : context.l10n.optSingles,
                       style: type.caption.copyWith(color: colors.textSecondary),
                     ),
                   ],
@@ -78,26 +82,10 @@ class DriftMatchCard extends StatelessWidget {
 }
 
 /// Shared so the card, detail screen and proposal list all read the same.
-String formatMatchTime(DateTime time) {
-  const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-  final hour = time.hour % 12 == 0 ? 12 : time.hour % 12;
-  final minute = time.minute.toString().padLeft(2, '0');
-  final meridiem = time.hour < 12 ? 'am' : 'pm';
-  return '${time.day} ${months[time.month - 1]}, $hour:$minute$meridiem';
-}
+String formatMatchTime(DateTime time) =>
+    // "4 Aug, 6:30 PM" / "4 août, 18:30" — each locale's own clock.
+    '${DateFormat.MMMd(localeTagNow).format(time)}, '
+    '${DateFormat.jm(localeTagNow).format(time)}';
 
 class _StateBadge extends StatelessWidget {
   const _StateBadge({required this.state});

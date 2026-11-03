@@ -5,6 +5,7 @@ import '../../../core/network/dio_client.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../matches/data/matches_repository.dart';
 import '../../players/data/players_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Mirrors the backend's derived `CompetitionState`
 /// (`competitions/competition-state.ts`) — `RegistrationClosed` folds into
@@ -29,12 +30,12 @@ enum SeasonState {
   };
 
   String get label => switch (this) {
-    SeasonState.draft => 'Not yet open',
-    SeasonState.registrationOpen => 'Registration open',
-    SeasonState.scheduled => 'Starting soon',
-    SeasonState.active => 'In progress',
-    SeasonState.completed => 'Completed',
-    SeasonState.cancelled => 'Cancelled',
+    SeasonState.draft => l10nNow.seasonDraft,
+    SeasonState.registrationOpen => l10nNow.seasonRegistrationOpen,
+    SeasonState.scheduled => l10nNow.seasonStartingSoon,
+    SeasonState.active => l10nNow.commonInProgress,
+    SeasonState.completed => l10nNow.commonCompleted,
+    SeasonState.cancelled => l10nNow.matchStateCancelled,
   };
 }
 
@@ -109,11 +110,11 @@ class League {
   /// What the card prints. Null and any unrecognised value both read as
   /// "All levels", so a band added server-side never renders as a raw enum.
   String get levelBandLabel => switch (levelBand) {
-    'BEGINNER' => 'Beginner',
-    'FOUNDATIONAL' => 'Foundational',
-    'INTERMEDIATE' => 'Intermediate',
-    'ADVANCED' => 'Advanced',
-    _ => 'All levels',
+    'BEGINNER' => l10nNow.levelBeginner,
+    'FOUNDATIONAL' => l10nNow.levelFoundational,
+    'INTERMEDIATE' => l10nNow.levelIntermediate,
+    'ADVANCED' => l10nNow.levelAdvanced,
+    _ => l10nNow.levelAll,
   };
 
   /// Whether the viewer holds a live place (enrolled or waitlisted). A
@@ -199,14 +200,15 @@ class SeasonDetail {
   /// never checks it. See `LEAGUE_LEVEL_BAND_SPEC.md`.
   final String? levelBand;
 
-  String get formatLabel => format == 'DOUBLES' ? 'Doubles' : 'Singles';
+  String get formatLabel =>
+      format == 'DOUBLES' ? l10nNow.optDoubles : l10nNow.optSingles;
 
   String get levelBandLabel => switch (levelBand) {
-    'BEGINNER' => 'Beginner',
-    'FOUNDATIONAL' => 'Foundational',
-    'INTERMEDIATE' => 'Intermediate',
-    'ADVANCED' => 'Advanced',
-    _ => 'All levels',
+    'BEGINNER' => l10nNow.levelBeginner,
+    'FOUNDATIONAL' => l10nNow.levelFoundational,
+    'INTERMEDIATE' => l10nNow.levelIntermediate,
+    'ADVANCED' => l10nNow.levelAdvanced,
+    _ => l10nNow.levelAll,
   };
   final DateTime registrationOpensAt;
   final DateTime registrationClosesAt;
@@ -468,7 +470,7 @@ class CompetitionsRepository {
       final body = e.response?.data;
       final message = body is Map ? body['message'] as Object? : null;
       final text = message is List ? message.join(' ') : message?.toString();
-      throw AuthException(text ?? 'Something went wrong. Please try again.');
+      throw AuthException(text ?? l10nNow.commonErrorGeneric);
     }
   }
 }

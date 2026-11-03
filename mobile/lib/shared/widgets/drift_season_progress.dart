@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/drift_colors.dart';
 import '../../core/theme/drift_spacing.dart';
 import '../../core/theme/drift_typography.dart';
+import '../../core/l10n/l10n.dart';
 
 /// Season Progress — `foundation/05-design-system.md` §7: "Round N of M
 /// indicator." A simple segmented bar, one segment per round.
@@ -27,8 +28,8 @@ class DriftSeasonProgress extends StatelessWidget {
       children: [
         Text(
           currentRound == 0
-              ? 'Not yet started'
-              : 'Round $currentRound of $roundCount',
+              ? context.l10n.seasonNotStarted
+              : context.l10n.seasonRoundOf(currentRound, roundCount),
           style: type.label,
         ),
         const SizedBox(height: DriftSpacing.s2),

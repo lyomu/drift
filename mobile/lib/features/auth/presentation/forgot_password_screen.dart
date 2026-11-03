@@ -9,6 +9,7 @@ import '../../../shared/widgets/drift_back_header.dart';
 import '../../../shared/widgets/drift_text_field.dart';
 import '../application/auth_controller.dart';
 import '../data/auth_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Forgot Password — `foundation/04-screen-inventory.md` A.1.
 ///
@@ -67,7 +68,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const DriftBackHeader(title: 'Forgot Password'),
+            DriftBackHeader(title: context.l10n.authForgotPasswordTitle),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
@@ -75,13 +76,12 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      'Enter the email address on your account and we’ll send a '
-                      'six-digit code you can use to set a new password.',
+                      context.l10n.authForgotPasswordIntro,
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     const SizedBox(height: DriftSpacing.s6),
                     DriftTextField(
-                      label: 'Email',
+                      label: context.l10n.authEmail,
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                     ),
@@ -91,13 +91,15 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                     ],
                     const SizedBox(height: DriftSpacing.s6),
                     DriftButton(
-                      label: _isSubmitting ? 'Sending…' : 'Send Code',
+                      label: _isSubmitting
+                          ? context.l10n.commonSending
+                          : context.l10n.authSendCode,
                       onPressed: _isSubmitting ? null : _submit,
                     ),
                     const SizedBox(height: DriftSpacing.s2),
                     Center(
                       child: DriftButton(
-                        label: 'Back to Log In',
+                        label: context.l10n.authBackToLogin,
                         variant: DriftButtonVariant.text,
                         onPressed: () => context.pop(),
                       ),

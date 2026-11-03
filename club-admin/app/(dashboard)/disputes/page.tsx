@@ -7,8 +7,10 @@ import { Button, ErrorBanner, PageHeader } from "@/components/ui";
 import { IconChip, Panel } from "@/components/dashboard-design";
 import { Listing } from "@/components/Listing";
 import type { Dispute } from "@/lib/types";
+import { useT } from "@/lib/i18n/i18n-context";
 
 export default function DisputesPage() {
+  const t = useT();
   const { clubId, role: myRole } = useClub();
   const canManage = myRole === "OWNER" || myRole === "ADMIN";
   const [disputes, setDisputes] = useState<Dispute[]>([]);
@@ -40,7 +42,7 @@ export default function DisputesPage() {
       await api.patch(`/disputes/${fixtureId}/resolve`, { ruling });
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Something went wrong.");
+      setError(err instanceof ApiError ? err.message : t("a.somethingWentWrong"));
     } finally {
       setResolving(null);
     }
@@ -62,20 +64,19 @@ export default function DisputesPage() {
   return (
     <div>
       <PageHeader
-        title="Disputes"
-        description="Result disputes awaiting a ruling, across all your leagues."
+        title={t("a.disputes")}
+        description={t("a.resultDisputesAwaitingARuling")}
       />
       <ErrorBanner message={error} />
 
       <Listing
-        title="Open disputes"
+        title={t("a.openDisputes")}
         count={loading ? null : disputes.length}
         loading={loading}
         empty={{
           icon: "gavel",
-          title: "No open disputes",
-          description:
-            "When a player contests a submitted result, it lands here for an admin ruling.",
+          title: t("a.noOpenDisputes"),
+          description: t("a.whenAPlayerContestsA"),
         }}
       >
         {disputes.map((dispute) => (
@@ -86,24 +87,18 @@ export default function DisputesPage() {
                   <h2 className="text-[14.5px] font-bold text-drift-text-primary">
                     {name(dispute.sideA)} vs {name(dispute.sideB)}
                   </h2>
-                  <p className="mt-1 text-[12.5px] text-drift-text-secondary">
-                    Result dispute awaiting an admin ruling
-                  </p>
+                  <p className="mt-1 text-[12.5px] text-drift-text-secondary">{t("a.resultDisputeAwaitingAnAdmin")}</p>
                 </div>
               </div>
               <div className="mb-4 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
                 <div className="rounded-md border border-drift-border bg-drift-background px-4 py-3">
-                  <div className="text-xs font-bold uppercase text-drift-text-secondary">
-                    Original submission
-                  </div>
+                  <div className="text-xs font-bold uppercase text-drift-text-secondary">{t("a.originalSubmission")}</div>
                   <div className="mt-1 text-drift-text-primary">
                     {winner(dispute, "submitted")}
                   </div>
                 </div>
                 <div className="rounded-md border border-drift-warning/20 bg-drift-warning-surface px-4 py-3">
-                  <div className="text-xs font-bold uppercase text-drift-warning">
-                    Disputant claims
-                  </div>
+                  <div className="text-xs font-bold uppercase text-drift-warning">{t("a.disputantClaims")}</div>
                   <div className="mt-1 text-drift-text-primary">
                     {winner(dispute, "disputant")}
                   </div>

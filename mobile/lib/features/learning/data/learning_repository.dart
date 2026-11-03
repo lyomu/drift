@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/dio_client.dart';
 import '../../auth/data/auth_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 class ContentSummary {
   const ContentSummary({
@@ -443,7 +444,7 @@ class LearningRepository {
     final body = e.response?.data;
     final message = body is Map ? body['message'] as Object? : null;
     final text = message is List ? message.join(' ') : message?.toString();
-    return AuthException(text ?? 'Something went wrong. Please try again.');
+    return AuthException(text ?? l10nNow.commonErrorGeneric);
   }
 }
 
