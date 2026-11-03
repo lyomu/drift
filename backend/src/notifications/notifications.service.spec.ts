@@ -17,6 +17,7 @@ function defaultPreference(overrides: Record<string, unknown> = {}) {
     matches: true,
     messages: true,
     competitions: true,
+    communities: true,
     learning: true,
     news: false,
     ...overrides,
@@ -137,6 +138,15 @@ describe('NotificationsService', () => {
       expect(prisma.notification.create).not.toHaveBeenCalled();
     });
 
+    it('respects the Communities notification preference', async () => {
+      prisma.notificationPreference.findUnique.mockResolvedValue(
+        defaultPreference({ communities: false }),
+      );
+      await service.create('user-1', 'COMMUNITIES', 'Title', 'Body');
+      expect(prisma.notification.create).not.toHaveBeenCalled();
+      expect(push.sendToUser).not.toHaveBeenCalled();
+    });
+
     it('lazily creates a default preference row when none exists yet', async () => {
       prisma.notificationPreference.findUnique.mockResolvedValue(null);
       await service.create('user-1', 'MATCHES', 'Title', 'Body');
@@ -228,6 +238,22 @@ describe('NotificationsService', () => {
       });
       expect(prisma.notificationPreference.create).toHaveBeenCalled();
       expect(result.news).toBe(true);
+    });
+
+    it('updates the Communities preference', async () => {
+      prisma.notificationPreference.update.mockResolvedValue(
+        defaultPreference({ communities: false }),
+      );
+      const result = await service.updatePreferences('user-1', {
+        communities: false,
+      });
+      expect(prisma.notificationPreference.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { userId: 'user-1' },
+          data: expect.objectContaining({ communities: false }),
+        }),
+      );
+      expect(result.communities).toBe(false);
     });
   });
 });

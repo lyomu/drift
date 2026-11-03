@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import {
   AssessmentBranch,
+  CommunityMemberStatus,
   LeagueState,
   LeagueRegistrationStatus,
   MatchFormat,
@@ -31,9 +32,29 @@ import {
 import { NotificationsService } from '../notifications/notifications.service';
 import { sanitizeRichText } from '../common/rich-text.util';
 import { demoScope } from '../common/demo-scope';
+import { communityMembersOnly } from '../common/community-scope';
 import { msg } from '../common/i18n';
 
 const MINUTE_MS = 60 * 1000;
+
+/** Fields a club-admin or community-admin league create accepts. */
+type LeagueCreateInput = {
+  name: string;
+  description?: string;
+  rulesText?: string;
+  scoringFormat?: string;
+  walkoverRule?: string;
+  unfinishedMatchPolicy?: string;
+  registrationOpensAt?: Date;
+  registrationClosesAt?: Date;
+  startsAt?: Date;
+  roundCount?: number;
+  roundIntervalMinutes?: number;
+  capacity?: number;
+  sport?: MatchSport;
+  format?: MatchFormat;
+  levelBand?: AssessmentBranch;
+};
 
 /** States where a fixture's match never really happened by its deadline —
  * these are forced to WALKOVER when a round closes. DISPUTED is
@@ -60,10 +81,18 @@ export class CompetitionsService {
   async listLeagues(viewerId: string) {
     const scope = await demoScope(this.prisma, viewerId);
     const leagues = await this.prisma.league.findMany({
-      where: { state: LeagueState.PUBLISHED, AND: [scope.clubOptional] },
+      where: {
+        state: LeagueState.PUBLISHED,
+        AND: [
+          scope.clubOptional,
+          scope.communityOptional,
+          communityMembersOnly(viewerId),
+        ],
+      },
       include: {
         rounds: { select: { index: true, closedAt: true } },
         club: { select: { name: true } },
+        community: { select: { name: true } },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -214,6 +243,18 @@ export class CompetitionsService {
         'Registration is not open for this league.',
       );
     }
+    if (league.communityId) {
+      const member = await this.prisma.communityMember.findUnique({
+        where: {
+          communityId_userId: { communityId: league.communityId, userId },
+        },
+      });
+      if (member?.status !== CommunityMemberStatus.ACTIVE) {
+        throw new BadRequestException(
+          'Join this community to register for its league.',
+        );
+      }
+    }
 
     const existing = await this.prisma.leagueRegistration.findUnique({
       where: { leagueId_userId: { leagueId, userId } },
@@ -321,6 +362,18 @@ export class CompetitionsService {
     return fixture.matchId;
   }
 
+  /** The community that owns a fixture's league, or null. */
+  async fixtureCommunityId(fixtureId: string): Promise<string | null> {
+    const fixture = await this.prisma.fixture.findUnique({
+      where: { id: fixtureId },
+      select: {
+        round: { select: { league: { select: { communityId: true } } } },
+      },
+    });
+    if (!fixture) throw new NotFoundException('Fixture not found.');
+    return fixture.round.league.communityId;
+  }
+
   async fixtureClubId(fixtureId: string): Promise<string | null> {
     const fixture = await this.prisma.fixture.findUnique({
       where: { id: fixtureId },
@@ -332,30 +385,40 @@ export class CompetitionsService {
     return fixture.round.league.clubId;
   }
 
-  async createLeague(
-    clubId: string,
-    dto: {
-      name: string;
-      description?: string;
-      rulesText?: string;
-      scoringFormat?: string;
-      walkoverRule?: string;
-      unfinishedMatchPolicy?: string;
-      registrationOpensAt?: Date;
-      registrationClosesAt?: Date;
-      startsAt?: Date;
-      roundCount?: number;
-      roundIntervalMinutes?: number;
-      capacity?: number;
-      sport?: MatchSport;
-      format?: MatchFormat;
-      levelBand?: AssessmentBranch;
-    },
+  async createLeague(clubId: string, dto: LeagueCreateInput) {
+    return this.insertLeague({ clubId }, dto, LeagueState.DRAFT);
+  }
+
+  /**
+   * A community-owned league (2026-11), created by the community's
+   * owner/admins from the app. Unlike a club draft it is published at once:
+   * the mobile form collects every date `ensureLeagueProgressed` needs, and
+   * rounds then generate on their own at `startsAt`. Only community members
+   * can see or register for it.
+   */
+  async createLeagueForCommunity(communityId: string, dto: LeagueCreateInput) {
+    if (
+      !dto.registrationOpensAt ||
+      !dto.registrationClosesAt ||
+      !dto.startsAt ||
+      !dto.roundCount
+    ) {
+      throw new BadRequestException(
+        'Set the registration window, start date and number of rounds.',
+      );
+    }
+    return this.insertLeague({ communityId }, dto, LeagueState.PUBLISHED);
+  }
+
+  private async insertLeague(
+    owner: { clubId: string } | { communityId: string },
+    dto: LeagueCreateInput,
+    state: LeagueState,
   ) {
     this.assertCompetitionWindow(dto);
     const league = await this.prisma.league.create({
       data: {
-        clubId,
+        ...owner,
         name: dto.name,
         description: dto.description,
         rulesText: sanitizeRichText(dto.rulesText),
@@ -371,7 +434,7 @@ export class CompetitionsService {
         sport: dto.sport,
         format: dto.format,
         levelBand: dto.levelBand,
-        state: LeagueState.DRAFT,
+        state,
       },
       include: { rounds: { select: { index: true, closedAt: true } } },
     });
@@ -429,6 +492,28 @@ export class CompetitionsService {
       data: { leagueId, issuedById, ...input },
     });
     return { award };
+  }
+
+  /** A community's leagues for its Competitions tab, with the viewer's
+   * registration status (Join vs Joined), drafts excluded. */
+  async listLeaguesForCommunity(communityId: string, viewerId: string) {
+    const leagues = await this.prisma.league.findMany({
+      where: { communityId, state: { not: LeagueState.DRAFT } },
+      include: { rounds: { select: { index: true, closedAt: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+    const registrations = await this.prisma.leagueRegistration.findMany({
+      where: { userId: viewerId, leagueId: { in: leagues.map((l) => l.id) } },
+      select: { leagueId: true, status: true },
+    });
+    const statusByLeague = new Map(
+      registrations.map((r) => [r.leagueId, r.status]),
+    );
+    return Promise.all(
+      leagues.map((l) =>
+        this.toLeagueSummary(l, statusByLeague.get(l.id) ?? null),
+      ),
+    );
   }
 
   async listLeaguesForClub(clubId: string) {
@@ -583,9 +668,21 @@ export class CompetitionsService {
   /** Every open dispute across this club's leagues — the queue M7 left
    * with no admin ruling path. */
   async listDisputesForClub(clubId: string) {
+    return this.listDisputes({ clubId });
+  }
+
+  /** Same queue for a community's own leagues, resolved by its
+   * owner/admins from the app. */
+  async listDisputesForCommunity(communityId: string) {
+    return this.listDisputes({ communityId });
+  }
+
+  private async listDisputes(
+    owner: { clubId: string } | { communityId: string },
+  ) {
     const fixtures = await this.prisma.fixture.findMany({
       where: {
-        round: { league: { clubId } },
+        round: { league: owner },
         match: { state: MatchState.DISPUTED },
       },
       include: {
@@ -645,6 +742,8 @@ export class CompetitionsService {
       // Optional: only the reads that drive a list card include the club, and
       // the rest would otherwise all need the join to satisfy this type.
       club?: { name: string } | null;
+      communityId?: string | null;
+      community?: { name: string } | null;
     },
     viewerRegistrationStatus: LeagueRegistrationStatus | null = null,
   ) {
@@ -655,6 +754,8 @@ export class CompetitionsService {
       id: league.id,
       clubId: league.clubId,
       clubName: league.club?.name ?? null,
+      communityId: league.communityId ?? null,
+      communityName: league.community?.name ?? null,
       sport: league.sport,
       name: league.name,
       description: league.description,

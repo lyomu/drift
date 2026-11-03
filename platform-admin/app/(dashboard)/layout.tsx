@@ -127,6 +127,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/users", label: "Users", icon: "person_search", permissions: ["USERS_MANAGE"], exact: true },
       { href: "/users/coach-applications", label: "Coach Applications", icon: "sports_tennis", permissions: ["USERS_MANAGE"] },
+      { href: "/communities", label: "Communities", icon: "groups", permissions: ["TRUST_SAFETY_MANAGE"] },
       { href: "/reports", label: "Reported Content Queue", icon: "flag", permissions: ["TRUST_SAFETY_MANAGE"] },
       { href: "/abuse-cases", label: "Block / Abuse Cases", icon: "block", permissions: ["TRUST_SAFETY_MANAGE"] },
     ],

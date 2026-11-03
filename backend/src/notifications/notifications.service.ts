@@ -27,6 +27,7 @@ const PREFERENCE_FIELD: Record<
   | 'news'
   | 'clubs'
   | 'announcements'
+  | 'communities'
 > = {
   CONNECTIONS: 'connections',
   MATCHES: 'matches',
@@ -36,6 +37,7 @@ const PREFERENCE_FIELD: Record<
   NEWS: 'news',
   CLUBS: 'clubs',
   ANNOUNCEMENTS: 'announcements',
+  COMMUNITIES: 'communities',
 };
 
 @Injectable()
@@ -212,6 +214,7 @@ export class NotificationsService {
         news: dto.news,
         clubs: dto.clubs,
         announcements: dto.announcements,
+        communities: dto.communities,
       },
     });
     return toPreferencesDto(preference);

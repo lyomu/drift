@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/network/media_url.dart';
 import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
@@ -20,10 +21,20 @@ import 'package:intl/intl.dart';
 /// Chat Thread — `foundation/04-screen-inventory.md` §A.9. Carries both
 /// player messages and the SYSTEM events the match state machine writes, so
 /// the negotiation and the conversation about it live in one place.
+///
+/// Also the community group chat (2026-11): [embedded] drops the screen
+/// chrome so the thread can sit inside Community Detail's Chat tab, group
+/// threads label each speaker, and a suspended community's chat is
+/// read-only.
 class ChatThreadScreen extends ConsumerStatefulWidget {
-  const ChatThreadScreen({super.key, required this.conversationId});
+  const ChatThreadScreen({
+    super.key,
+    required this.conversationId,
+    this.embedded = false,
+  });
 
   final String conversationId;
+  final bool embedded;
 
   @override
   ConsumerState<ChatThreadScreen> createState() => _ChatThreadScreenState();
@@ -102,6 +113,47 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
     // Scroll down as live messages land.
     ref.listen(threadProvider(widget.conversationId), (_, _) => _scrollToEnd());
 
+    final isGroup = conversation?.isCommunity ?? false;
+    final readOnly = conversation?.community?.isReadOnly ?? false;
+
+    final thread = [
+      Expanded(
+        child: switch (messages) {
+          AsyncData(:final value) =>
+            value.isEmpty
+                ? const _SayHello()
+                : _MessageList(
+                    scrollController: _scrollController,
+                    messages: value,
+                    viewerId: viewerId,
+                    participants: participants,
+                    isGroup: isGroup,
+                    onReport: (id) =>
+                        showMessageReportSheet(context, ref, messageId: id),
+                  ),
+          AsyncError() => Center(
+            child: Text(context.l10n.messagingLoadConversationFailed),
+          ),
+          _ => Center(child: CircularProgressIndicator()),
+        },
+      ),
+      if (readOnly)
+        _ReadOnlyNotice(text: context.l10n.communityChatReadOnly)
+      else
+        _Composer(
+          controller: _controller,
+          isSending: _isSending,
+          onSend: _send,
+        ),
+    ];
+
+    if (widget.embedded) {
+      return ColoredBox(
+        color: colors.surface,
+        child: Column(children: thread),
+      );
+    }
+
     return Scaffold(
       backgroundColor: colors.surface,
       body: SafeArea(
@@ -110,31 +162,9 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
             _ChatHeader(
               title: conversation?.title ?? context.l10n.messagingChat,
               counterpart: counterpart,
+              communityId: conversation?.community?.id,
             ),
-            Expanded(
-              child: switch (messages) {
-                AsyncData(:final value) =>
-                  value.isEmpty
-                      ? const _SayHello()
-                      : _MessageList(
-                          scrollController: _scrollController,
-                          messages: value,
-                          viewerId: viewerId,
-                          participants: participants,
-                          onReport: (id) =>
-                              showMessageReportSheet(context, ref, messageId: id),
-                        ),
-                AsyncError() => Center(
-                  child: Text(context.l10n.messagingLoadConversationFailed),
-                ),
-                _ => Center(child: CircularProgressIndicator()),
-              },
-            ),
-            _Composer(
-              controller: _controller,
-              isSending: _isSending,
-              onSend: _send,
-            ),
+            ...thread,
           ],
         ),
       ),
@@ -151,10 +181,17 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
 /// voice calling, and its "Active now" line has no backing presence data, so
 /// both slots carry the nearest real thing.
 class _ChatHeader extends ConsumerWidget {
-  const _ChatHeader({required this.title, required this.counterpart});
+  const _ChatHeader({
+    required this.title,
+    required this.counterpart,
+    this.communityId,
+  });
 
   final String title;
   final PlayerSummary? counterpart;
+
+  /// Set for a community group chat; the trailing button opens the community.
+  final String? communityId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -220,6 +257,14 @@ class _ChatHeader extends ConsumerWidget {
               icon: Icons.person_outline_rounded,
               iconColor: colors.primary,
               onTap: () => context.push('/players/${counterpart!.id}'),
+            ),
+          ],
+          if (communityId != null) ...[
+            SizedBox(width: 12),
+            _HeaderSquareButton(
+              icon: Icons.groups_outlined,
+              iconColor: colors.primary,
+              onTap: () => context.push('/communities/$communityId'),
             ),
           ],
         ],
@@ -288,6 +333,8 @@ class _Avatar extends StatelessWidget {
     required this.size,
     required this.fontSize,
     required this.borderWidth,
+    this.fallbackName,
+    this.fallbackPhotoUrl,
   });
 
   final PlayerSummary? player;
@@ -295,10 +342,15 @@ class _Avatar extends StatelessWidget {
   final double fontSize;
   final double borderWidth;
 
+  /// Used when [player] is null — a group-chat sender, known only by the
+  /// name and photo the message carries.
+  final String? fallbackName;
+  final String? fallbackPhotoUrl;
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<DriftColors>()!;
-    final photoUrl = player?.photoUrl;
+    final photoUrl = player?.photoUrl ?? fallbackPhotoUrl;
 
     return Container(
       width: size,
@@ -324,7 +376,9 @@ class _Avatar extends StatelessWidget {
 
   Widget _initials(DriftColors colors) => Center(
     child: Text(
-      _initialsOf(player),
+      player == null && fallbackName != null
+          ? _initialsOfName(fallbackName!)
+          : _initialsOf(player),
       style: TextStyle(
         fontSize: fontSize,
         fontWeight: FontWeight.w700,
@@ -346,6 +400,50 @@ String _initialsOf(PlayerSummary? player) {
   return letters.isEmpty ? '?' : letters.toUpperCase();
 }
 
+String _initialsOfName(String name) {
+  final letters = name
+      .trim()
+      .split(RegExp(r'\s+'))
+      .where((part) => part.isNotEmpty)
+      .take(2)
+      .map((part) => part[0])
+      .join();
+  return letters.isEmpty ? '?' : letters.toUpperCase();
+}
+
+/// Replaces the composer in a suspended community's chat.
+class _ReadOnlyNotice extends StatelessWidget {
+  const _ReadOnlyNotice({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<DriftColors>()!;
+    return SafeArea(
+      top: false,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+        decoration: BoxDecoration(
+          color: colors.warningSurface,
+          border: Border(top: BorderSide(color: _hairline(colors))),
+        ),
+        child: Text(
+          text,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            height: 1.35,
+            color: colors.textPrimary,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Message list
 // ---------------------------------------------------------------------------
@@ -357,6 +455,7 @@ class _MessageList extends StatelessWidget {
     required this.viewerId,
     required this.participants,
     required this.onReport,
+    this.isGroup = false,
   });
 
   final ScrollController scrollController;
@@ -364,6 +463,9 @@ class _MessageList extends StatelessWidget {
   final String viewerId;
   final List<PlayerSummary> participants;
   final void Function(String messageId) onReport;
+
+  /// Community chat: each run opens with the speaker's name.
+  final bool isGroup;
 
   @override
   Widget build(BuildContext context) {
@@ -410,6 +512,7 @@ class _MessageList extends StatelessWidget {
                 continuesRun: continuesRun,
                 endsRun: endsRun,
                 sender: _participantById(message.senderId),
+                showName: isGroup,
                 onReport: () => onReport(message.id),
               ),
           ],
@@ -526,6 +629,7 @@ class _MessageRow extends StatelessWidget {
     required this.endsRun,
     required this.sender,
     required this.onReport,
+    this.showName = false,
   });
 
   final ChatMessage message;
@@ -533,6 +637,9 @@ class _MessageRow extends StatelessWidget {
   final bool continuesRun;
   final bool endsRun;
   final PlayerSummary? sender;
+
+  /// Group chat: the first bubble of someone else's run carries their name.
+  final bool showName;
 
   /// Long-press on someone else's message. Your own aren't reportable.
   final VoidCallback onReport;
@@ -577,6 +684,10 @@ class _MessageRow extends StatelessWidget {
                       size: 28,
                       fontSize: 10,
                       borderWidth: 1.5,
+                      // Group chats return no participant list; the message
+                      // names its own sender.
+                      fallbackName: message.senderName,
+                      fallbackPhotoUrl: driftMediaUrl(message.senderPhotoUrl),
                     ),
             ),
             SizedBox(width: 8),
@@ -587,6 +698,23 @@ class _MessageRow extends StatelessWidget {
                   ? CrossAxisAlignment.end
                   : CrossAxisAlignment.start,
               children: [
+                if (showName &&
+                    !isMine &&
+                    !continuesRun &&
+                    message.senderName != null) ...[
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4, bottom: 3),
+                    child: Text(
+                      message.senderName!,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        height: 1.2,
+                        color: colors.primary,
+                      ),
+                    ),
+                  ),
+                ],
                 GestureDetector(
                   onLongPress: isMine ? null : onReport,
                   child: ConstrainedBox(

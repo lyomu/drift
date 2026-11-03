@@ -80,6 +80,48 @@ export const fr: Record<MessageKey, string> = {
     'Le résultat est définitif et les classements sont à jour.',
 
   'message.new.title': 'Nouveau message de {name}',
+  'message.newInCommunity.title': '{community} : {name}',
+
+  // Communities
+  'community.approved.title': 'Votre communauté est en ligne',
+  'community.approved.body':
+    '{community} a été approuvée. Invitez les personnes avec qui vous jouez.',
+  'community.rejected.title': "Votre communauté n'a pas été approuvée",
+  'community.rejected.body': '{community} : {note}',
+  'community.rejectedNoNote.body':
+    '{community} ne respecte pas les règles des communautés.',
+  'community.joinRequest.title': '{name} souhaite rejoindre {community}',
+  'community.joinRequest.body': 'Examinez la demande dans Gérer la communauté.',
+  'community.requestApproved.title': 'Vous avez rejoint {community}',
+  'community.requestApproved.body':
+    'Dites bonjour dans la discussion de la communauté.',
+  'community.requestDeclined.title': 'Demande non acceptée',
+  'community.requestDeclined.body':
+    "{community} n'a pas accepté votre demande.",
+  'community.removed.title': 'Retiré de {community}',
+  'community.removed.body':
+    'Un administrateur vous a retiré de cette communauté.',
+  'community.suspended.title': '{community} a été suspendue',
+  'community.suspended.body':
+    "Sa discussion est en lecture seule pendant que Drift Tennis l'examine.",
+  'community.restored.title': '{community} est de retour',
+  'community.restored.body':
+    'La discussion de la communauté est de nouveau ouverte.',
+  'community.deleted.title': '{community} a été fermée',
+  'community.deleted.body': "Cette communauté n'existe plus.",
+  'community.madeAdmin.title':
+    'Vous êtes maintenant administrateur de {community}',
+  'community.madeAdmin.body':
+    'Vous pouvez approuver les demandes et gérer les membres.',
+  'community.ownershipTransferred.title':
+    'Vous êtes maintenant propriétaire de {community}',
+  'community.ownershipTransferred.body':
+    'Vous pouvez tout gérer dans cette communauté.',
+  'community.newLeague.title': 'Nouvelle ligue dans {community}',
+  'community.newLadder.title': 'Nouvelle échelle dans {community}',
+  'community.newCompetition.body':
+    '{competition}. Ouvrez la communauté pour participer.',
+
 
   'home.empty.title': 'Vous êtes à jour',
   'home.empty.body':

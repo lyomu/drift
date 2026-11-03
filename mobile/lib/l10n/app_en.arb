@@ -271,6 +271,277 @@
   "commonWorking": "Working…",
   "commonYesterday": "Yesterday",
   "commonYou": "You",
+  "communityAboutHint": "Who it's for, level, where you usually play…",
+  "communityAboutOptional": "About · Optional",
+  "communityAddPhoto": "Add a photo",
+  "communityAddPhotoOptional": "Add a photo (optional)",
+  "communityApprove": "Approve",
+  "communityChallengeRange": "{count, plural, =1{Players can challenge 1 rung up} other{Players can challenge up to {count} rungs up}}",
+  "@communityChallengeRange": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "communityChallengeRangeHint": "How far above their own position a player may challenge.",
+  "communityChangePhoto": "Change photo",
+  "communityChatPreview": "{name}: {message}",
+  "@communityChatPreview": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "communityChatReadOnly": "This community is suspended, so its chat is read-only.",
+  "communityChatUnavailable": "The chat opens once the community is approved.",
+  "communityCity": "City",
+  "communityCityHint": "Nairobi",
+  "communityCreate": "Create",
+  "communityDecline": "Decline",
+  "communityDelete": "Delete community",
+  "communityDeleteBody": "The chat, ladders and leagues go with it, and every member is told it was closed. This can't be undone.",
+  "communityDeleted": "Community deleted",
+  "communityDeleteTitle": "Delete {name}?",
+  "@communityDeleteTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "communityDetails": "Details",
+  "communityDisputeHint": "The players disagree on the score. Your ruling settles it.",
+  "communityDisputeKeep": "Keep submitted score",
+  "communityDisputeResolved": "Dispute resolved",
+  "communityDisputes": "Disputed results ({count})",
+  "@communityDisputes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "communityDisputeUseDisputed": "Use disputed score",
+  "communityDisputeVs": "{a} vs {b}",
+  "@communityDisputeVs": {
+    "placeholders": {
+      "a": {
+        "type": "String"
+      },
+      "b": {
+        "type": "String"
+      }
+    }
+  },
+  "communityEmptyBody": "A community is a standing session with its own members and chat. Start one and invite the people you play with.",
+  "communityEmptyTitle": "No communities yet",
+  "communityFilterAnyCity": "Any city",
+  "communityFilterCity": "City",
+  "communityFilterCityTitle": "Communities in…",
+  "communityFilterNearMe": "Near me",
+  "communityFrequencyBiweekly": "Every two weeks",
+  "communityFrequencyMonthly": "Monthly",
+  "communityFrequencyOther": "Other",
+  "communityFrequencyWeekly": "Weekly",
+  "communityHowOften": "How often",
+  "communityJoin": "Join",
+  "communityJoinAnyone": "Anyone",
+  "communityJoinAnyoneHint": "Anyone on Drift Tennis can join straight away",
+  "communityJoinByRequest": "By request",
+  "communityJoinByRequestHint": "You approve each request",
+  "communityJoined": "Joined",
+  "communityJoinedToast": "You've joined {name}",
+  "@communityJoinedToast": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "communityJoinRequests": "Join requests ({count})",
+  "@communityJoinRequests": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "communityLadderCreated": "Ladder created. Members have been notified.",
+  "communityLadderName": "Ladder name",
+  "communityLadderPlayers": "{count, plural, =0{No players yet} =1{1 player} other{{count} players}}",
+  "@communityLadderPlayers": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "communityLadders": "Ladders",
+  "communityLadderYourRung": "You're #{position} of {total}",
+  "@communityLadderYourRung": {
+    "placeholders": {
+      "position": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "communityLeagueCapacity": "Player limit (optional)",
+  "communityLeagueCapacityHint": "Extra sign-ups join a waitlist.",
+  "communityLeagueCloseBeforeStart": "Registration has to close on or before the start date.",
+  "communityLeagueCreate": "Create league",
+  "communityLeagueCreated": "League created. Members have been notified.",
+  "communityLeagueDaysBetweenRounds": "Days per round",
+  "communityLeagueDescription": "Description (optional)",
+  "communityLeagueName": "League name",
+  "communityLeagueOpenBeforeClose": "Registration has to open before it closes.",
+  "communityLeagueRegistrationCloses": "Registration closes",
+  "communityLeagueRegistrationOpens": "Registration opens",
+  "communityLeagueRounds": "Rounds",
+  "communityLeagues": "Leagues",
+  "communityLeagueStarts": "League starts",
+  "communityLeave": "Leave community",
+  "communityLeaveBody": "You'll leave its chat and stop getting its notifications. You can ask to join again later.",
+  "communityLeaveLastOwner": "You're the only member, so leaving closes the community for good.",
+  "communityLeaveTitle": "Leave {name}?",
+  "@communityLeaveTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "communityLeft": "You've left the community.",
+  "communityLoadCompetitionsFailed": "Couldn't load competitions.",
+  "communityLoadFailed": "Couldn't load communities.",
+  "communityLoadMembersFailed": "Couldn't load members.",
+  "communityLoadOneFailed": "Couldn't load this community.",
+  "communityMakeAdmin": "Make admin",
+  "communityMakeOwner": "Make owner",
+  "communityManage": "Manage community",
+  "communityMemberCount": "{count, plural, =1{1 member} other{{count} members}}",
+  "@communityMemberCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "communityMembersCount": "Members ({count})",
+  "@communityMembersCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "communityMute": "Mute chat notifications",
+  "communityMuteHint": "Approvals and new competitions still reach you.",
+  "communityName": "Name",
+  "communityNameHint": "Tuesday Doubles",
+  "communityNearYou": "Communities near you",
+  "communityNewLadder": "New ladder",
+  "communityNewLeague": "New league",
+  "communityNoAbout": "No description yet.",
+  "communityNoCompetitions": "No ladders or leagues yet.",
+  "communityNoCompetitionsManager": "No ladders or leagues yet. Start one for your members.",
+  "communityNoneMatch": "No communities match. Try another filter, or start one.",
+  "communityNoneNearby": "No communities near you yet. Start one and invite the people you play with.",
+  "communityNotApprovedBody": "Drift didn't approve this community. Contact support if you think that's a mistake.",
+  "communityOwnerZone": "Owner",
+  "communityPhotoChosen": "Photo added",
+  "communityRemove": "Remove from community",
+  "communityRemoveAdmin": "Remove as admin",
+  "communityRemoveBody": "They'll leave the chat and be told they were removed. They can ask to join again.",
+  "communityRemoveTitle": "Remove {name}?",
+  "@communityRemoveTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "communityReport": "Report community",
+  "communityReportAlsoLeave": "Also leave this community",
+  "communityReportBody": "Drift's team will review it. The community won't be told who reported it.",
+  "communityReported": "Thanks — Drift will review this community.",
+  "communityReportedAndLeft": "Reported, and you've left the community.",
+  "communityReportTitle": "Report {name}",
+  "@communityReportTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "communityRequested": "Requested",
+  "communityRequestedCancel": "Requested · Cancel request",
+  "communityRequestSent": "Request sent. You'll get a notification when it's answered.",
+  "communityRequestToJoin": "Request to join",
+  "communityResults": "Results",
+  "communityReviewNote": "Drift reviews every new community before others can find it. We'll let you know when it's live.",
+  "communityRoleAdmin": "Admin",
+  "communityRoleMember": "Member",
+  "communityRoleOwner": "Owner",
+  "communityRunBy": "Run by {club}",
+  "@communityRunBy": {
+    "placeholders": {
+      "club": {
+        "type": "String"
+      }
+    }
+  },
+  "communitySave": "Save changes",
+  "communitySaved": "Saved",
+  "communitySearchHint": "Search communities",
+  "communityStart": "Start a community",
+  "communityStatusNotApproved": "Not approved",
+  "communityStatusSuspended": "Suspended",
+  "communityStatusUnderReview": "Under review",
+  "communitySubmitted": "Submitted for review",
+  "communitySuspendedBody": "Drift suspended this community. The chat is read-only and nobody can join while it's reviewed.",
+  "communityTabAbout": "About",
+  "communityTabChat": "Chat",
+  "communityTabCompetitions": "Competitions",
+  "communityTabMembers": "Members",
+  "communityTransfer": "Make owner",
+  "communityTransferBody": "They'll be able to manage everything, including deleting the community. You stay on as an admin.",
+  "communityTransferred": "{name} now owns the community",
+  "@communityTransferred": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "communityTransferTitle": "Make {name} the owner?",
+  "@communityTransferTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "communityTypeClub": "Club",
+  "communityTypeClubHint": "A club's own members",
+  "communityTypeLadder": "Ladder",
+  "communityTypeLadderHint": "A standing ranked competition",
+  "communityTypeSocial": "Social",
+  "communityTypeSocialHint": "Regular friendly sessions",
+  "communityTypeTraining": "Training",
+  "communityTypeTrainingHint": "Drills and coached practice",
+  "communityUnderReviewBody": "Drift is reviewing your community. Nobody else can find or join it until it's approved — we'll send you a notification.",
+  "communityUnmute": "Unmute chat notifications",
+  "communityWhatItIs": "What it is",
+  "communityWhoCanJoin": "Who can join",
+  "communityYourCommunities": "Your communities",
   "competeBye": "Bye",
   "competeByeFixture": "{name} — bye",
   "@competeByeFixture": {
@@ -422,6 +693,7 @@
   "discoverClubs": "Clubs",
   "discoverCoaches": "Coaches",
   "discoverCourts": "Courts",
+  "discoverFindPlayers": "Find players",
   "drawerSigningOut": "Signing out…",
   "drawerViewProfile": "View your profile",
   "eventsComingSoon": "Events coming soon",
@@ -753,7 +1025,7 @@
   "messagingViewRelatedLeague": "View related league",
   "messagingViewRelatedMatch": "View related match",
   "navAchievements": "Achievements",
-  "navCompete": "Compete",
+  "navCommunity": "Community",
   "navDiscover": "Discover",
   "navHome": "Home",
   "navLearn": "Learn",
@@ -816,6 +1088,7 @@
   "notifNothingToOpen": "Nothing further to open for this update.",
   "notifPrefAnnouncements": "News and updates from the Drift team",
   "notifPrefClubs": "Announcements and membership updates from your clubs",
+  "notifPrefCommunities": "Approvals, join requests and new competitions in your communities",
   "notifPrefCompetitions": "New rounds and results in your leagues",
   "notifPrefConnections": "Requests to connect, and accepted connections",
   "notifPrefLearning": "Goals, plans, and practice reminders",
@@ -1084,14 +1357,25 @@
   "playActiveEmpty": "No upcoming matches — challenge someone to get started.",
   "playChallengeWithdrawn": "Challenge withdrawn.",
   "playChallengesEmpty": "No open challenges — find a player and send one.",
+  "playCompetitionRound": "{name} · Round {round}",
+  "@playCompetitionRound": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "round": {
+        "type": "int"
+      }
+    }
+  },
+  "playFindOpponent": "Find opponent",
   "playHistoryEmpty": "Play your first match to start building history.",
   "playLoadPlayersFailed": "Couldn't load players. Pull to retry.",
   "playNoPlayersFound": "No players found.",
-  "playNoPlayersMatch": "No players match. Try widening your filters.",
   "playRespond": "Respond",
+  "playSegmentMatches": "Matches",
   "playTabActive": "Active",
   "playTabChallenges": "Challenges",
-  "playTabFind": "Find",
   "playTabHistory": "History",
   "playYourStats": "Your stats",
   "playerAtAGlance": "AT A GLANCE",

@@ -214,7 +214,7 @@ export class HomeService {
         accent: 'neutral',
         action: {
           label: t(locale, 'home.action.findPlayers'),
-          route: '/home?tab=play&play=find',
+          route: '/home?tab=discover&discover=players',
         },
         dismissible: false,
         data: null,

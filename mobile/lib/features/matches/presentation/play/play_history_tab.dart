@@ -160,6 +160,7 @@ class _HistoryRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                PlayCompetitionTag(match: match),
                 Text(
                   opponent?.displayName ?? context.l10n.matchTitle,
                   style: type.title.copyWith(fontWeight: FontWeight.w700),

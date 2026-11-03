@@ -251,6 +251,37 @@ class MatchCompetitionContext {
       );
 }
 
+/// Which competition produced a match — league fixture, ladder challenge or
+/// tournament fixture. Drives the "Spring League · Round 3" line on
+/// Play → Matches rows. Null for a friendly challenge.
+enum CompetitionKind { league, ladder, tournament }
+
+class MatchCompetitionLabel {
+  const MatchCompetitionLabel({
+    required this.kind,
+    required this.id,
+    required this.name,
+    this.roundIndex,
+  });
+
+  final CompetitionKind kind;
+  final String id;
+  final String name;
+  final int? roundIndex;
+
+  factory MatchCompetitionLabel.fromJson(Map<String, dynamic> json) =>
+      MatchCompetitionLabel(
+        kind: switch (json['kind']) {
+          'LADDER' => CompetitionKind.ladder,
+          'TOURNAMENT' => CompetitionKind.tournament,
+          _ => CompetitionKind.league,
+        },
+        id: json['id'] as String,
+        name: json['name'] as String,
+        roundIndex: json['roundIndex'] as int?,
+      );
+}
+
 class DriftMatch {
   const DriftMatch({
     required this.id,
@@ -270,6 +301,7 @@ class DriftMatch {
     required this.cancelReason,
     required this.result,
     required this.competitionContext,
+    this.competitionLabel,
   });
 
   final String id;
@@ -289,6 +321,7 @@ class DriftMatch {
   final String? cancelReason;
   final MatchResult? result;
   final MatchCompetitionContext? competitionContext;
+  final MatchCompetitionLabel? competitionLabel;
 
   bool get isDoubles => format == 'DOUBLES';
 
@@ -344,6 +377,11 @@ class DriftMatch {
         ? null
         : MatchCompetitionContext.fromJson(
             json['competitionContext'] as Map<String, dynamic>,
+          ),
+    competitionLabel: json['competitionLabel'] == null
+        ? null
+        : MatchCompetitionLabel.fromJson(
+            json['competitionLabel'] as Map<String, dynamic>,
           ),
   );
 }

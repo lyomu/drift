@@ -10,6 +10,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { displayName } from '../common/display-name.util';
 import { DemoScope, demoScope } from '../common/demo-scope';
+import { communityMembersOnly } from '../common/community-scope';
 import {
   GlobalSearchDto,
   GlobalSearchEntityType,
@@ -45,7 +46,7 @@ export class GlobalSearchService {
         ? this.clubs(query, take, scope)
         : [],
       this.includes(type, GlobalSearchEntityType.COMPETITION)
-        ? this.competitions(query, take, scope)
+        ? this.competitions(userId, query, take, scope)
         : [],
     ]);
 
@@ -189,6 +190,7 @@ export class GlobalSearchService {
   }
 
   private async competitions(
+    userId: string,
     query: string,
     take: number,
     scope: DemoScope,
@@ -197,7 +199,11 @@ export class GlobalSearchService {
       this.prisma.league.findMany({
         where: {
           state: LeagueState.PUBLISHED,
-          AND: [scope.clubOptional],
+          AND: [
+            scope.clubOptional,
+            scope.communityOptional,
+            communityMembersOnly(userId),
+          ],
           name: { contains: query, mode: 'insensitive' },
         },
         select: { id: true, name: true, sport: true, format: true },
@@ -222,10 +228,19 @@ export class GlobalSearchService {
       this.prisma.ladder.findMany({
         where: {
           state: LadderState.ACTIVE,
-          ...scope.clubRequired,
+          AND: [
+            scope.clubOptional,
+            scope.communityOptional,
+            communityMembersOnly(userId),
+          ],
           name: { contains: query, mode: 'insensitive' },
         },
-        select: { id: true, name: true, club: { select: { name: true } } },
+        select: {
+          id: true,
+          name: true,
+          club: { select: { name: true } },
+          community: { select: { name: true } },
+        },
         take,
         orderBy: { name: 'asc' },
       }),
@@ -250,7 +265,7 @@ export class GlobalSearchService {
         id: ladder.id,
         type: 'LADDER' as const,
         title: ladder.name,
-        subtitle: `Ladder - ${ladder.club.name}`,
+        subtitle: `Ladder - ${ladder.club?.name ?? ladder.community?.name ?? ''}`,
         route: `/compete/ladders/${ladder.id}`,
       })),
     ].slice(0, take);

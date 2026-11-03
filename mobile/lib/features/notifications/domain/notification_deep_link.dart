@@ -26,6 +26,9 @@ String? notificationDeepLink({
     // club's Announcements list, where the new item sorts to the top.
     'CLUB' when id != null => '/discover/clubs/$id',
     'CLUB_ANNOUNCEMENT' when id != null => '/discover/clubs/$id/announcements',
+    // Every community event (approval, join request, membership decision,
+    // role change, new competition) opens the community itself.
+    'COMMUNITY' when id != null => '/communities/$id',
     'SETTINGS' => '/settings',
     _ => null,
   };

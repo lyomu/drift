@@ -1102,6 +1102,864 @@ abstract class AppLocalizations {
   /// **'You'**
   String get commonYou;
 
+  /// No description provided for @communityAboutHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Who it\'s for, level, where you usually play…'**
+  String get communityAboutHint;
+
+  /// No description provided for @communityAboutOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'About · Optional'**
+  String get communityAboutOptional;
+
+  /// No description provided for @communityAddPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a photo'**
+  String get communityAddPhoto;
+
+  /// No description provided for @communityAddPhotoOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a photo (optional)'**
+  String get communityAddPhotoOptional;
+
+  /// No description provided for @communityApprove.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve'**
+  String get communityApprove;
+
+  /// No description provided for @communityChallengeRange.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Players can challenge 1 rung up} other{Players can challenge up to {count} rungs up}}'**
+  String communityChallengeRange(int count);
+
+  /// No description provided for @communityChallengeRangeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'How far above their own position a player may challenge.'**
+  String get communityChallengeRangeHint;
+
+  /// No description provided for @communityChangePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Change photo'**
+  String get communityChangePhoto;
+
+  /// No description provided for @communityChatPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}: {message}'**
+  String communityChatPreview(String name, String message);
+
+  /// No description provided for @communityChatReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'This community is suspended, so its chat is read-only.'**
+  String get communityChatReadOnly;
+
+  /// No description provided for @communityChatUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The chat opens once the community is approved.'**
+  String get communityChatUnavailable;
+
+  /// No description provided for @communityCity.
+  ///
+  /// In en, this message translates to:
+  /// **'City'**
+  String get communityCity;
+
+  /// No description provided for @communityCityHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Nairobi'**
+  String get communityCityHint;
+
+  /// No description provided for @communityCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get communityCreate;
+
+  /// No description provided for @communityDecline.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline'**
+  String get communityDecline;
+
+  /// No description provided for @communityDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete community'**
+  String get communityDelete;
+
+  /// No description provided for @communityDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The chat, ladders and leagues go with it, and every member is told it was closed. This can\'t be undone.'**
+  String get communityDeleteBody;
+
+  /// No description provided for @communityDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Community deleted'**
+  String get communityDeleted;
+
+  /// No description provided for @communityDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {name}?'**
+  String communityDeleteTitle(String name);
+
+  /// No description provided for @communityDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get communityDetails;
+
+  /// No description provided for @communityDisputeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The players disagree on the score. Your ruling settles it.'**
+  String get communityDisputeHint;
+
+  /// No description provided for @communityDisputeKeep.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep submitted score'**
+  String get communityDisputeKeep;
+
+  /// No description provided for @communityDisputeResolved.
+  ///
+  /// In en, this message translates to:
+  /// **'Dispute resolved'**
+  String get communityDisputeResolved;
+
+  /// No description provided for @communityDisputes.
+  ///
+  /// In en, this message translates to:
+  /// **'Disputed results ({count})'**
+  String communityDisputes(int count);
+
+  /// No description provided for @communityDisputeUseDisputed.
+  ///
+  /// In en, this message translates to:
+  /// **'Use disputed score'**
+  String get communityDisputeUseDisputed;
+
+  /// No description provided for @communityDisputeVs.
+  ///
+  /// In en, this message translates to:
+  /// **'{a} vs {b}'**
+  String communityDisputeVs(String a, String b);
+
+  /// No description provided for @communityEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'A community is a standing session with its own members and chat. Start one and invite the people you play with.'**
+  String get communityEmptyBody;
+
+  /// No description provided for @communityEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No communities yet'**
+  String get communityEmptyTitle;
+
+  /// No description provided for @communityFilterAnyCity.
+  ///
+  /// In en, this message translates to:
+  /// **'Any city'**
+  String get communityFilterAnyCity;
+
+  /// No description provided for @communityFilterCity.
+  ///
+  /// In en, this message translates to:
+  /// **'City'**
+  String get communityFilterCity;
+
+  /// No description provided for @communityFilterCityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Communities in…'**
+  String get communityFilterCityTitle;
+
+  /// No description provided for @communityFilterNearMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Near me'**
+  String get communityFilterNearMe;
+
+  /// No description provided for @communityFrequencyBiweekly.
+  ///
+  /// In en, this message translates to:
+  /// **'Every two weeks'**
+  String get communityFrequencyBiweekly;
+
+  /// No description provided for @communityFrequencyMonthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly'**
+  String get communityFrequencyMonthly;
+
+  /// No description provided for @communityFrequencyOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get communityFrequencyOther;
+
+  /// No description provided for @communityFrequencyWeekly.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly'**
+  String get communityFrequencyWeekly;
+
+  /// No description provided for @communityHowOften.
+  ///
+  /// In en, this message translates to:
+  /// **'How often'**
+  String get communityHowOften;
+
+  /// No description provided for @communityJoin.
+  ///
+  /// In en, this message translates to:
+  /// **'Join'**
+  String get communityJoin;
+
+  /// No description provided for @communityJoinAnyone.
+  ///
+  /// In en, this message translates to:
+  /// **'Anyone'**
+  String get communityJoinAnyone;
+
+  /// No description provided for @communityJoinAnyoneHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Anyone on Drift Tennis can join straight away'**
+  String get communityJoinAnyoneHint;
+
+  /// No description provided for @communityJoinByRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'By request'**
+  String get communityJoinByRequest;
+
+  /// No description provided for @communityJoinByRequestHint.
+  ///
+  /// In en, this message translates to:
+  /// **'You approve each request'**
+  String get communityJoinByRequestHint;
+
+  /// No description provided for @communityJoined.
+  ///
+  /// In en, this message translates to:
+  /// **'Joined'**
+  String get communityJoined;
+
+  /// No description provided for @communityJoinedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve joined {name}'**
+  String communityJoinedToast(String name);
+
+  /// No description provided for @communityJoinRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'Join requests ({count})'**
+  String communityJoinRequests(int count);
+
+  /// No description provided for @communityLadderCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Ladder created. Members have been notified.'**
+  String get communityLadderCreated;
+
+  /// No description provided for @communityLadderName.
+  ///
+  /// In en, this message translates to:
+  /// **'Ladder name'**
+  String get communityLadderName;
+
+  /// No description provided for @communityLadderPlayers.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No players yet} =1{1 player} other{{count} players}}'**
+  String communityLadderPlayers(int count);
+
+  /// No description provided for @communityLadders.
+  ///
+  /// In en, this message translates to:
+  /// **'Ladders'**
+  String get communityLadders;
+
+  /// No description provided for @communityLadderYourRung.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re #{position} of {total}'**
+  String communityLadderYourRung(int position, int total);
+
+  /// No description provided for @communityLeagueCapacity.
+  ///
+  /// In en, this message translates to:
+  /// **'Player limit (optional)'**
+  String get communityLeagueCapacity;
+
+  /// No description provided for @communityLeagueCapacityHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Extra sign-ups join a waitlist.'**
+  String get communityLeagueCapacityHint;
+
+  /// No description provided for @communityLeagueCloseBeforeStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Registration has to close on or before the start date.'**
+  String get communityLeagueCloseBeforeStart;
+
+  /// No description provided for @communityLeagueCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create league'**
+  String get communityLeagueCreate;
+
+  /// No description provided for @communityLeagueCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'League created. Members have been notified.'**
+  String get communityLeagueCreated;
+
+  /// No description provided for @communityLeagueDaysBetweenRounds.
+  ///
+  /// In en, this message translates to:
+  /// **'Days per round'**
+  String get communityLeagueDaysBetweenRounds;
+
+  /// No description provided for @communityLeagueDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description (optional)'**
+  String get communityLeagueDescription;
+
+  /// No description provided for @communityLeagueName.
+  ///
+  /// In en, this message translates to:
+  /// **'League name'**
+  String get communityLeagueName;
+
+  /// No description provided for @communityLeagueOpenBeforeClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Registration has to open before it closes.'**
+  String get communityLeagueOpenBeforeClose;
+
+  /// No description provided for @communityLeagueRegistrationCloses.
+  ///
+  /// In en, this message translates to:
+  /// **'Registration closes'**
+  String get communityLeagueRegistrationCloses;
+
+  /// No description provided for @communityLeagueRegistrationOpens.
+  ///
+  /// In en, this message translates to:
+  /// **'Registration opens'**
+  String get communityLeagueRegistrationOpens;
+
+  /// No description provided for @communityLeagueRounds.
+  ///
+  /// In en, this message translates to:
+  /// **'Rounds'**
+  String get communityLeagueRounds;
+
+  /// No description provided for @communityLeagues.
+  ///
+  /// In en, this message translates to:
+  /// **'Leagues'**
+  String get communityLeagues;
+
+  /// No description provided for @communityLeagueStarts.
+  ///
+  /// In en, this message translates to:
+  /// **'League starts'**
+  String get communityLeagueStarts;
+
+  /// No description provided for @communityLeave.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave community'**
+  String get communityLeave;
+
+  /// No description provided for @communityLeaveBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ll leave its chat and stop getting its notifications. You can ask to join again later.'**
+  String get communityLeaveBody;
+
+  /// No description provided for @communityLeaveLastOwner.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re the only member, so leaving closes the community for good.'**
+  String get communityLeaveLastOwner;
+
+  /// No description provided for @communityLeaveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave {name}?'**
+  String communityLeaveTitle(String name);
+
+  /// No description provided for @communityLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve left the community.'**
+  String get communityLeft;
+
+  /// No description provided for @communityLoadCompetitionsFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load competitions.'**
+  String get communityLoadCompetitionsFailed;
+
+  /// No description provided for @communityLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load communities.'**
+  String get communityLoadFailed;
+
+  /// No description provided for @communityLoadMembersFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load members.'**
+  String get communityLoadMembersFailed;
+
+  /// No description provided for @communityLoadOneFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load this community.'**
+  String get communityLoadOneFailed;
+
+  /// No description provided for @communityMakeAdmin.
+  ///
+  /// In en, this message translates to:
+  /// **'Make admin'**
+  String get communityMakeAdmin;
+
+  /// No description provided for @communityMakeOwner.
+  ///
+  /// In en, this message translates to:
+  /// **'Make owner'**
+  String get communityMakeOwner;
+
+  /// No description provided for @communityManage.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage community'**
+  String get communityManage;
+
+  /// No description provided for @communityMemberCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 member} other{{count} members}}'**
+  String communityMemberCount(int count);
+
+  /// No description provided for @communityMembersCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Members ({count})'**
+  String communityMembersCount(int count);
+
+  /// No description provided for @communityMute.
+  ///
+  /// In en, this message translates to:
+  /// **'Mute chat notifications'**
+  String get communityMute;
+
+  /// No description provided for @communityMuteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Approvals and new competitions still reach you.'**
+  String get communityMuteHint;
+
+  /// No description provided for @communityName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get communityName;
+
+  /// No description provided for @communityNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tuesday Doubles'**
+  String get communityNameHint;
+
+  /// No description provided for @communityNearYou.
+  ///
+  /// In en, this message translates to:
+  /// **'Communities near you'**
+  String get communityNearYou;
+
+  /// No description provided for @communityNewLadder.
+  ///
+  /// In en, this message translates to:
+  /// **'New ladder'**
+  String get communityNewLadder;
+
+  /// No description provided for @communityNewLeague.
+  ///
+  /// In en, this message translates to:
+  /// **'New league'**
+  String get communityNewLeague;
+
+  /// No description provided for @communityNoAbout.
+  ///
+  /// In en, this message translates to:
+  /// **'No description yet.'**
+  String get communityNoAbout;
+
+  /// No description provided for @communityNoCompetitions.
+  ///
+  /// In en, this message translates to:
+  /// **'No ladders or leagues yet.'**
+  String get communityNoCompetitions;
+
+  /// No description provided for @communityNoCompetitionsManager.
+  ///
+  /// In en, this message translates to:
+  /// **'No ladders or leagues yet. Start one for your members.'**
+  String get communityNoCompetitionsManager;
+
+  /// No description provided for @communityNoneMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No communities match. Try another filter, or start one.'**
+  String get communityNoneMatch;
+
+  /// No description provided for @communityNoneNearby.
+  ///
+  /// In en, this message translates to:
+  /// **'No communities near you yet. Start one and invite the people you play with.'**
+  String get communityNoneNearby;
+
+  /// No description provided for @communityNotApprovedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Drift didn\'t approve this community. Contact support if you think that\'s a mistake.'**
+  String get communityNotApprovedBody;
+
+  /// No description provided for @communityOwnerZone.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner'**
+  String get communityOwnerZone;
+
+  /// No description provided for @communityPhotoChosen.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo added'**
+  String get communityPhotoChosen;
+
+  /// No description provided for @communityRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from community'**
+  String get communityRemove;
+
+  /// No description provided for @communityRemoveAdmin.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove as admin'**
+  String get communityRemoveAdmin;
+
+  /// No description provided for @communityRemoveBody.
+  ///
+  /// In en, this message translates to:
+  /// **'They\'ll leave the chat and be told they were removed. They can ask to join again.'**
+  String get communityRemoveBody;
+
+  /// No description provided for @communityRemoveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {name}?'**
+  String communityRemoveTitle(String name);
+
+  /// No description provided for @communityReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Report community'**
+  String get communityReport;
+
+  /// No description provided for @communityReportAlsoLeave.
+  ///
+  /// In en, this message translates to:
+  /// **'Also leave this community'**
+  String get communityReportAlsoLeave;
+
+  /// No description provided for @communityReportBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Drift\'s team will review it. The community won\'t be told who reported it.'**
+  String get communityReportBody;
+
+  /// No description provided for @communityReported.
+  ///
+  /// In en, this message translates to:
+  /// **'Thanks — Drift will review this community.'**
+  String get communityReported;
+
+  /// No description provided for @communityReportedAndLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Reported, and you\'ve left the community.'**
+  String get communityReportedAndLeft;
+
+  /// No description provided for @communityReportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Report {name}'**
+  String communityReportTitle(String name);
+
+  /// No description provided for @communityRequested.
+  ///
+  /// In en, this message translates to:
+  /// **'Requested'**
+  String get communityRequested;
+
+  /// No description provided for @communityRequestedCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Requested · Cancel request'**
+  String get communityRequestedCancel;
+
+  /// No description provided for @communityRequestSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Request sent. You\'ll get a notification when it\'s answered.'**
+  String get communityRequestSent;
+
+  /// No description provided for @communityRequestToJoin.
+  ///
+  /// In en, this message translates to:
+  /// **'Request to join'**
+  String get communityRequestToJoin;
+
+  /// No description provided for @communityResults.
+  ///
+  /// In en, this message translates to:
+  /// **'Results'**
+  String get communityResults;
+
+  /// No description provided for @communityReviewNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Drift reviews every new community before others can find it. We\'ll let you know when it\'s live.'**
+  String get communityReviewNote;
+
+  /// No description provided for @communityRoleAdmin.
+  ///
+  /// In en, this message translates to:
+  /// **'Admin'**
+  String get communityRoleAdmin;
+
+  /// No description provided for @communityRoleMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Member'**
+  String get communityRoleMember;
+
+  /// No description provided for @communityRoleOwner.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner'**
+  String get communityRoleOwner;
+
+  /// No description provided for @communityRunBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Run by {club}'**
+  String communityRunBy(String club);
+
+  /// No description provided for @communitySave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save changes'**
+  String get communitySave;
+
+  /// No description provided for @communitySaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get communitySaved;
+
+  /// No description provided for @communitySearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search communities'**
+  String get communitySearchHint;
+
+  /// No description provided for @communityStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start a community'**
+  String get communityStart;
+
+  /// No description provided for @communityStatusNotApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Not approved'**
+  String get communityStatusNotApproved;
+
+  /// No description provided for @communityStatusSuspended.
+  ///
+  /// In en, this message translates to:
+  /// **'Suspended'**
+  String get communityStatusSuspended;
+
+  /// No description provided for @communityStatusUnderReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Under review'**
+  String get communityStatusUnderReview;
+
+  /// No description provided for @communitySubmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Submitted for review'**
+  String get communitySubmitted;
+
+  /// No description provided for @communitySuspendedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Drift suspended this community. The chat is read-only and nobody can join while it\'s reviewed.'**
+  String get communitySuspendedBody;
+
+  /// No description provided for @communityTabAbout.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get communityTabAbout;
+
+  /// No description provided for @communityTabChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat'**
+  String get communityTabChat;
+
+  /// No description provided for @communityTabCompetitions.
+  ///
+  /// In en, this message translates to:
+  /// **'Competitions'**
+  String get communityTabCompetitions;
+
+  /// No description provided for @communityTabMembers.
+  ///
+  /// In en, this message translates to:
+  /// **'Members'**
+  String get communityTabMembers;
+
+  /// No description provided for @communityTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Make owner'**
+  String get communityTransfer;
+
+  /// No description provided for @communityTransferBody.
+  ///
+  /// In en, this message translates to:
+  /// **'They\'ll be able to manage everything, including deleting the community. You stay on as an admin.'**
+  String get communityTransferBody;
+
+  /// No description provided for @communityTransferred.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} now owns the community'**
+  String communityTransferred(String name);
+
+  /// No description provided for @communityTransferTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Make {name} the owner?'**
+  String communityTransferTitle(String name);
+
+  /// No description provided for @communityTypeClub.
+  ///
+  /// In en, this message translates to:
+  /// **'Club'**
+  String get communityTypeClub;
+
+  /// No description provided for @communityTypeClubHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A club\'s own members'**
+  String get communityTypeClubHint;
+
+  /// No description provided for @communityTypeLadder.
+  ///
+  /// In en, this message translates to:
+  /// **'Ladder'**
+  String get communityTypeLadder;
+
+  /// No description provided for @communityTypeLadderHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A standing ranked competition'**
+  String get communityTypeLadderHint;
+
+  /// No description provided for @communityTypeSocial.
+  ///
+  /// In en, this message translates to:
+  /// **'Social'**
+  String get communityTypeSocial;
+
+  /// No description provided for @communityTypeSocialHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Regular friendly sessions'**
+  String get communityTypeSocialHint;
+
+  /// No description provided for @communityTypeTraining.
+  ///
+  /// In en, this message translates to:
+  /// **'Training'**
+  String get communityTypeTraining;
+
+  /// No description provided for @communityTypeTrainingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Drills and coached practice'**
+  String get communityTypeTrainingHint;
+
+  /// No description provided for @communityUnderReviewBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Drift is reviewing your community. Nobody else can find or join it until it\'s approved — we\'ll send you a notification.'**
+  String get communityUnderReviewBody;
+
+  /// No description provided for @communityUnmute.
+  ///
+  /// In en, this message translates to:
+  /// **'Unmute chat notifications'**
+  String get communityUnmute;
+
+  /// No description provided for @communityWhatItIs.
+  ///
+  /// In en, this message translates to:
+  /// **'What it is'**
+  String get communityWhatItIs;
+
+  /// No description provided for @communityWhoCanJoin.
+  ///
+  /// In en, this message translates to:
+  /// **'Who can join'**
+  String get communityWhoCanJoin;
+
+  /// No description provided for @communityYourCommunities.
+  ///
+  /// In en, this message translates to:
+  /// **'Your communities'**
+  String get communityYourCommunities;
+
   /// No description provided for @competeBye.
   ///
   /// In en, this message translates to:
@@ -1779,6 +2637,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Courts'**
   String get discoverCourts;
+
+  /// No description provided for @discoverFindPlayers.
+  ///
+  /// In en, this message translates to:
+  /// **'Find players'**
+  String get discoverFindPlayers;
 
   /// No description provided for @drawerSigningOut.
   ///
@@ -3184,11 +4048,11 @@ abstract class AppLocalizations {
   /// **'Achievements'**
   String get navAchievements;
 
-  /// No description provided for @navCompete.
+  /// No description provided for @navCommunity.
   ///
   /// In en, this message translates to:
-  /// **'Compete'**
-  String get navCompete;
+  /// **'Community'**
+  String get navCommunity;
 
   /// No description provided for @navDiscover.
   ///
@@ -3477,6 +4341,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Announcements and membership updates from your clubs'**
   String get notifPrefClubs;
+
+  /// No description provided for @notifPrefCommunities.
+  ///
+  /// In en, this message translates to:
+  /// **'Approvals, join requests and new competitions in your communities'**
+  String get notifPrefCommunities;
 
   /// No description provided for @notifPrefCompetitions.
   ///
@@ -4630,6 +5500,18 @@ abstract class AppLocalizations {
   /// **'No open challenges — find a player and send one.'**
   String get playChallengesEmpty;
 
+  /// No description provided for @playCompetitionRound.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} · Round {round}'**
+  String playCompetitionRound(String name, int round);
+
+  /// No description provided for @playFindOpponent.
+  ///
+  /// In en, this message translates to:
+  /// **'Find opponent'**
+  String get playFindOpponent;
+
   /// No description provided for @playHistoryEmpty.
   ///
   /// In en, this message translates to:
@@ -4648,17 +5530,17 @@ abstract class AppLocalizations {
   /// **'No players found.'**
   String get playNoPlayersFound;
 
-  /// No description provided for @playNoPlayersMatch.
-  ///
-  /// In en, this message translates to:
-  /// **'No players match. Try widening your filters.'**
-  String get playNoPlayersMatch;
-
   /// No description provided for @playRespond.
   ///
   /// In en, this message translates to:
   /// **'Respond'**
   String get playRespond;
+
+  /// No description provided for @playSegmentMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'Matches'**
+  String get playSegmentMatches;
 
   /// No description provided for @playTabActive.
   ///
@@ -4671,12 +5553,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Challenges'**
   String get playTabChallenges;
-
-  /// No description provided for @playTabFind.
-  ///
-  /// In en, this message translates to:
-  /// **'Find'**
-  String get playTabFind;
 
   /// No description provided for @playTabHistory.
   ///

@@ -54,6 +54,7 @@ const notificationPreferences = NotificationPreferences(
   matches: true,
   messages: true,
   competitions: true,
+  communities: true,
   learning: true,
   news: false,
   clubs: true,

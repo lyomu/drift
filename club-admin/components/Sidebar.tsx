@@ -40,6 +40,7 @@ const NAV_GROUPS: {
     label: "nav.community",
     icon: "campaign",
     items: [
+      { href: "/community", label: "nav.clubCommunity" },
       { href: "/events", label: "nav.events" },
       { href: "/announcements", label: "nav.announcements" },
       {

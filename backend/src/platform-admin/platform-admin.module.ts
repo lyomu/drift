@@ -42,6 +42,8 @@ import {
 import { PushBroadcastScheduler } from './push-broadcast.scheduler';
 import { PushBroadcastAdminService } from './push-broadcast-admin.service';
 import { NewsModule } from '../news/news.module';
+import { CommunitiesModule } from '../communities/communities.module';
+import { CommunityAdminController } from './community-admin.controller';
 
 @Module({
   imports: [
@@ -71,6 +73,7 @@ import { NewsModule } from '../news/news.module';
     // PushService directly.
     NotificationsModule,
     NewsModule,
+    CommunitiesModule,
   ],
   controllers: [
     PlatformAdminController,
@@ -87,6 +90,7 @@ import { NewsModule } from '../news/news.module';
     WaitlistAdminController,
     PushBroadcastAdminController,
     PushBroadcastMediaController,
+    CommunityAdminController,
   ],
   providers: [
     PlatformAdminService,

@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import {
+  CommunityStatus,
   ConnectionStatus,
   ConversationType,
   MatchState,
@@ -29,6 +30,12 @@ const OPEN_CHALLENGE_STATES: MatchState[] = [
   MatchState.RESCHEDULED,
 ];
 const NOTIFICATION_PREVIEW_LENGTH = 100;
+
+/** Who wrote a message: shown on group (COMMUNITY) chat bubbles, where the
+ * sender can't be inferred from a two-person thread. */
+const senderSelect = {
+  select: { id: true, firstName: true, lastName: true, photoUrl: true },
+} as const;
 
 @Injectable()
 export class MessagingService {
@@ -166,6 +173,7 @@ export class MessagingService {
 
   async sendMessage(userId: string, conversationId: string, body: string) {
     await this.requireParticipant(conversationId, userId);
+    await this.assertCommunityChatOpen(conversationId);
 
     const message = await this.prisma.$transaction(async (tx) => {
       const created = await tx.message.create({
@@ -175,6 +183,7 @@ export class MessagingService {
           kind: MessageKind.TEXT,
           body,
         },
+        include: { sender: senderSelect },
       });
       await tx.conversation.update({
         where: { id: conversationId },
@@ -203,7 +212,7 @@ export class MessagingService {
     senderId: string,
     body: string,
   ) {
-    const [sender, others] = await Promise.all([
+    const [sender, others, conversation] = await Promise.all([
       this.prisma.user.findUnique({
         where: { id: senderId },
         select: { firstName: true, lastName: true },
@@ -212,8 +221,28 @@ export class MessagingService {
         where: { conversationId, userId: { not: senderId } },
         select: { userId: true },
       }),
+      this.prisma.conversation.findUnique({
+        where: { id: conversationId },
+        select: {
+          community: {
+            select: {
+              name: true,
+              // Members who muted this community get no chat pushes; their
+              // inbox unread count still moves.
+              members: {
+                where: { mutedAt: { not: null } },
+                select: { userId: true },
+              },
+            },
+          },
+        },
+      }),
     ]);
     if (!sender) return;
+
+    const community = conversation?.community;
+    const muted = new Set(community?.members.map((m) => m.userId) ?? []);
+    const recipients = others.filter((p) => !muted.has(p.userId));
 
     const preview =
       body.length > NOTIFICATION_PREVIEW_LENGTH
@@ -221,11 +250,16 @@ export class MessagingService {
         : body;
 
     await Promise.all(
-      others.map((p) =>
+      recipients.map((p) =>
         this.notifications.create(
           p.userId,
           'MESSAGES',
-          msg('message.new.title', { name: displayName(sender) }),
+          community
+            ? msg('message.newInCommunity.title', {
+                community: community.name,
+                name: displayName(sender),
+              })
+            : msg('message.new.title', { name: displayName(sender) }),
           preview,
           'CONVERSATION',
           conversationId,
@@ -243,8 +277,19 @@ export class MessagingService {
             participants: {
               where: { userId: { not: userId } },
               include: { user: { include: playerInclude } },
+              // Direct and match threads have at most three others (a
+              // doubles match). A community thread can have hundreds and is
+              // labelled by `community` instead.
+              take: 3,
             },
-            messages: { orderBy: { createdAt: 'desc' }, take: 1 },
+            community: {
+              select: { id: true, name: true, photoUrl: true, status: true },
+            },
+            messages: {
+              orderBy: { createdAt: 'desc' },
+              take: 1,
+              include: { sender: senderSelect },
+            },
           },
         },
       },
@@ -266,12 +311,16 @@ export class MessagingService {
           id: m.conversation.id,
           type: m.conversation.type,
           matchId: m.conversation.matchId,
+          community: m.conversation.community,
           lastMessageAt: m.conversation.lastMessageAt,
           unreadCount,
           lastMessage: lastMessage ? this.toMessageDto(lastMessage) : null,
-          participants: m.conversation.participants.map((p) =>
-            toPlayerSummary(p.user, null),
-          ),
+          participants:
+            m.conversation.type === ConversationType.COMMUNITY
+              ? []
+              : m.conversation.participants.map((p) =>
+                  toPlayerSummary(p.user, null),
+                ),
         };
       }),
     );
@@ -294,6 +343,7 @@ export class MessagingService {
       },
       orderBy: { createdAt: 'desc' },
       take,
+      include: { sender: senderSelect },
     });
 
     const relatedMatches = await this.relatedMatchContext(messages);
@@ -372,6 +422,21 @@ export class MessagingService {
     );
   }
 
+  /** A suspended community's chat is read-only until a platform admin
+   * restores it. Non-community threads always pass. */
+  private async assertCommunityChatOpen(conversationId: string) {
+    const conversation = await this.prisma.conversation.findUnique({
+      where: { id: conversationId },
+      select: { community: { select: { status: true } } },
+    });
+    const status = conversation?.community?.status;
+    if (status && status !== CommunityStatus.APPROVED) {
+      throw new ForbiddenException(
+        'This community is suspended, so its chat is read-only.',
+      );
+    }
+  }
+
   private toMessageDto(
     message: {
       id: string;
@@ -382,6 +447,12 @@ export class MessagingService {
       systemEvent: string | null;
       relatedMatchId: string | null;
       createdAt: Date;
+      sender?: {
+        id: string;
+        firstName: string | null;
+        lastName: string | null;
+        photoUrl: string | null;
+      } | null;
     },
     related?: { leagueId: string | null; leagueName: string | null },
   ) {
@@ -395,6 +466,13 @@ export class MessagingService {
       relatedMatchId: message.relatedMatchId,
       relatedLeagueId: related?.leagueId ?? null,
       relatedLeagueName: related?.leagueName ?? null,
+      sender: message.sender
+        ? {
+            id: message.sender.id,
+            displayName: displayName(message.sender),
+            photoUrl: message.sender.photoUrl,
+          }
+        : null,
       createdAt: message.createdAt,
     };
   }

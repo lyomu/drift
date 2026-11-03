@@ -23,8 +23,10 @@ class DriftBottomNav extends StatelessWidget {
 
   static final _tabs = <({String Function(AppLocalizations) label, String svg})>[
     (label: (l) => l.navHome, svg: _homeSvg),
+    // 2026-11: Play and Compete merged into Play (trophy icon); Community
+    // took the freed slot.
     (label: (l) => l.navPlay, svg: _playSvg),
-    (label: (l) => l.navCompete, svg: _competeSvg),
+    (label: (l) => l.navCommunity, svg: _communitySvg),
     (label: (l) => l.navDiscover, svg: _discoverSvg),
     // Learn took this slot from Profile in the 2026-09 redesign — profile
     // navigation moved into the app drawer (`DriftAppDrawer`).
@@ -117,13 +119,16 @@ const _homeSvg =
     '<path d="M3 9.5L11 3l8 6.5V19a1 1 0 0 1-1 1H14v-5H8v5H4a1 1 0 0 1-1-1V9.5z" '
     'stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>';
 
-const _playSvg =
+/// Two people — a front figure and one behind it, same 1.7 outline.
+const _communitySvg =
     '<svg width="22" height="22" viewBox="0 0 22 22" fill="none">'
-    '<circle cx="11" cy="8" r="3.5" stroke="currentColor" stroke-width="1.7"/>'
-    '<path d="M4 19c0-3.866 3.134-7 7-7s7 3.134 7 7" stroke="currentColor" '
-    'stroke-width="1.7" stroke-linecap="round"/></svg>';
+    '<circle cx="8.5" cy="8" r="3.2" stroke="currentColor" stroke-width="1.7"/>'
+    '<path d="M2.5 18.5c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" '
+    'stroke-width="1.7" stroke-linecap="round"/>'
+    '<path d="M14 5.2a3.2 3.2 0 0 1 0 5.6M16.5 13c1.8.9 3 2.9 3 5.5" '
+    'stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>';
 
-const _competeSvg =
+const _playSvg =
     '<svg width="22" height="22" viewBox="0 0 22 22" fill="none">'
     '<path d="M7 4h8v6a4 4 0 0 1-8 0V4z" stroke="currentColor" stroke-width="1.7" '
     'stroke-linejoin="round"/>'

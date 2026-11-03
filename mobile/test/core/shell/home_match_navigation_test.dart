@@ -8,6 +8,7 @@ import 'package:drift_tennis/features/home/presentation/home_screen.dart';
 import 'package:drift_tennis/features/matches/application/matches_providers.dart';
 import 'package:drift_tennis/features/matches/data/matches_repository.dart';
 import 'package:drift_tennis/features/matches/presentation/play_hub_screen.dart';
+import 'package:drift_tennis/features/discover/presentation/discover_hub_screen.dart';
 import 'package:drift_tennis/features/news/application/news_providers.dart';
 import 'package:drift_tennis/features/notifications/application/notifications_providers.dart';
 import 'package:drift_tennis/features/players/application/players_providers.dart';
@@ -22,7 +23,7 @@ import 'package:go_router/go_router.dart';
 import '../../support/fixtures.dart';
 
 void main() {
-  testWidgets('Home match actions select the requested Play segment', (
+  testWidgets('Home player search actions select Discover', (
     tester,
   ) async {
     final router = GoRouter(
@@ -31,12 +32,17 @@ void main() {
         GoRoute(
           path: '/home',
           builder: (context, state) => AppShell(
-            initialIndex: state.uri.queryParameters['tab'] == 'play' ? 1 : 0,
+            initialIndex: switch (state.uri.queryParameters['tab']) {
+              'play' => 1,
+              'discover' => 3,
+              _ => 0,
+            },
             initialPlaySegment: switch (state.uri.queryParameters['play']) {
               'find' => 0,
               'active' => 2,
               _ => null,
             },
+            initialDiscoverSegment: 0,
           ),
         ),
       ],
@@ -79,12 +85,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
     expect(
       tester.widget<DriftBottomNav>(find.byType(DriftBottomNav)).selectedIndex,
-      1,
+      3,
     );
-    expect(
-      tester.widget<PlayHubScreen>(find.byType(PlayHubScreen)).initialSegment,
-      0,
-    );
+    expect(find.byType(DiscoverHubScreen), findsOneWidget);
 
     await tester.tap(find.text('Home').last);
     await tester.pump();
@@ -96,7 +99,7 @@ void main() {
     await tester.pump();
     expect(
       tester.widget<DriftBottomNav>(find.byType(DriftBottomNav)).selectedIndex,
-      1,
+      3,
     );
 
     await tester.tap(find.text('Home').last);
@@ -122,11 +125,9 @@ void main() {
     await tester.pump();
     expect(
       tester.widget<DriftBottomNav>(find.byType(DriftBottomNav)).selectedIndex,
-      1,
+      3,
     );
-    expect(
-      tester.widget<PlayHubScreen>(find.byType(PlayHubScreen)).initialSegment,
-      0,
-    );
+    expect(find.byType(DiscoverHubScreen), findsOneWidget);
+    await tester.pump(const Duration(seconds: 1));
   });
 }

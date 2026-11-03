@@ -22,6 +22,7 @@ import { MatchesModule } from './matches/matches.module';
 import { CompetitionsModule } from './competitions/competitions.module';
 import { CourtsModule } from './courts/courts.module';
 import { ClubsModule } from './clubs/clubs.module';
+import { CommunitiesModule } from './communities/communities.module';
 import { ClubAdminModule } from './club-admin/club-admin.module';
 import { ClubOnboardingModule } from './club-onboarding/club-onboarding.module';
 import { PlatformAdminModule } from './platform-admin/platform-admin.module';
@@ -81,6 +82,7 @@ import { validateEnvironment } from './config/environment';
     CompetitionsModule,
     CourtsModule,
     ClubsModule,
+    CommunitiesModule,
     ClubAdminModule,
     ClubOnboardingModule,
     PlatformAdminModule,

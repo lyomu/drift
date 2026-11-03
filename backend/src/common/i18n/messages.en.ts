@@ -81,6 +81,42 @@ export const en = {
 
   // Messaging
   'message.new.title': 'New message from {name}',
+  'message.newInCommunity.title': '{community}: {name}',
+
+  // Communities
+  'community.approved.title': 'Your community is live',
+  'community.approved.body':
+    '{community} was approved. Invite the people you play with.',
+  'community.rejected.title': "Your community wasn't approved",
+  'community.rejected.body': '{community}: {note}',
+  'community.rejectedNoNote.body':
+    "{community} didn't meet the community guidelines.",
+  'community.joinRequest.title': '{name} asked to join {community}',
+  'community.joinRequest.body': 'Review the request in Manage community.',
+  'community.requestApproved.title': "You're in {community}",
+  'community.requestApproved.body': 'Say hello in the community chat.',
+  'community.requestDeclined.title': 'Request not accepted',
+  'community.requestDeclined.body':
+    "{community} didn't accept your request to join.",
+  'community.removed.title': 'Removed from {community}',
+  'community.removed.body': 'An admin removed you from this community.',
+  'community.suspended.title': '{community} was suspended',
+  'community.suspended.body':
+    'Its chat is read-only while Drift Tennis reviews it.',
+  'community.restored.title': '{community} is back',
+  'community.restored.body': 'The community chat is open again.',
+  'community.deleted.title': '{community} was closed',
+  'community.deleted.body': 'This community no longer exists.',
+  'community.madeAdmin.title': "You're now an admin of {community}",
+  'community.madeAdmin.body': 'You can approve requests and manage members.',
+  'community.ownershipTransferred.title': 'You now own {community}',
+  'community.ownershipTransferred.body':
+    'You can manage everything about this community.',
+  'community.newLeague.title': 'New league in {community}',
+  'community.newLadder.title': 'New ladder in {community}',
+  'community.newCompetition.body':
+    '{competition}. Open the community to take part.',
+
 
   // Home feed cards
   'home.empty.title': "You're all caught up",

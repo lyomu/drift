@@ -73,6 +73,44 @@ export const es: Record<MessageKey, string> = {
     'El resultado es definitivo y los niveles están actualizados.',
 
   'message.new.title': 'Nuevo mensaje de {name}',
+  'message.newInCommunity.title': '{community}: {name}',
+
+  // Communities
+  'community.approved.title': 'Tu comunidad ya está activa',
+  'community.approved.body':
+    '{community} fue aprobada. Invita a las personas con las que juegas.',
+  'community.rejected.title': 'Tu comunidad no fue aprobada',
+  'community.rejected.body': '{community}: {note}',
+  'community.rejectedNoNote.body':
+    '{community} no cumple las normas de las comunidades.',
+  'community.joinRequest.title': '{name} quiere unirse a {community}',
+  'community.joinRequest.body': 'Revisa la solicitud en Gestionar comunidad.',
+  'community.requestApproved.title': 'Ya formas parte de {community}',
+  'community.requestApproved.body': 'Saluda en el chat de la comunidad.',
+  'community.requestDeclined.title': 'Solicitud no aceptada',
+  'community.requestDeclined.body':
+    '{community} no aceptó tu solicitud para unirte.',
+  'community.removed.title': 'Te eliminaron de {community}',
+  'community.removed.body': 'Un administrador te eliminó de esta comunidad.',
+  'community.suspended.title': '{community} fue suspendida',
+  'community.suspended.body':
+    'Su chat es de solo lectura mientras Drift Tennis la revisa.',
+  'community.restored.title': '{community} ha vuelto',
+  'community.restored.body': 'El chat de la comunidad vuelve a estar abierto.',
+  'community.deleted.title': '{community} se cerró',
+  'community.deleted.body': 'Esta comunidad ya no existe.',
+  'community.madeAdmin.title': 'Ahora eres administrador de {community}',
+  'community.madeAdmin.body':
+    'Puedes aprobar solicitudes y gestionar miembros.',
+  'community.ownershipTransferred.title':
+    'Ahora eres el propietario de {community}',
+  'community.ownershipTransferred.body':
+    'Puedes gestionar todo en esta comunidad.',
+  'community.newLeague.title': 'Nueva liga en {community}',
+  'community.newLadder.title': 'Nueva escalera en {community}',
+  'community.newCompetition.body':
+    '{competition}. Abre la comunidad para participar.',
+
 
   'home.empty.title': 'Lo tienes todo al día',
   'home.empty.body':

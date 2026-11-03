@@ -1,5 +1,11 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3009";
 
+/** Absolute URL for a server-relative media path such as a community
+ * photo (`/media/community-photos/...`). Those routes are public. */
+export function mediaUrl(path: string): string {
+  return /^https?:\/\//.test(path) ? path : `${API_URL}${path}`;
+}
+
 // Deliberately a different storage key from Club Admin's: the two consoles
 // hold different authorities and must never read each other's tokens.
 const TOKEN_KEY = "driftPlatformToken";

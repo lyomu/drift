@@ -23,7 +23,7 @@ class QuickActionsGrid extends StatelessWidget {
         hint: l10n.quickFindMatchHint,
         icon: Icons.group_rounded,
         accent: const Color(0xFF3B8BFF),
-        onTap: () => context.go('/home?tab=play&play=find'),
+        onTap: () => context.go('/home?tab=discover&discover=players'),
       ),
       _QuickAction(
         label: l10n.quickBookCourt,
@@ -44,7 +44,7 @@ class QuickActionsGrid extends StatelessWidget {
         hint: l10n.quickEnterLadderHint,
         icon: Icons.emoji_events_rounded,
         accent: const Color(0xFFFB923C),
-        onTap: () => context.go('/home?tab=compete'),
+        onTap: () => context.go('/home?tab=play&segment=ladders'),
       ),
     ];
 

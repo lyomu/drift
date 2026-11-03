@@ -56,6 +56,53 @@ class PlayTabScaffold extends StatelessWidget {
   }
 }
 
+/// The "Spring League · Round 3" line above a Play → Matches row, for
+/// matches a league, ladder or tournament produced. Renders nothing for a
+/// friendly challenge.
+class PlayCompetitionTag extends StatelessWidget {
+  const PlayCompetitionTag({super.key, required this.match});
+
+  final DriftMatch match;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = match.competitionLabel;
+    if (label == null) return const SizedBox.shrink();
+    final type = Theme.of(context).extension<DriftTypography>()!;
+    final colors = Theme.of(context).extension<DriftColors>()!;
+    final round = label.roundIndex;
+    final text = round == null
+        ? label.name
+        : context.l10n.playCompetitionRound(label.name, round);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 2),
+      child: Row(
+        children: [
+          Icon(
+            label.kind == CompetitionKind.ladder
+                ? Icons.stairs_outlined
+                : Icons.emoji_events_outlined,
+            size: 13,
+            color: colors.primary,
+          ),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: type.caption.copyWith(
+                color: colors.primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _Empty extends StatelessWidget {
   const _Empty({required this.icon, required this.message});
 

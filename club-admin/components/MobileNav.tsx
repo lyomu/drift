@@ -16,6 +16,7 @@ const NAV: { href: string; label: MessageKey; ownerOnly?: boolean; roles?: strin
   { href: "/tournaments", label: "nav.tournaments" },
   { href: "/ladders", label: "nav.ladders" },
   { href: "/leagues/archive", label: "nav.leagueArchive" },
+  { href: "/community", label: "nav.clubCommunity" },
   { href: "/events", label: "nav.events" },
   { href: "/announcements", label: "nav.announcements" },
   { href: "/media", label: "nav.media", roles: ["OWNER", "ADMIN", "CONTENT_MANAGER"] },

@@ -29,6 +29,10 @@ import '../../../core/l10n/l10n.dart';
         l.clubAnnouncements,
         l.notifPrefAnnouncements,
       ),
+      NotificationCategory.communities => (
+        l.navCommunity,
+        l.notifPrefCommunities,
+      ),
       NotificationCategory.unknown => ('', ''),
     };
 

@@ -156,7 +156,8 @@ class League {
     scoringFormat: json['scoringFormat'] as String?,
     walkoverRule: json['walkoverRule'] as String?,
     unfinishedMatchPolicy: json['unfinishedMatchPolicy'] as String?,
-    clubName: json['clubName'] as String?,
+    // A community league (2026-11) carries `communityName` instead.
+    clubName: json['clubName'] as String? ?? json['communityName'] as String?,
     levelBand: json['levelBand'] as String?,
     enrolledCount: json['enrolledCount'] as int?,
     capacity: json['capacity'] as int?,

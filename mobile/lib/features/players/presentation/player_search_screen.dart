@@ -15,9 +15,10 @@ import '../../../core/l10n/l10n.dart';
 /// compatibility); the search box filters the loaded page by name or
 /// location, since the API has no text query.
 ///
-/// The list furniture is [DriftPlayerResultCard] / [DriftPlayerSearchBar],
-/// shared with Play → Find — the two surfaces show the same card and differ
-/// only in the card's action.
+/// Discover → Find players (2026-11 restructure): this absorbed the old
+/// Play → Find tab, which was the same list with a Challenge button. The
+/// card's action is now Challenge; tapping the card itself still opens the
+/// profile, where Connect lives.
 ///
 /// Renders [embedded] inside the Discover Hub, which already supplies the
 /// title and SafeArea.
@@ -85,10 +86,10 @@ class _PlayerSearchScreenState extends ConsumerState<PlayerSearchScreen> {
       itemBuilder: (context, i) => DriftPlayerResultCard(
         player: players[i],
         action: DriftPlayerActionButton(
-          label: context.l10n.playerConnect,
-          // The connect action itself lives on the profile, which is also
-          // where the current relationship state is known.
-          onTap: () => context.push('/players/${players[i].id}'),
+          label: context.l10n.matchChallenge,
+          // Opens the composer with this player pre-filled; the challenge is
+          // not sent until it is submitted there.
+          onTap: () => context.push('/challenge', extra: players[i]),
         ),
       ),
     );
@@ -110,8 +111,7 @@ class _PlayerSearchScreenState extends ConsumerState<PlayerSearchScreen> {
   }
 }
 
-/// Name-or-location match over the loaded page. Shared by both result
-/// surfaces so "no results" means the same thing on each.
+/// Name-or-location match over the loaded page.
 List<PlayerSummary> filterPlayers(List<PlayerSummary> players, String query) {
   final q = query.trim().toLowerCase();
   if (q.isEmpty) return players;

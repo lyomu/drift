@@ -19,6 +19,7 @@ Future<void> pumpScreen(
   Widget screen, {
   List<Override> overrides = const [],
   Brightness brightness = Brightness.light,
+  Locale? locale,
   bool settle = true,
   TextScaler? textScaler,
 }) async {
@@ -26,6 +27,7 @@ Future<void> pumpScreen(
     ProviderScope(
       overrides: overrides,
       child: MaterialApp(
+        locale: locale,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         builder: textScaler == null

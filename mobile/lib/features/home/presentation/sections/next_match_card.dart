@@ -34,7 +34,7 @@ class NextMatchSection extends ConsumerWidget {
         icon: Icons.event_available_outlined,
         message: context.l10n.homeNoMatches,
         actionLabel: context.l10n.homeFindAMatch,
-        onAction: () => context.go('/home?tab=play&play=find'),
+        onAction: () => context.go('/home?tab=discover&discover=players'),
       );
     }
     return _MatchCard(

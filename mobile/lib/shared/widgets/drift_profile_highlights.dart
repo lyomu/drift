@@ -95,7 +95,9 @@ class DriftProfileHighlights extends StatelessWidget {
                               foregroundImage: photoUrl == null
                                   ? null
                                   : NetworkImage(photoUrl),
-                              onForegroundImageError: (_, _) {},
+                              onForegroundImageError: photoUrl == null
+                                  ? null
+                                  : (_, _) {},
                               child: Text(
                                 _initials(summary),
                                 style: type.h3.copyWith(color: colors.primary),

@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { MessagingService } from './messaging.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { RealtimePublisher } from './realtime.publisher';
@@ -104,6 +104,16 @@ describe('MessagingService', () => {
   });
 
   describe('sendMessage', () => {
+    it('locks chat when the community is suspended', async () => {
+      prisma.conversation.findUnique.mockResolvedValue({
+        community: { status: 'SUSPENDED' },
+      });
+      await expect(service.sendMessage('me', 'c1', 'hi')).rejects.toBeInstanceOf(
+        ForbiddenException,
+      );
+      expect(prisma.message.create).not.toHaveBeenCalled();
+    });
+
     it('broadcasts over the socket after committing', async () => {
       await service.sendMessage('me', 'c1', 'hi');
       expect(prisma.message.create).toHaveBeenCalled();

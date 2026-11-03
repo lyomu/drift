@@ -567,6 +567,518 @@ class AppLocalizationsFr extends AppLocalizations {
   String get commonYou => 'Vous';
 
   @override
+  String get communityAboutHint =>
+      'Pour qui, niveau, où vous jouez d\'habitude…';
+
+  @override
+  String get communityAboutOptional => 'À propos · Facultatif';
+
+  @override
+  String get communityAddPhoto => 'Ajouter une photo';
+
+  @override
+  String get communityAddPhotoOptional => 'Ajouter une photo (facultatif)';
+
+  @override
+  String get communityApprove => 'Approuver';
+
+  @override
+  String communityChallengeRange(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Défi possible jusqu\'à $count échelons au-dessus',
+      one: 'Défi possible 1 échelon au-dessus',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get communityChallengeRangeHint =>
+      'Jusqu\'où au-dessus de sa position un joueur peut défier.';
+
+  @override
+  String get communityChangePhoto => 'Changer la photo';
+
+  @override
+  String communityChatPreview(String name, String message) {
+    return '$name : $message';
+  }
+
+  @override
+  String get communityChatReadOnly =>
+      'Cette communauté est suspendue : sa discussion est en lecture seule.';
+
+  @override
+  String get communityChatUnavailable =>
+      'La discussion s\'ouvre une fois la communauté approuvée.';
+
+  @override
+  String get communityCity => 'Ville';
+
+  @override
+  String get communityCityHint => 'Nairobi';
+
+  @override
+  String get communityCreate => 'Créer';
+
+  @override
+  String get communityDecline => 'Refuser';
+
+  @override
+  String get communityDelete => 'Supprimer la communauté';
+
+  @override
+  String get communityDeleteBody =>
+      'La discussion, les échelles et les ligues disparaissent aussi, et chaque membre est informé de sa fermeture. C\'est irréversible.';
+
+  @override
+  String get communityDeleted => 'Communauté supprimée';
+
+  @override
+  String communityDeleteTitle(String name) {
+    return 'Supprimer $name ?';
+  }
+
+  @override
+  String get communityDetails => 'Informations';
+
+  @override
+  String get communityDisputeHint =>
+      'Les joueurs ne s\'accordent pas sur le score. Votre décision tranche.';
+
+  @override
+  String get communityDisputeKeep => 'Garder le score saisi';
+
+  @override
+  String get communityDisputeResolved => 'Litige résolu';
+
+  @override
+  String communityDisputes(int count) {
+    return 'Résultats contestés ($count)';
+  }
+
+  @override
+  String get communityDisputeUseDisputed => 'Retenir le score contesté';
+
+  @override
+  String communityDisputeVs(String a, String b) {
+    return '$a contre $b';
+  }
+
+  @override
+  String get communityEmptyBody =>
+      'Une communauté, c\'est une session régulière avec ses propres membres et sa discussion. Créez-en une et invitez les personnes avec qui vous jouez.';
+
+  @override
+  String get communityEmptyTitle => 'Pas encore de communauté';
+
+  @override
+  String get communityFilterAnyCity => 'Toutes les villes';
+
+  @override
+  String get communityFilterCity => 'Ville';
+
+  @override
+  String get communityFilterCityTitle => 'Communautés à…';
+
+  @override
+  String get communityFilterNearMe => 'Près de moi';
+
+  @override
+  String get communityFrequencyBiweekly => 'Toutes les 2 semaines';
+
+  @override
+  String get communityFrequencyMonthly => 'Mensuel';
+
+  @override
+  String get communityFrequencyOther => 'Autre';
+
+  @override
+  String get communityFrequencyWeekly => 'Hebdo';
+
+  @override
+  String get communityHowOften => 'Fréquence';
+
+  @override
+  String get communityJoin => 'Rejoindre';
+
+  @override
+  String get communityJoinAnyone => 'Tout le monde';
+
+  @override
+  String get communityJoinAnyoneHint =>
+      'Tout le monde sur Drift Tennis peut rejoindre directement';
+
+  @override
+  String get communityJoinByRequest => 'Sur demande';
+
+  @override
+  String get communityJoinByRequestHint => 'Vous approuvez chaque demande';
+
+  @override
+  String get communityJoined => 'Membre';
+
+  @override
+  String communityJoinedToast(String name) {
+    return 'Vous avez rejoint $name';
+  }
+
+  @override
+  String communityJoinRequests(int count) {
+    return 'Demandes d\'adhésion ($count)';
+  }
+
+  @override
+  String get communityLadderCreated =>
+      'Échelle créée. Les membres ont été prévenus.';
+
+  @override
+  String get communityLadderName => 'Nom de l\'échelle';
+
+  @override
+  String communityLadderPlayers(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count joueurs',
+      one: '1 joueur',
+      zero: 'Aucun joueur pour l\'instant',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get communityLadders => 'Échelles';
+
+  @override
+  String communityLadderYourRung(int position, int total) {
+    return 'Vous êtes n°$position sur $total';
+  }
+
+  @override
+  String get communityLeagueCapacity => 'Nombre max. de joueurs (facultatif)';
+
+  @override
+  String get communityLeagueCapacityHint =>
+      'Les inscriptions en trop rejoignent une liste d\'attente.';
+
+  @override
+  String get communityLeagueCloseBeforeStart =>
+      'Les inscriptions doivent fermer au plus tard le jour du début.';
+
+  @override
+  String get communityLeagueCreate => 'Créer la ligue';
+
+  @override
+  String get communityLeagueCreated =>
+      'Ligue créée. Les membres ont été prévenus.';
+
+  @override
+  String get communityLeagueDaysBetweenRounds => 'Jours par tour';
+
+  @override
+  String get communityLeagueDescription => 'Description (facultatif)';
+
+  @override
+  String get communityLeagueName => 'Nom de la ligue';
+
+  @override
+  String get communityLeagueOpenBeforeClose =>
+      'Les inscriptions doivent ouvrir avant de fermer.';
+
+  @override
+  String get communityLeagueRegistrationCloses => 'Clôture des inscriptions';
+
+  @override
+  String get communityLeagueRegistrationOpens => 'Ouverture des inscriptions';
+
+  @override
+  String get communityLeagueRounds => 'Tours';
+
+  @override
+  String get communityLeagues => 'Ligues';
+
+  @override
+  String get communityLeagueStarts => 'Début de la ligue';
+
+  @override
+  String get communityLeave => 'Quitter la communauté';
+
+  @override
+  String get communityLeaveBody =>
+      'Vous quitterez sa discussion et ne recevrez plus ses notifications. Vous pourrez redemander à la rejoindre plus tard.';
+
+  @override
+  String get communityLeaveLastOwner =>
+      'Vous êtes le seul membre : partir ferme définitivement la communauté.';
+
+  @override
+  String communityLeaveTitle(String name) {
+    return 'Quitter $name ?';
+  }
+
+  @override
+  String get communityLeft => 'Vous avez quitté la communauté.';
+
+  @override
+  String get communityLoadCompetitionsFailed =>
+      'Impossible de charger les compétitions.';
+
+  @override
+  String get communityLoadFailed => 'Impossible de charger les communautés.';
+
+  @override
+  String get communityLoadMembersFailed => 'Impossible de charger les membres.';
+
+  @override
+  String get communityLoadOneFailed =>
+      'Impossible de charger cette communauté.';
+
+  @override
+  String get communityMakeAdmin => 'Nommer admin';
+
+  @override
+  String get communityMakeOwner => 'Nommer propriétaire';
+
+  @override
+  String get communityManage => 'Gérer la communauté';
+
+  @override
+  String communityMemberCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count membres',
+      one: '1 membre',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String communityMembersCount(int count) {
+    return 'Membres ($count)';
+  }
+
+  @override
+  String get communityMute => 'Couper les notifications de discussion';
+
+  @override
+  String get communityMuteHint =>
+      'Les approbations et nouvelles compétitions vous parviennent toujours.';
+
+  @override
+  String get communityName => 'Nom';
+
+  @override
+  String get communityNameHint => 'Double du mardi';
+
+  @override
+  String get communityNearYou => 'Communautés près de vous';
+
+  @override
+  String get communityNewLadder => 'Nouvelle échelle';
+
+  @override
+  String get communityNewLeague => 'Nouvelle ligue';
+
+  @override
+  String get communityNoAbout => 'Pas encore de description.';
+
+  @override
+  String get communityNoCompetitions => 'Pas encore d\'échelle ni de ligue.';
+
+  @override
+  String get communityNoCompetitionsManager =>
+      'Pas encore d\'échelle ni de ligue. Créez-en une pour vos membres.';
+
+  @override
+  String get communityNoneMatch =>
+      'Aucune communauté ne correspond. Essayez un autre filtre ou créez-en une.';
+
+  @override
+  String get communityNoneNearby =>
+      'Pas encore de communauté près de vous. Créez-en une et invitez les personnes avec qui vous jouez.';
+
+  @override
+  String get communityNotApprovedBody =>
+      'Drift n\'a pas approuvé cette communauté. Contactez le support si vous pensez que c\'est une erreur.';
+
+  @override
+  String get communityOwnerZone => 'Propriétaire';
+
+  @override
+  String get communityPhotoChosen => 'Photo ajoutée';
+
+  @override
+  String get communityRemove => 'Retirer de la communauté';
+
+  @override
+  String get communityRemoveAdmin => 'Retirer le rôle d\'admin';
+
+  @override
+  String get communityRemoveBody =>
+      'Cette personne quittera la discussion et sera informée de son retrait. Elle pourra redemander à rejoindre.';
+
+  @override
+  String communityRemoveTitle(String name) {
+    return 'Retirer $name ?';
+  }
+
+  @override
+  String get communityReport => 'Signaler la communauté';
+
+  @override
+  String get communityReportAlsoLeave => 'Quitter aussi cette communauté';
+
+  @override
+  String get communityReportBody =>
+      'L\'équipe Drift l\'examinera. La communauté ne saura pas qui l\'a signalée.';
+
+  @override
+  String get communityReported => 'Merci — Drift va examiner cette communauté.';
+
+  @override
+  String get communityReportedAndLeft =>
+      'Signalée, et vous avez quitté la communauté.';
+
+  @override
+  String communityReportTitle(String name) {
+    return 'Signaler $name';
+  }
+
+  @override
+  String get communityRequested => 'Demandée';
+
+  @override
+  String get communityRequestedCancel => 'Demandée · Annuler la demande';
+
+  @override
+  String get communityRequestSent =>
+      'Demande envoyée. Vous recevrez une notification dès qu\'elle sera traitée.';
+
+  @override
+  String get communityRequestToJoin => 'Demander à rejoindre';
+
+  @override
+  String get communityResults => 'Résultats';
+
+  @override
+  String get communityReviewNote =>
+      'Drift examine chaque nouvelle communauté avant que d\'autres puissent la trouver. Nous vous préviendrons dès qu\'elle sera en ligne.';
+
+  @override
+  String get communityRoleAdmin => 'Admin';
+
+  @override
+  String get communityRoleMember => 'Membre';
+
+  @override
+  String get communityRoleOwner => 'Propriétaire';
+
+  @override
+  String communityRunBy(String club) {
+    return 'Gérée par $club';
+  }
+
+  @override
+  String get communitySave => 'Enregistrer';
+
+  @override
+  String get communitySaved => 'Enregistré';
+
+  @override
+  String get communitySearchHint => 'Rechercher des communautés';
+
+  @override
+  String get communityStart => 'Créer une communauté';
+
+  @override
+  String get communityStatusNotApproved => 'Non approuvée';
+
+  @override
+  String get communityStatusSuspended => 'Suspendue';
+
+  @override
+  String get communityStatusUnderReview => 'En cours d\'examen';
+
+  @override
+  String get communitySubmitted => 'Envoyée pour examen';
+
+  @override
+  String get communitySuspendedBody =>
+      'Drift a suspendu cette communauté. La discussion est en lecture seule et personne ne peut la rejoindre pendant l\'examen.';
+
+  @override
+  String get communityTabAbout => 'À propos';
+
+  @override
+  String get communityTabChat => 'Discussion';
+
+  @override
+  String get communityTabCompetitions => 'Compétitions';
+
+  @override
+  String get communityTabMembers => 'Membres';
+
+  @override
+  String get communityTransfer => 'Transférer';
+
+  @override
+  String get communityTransferBody =>
+      'Cette personne pourra tout gérer, y compris supprimer la communauté. Vous restez administrateur.';
+
+  @override
+  String communityTransferred(String name) {
+    return '$name est maintenant propriétaire de la communauté';
+  }
+
+  @override
+  String communityTransferTitle(String name) {
+    return 'Nommer $name propriétaire ?';
+  }
+
+  @override
+  String get communityTypeClub => 'Club';
+
+  @override
+  String get communityTypeClubHint => 'Les membres d\'un club';
+
+  @override
+  String get communityTypeLadder => 'Échelle';
+
+  @override
+  String get communityTypeLadderHint => 'Un classement permanent';
+
+  @override
+  String get communityTypeSocial => 'Loisir';
+
+  @override
+  String get communityTypeSocialHint => 'Des sessions amicales régulières';
+
+  @override
+  String get communityTypeTraining => 'Entraînement';
+
+  @override
+  String get communityTypeTrainingHint => 'Exercices et entraînements encadrés';
+
+  @override
+  String get communityUnderReviewBody =>
+      'Drift examine votre communauté. Personne d\'autre ne peut la trouver ni la rejoindre avant son approbation — vous recevrez une notification.';
+
+  @override
+  String get communityUnmute => 'Réactiver les notifications de discussion';
+
+  @override
+  String get communityWhatItIs => 'Type';
+
+  @override
+  String get communityWhoCanJoin => 'Qui peut rejoindre';
+
+  @override
+  String get communityYourCommunities => 'Vos communautés';
+
+  @override
   String get competeBye => 'Exempt';
 
   @override
@@ -942,6 +1454,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get discoverCourts => 'Courts';
+
+  @override
+  String get discoverFindPlayers => 'Trouver des joueurs';
 
   @override
   String get drawerSigningOut => 'Déconnexion…';
@@ -1703,7 +2218,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get navAchievements => 'Succès';
 
   @override
-  String get navCompete => 'Compétition';
+  String get navCommunity => 'Communauté';
 
   @override
   String get navDiscover => 'Découvrir';
@@ -1859,6 +2374,10 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get notifPrefClubs => 'Annonces et adhésions de vos clubs';
+
+  @override
+  String get notifPrefCommunities =>
+      'Approbations, demandes d\'adhésion et nouvelles compétitions dans vos communautés';
 
   @override
   String get notifPrefCompetitions =>
@@ -2489,6 +3008,14 @@ class AppLocalizationsFr extends AppLocalizations {
       'Aucun défi en cours — trouvez un joueur et lancez-en un.';
 
   @override
+  String playCompetitionRound(String name, int round) {
+    return '$name · Tour $round';
+  }
+
+  @override
+  String get playFindOpponent => 'Trouver un adversaire';
+
+  @override
   String get playHistoryEmpty =>
       'Jouez votre premier match pour commencer votre historique.';
 
@@ -2500,20 +3027,16 @@ class AppLocalizationsFr extends AppLocalizations {
   String get playNoPlayersFound => 'Aucun joueur trouvé.';
 
   @override
-  String get playNoPlayersMatch =>
-      'Aucun joueur ne correspond. Élargissez vos filtres.';
+  String get playRespond => 'Répondre';
 
   @override
-  String get playRespond => 'Répondre';
+  String get playSegmentMatches => 'Matchs';
 
   @override
   String get playTabActive => 'En cours';
 
   @override
   String get playTabChallenges => 'Défis';
-
-  @override
-  String get playTabFind => 'Trouver';
 
   @override
   String get playTabHistory => 'Historique';

@@ -47,7 +47,7 @@ void main() {
     for (final brightness in Brightness.values) {
       final label = brightness.name;
 
-      testWidgets('opens on the Find tab in $label', (tester) async {
+      testWidgets('shows Matches segments and match filter chips in $label', (tester) async {
         await pumpScreen(
           tester,
           screen(),
@@ -55,7 +55,11 @@ void main() {
           overrides: baseOverrides(search: Future.value([playerSummary()])),
         );
 
-        expect(find.text('Ana Diaz'), findsOneWidget);
+        expect(find.text('Matches'), findsOneWidget);
+        expect(find.text('Leagues'), findsOneWidget);
+        expect(find.text('Challenges'), findsOneWidget);
+        expect(find.text('Active'), findsOneWidget);
+        expect(find.text('History'), findsOneWidget);
       });
     }
 

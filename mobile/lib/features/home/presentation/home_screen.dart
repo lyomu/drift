@@ -96,7 +96,7 @@ class _HomeBody extends StatelessWidget {
           HomeSectionPanel(
             title: context.l10n.homePlayersNearYou,
             actionLabel: context.l10n.homeFindMore,
-            onAction: () => context.go('/home?tab=play&play=find'),
+            onAction: () => context.go('/home?tab=discover&discover=players'),
             child: PlayersNearYouSection(
               players: sections.players?.data?.players ?? const [],
             ),

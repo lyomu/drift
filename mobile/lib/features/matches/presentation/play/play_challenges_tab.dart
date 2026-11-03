@@ -87,6 +87,7 @@ class _ChallengeCard extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    PlayCompetitionTag(match: match),
                     Text(
                       opponent?.displayName ?? context.l10n.matchChallenge,
                       style: type.title.copyWith(fontWeight: FontWeight.w700),

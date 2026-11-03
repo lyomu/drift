@@ -12,6 +12,7 @@ interface MockPrisma {
   standing: Record<string, jest.Mock>;
   match: Record<string, jest.Mock>;
   user: Record<string, jest.Mock>;
+  communityMember: Record<string, jest.Mock>;
   $transaction: jest.Mock;
 }
 
@@ -52,6 +53,7 @@ function createMockPrisma(): MockPrisma {
     },
     match: { update: jest.fn().mockResolvedValue({}) },
     user: { findMany: jest.fn().mockResolvedValue([]) },
+    communityMember: { findUnique: jest.fn() },
     $transaction: jest.fn(),
   };
 
@@ -115,6 +117,27 @@ describe('CompetitionsService', () => {
   });
 
   describe('register', () => {
+    it('requires ACTIVE membership for a community league', async () => {
+      prisma.league.findUnique.mockResolvedValue(
+        baseLeague({
+          communityId: 'community-1',
+          registrationOpensAt: new Date(Date.now() - HOUR),
+          registrationClosesAt: new Date(Date.now() + HOUR),
+          startsAt: new Date(Date.now() + 2 * HOUR),
+        }),
+      );
+      prisma.communityMember.findUnique.mockResolvedValue({ status: 'REQUESTED' });
+      await expect(service.register('u1', 'l1')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      expect(prisma.leagueRegistration.upsert).not.toHaveBeenCalled();
+
+      prisma.communityMember.findUnique.mockResolvedValue({ status: 'ACTIVE' });
+      prisma.leagueRegistration.findUnique.mockResolvedValue(null);
+      await service.register('u1', 'l1');
+      expect(prisma.leagueRegistration.upsert).toHaveBeenCalled();
+    });
+
     it('rejects when registration is not open', async () => {
       prisma.league.findUnique.mockResolvedValue(
         baseLeague({

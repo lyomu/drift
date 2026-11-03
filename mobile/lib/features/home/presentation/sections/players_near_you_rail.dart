@@ -37,7 +37,7 @@ class PlayersNearYouSection extends ConsumerWidget {
         icon: Icons.person_search_outlined,
         message: context.l10n.homeNoPlayers,
         actionLabel: context.l10n.commonSearch,
-        onAction: () => context.go('/home?tab=play&play=find'),
+        onAction: () => context.go('/home?tab=discover&discover=players'),
       );
     }
 

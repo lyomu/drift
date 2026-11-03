@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/network/media_url.dart';
 import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
@@ -218,7 +219,11 @@ class _ConversationTile extends ConsumerWidget {
         children: [
           other != null
               ? DriftPlayerAvatar(player: other, radius: 22)
-              : _FallbackAvatar(radius: 22),
+              : _FallbackAvatar(
+                  radius: 22,
+                  group: conversation.isCommunity,
+                  photoUrl: driftMediaUrl(conversation.community?.photoUrl),
+                ),
           const SizedBox(width: DriftSpacing.s3),
           Expanded(
             child: Column(
@@ -255,7 +260,16 @@ class _ConversationTile extends ConsumerWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          preview.body,
+                          // A group thread says who spoke last.
+                          conversation.isCommunity &&
+                                  !preview.isSystem &&
+                                  preview.senderName != null &&
+                                  preview.senderId != viewerId
+                              ? context.l10n.communityChatPreview(
+                                  preview.senderName!,
+                                  preview.body,
+                                )
+                              : preview.body,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: type.bodySmall.copyWith(
@@ -288,10 +302,18 @@ class _ConversationTile extends ConsumerWidget {
 /// Generic stand-in for the (practically unreachable) case of a conversation
 /// with no other participant — mirrors `Conversation.title`'s own
 /// "Conversation" fallback for the same situation.
+///
+/// Also a community thread's avatar: its photo, or a group icon.
 class _FallbackAvatar extends StatelessWidget {
-  const _FallbackAvatar({required this.radius});
+  const _FallbackAvatar({
+    required this.radius,
+    this.group = false,
+    this.photoUrl,
+  });
 
   final double radius;
+  final bool group;
+  final String? photoUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -299,8 +321,9 @@ class _FallbackAvatar extends StatelessWidget {
     return CircleAvatar(
       radius: radius,
       backgroundColor: colors.primaryLight,
+      foregroundImage: photoUrl == null ? null : NetworkImage(photoUrl!),
       child: Icon(
-        Icons.person_outline_rounded,
+        group ? Icons.groups_outlined : Icons.person_outline_rounded,
         color: colors.primaryDark,
         size: radius,
       ),

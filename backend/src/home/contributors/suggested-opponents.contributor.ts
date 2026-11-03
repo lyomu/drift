@@ -55,7 +55,7 @@ export class SuggestedOpponentsContributor implements HomeCardContributor {
         accent: 'neutral',
         action: {
           label: tr('home.action.findPlayers'),
-          route: '/home?tab=play&play=find',
+          route: '/home?tab=discover&discover=players',
         },
         dismissible: true,
         data: { kind: 'players', players },

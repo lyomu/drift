@@ -12,6 +12,7 @@ import { PrismaService } from '../prisma/prisma.service';
  * - Clubs and club-owned things (courts, leagues, tournaments, ladders):
  *   real viewers never see demo ones; demo viewers see everything, so the
  *   demo still has real-looking neighbours.
+ * - Communities and community-owned leagues/ladders: same rule as clubs.
  */
 export interface DemoScope {
   viewerIsDemo: boolean;
@@ -20,8 +21,9 @@ export interface DemoScope {
   /** Spread into a `Club` where-clause. */
   club: Prisma.ClubWhereInput;
   /**
-   * For models with a REQUIRED `club` relation (Tournament, Ladder). Spread
-   * into the where-clause.
+   * For models with a REQUIRED `club` relation (Tournament). Spread into the
+   * where-clause. Ladder's club became optional with community ladders
+   * (2026-11) — use [clubOptional] and [communityOptional] there.
    */
   clubRequired: { club?: { is: { isDemo: false } } };
   /**
@@ -30,6 +32,15 @@ export interface DemoScope {
    */
   clubOptional: {
     OR?: [{ clubId: null }, { club: { is: { isDemo: false } } }];
+  };
+  /** Spread into a `Community` where-clause. */
+  community: Prisma.CommunityWhereInput;
+  /**
+   * For models with a NULLABLE `communityId` (League, Ladder). Same `AND`
+   * rule as [clubOptional].
+   */
+  communityOptional: {
+    OR?: [{ communityId: null }, { community: { is: { isDemo: false } } }];
   };
 }
 
@@ -42,6 +53,12 @@ export function demoScopeFor(viewerIsDemo: boolean): DemoScope {
     clubOptional: viewerIsDemo
       ? {}
       : { OR: [{ clubId: null }, { club: { is: { isDemo: false } } }] },
+    community: viewerIsDemo ? {} : { isDemo: false },
+    communityOptional: viewerIsDemo
+      ? {}
+      : {
+          OR: [{ communityId: null }, { community: { is: { isDemo: false } } }],
+        },
   };
 }
 

@@ -18,6 +18,13 @@ class AppLanguage {
   final String code;
   final String nativeName;
 
+  String get flag => switch (code) {
+    'en' => '🇬🇧',
+    'fr' => '🇫🇷',
+    'es' => '🇪🇸',
+    _ => '🌐',
+  };
+
   String get countryCode => switch (code) {
     'en' => 'GB',
     'fr' => 'FR',
