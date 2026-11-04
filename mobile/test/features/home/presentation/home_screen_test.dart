@@ -7,7 +7,9 @@ import 'package:drift_tennis/features/home/data/home_repository.dart';
 import 'package:drift_tennis/features/home/presentation/home_screen.dart';
 import 'package:drift_tennis/features/home/presentation/sections/players_near_you_rail.dart';
 import 'package:drift_tennis/features/notifications/application/notifications_providers.dart';
+import 'package:drift_tennis/features/tennis_facts/data/tennis_facts_repository.dart';
 import 'package:drift_tennis/features/users/application/current_user_provider.dart';
+import 'package:drift_tennis/shared/widgets/motion/shimmer.dart';
 
 import '../../../support/fixtures.dart';
 import '../../../support/pump.dart';
@@ -22,9 +24,12 @@ void main() {
   final summaryOverride = homeSummaryProvider.overrideWith(
     (ref) async => homeSummary(),
   );
+  // Today's fact is fetched alongside the feed; stub it to "none published"
+  // (the dedicated fact tests live in tennis_fact_rail_test.dart).
   final notificationsOverride = notificationsListProvider.overrideWith(
     (ref) async => notificationsPage(),
   );
+  final factOverride = todayFactProvider.overrideWith((ref) async => null);
   // PlayersNearYouSection filters out the viewer, so it reads the current user.
   final currentUserOverride = currentUserProvider.overrideWith(
     (ref) async => userProfile(),
@@ -43,6 +48,7 @@ void main() {
             homeFeedProvider.overrideWith((ref) => Future.value([homeCard()])),
             summaryOverride,
             notificationsOverride,
+            factOverride,
           ],
         );
 
@@ -64,6 +70,7 @@ void main() {
             homeFeedProvider.overrideWith((ref) => Future.value(<HomeCard>[])),
             summaryOverride,
             notificationsOverride,
+            factOverride,
           ],
         );
 
@@ -110,7 +117,7 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('shows a spinner while loading', (tester) async {
+    testWidgets('shows a skeleton while loading', (tester) async {
       await pumpScreen(
         tester,
         screen(),
@@ -119,10 +126,12 @@ void main() {
           homeFeedProvider.overrideWith((ref) => pending<List<HomeCard>>()),
           summaryOverride,
           notificationsOverride,
+          factOverride,
         ],
       );
 
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      // A content-shaped skeleton replaced the bare spinner (2026-11).
+      expect(find.byType(DriftShimmer), findsOneWidget);
     });
 
     testWidgets('offers a retry after an error', (tester) async {
@@ -133,6 +142,7 @@ void main() {
           homeFeedProvider.overrideWith((ref) => failing<List<HomeCard>>()),
           summaryOverride,
           notificationsOverride,
+          factOverride,
         ],
       );
 

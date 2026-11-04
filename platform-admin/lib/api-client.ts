@@ -203,9 +203,13 @@ export const api = {
     apiFetch<T>(`/platform-admin${path}`, { method: "PATCH", body }),
   delete: <T>(path: string) =>
     apiFetch<T>(`/platform-admin${path}`, { method: "DELETE" }),
-  upload: async <T>(path: string, form: FormData) => {
+  upload: async <T>(
+    path: string,
+    form: FormData,
+    method: "POST" | "PUT" = "POST",
+  ) => {
     const res = await rawFetch(`/platform-admin${path}`, {
-      method: "POST",
+      method,
       body: form,
     });
     return res.json() as Promise<T>;

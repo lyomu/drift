@@ -4562,4 +4562,34 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get withdrawTitle => 'Annuler ce défi ?';
+
+  @override
+  String get homeVs => 'VS';
+
+  @override
+  String get homeNextMatchEmptyTitle => 'Votre prochain adversaire vous attend';
+
+  @override
+  String get homeNextMatchEmptyBody =>
+      'Trouvez un joueur de votre niveau et fixez un créneau.';
+
+  @override
+  String get homeChallengeAFriend => 'Défier un ami';
+
+  @override
+  String get homeTodaysFact => 'Le fait du jour';
+
+  @override
+  String get tennisFactEyebrow => 'Le saviez-vous ?';
+
+  @override
+  String get tennisFactGotIt => 'Compris';
+
+  @override
+  String tennisFactSource(String source) {
+    return 'Source : $source';
+  }
+
+  @override
+  String get tennisFactOpenHint => 'Touchez pour lire';
 }

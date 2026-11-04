@@ -37,6 +37,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { AchievementsModule } from './achievements/achievements.module';
 import { GlobalSearchModule } from './global-search/global-search.module';
 import { WaitlistModule } from './waitlist/waitlist.module';
+import { TennisFactsModule } from './tennis-facts/tennis-facts.module';
 import { MetricsModule } from './metrics/metrics.module';
 import { validateEnvironment } from './config/environment';
 
@@ -95,6 +96,7 @@ import { validateEnvironment } from './config/environment';
     AchievementsModule,
     GlobalSearchModule,
     WaitlistModule,
+    TennisFactsModule,
     MetricsModule,
   ],
   controllers: [AppController],

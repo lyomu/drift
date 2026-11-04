@@ -68,6 +68,7 @@ export class NotificationsService {
     relatedEntityType?: string,
     relatedEntityId?: string,
     imageUrl?: string,
+    options: { push?: boolean } = {},
   ): Promise<boolean> {
     const preference = await this.getOrCreatePreference(userId);
     if (!preference[PREFERENCE_FIELD[category]]) {
@@ -110,6 +111,9 @@ export class NotificationsService {
     // Deliberately not awaited: the caller is finishing a match confirmation
     // or a message send and must not wait on Google. `sendToUser` never
     // throws, so this cannot become an unhandled rejection.
+    // `push: false` files the row in the Notification Centre only — for
+    // low-stakes, daily content (the tennis fact) that shouldn't buzz a phone.
+    if (options.push === false) return true;
     void this.push.sendToUser(userId, title, body, {
       category,
       ...(notification?.id ? { notificationId: notification.id } : {}),

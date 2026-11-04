@@ -168,6 +168,8 @@ export class ErasureService {
     await tx.savedStory.deleteMany({ where: { userId } });
     await tx.favoriteCourt.deleteMany({ where: { userId } });
     await tx.dismissedHomeCard.deleteMany({ where: { userId } });
+    // Which daily tennis facts they saw and opened — reading history.
+    await tx.tennisFactView.deleteMany({ where: { userId } });
     await tx.clubPostReaction.deleteMany({ where: { userId } });
 
     // ---- uploaded match video --------------------------------------------

@@ -1349,5 +1349,14 @@
   "welcomeTitle": "Rejoignez le court",
   "withdrawBody": "Le joueur invité sera informé que le défi a été retiré.",
   "withdrawKeep": "Garder le défi",
-  "withdrawTitle": "Annuler ce défi ?"
+  "withdrawTitle": "Annuler ce défi ?",
+  "homeVs": "VS",
+  "homeNextMatchEmptyTitle": "Votre prochain adversaire vous attend",
+  "homeNextMatchEmptyBody": "Trouvez un joueur de votre niveau et fixez un créneau.",
+  "homeChallengeAFriend": "Défier un ami",
+  "homeTodaysFact": "Le fait du jour",
+  "tennisFactEyebrow": "Le saviez-vous ?",
+  "tennisFactGotIt": "Compris",
+  "tennisFactSource": "Source : {source}",
+  "tennisFactOpenHint": "Touchez pour lire"
 }

@@ -4548,4 +4548,34 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get withdrawTitle => '¿Deshacer este desafío?';
+
+  @override
+  String get homeVs => 'VS';
+
+  @override
+  String get homeNextMatchEmptyTitle => 'Tu próximo rival te espera';
+
+  @override
+  String get homeNextMatchEmptyBody =>
+      'Encuentra un jugador de tu nivel y reserva una hora.';
+
+  @override
+  String get homeChallengeAFriend => 'Reta a un amigo';
+
+  @override
+  String get homeTodaysFact => 'El dato del día';
+
+  @override
+  String get tennisFactEyebrow => '¿Sabías que…?';
+
+  @override
+  String get tennisFactGotIt => 'Entendido';
+
+  @override
+  String tennisFactSource(String source) {
+    return 'Fuente: $source';
+  }
+
+  @override
+  String get tennisFactOpenHint => 'Toca para leer';
 }

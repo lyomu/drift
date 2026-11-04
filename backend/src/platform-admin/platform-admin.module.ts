@@ -40,6 +40,8 @@ import {
   PushBroadcastMediaController,
 } from './push-broadcast-admin.controller';
 import { PushBroadcastScheduler } from './push-broadcast.scheduler';
+import { TennisFactAdminController } from './tennis-fact-admin.controller';
+import { TennisFactAdminService } from './tennis-fact-admin.service';
 import { PushBroadcastAdminService } from './push-broadcast-admin.service';
 import { NewsModule } from '../news/news.module';
 import { CommunitiesModule } from '../communities/communities.module';
@@ -90,6 +92,7 @@ import { CommunityAdminController } from './community-admin.controller';
     WaitlistAdminController,
     PushBroadcastAdminController,
     PushBroadcastMediaController,
+    TennisFactAdminController,
     CommunityAdminController,
   ],
   providers: [
@@ -108,6 +111,7 @@ import { CommunityAdminController } from './community-admin.controller';
     WaitlistAdminService,
     PushBroadcastAdminService,
     PushBroadcastScheduler,
+    TennisFactAdminService,
     AuditService,
     PlatformJwtStrategy,
     PlatformPermissionGuard,

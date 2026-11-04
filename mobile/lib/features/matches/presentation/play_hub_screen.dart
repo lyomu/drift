@@ -9,6 +9,7 @@ import '../../competitions/presentation/league_list_screen.dart';
 import '../../competitions/presentation/tournament_list_screen.dart';
 import '../application/matches_providers.dart';
 import 'play/play_matches_tab.dart';
+import '../../../shared/widgets/motion/fade_switcher.dart';
 
 /// Play Hub (2026-11 restructure). The former Play and Compete tabs merged
 /// into one: Matches / Leagues / Ladders / Tournaments / Events. The old
@@ -16,7 +17,11 @@ import 'play/play_matches_tab.dart';
 /// Matches; Find moved to Discover → Find players. Compete's bottom-nav slot
 /// went to Community.
 class PlayHubScreen extends StatefulWidget {
-  const PlayHubScreen({super.key, this.initialSegment, this.initialMatchFilter});
+  const PlayHubScreen({
+    super.key,
+    this.initialSegment,
+    this.initialMatchFilter,
+  });
 
   /// Index into [PlaySegment.values].
   final int? initialSegment;
@@ -83,17 +88,22 @@ class _PlayHubScreenState extends State<PlayHubScreen> {
         Expanded(
           child: Container(
             color: colors.background,
-            child: switch (PlaySegment.values[_segment]) {
-              PlaySegment.matches => PlayMatchesTab(
-                initialFilter: widget.initialMatchFilter,
+            child: DriftFadeSwitcher(
+              child: KeyedSubtree(
+                key: ValueKey(_segment),
+                child: switch (PlaySegment.values[_segment]) {
+                  PlaySegment.matches => PlayMatchesTab(
+                    initialFilter: widget.initialMatchFilter,
+                  ),
+                  PlaySegment.leagues => const LeagueListScreen(embedded: true),
+                  PlaySegment.ladders => const LadderListScreen(embedded: true),
+                  PlaySegment.tournaments => const TournamentListScreen(
+                    embedded: true,
+                  ),
+                  PlaySegment.events => const EventListScreen(),
+                },
               ),
-              PlaySegment.leagues => const LeagueListScreen(embedded: true),
-              PlaySegment.ladders => const LadderListScreen(embedded: true),
-              PlaySegment.tournaments => const TournamentListScreen(
-                embedded: true,
-              ),
-              PlaySegment.events => const EventListScreen(),
-            },
+            ),
           ),
         ),
       ],

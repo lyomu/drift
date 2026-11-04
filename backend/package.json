@@ -20,6 +20,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json --runInBand --forceExit",
     "seed": "ts-node prisma/seed.ts",
     "seed:communities-demo": "ts-node prisma/seed-communities-demo.ts",
+    "seed:tennis-facts": "ts-node prisma/seed-tennis-facts.ts",
     "seed:demo": "node scripts/seed-demo-history.mjs"
   },
   "prisma": {

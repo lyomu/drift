@@ -2066,5 +2066,19 @@
   "welcomeTitle": "Join the Court",
   "withdrawBody": "The invited player will be told that the challenge was withdrawn.",
   "withdrawKeep": "Keep challenge",
-  "withdrawTitle": "Undo this challenge?"
+  "withdrawTitle": "Undo this challenge?",
+  "homeVs": "VS",
+  "homeNextMatchEmptyTitle": "Your next rival is out there",
+  "homeNextMatchEmptyBody": "Find a player at your level and lock in a time.",
+  "homeChallengeAFriend": "Challenge a friend",
+  "homeTodaysFact": "Today's fact",
+  "tennisFactEyebrow": "Did you know?",
+  "tennisFactGotIt": "Got it",
+  "tennisFactSource": "Source: {source}",
+  "@tennisFactSource": {
+    "placeholders": {
+      "source": {"type": "String"}
+    }
+  },
+  "tennisFactOpenHint": "Tap to read"
 }

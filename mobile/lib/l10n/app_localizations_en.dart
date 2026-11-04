@@ -4491,4 +4491,34 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get withdrawTitle => 'Undo this challenge?';
+
+  @override
+  String get homeVs => 'VS';
+
+  @override
+  String get homeNextMatchEmptyTitle => 'Your next rival is out there';
+
+  @override
+  String get homeNextMatchEmptyBody =>
+      'Find a player at your level and lock in a time.';
+
+  @override
+  String get homeChallengeAFriend => 'Challenge a friend';
+
+  @override
+  String get homeTodaysFact => 'Today\'s fact';
+
+  @override
+  String get tennisFactEyebrow => 'Did you know?';
+
+  @override
+  String get tennisFactGotIt => 'Got it';
+
+  @override
+  String tennisFactSource(String source) {
+    return 'Source: $source';
+  }
+
+  @override
+  String get tennisFactOpenHint => 'Tap to read';
 }

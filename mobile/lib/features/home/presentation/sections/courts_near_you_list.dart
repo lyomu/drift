@@ -6,6 +6,8 @@ import '../../../../core/theme/drift_colors.dart';
 import '../../../courts/data/courts_repository.dart';
 import 'home_empty_state.dart';
 import '../../../../core/l10n/l10n.dart';
+import '../../../../shared/widgets/motion/entrance.dart';
+import '../../../../shared/widgets/motion/pressable.dart';
 
 /// Surface accents, so the badge over the photo matches the court's surface.
 /// Falls back to the brand colour for anything unrecognised.
@@ -45,7 +47,11 @@ class CourtsNearYouSection extends StatelessWidget {
       children: [
         for (var i = 0; i < courts.length; i++) ...[
           if (i > 0) const SizedBox(height: 10),
-          _CourtCard(court: courts[i]),
+          DriftEntrance(
+            index: i,
+            offset: 8,
+            child: DriftPressable(child: _CourtCard(court: courts[i])),
+          ),
         ],
       ],
     );
@@ -237,10 +243,7 @@ class _Thumbnail extends StatelessWidget {
                   color: accent,
                   borderRadius: BorderRadius.circular(999),
                 ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 7,
-                  vertical: 2,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                 child: Text(
                   surface!,
                   style: const TextStyle(

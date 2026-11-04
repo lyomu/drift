@@ -4,7 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/l10n/l10n.dart';
 import '../../../../core/theme/drift_colors.dart';
 import '../../../../core/theme/drift_typography.dart';
-import '../../../../shared/widgets/drift_filter_chip.dart';
+import '../../../../shared/widgets/drift_segmented_filter.dart';
+import '../../../../shared/widgets/motion/fade_switcher.dart';
 import '../../application/matches_providers.dart';
 import 'play_active_tab.dart';
 import 'play_challenges_tab.dart';
@@ -48,28 +49,32 @@ class _PlayMatchesTabState extends State<PlayMatchesTab> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final chips = <(MatchSegment, String)>[
-      (MatchSegment.challenges, l10n.playTabChallenges),
-      (MatchSegment.active, l10n.playTabActive),
-      (MatchSegment.history, l10n.playTabHistory),
+    const segments = [
+      MatchSegment.challenges,
+      MatchSegment.active,
+      MatchSegment.history,
     ];
 
+    // Second-level control: a segmented track, visibly quieter than the
+    // section pills above it, so the two rows don't read as one group.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 12, 12),
           child: Row(
             children: [
-              for (final (segment, label) in chips) ...[
-                DriftFilterChip(
-                  label: label,
-                  selected: _filter == segment,
-                  onTap: () => setState(() => _filter = segment),
+              Expanded(
+                child: DriftSegmentedFilter(
+                  labels: [
+                    l10n.playTabChallenges,
+                    l10n.playTabActive,
+                    l10n.playTabHistory,
+                  ],
+                  selected: segments.indexOf(_filter),
+                  onChanged: (i) => setState(() => _filter = segments[i]),
                 ),
-                const SizedBox(width: 8),
-              ],
+              ),
               const SizedBox(width: 4),
               _FindOpponentButton(
                 onTap: () => context.go('/home?tab=discover&discover=players'),
@@ -78,17 +83,24 @@ class _PlayMatchesTabState extends State<PlayMatchesTab> {
           ),
         ),
         Expanded(
-          child: switch (_filter) {
-            MatchSegment.challenges => const PlayChallengesTab(),
-            MatchSegment.active => const PlayActiveTab(),
-            MatchSegment.history => const PlayHistoryTab(),
-          },
+          child: DriftFadeSwitcher(
+            child: KeyedSubtree(
+              key: ValueKey(_filter),
+              child: switch (_filter) {
+                MatchSegment.challenges => const PlayChallengesTab(),
+                MatchSegment.active => const PlayActiveTab(),
+                MatchSegment.history => const PlayHistoryTab(),
+              },
+            ),
+          ),
         ),
       ],
     );
   }
 }
 
+/// Compact icon + text link at the end of the filter row. Styled as a link
+/// (no filled pill) so it isn't mistaken for a fourth filter segment.
 class _FindOpponentButton extends StatelessWidget {
   const _FindOpponentButton({required this.onTap});
 
@@ -98,29 +110,42 @@ class _FindOpponentButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<DriftColors>()!;
     final type = Theme.of(context).extension<DriftTypography>()!;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(999),
-      child: Container(
-        constraints: const BoxConstraints(minHeight: 44),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: colors.primaryLight,
-          borderRadius: BorderRadius.circular(999),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.person_search_outlined, size: 18, color: colors.primary),
-            const SizedBox(width: 6),
-            Text(
-              context.l10n.playFindOpponent,
-              style: type.label.copyWith(
-                color: colors.primary,
-                fontWeight: FontWeight.w700,
-              ),
+    return Semantics(
+      button: true,
+      label: context.l10n.playFindOpponent,
+      excludeSemantics: true,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 44, minWidth: 44),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.person_search_outlined,
+                  size: 18,
+                  color: colors.primary,
+                ),
+                const SizedBox(width: 4),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 96),
+                  child: Text(
+                    context.l10n.playFindOpponent,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: type.caption.copyWith(
+                      color: colors.primary,
+                      fontWeight: FontWeight.w700,
+                      height: 1.15,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

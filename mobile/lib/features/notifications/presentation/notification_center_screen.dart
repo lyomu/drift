@@ -13,6 +13,7 @@ import '../application/notifications_providers.dart';
 import '../domain/notification_deep_link.dart';
 import '../data/notifications_repository.dart';
 import '../../../core/l10n/l10n.dart';
+import '../../tennis_facts/presentation/tennis_fact_sheet.dart';
 
 /// Notification Center — `foundation/04-screen-inventory.md` §A.11. Delivery
 /// is in-app-fetch only this phase (no FCM/APNs credentials); see
@@ -154,9 +155,7 @@ class _NotificationHeaderActions extends ConsumerWidget {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: Text(context.l10n.notifClearAllQ),
-        content: Text(
-          context.l10n.notifClearAllBody,
-        ),
+        content: Text(context.l10n.notifClearAllBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
@@ -318,9 +317,7 @@ class _NotificationTile extends ConsumerWidget {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: Text(context.l10n.notifDeleteQ),
-        content: Text(
-          context.l10n.notifDeleteBody,
-        ),
+        content: Text(context.l10n.notifDeleteBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
@@ -359,6 +356,13 @@ class _NotificationTile extends ConsumerWidget {
     }
     if (!context.mounted) return;
 
+    // A daily fact opens as a sheet over the list rather than a new screen.
+    final factId = notification.relatedEntityId;
+    if (notification.relatedEntityType == 'TENNIS_FACT' && factId != null) {
+      await openTennisFactById(context, ref, factId);
+      return;
+    }
+
     final path = notificationDeepLink(
       relatedEntityType: notification.relatedEntityType,
       relatedEntityId: notification.relatedEntityId,
@@ -373,8 +377,8 @@ class _NotificationTile extends ConsumerWidget {
     // Silently doing nothing reads as a broken tap, so say so instead: the
     // notification is already marked read, and its title and body are shown
     // in full on the row itself.
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(context.l10n.notifNothingToOpen)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(context.l10n.notifNothingToOpen)));
   }
 }

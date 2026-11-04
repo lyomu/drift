@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/l10n/l10n.dart';
 import '../../../../core/theme/drift_colors.dart';
 import '../../../../shared/widgets/drift_section_header.dart';
+import '../../../../shared/widgets/motion/pressable.dart';
 
 /// The four things a player most often wants to start from Home.
 ///
@@ -97,7 +98,9 @@ class _HeroLayout extends StatelessWidget {
         _TintedCard(
           action: hero,
           radius: 24,
-          court: const _CourtPlacement(Alignment.centerRight, 0.62, 1.25),
+          // Kept to the right third so the lines sit behind the ↗ button and
+          // never cross the title/hint text column.
+          court: const _CourtPlacement(Alignment.centerRight, 0.36, 1.25),
           child: SizedBox(
             height: 112,
             child: Padding(
@@ -197,42 +200,50 @@ class _TintedCard extends StatelessWidget {
       colors.surface,
     );
 
-    return Semantics(
-      button: true,
-      label: '${action.label}. ${action.hint}',
-      excludeSemantics: true,
-      child: Material(
-        borderRadius: BorderRadius.circular(radius),
-        clipBehavior: Clip.antiAlias,
-        color: bottom,
-        child: InkWell(
-          onTap: action.onTap,
-          splashColor: accent.withValues(alpha: 0.18),
-          child: Ink(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [top, bottom],
+    return DriftPressable(
+      child: Semantics(
+        button: true,
+        label: '${action.label}. ${action.hint}',
+        excludeSemantics: true,
+        child: Material(
+          borderRadius: BorderRadius.circular(radius),
+          clipBehavior: Clip.antiAlias,
+          color: bottom,
+          child: InkWell(
+            onTap: action.onTap,
+            splashColor: accent.withValues(alpha: 0.18),
+            child: Ink(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [top, bottom],
+                ),
+                border: Border.all(color: accent.withValues(alpha: 0.20)),
+                borderRadius: BorderRadius.circular(radius),
               ),
-              border: Border.all(color: accent.withValues(alpha: 0.20)),
-              borderRadius: BorderRadius.circular(radius),
-            ),
-            child: Stack(
-              children: [
-                if (court != null)
-                  Positioned.fill(
-                    child: ExcludeSemantics(
-                      child: CustomPaint(
-                        painter: _CourtLinesPainter(
-                          placement: court!,
-                          color: accent.withValues(alpha: isDark ? 0.22 : 0.20),
+              child: Stack(
+                children: [
+                  if (court != null)
+                    Positioned.fill(
+                      child: ExcludeSemantics(
+                        child: CustomPaint(
+                          painter: _CourtLinesPainter(
+                            placement: court!,
+                            // Light mode washes are pale, so the same alpha
+                            // that reads as texture in dark mode reads as
+                            // drawn lines here — keep it a whisper.
+                            color: accent.withValues(
+                              alpha: isDark ? 0.22 : 0.09,
+                            ),
+                            netWidth: isDark ? 3 : 1.8,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                child,
-              ],
+                  child,
+                ],
+              ),
             ),
           ),
         ),
@@ -356,10 +367,15 @@ class _CourtPlacement {
 /// and the centre service line. Proportions follow the real court
 /// (11.885 m half-length × 10.97 m doubles width).
 class _CourtLinesPainter extends CustomPainter {
-  const _CourtLinesPainter({required this.placement, required this.color});
+  const _CourtLinesPainter({
+    required this.placement,
+    required this.color,
+    this.netWidth = 3,
+  });
 
   final _CourtPlacement placement;
   final Color color;
+  final double netWidth;
 
   static const _halfLength = 11.885;
   static const _width = 10.97;
@@ -415,11 +431,13 @@ class _CourtLinesPainter extends CustomPainter {
     canvas.drawLine(
       Offset(r.left, r.top),
       Offset(r.left, r.bottom),
-      line..strokeWidth = 3,
+      line..strokeWidth = netWidth,
     );
   }
 
   @override
   bool shouldRepaint(_CourtLinesPainter old) =>
-      old.color != color || old.placement != placement;
+      old.color != color ||
+      old.placement != placement ||
+      old.netWidth != netWidth;
 }

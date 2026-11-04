@@ -727,6 +727,7 @@ model User {
   messageReportsMade           MessageReport[]     @relation("MessageReporter")
 
   notifications          Notification[]
+  tennisFactViews        TennisFactView[]
   notificationPreference NotificationPreference?
   deviceTokens           DeviceToken[]
 
@@ -3530,6 +3531,66 @@ model PushBroadcastImageAsset {
   createdAt   DateTime      @default(now())
 
   @@map("push_broadcast_image_assets")
+}
+
+// ── Daily tennis fact ───────────────────────────────────────────────────────
+// One short fact a day on Home ("Today's fact") and in the Notification
+// Centre. Curated in platform-admin; text is stored per app language (the
+// apps ship EN/FR/ES) and capped so a fact always fits one screen.
+model TennisFact {
+  id       String  @id @default(uuid())
+  titleEn  String  @db.VarChar(60)
+  titleFr  String  @db.VarChar(60)
+  titleEs  String  @db.VarChar(60)
+  bodyEn   String  @db.VarChar(280)
+  bodyFr   String  @db.VarChar(280)
+  bodyEs   String  @db.VarChar(280)
+  sourceEn String? @db.VarChar(80)
+  sourceFr String? @db.VarChar(80)
+  sourceEs String? @db.VarChar(80)
+  active   Boolean @default(true)
+  // Rotation order: the day's fact is active facts ordered by
+  // (sortOrder, id), indexed by days-since-epoch modulo the count.
+  sortOrder Int    @default(0)
+
+  image TennisFactImageAsset?
+  views TennisFactView[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([active, sortOrder])
+  @@map("tennis_facts")
+}
+
+model TennisFactImageAsset {
+  id        String     @id @default(uuid())
+  factId    String     @unique
+  fact      TennisFact @relation(fields: [factId], references: [id], onDelete: Cascade)
+  filename  String
+  mimeType  String
+  bytes     Bytes
+  createdAt DateTime   @default(now())
+
+  @@map("tennis_fact_image_assets")
+}
+
+// One row per user per (UTC) day: proves the day's notification was filed
+// exactly once, and records whether the fact was opened (which flips the
+// Home rail title back from "Today's fact" to "Needs you").
+model TennisFactView {
+  id       String     @id @default(uuid())
+  userId   String
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  factId   String
+  fact     TennisFact @relation(fields: [factId], references: [id], onDelete: Cascade)
+  day      DateTime   @db.Date
+  openedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@unique([userId, day])
+  @@index([factId])
+  @@map("tennis_fact_views")
 }
 
 // ── AI match-video analysis (Phase 1) ───────────────────────────────────────

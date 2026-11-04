@@ -4,6 +4,7 @@ import '../../../../core/theme/drift_colors.dart';
 import '../../../../core/theme/drift_typography.dart';
 import '../../data/home_repository.dart';
 import '../../../../core/l10n/l10n.dart';
+import '../../../../shared/widgets/motion/count_up.dart';
 
 /// The gradient identity card at the top of Home — Level / Singles / Doubles,
 /// with a bar showing how far through the current level band the player is.
@@ -72,7 +73,8 @@ class HomeStatCard extends StatelessWidget {
                         child: _Stat(
                           label: context.l10n.homeStatLevel,
                           value: rating(summary?.level),
-                          caption: summary?.levelLabel ?? context.l10n.commonUnrated,
+                          caption:
+                              summary?.levelLabel ?? context.l10n.commonUnrated,
                         ),
                       ),
                       const _Divider(),
@@ -211,12 +213,15 @@ class _ProgressBar extends StatelessWidget {
                 ),
                 style: const TextStyle(fontSize: 10, color: _dim),
               ),
-              Text(
-                '${progress.percent}%',
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xE6FFFFFF),
+              DriftCountUp(
+                value: progress.percent,
+                builder: (context, v) => Text(
+                  '${v.round()}%',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xE6FFFFFF),
+                  ),
                 ),
               ),
             ],
@@ -227,10 +232,13 @@ class _ProgressBar extends StatelessWidget {
             child: Container(
               height: 5,
               color: const Color(0x33FFFFFF),
-              child: FractionallySizedBox(
-                alignment: Alignment.centerLeft,
-                widthFactor: (progress.percent / 100).clamp(0.0, 1.0),
-                child: const ColoredBox(color: Colors.white),
+              child: DriftAnimatedFraction(
+                value: progress.percent / 100,
+                builder: (context, f) => FractionallySizedBox(
+                  alignment: Alignment.centerLeft,
+                  widthFactor: f,
+                  child: const ColoredBox(color: Colors.white),
+                ),
               ),
             ),
           ),

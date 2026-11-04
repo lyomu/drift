@@ -8193,6 +8193,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Undo this challenge?'**
   String get withdrawTitle;
+
+  /// No description provided for @homeVs.
+  ///
+  /// In en, this message translates to:
+  /// **'VS'**
+  String get homeVs;
+
+  /// No description provided for @homeNextMatchEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your next rival is out there'**
+  String get homeNextMatchEmptyTitle;
+
+  /// No description provided for @homeNextMatchEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Find a player at your level and lock in a time.'**
+  String get homeNextMatchEmptyBody;
+
+  /// No description provided for @homeChallengeAFriend.
+  ///
+  /// In en, this message translates to:
+  /// **'Challenge a friend'**
+  String get homeChallengeAFriend;
+
+  /// No description provided for @homeTodaysFact.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s fact'**
+  String get homeTodaysFact;
+
+  /// No description provided for @tennisFactEyebrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Did you know?'**
+  String get tennisFactEyebrow;
+
+  /// No description provided for @tennisFactGotIt.
+  ///
+  /// In en, this message translates to:
+  /// **'Got it'**
+  String get tennisFactGotIt;
+
+  /// No description provided for @tennisFactSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Source: {source}'**
+  String tennisFactSource(String source);
+
+  /// No description provided for @tennisFactOpenHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to read'**
+  String get tennisFactOpenHint;
 }
 
 class _AppLocalizationsDelegate
