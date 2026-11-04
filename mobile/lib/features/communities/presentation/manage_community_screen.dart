@@ -241,7 +241,7 @@ class _ManageBodyState extends ConsumerState<_ManageBody> {
                 controller: _name,
                 maxLength: 60,
                 decoration: InputDecoration(
-                  labelText: l10n.communityName,
+                  labelText: l10n.communityFormNameLabel,
                   counterText: '',
                 ),
               ),
@@ -250,12 +250,12 @@ class _ManageBodyState extends ConsumerState<_ManageBody> {
                 controller: _city,
                 maxLength: 80,
                 decoration: InputDecoration(
-                  labelText: l10n.communityCity,
+                  labelText: l10n.communityFormCityLabel,
                   counterText: '',
                 ),
               ),
               const SizedBox(height: 12),
-              Text(l10n.communityHowOften, style: type.label),
+              Text(l10n.communityFormFrequencyLabel, style: type.label),
               const SizedBox(height: 6),
               CommunityFrequencyPicker(
                 value: _frequency,
@@ -267,17 +267,17 @@ class _ManageBodyState extends ConsumerState<_ManageBody> {
                 maxLines: 3,
                 maxLength: 1000,
                 decoration: InputDecoration(
-                  labelText: l10n.communityAboutOptional,
+                  labelText: l10n.communityFormAboutLabel,
                   counterText: '',
                 ),
               ),
               const SizedBox(height: 12),
-              Text(l10n.communityWhoCanJoin, style: type.label),
+              Text(l10n.communityFormJoinLabel, style: type.label),
               const SizedBox(height: 6),
               CommunityOptionCard(
                 icon: Icons.public_rounded,
-                title: l10n.communityJoinAnyone,
-                subtitle: l10n.communityJoinAnyoneHint,
+                title: l10n.communityFormJoinOpen,
+                subtitle: l10n.communityFormJoinOpenHint,
                 selected: _joinPolicy == CommunityJoinPolicy.open,
                 onTap: () =>
                     setState(() => _joinPolicy = CommunityJoinPolicy.open),
@@ -285,8 +285,8 @@ class _ManageBodyState extends ConsumerState<_ManageBody> {
               const SizedBox(height: 8),
               CommunityOptionCard(
                 icon: Icons.lock_outline_rounded,
-                title: l10n.communityJoinByRequest,
-                subtitle: l10n.communityJoinByRequestHint,
+                title: l10n.communityFormJoinRequest,
+                subtitle: l10n.communityFormJoinRequestHint,
                 selected: _joinPolicy == CommunityJoinPolicy.byRequest,
                 onTap: () => setState(
                   () => _joinPolicy = CommunityJoinPolicy.byRequest,

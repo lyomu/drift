@@ -1105,7 +1105,7 @@ abstract class AppLocalizations {
   /// No description provided for @communityAboutHint.
   ///
   /// In en, this message translates to:
-  /// **'Who it\'s for, level, where you usually play…'**
+  /// **'e.g. level, usual courts, what a session looks like'**
   String get communityAboutHint;
 
   /// No description provided for @communityAboutOptional.
@@ -1293,6 +1293,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Near me'**
   String get communityFilterNearMe;
+
+  /// No description provided for @communityFormAboutLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell players what to expect'**
+  String get communityFormAboutLabel;
+
+  /// No description provided for @communityFormCityHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Nairobi'**
+  String get communityFormCityHint;
+
+  /// No description provided for @communityFormCityLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Which city do you play in?'**
+  String get communityFormCityLabel;
+
+  /// No description provided for @communityFormFrequencyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'How often do you get together?'**
+  String get communityFormFrequencyLabel;
+
+  /// No description provided for @communityFormJoinLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'How do new players get in?'**
+  String get communityFormJoinLabel;
+
+  /// No description provided for @communityFormJoinOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open to everyone'**
+  String get communityFormJoinOpen;
+
+  /// No description provided for @communityFormJoinOpenHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Players join instantly, no approval needed'**
+  String get communityFormJoinOpenHint;
+
+  /// No description provided for @communityFormJoinRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Approval needed'**
+  String get communityFormJoinRequest;
+
+  /// No description provided for @communityFormJoinRequestHint.
+  ///
+  /// In en, this message translates to:
+  /// **'You review and accept each player'**
+  String get communityFormJoinRequestHint;
+
+  /// No description provided for @communityFormNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s your community called?'**
+  String get communityFormNameLabel;
+
+  /// No description provided for @communityFormOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get communityFormOptional;
 
   /// No description provided for @communityFrequencyBiweekly.
   ///
@@ -1591,7 +1657,7 @@ abstract class AppLocalizations {
   /// No description provided for @communityNameHint.
   ///
   /// In en, this message translates to:
-  /// **'Tuesday Doubles'**
+  /// **'e.g. Tuesday Night Doubles'**
   String get communityNameHint;
 
   /// No description provided for @communityNearYou.
@@ -1903,7 +1969,7 @@ abstract class AppLocalizations {
   /// No description provided for @communityTypeLadderHint.
   ///
   /// In en, this message translates to:
-  /// **'A standing ranked competition'**
+  /// **'Ongoing ranked challenges between members'**
   String get communityTypeLadderHint;
 
   /// No description provided for @communityTypeSocial.
@@ -1915,7 +1981,7 @@ abstract class AppLocalizations {
   /// No description provided for @communityTypeSocialHint.
   ///
   /// In en, this message translates to:
-  /// **'Regular friendly sessions'**
+  /// **'Casual hits and regular meetups'**
   String get communityTypeSocialHint;
 
   /// No description provided for @communityTypeTraining.
@@ -1927,7 +1993,7 @@ abstract class AppLocalizations {
   /// No description provided for @communityTypeTrainingHint.
   ///
   /// In en, this message translates to:
-  /// **'Drills and coached practice'**
+  /// **'Clinics, drills and coached sessions'**
   String get communityTypeTrainingHint;
 
   /// No description provided for @communityUnderReviewBody.
@@ -1945,7 +2011,7 @@ abstract class AppLocalizations {
   /// No description provided for @communityWhatItIs.
   ///
   /// In en, this message translates to:
-  /// **'What it is'**
+  /// **'What kind of community is it?'**
   String get communityWhatItIs;
 
   /// No description provided for @communityWhoCanJoin.

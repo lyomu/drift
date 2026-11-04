@@ -568,7 +568,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get communityAboutHint =>
-      'Pour qui, niveau, où vous jouez d\'habitude…';
+      'ex. niveau, courts habituels, déroulé d’une séance';
 
   @override
   String get communityAboutOptional => 'À propos · Facultatif';
@@ -684,6 +684,43 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get communityFilterNearMe => 'Près de moi';
+
+  @override
+  String get communityFormAboutLabel => 'Dites aux joueurs à quoi s’attendre';
+
+  @override
+  String get communityFormCityHint => 'ex. Nairobi';
+
+  @override
+  String get communityFormCityLabel => 'Dans quelle ville jouez-vous ?';
+
+  @override
+  String get communityFormFrequencyLabel =>
+      'À quelle fréquence vous retrouvez-vous ?';
+
+  @override
+  String get communityFormJoinLabel =>
+      'Comment les nouveaux joueurs rejoignent-ils ?';
+
+  @override
+  String get communityFormJoinOpen => 'Ouverte à tous';
+
+  @override
+  String get communityFormJoinOpenHint =>
+      'Les joueurs rejoignent tout de suite, sans validation';
+
+  @override
+  String get communityFormJoinRequest => 'Sur validation';
+
+  @override
+  String get communityFormJoinRequestHint =>
+      'Vous examinez et acceptez chaque joueur';
+
+  @override
+  String get communityFormNameLabel => 'Comment s’appelle votre communauté ?';
+
+  @override
+  String get communityFormOptional => 'Facultatif';
 
   @override
   String get communityFrequencyBiweekly => 'Toutes les 2 semaines';
@@ -871,7 +908,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get communityName => 'Nom';
 
   @override
-  String get communityNameHint => 'Double du mardi';
+  String get communityNameHint => 'ex. Double du mardi soir';
 
   @override
   String get communityNearYou => 'Communautés près de vous';
@@ -1048,19 +1085,22 @@ class AppLocalizationsFr extends AppLocalizations {
   String get communityTypeLadder => 'Échelle';
 
   @override
-  String get communityTypeLadderHint => 'Un classement permanent';
+  String get communityTypeLadderHint =>
+      'Défis classés en continu entre membres';
 
   @override
   String get communityTypeSocial => 'Loisir';
 
   @override
-  String get communityTypeSocialHint => 'Des sessions amicales régulières';
+  String get communityTypeSocialHint =>
+      'Échanges détendus et rendez-vous réguliers';
 
   @override
   String get communityTypeTraining => 'Entraînement';
 
   @override
-  String get communityTypeTrainingHint => 'Exercices et entraînements encadrés';
+  String get communityTypeTrainingHint =>
+      'Stages, exercices et séances encadrées';
 
   @override
   String get communityUnderReviewBody =>
@@ -1070,7 +1110,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get communityUnmute => 'Réactiver les notifications de discussion';
 
   @override
-  String get communityWhatItIs => 'Type';
+  String get communityWhatItIs => 'Quel type de communauté est-ce ?';
 
   @override
   String get communityWhoCanJoin => 'Qui peut rejoindre';

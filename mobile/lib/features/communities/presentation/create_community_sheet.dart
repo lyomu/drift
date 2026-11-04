@@ -49,10 +49,7 @@ class _CreateCommunitySheetState extends ConsumerState<_CreateCommunitySheet> {
   void initState() {
     super.initState();
     // "Nairobi, Nairobi County" → "Nairobi". Only a prefill; editable.
-    final label = ref
-        .read(communityViewerLocationProvider)
-        .valueOrNull
-        ?.label;
+    final label = ref.read(communityViewerLocationProvider).valueOrNull?.label;
     if (label != null) _city.text = label.split(',').first.trim();
   }
 
@@ -122,6 +119,11 @@ class _CreateCommunitySheetState extends ConsumerState<_CreateCommunitySheet> {
     final type = Theme.of(context).extension<DriftTypography>()!;
     final colors = Theme.of(context).extension<DriftColors>()!;
     final l10n = context.l10n;
+    // Placeholders sit well back from typed text so an example never reads
+    // as a value that's already filled in.
+    final hintStyle = TextStyle(
+      color: colors.textSecondary.withValues(alpha: 0.45),
+    );
 
     return Padding(
       padding: EdgeInsets.only(
@@ -143,20 +145,31 @@ class _CreateCommunitySheetState extends ConsumerState<_CreateCommunitySheet> {
               ],
             ),
             const SizedBox(height: 16),
-            _SectionLabel(l10n.communityWhatItIs),
-            for (final option in CommunityType.creatable) ...[
-              CommunityOptionCard(
-                icon: communityTypeIcon(option),
-                title: option.label,
-                subtitle: _typeHint(l10n, option),
-                selected: _type == option,
-                onTap: () => setState(() => _type = option),
-              ),
-              const SizedBox(height: 10),
-            ],
-            const SizedBox(height: 8),
             _Field(
-              label: l10n.communityName,
+              label: l10n.communityWhatItIs,
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (final (i, option)
+                        in CommunityType.creatable.indexed) ...[
+                      if (i > 0) const SizedBox(width: 8),
+                      Expanded(
+                        child: _TypeTile(
+                          icon: communityTypeIcon(option),
+                          title: option.label,
+                          hint: _typeHint(l10n, option),
+                          selected: _type == option,
+                          onTap: () => setState(() => _type = option),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            _Field(
+              label: l10n.communityFormNameLabel,
               child: TextField(
                 controller: _name,
                 maxLength: 60,
@@ -164,60 +177,72 @@ class _CreateCommunitySheetState extends ConsumerState<_CreateCommunitySheet> {
                 onChanged: (_) => setState(() {}),
                 decoration: InputDecoration(
                   hintText: l10n.communityNameHint,
+                  hintStyle: hintStyle,
                   counterText: '',
                 ),
               ),
             ),
             _Field(
-              label: l10n.communityCity,
+              label: l10n.communityFormCityLabel,
               child: TextField(
                 controller: _city,
                 maxLength: 80,
                 textCapitalization: TextCapitalization.words,
                 onChanged: (_) => setState(() {}),
                 decoration: InputDecoration(
-                  hintText: l10n.communityCityHint,
+                  hintText: l10n.communityFormCityHint,
+                  hintStyle: hintStyle,
                   counterText: '',
                 ),
               ),
             ),
-            _SectionLabel(l10n.communityHowOften),
-            CommunityFrequencyPicker(
-              value: _frequency,
-              onChanged: (value) => setState(() => _frequency = value),
-            ),
-            const SizedBox(height: 16),
             _Field(
-              label: l10n.communityAboutOptional,
+              label: l10n.communityFormFrequencyLabel,
+              child: CommunityFrequencyPicker(
+                value: _frequency,
+                onChanged: (value) => setState(() => _frequency = value),
+              ),
+            ),
+            _Field(
+              label: l10n.communityFormAboutLabel,
+              optional: true,
               child: TextField(
                 controller: _about,
                 maxLines: 3,
                 maxLength: 1000,
                 decoration: InputDecoration(
                   hintText: l10n.communityAboutHint,
+                  hintStyle: hintStyle,
                   counterText: '',
                 ),
               ),
             ),
-            _SectionLabel(l10n.communityWhoCanJoin),
-            CommunityOptionCard(
-              icon: Icons.public_rounded,
-              title: l10n.communityJoinAnyone,
-              subtitle: l10n.communityJoinAnyoneHint,
-              selected: _joinPolicy == CommunityJoinPolicy.open,
-              onTap: () =>
-                  setState(() => _joinPolicy = CommunityJoinPolicy.open),
+            _Field(
+              label: l10n.communityFormJoinLabel,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  CommunityOptionCard(
+                    icon: Icons.public_rounded,
+                    title: l10n.communityFormJoinOpen,
+                    subtitle: l10n.communityFormJoinOpenHint,
+                    selected: _joinPolicy == CommunityJoinPolicy.open,
+                    onTap: () =>
+                        setState(() => _joinPolicy = CommunityJoinPolicy.open),
+                  ),
+                  const SizedBox(height: 8),
+                  CommunityOptionCard(
+                    icon: Icons.lock_outline_rounded,
+                    title: l10n.communityFormJoinRequest,
+                    subtitle: l10n.communityFormJoinRequestHint,
+                    selected: _joinPolicy == CommunityJoinPolicy.byRequest,
+                    onTap: () => setState(
+                      () => _joinPolicy = CommunityJoinPolicy.byRequest,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 10),
-            CommunityOptionCard(
-              icon: Icons.lock_outline_rounded,
-              title: l10n.communityJoinByRequest,
-              subtitle: l10n.communityJoinByRequestHint,
-              selected: _joinPolicy == CommunityJoinPolicy.byRequest,
-              onTap: () =>
-                  setState(() => _joinPolicy = CommunityJoinPolicy.byRequest),
-            ),
-            const SizedBox(height: 16),
             OutlinedButton.icon(
               onPressed: _submitting ? null : _pickPhoto,
               icon: Icon(
@@ -238,7 +263,10 @@ class _CreateCommunitySheetState extends ConsumerState<_CreateCommunitySheet> {
             ),
             if (_error != null) ...[
               const SizedBox(height: 12),
-              Text(_error!, style: type.bodySmall.copyWith(color: colors.error)),
+              Text(
+                _error!,
+                style: type.bodySmall.copyWith(color: colors.error),
+              ),
             ],
             const SizedBox(height: 16),
             DriftPrimaryButton(
@@ -261,44 +289,57 @@ class _CreateCommunitySheetState extends ConsumerState<_CreateCommunitySheet> {
       };
 }
 
-class _SectionLabel extends StatelessWidget {
-  const _SectionLabel(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<DriftColors>()!;
-    final type = Theme.of(context).extension<DriftTypography>()!;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Text(
-        text.toUpperCase(),
-        style: type.label.copyWith(
-          color: colors.textSecondary,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-}
-
+/// One labelled block of the form: a sentence-case question above its
+/// input, with an "Optional" pill when the block can be skipped.
 class _Field extends StatelessWidget {
-  const _Field({required this.label, required this.child});
+  const _Field({
+    required this.label,
+    required this.child,
+    this.optional = false,
+  });
 
   final String label;
   final Widget child;
+  final bool optional;
 
   @override
   Widget build(BuildContext context) {
     final type = Theme.of(context).extension<DriftTypography>()!;
+    final colors = Theme.of(context).extension<DriftColors>()!;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: type.title.copyWith(fontWeight: FontWeight.w600)),
-          const SizedBox(height: 8),
+          Row(
+            children: [
+              Flexible(
+                child: Text(
+                  label,
+                  style: type.title.copyWith(fontWeight: FontWeight.w600),
+                ),
+              ),
+              if (optional) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colors.surfaceRaised,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: colors.border),
+                  ),
+                  child: Text(
+                    context.l10n.communityFormOptional,
+                    style: type.caption.copyWith(color: colors.textSecondary),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 10),
           child,
         ],
       ),
@@ -306,8 +347,141 @@ class _Field extends StatelessWidget {
   }
 }
 
-/// A selectable option card with an icon, two lines of text and a radio —
-/// "What it is" and "Who can join" in the create sheet, reused by Manage.
+/// Filled circle with a ✓, shown on whichever option is chosen.
+class _CheckBadge extends StatelessWidget {
+  const _CheckBadge({this.size = 22});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<DriftColors>()!;
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(color: colors.primary, shape: BoxShape.circle),
+      child: Icon(
+        Icons.check_rounded,
+        size: size * 0.68,
+        color: Theme.of(context).colorScheme.onPrimary,
+      ),
+    );
+  }
+}
+
+/// Selected / unselected surface shared by the type tiles and option cards:
+/// a soft primary tint and border when chosen, a plain raised card when not.
+BoxDecoration _optionDecoration(DriftColors colors, bool selected) =>
+    BoxDecoration(
+      color: selected
+          ? Color.alphaBlend(
+              colors.primary.withValues(alpha: 0.12),
+              colors.surfaceRaised,
+            )
+          : colors.surfaceRaised,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(
+        color: selected ? colors.primary : colors.border,
+        width: selected ? 1.5 : 1,
+      ),
+    );
+
+/// Rounded-square icon holder for option cards and type tiles.
+class _OptionIcon extends StatelessWidget {
+  const _OptionIcon({required this.icon, required this.selected});
+
+  final IconData icon;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<DriftColors>()!;
+    return Container(
+      width: 38,
+      height: 38,
+      decoration: BoxDecoration(
+        color: selected
+            ? colors.primary.withValues(alpha: 0.18)
+            : colors.background,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(
+        icon,
+        size: 20,
+        color: selected ? colors.primary : colors.textSecondary,
+      ),
+    );
+  }
+}
+
+/// One of the side-by-side "What kind of community" choices.
+class _TypeTile extends StatelessWidget {
+  const _TypeTile({
+    required this.icon,
+    required this.title,
+    required this.hint,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String hint;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<DriftColors>()!;
+    final type = Theme.of(context).extension<DriftTypography>()!;
+    return Semantics(
+      selected: selected,
+      button: true,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Ink(
+            decoration: _optionDecoration(colors, selected),
+            padding: const EdgeInsets.fromLTRB(12, 12, 10, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _OptionIcon(icon: icon, selected: selected),
+                    const Spacer(),
+                    if (selected) const _CheckBadge(size: 20),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: type.title.copyWith(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  hint,
+                  maxLines: 4,
+                  overflow: TextOverflow.ellipsis,
+                  style: type.caption.copyWith(color: colors.textSecondary),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A selectable full-width card with an icon, two lines of text and a ✓
+/// badge when chosen. "Who can join" in the create sheet, reused by Manage.
 class CommunityOptionCard extends StatelessWidget {
   const CommunityOptionCard({
     super.key,
@@ -332,35 +506,17 @@ class CommunityOptionCard extends StatelessWidget {
       selected: selected,
       button: true,
       child: Material(
-        color: colors.surfaceRaised,
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(16),
-          child: Container(
+          child: Ink(
             padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: selected ? colors.primary : colors.border,
-                width: selected ? 2 : 1,
-              ),
-            ),
+            decoration: _optionDecoration(colors, selected),
             child: Row(
               children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: selected ? colors.primaryLight : colors.background,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    icon,
-                    size: 22,
-                    color: selected ? colors.primary : colors.textSecondary,
-                  ),
-                ),
+                _OptionIcon(icon: icon, selected: selected),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -383,11 +539,10 @@ class CommunityOptionCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Icon(
-                  selected
-                      ? Icons.radio_button_checked_rounded
-                      : Icons.radio_button_off_rounded,
-                  color: selected ? colors.primary : colors.border,
+                // Keep the row's width stable whether or not it's chosen.
+                SizedBox(
+                  width: 22,
+                  child: selected ? const _CheckBadge() : null,
                 ),
               ],
             ),
@@ -398,7 +553,8 @@ class CommunityOptionCard extends StatelessWidget {
   }
 }
 
-/// Weekly / Every two weeks / Monthly / Other, as a segmented control.
+/// Weekly / Every two weeks / Monthly / Other, as wrapping pill chips so
+/// every label shows in full.
 class CommunityFrequencyPicker extends StatelessWidget {
   const CommunityFrequencyPicker({
     super.key,
@@ -411,25 +567,34 @@ class CommunityFrequencyPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: SegmentedButton<CommunityFrequency>(
-        showSelectedIcon: false,
-        segments: [
-          for (final f in CommunityFrequency.values)
-            ButtonSegment(
-              value: f,
-              label: Text(
-                f.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-              ),
+    final colors = Theme.of(context).extension<DriftColors>()!;
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final f in CommunityFrequency.values)
+          ChoiceChip(
+            label: Text(f.label),
+            selected: value == f,
+            onSelected: (_) => onChanged(f),
+            showCheckmark: true,
+            checkmarkColor: colors.primary,
+            shape: const StadiumBorder(),
+            side: BorderSide(
+              color: value == f ? colors.primary : colors.border,
+              width: value == f ? 1.5 : 1,
             ),
-        ],
-        selected: {value},
-        onSelectionChanged: (selection) => onChanged(selection.first),
-      ),
+            backgroundColor: colors.surfaceRaised,
+            selectedColor: Color.alphaBlend(
+              colors.primary.withValues(alpha: 0.12),
+              colors.surfaceRaised,
+            ),
+            labelStyle: TextStyle(
+              fontWeight: value == f ? FontWeight.w700 : FontWeight.w500,
+              color: value == f ? colors.primary : colors.textPrimary,
+            ),
+          ),
+      ],
     );
   }
 }
