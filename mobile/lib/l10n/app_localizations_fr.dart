@@ -1410,6 +1410,85 @@ class AppLocalizationsFr extends AppLocalizations {
   String get courtPublic => 'Public';
 
   @override
+  String get courtAddFavorite => 'Ajouter aux favoris';
+
+  @override
+  String get courtBookACourt => 'Réserver un terrain';
+
+  @override
+  String get courtBookingEyebrow => 'Réservation';
+
+  @override
+  String get courtClosedNow => 'Fermé';
+
+  @override
+  String courtCourtCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count terrains',
+      one: '1 terrain',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String courtCourtsOfSurface(int count, String surface) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count terrains $surface',
+      one: '1 terrain $surface',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get courtFavoriteFailed =>
+      'Impossible de mettre à jour les favoris. Réessayez.';
+
+  @override
+  String get courtFindTheCourt => 'Trouver le terrain';
+
+  @override
+  String get courtGoodToKnow => 'Bon à savoir';
+
+  @override
+  String get courtInfoVerifiedFooter =>
+      'Informations du lieu vérifiées par Drift';
+
+  @override
+  String get courtLocationEyebrow => 'Emplacement';
+
+  @override
+  String get courtOpenNow => 'Ouvert';
+
+  @override
+  String courtPhotoCount(int index, int total) {
+    return '$index / $total';
+  }
+
+  @override
+  String get courtRemoveFavorite => 'Retirer des favoris';
+
+  @override
+  String get courtReportIssue => 'Signaler ou corriger les infos';
+
+  @override
+  String get courtShare => 'Partager le terrain';
+
+  @override
+  String courtShareText(String name, String address) {
+    return '$name — $address';
+  }
+
+  @override
+  String get courtSurface => 'Surface';
+
+  @override
+  String get courtVerifiedVenue => 'Lieu vérifié';
+
+  @override
   String get courtUnavailable => 'Court indisponible.';
 
   @override
@@ -1561,17 +1640,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get goalAchieved => 'Atteint';
 
   @override
-  String get goalAddMilestone => 'Ajouter une étape';
-
-  @override
   String get goalBaseline => 'Point de départ';
 
   @override
   String get goalBehind => 'En retard';
-
-  @override
-  String get goalChooseSkill =>
-      'Choisissez la compétence visée par cet objectif.';
 
   @override
   String get goalCoaching => 'Trouver un entraîneur';
@@ -1581,11 +1653,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get goalDeadline => 'Échéance';
-
-  @override
-  String goalDeadlineValue(String date) {
-    return 'Échéance : $date';
-  }
 
   @override
   String get goalDeleteQ => 'Supprimer cet objectif ?';
@@ -1612,30 +1679,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get goalMilestones => 'Étapes';
 
   @override
-  String get goalMilestonesOptional => 'Étapes (facultatif)';
-
-  @override
-  String get goalNew => 'Nouvel objectif';
-
-  @override
   String get goalOnTrack => 'En bonne voie';
 
   @override
   String get goalPlayMore => 'Jouer plus souvent';
 
   @override
-  String get goalSetDeadline => 'Fixer une échéance (facultatif)';
-
-  @override
-  String get goalSkill => 'Compétence';
-
-  @override
   String get goalTarget => 'Cible';
-
-  @override
-  String goalTargetLabel(String value) {
-    return 'Cible : $value/6';
-  }
 
   @override
   String goalTargetOutOf6(String value) {
@@ -1647,6 +1697,447 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get goalTrackProgress => 'Suivre ma progression';
+
+  @override
+  String get goalCreateAddCustomMilestone => 'Ajouter une étape personnalisée';
+
+  @override
+  String get goalCreateAddDeadline => 'Ajouter une échéance';
+
+  @override
+  String get goalCreateChange => 'Changer';
+
+  @override
+  String get goalCreateChooseDate => 'Choisir une date';
+
+  @override
+  String get goalCreateCurrentRating => 'Niveau actuel';
+
+  @override
+  String get goalCreateCustomDate => 'Date personnalisée';
+
+  @override
+  String get goalCreateEdit => 'Modifier';
+
+  @override
+  String get goalCreateErrorCustomDate =>
+      'Choisissez une date ou sélectionnez « Sans échéance ».';
+
+  @override
+  String get goalCreateErrorTargetHigher =>
+      'Choisissez une cible supérieure à votre niveau actuel.';
+
+  @override
+  String get goalCreateFocusHeading => 'Que voulez-vous améliorer ?';
+
+  @override
+  String get goalCreateFocusSub => 'Choisissez un axe ou restez général.';
+
+  @override
+  String goalCreateFocusValue(String focus) {
+    return 'Axe : $focus';
+  }
+
+  @override
+  String goalCreateImprovement(String value) {
+    return '+$value de progression';
+  }
+
+  @override
+  String get goalCreateMilestoneHint => 'ex. Travailler le placement croisé';
+
+  @override
+  String goalCreateMilestonesAdded(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count étapes ajoutées',
+      one: '1 étape ajoutée',
+      zero: 'Aucune étape ajoutée',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get goalCreateMilestonesHeading => 'Découpez-le en étapes';
+
+  @override
+  String get goalCreateMilestonesSub =>
+      'Facultatif · De petites victoires aident à garder le cap.';
+
+  @override
+  String get goalCreateNoDeadline => 'Sans échéance';
+
+  @override
+  String get goalCreateNone => 'Aucune';
+
+  @override
+  String get goalCreateOptionalLater => 'Facultatif · Modifiable plus tard.';
+
+  @override
+  String get goalCreateRatingInfoBody =>
+      'Les niveaux Drift vont de 0 à 6. Votre niveau actuel part de votre dernière évaluation et de vos entraînements. Ajustez-le s’il ne vous semble pas juste.';
+
+  @override
+  String get goalCreateRatingInfoTitle => 'À propos des niveaux Drift';
+
+  @override
+  String get goalCreateRemoveMilestone => 'Supprimer l’étape';
+
+  @override
+  String get goalCreateSelectedSkill => 'Compétence choisie';
+
+  @override
+  String get goalCreateSetTarget => 'Choisissez votre cible';
+
+  @override
+  String get goalCreateSkillHeading => 'Choisissez une compétence';
+
+  @override
+  String get goalCreateSkillSub => 'Sélectionnez une compétence à développer.';
+
+  @override
+  String get goalCreateStep1Subtitle =>
+      'Quelle partie de votre jeu voulez-vous améliorer ?';
+
+  @override
+  String get goalCreateStep1Title => 'Créer un objectif';
+
+  @override
+  String get goalCreateStep2Subtitle =>
+      'Choisissez le résultat que vous visez.';
+
+  @override
+  String get goalCreateStep2Title => 'Choisissez votre axe';
+
+  @override
+  String get goalCreateStep3Subtitle =>
+      'Fixez une cible motivante et un plan pour l’atteindre.';
+
+  @override
+  String get goalCreateStep3Title => 'Construisez votre objectif';
+
+  @override
+  String goalCreateStepOf(int step, int total) {
+    return 'Étape $step sur $total';
+  }
+
+  @override
+  String get goalCreateSubmit => 'Créer l’objectif';
+
+  @override
+  String get goalCreateSummaryFocus => 'Axe';
+
+  @override
+  String get goalCreateSummaryHeading => 'Récapitulatif';
+
+  @override
+  String get goalCreateSummaryRating => 'Niveau';
+
+  @override
+  String get goalCreateSummarySub => 'Vérifiez votre plan avant de le créer.';
+
+  @override
+  String get goalCreateTargetDate => 'Date cible';
+
+  @override
+  String get goalCreateTargetDisclaimer =>
+      'Votre cible est le niveau que vous visez, pas une mesure automatique de vos performances.';
+
+  @override
+  String get goalCreateTargetHeading => 'Fixez votre objectif de progression';
+
+  @override
+  String get goalCreateTargetMustBeHigher => 'La cible doit être plus haute';
+
+  @override
+  String get goalCreateTargetRating => 'Niveau visé';
+
+  @override
+  String get goalCreateTargetSub => 'Déplacez les curseurs par pas de 0,5.';
+
+  @override
+  String get goalCreateTimeline => 'Échéance';
+
+  @override
+  String get goalCreateTimelineHeading => 'Quand voulez-vous l’atteindre ?';
+
+  @override
+  String goalCreateWeeks(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count semaines',
+      one: '1 semaine',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get goalCreateYourGoal => 'Votre objectif';
+
+  @override
+  String get goalCreatedAnother => 'Créer un autre objectif';
+
+  @override
+  String goalCreatedBody(String skill) {
+    return 'Votre objectif $skill est fixé. Chaque séance ciblée vous en rapproche.';
+  }
+
+  @override
+  String get goalCreatedEyebrow => 'Objectif créé';
+
+  @override
+  String get goalCreatedOpen => 'Ouverte';
+
+  @override
+  String get goalCreatedStart => 'Départ';
+
+  @override
+  String get goalCreatedTitle => 'Prêt à progresser.';
+
+  @override
+  String get goalCreatedView => 'Voir l’objectif';
+
+  @override
+  String get goalFocusAccuracy => 'Précision';
+
+  @override
+  String get goalFocusAgility => 'Agilité';
+
+  @override
+  String get goalFocusApproach => 'Montée au filet';
+
+  @override
+  String get goalFocusBalance => 'Équilibre';
+
+  @override
+  String get goalFocusClosing => 'Conclure';
+
+  @override
+  String get goalFocusComposure => 'Sang-froid';
+
+  @override
+  String get goalFocusConsistency => 'Régularité';
+
+  @override
+  String get goalFocusDepth => 'Profondeur';
+
+  @override
+  String get goalFocusDescBackhandAccuracy => 'Diriger la balle avec contrôle';
+
+  @override
+  String get goalFocusDescBackhandConsistency => 'Construire un revers fiable';
+
+  @override
+  String get goalFocusDescBackhandPower => 'Gagner en vitesse et en profondeur';
+
+  @override
+  String get goalFocusDescBackhandTechnique =>
+      'Améliorer la mécanique de frappe';
+
+  @override
+  String get goalFocusDescFootworkAgility =>
+      'Changer de direction efficacement';
+
+  @override
+  String get goalFocusDescFootworkBalance => 'Rester contrôlé en mouvement';
+
+  @override
+  String get goalFocusDescFootworkPreparation =>
+      'Se placer plus tôt pour chaque frappe';
+
+  @override
+  String get goalFocusDescFootworkRecovery => 'Se replacer après chaque frappe';
+
+  @override
+  String get goalFocusDescForehandAccuracy => 'Mieux placer vos frappes';
+
+  @override
+  String get goalFocusDescForehandConsistency => 'Garder plus de balles en jeu';
+
+  @override
+  String get goalFocusDescForehandPower =>
+      'Développer des frappes plus puissantes';
+
+  @override
+  String get goalFocusDescForehandTechnique => 'Affiner la mécanique du geste';
+
+  @override
+  String get goalFocusDescGeneral =>
+      'Travailler la compétence dans son ensemble';
+
+  @override
+  String get goalFocusDescMatchPlayClosing =>
+      'Conclure les sets avec confiance';
+
+  @override
+  String get goalFocusDescMatchPlayComposure => 'Rester lucide sous pression';
+
+  @override
+  String get goalFocusDescMatchPlayConsistency => 'Réduire les fautes directes';
+
+  @override
+  String get goalFocusDescMatchPlayStrategy =>
+      'Construire des points plus intelligents';
+
+  @override
+  String get goalFocusDescMovementBalance => 'Rester stable sur chaque frappe';
+
+  @override
+  String get goalFocusDescMovementEndurance => 'Bien bouger plus longtemps';
+
+  @override
+  String get goalFocusDescMovementRecovery => 'Se replacer plus vite';
+
+  @override
+  String get goalFocusDescMovementSpeed => 'Arriver plus tôt sur la balle';
+
+  @override
+  String get goalFocusDescNetPlayApproach => 'Monter au filet efficacement';
+
+  @override
+  String get goalFocusDescNetPlayPositioning => 'Occuper le bon espace';
+
+  @override
+  String get goalFocusDescNetPlayTouch => 'Améliorer le toucher et le contrôle';
+
+  @override
+  String get goalFocusDescNetPlayVolleys => 'Gagner en confiance à la volée';
+
+  @override
+  String get goalFocusDescReturnConsistency =>
+      'Remettre plus de retours en jeu';
+
+  @override
+  String get goalFocusDescReturnDepth => 'Garder des retours profonds';
+
+  @override
+  String get goalFocusDescReturnPositioning =>
+      'Trouver une meilleure position de retour';
+
+  @override
+  String get goalFocusDescReturnReaction => 'Lire et réagir plus tôt';
+
+  @override
+  String get goalFocusDescServeConsistency =>
+      'Augmenter votre pourcentage de premières balles';
+
+  @override
+  String get goalFocusDescServePlacement => 'Toucher vos cibles au service';
+
+  @override
+  String get goalFocusDescServePower => 'Générer plus de vitesse de raquette';
+
+  @override
+  String get goalFocusDescServeTechnique => 'Améliorer le geste et le rythme';
+
+  @override
+  String get goalFocusEndurance => 'Endurance';
+
+  @override
+  String get goalFocusGeneral => 'Progression générale';
+
+  @override
+  String get goalFocusPlacement => 'Placement';
+
+  @override
+  String get goalFocusPositioning => 'Positionnement';
+
+  @override
+  String get goalFocusPower => 'Puissance';
+
+  @override
+  String get goalFocusPreparation => 'Préparation';
+
+  @override
+  String get goalFocusReaction => 'Réaction';
+
+  @override
+  String get goalFocusRecovery => 'Replacement';
+
+  @override
+  String get goalFocusSpeed => 'Vitesse';
+
+  @override
+  String get goalFocusStrategy => 'Stratégie';
+
+  @override
+  String get goalFocusTechnique => 'Technique';
+
+  @override
+  String get goalFocusTouch => 'Toucher';
+
+  @override
+  String get goalFocusVolleys => 'Volées';
+
+  @override
+  String get goalMilestoneDrillBackhand => 'Tenir un échange de 10 revers';
+
+  @override
+  String get goalMilestoneDrillFootwork =>
+      'Terminer un circuit complet de jeu de jambes à vide';
+
+  @override
+  String get goalMilestoneDrillForehand =>
+      'Tenir un échange de 10 coups droits';
+
+  @override
+  String get goalMilestoneDrillMatchPlay =>
+      'Appliquer votre axe dans un match complet';
+
+  @override
+  String get goalMilestoneDrillMovement =>
+      'Terminer un exercice de déplacement sur tout le court avec contrôle';
+
+  @override
+  String get goalMilestoneDrillNetPlay =>
+      'Tenir un échange de 10 volées au filet';
+
+  @override
+  String get goalMilestoneDrillReturn =>
+      'Remettre 8 services sur 10 à l’entraînement';
+
+  @override
+  String get goalMilestoneDrillServe =>
+      'Passer 7 premières balles sur 10 dans la zone cible';
+
+  @override
+  String goalMilestoneReachTarget(String skill) {
+    return 'Atteindre votre niveau cible en $skill';
+  }
+
+  @override
+  String get goalMilestoneSessionsBackhand =>
+      'Faire trois séances axées sur le revers';
+
+  @override
+  String get goalMilestoneSessionsFootwork =>
+      'Faire trois séances axées sur le jeu de jambes';
+
+  @override
+  String get goalMilestoneSessionsForehand =>
+      'Faire trois séances axées sur le coup droit';
+
+  @override
+  String get goalMilestoneSessionsMatchPlay =>
+      'Jouer trois sets d’entraînement ciblés';
+
+  @override
+  String get goalMilestoneSessionsMovement =>
+      'Faire trois séances axées sur le déplacement';
+
+  @override
+  String get goalMilestoneSessionsNetPlay =>
+      'Faire trois séances de jeu au filet';
+
+  @override
+  String get goalMilestoneSessionsReturn =>
+      'Faire trois séances axées sur le retour';
+
+  @override
+  String get goalMilestoneSessionsServe =>
+      'Faire trois séances axées sur le service';
 
   @override
   String get goalUnavailable => 'Objectif indisponible.';

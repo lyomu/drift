@@ -678,6 +678,62 @@
   "courtPhotos": "Photos",
   "courtPrivate": "Private",
   "courtPublic": "Public",
+  "courtAddFavorite": "Add to favorites",
+  "courtBookACourt": "Book a court",
+  "courtBookingEyebrow": "Booking",
+  "courtClosedNow": "Closed now",
+  "courtCourtCount": "{count, plural, =1{1 court} other{{count} courts}}",
+  "@courtCourtCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "courtCourtsOfSurface": "{count, plural, =1{1 {surface} court} other{{count} {surface} courts}}",
+  "@courtCourtsOfSurface": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "surface": {
+        "type": "String"
+      }
+    }
+  },
+  "courtFavoriteFailed": "Couldn’t update favorites. Try again.",
+  "courtFindTheCourt": "Find the court",
+  "courtGoodToKnow": "Good to know",
+  "courtInfoVerifiedFooter": "Venue information verified by Drift",
+  "courtLocationEyebrow": "Location",
+  "courtOpenNow": "Open now",
+  "courtPhotoCount": "{index} / {total}",
+  "@courtPhotoCount": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "courtRemoveFavorite": "Remove from favorites",
+  "courtReportIssue": "Report or update court info",
+  "courtShare": "Share court",
+  "courtShareText": "{name} — {address}",
+  "@courtShareText": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "address": {
+        "type": "String"
+      }
+    }
+  },
+  "courtSurface": "Surface",
+  "courtVerifiedVenue": "Verified venue",
   "courtUnavailable": "Court not available.",
   "courtUnverified": "Unverified",
   "courtVerificationPending": "Verification pending",
@@ -734,21 +790,11 @@
   "formNoMatches": "No matches played yet",
   "formWin": "W",
   "goalAchieved": "Achieved",
-  "goalAddMilestone": "Add a milestone",
   "goalBaseline": "Baseline",
   "goalBehind": "Behind",
-  "goalChooseSkill": "Choose which skill this goal targets.",
   "goalCoaching": "Find a coach",
   "goalCompete": "Compete in leagues/tournaments",
   "goalDeadline": "Deadline",
-  "goalDeadlineValue": "Deadline: {date}",
-  "@goalDeadlineValue": {
-    "placeholders": {
-      "date": {
-        "type": "String"
-      }
-    }
-  },
   "goalDeleteQ": "Delete this goal?",
   "goalEmpty": "Set your first development goal",
   "goalGetFit": "Get fitter",
@@ -757,21 +803,9 @@
   "goalLoadFailed": "Couldn't load goals.",
   "goalMeetPeople": "Meet new players",
   "goalMilestones": "Milestones",
-  "goalMilestonesOptional": "Milestones (optional)",
-  "goalNew": "New Goal",
   "goalOnTrack": "On track",
   "goalPlayMore": "Play more often",
-  "goalSetDeadline": "Set a deadline (optional)",
-  "goalSkill": "Skill",
   "goalTarget": "Target",
-  "goalTargetLabel": "Target: {value}/6",
-  "@goalTargetLabel": {
-    "placeholders": {
-      "value": {
-        "type": "String"
-      }
-    }
-  },
   "goalTargetOutOf6": "Target {value}/6",
   "@goalTargetOutOf6": {
     "placeholders": {
@@ -782,6 +816,185 @@
   },
   "goalTitle": "Goal",
   "goalTrackProgress": "Track my progress",
+  "goalCreateAddCustomMilestone": "Add custom milestone",
+  "goalCreateAddDeadline": "Add deadline",
+  "goalCreateChange": "Change",
+  "goalCreateChooseDate": "Choose a date",
+  "goalCreateCurrentRating": "Current rating",
+  "goalCreateCustomDate": "Custom Date",
+  "goalCreateEdit": "Edit",
+  "goalCreateErrorCustomDate": "Choose a custom deadline or select “No deadline”.",
+  "goalCreateErrorTargetHigher": "Choose a target that is higher than your current rating.",
+  "goalCreateFocusHeading": "What would you like to improve?",
+  "goalCreateFocusSub": "Choose a focus or keep it general.",
+  "goalCreateFocusValue": "Focus: {focus}",
+  "@goalCreateFocusValue": {
+    "placeholders": {
+      "focus": {
+        "type": "String"
+      }
+    }
+  },
+  "goalCreateImprovement": "+{value} improvement",
+  "@goalCreateImprovement": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "goalCreateMilestoneHint": "e.g. Practice cross-court placement",
+  "goalCreateMilestonesAdded": "{count, plural, =0{No milestones added} =1{1 milestone added} other{{count} milestones added}}",
+  "@goalCreateMilestonesAdded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "goalCreateMilestonesHeading": "Break it into milestones",
+  "goalCreateMilestonesSub": "Optional · Small achievements help you stay on track.",
+  "goalCreateNoDeadline": "No deadline",
+  "goalCreateNone": "None",
+  "goalCreateOptionalLater": "Optional · You can change this later.",
+  "goalCreateRatingInfoBody": "Drift ratings use a 0–6 scale. Your current rating starts from your latest assessment and practice. Adjust it if it doesn’t feel right.",
+  "goalCreateRatingInfoTitle": "About Drift ratings",
+  "goalCreateRemoveMilestone": "Remove milestone",
+  "goalCreateSelectedSkill": "Selected skill",
+  "goalCreateSetTarget": "Set your target",
+  "goalCreateSkillHeading": "Choose a skill",
+  "goalCreateSkillSub": "Select one skill to develop.",
+  "goalCreateStep1Subtitle": "What part of your tennis game would you like to improve?",
+  "goalCreateStep1Title": "Create a Goal",
+  "goalCreateStep2Subtitle": "Choose the result you want to work toward.",
+  "goalCreateStep2Title": "Choose Your Focus",
+  "goalCreateStep3Subtitle": "Set a meaningful target and make a plan to reach it.",
+  "goalCreateStep3Title": "Build Your Goal",
+  "goalCreateStepOf": "Step {step} of {total}",
+  "@goalCreateStepOf": {
+    "placeholders": {
+      "step": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "goalCreateSubmit": "Create Goal",
+  "goalCreateSummaryFocus": "Focus",
+  "goalCreateSummaryHeading": "Goal summary",
+  "goalCreateSummaryRating": "Rating",
+  "goalCreateSummarySub": "Review your plan before creating it.",
+  "goalCreateTargetDate": "Target date",
+  "goalCreateTargetDisclaimer": "Your target is the skill rating you’re working toward—not an automatic performance measurement.",
+  "goalCreateTargetHeading": "Set your improvement target",
+  "goalCreateTargetMustBeHigher": "Target must be higher",
+  "goalCreateTargetRating": "Target rating",
+  "goalCreateTargetSub": "Move the sliders in 0.5 increments.",
+  "goalCreateTimeline": "Timeline",
+  "goalCreateTimelineHeading": "When do you want to achieve this?",
+  "goalCreateWeeks": "{count, plural, =1{1 Week} other{{count} Weeks}}",
+  "@goalCreateWeeks": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "goalCreateYourGoal": "Your goal",
+  "goalCreatedAnother": "Create another goal",
+  "goalCreatedBody": "Your {skill} goal is set. Every focused session moves you closer.",
+  "@goalCreatedBody": {
+    "placeholders": {
+      "skill": {
+        "type": "String"
+      }
+    }
+  },
+  "goalCreatedEyebrow": "Goal created",
+  "goalCreatedOpen": "Open",
+  "goalCreatedStart": "Start",
+  "goalCreatedTitle": "You’re ready to improve.",
+  "goalCreatedView": "View goal",
+  "goalFocusAccuracy": "Accuracy",
+  "goalFocusAgility": "Agility",
+  "goalFocusApproach": "Approach",
+  "goalFocusBalance": "Balance",
+  "goalFocusClosing": "Closing",
+  "goalFocusComposure": "Composure",
+  "goalFocusConsistency": "Consistency",
+  "goalFocusDepth": "Depth",
+  "goalFocusDescBackhandAccuracy": "Direct the ball with control",
+  "goalFocusDescBackhandConsistency": "Build a dependable backhand",
+  "goalFocusDescBackhandPower": "Add pace and depth",
+  "goalFocusDescBackhandTechnique": "Improve stroke mechanics",
+  "goalFocusDescFootworkAgility": "Change direction efficiently",
+  "goalFocusDescFootworkBalance": "Stay controlled on the move",
+  "goalFocusDescFootworkPreparation": "Set up earlier for each shot",
+  "goalFocusDescFootworkRecovery": "Reset after every stroke",
+  "goalFocusDescForehandAccuracy": "Improve shot placement",
+  "goalFocusDescForehandConsistency": "Keep more shots in play",
+  "goalFocusDescForehandPower": "Develop stronger strokes",
+  "goalFocusDescForehandTechnique": "Refine swing mechanics",
+  "goalFocusDescGeneral": "Work on the skill overall",
+  "goalFocusDescMatchPlayClosing": "Finish sets with confidence",
+  "goalFocusDescMatchPlayComposure": "Stay present under pressure",
+  "goalFocusDescMatchPlayConsistency": "Reduce unforced errors",
+  "goalFocusDescMatchPlayStrategy": "Build smarter point patterns",
+  "goalFocusDescMovementBalance": "Stay stable through every shot",
+  "goalFocusDescMovementEndurance": "Move well for longer",
+  "goalFocusDescMovementRecovery": "Return to position faster",
+  "goalFocusDescMovementSpeed": "Reach the ball sooner",
+  "goalFocusDescNetPlayApproach": "Transition forward effectively",
+  "goalFocusDescNetPlayPositioning": "Own the right court space",
+  "goalFocusDescNetPlayTouch": "Improve feel and control",
+  "goalFocusDescNetPlayVolleys": "Build confident volleys",
+  "goalFocusDescReturnConsistency": "Put more returns in play",
+  "goalFocusDescReturnDepth": "Keep returns deep",
+  "goalFocusDescReturnPositioning": "Find a stronger return position",
+  "goalFocusDescReturnReaction": "Read and react earlier",
+  "goalFocusDescServeConsistency": "Raise your first-serve rate",
+  "goalFocusDescServePlacement": "Hit your service targets",
+  "goalFocusDescServePower": "Generate more racquet speed",
+  "goalFocusDescServeTechnique": "Improve motion and rhythm",
+  "goalFocusEndurance": "Endurance",
+  "goalFocusGeneral": "General improvement",
+  "goalFocusPlacement": "Placement",
+  "goalFocusPositioning": "Positioning",
+  "goalFocusPower": "Power",
+  "goalFocusPreparation": "Preparation",
+  "goalFocusReaction": "Reaction",
+  "goalFocusRecovery": "Recovery",
+  "goalFocusSpeed": "Speed",
+  "goalFocusStrategy": "Strategy",
+  "goalFocusTechnique": "Technique",
+  "goalFocusTouch": "Touch",
+  "goalFocusVolleys": "Volleys",
+  "goalMilestoneDrillBackhand": "Maintain a 10-shot backhand rally",
+  "goalMilestoneDrillFootwork": "Finish a full shadow-swing footwork circuit",
+  "goalMilestoneDrillForehand": "Maintain a 10-shot forehand rally",
+  "goalMilestoneDrillMatchPlay": "Use the chosen focus in a full match",
+  "goalMilestoneDrillMovement": "Finish a full-court movement drill with control",
+  "goalMilestoneDrillNetPlay": "Finish a 10-volley exchange at the net",
+  "goalMilestoneDrillReturn": "Return 8 of 10 practice serves",
+  "goalMilestoneDrillServe": "Land 7 of 10 first serves in the target area",
+  "goalMilestoneReachTarget": "Reach your {skill} rating target",
+  "@goalMilestoneReachTarget": {
+    "placeholders": {
+      "skill": {
+        "type": "String"
+      }
+    }
+  },
+  "goalMilestoneSessionsBackhand": "Complete three backhand-focused practice sessions",
+  "goalMilestoneSessionsFootwork": "Complete three footwork-focused practice sessions",
+  "goalMilestoneSessionsForehand": "Complete three forehand-focused practice sessions",
+  "goalMilestoneSessionsMatchPlay": "Play three focused practice sets",
+  "goalMilestoneSessionsMovement": "Complete three movement-focused practice sessions",
+  "goalMilestoneSessionsNetPlay": "Complete three net-play practice sessions",
+  "goalMilestoneSessionsReturn": "Complete three return-focused practice sessions",
+  "goalMilestoneSessionsServe": "Complete three serve-focused practice sessions",
   "goalUnavailable": "Goal not available.",
   "handLeftHanded": "Left-handed",
   "handRightHanded": "Right-handed",

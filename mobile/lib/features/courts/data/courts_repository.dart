@@ -173,6 +173,7 @@ class CourtProfile {
     required this.photoUrls,
     required this.courtGroups,
     required this.club,
+    this.isFavorite = false,
   });
 
   final CourtSummary summary;
@@ -197,6 +198,9 @@ class CourtProfile {
   final List<CourtGroupSummary> courtGroups;
   final ClubRef? club;
 
+  /// Whether the viewer has hearted this court.
+  final bool isFavorite;
+
   factory CourtProfile.fromJson(Map<String, dynamic> json) => CourtProfile(
     summary: CourtSummary.fromJson(json),
     phone: json['phone'] as String?,
@@ -213,6 +217,7 @@ class CourtProfile {
     club: json['club'] != null
         ? ClubRef.fromJson(json['club'] as Map<String, dynamic>)
         : null,
+    isFavorite: json['isFavorite'] as bool? ?? false,
   );
 }
 
@@ -331,6 +336,19 @@ class CourtsRepository {
         'reason': reason,
         if (notes != null) 'notes': notes,
       });
+
+  /// Hearts / un-hearts the court for the viewer.
+  Future<void> setFavorite(String id, {required bool favorite}) async {
+    try {
+      if (favorite) {
+        await _dio.post('/courts/$id/favorite');
+      } else {
+        await _dio.delete('/courts/$id/favorite');
+      }
+    } on DioException catch (e) {
+      throw _toAuthException(e);
+    }
+  }
 
   Future<Map<String, dynamic>> _get(
     String path, {

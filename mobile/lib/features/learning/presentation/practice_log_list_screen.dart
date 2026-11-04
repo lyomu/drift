@@ -11,7 +11,6 @@ import '../application/learning_providers.dart';
 import '../../../core/l10n/l10n.dart';
 import '../../../core/l10n/enum_labels.dart';
 
-
 /// Practice Log List — `foundation/04-screen-inventory.md` §A.7.
 class PracticeLogListScreen extends ConsumerWidget {
   const PracticeLogListScreen({super.key});
@@ -78,7 +77,10 @@ class PracticeLogListScreen extends ConsumerWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    pillarLabel(context.l10n, session.skillFocus),
+                                    pillarLabel(
+                                      context.l10n,
+                                      session.skillFocus,
+                                    ),
                                     style: type.title,
                                   ),
                                   const SizedBox(height: DriftSpacing.s1),
@@ -107,9 +109,7 @@ class PracticeLogListScreen extends ConsumerWidget {
                       );
                     },
                   ),
-          AsyncError() => Center(
-            child: Text(context.l10n.practiceLoadFailed),
-          ),
+          AsyncError() => Center(child: Text(context.l10n.practiceLoadFailed)),
           _ => const Center(child: CircularProgressIndicator()),
         },
       ),

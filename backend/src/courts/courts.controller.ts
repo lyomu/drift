@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -50,6 +51,16 @@ export class CourtsController {
     @Body('kind') kind: CourtInquiryKind,
   ) {
     return this.courtsService.recordInquiry(id, this.userId(req), kind);
+  }
+
+  @Post(':id/favorite')
+  favorite(@Req() req: Request, @Param('id') id: string) {
+    return this.courtsService.favorite(this.userId(req), id);
+  }
+
+  @Delete(':id/favorite')
+  unfavorite(@Req() req: Request, @Param('id') id: string) {
+    return this.courtsService.unfavorite(this.userId(req), id);
   }
 
   @Post(':id/report')

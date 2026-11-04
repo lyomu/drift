@@ -166,6 +166,7 @@ export class ErasureService {
     // routinely embed the person's own name.
     await tx.notification.deleteMany({ where: { userId } });
     await tx.savedStory.deleteMany({ where: { userId } });
+    await tx.favoriteCourt.deleteMany({ where: { userId } });
     await tx.dismissedHomeCard.deleteMany({ where: { userId } });
     await tx.clubPostReaction.deleteMany({ where: { userId } });
 

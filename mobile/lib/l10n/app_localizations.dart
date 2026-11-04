@@ -2548,6 +2548,120 @@ abstract class AppLocalizations {
   /// **'Public'**
   String get courtPublic;
 
+  /// No description provided for @courtAddFavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to favorites'**
+  String get courtAddFavorite;
+
+  /// No description provided for @courtBookACourt.
+  ///
+  /// In en, this message translates to:
+  /// **'Book a court'**
+  String get courtBookACourt;
+
+  /// No description provided for @courtBookingEyebrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking'**
+  String get courtBookingEyebrow;
+
+  /// No description provided for @courtClosedNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Closed now'**
+  String get courtClosedNow;
+
+  /// No description provided for @courtCourtCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 court} other{{count} courts}}'**
+  String courtCourtCount(int count);
+
+  /// No description provided for @courtCourtsOfSurface.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 {surface} court} other{{count} {surface} courts}}'**
+  String courtCourtsOfSurface(int count, String surface);
+
+  /// No description provided for @courtFavoriteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t update favorites. Try again.'**
+  String get courtFavoriteFailed;
+
+  /// No description provided for @courtFindTheCourt.
+  ///
+  /// In en, this message translates to:
+  /// **'Find the court'**
+  String get courtFindTheCourt;
+
+  /// No description provided for @courtGoodToKnow.
+  ///
+  /// In en, this message translates to:
+  /// **'Good to know'**
+  String get courtGoodToKnow;
+
+  /// No description provided for @courtInfoVerifiedFooter.
+  ///
+  /// In en, this message translates to:
+  /// **'Venue information verified by Drift'**
+  String get courtInfoVerifiedFooter;
+
+  /// No description provided for @courtLocationEyebrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get courtLocationEyebrow;
+
+  /// No description provided for @courtOpenNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Open now'**
+  String get courtOpenNow;
+
+  /// No description provided for @courtPhotoCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{index} / {total}'**
+  String courtPhotoCount(int index, int total);
+
+  /// No description provided for @courtRemoveFavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from favorites'**
+  String get courtRemoveFavorite;
+
+  /// No description provided for @courtReportIssue.
+  ///
+  /// In en, this message translates to:
+  /// **'Report or update court info'**
+  String get courtReportIssue;
+
+  /// No description provided for @courtShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Share court'**
+  String get courtShare;
+
+  /// No description provided for @courtShareText.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} — {address}'**
+  String courtShareText(String name, String address);
+
+  /// No description provided for @courtSurface.
+  ///
+  /// In en, this message translates to:
+  /// **'Surface'**
+  String get courtSurface;
+
+  /// No description provided for @courtVerifiedVenue.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified venue'**
+  String get courtVerifiedVenue;
+
   /// No description provided for @courtUnavailable.
   ///
   /// In en, this message translates to:
@@ -2842,12 +2956,6 @@ abstract class AppLocalizations {
   /// **'Achieved'**
   String get goalAchieved;
 
-  /// No description provided for @goalAddMilestone.
-  ///
-  /// In en, this message translates to:
-  /// **'Add a milestone'**
-  String get goalAddMilestone;
-
   /// No description provided for @goalBaseline.
   ///
   /// In en, this message translates to:
@@ -2859,12 +2967,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Behind'**
   String get goalBehind;
-
-  /// No description provided for @goalChooseSkill.
-  ///
-  /// In en, this message translates to:
-  /// **'Choose which skill this goal targets.'**
-  String get goalChooseSkill;
 
   /// No description provided for @goalCoaching.
   ///
@@ -2883,12 +2985,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Deadline'**
   String get goalDeadline;
-
-  /// No description provided for @goalDeadlineValue.
-  ///
-  /// In en, this message translates to:
-  /// **'Deadline: {date}'**
-  String goalDeadlineValue(String date);
 
   /// No description provided for @goalDeleteQ.
   ///
@@ -2938,18 +3034,6 @@ abstract class AppLocalizations {
   /// **'Milestones'**
   String get goalMilestones;
 
-  /// No description provided for @goalMilestonesOptional.
-  ///
-  /// In en, this message translates to:
-  /// **'Milestones (optional)'**
-  String get goalMilestonesOptional;
-
-  /// No description provided for @goalNew.
-  ///
-  /// In en, this message translates to:
-  /// **'New Goal'**
-  String get goalNew;
-
   /// No description provided for @goalOnTrack.
   ///
   /// In en, this message translates to:
@@ -2962,29 +3046,11 @@ abstract class AppLocalizations {
   /// **'Play more often'**
   String get goalPlayMore;
 
-  /// No description provided for @goalSetDeadline.
-  ///
-  /// In en, this message translates to:
-  /// **'Set a deadline (optional)'**
-  String get goalSetDeadline;
-
-  /// No description provided for @goalSkill.
-  ///
-  /// In en, this message translates to:
-  /// **'Skill'**
-  String get goalSkill;
-
   /// No description provided for @goalTarget.
   ///
   /// In en, this message translates to:
   /// **'Target'**
   String get goalTarget;
-
-  /// No description provided for @goalTargetLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Target: {value}/6'**
-  String goalTargetLabel(String value);
 
   /// No description provided for @goalTargetOutOf6.
   ///
@@ -3003,6 +3069,768 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Track my progress'**
   String get goalTrackProgress;
+
+  /// No description provided for @goalCreateAddCustomMilestone.
+  ///
+  /// In en, this message translates to:
+  /// **'Add custom milestone'**
+  String get goalCreateAddCustomMilestone;
+
+  /// No description provided for @goalCreateAddDeadline.
+  ///
+  /// In en, this message translates to:
+  /// **'Add deadline'**
+  String get goalCreateAddDeadline;
+
+  /// No description provided for @goalCreateChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get goalCreateChange;
+
+  /// No description provided for @goalCreateChooseDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a date'**
+  String get goalCreateChooseDate;
+
+  /// No description provided for @goalCreateCurrentRating.
+  ///
+  /// In en, this message translates to:
+  /// **'Current rating'**
+  String get goalCreateCurrentRating;
+
+  /// No description provided for @goalCreateCustomDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom Date'**
+  String get goalCreateCustomDate;
+
+  /// No description provided for @goalCreateEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get goalCreateEdit;
+
+  /// No description provided for @goalCreateErrorCustomDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a custom deadline or select “No deadline”.'**
+  String get goalCreateErrorCustomDate;
+
+  /// No description provided for @goalCreateErrorTargetHigher.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a target that is higher than your current rating.'**
+  String get goalCreateErrorTargetHigher;
+
+  /// No description provided for @goalCreateFocusHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'What would you like to improve?'**
+  String get goalCreateFocusHeading;
+
+  /// No description provided for @goalCreateFocusSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a focus or keep it general.'**
+  String get goalCreateFocusSub;
+
+  /// No description provided for @goalCreateFocusValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus: {focus}'**
+  String goalCreateFocusValue(String focus);
+
+  /// No description provided for @goalCreateImprovement.
+  ///
+  /// In en, this message translates to:
+  /// **'+{value} improvement'**
+  String goalCreateImprovement(String value);
+
+  /// No description provided for @goalCreateMilestoneHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Practice cross-court placement'**
+  String get goalCreateMilestoneHint;
+
+  /// No description provided for @goalCreateMilestonesAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No milestones added} =1{1 milestone added} other{{count} milestones added}}'**
+  String goalCreateMilestonesAdded(int count);
+
+  /// No description provided for @goalCreateMilestonesHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Break it into milestones'**
+  String get goalCreateMilestonesHeading;
+
+  /// No description provided for @goalCreateMilestonesSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional · Small achievements help you stay on track.'**
+  String get goalCreateMilestonesSub;
+
+  /// No description provided for @goalCreateNoDeadline.
+  ///
+  /// In en, this message translates to:
+  /// **'No deadline'**
+  String get goalCreateNoDeadline;
+
+  /// No description provided for @goalCreateNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get goalCreateNone;
+
+  /// No description provided for @goalCreateOptionalLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional · You can change this later.'**
+  String get goalCreateOptionalLater;
+
+  /// No description provided for @goalCreateRatingInfoBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Drift ratings use a 0–6 scale. Your current rating starts from your latest assessment and practice. Adjust it if it doesn’t feel right.'**
+  String get goalCreateRatingInfoBody;
+
+  /// No description provided for @goalCreateRatingInfoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'About Drift ratings'**
+  String get goalCreateRatingInfoTitle;
+
+  /// No description provided for @goalCreateRemoveMilestone.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove milestone'**
+  String get goalCreateRemoveMilestone;
+
+  /// No description provided for @goalCreateSelectedSkill.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected skill'**
+  String get goalCreateSelectedSkill;
+
+  /// No description provided for @goalCreateSetTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Set your target'**
+  String get goalCreateSetTarget;
+
+  /// No description provided for @goalCreateSkillHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a skill'**
+  String get goalCreateSkillHeading;
+
+  /// No description provided for @goalCreateSkillSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Select one skill to develop.'**
+  String get goalCreateSkillSub;
+
+  /// No description provided for @goalCreateStep1Subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What part of your tennis game would you like to improve?'**
+  String get goalCreateStep1Subtitle;
+
+  /// No description provided for @goalCreateStep1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a Goal'**
+  String get goalCreateStep1Title;
+
+  /// No description provided for @goalCreateStep2Subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the result you want to work toward.'**
+  String get goalCreateStep2Subtitle;
+
+  /// No description provided for @goalCreateStep2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Your Focus'**
+  String get goalCreateStep2Title;
+
+  /// No description provided for @goalCreateStep3Subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a meaningful target and make a plan to reach it.'**
+  String get goalCreateStep3Subtitle;
+
+  /// No description provided for @goalCreateStep3Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Build Your Goal'**
+  String get goalCreateStep3Title;
+
+  /// No description provided for @goalCreateStepOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Step {step} of {total}'**
+  String goalCreateStepOf(int step, int total);
+
+  /// No description provided for @goalCreateSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Goal'**
+  String get goalCreateSubmit;
+
+  /// No description provided for @goalCreateSummaryFocus.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus'**
+  String get goalCreateSummaryFocus;
+
+  /// No description provided for @goalCreateSummaryHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal summary'**
+  String get goalCreateSummaryHeading;
+
+  /// No description provided for @goalCreateSummaryRating.
+  ///
+  /// In en, this message translates to:
+  /// **'Rating'**
+  String get goalCreateSummaryRating;
+
+  /// No description provided for @goalCreateSummarySub.
+  ///
+  /// In en, this message translates to:
+  /// **'Review your plan before creating it.'**
+  String get goalCreateSummarySub;
+
+  /// No description provided for @goalCreateTargetDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Target date'**
+  String get goalCreateTargetDate;
+
+  /// No description provided for @goalCreateTargetDisclaimer.
+  ///
+  /// In en, this message translates to:
+  /// **'Your target is the skill rating you’re working toward—not an automatic performance measurement.'**
+  String get goalCreateTargetDisclaimer;
+
+  /// No description provided for @goalCreateTargetHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Set your improvement target'**
+  String get goalCreateTargetHeading;
+
+  /// No description provided for @goalCreateTargetMustBeHigher.
+  ///
+  /// In en, this message translates to:
+  /// **'Target must be higher'**
+  String get goalCreateTargetMustBeHigher;
+
+  /// No description provided for @goalCreateTargetRating.
+  ///
+  /// In en, this message translates to:
+  /// **'Target rating'**
+  String get goalCreateTargetRating;
+
+  /// No description provided for @goalCreateTargetSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Move the sliders in 0.5 increments.'**
+  String get goalCreateTargetSub;
+
+  /// No description provided for @goalCreateTimeline.
+  ///
+  /// In en, this message translates to:
+  /// **'Timeline'**
+  String get goalCreateTimeline;
+
+  /// No description provided for @goalCreateTimelineHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'When do you want to achieve this?'**
+  String get goalCreateTimelineHeading;
+
+  /// No description provided for @goalCreateWeeks.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 Week} other{{count} Weeks}}'**
+  String goalCreateWeeks(int count);
+
+  /// No description provided for @goalCreateYourGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Your goal'**
+  String get goalCreateYourGoal;
+
+  /// No description provided for @goalCreatedAnother.
+  ///
+  /// In en, this message translates to:
+  /// **'Create another goal'**
+  String get goalCreatedAnother;
+
+  /// No description provided for @goalCreatedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your {skill} goal is set. Every focused session moves you closer.'**
+  String goalCreatedBody(String skill);
+
+  /// No description provided for @goalCreatedEyebrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal created'**
+  String get goalCreatedEyebrow;
+
+  /// No description provided for @goalCreatedOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get goalCreatedOpen;
+
+  /// No description provided for @goalCreatedStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get goalCreatedStart;
+
+  /// No description provided for @goalCreatedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You’re ready to improve.'**
+  String get goalCreatedTitle;
+
+  /// No description provided for @goalCreatedView.
+  ///
+  /// In en, this message translates to:
+  /// **'View goal'**
+  String get goalCreatedView;
+
+  /// No description provided for @goalFocusAccuracy.
+  ///
+  /// In en, this message translates to:
+  /// **'Accuracy'**
+  String get goalFocusAccuracy;
+
+  /// No description provided for @goalFocusAgility.
+  ///
+  /// In en, this message translates to:
+  /// **'Agility'**
+  String get goalFocusAgility;
+
+  /// No description provided for @goalFocusApproach.
+  ///
+  /// In en, this message translates to:
+  /// **'Approach'**
+  String get goalFocusApproach;
+
+  /// No description provided for @goalFocusBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance'**
+  String get goalFocusBalance;
+
+  /// No description provided for @goalFocusClosing.
+  ///
+  /// In en, this message translates to:
+  /// **'Closing'**
+  String get goalFocusClosing;
+
+  /// No description provided for @goalFocusComposure.
+  ///
+  /// In en, this message translates to:
+  /// **'Composure'**
+  String get goalFocusComposure;
+
+  /// No description provided for @goalFocusConsistency.
+  ///
+  /// In en, this message translates to:
+  /// **'Consistency'**
+  String get goalFocusConsistency;
+
+  /// No description provided for @goalFocusDepth.
+  ///
+  /// In en, this message translates to:
+  /// **'Depth'**
+  String get goalFocusDepth;
+
+  /// No description provided for @goalFocusDescBackhandAccuracy.
+  ///
+  /// In en, this message translates to:
+  /// **'Direct the ball with control'**
+  String get goalFocusDescBackhandAccuracy;
+
+  /// No description provided for @goalFocusDescBackhandConsistency.
+  ///
+  /// In en, this message translates to:
+  /// **'Build a dependable backhand'**
+  String get goalFocusDescBackhandConsistency;
+
+  /// No description provided for @goalFocusDescBackhandPower.
+  ///
+  /// In en, this message translates to:
+  /// **'Add pace and depth'**
+  String get goalFocusDescBackhandPower;
+
+  /// No description provided for @goalFocusDescBackhandTechnique.
+  ///
+  /// In en, this message translates to:
+  /// **'Improve stroke mechanics'**
+  String get goalFocusDescBackhandTechnique;
+
+  /// No description provided for @goalFocusDescFootworkAgility.
+  ///
+  /// In en, this message translates to:
+  /// **'Change direction efficiently'**
+  String get goalFocusDescFootworkAgility;
+
+  /// No description provided for @goalFocusDescFootworkBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Stay controlled on the move'**
+  String get goalFocusDescFootworkBalance;
+
+  /// No description provided for @goalFocusDescFootworkPreparation.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up earlier for each shot'**
+  String get goalFocusDescFootworkPreparation;
+
+  /// No description provided for @goalFocusDescFootworkRecovery.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset after every stroke'**
+  String get goalFocusDescFootworkRecovery;
+
+  /// No description provided for @goalFocusDescForehandAccuracy.
+  ///
+  /// In en, this message translates to:
+  /// **'Improve shot placement'**
+  String get goalFocusDescForehandAccuracy;
+
+  /// No description provided for @goalFocusDescForehandConsistency.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep more shots in play'**
+  String get goalFocusDescForehandConsistency;
+
+  /// No description provided for @goalFocusDescForehandPower.
+  ///
+  /// In en, this message translates to:
+  /// **'Develop stronger strokes'**
+  String get goalFocusDescForehandPower;
+
+  /// No description provided for @goalFocusDescForehandTechnique.
+  ///
+  /// In en, this message translates to:
+  /// **'Refine swing mechanics'**
+  String get goalFocusDescForehandTechnique;
+
+  /// No description provided for @goalFocusDescGeneral.
+  ///
+  /// In en, this message translates to:
+  /// **'Work on the skill overall'**
+  String get goalFocusDescGeneral;
+
+  /// No description provided for @goalFocusDescMatchPlayClosing.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish sets with confidence'**
+  String get goalFocusDescMatchPlayClosing;
+
+  /// No description provided for @goalFocusDescMatchPlayComposure.
+  ///
+  /// In en, this message translates to:
+  /// **'Stay present under pressure'**
+  String get goalFocusDescMatchPlayComposure;
+
+  /// No description provided for @goalFocusDescMatchPlayConsistency.
+  ///
+  /// In en, this message translates to:
+  /// **'Reduce unforced errors'**
+  String get goalFocusDescMatchPlayConsistency;
+
+  /// No description provided for @goalFocusDescMatchPlayStrategy.
+  ///
+  /// In en, this message translates to:
+  /// **'Build smarter point patterns'**
+  String get goalFocusDescMatchPlayStrategy;
+
+  /// No description provided for @goalFocusDescMovementBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Stay stable through every shot'**
+  String get goalFocusDescMovementBalance;
+
+  /// No description provided for @goalFocusDescMovementEndurance.
+  ///
+  /// In en, this message translates to:
+  /// **'Move well for longer'**
+  String get goalFocusDescMovementEndurance;
+
+  /// No description provided for @goalFocusDescMovementRecovery.
+  ///
+  /// In en, this message translates to:
+  /// **'Return to position faster'**
+  String get goalFocusDescMovementRecovery;
+
+  /// No description provided for @goalFocusDescMovementSpeed.
+  ///
+  /// In en, this message translates to:
+  /// **'Reach the ball sooner'**
+  String get goalFocusDescMovementSpeed;
+
+  /// No description provided for @goalFocusDescNetPlayApproach.
+  ///
+  /// In en, this message translates to:
+  /// **'Transition forward effectively'**
+  String get goalFocusDescNetPlayApproach;
+
+  /// No description provided for @goalFocusDescNetPlayPositioning.
+  ///
+  /// In en, this message translates to:
+  /// **'Own the right court space'**
+  String get goalFocusDescNetPlayPositioning;
+
+  /// No description provided for @goalFocusDescNetPlayTouch.
+  ///
+  /// In en, this message translates to:
+  /// **'Improve feel and control'**
+  String get goalFocusDescNetPlayTouch;
+
+  /// No description provided for @goalFocusDescNetPlayVolleys.
+  ///
+  /// In en, this message translates to:
+  /// **'Build confident volleys'**
+  String get goalFocusDescNetPlayVolleys;
+
+  /// No description provided for @goalFocusDescReturnConsistency.
+  ///
+  /// In en, this message translates to:
+  /// **'Put more returns in play'**
+  String get goalFocusDescReturnConsistency;
+
+  /// No description provided for @goalFocusDescReturnDepth.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep returns deep'**
+  String get goalFocusDescReturnDepth;
+
+  /// No description provided for @goalFocusDescReturnPositioning.
+  ///
+  /// In en, this message translates to:
+  /// **'Find a stronger return position'**
+  String get goalFocusDescReturnPositioning;
+
+  /// No description provided for @goalFocusDescReturnReaction.
+  ///
+  /// In en, this message translates to:
+  /// **'Read and react earlier'**
+  String get goalFocusDescReturnReaction;
+
+  /// No description provided for @goalFocusDescServeConsistency.
+  ///
+  /// In en, this message translates to:
+  /// **'Raise your first-serve rate'**
+  String get goalFocusDescServeConsistency;
+
+  /// No description provided for @goalFocusDescServePlacement.
+  ///
+  /// In en, this message translates to:
+  /// **'Hit your service targets'**
+  String get goalFocusDescServePlacement;
+
+  /// No description provided for @goalFocusDescServePower.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate more racquet speed'**
+  String get goalFocusDescServePower;
+
+  /// No description provided for @goalFocusDescServeTechnique.
+  ///
+  /// In en, this message translates to:
+  /// **'Improve motion and rhythm'**
+  String get goalFocusDescServeTechnique;
+
+  /// No description provided for @goalFocusEndurance.
+  ///
+  /// In en, this message translates to:
+  /// **'Endurance'**
+  String get goalFocusEndurance;
+
+  /// No description provided for @goalFocusGeneral.
+  ///
+  /// In en, this message translates to:
+  /// **'General improvement'**
+  String get goalFocusGeneral;
+
+  /// No description provided for @goalFocusPlacement.
+  ///
+  /// In en, this message translates to:
+  /// **'Placement'**
+  String get goalFocusPlacement;
+
+  /// No description provided for @goalFocusPositioning.
+  ///
+  /// In en, this message translates to:
+  /// **'Positioning'**
+  String get goalFocusPositioning;
+
+  /// No description provided for @goalFocusPower.
+  ///
+  /// In en, this message translates to:
+  /// **'Power'**
+  String get goalFocusPower;
+
+  /// No description provided for @goalFocusPreparation.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparation'**
+  String get goalFocusPreparation;
+
+  /// No description provided for @goalFocusReaction.
+  ///
+  /// In en, this message translates to:
+  /// **'Reaction'**
+  String get goalFocusReaction;
+
+  /// No description provided for @goalFocusRecovery.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery'**
+  String get goalFocusRecovery;
+
+  /// No description provided for @goalFocusSpeed.
+  ///
+  /// In en, this message translates to:
+  /// **'Speed'**
+  String get goalFocusSpeed;
+
+  /// No description provided for @goalFocusStrategy.
+  ///
+  /// In en, this message translates to:
+  /// **'Strategy'**
+  String get goalFocusStrategy;
+
+  /// No description provided for @goalFocusTechnique.
+  ///
+  /// In en, this message translates to:
+  /// **'Technique'**
+  String get goalFocusTechnique;
+
+  /// No description provided for @goalFocusTouch.
+  ///
+  /// In en, this message translates to:
+  /// **'Touch'**
+  String get goalFocusTouch;
+
+  /// No description provided for @goalFocusVolleys.
+  ///
+  /// In en, this message translates to:
+  /// **'Volleys'**
+  String get goalFocusVolleys;
+
+  /// No description provided for @goalMilestoneDrillBackhand.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintain a 10-shot backhand rally'**
+  String get goalMilestoneDrillBackhand;
+
+  /// No description provided for @goalMilestoneDrillFootwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish a full shadow-swing footwork circuit'**
+  String get goalMilestoneDrillFootwork;
+
+  /// No description provided for @goalMilestoneDrillForehand.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintain a 10-shot forehand rally'**
+  String get goalMilestoneDrillForehand;
+
+  /// No description provided for @goalMilestoneDrillMatchPlay.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the chosen focus in a full match'**
+  String get goalMilestoneDrillMatchPlay;
+
+  /// No description provided for @goalMilestoneDrillMovement.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish a full-court movement drill with control'**
+  String get goalMilestoneDrillMovement;
+
+  /// No description provided for @goalMilestoneDrillNetPlay.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish a 10-volley exchange at the net'**
+  String get goalMilestoneDrillNetPlay;
+
+  /// No description provided for @goalMilestoneDrillReturn.
+  ///
+  /// In en, this message translates to:
+  /// **'Return 8 of 10 practice serves'**
+  String get goalMilestoneDrillReturn;
+
+  /// No description provided for @goalMilestoneDrillServe.
+  ///
+  /// In en, this message translates to:
+  /// **'Land 7 of 10 first serves in the target area'**
+  String get goalMilestoneDrillServe;
+
+  /// No description provided for @goalMilestoneReachTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Reach your {skill} rating target'**
+  String goalMilestoneReachTarget(String skill);
+
+  /// No description provided for @goalMilestoneSessionsBackhand.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete three backhand-focused practice sessions'**
+  String get goalMilestoneSessionsBackhand;
+
+  /// No description provided for @goalMilestoneSessionsFootwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete three footwork-focused practice sessions'**
+  String get goalMilestoneSessionsFootwork;
+
+  /// No description provided for @goalMilestoneSessionsForehand.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete three forehand-focused practice sessions'**
+  String get goalMilestoneSessionsForehand;
+
+  /// No description provided for @goalMilestoneSessionsMatchPlay.
+  ///
+  /// In en, this message translates to:
+  /// **'Play three focused practice sets'**
+  String get goalMilestoneSessionsMatchPlay;
+
+  /// No description provided for @goalMilestoneSessionsMovement.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete three movement-focused practice sessions'**
+  String get goalMilestoneSessionsMovement;
+
+  /// No description provided for @goalMilestoneSessionsNetPlay.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete three net-play practice sessions'**
+  String get goalMilestoneSessionsNetPlay;
+
+  /// No description provided for @goalMilestoneSessionsReturn.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete three return-focused practice sessions'**
+  String get goalMilestoneSessionsReturn;
+
+  /// No description provided for @goalMilestoneSessionsServe.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete three serve-focused practice sessions'**
+  String get goalMilestoneSessionsServe;
 
   /// No description provided for @goalUnavailable.
   ///

@@ -12,7 +12,6 @@ import '../application/learning_providers.dart';
 import '../../../core/l10n/l10n.dart';
 import '../../../core/l10n/enum_labels.dart';
 
-
 /// Skill Detail — `foundation/04-screen-inventory.md` §A.7. "Historical
 /// trend, contributing signals" is shown as the actual list of logged
 /// practice sessions rather than a synthesised daily line chart — there's

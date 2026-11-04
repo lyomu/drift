@@ -723,6 +723,7 @@ model User {
   supportTickets               SupportTicket[]
   privacyRequests              PrivacyRequest[]
   savedStories                 SavedStory[]
+  favoriteCourts               FavoriteCourt[]
   messageReportsMade           MessageReport[]     @relation("MessageReporter")
 
   notifications          Notification[]
@@ -1567,6 +1568,7 @@ model Court {
   reports     CourtReport[]
   matches     Match[]
   inquiries   CourtInquiry[]
+  favorites   FavoriteCourt[]
 
   @@index([latitude, longitude])
   @@index([clubId])
@@ -2165,6 +2167,8 @@ model Goal {
   tennisProfile   TennisProfile @relation(fields: [tennisProfileId], references: [id], onDelete: Cascade)
 
   skill    AssessmentPillar
+  /// Optional sub-focus within the skill (e.g. CONSISTENCY, POWER, GENERAL).
+  focus    String?
   baseline Float
   target   Float
   deadline DateTime?
@@ -2363,6 +2367,22 @@ model NewsAutomationEvent {
 
   @@index([sourceId, createdAt(sort: Desc)])
   @@map("news_automation_events")
+}
+
+// A court the player has hearted on its profile.
+model FavoriteCourt {
+  id String @id @default(uuid())
+
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courtId String
+  court   Court  @relation(fields: [courtId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, courtId])
+  @@index([courtId])
+  @@map("favorite_courts")
 }
 
 model SavedStory {

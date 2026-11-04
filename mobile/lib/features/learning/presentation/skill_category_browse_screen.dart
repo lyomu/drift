@@ -11,7 +11,6 @@ import '../application/learning_providers.dart';
 import '../../../core/l10n/l10n.dart';
 import '../../../core/l10n/enum_labels.dart';
 
-
 /// Skill Category Browse — `foundation/04-screen-inventory.md` §A.7.
 class SkillCategoryBrowseScreen extends ConsumerWidget {
   const SkillCategoryBrowseScreen({super.key, required this.skill});
@@ -97,7 +96,9 @@ class SkillCategoryBrowseScreen extends ConsumerWidget {
                       );
                     },
                   ),
-          AsyncError() => Center(child: Text(context.l10n.learnContentLoadFailed)),
+          AsyncError() => Center(
+            child: Text(context.l10n.learnContentLoadFailed),
+          ),
           _ => const Center(child: CircularProgressIndicator()),
         },
       ),

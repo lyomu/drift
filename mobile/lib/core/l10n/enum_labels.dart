@@ -24,6 +24,33 @@ String pillarLabel(AppLocalizations l, String pillar) => switch (pillar) {
   _ => pillar,
 };
 
+/// Goal focus codes (`CONSISTENCY`, `GENERAL`…) — the sub-focus a player
+/// picks within a skill when creating a goal.
+String goalFocusLabel(AppLocalizations l, String focus) => switch (focus) {
+  'CONSISTENCY' => l.goalFocusConsistency,
+  'ACCURACY' => l.goalFocusAccuracy,
+  'POWER' => l.goalFocusPower,
+  'TECHNIQUE' => l.goalFocusTechnique,
+  'PLACEMENT' => l.goalFocusPlacement,
+  'POSITIONING' => l.goalFocusPositioning,
+  'REACTION' => l.goalFocusReaction,
+  'DEPTH' => l.goalFocusDepth,
+  'VOLLEYS' => l.goalFocusVolleys,
+  'TOUCH' => l.goalFocusTouch,
+  'APPROACH' => l.goalFocusApproach,
+  'SPEED' => l.goalFocusSpeed,
+  'BALANCE' => l.goalFocusBalance,
+  'RECOVERY' => l.goalFocusRecovery,
+  'ENDURANCE' => l.goalFocusEndurance,
+  'STRATEGY' => l.goalFocusStrategy,
+  'COMPOSURE' => l.goalFocusComposure,
+  'CLOSING' => l.goalFocusClosing,
+  'PREPARATION' => l.goalFocusPreparation,
+  'AGILITY' => l.goalFocusAgility,
+  'GENERAL' => l.goalFocusGeneral,
+  _ => focus,
+};
+
 /// Padel skill pillars, which add padel-only shots to the shared ones.
 String padelPillarLabel(AppLocalizations l, String pillar) => switch (pillar) {
   'RALLY_CONSISTENCY' => l.padelPillarRallyConsistency,

@@ -11,7 +11,6 @@ import '../application/learning_providers.dart';
 import '../../../core/l10n/l10n.dart';
 import '../../../core/l10n/enum_labels.dart';
 
-
 /// Progress Report — `foundation/04-screen-inventory.md` §A.7.
 class ProgressReportScreen extends ConsumerWidget {
   const ProgressReportScreen({super.key});

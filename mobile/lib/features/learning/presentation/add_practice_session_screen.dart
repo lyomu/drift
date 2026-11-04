@@ -14,7 +14,6 @@ import 'package:intl/intl.dart';
 /// Drift's official readable text family.
 const _font = 'Outfit';
 
-
 /// The `AssessmentPillar` values a practice session can target. FOOTWORK was
 /// added to the enum for this screen (2026-10) — it has no assessment
 /// questions, so it scores from practice alone.
@@ -145,10 +144,7 @@ class _AddPracticeSessionScreenState
             const _Header(),
             Expanded(
               child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 16,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -285,7 +281,12 @@ class _FieldLabel extends StatelessWidget {
             if (optional)
               TextSpan(
                 text: context.l10n.commonOptionalSuffix,
-                style: TextStyle(fontWeight: FontWeight.w400, color: Theme.of(context).extension<DriftColors>()!.textSecondary),
+                style: TextStyle(
+                  fontWeight: FontWeight.w400,
+                  color: Theme.of(
+                    context,
+                  ).extension<DriftColors>()!.textSecondary,
+                ),
               ),
           ],
         ),
@@ -412,9 +413,7 @@ class _SkillChip extends StatelessWidget {
     final colors = Theme.of(context).extension<DriftColors>()!;
 
     return Material(
-      color: selected
-          ? colors.primary.withValues(alpha: 0.07)
-          : colors.surface,
+      color: selected ? colors.primary.withValues(alpha: 0.07) : colors.surface,
       borderRadius: BorderRadius.circular(10),
       clipBehavior: Clip.antiAlias,
       child: InkWell(

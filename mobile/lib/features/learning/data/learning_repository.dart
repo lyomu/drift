@@ -237,6 +237,7 @@ class Goal {
   const Goal({
     required this.id,
     required this.skill,
+    this.focus,
     required this.baseline,
     required this.target,
     required this.deadline,
@@ -248,6 +249,10 @@ class Goal {
 
   final String id;
   final String skill;
+
+  /// Optional sub-focus code within [skill] (`CONSISTENCY`, `GENERAL`…) —
+  /// see `goalFocusLabel`.
+  final String? focus;
   final double baseline;
   final double target;
   final DateTime? deadline;
@@ -262,6 +267,7 @@ class Goal {
   factory Goal.fromJson(Map<String, dynamic> json) => Goal(
     id: json['id'] as String,
     skill: json['skill'] as String,
+    focus: json['focus'] as String?,
     baseline: (json['baseline'] as num).toDouble(),
     target: (json['target'] as num).toDouble(),
     deadline: json['deadline'] != null
@@ -360,6 +366,8 @@ class LearningRepository {
   Future<Goal> createGoal({
     required String skill,
     required double target,
+    String? focus,
+    double? baseline,
     DateTime? deadline,
     List<String>? milestones,
   }) async {
@@ -369,6 +377,8 @@ class LearningRepository {
         data: {
           'skill': skill,
           'target': target,
+          if (focus != null) 'focus': focus,
+          if (baseline != null) 'baseline': baseline,
           if (deadline != null) 'deadline': deadline.toUtc().toIso8601String(),
           if (milestones != null && milestones.isNotEmpty)
             'milestones': milestones,

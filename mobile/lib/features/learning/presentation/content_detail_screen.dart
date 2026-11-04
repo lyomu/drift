@@ -60,7 +60,9 @@ class _ContentDetailScreenState extends ConsumerState<ContentDetailScreen> {
           isMarking: _isMarking,
           onMarkComplete: _markComplete,
         ),
-        AsyncError() => Center(child: Text(context.l10n.learnContentUnavailable)),
+        AsyncError() => Center(
+          child: Text(context.l10n.learnContentUnavailable),
+        ),
         _ => const Center(child: CircularProgressIndicator()),
       },
     );

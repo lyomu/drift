@@ -31,6 +31,7 @@ function createTx(): Tx {
     playerReport: model(),
     notification: model(),
     savedStory: model(),
+    favoriteCourt: model(),
     dismissedHomeCard: model(),
     clubPostReaction: model(),
     videoAnalysisJob: {
@@ -222,6 +223,7 @@ describe('ErasureService and uploaded video', () => {
       playerReport: model(),
       notification: model(),
       savedStory: model(),
+    favoriteCourt: model(),
       dismissedHomeCard: model(),
       clubPostReaction: model(),
       videoAnalysisJob: {

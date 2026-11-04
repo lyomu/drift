@@ -12,7 +12,6 @@ import '../application/learning_providers.dart';
 import '../../../core/l10n/l10n.dart';
 import '../../../core/l10n/enum_labels.dart';
 
-
 /// Goal List — `foundation/04-screen-inventory.md` §A.7.
 class GoalListScreen extends ConsumerWidget {
   const GoalListScreen({super.key});
@@ -80,12 +79,17 @@ class GoalListScreen extends ConsumerWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    pillarLabel(context.l10n, goal.skill),
+                                    goal.focus == null
+                                        ? pillarLabel(context.l10n, goal.skill)
+                                        : '${pillarLabel(context.l10n, goal.skill)} · '
+                                              '${goalFocusLabel(context.l10n, goal.focus!)}',
                                     style: type.title,
                                   ),
                                   const SizedBox(height: DriftSpacing.s1),
                                   Text(
-                                    context.l10n.goalTargetOutOf6(goal.target.toStringAsFixed(1)),
+                                    context.l10n.goalTargetOutOf6(
+                                      goal.target.toStringAsFixed(1),
+                                    ),
                                     style: type.bodySmall.copyWith(
                                       color: colors.textSecondary,
                                     ),

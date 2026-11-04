@@ -85,7 +85,6 @@ const _lessonAccents = <Color>[
 /// so the cap lives here rather than in the query.
 const _featuredCount = 3;
 
-
 /// Learning Home — `foundation/04-screen-inventory.md` §A.7. Entry to
 /// structured learning, a browse-by-skill rail, and the featured lessons.
 ///
@@ -175,7 +174,11 @@ class _LearningHomeBody extends ConsumerWidget {
         SizedBox(height: 12),
         Text(
           l10nNow.learnLessonsFailed,
-          style: TextStyle(fontSize: 12, height: 1.4, color: colors.textSecondary),
+          style: TextStyle(
+            fontSize: 12,
+            height: 1.4,
+            color: colors.textSecondary,
+          ),
         ),
       ],
       _ => [
@@ -374,7 +377,11 @@ class _QuickLinkCard extends StatelessWidget {
               ],
             ),
           ),
-          Icon(Icons.chevron_right_rounded, size: 18, color: colors.textSecondary),
+          Icon(
+            Icons.chevron_right_rounded,
+            size: 18,
+            color: colors.textSecondary,
+          ),
         ],
       ),
     );
@@ -534,7 +541,11 @@ class _LessonCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          Icon(Icons.chevron_right_rounded, size: 18, color: colors.textSecondary),
+          Icon(
+            Icons.chevron_right_rounded,
+            size: 18,
+            color: colors.textSecondary,
+          ),
         ],
       ),
     );

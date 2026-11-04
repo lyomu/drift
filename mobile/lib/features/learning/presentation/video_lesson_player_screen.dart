@@ -98,9 +98,7 @@ class _VideoLessonPlayerScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(
-        SnackBar(content: Text(context.l10n.videoLessonComplete)),
-      );
+      ).showSnackBar(SnackBar(content: Text(context.l10n.videoLessonComplete)));
     } finally {
       if (mounted) setState(() => _isMarking = false);
     }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
@@ -13,7 +14,6 @@ import '../application/learning_providers.dart';
 import '../data/learning_repository.dart';
 import '../../../core/l10n/l10n.dart';
 import '../../../core/l10n/enum_labels.dart';
-
 
 /// Goal Detail — `foundation/04-screen-inventory.md` §A.7. Status is always
 /// server-derived (never a stored field the client could show stale).
@@ -85,9 +85,21 @@ class _GoalDetailScreenState extends ConsumerState<GoalDetailScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: Text(
-                      pillarLabel(context.l10n, value.skill),
-                      style: type.h2,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          pillarLabel(context.l10n, value.skill),
+                          style: type.h2,
+                        ),
+                        if (value.focus != null)
+                          Text(
+                            goalFocusLabel(context.l10n, value.focus!),
+                            style: type.body.copyWith(
+                              color: colors.textSecondary,
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                   _StatusBadge(status: value.status),
@@ -115,8 +127,9 @@ class _GoalDetailScreenState extends ConsumerState<GoalDetailScreen> {
                     if (value.deadline != null)
                       _Fact(
                         label: context.l10n.goalDeadline,
-                        value:
-                            '${value.deadline!.day}/${value.deadline!.month}/${value.deadline!.year}',
+                        value: DateFormat.yMMMd(
+                          context.localeTag,
+                        ).format(value.deadline!),
                       ),
                   ],
                 ),

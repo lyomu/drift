@@ -298,12 +298,14 @@ export class LearningService {
   async createGoal(userId: string, dto: CreateGoalDto) {
     const profile = await this.requireTennisProfile(userId);
     const scores = await this.currentScores(profile.id);
-    const baseline = scores.find((s) => s.skill === dto.skill)?.score ?? 0;
+    const computed = scores.find((s) => s.skill === dto.skill)?.score ?? null;
+    const baseline = dto.baseline ?? computed ?? 0;
 
     const goal = await this.prisma.goal.create({
       data: {
         tennisProfileId: profile.id,
         skill: dto.skill,
+        focus: dto.focus,
         baseline,
         target: dto.target,
         deadline: dto.deadline,
@@ -314,7 +316,7 @@ export class LearningService {
       include: { milestones: true },
     });
 
-    return this.toGoalDto(goal, baseline);
+    return this.toGoalDto(goal, computed);
   }
 
   async listGoals(userId: string) {
@@ -410,6 +412,7 @@ export class LearningService {
     goal: {
       id: string;
       skill: string;
+      focus?: string | null;
       baseline: number;
       target: number;
       deadline: Date | null;
@@ -432,6 +435,7 @@ export class LearningService {
     return {
       id: goal.id,
       skill: goal.skill,
+      focus: goal.focus ?? null,
       baseline: goal.baseline,
       target: goal.target,
       deadline: goal.deadline,
