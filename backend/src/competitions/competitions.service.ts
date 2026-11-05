@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import {
   AssessmentBranch,
+  ClubMembershipStatus,
   CommunityMemberStatus,
   LeagueState,
   LeagueRegistrationStatus,
@@ -211,6 +212,54 @@ export class CompetitionsService {
       throw new NotFoundException('Round not found.');
     }
     return { round: await this.toRoundDto(roundId) };
+  }
+
+  /**
+   * Every round of a league, oldest first, with how far each has got. The
+   * club-admin fixtures tab needs this to offer a round selector: the other
+   * round reads return either only the current round or one round by id, so a
+   * client could not discover the ids. Fixtures themselves stay behind
+   * `getRound`, so this list stays small however many fixtures a round has.
+   *
+   * `playedCount` counts settled matches (completed, walkover, retired);
+   * a bye has no match and is left out of both counts.
+   */
+  async listRounds(leagueId: string) {
+    await this.ensureLeagueProgressed(leagueId);
+    await this.loadLeague(leagueId);
+
+    const rounds = await this.prisma.round.findMany({
+      where: { leagueId },
+      orderBy: { index: 'asc' },
+      include: {
+        fixtures: {
+          select: { sideBUserId: true, match: { select: { state: true } } },
+        },
+      },
+    });
+
+    const settled: MatchState[] = [
+      MatchState.COMPLETED,
+      MatchState.WALKOVER,
+      MatchState.RETIRED,
+    ];
+
+    return {
+      rounds: rounds.map((round) => {
+        const played = round.fixtures.filter((f) => f.sideBUserId !== null);
+        return {
+          id: round.id,
+          index: round.index,
+          deadline: round.deadline,
+          openedAt: round.openedAt,
+          closedAt: round.closedAt,
+          fixtureCount: played.length,
+          playedCount: played.filter(
+            (f) => f.match && settled.includes(f.match.state),
+          ).length,
+        };
+      }),
+    };
   }
 
   async getStandings(leagueId: string) {
@@ -628,6 +677,110 @@ export class CompetitionsService {
    * directly rather than waiting for the date gate. Idempotent — a no-op if
    * rounds already exist.
    */
+  /**
+   * A club admin enrols or waitlists a member directly, for players who
+   * cannot or will not register themselves. It mirrors `register()` but is
+   * the admin's call rather than the player's: the registration window is not
+   * enforced, only that play has not begun (fixtures are generated from the
+   * enrolled set, so adding a player later would leave them with no matches).
+   *
+   * The player must already belong to the league's club (or community), so an
+   * admin cannot pull in someone who never joined. Capacity is still honoured:
+   * a full league refuses ENROLLED and the admin must choose the waitlist.
+   * An existing row (including a WITHDRAWN one) is revived in place.
+   */
+  async adminAddRegistration(
+    leagueId: string,
+    userId: string,
+    status: LeagueRegistrationStatus,
+  ) {
+    const league = await this.loadLeague(leagueId);
+
+    const state = effectiveCompetitionState(
+      league,
+      this.isFinalRoundClosedFromRounds(league.roundCount, league.rounds),
+    );
+    if (state === 'ACTIVE' || state === 'COMPLETED' || state === 'CANCELLED') {
+      throw new BadRequestException(
+        'Players can only be added before the league starts.',
+      );
+    }
+    if (status === LeagueRegistrationStatus.WITHDRAWN) {
+      throw new BadRequestException(
+        'Choose enrolled or waitlisted. Use the registration list to remove a player.',
+      );
+    }
+
+    if (league.communityId) {
+      const member = await this.prisma.communityMember.findUnique({
+        where: {
+          communityId_userId: { communityId: league.communityId, userId },
+        },
+      });
+      if (member?.status !== CommunityMemberStatus.ACTIVE) {
+        throw new BadRequestException(
+          'Only active members of the community can be added.',
+        );
+      }
+    } else if (league.clubId) {
+      const member = await this.prisma.clubMembership.findUnique({
+        where: { clubId_userId: { clubId: league.clubId, userId } },
+      });
+      if (member?.status !== ClubMembershipStatus.ACTIVE) {
+        throw new BadRequestException(
+          'Only active members of the club can be added.',
+        );
+      }
+    } else {
+      throw new BadRequestException('This league has no owning club.');
+    }
+
+    if (
+      status === LeagueRegistrationStatus.ENROLLED &&
+      league.capacity != null
+    ) {
+      const enrolledCount = await this.prisma.leagueRegistration.count({
+        where: {
+          leagueId,
+          status: LeagueRegistrationStatus.ENROLLED,
+          // Re-enrolling someone already enrolled must not count against them.
+          userId: { not: userId },
+        },
+      });
+      if (enrolledCount >= league.capacity) {
+        throw new BadRequestException(
+          'This league is full. Add the player to the waitlist instead.',
+        );
+      }
+    }
+
+    const registration = await this.prisma.leagueRegistration.upsert({
+      where: { leagueId_userId: { leagueId, userId } },
+      create: { leagueId, userId, status },
+      update: { status, registeredAt: new Date() },
+    });
+
+    await this.notifications.create(
+      userId,
+      'COMPETITIONS',
+      msg(
+        status === LeagueRegistrationStatus.ENROLLED
+          ? 'league.registered.title'
+          : 'league.waitlisted.title',
+      ),
+      msg(
+        status === LeagueRegistrationStatus.ENROLLED
+          ? 'league.registered.body'
+          : 'league.waitlisted.body',
+        { league: league.name },
+      ),
+      'LEAGUE',
+      leagueId,
+    );
+
+    return { id: registration.id, status: registration.status };
+  }
+
   async adminGenerateFixtures(leagueId: string) {
     const league = await this.loadLeague(leagueId);
     if (!league.startsAt || !league.roundCount) {

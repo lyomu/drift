@@ -23,6 +23,7 @@ function createMockPrisma(): MockPrisma {
     matchResult: {
       create: jest.fn().mockResolvedValue({}),
       update: jest.fn().mockResolvedValue({}),
+      upsert: jest.fn().mockResolvedValue({}),
     },
     matchReflection: { upsert: jest.fn().mockResolvedValue({}) },
     tennisProfile: { update: jest.fn().mockResolvedValue({}) },
@@ -501,6 +502,146 @@ describe('ResultsService', () => {
           winningSide: 'B',
         }),
       });
+    });
+  });
+
+  describe('adminRecordResult', () => {
+    it('settles a scored result at once, attributed to the admin', async () => {
+      matches.loadMatch!.mockResolvedValue(matchRecord());
+
+      await service.adminRecordResult('m1', 'admin-1', {
+        outcome: 'SCORE',
+        sets: futureSets,
+      } as never);
+
+      expect(prisma.matchResult.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { matchId: 'm1' },
+          create: expect.objectContaining({
+            submittedById: 'admin-1',
+            winningSide: 'A',
+          }),
+        }),
+      );
+      expect(prisma.matchResult.update).toHaveBeenCalledWith({
+        where: { matchId: 'm1' },
+        data: expect.objectContaining({
+          status: 'CONFIRMED',
+          confirmedById: 'admin-1',
+          winningSide: 'A',
+        }),
+      });
+      expect(prisma.match.update).toHaveBeenCalledWith({
+        where: { id: 'm1' },
+        data: { state: 'COMPLETED' },
+      });
+      // Ratings move for a decided score, exactly as for a player confirm.
+      expect(prisma.tennisProfile.update).toHaveBeenCalledTimes(2);
+    });
+
+    it('tells every player, because the admin is not a participant', async () => {
+      matches.loadMatch!.mockResolvedValue(matchRecord());
+      await service.adminRecordResult('m1', 'admin-1', {
+        outcome: 'SCORE',
+        sets: futureSets,
+      } as never);
+
+      const [, except, title] = matches.notifyOthers!.mock.calls[0] as [
+        unknown,
+        string | null,
+        Localizable,
+      ];
+      expect(except).toBeNull();
+      expect(render('en', title)).toContain('club admin recorded');
+    });
+
+    it('records a neutral walkover without touching any rating', async () => {
+      matches.loadMatch!.mockResolvedValue(matchRecord());
+
+      await service.adminRecordResult('m1', 'admin-1', {
+        outcome: 'WALKOVER',
+      } as never);
+
+      expect(prisma.match.update).toHaveBeenCalledWith({
+        where: { id: 'm1' },
+        data: { state: 'WALKOVER' },
+      });
+      expect(prisma.tennisProfile.update).not.toHaveBeenCalled();
+    });
+
+    it('replaces a player result that is still awaiting confirmation', async () => {
+      matches.loadMatch!.mockResolvedValue(
+        matchRecord({
+          result: {
+            status: 'PENDING_CONFIRMATION',
+            outcome: 'SCORE',
+            sets: futureSets,
+            winningSide: 'A',
+            submittedById: 'a',
+          },
+        }),
+      );
+
+      await service.adminRecordResult('m1', 'admin-1', {
+        outcome: 'SCORE',
+        sets: [{ sideAGames: 2, sideBGames: 6 }],
+      } as never);
+
+      expect(prisma.matchResult.update).toHaveBeenCalledWith({
+        where: { matchId: 'm1' },
+        data: expect.objectContaining({
+          status: 'CONFIRMED',
+          winningSide: 'B',
+        }),
+      });
+    });
+
+    it('refuses a result that is already confirmed', async () => {
+      matches.loadMatch!.mockResolvedValue(
+        matchRecord({ state: 'COMPLETED', result: { status: 'CONFIRMED' } }),
+      );
+      await expect(
+        service.adminRecordResult('m1', 'admin-1', {
+          outcome: 'SCORE',
+          sets: futureSets,
+        } as never),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(prisma.matchResult.upsert).not.toHaveBeenCalled();
+    });
+
+    it('sends a disputed result to the dispute flow instead', async () => {
+      matches.loadMatch!.mockResolvedValue(
+        matchRecord({ state: 'DISPUTED', result: { status: 'DISPUTED' } }),
+      );
+      await expect(
+        service.adminRecordResult('m1', 'admin-1', {
+          outcome: 'SCORE',
+          sets: futureSets,
+        } as never),
+      ).rejects.toThrow(/dispute/i);
+    });
+
+    it('does not bypass the state machine: a score before scheduling writes nothing', async () => {
+      matches.loadMatch!.mockResolvedValue(
+        matchRecord({ state: 'SCHEDULING' }),
+      );
+      await expect(
+        service.adminRecordResult('m1', 'admin-1', {
+          outcome: 'SCORE',
+          sets: futureSets,
+        } as never),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(prisma.matchResult.upsert).not.toHaveBeenCalled();
+      expect(prisma.match.update).not.toHaveBeenCalled();
+    });
+
+    it('asks who won after a retirement', async () => {
+      matches.loadMatch!.mockResolvedValue(matchRecord());
+      await expect(
+        service.adminRecordResult('m1', 'admin-1', {
+          outcome: 'RETIREMENT',
+        } as never),
+      ).rejects.toThrow(/who won/i);
     });
   });
 
