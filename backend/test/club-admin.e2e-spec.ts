@@ -371,7 +371,10 @@ describe('Club Admin (e2e)', () => {
     const path = `/fixtures/${fixture.id}/result`;
     const score = {
       outcome: 'SCORE',
-      sets: [{ sideAGames: 6, sideBGames: 2 }],
+      sets: [
+        { sideAGames: 6, sideBGames: 2 },
+        { sideAGames: 6, sideBGames: 2 },
+      ],
     };
 
     await authed(outsider.token, 'post', path).send(score).expect(403);
@@ -415,10 +418,16 @@ describe('Club Admin (e2e)', () => {
       .expect(200);
 
     await authed(playerA.token, 'post', `/matches/${matchId}/results`)
-      .send({ outcome: 'SCORE', sets: [{ sideAGames: 6, sideBGames: 2 }] })
+      .send({ outcome: 'SCORE', sets: [
+        { sideAGames: 6, sideBGames: 2 },
+        { sideAGames: 6, sideBGames: 2 },
+      ] })
       .expect(201);
     await authed(playerB.token, 'patch', `/matches/${matchId}/results/dispute`)
-      .send({ outcome: 'SCORE', sets: [{ sideAGames: 2, sideBGames: 6 }] })
+      .send({ outcome: 'SCORE', sets: [
+        { sideAGames: 2, sideBGames: 6 },
+        { sideAGames: 2, sideBGames: 6 },
+      ] })
       .expect(200);
 
     const match = await authed(
@@ -485,7 +494,10 @@ describe('Club Admin (e2e)', () => {
 
   it('refuses to record an admin result over a confirmed one', async () => {
     await authed(admin.token, 'post', `/fixtures/${fixtureId}/result`)
-      .send({ outcome: 'SCORE', sets: [{ sideAGames: 0, sideBGames: 6 }] })
+      .send({ outcome: 'SCORE', sets: [
+        { sideAGames: 0, sideBGames: 6 },
+        { sideAGames: 0, sideBGames: 6 },
+      ] })
       .expect(400);
   });
 

@@ -272,7 +272,10 @@ describe('Padel (e2e)', () => {
       .expect(200);
 
     await authed(alice.token, 'post', `/matches/${matchId}/results`)
-      .send({ outcome: 'SCORE', sets: [{ sideAGames: 6, sideBGames: 3 }] })
+      .send({ outcome: 'SCORE', sets: [
+        { sideAGames: 6, sideBGames: 3 },
+        { sideAGames: 6, sideBGames: 3 },
+      ] })
       .expect(201);
     await authed(
       bob.token,
