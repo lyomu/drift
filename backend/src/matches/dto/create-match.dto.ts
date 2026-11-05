@@ -1,6 +1,7 @@
 import { MatchFormat, MatchSport } from '@prisma/client';
 import {
   IsEnum,
+  IsIn,
   IsOptional,
   IsString,
   IsUUID,
@@ -15,6 +16,11 @@ export class CreateMatchDto {
   @IsOptional()
   @IsEnum(MatchFormat)
   format?: MatchFormat;
+
+  /** Best of 3 or best of 5 sets. Defaults to 3. */
+  @IsOptional()
+  @IsIn([3, 5])
+  bestOfSets?: number;
 
   @IsOptional()
   @IsEnum(MatchSport)

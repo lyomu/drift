@@ -1038,6 +1038,10 @@ model Match {
   format MatchFormat @default(SINGLES)
   state  MatchState  @default(PROPOSED)
 
+  // Best of 3 or best of 5 sets; chosen by the challenger, enforced when a
+  // result is entered. Existing and fixture-generated matches are best of 3.
+  bestOfSets Int @default(3)
+
   createdById String
   createdBy   User   @relation("MatchCreator", fields: [createdById], references: [id], onDelete: Cascade)
 

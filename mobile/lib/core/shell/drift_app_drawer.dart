@@ -166,6 +166,9 @@ class _DriftAppDrawerState extends ConsumerState<DriftAppDrawer> {
                     ),
                     SizedBox(height: 2),
                   ],
+                  // Clip analysis isn't ready yet: the row only shows a
+                  // "Coming soon" tooltip and never navigates.
+                  const _ComingSoonRow(),
                 ],
               ),
             ),
@@ -189,6 +192,64 @@ class _DriftAppDrawerState extends ConsumerState<DriftAppDrawer> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ComingSoonRow extends StatefulWidget {
+  const _ComingSoonRow();
+
+  @override
+  State<_ComingSoonRow> createState() => _ComingSoonRowState();
+}
+
+class _ComingSoonRowState extends State<_ComingSoonRow> {
+  final _tooltipKey = GlobalKey<TooltipState>();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<DriftColors>()!;
+    final l10n = context.l10n;
+
+    return Tooltip(
+      key: _tooltipKey,
+      message: l10n.commonComingSoon,
+      triggerMode: TooltipTriggerMode.manual,
+      preferBelow: false,
+      showDuration: const Duration(seconds: 2),
+      child: Stack(
+        alignment: Alignment.centerRight,
+        children: [
+          _DrawerRow(
+            activeIcon: Icons.videocam_rounded,
+            idleIcon: Icons.videocam_outlined,
+            label: l10n.settingsAnalyseClip,
+            active: false,
+            onTap: () => _tooltipKey.currentState?.ensureTooltipVisible(),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 14),
+            child: IgnorePointer(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: colors.primary.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  l10n.drawerSoonBadge,
+                  style: TextStyle(
+                    fontFamily: _font,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: colors.primary,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

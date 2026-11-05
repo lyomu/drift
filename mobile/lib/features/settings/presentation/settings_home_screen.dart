@@ -123,10 +123,6 @@ class _SettingsHomeScreenState extends ConsumerState<SettingsHomeScreen> {
               child: ListView(
                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 children: [
-                  // Reachable from Settings rather than a tab: the feature is
-                  // a Phase 0 spike that cannot analyse anything yet, and
-                  // promoting it to primary navigation would promise a great
-                  // deal more than it does.
                   _Section(
                     title: l10n.settingsAppearance,
                     rows: [
@@ -144,17 +140,6 @@ class _SettingsHomeScreenState extends ConsumerState<SettingsHomeScreen> {
                         label: l10n.settingsLanguage,
                         value: '${language.flag} ${language.nativeName}',
                         onTap: () => showLanguageSheet(context),
-                      ),
-                    ],
-                  ),
-                  _Section(
-                    title: l10n.settingsLabs,
-                    rows: [
-                      _Row(
-                        icon: DriftSymbolsFilled.videocam,
-                        accent: colors.primary,
-                        label: l10n.settingsAnalyseClip,
-                        onTap: () => context.push('/video-analysis'),
                       ),
                     ],
                   ),

@@ -1743,6 +1743,27 @@
   "safetyTellUs": "Tell us what went wrong",
   "safetyTitle": "Safety",
   "scoreErrBothGames": "Enter both games for every set.",
+  "matchLength": "Match length",
+  "aiCoachLabel": "AI Coach",
+  "commonComingSoon": "Coming soon",
+  "drawerSoonBadge": "Soon",
+  "matchBestOfN": "Best of {number}",
+  "@matchBestOfN": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "scoreErrMatchDecided": "The match was already decided before set {set}. Remove the extra sets.",
+  "@scoreErrMatchDecided": {
+    "placeholders": {
+      "set": {
+        "type": "int"
+      }
+    }
+  },
+  "scoreErrNeedMoreSets": "The match isn't finished yet — add the remaining sets.",
   "scoreErrInvalid": "Set {set} ({score}) isn't a valid tennis score.",
   "@scoreErrInvalid": {
     "placeholders": {

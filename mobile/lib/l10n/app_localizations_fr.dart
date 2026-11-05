@@ -3916,6 +3916,32 @@ class AppLocalizationsFr extends AppLocalizations {
       'Saisissez les jeux des deux joueurs pour chaque manche.';
 
   @override
+  String get matchLength => 'Format du match';
+
+  @override
+  String get aiCoachLabel => 'Coach IA';
+
+  @override
+  String get commonComingSoon => 'Bientôt disponible';
+
+  @override
+  String get drawerSoonBadge => 'Bientôt';
+
+  @override
+  String matchBestOfN(int number) {
+    return 'Au meilleur des $number';
+  }
+
+  @override
+  String scoreErrMatchDecided(int set) {
+    return 'Le match était déjà joué avant la manche $set. Supprimez les manches en trop.';
+  }
+
+  @override
+  String get scoreErrNeedMoreSets =>
+      'Le match n’est pas terminé — ajoutez les manches restantes.';
+
+  @override
   String scoreErrInvalid(int set, String score) {
     return 'La manche $set ($score) n’est pas un score de tennis valide.';
   }

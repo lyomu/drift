@@ -59,6 +59,7 @@ export function toMatchDto(match: MatchRecord, viewerId: string) {
     id: match.id,
     sport: match.sport,
     format: match.format,
+    bestOfSets: match.bestOfSets,
     state,
     createdById: match.createdById,
     confirmedTime: match.confirmedTime,

@@ -33,6 +33,7 @@ class ChallengeComposerScreen extends ConsumerStatefulWidget {
 class _ChallengeComposerScreenState
     extends ConsumerState<ChallengeComposerScreen> {
   String _format = 'SINGLES';
+  int _bestOf = 3;
   String _sport = 'TENNIS';
   String? _partnerId;
   final _noteController = TextEditingController();
@@ -65,6 +66,7 @@ class _ChallengeComposerScreenState
           .challenge(
             opponentId: widget.opponent.id,
             format: _format,
+            bestOfSets: _bestOf,
             partnerId: _partnerId,
             note: _noteController.text.trim(),
             sport: _isPadel ? 'PADEL' : null,
@@ -179,6 +181,22 @@ class _ChallengeComposerScreenState
                         selected: _isDoubles,
                         onTap: () => setState(() => _format = 'DOUBLES'),
                       ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16),
+                  sectionLabel(context.l10n.matchLength),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      for (final n in const [3, 5]) ...[
+                        if (n != 3) const SizedBox(width: 8),
+                        DriftFilterChip(
+                          label: context.l10n.matchBestOfN(n),
+                          selected: _bestOf == n,
+                          onTap: () => setState(() => _bestOf = n),
+                        ),
+                      ],
                     ],
                   ),
 

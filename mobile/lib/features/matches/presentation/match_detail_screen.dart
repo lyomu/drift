@@ -314,7 +314,7 @@ class _OpponentCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      match.isDoubles ? context.l10n.optDoubles : context.l10n.optSingles,
+                      '${match.isDoubles ? context.l10n.optDoubles : context.l10n.optSingles} · ${context.l10n.matchBestOfN(match.bestOfSets)}',
                       style: type.caption.copyWith(color: colors.textSecondary),
                     ),
                   ],

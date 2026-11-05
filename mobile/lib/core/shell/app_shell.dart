@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'ai_coach_fab.dart';
 import 'drift_app_drawer.dart';
 import 'drift_app_header.dart';
 import 'drift_bottom_nav.dart';
@@ -95,6 +96,7 @@ class _AppShellState extends ConsumerState<AppShell> {
   Widget build(BuildContext context) {
     return Scaffold(
       drawer: const DriftAppDrawer(),
+      floatingActionButton: const AiCoachFab(),
       body: Column(
         children: [
           DriftAppHeader(title: _title, actions: _actions),

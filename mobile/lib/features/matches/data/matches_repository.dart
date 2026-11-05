@@ -287,6 +287,7 @@ class DriftMatch {
     required this.id,
     required this.sport,
     required this.format,
+    this.bestOfSets = 3,
     required this.state,
     required this.createdById,
     required this.confirmedTime,
@@ -307,6 +308,9 @@ class DriftMatch {
   final String id;
   final String sport;
   final String format;
+
+  /// Best of 3 or 5 sets.
+  final int bestOfSets;
   final MatchState state;
   final String createdById;
   final DateTime? confirmedTime;
@@ -350,6 +354,7 @@ class DriftMatch {
     id: json['id'] as String,
     sport: json['sport'] as String,
     format: json['format'] as String,
+    bestOfSets: json['bestOfSets'] as int? ?? 3,
     state: MatchState.fromJson(json['state'] as String),
     createdById: json['createdById'] as String,
     confirmedTime: json['confirmedTime'] == null
@@ -416,6 +421,7 @@ class MatchesRepository {
   Future<DriftMatch> challenge({
     required String opponentId,
     required String format,
+    int bestOfSets = 3,
     String? partnerId,
     String? note,
     String? sport,
@@ -426,6 +432,7 @@ class MatchesRepository {
         data: {
           'opponentId': opponentId,
           'format': format,
+          'bestOfSets': bestOfSets,
           if (partnerId != null) 'partnerId': partnerId,
           if (note != null && note.isNotEmpty) 'note': note,
           if (sport != null) 'sport': sport,

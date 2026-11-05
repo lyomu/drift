@@ -80,6 +80,7 @@ function matchRecord(overrides: Record<string, unknown> = {}) {
   return {
     id: 'm1',
     format: 'SINGLES',
+    bestOfSets: 3,
     sport: 'TENNIS',
     state: 'SCHEDULED',
     conversation: { id: 'c1' },
@@ -89,7 +90,10 @@ function matchRecord(overrides: Record<string, unknown> = {}) {
   };
 }
 
-const futureSets = [{ sideAGames: 6, sideBGames: 3 }];
+const futureSets = [
+  { sideAGames: 6, sideBGames: 3 },
+  { sideAGames: 6, sideBGames: 4 },
+];
 
 describe('ResultsService', () => {
   let service: ResultsService;
@@ -346,7 +350,10 @@ describe('ResultsService', () => {
       });
       matches.loadMatch!.mockResolvedValue(match);
 
-      const counterSets = [{ sideAGames: 3, sideBGames: 6 }];
+      const counterSets = [
+{ sideAGames: 3, sideBGames: 6 },
+{ sideAGames: 4, sideBGames: 6 },
+];
       await service.dispute('b', 'm1', {
         outcome: 'SCORE',
         sets: counterSets,
@@ -379,7 +386,10 @@ describe('ResultsService', () => {
           submittedById: 'a',
           disputedById: 'b',
           disputantOutcome: 'SCORE',
-          disputantSets: [{ sideAGames: 3, sideBGames: 6 }],
+          disputantSets: [
+{ sideAGames: 3, sideBGames: 6 },
+{ sideAGames: 4, sideBGames: 6 },
+],
           disputantWinningSide: 'B',
         },
       });
@@ -411,7 +421,10 @@ describe('ResultsService', () => {
       // Submitter (side A) revises to match the disputer's version exactly.
       await service.resubmit('a', 'm1', {
         outcome: 'SCORE',
-        sets: [{ sideAGames: 3, sideBGames: 6 }] as never,
+        sets: [
+{ sideAGames: 3, sideBGames: 6 },
+{ sideAGames: 4, sideBGames: 6 },
+] as never,
       });
 
       const resultUpdate = prisma.matchResult.update.mock.calls[0][0];
@@ -433,7 +446,10 @@ describe('ResultsService', () => {
 
       await service.resubmit('a', 'm1', {
         outcome: 'SCORE',
-        sets: [{ sideAGames: 7, sideBGames: 5 }] as never,
+        sets: [
+{ sideAGames: 7, sideBGames: 5 },
+{ sideAGames: 6, sideBGames: 3 },
+] as never,
       });
 
       expect(prisma.matchResult.update).toHaveBeenCalledWith({
@@ -456,7 +472,10 @@ describe('ResultsService', () => {
           submittedById: 'a',
           disputedById: 'b',
           disputantOutcome: 'SCORE',
-          disputantSets: [{ sideAGames: 3, sideBGames: 6 }],
+          disputantSets: [
+{ sideAGames: 3, sideBGames: 6 },
+{ sideAGames: 4, sideBGames: 6 },
+],
           disputantWinningSide: 'B',
         },
       });
@@ -584,7 +603,10 @@ describe('ResultsService', () => {
 
       await service.adminRecordResult('m1', 'admin-1', {
         outcome: 'SCORE',
-        sets: [{ sideAGames: 2, sideBGames: 6 }],
+        sets: [
+{ sideAGames: 2, sideBGames: 6 },
+{ sideAGames: 1, sideBGames: 6 },
+],
       } as never);
 
       expect(prisma.matchResult.update).toHaveBeenCalledWith({
@@ -750,7 +772,10 @@ describe('ResultsService', () => {
 
       await service.dispute('b', 'm1', {
         outcome: 'SCORE',
-        sets: [{ sideAGames: 3, sideBGames: 6 }],
+        sets: [
+{ sideAGames: 3, sideBGames: 6 },
+{ sideAGames: 4, sideBGames: 6 },
+],
       } as never);
 
       const [, except, title] = callFor(0);
@@ -769,7 +794,10 @@ describe('ResultsService', () => {
           submittedById: 'a',
           disputedById: 'b',
           disputantOutcome: 'SCORE',
-          disputantSets: [{ sideAGames: 3, sideBGames: 6 }],
+          disputantSets: [
+{ sideAGames: 3, sideBGames: 6 },
+{ sideAGames: 4, sideBGames: 6 },
+],
           disputantWinningSide: 'B',
         },
       });
