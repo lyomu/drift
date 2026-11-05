@@ -247,7 +247,7 @@ export const es: Record<MessageKey, string> = {
   'mail.waitlist.greetingNamed': 'Estás en la lista de Drift Tennis, {name}.',
   'mail.waitlist.greeting': 'Estás en la lista de Drift Tennis.',
   'mail.waitlist.body':
-    'Te enviaremos novedades del lanzamiento y, de vez en cuando, noticias u ofertas\nde Drift Tennis. Para dejar de recibir correos no esenciales, escribe a drift@einsbrand.com\ncon «Unsubscribe» en el asunto.\nUnirse y jugar es gratis mientras arrancamos.\nPrimero Android, después iOS.\n\nSi no te has apuntado, ignora este correo y escríbenos si quieres\nque eliminemos la dirección.',
+    'Te enviaremos novedades del lanzamiento y, de vez en cuando, noticias u ofertas\nde Drift Tennis. Para dejar de recibir correos no esenciales, escribe a serve@driftsports.app\ncon «Unsubscribe» en el asunto.\nUnirse y jugar es gratis mientras arrancamos.\nPrimero Android, después iOS.\n\nSi no te has apuntado, ignora este correo y escríbenos si quieres\nque eliminemos la dirección.',
 
   // Daily tennis fact (Notification Centre only, no push)
   'tennisFact.notificationTitle': 'Tu as del día',

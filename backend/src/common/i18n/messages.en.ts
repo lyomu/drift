@@ -254,7 +254,7 @@ export const en = {
   'mail.waitlist.greetingNamed': "You're on the list for Drift Tennis, {name}.",
   'mail.waitlist.greeting': "You're on the list for Drift Tennis.",
   'mail.waitlist.body':
-    'We will send launch news and occasional Drift Tennis product updates\nor offers. To stop non-essential emails, contact drift@einsbrand.com\nwith "Unsubscribe" in the subject line.\nIt is free to join and free to play while we get going.\nAndroid first, iOS follows.\n\nIf you did not sign up, ignore this email and contact us if you would\nlike the address removed.',
+    'We will send launch news and occasional Drift Tennis product updates\nor offers. To stop non-essential emails, contact serve@driftsports.app\nwith "Unsubscribe" in the subject line.\nIt is free to join and free to play while we get going.\nAndroid first, iOS follows.\n\nIf you did not sign up, ignore this email and contact us if you would\nlike the address removed.',
 
   // Daily tennis fact (Notification Centre only, no push)
   'tennisFact.notificationTitle': 'Your daily ace',

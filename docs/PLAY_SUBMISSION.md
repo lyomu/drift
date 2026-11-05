@@ -42,7 +42,7 @@ page, and Play wants the page. It matters most for the case P.3 created: `login`
 refuses a `DELETED` account, so a person inside the 30-day recovery window cannot ask
 from within the app at all.
 
-A page at the same host as the privacy policy, naming `drift@einsbrand.com` and what
+A page at the same host as the privacy policy, naming `serve@driftsports.app` and what
 happens over the following 30 days, is enough; it does not need to be a form. Track it
 as **P.7**, and do it together with §1.1 — same host, and the copy has to agree.
 

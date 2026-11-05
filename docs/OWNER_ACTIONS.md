@@ -118,7 +118,7 @@ uninstalled. In-app deletion alone is not sufficient. Tracker **P.7**.
 The mailbox behind it is now confirmed (see below), but a monitored address is not
 a page. Do this at the same time as §1 — same host, and the copy has to agree.
 
-**Done when:** a public page names `drift@einsbrand.com`, explains the 30-day
+**Done when:** a public page names `serve@driftsports.app`, explains the 30-day
 window and what is kept in redacted form afterwards, and is linked from the Play
 listing.
 
