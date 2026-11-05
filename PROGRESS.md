@@ -199,6 +199,141 @@ entry already exist and read `GET /coaches`.
 pass is still outstanding and should cover, at minimum, the backfill against a
 database that already holds `UNVERIFIED` coach profiles.
 
+## Club Admin + Coach redesign (2026-11-04, in progress)
+
+Re-skin of `club-admin/` from the Figma Make export "Redesign Tennis Club
+Dashboard". Plan: `CLUB_ADMIN_REDESIGN_PLAN.md`. Decisions: design's layout and
+spacing in **Drift's brand** (blue, Outfit, Drift logo); real data or no card;
+derived dark mode; one pass, one test pass at the end. Text sizes: the design's
+8–10px text is raised to an 11px floor (11–13px body kept as designed).
+Zero letter-spacing is kept (brand rule) where the design used negative.
+
+- [x] **1. Foundation + shells.** Tokens (`globals.css`: sunken surface, accent
+  tints, card shadow, 3px focus ring, icon weight 300 + variable-weight font
+  link), shared components (`ui.tsx`, `dashboard-design.tsx`, new
+  `redesign.tsx`, `Toast.tsx`), shared nav config (`lib/nav.ts`), club shell
+  (Sidebar 258px + drawer < 920px, SiteHeader with ⌘K page quick-jump,
+  real moderation badge) and coach shell. `MobileNav` removed.
+- [x] 2. Overview (real stats + 30-day engagement breakdown in place of the design's chart, which needs a time series the analytics endpoints don't return), Members (directory, join requests, action menu, search/filter), member profile (hero, stats, Overview/Activity/Access tabs; Activity = audit log by actor).
+- [x] 3. Leagues (list cards + summary, detail hero/capacity ring/tabs/row menu, rules cards, archive), tournaments (list rows, detail), ladders. The design's per-round selector, result-entry modal and manual 'add registration' modal are not built: no API for them in this app.
+- [x] 4. Events (list rows with date tile, detail hero + attendance stats + registrations table), announcements, media, moderation (segmented status filter).
+- [x] 5. Courts (list, edit), reports (translated tabs/metrics), disputes. Court detail keeps the existing edit form (no venue overview/activity tabs: no booking data).
+- [x] 6. Coaches list (search), coach detail (back button, hero, shared CoachForm section cards used by both club and coach-workspace modes), coach workspace pages (eyebrow + shared primitives).
+- [x] 7. Settings/team/notifications/audit/billing (eyebrow, tab bar, translated billing copy), community, setup, request-club inherit the restyled primitives (no bespoke layout changes).
+- [x] 8. Test pass + second pass against the live prototype (2026-11-04). `tsc` clean,
+  `eslint` 0 errors (3 pre-existing warnings), `next build` OK (35 routes), EN/FR/ES parity
+  (976 keys each), 14/14 Playwright interaction checks (invite modal + POST + toast, approve/
+  decline, row menu, search, profile tabs, league filter, Ctrl+K, theme, dispute selection,
+  settings rail, coach-form tabs + validation jump, mobile drawer). Visuals: production build
+  with the API mocked, ~20 screens x light/dark/430px, compared side by side with the Figma
+  Make prototype run locally. The comparison found structural gaps that were then built:
+  Settings two-column workspace (route group `(settings)`), Courts venue grid, Tournaments live
+  hero + filter, Announcements list, Events calendar strip + Upcoming/Past, Disputes case queue,
+  Coach hero banner + tabs, Ladders strip, Reports chart, real user name + plan card in sidebar.
+  Also fixed a real bug: coach overview/application showed raw i18n keys.
+  **Not done:** run against the real backend; every modal/form clicked through by hand; and the
+  features below that need new backend endpoints.
+
+**Backend endpoints added for the prototype features (2026-11-04, no schema change / no migration):**
+- `GET /leagues/:id/rounds` (rounds + fixture progress) -> round selector on league fixtures.
+- `POST /fixtures/:id/result` (OWNER/ADMIN): admin records a result through the same `settle()` a
+  player confirm uses (ratings, standings, bracket/ladder hook); refuses confirmed/disputed results
+  and never bypasses the match state machine (a score needs a SCHEDULED match; a walkover is
+  allowed earlier).
+- `POST /leagues/:id/registrations` (OWNER/ADMIN): add an active club/community member as
+  ENROLLED or WAITLISTED before the league starts; honours capacity; notifies the player.
+- `GET /clubs/:id/members/:userId/stats` (OWNER/ADMIN): 90-day activity + engagement score
+  (formula in `club-admin/member-engagement.ts`, a product decision to confirm: matches 8x5,
+  events attended 5x5, posts+reactions 2x10, leagues enrolled 5x3; bands 70/40/1).
+- `GET /clubs/:id/attention`: counts of work waiting on the caller, role-filtered; drives the bell
+  dot and sidebar badges via `AttentionProvider`.
+Verified: 909/909 backend unit tests (71 suites), 18/18 club-admin e2e against local Postgres
+(incl. permissions and an admin walkover end to end), backend tsc + eslint (changed files, no
+--fix) clean; frontend tsc/eslint/build clean, 1027 EN/FR/ES keys, 8/8 Playwright checks on the
+new modals/stats/badges (API mocked).
+
+**Still not built (no data exists):** court-booking counts and time-on-court; the app records
+neither, so showing numbers would mean inventing them.
+
+**Root-cause fix found during the visual pass:** `globals.css` had an *unlayered*
+`* { border-color }` that beat every Tailwind border-colour utility, so coloured
+borders (`border-drift-primary`, `border-transparent`, hover borders) never applied
+anywhere in the console. It now lives in `@layer base`. This will make previously
+suppressed coloured borders (error/success banners, selected cards) appear as designed.
+
+**Pre-existing translation corruption (fixed):** ~150 catalog strings had `…`/`—`/`·`/
+accents replaced by `?` (worst in FR, e.g. `G?n?ration?`); all repaired in EN/FR/ES.
+
+**Gaps vs the design:** see "Needs backend work" above. The user's name now comes from
+`GET /users/me`; the plan card shows "Free during beta" (owner only).
+
+## Native court bookings (2026-11-05, code + automated tests done; manual emulator pass outstanding)
+
+Players request a court slot, the club approves or declines. Free; no payments.
+Native booking is on exactly when `Court.bookingType = NATIVE_PARTNER`; only club-owned courts qualify.
+
+**Schema** (one additive migration `20261104200636_court_bookings`, applied locally): `Court` gains
+`timezone` / `bookingSlotMinutes` / `bookingMaxSlots` / `bookingAdvanceDays`; new `CourtOpeningHours`
+(several intervals per day) and `CourtBooking` (`PENDING/APPROVED/DECLINED/CANCELLED`, cancelled by
+`PLAYER/CLUB`). "Completed" is derived (approved and ended), never stored. The generated migration also
+contained unrelated `news_*` drift (a dropped index, dropped `updatedAt` defaults); that was stripped so
+the migration only adds. That drift still exists between schema and migrations; not part of this work.
+
+**Backend** (`backend/src/bookings/`):
+- `booking-logic.ts`: pure `generateSlots`, `isWithinHours`, `overlaps`, `remainingCapacity`,
+  `validateBookingWindow`, `validateOpeningHours`, `openMinutesInRange`; time zones via `Intl`, no dependency.
+- Player API: `GET /courts/:id/availability`, `POST /courts/:id/bookings`, `GET /me/bookings`,
+  `POST /me/bookings/:id/cancel` (all through `demoScope`). Rules: inside hours, on the slot grid, 1..maxSlots,
+  not past, inside the advance window, max 5 open requests, no overlapping own booking. Pending requests never
+  block a slot; capacity counts APPROVED only.
+- Club API (OWNER/ADMIN): list, approve/decline (PATCH), staff-entered walk-in (instantly approved, member or
+  guest), cancel with reason, `GET/PUT .../courts/:courtId/booking-settings`. Approve/create run in a
+  transaction with `SELECT ... FOR UPDATE` on the `court_groups` row, then re-check capacity.
+- Notifications use the existing CLUBS category (no enum change): managers on a new request; player on approve,
+  decline, club cancel. Copy is in `messages.{en,fr,es}.ts`.
+- Real numbers: `analytics/courts` adds `bookingRequests`, `bookingsApproved`, `hoursBooked`, `utilisationPct`
+  (capacity-weighted approved hours over opening hours, up to now) plus a pooled `utilisation`; `attention`
+  gains `pendingBookings` (in `total`); member stats gain `bookings` + `hoursOnCourt`.
+  `member-engagement.ts` weights are unchanged; bookings are display-only.
+- **Erasure:** `ErasureService` cancels a deleted user's open future bookings, then detaches every booking
+  (`userId = null`, note cleared) so the club keeps an anonymous usage record. `CourtBooking` is registered in
+  the erasure-coverage spec.
+- API returns court-local `local.{date,start,end}` / `localStart` / `localEnd` next to the UTC instants
+  because the mobile app has no time-zone database.
+
+**Club-admin:** new `/bookings` page (Operations nav, OWNER/ADMIN, sidebar badge from `pendingBookings`):
+pending approvals, day/week calendar per court, Add-booking modal, decline/cancel with reason. Court detail has
+a Booking tab (enable switch, slot length, max slots, advance days, time zone, weekly-hours editor). Overview
+"Court enquiries" card became "Court usage" (real utilisation); Reports > courts and the member profile show the
+new numbers. EN/FR/ES catalogs in step (1102 keys each).
+
+**Mobile:** `CourtBookingScreen` (`/discover/courts/:id/book`: surface picker, 14-day strip, slot grid,
+duration, note, submit) opened from the booking sheet when the court is `NATIVE_PARTNER`; `MyBookingsScreen`
+(`/discover/my-bookings`, cancel) linked from the booking sheet and the Play hub. Strings in all three ARBs.
+
+**Verification (one pass, 2026-11-05):** backend `tsc` clean; new/changed files lint-clean; `jest` 973 passing
+(including `bookings` specs and the erasure specs); `club-admin` e2e 19/19 including the new booking loop;
+club-admin `tsc` + `eslint` (0 errors) + `npm run build` + key parity; Playwright against a mocked API (approve,
+decline, calendar, add modal, settings PUT; no page errors); `flutter analyze` clean, `flutter test` 670 passing.
+
+**Still to do:** manual emulator pass (`mobile/tool/dev_run.sh`); the server on :3009 is an older compiled
+build and has none of these endpoints until it is rebuilt/restarted (not done, per standing instruction).
+Out of scope: payments/pricing, recurring bookings, waitlists, per-physical-court assignment, calendar export,
+reminders. ~~A pending request is not auto-expired~~ — **fixed 2026-11-05 (release prep):**
+`BookingsScheduler` (hourly, `7 * * * *`) calls `BookingsService.expireStalePending()`, which sets PENDING
+requests whose slot has ended to DECLINED (no decider) and notifies the player (`booking.expired.*`, EN/FR/ES).
+No schema change.
+
+### Release prep, Phase 1 (2026-11-05): code committed locally, NOT pushed, NOT deployed
+Owner confirmed: club-admin deletions (audit/billing/notifications/settings/team pages, `MobileNav`) are
+intentional (moved into the `(settings)` route group). Commits on `feat/play-communities` (local only):
+`f8b2c86` bookings backend, `0673554` admin-recorded league results, `987ae55` club-admin redesign + bookings UI,
+`ab496bf` mobile bookings + Home polish. Fresh evidence: backend `tsc` clean; `jest --maxWorkers=2` 975/975
+(default parallelism OOMs workers on this machine); e2e club-admin 19/19; club-admin `tsc`, `eslint` (0 errors,
+3 warnings), `npm run build` pass; `flutter analyze` clean, `flutter test` 679/679.
+Not committed on purpose: `mobile.zip`, `*-check.png`, `backend/var/`, two untracked planning `.md` files.
+Next: push + PR to `master`, `pg_dump`, Jenkins approval, deploy, smoke, then the Play bundle.
+
 ## Open Dependencies
 
 - ~~**Sharp Sans Display font license**~~ — **struck 2026-09-03: no longer a dependency.** The redesign dropped the typeface entirely, so there is nothing to purchase and no placeholder to replace. What actually ships is **Outfit** for display and **DMSans** for body — both SIL OFL, both bundled as static cuts in `mobile/pubspec.yaml` and set in `drift_typography.dart`. Space Grotesk is gone too. *Note:* `foundation/05-design-system.md` still specifies Sharp Sans Display throughout and is now the only place this claim survives; it describes the pre-redesign design system, not the build.
