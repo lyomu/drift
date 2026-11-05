@@ -334,6 +334,26 @@ intentional (moved into the `(settings)` route group). Commits on `feat/play-com
 Not committed on purpose: `mobile.zip`, `*-check.png`, `backend/var/`, two untracked planning `.md` files.
 Next: push + PR to `master`, `pg_dump`, Jenkins approval, deploy, smoke, then the Play bundle.
 
+### Phase 2 (2026-11-05): DEPLOYED to production
+- PR #42 merged (`fc0cce3`; merged master into the branch first, conflicts only in the news reader — took master's files).
+  GitHub Actions all green. Jenkins build #44 FAILED: the Jenkins host (`einsbrand-infra`, 46.225.228.182) disk was
+  100% full (`no space left on device` in Build CI images). Freed 14 GB by truncating the unbounded json logs of
+  `blackbox-exporter`, `sonarqube`, `loki`; **log rotation still not configured, they will refill**. Today's
+  jenkins-home backup was 0 bytes (same cause). Backup retention is already 7 days. Build #45 passed end to end.
+- Pre-deploy: `pg_dump` `~/backups/drift-db-pre-bookings-20261105-084903.sql.gz` on the prod box (verified).
+- Deployed image `sha-fc0cce3c1591` at ~09:54 UTC (previous: `sha-517cc75bc82e` = rollback tag). Migrations applied (read from
+  the console log): `user_preferred_locale`, `communities`, `goal_focus`, `favorite_courts`, `tennis_facts`,
+  `court_bookings`; prod now has 75. Jenkins smoke stage passed.
+- `seed-tennis-facts` run on prod (table was empty): 30 facts.
+- Checked live: `/health` 200; `/tennis-facts/today`, `/courts/:id/availability`, `/me/bookings`, `/clubs/:id/bookings`,
+  booking-settings all answer 401 unauthenticated (routes exist); console bundle points at `https://api.driftsports.app`.
+  **Not yet verified live:** the authenticated booking flow (enable on a court, request, approve, notification, cancel),
+  demo-club isolation, 404 on a booking-off court — needs a test login.
+- Owner-side Play: privacy policy `https://driftsports.app/privacy-policy`, deletion/data notice
+  `https://driftsports.app/data-privacy` (both name `serve@driftsports.app`); owner reports OAuth client, Play Console
+  listing and keystore backup done (not verified by us). Bundle `mobile/dist/drift-0.9.0-build4-20261105-120044.aab`
+  signed with `B1:FF:6E:…:CE:BF`, versionCode 4; not uploaded, not yet tried on a device.
+
 ## Open Dependencies
 
 - ~~**Sharp Sans Display font license**~~ — **struck 2026-09-03: no longer a dependency.** The redesign dropped the typeface entirely, so there is nothing to purchase and no placeholder to replace. What actually ships is **Outfit** for display and **DMSans** for body — both SIL OFL, both bundled as static cuts in `mobile/pubspec.yaml` and set in `drift_typography.dart`. Space Grotesk is gone too. *Note:* `foundation/05-design-system.md` still specifies Sharp Sans Display throughout and is now the only place this claim survives; it describes the pre-redesign design system, not the build.
