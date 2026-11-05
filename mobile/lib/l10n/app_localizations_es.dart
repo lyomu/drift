@@ -3905,6 +3905,32 @@ class AppLocalizationsEs extends AppLocalizations {
   String get scoreErrBothGames => 'Introduce los juegos de ambos en cada set.';
 
   @override
+  String get matchLength => 'Formato del partido';
+
+  @override
+  String get aiCoachLabel => 'Entrenador IA';
+
+  @override
+  String get commonComingSoon => 'Próximamente';
+
+  @override
+  String get drawerSoonBadge => 'Pronto';
+
+  @override
+  String matchBestOfN(int number) {
+    return 'Al mejor de $number';
+  }
+
+  @override
+  String scoreErrMatchDecided(int set) {
+    return 'El partido ya estaba decidido antes del set $set. Quita los sets sobrantes.';
+  }
+
+  @override
+  String get scoreErrNeedMoreSets =>
+      'El partido aún no ha terminado: añade los sets que faltan.';
+
+  @override
   String scoreErrInvalid(int set, String score) {
     return 'El set $set ($score) no es un resultado de tenis válido.';
   }

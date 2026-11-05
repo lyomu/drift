@@ -706,10 +706,16 @@ describe('Platform Admin (e2e)', () => {
     const matchId = await scheduleMatch(alice, bob);
 
     await authed(alice.token, 'post', `/matches/${matchId}/results`)
-      .send({ outcome: 'SCORE', sets: [{ sideAGames: 6, sideBGames: 3 }] })
+      .send({ outcome: 'SCORE', sets: [
+        { sideAGames: 6, sideBGames: 3 },
+        { sideAGames: 6, sideBGames: 3 },
+      ] })
       .expect(201);
     await authed(bob.token, 'patch', `/matches/${matchId}/results/dispute`)
-      .send({ outcome: 'SCORE', sets: [{ sideAGames: 3, sideBGames: 6 }] })
+      .send({ outcome: 'SCORE', sets: [
+        { sideAGames: 3, sideBGames: 6 },
+        { sideAGames: 3, sideBGames: 6 },
+      ] })
       .expect(200);
 
     const queue = await authed(

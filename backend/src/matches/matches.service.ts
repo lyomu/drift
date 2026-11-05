@@ -225,6 +225,7 @@ export class MatchesService {
         data: {
           sport: dto.sport ?? undefined,
           format,
+          bestOfSets: dto.bestOfSets ?? undefined,
           state: MatchState.PROPOSED,
           createdById: userId,
           expiresAt: new Date(Date.now() + CHALLENGE_TTL_MS),

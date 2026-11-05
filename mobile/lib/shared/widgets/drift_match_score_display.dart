@@ -30,6 +30,7 @@ class DriftMatchScoreDisplay extends StatelessWidget {
     Widget row(
       String label,
       int Function(SetScore) games,
+      int Function(SetScore) opponentGames,
       int? Function(SetScore) tiebreak,
     ) {
       return Row(
@@ -49,12 +50,30 @@ class DriftMatchScoreDisplay extends StatelessWidget {
                 children: [
                   Text(
                     '${games(set)}',
-                    style: type.statistics.copyWith(fontSize: 20),
+                    style: type.statistics.copyWith(
+                      fontSize: 20,
+                      // The set winner reads heavier, like a printed scoreboard.
+                      fontWeight: games(set) > opponentGames(set)
+                          ? FontWeight.w800
+                          : FontWeight.w400,
+                      color: games(set) > opponentGames(set)
+                          ? colors.textPrimary
+                          : colors.textSecondary,
+                    ),
                   ),
+                  // Tiebreak points as a true superscript: 7⁸ / 6⁶.
                   if (tiebreak(set) != null)
                     Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Text('${tiebreak(set)}', style: type.caption),
+                      padding: const EdgeInsets.only(left: 1),
+                      child: Text(
+                        '${tiebreak(set)}',
+                        style: type.caption.copyWith(
+                          fontSize: 11,
+                          height: 1,
+                          fontWeight: FontWeight.w600,
+                          fontFeatures: const [FontFeature.superscripts()],
+                        ),
+                      ),
                     ),
                 ],
               ),
@@ -69,12 +88,14 @@ class DriftMatchScoreDisplay extends StatelessWidget {
         row(
           sideALabel ?? context.l10n.commonYou,
           (s) => s.sideAGames,
+          (s) => s.sideBGames,
           (s) => s.sideATiebreak,
         ),
         const SizedBox(height: DriftSpacing.s1),
         row(
           sideBLabel ?? context.l10n.commonThem,
           (s) => s.sideBGames,
+          (s) => s.sideAGames,
           (s) => s.sideBTiebreak,
         ),
       ],

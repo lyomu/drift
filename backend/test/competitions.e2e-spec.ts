@@ -259,7 +259,10 @@ describe('Competitions (e2e)', () => {
     // Play it through the M7 flow — already thoroughly e2e-tested there,
     // this just proves the fixture's match is a real, usable Match.
     await authed(alice.token, 'post', `/matches/${matchId}/results`)
-      .send({ outcome: 'SCORE', sets: [{ sideAGames: 6, sideBGames: 2 }] })
+      .send({ outcome: 'SCORE', sets: [
+        { sideAGames: 6, sideBGames: 2 },
+        { sideAGames: 6, sideBGames: 2 },
+      ] })
       .expect(201);
     const confirmed = await authed(
       bob.token,

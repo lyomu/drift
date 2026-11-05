@@ -3855,6 +3855,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scoreErrBothGames => 'Enter both games for every set.';
 
   @override
+  String get matchLength => 'Match length';
+
+  @override
+  String get aiCoachLabel => 'AI Coach';
+
+  @override
+  String get commonComingSoon => 'Coming soon';
+
+  @override
+  String get drawerSoonBadge => 'Soon';
+
+  @override
+  String matchBestOfN(int number) {
+    return 'Best of $number';
+  }
+
+  @override
+  String scoreErrMatchDecided(int set) {
+    return 'The match was already decided before set $set. Remove the extra sets.';
+  }
+
+  @override
+  String get scoreErrNeedMoreSets =>
+      'The match isn\'t finished yet — add the remaining sets.';
+
+  @override
   String scoreErrInvalid(int set, String score) {
     return 'Set $set ($score) isn\'t a valid tennis score.';
   }

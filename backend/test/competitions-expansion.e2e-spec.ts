@@ -134,7 +134,10 @@ describe('Competitions Expansion (e2e)', () => {
     await authed(submitter.token, 'post', `/matches/${matchId}/results`)
       .send({
         outcome: 'SCORE',
-        sets: [{ sideAGames: aGames, sideBGames: bGames }],
+        sets: [
+          { sideAGames: aGames, sideBGames: bGames },
+          { sideAGames: aGames, sideBGames: bGames },
+        ],
       })
       .expect(201);
     await authed(opponent.token, 'patch', `/matches/${matchId}/results/confirm`)

@@ -67,10 +67,14 @@ export class ResultsService {
 
   /** Derives winningSide server-side for SCORE; trusts the caller only for
    * the two outcomes with no score to derive it from. */
-  private resolveVersion(dto: ResultVersionDto): Version {
+  private resolveVersion(dto: ResultVersionDto, bestOf: number): Version {
     if (dto.outcome === MatchResultOutcome.SCORE) {
       const sets = (dto.sets ?? []) as SetScore[];
-      return { outcome: dto.outcome, sets, winningSide: matchWinner(sets) };
+      return {
+        outcome: dto.outcome,
+        sets,
+        winningSide: matchWinner(sets, bestOf),
+      };
     }
     if (
       dto.outcome === MatchResultOutcome.RETIREMENT &&
@@ -263,7 +267,7 @@ export class ResultsService {
       throw new BadRequestException('A result has already been submitted.');
     }
 
-    const version = this.resolveVersion(dto);
+    const version = this.resolveVersion(dto, match.bestOfSets);
 
     await this.prisma.matchResult.create({
       data: {
@@ -341,7 +345,7 @@ export class ResultsService {
     }
     this.assertOpposingSide(match, result.submittedById, userId);
 
-    const version = this.resolveVersion(dto);
+    const version = this.resolveVersion(dto, match.bestOfSets);
     assertTransition(state, MatchState.DISPUTED);
 
     await this.prisma.$transaction([
@@ -406,7 +410,7 @@ export class ResultsService {
     )!;
     const isSubmitterSlot = participant.side === submitter.side;
 
-    const newVersion = this.resolveVersion(dto);
+    const newVersion = this.resolveVersion(dto, match.bestOfSets);
     const otherVersion: Version = isSubmitterSlot
       ? {
           outcome: result.disputantOutcome!,
@@ -574,7 +578,7 @@ export class ResultsService {
       );
     }
 
-    const version = this.resolveVersion(dto);
+    const version = this.resolveVersion(dto, match.bestOfSets);
     // Fail on an illegal transition before anything is written, so a refused
     // request cannot leave a half-recorded result behind.
     assertTransition(state, SETTLED_STATE[version.outcome]);

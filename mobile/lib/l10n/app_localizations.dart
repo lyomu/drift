@@ -7072,6 +7072,48 @@ abstract class AppLocalizations {
   /// **'Enter both games for every set.'**
   String get scoreErrBothGames;
 
+  /// No description provided for @matchLength.
+  ///
+  /// In en, this message translates to:
+  /// **'Match length'**
+  String get matchLength;
+
+  /// No description provided for @aiCoachLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Coach'**
+  String get aiCoachLabel;
+
+  /// No description provided for @commonComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming soon'**
+  String get commonComingSoon;
+
+  /// No description provided for @drawerSoonBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Soon'**
+  String get drawerSoonBadge;
+
+  /// No description provided for @matchBestOfN.
+  ///
+  /// In en, this message translates to:
+  /// **'Best of {number}'**
+  String matchBestOfN(int number);
+
+  /// No description provided for @scoreErrMatchDecided.
+  ///
+  /// In en, this message translates to:
+  /// **'The match was already decided before set {set}. Remove the extra sets.'**
+  String scoreErrMatchDecided(int set);
+
+  /// No description provided for @scoreErrNeedMoreSets.
+  ///
+  /// In en, this message translates to:
+  /// **'The match isn\'t finished yet — add the remaining sets.'**
+  String get scoreErrNeedMoreSets;
+
   /// No description provided for @scoreErrInvalid.
   ///
   /// In en, this message translates to:

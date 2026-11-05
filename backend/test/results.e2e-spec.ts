@@ -215,7 +215,10 @@ describe('Match Results (e2e)', () => {
       'post',
       `/matches/${matchId}/results`,
     )
-      .send({ outcome: 'SCORE', sets: [{ sideAGames: 6, sideBGames: 2 }] })
+      .send({ outcome: 'SCORE', sets: [
+        { sideAGames: 6, sideBGames: 2 },
+        { sideAGames: 6, sideBGames: 2 },
+      ] })
       .expect(201);
     expect(submitted.body.result.status).toBe('PENDING_CONFIRMATION');
     expect(submitted.body.result.winningSide).toBe('A');
@@ -258,7 +261,10 @@ describe('Match Results (e2e)', () => {
 
     // A duplicate submission is rejected.
     await authed(alice.token, 'post', `/matches/${matchId}/results`)
-      .send({ outcome: 'SCORE', sets: [{ sideAGames: 6, sideBGames: 2 }] })
+      .send({ outcome: 'SCORE', sets: [
+        { sideAGames: 6, sideBGames: 2 },
+        { sideAGames: 6, sideBGames: 2 },
+      ] })
       .expect(400);
 
     // Reflection can be saved once settled.
@@ -272,7 +278,10 @@ describe('Match Results (e2e)', () => {
     const matchId = await scheduleMatch(bob, alice);
 
     await authed(bob.token, 'post', `/matches/${matchId}/results`)
-      .send({ outcome: 'SCORE', sets: [{ sideAGames: 6, sideBGames: 4 }] })
+      .send({ outcome: 'SCORE', sets: [
+        { sideAGames: 6, sideBGames: 4 },
+        { sideAGames: 6, sideBGames: 4 },
+      ] })
       .expect(201);
 
     // Alice disagrees with her own version.
@@ -281,7 +290,10 @@ describe('Match Results (e2e)', () => {
       'patch',
       `/matches/${matchId}/results/dispute`,
     )
-      .send({ outcome: 'SCORE', sets: [{ sideAGames: 4, sideBGames: 6 }] })
+      .send({ outcome: 'SCORE', sets: [
+        { sideAGames: 4, sideBGames: 6 },
+        { sideAGames: 4, sideBGames: 6 },
+      ] })
       .expect(200);
     expect(disputed.body.state).toBe('DISPUTED');
     expect(disputed.body.result.status).toBe('DISPUTED');
@@ -292,7 +304,10 @@ describe('Match Results (e2e)', () => {
       'patch',
       `/matches/${matchId}/results/resubmit`,
     )
-      .send({ outcome: 'SCORE', sets: [{ sideAGames: 7, sideBGames: 5 }] })
+      .send({ outcome: 'SCORE', sets: [
+        { sideAGames: 7, sideBGames: 5 },
+        { sideAGames: 7, sideBGames: 5 },
+      ] })
       .expect(200);
     expect(stillDisputed.body.state).toBe('DISPUTED');
 
@@ -302,7 +317,10 @@ describe('Match Results (e2e)', () => {
       'patch',
       `/matches/${matchId}/results/resubmit`,
     )
-      .send({ outcome: 'SCORE', sets: [{ sideAGames: 4, sideBGames: 6 }] })
+      .send({ outcome: 'SCORE', sets: [
+        { sideAGames: 4, sideBGames: 6 },
+        { sideAGames: 4, sideBGames: 6 },
+      ] })
       .expect(200);
     expect(resolved.body.state).toBe('COMPLETED');
     expect(resolved.body.result.status).toBe('CONFIRMED');

@@ -79,6 +79,32 @@ class _EnterScoreScreenState extends ConsumerState<EnterScoreScreen> {
     super.dispose();
   }
 
+  int get _bestOf => widget.match.bestOfSets;
+  int get _setsToWin => (_bestOf + 1) ~/ 2;
+
+  /// Sets won so far by each side, from the games typed in (ignores sets that
+  /// are blank or level). Drives the "Add a set" button and the final check.
+  (int, int) get _setWins {
+    var a = 0;
+    var b = 0;
+    for (final set in _sets) {
+      final ga = _parse(set.aController);
+      final gb = _parse(set.bController);
+      if (ga == null || gb == null || ga == gb) continue;
+      if (ga > gb) {
+        a++;
+      } else {
+        b++;
+      }
+    }
+    return (a, b);
+  }
+
+  bool get _matchDecided {
+    final (a, b) = _setWins;
+    return a >= _setsToWin || b >= _setsToWin;
+  }
+
   int? _parse(TextEditingController controller) =>
       controller.text.trim().isEmpty
       ? null
@@ -148,8 +174,16 @@ class _EnterScoreScreenState extends ConsumerState<EnterScoreScreen> {
 
       if (_isScore) {
         final sets = <SetScore>[];
+        var winsA = 0;
+        var winsB = 0;
         for (var i = 0; i < _sets.length; i++) {
           final set = _sets[i];
+          if (winsA >= _setsToWin || winsB >= _setsToWin) {
+            setState(
+              () => _errorText = context.l10n.scoreErrMatchDecided(i + 1),
+            );
+            return;
+          }
           final a = _parse(set.aController);
           final b = _parse(set.bController);
           if (a == null || b == null) {
@@ -163,6 +197,11 @@ class _EnterScoreScreenState extends ConsumerState<EnterScoreScreen> {
             setState(() => _errorText = setError);
             return;
           }
+          if (a > b) {
+            winsA++;
+          } else {
+            winsB++;
+          }
           sets.add(
             SetScore(
               sideAGames: a,
@@ -171,6 +210,10 @@ class _EnterScoreScreenState extends ConsumerState<EnterScoreScreen> {
               sideBTiebreak: tbB,
             ),
           );
+        }
+        if (winsA < _setsToWin && winsB < _setsToWin) {
+          setState(() => _errorText = context.l10n.scoreErrNeedMoreSets);
+          return;
         }
         updated = await _send(repo, outcome: ResultOutcome.score, sets: sets);
       } else {
@@ -232,6 +275,13 @@ class _EnterScoreScreenState extends ConsumerState<EnterScoreScreen> {
           const SizedBox(height: DriftSpacing.s5),
 
           if (_isScore) ...[
+            Padding(
+              padding: const EdgeInsets.only(bottom: DriftSpacing.s3),
+              child: Text(
+                context.l10n.matchBestOfN(_bestOf),
+                style: type.caption.copyWith(color: colors.textSecondary),
+              ),
+            ),
             for (var i = 0; i < _sets.length; i++)
               Padding(
                 padding: const EdgeInsets.only(bottom: DriftSpacing.s3),
@@ -245,6 +295,7 @@ class _EnterScoreScreenState extends ConsumerState<EnterScoreScreen> {
                           label: context.l10n.commonYou,
                           controller: _sets[i].aController,
                           tiebreakController: _sets[i].aTiebreakController,
+                          onChanged: () => setState(() {}),
                         ),
                       ),
                       const SizedBox(width: DriftSpacing.s3),
@@ -253,6 +304,7 @@ class _EnterScoreScreenState extends ConsumerState<EnterScoreScreen> {
                           label: opponent?.player.displayName ?? context.l10n.commonThem,
                           controller: _sets[i].bController,
                           tiebreakController: _sets[i].bTiebreakController,
+                          onChanged: () => setState(() {}),
                         ),
                       ),
                       if (_sets.length > 1)
@@ -267,7 +319,7 @@ class _EnterScoreScreenState extends ConsumerState<EnterScoreScreen> {
                   ),
                 ),
               ),
-            if (_sets.length < 5)
+            if (_sets.length < _bestOf && !_matchDecided)
               DriftButton(
                 label: context.l10n.matchAddSet,
                 variant: DriftButtonVariant.text,
@@ -352,11 +404,13 @@ class _GamesField extends StatelessWidget {
     required this.label,
     required this.controller,
     required this.tiebreakController,
+    this.onChanged,
   });
 
   final String label;
   final TextEditingController controller;
   final TextEditingController tiebreakController;
+  final VoidCallback? onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -373,6 +427,7 @@ class _GamesField extends StatelessWidget {
               width: 56,
               child: TextField(
                 controller: controller,
+                onChanged: (_) => onChanged?.call(),
                 keyboardType: TextInputType.number,
                 textAlign: TextAlign.center,
                 style: type.title,
