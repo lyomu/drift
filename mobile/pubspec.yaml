@@ -24,7 +24,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # rejected or abandoned upload still burns one. So increment the +N on every
 # build handed to Play — even a replacement for a submission that failed
 # review — and never reuse or decrement it.
-version: 0.9.0+5
+version: 0.9.0+6
 
 environment:
   sdk: ^3.9.2
