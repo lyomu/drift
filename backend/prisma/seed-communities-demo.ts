@@ -50,7 +50,7 @@ async function seedCommunitiesDemo() {
   ]);
   if (!alex || !sarah || !jordan) {
     throw new Error(
-      'Demo users are missing. Run `npx ts-node prisma/seed-test-users.ts` first.',
+      'Demo users are missing. Run `npm run seed:test-users` first.',
     );
   }
 
@@ -98,7 +98,6 @@ async function seedCommunitiesDemo() {
         id: ids.requestCommunity,
         ...communityBase,
         type: CommunityType.TRAINING,
-        isDemo: sarah.isDemo,
         name: 'Parklands Evening Drills',
         about:
           'Small-group practice for players who want focused evening sessions.',
@@ -111,7 +110,6 @@ async function seedCommunitiesDemo() {
       update: {
         ...communityBase,
         type: CommunityType.TRAINING,
-        isDemo: sarah.isDemo,
         name: 'Parklands Evening Drills',
         about:
           'Small-group practice for players who want focused evening sessions.',
@@ -268,17 +266,10 @@ async function seedCommunitiesDemo() {
     }
   });
 
-  const seeded = await prisma.community.findMany({
-    where: { id: { in: Object.values(ids).slice(0, 3) } },
-    orderBy: { name: 'asc' },
-    include: { _count: { select: { members: true, leagues: true, ladders: true } } },
-  });
   console.log('Seeded local community demo data:');
-  for (const community of seeded) {
-    console.log(
-      `- ${community.name}: ${community.status}/${community.joinPolicy}, ${community._count.members} members, ${community._count.leagues} leagues, ${community._count.ladders} ladders`,
-    );
-  }
+  console.log('- Nairobi Weekend Rally: approved/open, 3 members, group chat, league and ladder');
+  console.log('- Parklands Evening Drills: approved/by-request, Jordan request pending');
+  console.log('- Nairobi New Players Circle: pending review, owned by Alex');
 }
 
 seedCommunitiesDemo()

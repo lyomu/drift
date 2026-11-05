@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { BookingsModule } from '../bookings/bookings.module';
 import { CoachesModule } from '../coaches/coaches.module';
 import { CommunitiesModule } from '../communities/communities.module';
 import { EventsModule } from '../events/events.module';
@@ -28,6 +29,7 @@ import { ClubCommunityAdminController } from './club-community-admin.controller'
 
 @Module({
   imports: [
+    BookingsModule,
     CompetitionsModule,
     MatchesModule,
     CourtsModule,

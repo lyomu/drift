@@ -4,11 +4,19 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import {
+  ClubEventRegistrationStatus,
   ClubMembershipStatus,
   ClubRole,
   ClubPlatformStatus,
+  LeagueRegistrationStatus,
   ListingVerificationStatus,
+  MatchResultStatus,
 } from '@prisma/client';
+import {
+  ENGAGEMENT_WINDOW_DAYS,
+  engagementBand,
+  engagementScore,
+} from './member-engagement';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { MailerService } from '../mail/mailer.service';
@@ -192,6 +200,155 @@ export class ClubsAdminService {
         status: m.status,
         joinedAt: m.createdAt,
       })),
+    };
+  }
+
+  /**
+   * What one member has actually done for this club over the last
+   * `ENGAGEMENT_WINDOW_DAYS`, plus a transparent engagement score built from
+   * it (see `member-engagement.ts`). Every figure comes from a table the app
+   * already writes; nothing is estimated. Court bookings and hours on court
+   * come from approved native bookings that have finished; they are display
+   * only and do not feed the engagement score.
+   */
+  async memberStats(clubId: string, userId: string) {
+    const membership = await this.prisma.clubMembership.findUnique({
+      where: { clubId_userId: { clubId, userId } },
+      select: { id: true },
+    });
+    if (!membership) {
+      throw new NotFoundException('That person is not a member of this club.');
+    }
+
+    const since = new Date(
+      Date.now() - ENGAGEMENT_WINDOW_DAYS * 24 * 60 * 60 * 1000,
+    );
+
+    const [fixtures, registrations, posts, reactions, leagues, bookings] =
+      await Promise.all([
+        // Confirmed league results this member took part in. Which side they
+        // were on comes from the match's participant row, not the fixture.
+        this.prisma.fixture.findMany({
+          where: {
+            round: { league: { clubId } },
+            OR: [{ sideAUserId: userId }, { sideBUserId: userId }],
+            match: {
+              result: {
+                status: MatchResultStatus.CONFIRMED,
+                confirmedAt: { gte: since },
+              },
+            },
+          },
+          select: {
+            match: {
+              select: {
+                participants: {
+                  where: { userId },
+                  select: { side: true },
+                },
+                result: {
+                  select: { winningSide: true, confirmedAt: true },
+                },
+              },
+            },
+          },
+        }),
+        this.prisma.clubEventRegistration.findMany({
+          where: {
+            userId,
+            event: { clubId },
+            registeredAt: { gte: since },
+            status: { not: ClubEventRegistrationStatus.CANCELLED },
+          },
+          select: { status: true, registeredAt: true },
+        }),
+        this.prisma.clubPost.findMany({
+          where: {
+            clubId,
+            authorId: userId,
+            deletedAt: null,
+            createdAt: { gte: since },
+          },
+          select: { createdAt: true },
+        }),
+        this.prisma.clubPostReaction.findMany({
+          where: { userId, post: { clubId }, createdAt: { gte: since } },
+          select: { createdAt: true },
+        }),
+        this.prisma.leagueRegistration.count({
+          where: {
+            userId,
+            status: LeagueRegistrationStatus.ENROLLED,
+            league: { clubId, completedAt: null, cancelledAt: null },
+          },
+        }),
+        this.prisma.courtBooking.findMany({
+          where: {
+            userId,
+            court: { clubId },
+            status: 'APPROVED',
+            endsAt: { gte: since, lte: new Date() },
+          },
+          select: { startsAt: true, endsAt: true },
+        }),
+      ]);
+
+    // A neutral walkover has no winning side: nobody played, so it is neither
+    // a win nor a loss and does not count as a match played.
+    const decided = fixtures.flatMap((f) => {
+      const side = f.match?.participants[0]?.side;
+      const result = f.match?.result;
+      return side && result?.winningSide
+        ? [{ won: result.winningSide === side, at: result.confirmedAt }]
+        : [];
+    });
+    const matchesPlayed = decided.length;
+    const matchesWon = decided.filter((m) => m.won).length;
+    const eventsAttended = registrations.filter(
+      (r) => r.status === ClubEventRegistrationStatus.ATTENDED,
+    ).length;
+
+    const score = engagementScore({
+      matchesPlayed,
+      eventsAttended,
+      posts: posts.length,
+      reactions: reactions.length,
+      activeLeagues: leagues,
+    });
+
+    const lastActiveAt = [
+      ...decided.map((m) => m.at),
+      ...registrations.map((r) => r.registeredAt),
+      ...posts.map((p) => p.createdAt),
+      ...reactions.map((r) => r.createdAt),
+    ].reduce<Date | null>(
+      (latest, at) => (at && (!latest || at > latest) ? at : latest),
+      null,
+    );
+
+    return {
+      windowDays: ENGAGEMENT_WINDOW_DAYS,
+      matchesPlayed,
+      matchesWon,
+      matchesLost: matchesPlayed - matchesWon,
+      eventsRegistered: registrations.length,
+      eventsAttended,
+      posts: posts.length,
+      reactions: reactions.length,
+      activeLeagues: leagues,
+      bookings: bookings.length,
+      hoursOnCourt:
+        Math.round(
+          (bookings.reduce(
+            (sum, b) => sum + (b.endsAt.getTime() - b.startsAt.getTime()),
+            0,
+          ) /
+            3_600_000) *
+            10,
+        ) / 10,
+      lastActiveAt,
+      engagementScore: score,
+      engagementBand: engagementBand(score),
     };
   }
 

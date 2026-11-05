@@ -5,15 +5,87 @@ import {
 } from '@nestjs/common';
 import {
   ClubEventRegistrationStatus,
+  ClubMembershipStatus,
   ClubPostModerationStatus,
+  ClubRole,
+  MatchState,
+  ReportStatus,
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { BookingsService } from '../bookings/bookings.service';
 
 type Range = { from?: Date; to?: Date };
 
+/** Who can act on each kind of item, so the counts never leak work a role
+ * cannot see: it mirrors the roles the underlying queues already require. */
+const MANAGERS: ClubRole[] = [ClubRole.OWNER, ClubRole.ADMIN];
+const MODERATORS: ClubRole[] = [
+  ClubRole.OWNER,
+  ClubRole.ADMIN,
+  ClubRole.CONTENT_MANAGER,
+];
+
 @Injectable()
 export class ClubOperationsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly bookings: BookingsService,
+  ) {}
+
+  /**
+   * How much is waiting on this person. One call drives the console's bell
+   * dot, the sidebar badges and the Overview, instead of each fetching a
+   * whole queue just to count it. A count is 0 for a role that cannot act on
+   * that kind of item.
+   */
+  async attention(clubId: string, role: ClubRole) {
+    const [
+      pendingJoinRequests,
+      openDisputes,
+      pendingModeration,
+      openCourtReports,
+      pendingBookings,
+    ] = await Promise.all([
+      MANAGERS.includes(role)
+        ? this.prisma.clubMembership.count({
+            where: { clubId, status: ClubMembershipStatus.PENDING },
+          })
+        : 0,
+      MANAGERS.includes(role)
+        ? this.prisma.fixture.count({
+            where: {
+              round: { league: { clubId } },
+              match: { state: MatchState.DISPUTED },
+            },
+          })
+        : 0,
+      MODERATORS.includes(role)
+        ? this.prisma.clubPostModerationReport.count({
+            where: { clubId, status: ClubPostModerationStatus.PENDING },
+          })
+        : 0,
+      MANAGERS.includes(role)
+        ? this.prisma.courtReport.count({
+            where: { court: { clubId }, status: ReportStatus.OPEN },
+          })
+        : 0,
+      MANAGERS.includes(role) ? this.bookings.pendingCount(clubId) : 0,
+    ]);
+
+    return {
+      pendingJoinRequests,
+      openDisputes,
+      pendingModeration,
+      openCourtReports,
+      pendingBookings,
+      total:
+        pendingJoinRequests +
+        openDisputes +
+        pendingModeration +
+        openCourtReports +
+        pendingBookings,
+    };
+  }
 
   async listMedia(clubId: string) {
     const assets = await this.prisma.clubMediaAsset.findMany({
@@ -232,6 +304,7 @@ export class ClubOperationsService {
   }
 
   async courtInquiries(clubId: string, range: Range) {
+    const bookingStats = await this.bookings.courtStats(clubId, range);
     const rows = await this.prisma.court.findMany({
       where: { clubId },
       select: {
@@ -252,7 +325,12 @@ export class ClubOperationsService {
           .length,
         contacts: court.inquiries.filter((i) => i.kind === 'CONTACT').length,
         bookings: court.inquiries.filter((i) => i.kind === 'BOOKING').length,
+        bookingRequests: bookingStats.get(court.id)?.requested ?? 0,
+        bookingsApproved: bookingStats.get(court.id)?.approved ?? 0,
+        hoursBooked: bookingStats.get(court.id)?.hoursBooked ?? 0,
+        utilisationPct: bookingStats.get(court.id)?.utilisationPct ?? null,
       })),
+      utilisation: await this.bookings.clubUtilisation(clubId, range),
     };
   }
 

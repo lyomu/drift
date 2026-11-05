@@ -19,6 +19,16 @@ export const en = {
   'club.joined.body': 'Announcements and the club feed are now open to you.',
   'club.joinRequest.title': '{name} asked to join {club}',
   'club.joinRequest.body': 'Review the request in Members.',
+  'booking.request.title': '{name} requested a court booking',
+  'booking.request.body': '{court} · {when}. Review it in Bookings.',
+  'booking.approved.title': 'Booking confirmed',
+  'booking.approved.body': '{court} · {when}{note}',
+  'booking.declined.title': 'Booking declined',
+  'booking.declined.body': '{court} · {when}{note}',
+  'booking.cancelledByClub.title': 'Booking cancelled by the club',
+  'booking.cancelledByClub.body': '{court} · {when}{note}',
+  'booking.expired.title': 'Booking request expired',
+  'booking.expired.body': '{court} · {when}. The club did not respond in time.',
 
   // Leagues and ladders
   'league.registered.title': "You're registered",
@@ -78,6 +88,8 @@ export const en = {
   'result.revised.body': 'It still doesn’t match yours — take another look.',
   'result.ruled.title': 'A club admin ruled on your dispute',
   'result.ruled.body': 'The result is final and ratings are updated.',
+  'result.recorded.title': 'A club admin recorded your result',
+  'result.recorded.body': 'Your rating and stats are updated.',
 
   // Messaging
   'message.new.title': 'New message from {name}',
@@ -116,7 +128,6 @@ export const en = {
   'community.newLadder.title': 'New ladder in {community}',
   'community.newCompetition.body':
     '{competition}. Open the community to take part.',
-
 
   // Home feed cards
   'home.empty.title': "You're all caught up",
@@ -246,7 +257,7 @@ export const en = {
     'We will send launch news and occasional Drift Tennis product updates\nor offers. To stop non-essential emails, contact drift@einsbrand.com\nwith "Unsubscribe" in the subject line.\nIt is free to join and free to play while we get going.\nAndroid first, iOS follows.\n\nIf you did not sign up, ignore this email and contact us if you would\nlike the address removed.',
 
   // Daily tennis fact (Notification Centre only, no push)
-  'tennisFact.notificationTitle': "Today's tennis fact",
+  'tennisFact.notificationTitle': 'Your daily ace',
 
   // Email — support
   'mail.support.subject': 'Re: {subject} — new reply from Drift Tennis support',

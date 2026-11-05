@@ -38,6 +38,7 @@ const ERASED = new Set([
   'Notification',
   'SavedStory',
   'FavoriteCourt',
+  'CourtBooking',
   'DismissedHomeCard',
   'TennisFactView',
   'ClubPostReaction',

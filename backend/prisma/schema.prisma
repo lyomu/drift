@@ -767,6 +767,8 @@ model User {
   courtInquiries            CourtInquiry[]
   venueVerificationRequests VenueVerificationRequest[]
   dismissedHomeCards        DismissedHomeCard[]
+  courtBookings             CourtBooking[]             @relation("CourtBookingPlayer")
+  courtBookingsDecided      CourtBooking[]             @relation("CourtBookingDecider")
   videoAnalysisJobs         VideoAnalysisJob[]
 
   communitiesCreated    Community[]         @relation("CommunityCreator")
@@ -1533,6 +1535,14 @@ model Court {
   bookingType CourtBookingType @default(UNKNOWN)
   bookingUrl  String?
 
+  // Native booking (on exactly when bookingType = NATIVE_PARTNER). Capacity
+  // per surface is CourtGroup.count. Slots are generated from
+  // CourtOpeningHours in `timezone`; bookings are stored in UTC.
+  timezone           String @default("Africa/Nairobi")
+  bookingSlotMinutes Int?
+  bookingMaxSlots    Int    @default(3)
+  bookingAdvanceDays Int    @default(30)
+
   amenities String[]
 
   // Free text, not a structured per-weekday schedule — no data source this
@@ -1570,6 +1580,8 @@ model Court {
   matches     Match[]
   inquiries   CourtInquiry[]
   favorites   FavoriteCourt[]
+  openingHours CourtOpeningHours[]
+  bookings     CourtBooking[]
 
   @@index([latitude, longitude])
   @@index([clubId])
@@ -1592,9 +1604,76 @@ model CourtGroup {
   lighting Boolean      @default(false)
   count    Int          @default(1)
 
+  bookings CourtBooking[]
+
   @@index([courtId])
   @@index([sport, surface, indoor])
   @@map("court_groups")
+}
+
+// Structured weekly opening hours for native booking. Several intervals per
+// day are allowed (e.g. 06:00-12:00 and 14:00-21:00). Minutes are from local
+// midnight in Court.timezone; dayOfWeek 0 = Sunday .. 6 = Saturday.
+model CourtOpeningHours {
+  id          String @id @default(uuid())
+  courtId     String
+  court       Court  @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  dayOfWeek   Int
+  opensMinute Int
+  closesMinute Int
+
+  @@index([courtId, dayOfWeek])
+  @@map("court_opening_hours")
+}
+
+enum CourtBookingStatus {
+  PENDING
+  APPROVED
+  DECLINED
+  CANCELLED
+}
+
+enum CourtBookingCanceller {
+  PLAYER
+  CLUB
+}
+
+// A player's request to use a court surface (or a staff-entered walk-in).
+// Free for now. "Completed" is derived (APPROVED and endsAt in the past).
+// Only APPROVED bookings consume capacity.
+model CourtBooking {
+  id           String     @id @default(uuid())
+  courtId      String
+  court        Court      @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  courtGroupId String
+  courtGroup   CourtGroup @relation(fields: [courtGroupId], references: [id], onDelete: Cascade)
+
+  // Null for a staff-entered guest booking (guestName set instead).
+  userId    String?
+  user      User?   @relation("CourtBookingPlayer", fields: [userId], references: [id], onDelete: SetNull)
+  guestName String?
+
+  startsAt DateTime
+  endsAt   DateTime
+  status   CourtBookingStatus @default(PENDING)
+
+  note         String?
+  decisionNote String?
+  decidedById  String?
+  decidedBy    User?     @relation("CourtBookingDecider", fields: [decidedById], references: [id], onDelete: SetNull)
+  decidedAt    DateTime?
+
+  cancelledAt DateTime?
+  cancelledBy CourtBookingCanceller?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([courtId, startsAt])
+  @@index([courtGroupId, status, startsAt])
+  @@index([userId, startsAt])
+  @@index([courtId, status])
+  @@map("court_bookings")
 }
 
 // Write-only this phase, same shape as PlayerReport — the consuming queue

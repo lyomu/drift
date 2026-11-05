@@ -14,6 +14,17 @@ export const fr: Record<MessageKey, string> = {
     'Les annonces et le fil du club vous sont désormais ouverts.',
   'club.joinRequest.title': '{name} demande à rejoindre {club}',
   'club.joinRequest.body': 'Examinez la demande dans Membres.',
+  'booking.request.title': '{name} demande une réservation de court',
+  'booking.request.body':
+    '{court} · {when}. Examinez la demande dans Réservations.',
+  'booking.approved.title': 'Réservation confirmée',
+  'booking.approved.body': '{court} · {when}{note}',
+  'booking.declined.title': 'Réservation refusée',
+  'booking.declined.body': '{court} · {when}{note}',
+  'booking.cancelledByClub.title': 'Réservation annulée par le club',
+  'booking.cancelledByClub.body': '{court} · {when}{note}',
+  'booking.expired.title': 'Demande de réservation expirée',
+  'booking.expired.body': '{court} · {when}. Le club n’a pas répondu à temps.',
 
   'league.registered.title': 'Vous êtes inscrit',
   'league.registered.body':
@@ -78,6 +89,9 @@ export const fr: Record<MessageKey, string> = {
     'Un administrateur du club a tranché votre contestation',
   'result.ruled.body':
     'Le résultat est définitif et les classements sont à jour.',
+  'result.recorded.title':
+    'Un administrateur du club a enregistré votre résultat',
+  'result.recorded.body': 'Votre classement et vos statistiques sont à jour.',
 
   'message.new.title': 'Nouveau message de {name}',
   'message.newInCommunity.title': '{community} : {name}',
@@ -121,7 +135,6 @@ export const fr: Record<MessageKey, string> = {
   'community.newLadder.title': 'Nouvelle échelle dans {community}',
   'community.newCompetition.body':
     '{competition}. Ouvrez la communauté pour participer.',
-
 
   'home.empty.title': 'Vous êtes à jour',
   'home.empty.body':
@@ -254,7 +267,7 @@ export const fr: Record<MessageKey, string> = {
     'Nous vous enverrons les nouvelles du lancement ainsi que, de temps en temps, des actualités\nou offres Drift Tennis. Pour ne plus recevoir d’e-mails non essentiels, écrivez à drift@einsbrand.com\navec « Unsubscribe » en objet.\nL’inscription et le jeu sont gratuits pendant notre lancement.\nAndroid d’abord, iOS ensuite.\n\nSi vous ne vous êtes pas inscrit, ignorez cet e-mail et contactez-nous si vous souhaitez\nque l’adresse soit supprimée.',
 
   // Daily tennis fact (Notification Centre only, no push)
-  'tennisFact.notificationTitle': 'Le fait tennis du jour',
+  'tennisFact.notificationTitle': 'Votre ace du jour',
 
   'mail.support.subject':
     'Re : {subject} — nouvelle réponse du support Drift Tennis',
