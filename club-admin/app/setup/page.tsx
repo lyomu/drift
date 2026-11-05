@@ -18,15 +18,16 @@ import {
 import { CourtGroupsEditor } from "@/components/CourtGroupsEditor";
 import { PhoneNumberField } from "@/components/PhoneNumberField";
 import type { CourtGroup, ClubRole, MatchSport, Membership } from "@/lib/types";
+import { useT } from "@/lib/i18n/i18n-context";
 
 type Step = "login" | "profile" | "courts" | "team" | "loading" | "signin";
 
-const STEPS: { key: Step; label: string }[] = [
-  { key: "login", label: "Account" },
-  { key: "profile", label: "Club profile" },
-  { key: "courts", label: "Courts" },
-  { key: "team", label: "Team" },
-];
+function steps(t: ReturnType<typeof useT>): { key: Step; label: string }[] { return [
+  { key: "login", label: t("a.account") },
+  { key: "profile", label: t("a.clubProfile") },
+  { key: "courts", label: t("a.courts") },
+  { key: "team", label: t("a.team") },
+]; }
 
 const ROLES: ClubRole[] = [
   "ADMIN",
@@ -37,6 +38,8 @@ const ROLES: ClubRole[] = [
 ];
 
 function Stepper({ current }: { current: Step }) {
+  const t = useT();
+  const STEPS = steps(t);
   const activeIndex = STEPS.findIndex((s) => s.key === current);
   return (
     <ol className="mb-6 flex flex-wrap gap-x-6 gap-y-2">
@@ -85,6 +88,7 @@ function Shell({
   onFinishLater: () => void;
   children: React.ReactNode;
 }) {
+  const t = useT();
   const showStepper = step !== "loading" && step !== "signin";
   const showFinishLater =
     step !== "loading" && step !== "signin" && step !== "login";
@@ -95,8 +99,7 @@ function Shell({
           {title}
         </h1>
         <p className="mb-6 mt-1 text-sm text-drift-text-secondary">
-          A few steps and you&apos;re live. You can change everything later from
-          the dashboard.
+          {t("a.aFewStepsAndYou")}
         </p>
         {showStepper && <Stepper current={step} />}
         <ErrorBanner message={error} />
@@ -107,7 +110,7 @@ function Shell({
             onClick={onFinishLater}
             className="mt-6 text-[13px] font-semibold text-drift-text-secondary hover:text-drift-text-primary"
           >
-            Finish later — go to the dashboard
+            {t("a.finishLater")}
           </button>
         )}
       </Card>
@@ -116,6 +119,7 @@ function Shell({
 }
 
 function SetupWizard() {
+  const t = useT();
   const router = useRouter();
   const params = useSearchParams();
   const token = params.get("token");
@@ -220,7 +224,7 @@ function SetupWizard() {
         setError(
           err instanceof ApiError
             ? err.message
-            : "This setup link is invalid or has expired.",
+            : t("a.thisSetupLinkIsInvalid"),
         );
         setStep("login");
         setRequest(null);
@@ -236,7 +240,7 @@ function SetupWizard() {
     e.preventDefault();
     if (!token || !request) return;
     if (password !== confirm) {
-      setError("The passwords don't match.");
+      setError(t("a.thePasswordsDonTMatch"));
       return;
     }
     setError(null);
@@ -258,7 +262,7 @@ function SetupWizard() {
       setError(
         err instanceof ApiError
           ? err.message
-          : "Your account could not be set up.",
+          : t("a.yourAccountCouldNotBe"),
       );
     } finally {
       setBusy(false);
@@ -283,7 +287,7 @@ function SetupWizard() {
       setError(
         err instanceof ApiError
           ? err.message
-          : "The profile could not be saved.",
+          : t("a.theProfileCouldNotBe"),
       );
     } finally {
       setBusy(false);
@@ -308,7 +312,7 @@ function SetupWizard() {
       ]);
     } catch (err) {
       setError(
-        err instanceof ApiError ? err.message : "The court could not be added.",
+        err instanceof ApiError ? err.message : t("a.theCourtCouldNotBe"),
       );
     } finally {
       setBusy(false);
@@ -338,7 +342,7 @@ function SetupWizard() {
       router.push("/");
     } catch (err) {
       setError(
-        err instanceof ApiError ? err.message : "Setup could not be finished.",
+        err instanceof ApiError ? err.message : t("a.setupCouldNotBeFinished"),
       );
       setBusy(false);
     }
@@ -346,13 +350,11 @@ function SetupWizard() {
 
   const shellTitle = request?.clubName
     ? `Set up ${request.clubName}`
-    : "Set up your club";
+    : t("a.setUpYourClub");
 
   if (step === "loading") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-drift-background text-sm text-drift-text-secondary">
-        Loading…
-      </div>
+      <div className="flex min-h-screen items-center justify-center bg-drift-background text-sm text-drift-text-secondary">{t("a.loading")}</div>
     );
   }
 
@@ -374,9 +376,7 @@ function SetupWizard() {
         <Link
           href="/login"
           className="mt-5 inline-block rounded-md bg-drift-primary px-[18px] py-2.5 text-[13.5px] font-bold text-white"
-        >
-          Go to sign in
-        </Link>
+        >{t("a.goToSignIn")}</Link>
       </Shell>
     );
   }
@@ -390,11 +390,11 @@ function SetupWizard() {
         onFinishLater={() => void finishLater()}
       >
         <form onSubmit={submitLogin} className="flex flex-col gap-4">
-          <Field label="Email">
+          <Field label={t("a.email")}>
             <Input value={request?.requesterEmail ?? ""} readOnly disabled />
           </Field>
           <PasswordField
-            label="Create a password"
+            label={t("a.createAPassword")}
             required
             minLength={8}
             value={password}
@@ -402,7 +402,7 @@ function SetupWizard() {
             autoComplete="new-password"
           />
           <PasswordField
-            label="Confirm password"
+            label={t("a.confirmPassword")}
             required
             minLength={8}
             value={confirm}
@@ -414,7 +414,7 @@ function SetupWizard() {
             disabled={busy || !request}
             className="mt-2 w-full"
           >
-            {busy ? "Creating your account…" : "Create account & continue"}
+            {busy ? t("a.creatingYourAccount") : t("a.createAccountContinue")}
           </Button>
         </form>
       </Shell>
@@ -430,7 +430,7 @@ function SetupWizard() {
         onFinishLater={() => void finishLater()}
       >
         <form onSubmit={saveProfile} className="flex flex-col gap-4">
-          <Field label="Description">
+          <Field label={t("a.description")}>
             <Textarea
               rows={3}
               value={profile.description}
@@ -439,7 +439,7 @@ function SetupWizard() {
               }
             />
           </Field>
-          <Field label="Address / Location">
+          <Field label={t("a.addressLocation")}>
             <Input
               value={profile.address}
               onChange={(e) =>
@@ -448,14 +448,14 @@ function SetupWizard() {
             />
           </Field>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Phone">
+            <Field label={t("a.phone")}>
               <PhoneNumberField
                 value={profile.phone}
                 onChange={(phone) => setProfile({ ...profile, phone })}
-                label="Phone"
+                label={t("a.phone")}
               />
             </Field>
-            <Field label="Website">
+            <Field label={t("a.website")}>
               <Input
                 value={profile.website}
                 onChange={(e) =>
@@ -464,7 +464,7 @@ function SetupWizard() {
               />
             </Field>
           </div>
-          <Field label="Sports">
+          <Field label={t("a.sports")}>
             <div className="flex gap-4">
               {(["TENNIS", "PADEL"] as MatchSport[]).map((s) => (
                 <label
@@ -488,7 +488,7 @@ function SetupWizard() {
             </div>
           </Field>
           <Button type="submit" disabled={busy} className="mt-2 self-start">
-            {busy ? "Saving…" : "Save & continue"}
+            {busy ? t("common.saving") : t("a.saveContinue")}
           </Button>
         </form>
       </Shell>
@@ -504,9 +504,7 @@ function SetupWizard() {
         onFinishLater={() => void finishLater()}
       >
         <p className="mb-4 text-[13px] leading-6 text-drift-text-secondary">
-          Optional. Add courts only if your club runs its own — plenty of clubs
-          on Drift don&apos;t, and their members find courts themselves. You can
-          always add courts later from the dashboard.
+          {t("a.optionalAddCourtsOnlyIf")}
         </p>
         {addedCourts.length > 0 && (
           <p className="mb-4 text-[13px] text-drift-text-secondary">
@@ -514,14 +512,14 @@ function SetupWizard() {
           </p>
         )}
         <div className="flex flex-col gap-4">
-          <Field label="Court name">
+          <Field label={t("a.courtName")}>
             <Input
               value={courtName}
               onChange={(e) => setCourtName(e.target.value)}
-              placeholder="e.g. Main courts"
+              placeholder={t("a.eGMainCourts")}
             />
           </Field>
-          <Field label="Address (optional)">
+          <Field label={t("a.addressOptional")}>
             <Input
               value={courtAddress}
               onChange={(e) => setCourtAddress(e.target.value)}
@@ -535,10 +533,10 @@ function SetupWizard() {
               disabled={busy || !courtName.trim()}
               onClick={() => void addCourt()}
             >
-              {busy ? "Adding…" : "Add this court"}
+              {busy ? t("a.adding") : t("a.addThisCourt")}
             </Button>
             <Button type="button" onClick={() => setStep("team")}>
-              {addedCourts.length > 0 ? "Continue" : "Continue without courts"}
+              {addedCourts.length > 0 ? t("a.continue") : t("a.continueWithoutCourts")}
             </Button>
           </div>
         </div>
@@ -599,12 +597,11 @@ function SetupWizard() {
           + Add another
         </button>
         <p className="text-[12.5px] text-drift-text-secondary">
-          People you invite must already have a Drift account. You can also add
-          them later from Members.
+          {t("a.peopleYouInviteMustAlready")}
         </p>
         <div className="mt-2 flex flex-wrap gap-3">
           <Button disabled={busy} onClick={() => void sendInvitesAndFinish()}>
-            {busy ? "Finishing…" : "Send invites & finish"}
+            {busy ? t("a.finishing") : t("a.sendInvitesFinish")}
           </Button>
           <Button
             variant="secondary"
@@ -620,12 +617,11 @@ function SetupWizard() {
 }
 
 export default function SetupPage() {
+  const t = useT();
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-drift-background text-sm text-drift-text-secondary">
-          Loading…
-        </div>
+        <div className="flex min-h-screen items-center justify-center bg-drift-background text-sm text-drift-text-secondary">{t("a.loading")}</div>
       }
     >
       <SetupWizard />

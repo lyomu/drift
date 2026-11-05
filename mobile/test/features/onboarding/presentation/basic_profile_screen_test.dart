@@ -10,12 +10,13 @@ import '../../../support/pump.dart';
 
 /// Reads the text a `TextField` was seeded with, by the label above it.
 String fieldText(WidgetTester tester, String label) {
-  final field = tester.widget<TextField>(
-    find.ancestor(
-      of: find.text(label),
-      matching: find.byType(TextField),
-    ),
-  );
+  final index = switch (label) {
+    'First name' => 0,
+    'Last name' => 1,
+    'Phone number (optional)' => 2,
+    _ => throw ArgumentError.value(label, 'label'),
+  };
+  final field = tester.widget<TextField>(find.byType(TextField).at(index));
   return field.controller?.text ?? '';
 }
 

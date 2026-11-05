@@ -6,6 +6,7 @@ import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
 import '../../../shared/widgets/drift_scaffold.dart';
+import '../../../core/l10n/l10n.dart';
 
 const _termsUrl = 'https://driftsports.app/terms';
 const _privacyPolicyUrl = 'https://driftsports.app/privacy-policy';
@@ -34,8 +35,8 @@ class LegalScreen extends StatelessWidget {
     }
     if (!opened && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Unable to open the legal document right now.'),
+        SnackBar(
+          content: Text(context.l10n.legalOpenFailed),
         ),
       );
     }
@@ -47,30 +48,29 @@ class LegalScreen extends StatelessWidget {
     final colors = Theme.of(context).extension<DriftColors>()!;
 
     return DriftScaffold(
-      title: 'Legal',
+      title: context.l10n.legalTitle,
       body: ListView(
         padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
         children: [
-          Text('Terms and privacy', style: type.h3),
+          Text(context.l10n.legalHeading, style: type.h3),
           const SizedBox(height: DriftSpacing.s2),
           Text(
-            'The current legal documents for the Drift Tennis app and website '
-            'are published here. They always open the latest approved version.',
+            context.l10n.legalBody,
             style: type.body.copyWith(color: colors.textSecondary),
           ),
           const SizedBox(height: DriftSpacing.s6),
           DriftButton(
-            label: 'Terms and Conditions',
+            label: context.l10n.legalTerms,
             onPressed: () => _openDocument(context, _termsUrl),
           ),
           const SizedBox(height: DriftSpacing.s3),
           DriftButton(
-            label: 'Privacy Policy',
+            label: context.l10n.legalPrivacy,
             onPressed: () => _openDocument(context, _privacyPolicyUrl),
           ),
           const SizedBox(height: DriftSpacing.s3),
           DriftButton(
-            label: 'Data Privacy Notice',
+            label: context.l10n.legalDataPrivacy,
             onPressed: () => _openDocument(context, _dataPrivacyUrl),
           ),
         ],

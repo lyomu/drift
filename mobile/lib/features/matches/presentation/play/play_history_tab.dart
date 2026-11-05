@@ -11,11 +11,9 @@ import '../../application/matches_providers.dart';
 import '../../data/matches_repository.dart';
 import '../../data/player_stats.dart';
 import '_play_tab_scaffold.dart';
+import '../../../../core/l10n/l10n.dart';
+import 'package:intl/intl.dart';
 
-const _months = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', //
-];
 
 /// Play → History. A "Your stats" summary followed by past matches, each with
 /// a win / loss chip.
@@ -35,7 +33,7 @@ class PlayHistoryTab extends ConsumerWidget {
       },
       state: matches,
       emptyIcon: Icons.history,
-      emptyMessage: 'Play your first match to start building history.',
+      emptyMessage: context.l10n.playHistoryEmpty,
       onRetry: () => ref.invalidate(matchListProvider(MatchSegment.history)),
       header: stats == null ? null : _StatsCard(stats: stats),
       itemSpacing: 10,
@@ -66,17 +64,17 @@ class _StatsCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Your stats',
+            context.l10n.playYourStats,
             style: type.body.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 12),
           Row(
             children: [
-              _Tile(value: '$played', label: 'Played'),
+              _Tile(value: '$played', label: context.l10n.statPlayed),
               const SizedBox(width: 10),
-              _Tile(value: '$won', label: 'Won'),
+              _Tile(value: '$won', label: context.l10n.statWon),
               const SizedBox(width: 10),
-              _Tile(value: '$rate%', label: 'Win rate'),
+              _Tile(value: '$rate%', label: context.l10n.statWinRate),
             ],
           ),
         ],
@@ -145,7 +143,7 @@ class _HistoryRow extends StatelessWidget {
     final settled = match.result?.winningSide != null;
 
     final sub = <String>[
-      match.isDoubles ? 'Doubles' : 'Singles',
+      match.isDoubles ? context.l10n.optDoubles : context.l10n.optSingles,
       if (match.confirmedTime != null) _short(match.confirmedTime!),
     ].join(' · ');
 
@@ -162,8 +160,9 @@ class _HistoryRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                PlayCompetitionTag(match: match),
                 Text(
-                  opponent?.displayName ?? 'Match',
+                  opponent?.displayName ?? context.l10n.matchTitle,
                   style: type.title.copyWith(fontWeight: FontWeight.w700),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -191,9 +190,8 @@ class _HistoryRow extends StatelessWidget {
 
   static String _short(DateTime t) {
     final l = t.toLocal();
-    return '${l.day} ${_months[l.month - 1]} · '
-        '${l.hour.toString().padLeft(2, '0')}:'
-        '${l.minute.toString().padLeft(2, '0')}';
+    return '${DateFormat.MMMd(localeTagNow).format(l)} · '
+        '${DateFormat.Hm(localeTagNow).format(l)}';
   }
 }
 
@@ -215,7 +213,7 @@ class _ResultChip extends StatelessWidget {
         color: won ? colors.successSurface : colors.errorSurface,
       ),
       child: Text(
-        won ? 'W' : 'L',
+        won ? context.l10n.formWin : context.l10n.formLoss,
         style: type.label.copyWith(
           fontWeight: FontWeight.w800,
           color: won ? colors.success : colors.error,

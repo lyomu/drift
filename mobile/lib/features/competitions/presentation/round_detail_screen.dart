@@ -12,6 +12,8 @@ import '../../../shared/widgets/drift_scaffold.dart';
 import '../../users/application/current_user_provider.dart';
 import '../application/competitions_providers.dart';
 import '../data/competitions_repository.dart';
+import '../../../core/l10n/l10n.dart';
+import 'package:intl/intl.dart';
 
 /// Round Detail — `foundation/04-screen-inventory.md` §A.5. The current
 /// round's fixtures: opponent, deadline, tap through to the existing Match
@@ -39,7 +41,7 @@ class RoundDetailScreen extends ConsumerWidget {
     final colors = Theme.of(context).extension<DriftColors>()!;
 
     return DriftScaffold(
-      title: 'Round',
+      title: context.l10n.competeRound,
       body: RefreshIndicator(
         onRefresh: () async {
           final params = (seasonId: seasonId, roundId: roundId);
@@ -50,10 +52,14 @@ class RoundDetailScreen extends ConsumerWidget {
           AsyncData(:final value) => ListView(
             padding: const EdgeInsets.all(DriftSpacing.s5),
             children: [
-              Text('Round ${value.index}', style: type.h2),
+              Text(context.l10n.competeRoundNumber(value.index), style: type.h2),
               const SizedBox(height: DriftSpacing.s1),
               Text(
-                'Deadline: ${_formatDeadline(value.deadline)}',
+                context.l10n.competeDeadline(
+                  DateFormat.MMMd(context.localeTag)
+                      .add_jm()
+                      .format(value.deadline),
+                ),
                 style: type.bodySmall.copyWith(color: colors.textSecondary),
               ),
               const SizedBox(height: DriftSpacing.s4),
@@ -67,19 +73,15 @@ class RoundDetailScreen extends ConsumerWidget {
                 ),
             ],
           ),
-          AsyncError() => const Center(child: Text('Round not available.')),
+          AsyncError() => Center(
+            child: Text(context.l10n.competeRoundUnavailable),
+          ),
           _ => const Center(child: CircularProgressIndicator()),
         },
       ),
     );
   }
 
-  String _formatDeadline(DateTime deadline) {
-    final hour = deadline.hour % 12 == 0 ? 12 : deadline.hour % 12;
-    final minute = deadline.minute.toString().padLeft(2, '0');
-    final meridiem = deadline.hour < 12 ? 'am' : 'pm';
-    return '${deadline.day}/${deadline.month} $hour:$minute$meridiem';
-  }
 }
 
 class _FixtureTile extends StatelessWidget {
@@ -102,7 +104,7 @@ class _FixtureTile extends StatelessWidget {
             Expanded(
               child: Text(
                 isViewer
-                    ? 'Bye this round'
+                    ? context.l10n.competeByeThisRound
                     : '${fixture.sideA.displayName} — bye this round',
                 style: type.body.copyWith(color: colors.textSecondary),
               ),
@@ -127,7 +129,7 @@ class _FixtureTile extends StatelessWidget {
         children: [
           DriftPlayerAvatar(player: fixture.sideA, radius: 20),
           const SizedBox(width: DriftSpacing.s2),
-          const Text('vs'),
+          Text(context.l10n.commonVs),
           const SizedBox(width: DriftSpacing.s2),
           if (fixture.sideB != null)
             DriftPlayerAvatar(player: fixture.sideB!, radius: 20),

@@ -9,17 +9,8 @@ import '../../../shared/widgets/drift_card.dart';
 import '../../../shared/widgets/drift_scaffold.dart';
 import '../../../shared/widgets/drift_status_badge.dart';
 import '../application/learning_providers.dart';
-
-const _skillLabels = {
-  'FOREHAND': 'Forehand',
-  'BACKHAND': 'Backhand',
-  'SERVE': 'Serve',
-  'RETURN': 'Return',
-  'NET_PLAY': 'Net Play',
-  'MOVEMENT': 'Movement',
-  'MATCH_PLAY': 'Match Play',
-  'FOOTWORK': 'Footwork',
-};
+import '../../../core/l10n/l10n.dart';
+import '../../../core/l10n/enum_labels.dart';
 
 /// Goal List — `foundation/04-screen-inventory.md` §A.7.
 class GoalListScreen extends ConsumerWidget {
@@ -32,7 +23,7 @@ class GoalListScreen extends ConsumerWidget {
     final colors = Theme.of(context).extension<DriftColors>()!;
 
     return DriftScaffold(
-      title: 'Goals',
+      title: context.l10n.learnGoals,
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/learn/goals/create'),
         child: const Icon(Icons.add),
@@ -56,7 +47,7 @@ class GoalListScreen extends ConsumerWidget {
                             ),
                             const SizedBox(height: DriftSpacing.s3),
                             Text(
-                              'Set your first development goal',
+                              context.l10n.goalEmpty,
                               style: type.body.copyWith(
                                 color: colors.textSecondary,
                               ),
@@ -88,12 +79,17 @@ class GoalListScreen extends ConsumerWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    _skillLabels[goal.skill] ?? goal.skill,
+                                    goal.focus == null
+                                        ? pillarLabel(context.l10n, goal.skill)
+                                        : '${pillarLabel(context.l10n, goal.skill)} · '
+                                              '${goalFocusLabel(context.l10n, goal.focus!)}',
                                     style: type.title,
                                   ),
                                   const SizedBox(height: DriftSpacing.s1),
                                   Text(
-                                    'Target ${goal.target.toStringAsFixed(1)}/6',
+                                    context.l10n.goalTargetOutOf6(
+                                      goal.target.toStringAsFixed(1),
+                                    ),
                                     style: type.bodySmall.copyWith(
                                       color: colors.textSecondary,
                                     ),
@@ -107,7 +103,7 @@ class GoalListScreen extends ConsumerWidget {
                       );
                     },
                   ),
-          AsyncError() => const Center(child: Text("Couldn't load goals.")),
+          AsyncError() => Center(child: Text(context.l10n.goalLoadFailed)),
           _ => const Center(child: CircularProgressIndicator()),
         },
       ),
@@ -123,9 +119,9 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, tone) = switch (status) {
-      'ACHIEVED' => ('Achieved', DriftStatusTone.success),
-      'BEHIND' => ('Behind', DriftStatusTone.warning),
-      _ => ('On track', DriftStatusTone.info),
+      'ACHIEVED' => (l10nNow.goalAchieved, DriftStatusTone.success),
+      'BEHIND' => (l10nNow.goalBehind, DriftStatusTone.warning),
+      _ => (l10nNow.goalOnTrack, DriftStatusTone.info),
     };
     return DriftStatusBadge(label: label, tone: tone);
   }

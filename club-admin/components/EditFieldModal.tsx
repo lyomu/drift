@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ApiError } from "@/lib/api-client";
 import { Button, Field, Select } from "@/components/ui";
 import { MaterialIcon, ModalShell } from "@/components/dashboard-design";
+import { useT } from "@/lib/i18n/i18n-context";
 
 type Option = { value: string; label: string };
 
@@ -23,7 +24,7 @@ export function SelectEditControl({
   title,
   description,
   fieldLabel,
-  confirmLabel = "Save",
+  confirmLabel,
   disabled = false,
   triggerClassName = "",
 }: {
@@ -37,6 +38,7 @@ export function SelectEditControl({
   disabled?: boolean;
   triggerClassName?: string;
 }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [next, setNext] = useState(value);
   const [busy, setBusy] = useState(false);
@@ -63,7 +65,7 @@ export function SelectEditControl({
       setOpen(false);
     } catch (err) {
       setError(
-        err instanceof ApiError ? err.message : "The change could not be saved.",
+        err instanceof ApiError ? err.message : t("common.saveFailed"),
       );
     } finally {
       setBusy(false);
@@ -106,10 +108,10 @@ export function SelectEditControl({
                 variant="secondary"
                 onClick={() => setOpen(false)}
               >
-                Cancel
+                {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={busy}>
-                {busy ? "Saving…" : confirmLabel}
+                {busy ? t("common.saving") : (confirmLabel ?? t("common.save"))}
               </Button>
             </div>
           </form>

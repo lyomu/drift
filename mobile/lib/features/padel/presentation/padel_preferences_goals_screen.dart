@@ -11,6 +11,7 @@ import '../../../shared/widgets/drift_text_field.dart';
 import '../../auth/data/auth_repository.dart';
 import '../application/padel_providers.dart';
 import '../data/padel_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Padel Preferences & Goals — `foundation/04-screen-inventory.md` §A.10.
 class PadelPreferencesGoalsScreen extends ConsumerWidget {
@@ -22,13 +23,13 @@ class PadelPreferencesGoalsScreen extends ConsumerWidget {
     final type = Theme.of(context).extension<DriftTypography>()!;
 
     return DriftScaffold(
-      title: 'Preferences & Goals',
+      title: context.l10n.padelPrefsGoals,
       body: switch (profile) {
         AsyncData(:final value) when value != null => _PreferencesForm(
           profile: value,
         ),
         AsyncError() => Center(
-          child: Text("Couldn't load your Padel profile.", style: type.body),
+          child: Text(context.l10n.padelProfileFailed, style: type.body),
         ),
         _ => const Center(child: CircularProgressIndicator()),
       },
@@ -100,7 +101,10 @@ class _PreferencesFormState extends ConsumerState<_PreferencesForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Preferred side', style: Theme.of(context).textTheme.labelLarge),
+          Text(
+            context.l10n.padelPreferredSide,
+            style: Theme.of(context).textTheme.labelLarge,
+          ),
           const SizedBox(height: DriftSpacing.s2),
           Wrap(
             spacing: DriftSpacing.s2,
@@ -116,16 +120,16 @@ class _PreferencesFormState extends ConsumerState<_PreferencesForm> {
           ),
           const SizedBox(height: DriftSpacing.s4),
           DriftTextField(
-            label: 'Partner preference',
+            label: context.l10n.padelPartnerPreference,
             controller: _partnerPreferenceController,
-            hintText: 'e.g. Looking for a regular doubles partner',
+            hintText: context.l10n.padelPartnerHint,
             maxLines: 3,
           ),
           const SizedBox(height: DriftSpacing.s4),
           DriftTextField(
-            label: 'Goals',
+            label: context.l10n.learnGoals,
             controller: _goalsController,
-            hintText: 'Comma-separated, e.g. Improve my bandeja, Play weekly',
+            hintText: context.l10n.padelGoalsHint,
             maxLines: 3,
           ),
           if (_errorText != null) ...[
@@ -134,7 +138,9 @@ class _PreferencesFormState extends ConsumerState<_PreferencesForm> {
           ],
           const SizedBox(height: DriftSpacing.s6),
           DriftButton(
-            label: _isSubmitting ? 'Saving…' : 'Save',
+            label: _isSubmitting
+                ? context.l10n.commonSaving
+                : context.l10n.commonSave,
             onPressed: _isSubmitting ? null : _save,
           ),
         ],

@@ -7,6 +7,7 @@ import 'drift_card.dart';
 import 'drift_court_surface_chip.dart';
 import 'drift_detail_row.dart';
 import 'drift_status_badge.dart';
+import '../../core/l10n/l10n.dart';
 
 /// Court Card — `foundation/05-design-system.md` §7. Court summary in
 /// list/map results: name, distance, surface breakdown, verification.
@@ -35,7 +36,7 @@ class DriftCourtCard extends StatelessWidget {
             DriftDetailRow(
               icon: Icons.place_outlined,
               text: court.distanceKm != null
-                  ? '${court.distanceKm!.toStringAsFixed(1)} km away'
+                  ? context.l10n.commonKmAway(court.distanceKm!.toStringAsFixed(1))
                   : court.address!,
             ),
           if (court.clubName != null)

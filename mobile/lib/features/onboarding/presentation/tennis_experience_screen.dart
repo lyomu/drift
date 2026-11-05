@@ -6,6 +6,7 @@ import '../../../core/theme/drift_colors.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../users/data/users_repository.dart';
 import 'widgets/onboarding_scaffold.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// One selectable experience band. [signal] is the backend enum value; the
 /// rest is presentation taken from the redesign mock.
@@ -19,60 +20,60 @@ class _ExperienceOption {
   });
 
   final String signal;
-  final String label;
-  final String subtitle;
+  final String Function(AppLocalizations) label;
+  final String Function(AppLocalizations) subtitle;
   final IconData icon;
 
   /// `null` means "use the theme's brand colour".
   final Color? accent;
 }
 
-const _experienceOptions = <_ExperienceOption>[
+final _experienceOptions = <_ExperienceOption>[
   _ExperienceOption(
     signal: 'NEW',
-    label: "I'm completely new",
-    subtitle: 'Never held a racket',
+    label: (AppLocalizations l) => l.expNew,
+    subtitle: (AppLocalizations l) => l.expNewSub,
     icon: Icons.sports_tennis_rounded,
   ),
   _ExperienceOption(
     signal: 'UNDER_6M',
-    label: 'Less than 6 months',
-    subtitle: 'Still learning the basics',
+    label: (AppLocalizations l) => l.expUnder6m,
+    subtitle: (AppLocalizations l) => l.expUnder6mSub,
     icon: Icons.trending_up_rounded,
     accent: Color(0xFF22C55E),
   ),
   _ExperienceOption(
     signal: 'SIX_TO_12M',
-    label: '6–12 months',
-    subtitle: 'Getting comfortable on court',
+    label: (AppLocalizations l) => l.exp6to12m,
+    subtitle: (AppLocalizations l) => l.exp6to12mSub,
     icon: Icons.electric_bolt_rounded,
     accent: Color(0xFFEAB308),
   ),
   _ExperienceOption(
     signal: 'ONE_TO_2Y',
-    label: '1–2 years',
-    subtitle: 'Building a solid foundation',
+    label: (AppLocalizations l) => l.exp1to2y,
+    subtitle: (AppLocalizations l) => l.exp1to2ySub,
     icon: Icons.fitness_center_rounded,
     accent: Color(0xFFF97316),
   ),
   _ExperienceOption(
     signal: 'TWO_TO_5Y',
-    label: '2–5 years',
-    subtitle: 'Developing real game sense',
+    label: (AppLocalizations l) => l.exp2to5y,
+    subtitle: (AppLocalizations l) => l.exp2to5ySub,
     icon: Icons.military_tech_rounded,
     accent: Color(0xFFEC4899),
   ),
   _ExperienceOption(
     signal: 'FIVE_PLUS',
-    label: '5+ years',
-    subtitle: 'Experienced and consistent',
+    label: (AppLocalizations l) => l.exp5plus,
+    subtitle: (AppLocalizations l) => l.exp5plusSub,
     icon: Icons.emoji_events_rounded,
     accent: Color(0xFFEAB308),
   ),
   _ExperienceOption(
     signal: 'COMPETITIVE',
-    label: 'Competitive / Advanced',
-    subtitle: 'Tournament-level play',
+    label: (AppLocalizations l) => l.expAdvanced,
+    subtitle: (AppLocalizations l) => l.expAdvancedSub,
     icon: Icons.workspace_premium_rounded,
     accent: Color(0xFF8B5CF6),
   ),
@@ -100,7 +101,7 @@ class _TennisExperienceScreenState
 
   Future<void> _submit() async {
     if (_experienceSignal == null) {
-      setState(() => _errorText = 'Please choose an option to continue.');
+      setState(() => _errorText = context.l10n.onbChooseOption);
       return;
     }
 
@@ -126,9 +127,9 @@ class _TennisExperienceScreenState
   Widget build(BuildContext context) {
     return DriftOnboardingScaffold(
       step: OnboardingStepIndex.tennisExperience,
-      title: "What's your tennis experience?",
-      highlight: 'experience?',
-      subtitle: "We'll personalize your training to match your level.",
+      title: context.l10n.onbExperienceTitle,
+      highlight: context.l10n.onbExperienceHighlight,
+      subtitle: context.l10n.onbExperienceSubtitle,
       ctaActive: _experienceSignal != null,
       loading: _isSubmitting,
       onContinue: _isSubmitting ? null : _submit,
@@ -225,7 +226,7 @@ class _OptionCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          option.label,
+                          option.label(context.l10n),
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
@@ -235,7 +236,7 @@ class _OptionCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          option.subtitle,
+                          option.subtitle(context.l10n),
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w500,

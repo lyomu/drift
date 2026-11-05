@@ -18,6 +18,23 @@ export const matchInclude = {
   fixture: {
     include: { round: { include: { league: true } } },
   },
+  // Ladder and tournament matches, for the Play → Matches label. A match is
+  // created by at most one of these, so `take: 1` loses nothing.
+  ladderChallenges: {
+    select: { ladder: { select: { id: true, name: true } } },
+    take: 1,
+  },
+  tournamentFixtures: {
+    select: {
+      round: {
+        select: {
+          index: true,
+          tournament: { select: { id: true, name: true } },
+        },
+      },
+    },
+    take: 1,
+  },
   // Optional real-court link (Phase M9) — courtName/courtNote below stay
   // authoritative free text; this is populated only once a real court is
   // chosen via suggestCourt().
@@ -113,5 +130,43 @@ export function toMatchDto(match: MatchRecord, viewerId: string) {
           roundIndex: match.fixture.round.index,
         }
       : null,
+
+    competitionLabel: toCompetitionLabel(match),
   };
+}
+
+/**
+ * Which competition (if any) produced this match — league fixture, ladder
+ * challenge or tournament fixture — for the "League · Round 3" line on
+ * Play → Matches rows. `competitionContext` above stays league-only because
+ * Match Detail's round links depend on its shape.
+ */
+function toCompetitionLabel(match: MatchRecord) {
+  if (match.fixture) {
+    return {
+      kind: 'LEAGUE' as const,
+      id: match.fixture.round.league.id,
+      name: match.fixture.round.league.name,
+      roundIndex: match.fixture.round.index,
+    };
+  }
+  const ladder = match.ladderChallenges?.[0]?.ladder;
+  if (ladder) {
+    return {
+      kind: 'LADDER' as const,
+      id: ladder.id,
+      name: ladder.name,
+      roundIndex: null,
+    };
+  }
+  const round = match.tournamentFixtures?.[0]?.round;
+  if (round) {
+    return {
+      kind: 'TOURNAMENT' as const,
+      id: round.tournament.id,
+      name: round.tournament.name,
+      roundIndex: round.index,
+    };
+  }
+  return null;
 }

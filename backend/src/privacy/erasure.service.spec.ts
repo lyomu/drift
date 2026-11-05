@@ -31,7 +31,10 @@ function createTx(): Tx {
     playerReport: model(),
     notification: model(),
     savedStory: model(),
+    favoriteCourt: model(),
+    courtBooking: model(),
     dismissedHomeCard: model(),
+    tennisFactView: model(),
     clubPostReaction: model(),
     videoAnalysisJob: {
       ...model(),
@@ -222,7 +225,10 @@ describe('ErasureService and uploaded video', () => {
       playerReport: model(),
       notification: model(),
       savedStory: model(),
+      favoriteCourt: model(),
+      courtBooking: model(),
       dismissedHomeCard: model(),
+      tennisFactView: model(),
       clubPostReaction: model(),
       videoAnalysisJob: {
         ...model(),

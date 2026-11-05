@@ -8,8 +8,10 @@ import { MaterialIcon } from "@/components/dashboard-design";
 import { Button, ErrorBanner, Input, PasswordField } from "@/components/ui";
 import { api, ApiError, setToken } from "@/lib/api-client";
 import { useWorkspace } from "@/lib/workspace-context";
+import { useT } from "@/lib/i18n/i18n-context";
 
 export default function LoginPage() {
+  const t = useT();
   const router = useRouter();
   const { refresh } = useWorkspace();
   const [email, setEmail] = useState("");
@@ -30,7 +32,7 @@ export default function LoginPage() {
       await refresh();
       router.push("/");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Something went wrong.");
+      setError(err instanceof ApiError ? err.message : t("auth.somethingWrong"));
     } finally {
       setSubmitting(false);
     }
@@ -82,10 +84,10 @@ export default function LoginPage() {
         <div className="w-full max-w-[400px] rounded-[24px] bg-white px-8 py-9 shadow-[0_28px_64px_rgba(17,24,39,0.14)]">
           <div className="text-center">
             <h1 className="font-display text-[26px] font-extrabold leading-tight text-[#111827]">
-              Drift Admin Login
+              {t("auth.loginTitle")}
             </h1>
             <p className="mx-auto mt-2.5 max-w-[300px] text-[14px] leading-6 text-[#6B7280]">
-              One sign-in for club administrators and coaches
+              {t("auth.loginSubtitle")}
             </p>
           </div>
 
@@ -95,25 +97,25 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="mt-5 flex flex-col gap-3.5">
             <label className="relative block">
-              <span className="sr-only">Email address</span>
+              <span className="sr-only">{t("a.emailAddress")}</span>
               <Input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
-                placeholder="Enter email address"
+                placeholder={t("auth.emailPlaceholder")}
                 className="!h-[52px] !rounded-[10px] !border-[1.5px] !border-[#E5E7EB] !px-4 !pr-12 !text-[14px] !text-[#111827] placeholder:!text-[#6B7280]"
               />
               <span className="absolute right-4 top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full border-2 border-[#9CA3AF]" />
             </label>
             <PasswordField
-              label="Password"
+              label={t("auth.password")}
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
-              placeholder="Password"
+              placeholder={t("auth.password")}
               labelClassName="sr-only"
               inputClassName="!h-[52px] !rounded-[10px] !border-[1.5px] !border-[#E5E7EB] !px-4 !pr-16 !text-[14px] !text-[#111827] placeholder:!text-[#6B7280]"
               toggleVariant="text"
@@ -124,7 +126,7 @@ export default function LoginPage() {
               href="/reset-password"
               className="self-start text-[13px] font-extrabold text-[#111827] hover:underline"
             >
-              Having trouble signing in?
+              {t("auth.trouble")}
             </Link>
 
             <Button
@@ -132,21 +134,21 @@ export default function LoginPage() {
               disabled={submitting}
               className="mt-2 min-h-[54px] w-full rounded-[10px] bg-[#1C91D0] text-[16px] hover:bg-[#126A9B]"
             >
-              {submitting ? "Signing in..." : "Sign in"}
+              {submitting ? t("auth.signingIn") : t("auth.signIn")}
             </Button>
           </form>
 
           <div className="mt-6 flex flex-col gap-1.5 text-center text-[13px] text-[#6B7280]">
             <p>
-              New to Drift?{" "}
+              {t("auth.newToDrift")}{" "}
               <Link href="/request-club" className="font-extrabold text-[#111827] hover:underline">
-                Register a club
+                {t("auth.registerClub")}
               </Link>
             </p>
             <p>
-              Coaching independently?{" "}
+              {t("auth.coachingIndependently")}{" "}
               <Link href="/coach-signup" className="font-extrabold text-[#111827] hover:underline">
-                Apply as a coach
+                {t("auth.applyCoach")}
               </Link>
             </p>
           </div>

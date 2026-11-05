@@ -2,11 +2,13 @@ import { Transform } from 'class-transformer';
 import {
   IsEmail,
   IsEnum,
+  IsIn,
   IsOptional,
   IsString,
   MaxLength,
 } from 'class-validator';
 import { WaitlistAudience } from '@prisma/client';
+import { LOCALES, type LocaleCode } from '../../common/i18n';
 
 /**
  * The global ValidationPipe runs with `whitelist` + `forbidNonWhitelisted`
@@ -66,4 +68,10 @@ export class CreateWaitlistSignupDto {
   @IsString()
   @MaxLength(60)
   source?: string;
+
+  /** The site's language, used only to pick the confirmation email's
+   * language — not stored. */
+  @IsOptional()
+  @IsIn(LOCALES)
+  locale?: LocaleCode;
 }

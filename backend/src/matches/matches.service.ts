@@ -32,6 +32,7 @@ import { MatchRecord, matchInclude, toMatchDto } from './match.mapper';
 import { CreateMatchDto } from './dto/create-match.dto';
 import { ProposeTimesDto } from './dto/propose-times.dto';
 import { NotificationsService } from '../notifications/notifications.service';
+import { type Localizable, msg } from '../common/i18n';
 
 @Injectable()
 export class MatchesService {
@@ -154,8 +155,8 @@ export class MatchesService {
   async notifyOthers(
     match: MatchRecord,
     exceptUserId: string | null,
-    title: string,
-    body: string,
+    title: Localizable,
+    body: Localizable,
   ) {
     await Promise.all(
       match.participants
@@ -251,8 +252,10 @@ export class MatchesService {
     await this.notifications.create(
       dto.opponentId,
       'MATCHES',
-      `${this.displayName(challenger.user)} challenged you to a match`,
-      'Review the challenge and accept or decline.',
+      msg('match.challenge.title', {
+        name: this.displayName(challenger.user),
+      }),
+      msg('match.challenge.body'),
       'MATCH',
       match.id,
     );
@@ -263,8 +266,10 @@ export class MatchesService {
       await this.notifications.create(
         dto.partnerId,
         'MATCHES',
-        `${this.displayName(challenger.user)} wants you as their doubles partner`,
-        'Accept to join the match.',
+        msg('match.partnerInvite.title', {
+          name: this.displayName(challenger.user),
+        }),
+        msg('match.partnerInvite.body'),
         'MATCH',
         match.id,
       );
@@ -381,8 +386,10 @@ export class MatchesService {
       await this.notifications.create(
         partnerId,
         'MATCHES',
-        `${this.displayName(participant.user)} wants you as their doubles partner`,
-        'Accept to join the match.',
+        msg('match.partnerInvite.title', {
+          name: this.displayName(participant.user),
+        }),
+        msg('match.partnerInvite.body'),
         'MATCH',
         final.id,
       );
@@ -395,11 +402,13 @@ export class MatchesService {
             pt.userId,
             'MATCHES',
             everyoneIn
-              ? 'Everyone is in — agree a time'
-              : `${this.displayName(participant.user)} accepted your challenge`,
+              ? msg('match.everyoneIn.title')
+              : msg('match.accepted.title', {
+                  name: this.displayName(participant.user),
+                }),
             everyoneIn
-              ? 'Propose a time to get the match scheduled.'
-              : 'Waiting on the rest of the players.',
+              ? msg('match.everyoneIn.body')
+              : msg('match.accepted.body'),
             'MATCH',
             final.id,
           ),
@@ -456,8 +465,10 @@ export class MatchesService {
     await this.notifyOthers(
       final,
       userId,
-      `${this.displayName(participant.user)} declined your challenge`,
-      'Find another opponent when you’re ready.',
+      msg('match.declined.title', {
+        name: this.displayName(participant.user),
+      }),
+      msg('match.declined.body'),
     );
 
     return toMatchDto(final, userId);
@@ -531,8 +542,10 @@ export class MatchesService {
     await this.notifyOthers(
       final,
       userId,
-      `${this.displayName(proposer.user)} proposed a time`,
-      'Pick one that works or counter with your own.',
+      msg('match.timeProposed.title', {
+        name: this.displayName(proposer.user),
+      }),
+      msg('match.timeProposed.body'),
     );
 
     return toMatchDto(final, userId);
@@ -589,8 +602,8 @@ export class MatchesService {
     await this.notifyOthers(
       final,
       userId,
-      'Your match is confirmed',
-      `Locked in for ${option.startsAt.toISOString()}.`,
+      msg('match.confirmed.title'),
+      msg('match.confirmed.body', { date: option.startsAt }),
     );
 
     return toMatchDto(final, userId);
@@ -631,7 +644,9 @@ export class MatchesService {
     await this.notifyOthers(
       final,
       userId,
-      `${this.displayName(suggester.user)} suggested a court`,
+      msg('match.courtSuggested.title', {
+        name: this.displayName(suggester.user),
+      }),
       courtName,
     );
 
@@ -673,8 +688,8 @@ export class MatchesService {
     await this.notifyOthers(
       final,
       userId,
-      `${this.displayName(actor.user)} wants to reschedule`,
-      'Propose a new time to get it back on.',
+      msg('match.reschedule.title', { name: this.displayName(actor.user) }),
+      msg('match.reschedule.body'),
     );
 
     return toMatchDto(final, userId);
@@ -706,8 +721,8 @@ export class MatchesService {
     await this.notifyOthers(
       final,
       userId,
-      `${this.displayName(actor.user)} cancelled the match`,
-      reason ?? 'No reason given.',
+      msg('match.cancelled.title', { name: this.displayName(actor.user) }),
+      reason ?? msg('match.cancelled.noReason'),
     );
 
     return toMatchDto(final, userId);
@@ -764,8 +779,8 @@ export class MatchesService {
     await this.notifyOthers(
       withdrawn,
       userId,
-      `${this.displayName(sender.user)} withdrew the challenge`,
-      'This challenge is no longer available.',
+      msg('match.withdrawn.title', { name: this.displayName(sender.user) }),
+      msg('match.withdrawn.body'),
     );
     return toMatchDto(withdrawn, userId);
   }

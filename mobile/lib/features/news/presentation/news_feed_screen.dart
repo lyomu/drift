@@ -9,6 +9,8 @@ import '../application/news_providers.dart';
 import '../data/news_repository.dart';
 import '../../../core/theme/drift_colors.dart';
 import '../../../shared/widgets/drift_news_image.dart';
+import '../../../core/l10n/l10n.dart';
+import 'package:intl/intl.dart';
 
 /// News Feed — the player-facing editorial feed and story discovery surface.
 class NewsFeedScreen extends ConsumerStatefulWidget {
@@ -46,7 +48,7 @@ class _NewsFeedScreenState extends ConsumerState<NewsFeedScreen> {
       });
     } catch (_) {
       if (mounted) {
-        setState(() => _loadError = 'Could not load more stories. Try again.');
+        setState(() => _loadError = context.l10n.newsLoadMoreFailed);
       }
     } finally {
       if (mounted) setState(() => _loadingMore = false);
@@ -69,7 +71,7 @@ class _NewsFeedScreenState extends ConsumerState<NewsFeedScreen> {
     final feed = ref.watch(newsPageProvider);
     final categories =
         ref.watch(newsCategoriesProvider).valueOrNull ??
-        const [NewsCategoryOption(slug: 'LATEST', label: 'Latest')];
+        [NewsCategoryOption(slug: 'LATEST', label: context.l10n.newsLatest)];
     final category = ref.watch(newsCategoryProvider);
     if (category != null &&
         ref.watch(newsCategoriesProvider) is AsyncData &&
@@ -100,10 +102,10 @@ class _NewsFeedScreenState extends ConsumerState<NewsFeedScreen> {
     }
 
     return DriftScaffold(
-      title: 'News',
+      title: context.l10n.navNews,
       onBack: () => context.canPop() ? context.pop() : context.go('/home'),
       trailing: Tooltip(
-        message: 'Saved stories',
+        message: context.l10n.newsSavedStories,
         child: DriftHeaderSquareButton(
           icon: Icons.bookmark_outline,
           onTap: () => context.push('/news/saved'),
@@ -116,7 +118,7 @@ class _NewsFeedScreenState extends ConsumerState<NewsFeedScreen> {
         child: switch (feed) {
           AsyncData(:final value) =>
             value.stories.isEmpty
-                ? _message(type, 'No stories in this category yet')
+                ? _message(type, context.l10n.newsNoStories)
                 : _FeedContent(
                     stories: [
                       ...value.stories,
@@ -137,7 +139,7 @@ class _NewsFeedScreenState extends ConsumerState<NewsFeedScreen> {
                     loadError: _loadError,
                     onLoadMore: () => _loadMore(value.nextCursor, category),
                   ),
-          AsyncError() => _message(type, "Couldn't load news. Pull to retry."),
+          AsyncError() => _message(type, context.l10n.newsLoadFailed),
           _ => Center(child: CircularProgressIndicator(color: colors.primary)),
         },
       ),
@@ -192,7 +194,7 @@ class _FeedContent extends StatelessWidget {
     final hasHero = category == null && stories.isNotEmpty;
     final visibleStories = hasHero ? stories.skip(1).toList() : stories;
     final categoryLabel = category == null
-        ? 'Curated for you'
+        ? context.l10n.newsCurated
         : _categoryLabel(category!, categories);
 
     return ListView(
@@ -203,7 +205,11 @@ class _FeedContent extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 12),
             child: Text(
-              'Offline news saved ${cachedAt!.toLocal()}',
+              context.l10n.newsOfflineSaved(
+                DateFormat.yMMMd(context.localeTag)
+                    .add_jm()
+                    .format(cachedAt!.toLocal()),
+              ),
               style: TextStyle(color: colors.textSecondary, fontSize: 12),
             ),
           ),
@@ -244,7 +250,11 @@ class _FeedContent extends StatelessWidget {
             child: Center(
               child: TextButton(
                 onPressed: loadingMore ? null : onLoadMore,
-                child: Text(loadingMore ? 'Loading…' : 'Load more stories'),
+                child: Text(
+                  loadingMore
+                      ? context.l10n.commonLoading
+                      : context.l10n.newsLoadMore,
+                ),
               ),
             ),
           ),
@@ -341,8 +351,8 @@ class _FeaturedStory extends StatelessWidget {
                             children: [
                               Text(
                                 MediaQuery.textScalerOf(context).scale(1) > 1.4
-                                    ? 'Read'
-                                    : 'Read story',
+                                    ? context.l10n.newsRead
+                                    : context.l10n.newsReadStory,
                                 style: TextStyle(fontWeight: FontWeight.w700),
                               ),
                               if (MediaQuery.textScalerOf(context).scale(1) <=
@@ -401,7 +411,7 @@ class _SectionHeading extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'FRESH OFF THE COURT',
+          context.l10n.newsFreshOffCourt,
           style: TextStyle(
             color: colors.primaryDark,
             fontFamily: 'Outfit',
@@ -411,7 +421,7 @@ class _SectionHeading extends ConsumerWidget {
         ),
         SizedBox(height: 12),
         Text(
-          'Latest stories',
+          context.l10n.newsLatestStories,
           style: TextStyle(
             color: colors.textPrimary,
             fontFamily: 'Outfit',
@@ -619,7 +629,9 @@ class _SaveButton extends StatelessWidget {
     final colors = Theme.of(context).extension<DriftColors>()!;
     return IconButton(
       onPressed: onPressed,
-      tooltip: saved ? 'Remove from saved' : 'Save story',
+      tooltip: saved
+          ? context.l10n.newsRemoveFromSaved
+          : context.l10n.newsSaveStory,
       icon: Icon(
         saved ? Icons.bookmark : Icons.bookmark_border,
         size: 18,
@@ -648,7 +660,7 @@ class _StoryImage extends StatelessWidget {
 }
 
 String _categoryLabel(String? value, List<NewsCategoryOption> categories) {
-  if (value == null || value.isEmpty) return 'Stories';
+  if (value == null || value.isEmpty) return l10nNow.newsStories;
   for (final option in categories) {
     if (option.slug == value) return option.label;
   }
@@ -668,8 +680,8 @@ String _relativeDate(DateTime date) {
   final today = DateTime(now.year, now.month, now.day);
   final published = DateTime(date.year, date.month, date.day);
   final days = today.difference(published).inDays;
-  if (days <= 0) return 'Recently';
-  if (days == 1) return 'Yesterday';
-  if (days < 7) return '${days}d ago';
-  return '${date.day}/${date.month}/${date.year}';
+  if (days <= 0) return l10nNow.newsRecently;
+  if (days == 1) return l10nNow.commonYesterday;
+  if (days < 7) return l10nNow.newsDaysAgo(days);
+  return DateFormat.yMd(localeTagNow).format(date);
 }

@@ -3,12 +3,19 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { LadderChallengeState, LadderState, MatchSport } from '@prisma/client';
+import {
+  CommunityMemberStatus,
+  LadderChallengeState,
+  LadderState,
+  MatchSport,
+} from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { demoScope } from '../common/demo-scope';
+import { communityMembersOnly } from '../common/community-scope';
 import { MatchesService } from '../matches/matches.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { canChallenge, resolvePositions } from './ladder-rules';
+import { msg } from '../common/i18n';
 
 @Injectable()
 export class LaddersService {
@@ -20,18 +27,47 @@ export class LaddersService {
 
   // ------------------------------------------------------------------ read
 
-  /** `viewerId` hides demo clubs' ladders from real users. */
+  /** A community's active ladders, with whether the viewer is on each. */
+  async listForCommunity(communityId: string, viewerId: string) {
+    const ladders = await this.prisma.ladder.findMany({
+      where: { communityId, state: LadderState.ACTIVE },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        _count: { select: { entries: true } },
+        entries: { where: { userId: viewerId }, select: { position: true } },
+      },
+    });
+    return ladders.map(({ entries, _count, ...ladder }) => ({
+      id: ladder.id,
+      name: ladder.name,
+      sport: ladder.sport,
+      challengeRange: ladder.challengeRange,
+      entryCount: _count.entries,
+      myPosition: entries[0]?.position ?? null,
+      createdAt: ladder.createdAt,
+    }));
+  }
+
+  /**
+   * `viewerId` hides demo clubs' and communities' ladders from real users,
+   * and community ladders from anyone who isn't a member of that community.
+   */
   async list(clubId?: string, viewerId?: string) {
     const scope = viewerId ? await demoScope(this.prisma, viewerId) : null;
     const ladders = await this.prisma.ladder.findMany({
       where: {
         ...(clubId ? { clubId } : {}),
-        ...scope?.clubRequired,
+        AND: [
+          scope?.clubOptional ?? {},
+          scope?.communityOptional ?? {},
+          communityMembersOnly(viewerId),
+        ],
         state: LadderState.ACTIVE,
       },
       orderBy: { createdAt: 'desc' },
       include: {
         club: { select: { id: true, name: true } },
+        community: { select: { id: true, name: true } },
         _count: { select: { entries: true } },
       },
       take: 100,
@@ -44,6 +80,7 @@ export class LaddersService {
       where: { id },
       include: {
         club: { select: { id: true, name: true } },
+        community: { select: { id: true, name: true } },
         entries: {
           orderBy: { position: 'asc' },
           include: {
@@ -77,6 +114,22 @@ export class LaddersService {
     clubId: string,
     data: { name: string; challengeRange?: number; sport?: MatchSport },
   ) {
+    return this.insert({ clubId }, data);
+  }
+
+  /** A community-owned ladder (2026-11) — only that community's members can
+   * see or join it. */
+  async createForCommunity(
+    communityId: string,
+    data: { name: string; challengeRange?: number; sport?: MatchSport },
+  ) {
+    return this.insert({ communityId }, data);
+  }
+
+  private async insert(
+    owner: { clubId: string } | { communityId: string },
+    data: { name: string; challengeRange?: number; sport?: MatchSport },
+  ) {
     const challengeRange = data.challengeRange ?? 2;
     if (challengeRange < 1 || challengeRange > 10) {
       throw new BadRequestException(
@@ -85,7 +138,7 @@ export class LaddersService {
     }
     return this.prisma.ladder.create({
       data: {
-        clubId,
+        ...owner,
         name: data.name,
         sport: data.sport ?? MatchSport.TENNIS,
         challengeRange,
@@ -97,6 +150,18 @@ export class LaddersService {
     const ladder = await this.load(ladderId);
     if (ladder.state !== LadderState.ACTIVE) {
       throw new BadRequestException('This ladder is archived.');
+    }
+    if (ladder.communityId) {
+      const member = await this.prisma.communityMember.findUnique({
+        where: {
+          communityId_userId: { communityId: ladder.communityId, userId },
+        },
+      });
+      if (member?.status !== CommunityMemberStatus.ACTIVE) {
+        throw new BadRequestException(
+          'Join this community to take part in its ladder.',
+        );
+      }
     }
     const existing = await this.prisma.ladderEntry.findUnique({
       where: { ladderId_userId: { ladderId, userId } },
@@ -175,8 +240,8 @@ export class LaddersService {
     await this.notifications.create(
       defenderUserId,
       'COMPETITIONS',
-      'Ladder challenge',
-      `You've been challenged on ${ladder.name}. Accept to schedule the match.`,
+      msg('ladder.challenge.title'),
+      msg('ladder.challenge.body', { ladder: ladder.name }),
       'LADDER',
       ladderId,
     );

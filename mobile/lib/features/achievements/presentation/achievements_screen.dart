@@ -7,6 +7,7 @@ import '../../../core/theme/drift_colors.dart';
 import '../../../shared/widgets/drift_symbol.dart';
 import '../application/achievements_providers.dart';
 import '../data/achievements_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Drift's official readable text family.
 const _font = 'Outfit';
@@ -91,7 +92,7 @@ class _Header extends StatelessWidget {
           ),
           SizedBox(width: 12),
           Text(
-            'Achievements',
+            context.l10n.navAchievements,
             style: TextStyle(
               fontFamily: _font,
               fontSize: 22,
@@ -160,7 +161,7 @@ class _SummaryCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Your badges',
+                      context.l10n.achievementsYourBadges,
                       style: TextStyle(
                         fontFamily: _font,
                         fontSize: 16,
@@ -345,7 +346,9 @@ class _StatePill extends StatelessWidget {
         borderRadius: BorderRadius.circular(99),
       ),
       child: Text(
-        earned ? 'Earned' : 'Locked',
+        earned
+            ? context.l10n.achievementsEarned
+            : context.l10n.achievementsLocked,
         style: TextStyle(
           fontFamily: _font,
           fontSize: 11,
@@ -413,7 +416,7 @@ class _LoadFailed extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              "Couldn't load achievements.",
+              context.l10n.achievementsLoadFailed,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: _font,
@@ -427,7 +430,7 @@ class _LoadFailed extends StatelessWidget {
             TextButton(
               onPressed: onRetry,
               child: Text(
-                'Retry',
+                context.l10n.commonRetry,
                 style: TextStyle(
                   fontFamily: _font,
                   fontSize: 14,
@@ -515,7 +518,7 @@ void _showAchievementDetail(BuildContext context, Achievement achievement) {
             ),
             SizedBox(height: 14),
             Text(
-              'Criteria',
+              context.l10n.achievementsCriteria,
               style: TextStyle(
                 fontFamily: _font,
                 fontSize: 12,

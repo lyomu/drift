@@ -189,6 +189,41 @@ describe('LearningService', () => {
         }),
       );
     });
+
+    it('uses the player-adjusted baseline and stores the focus', async () => {
+      prisma.assessmentSession.findFirst.mockResolvedValue({
+        resultSkillBreakdown: { SERVE: 3 },
+        branch: 'BEGINNER',
+      });
+      prisma.goal.create.mockResolvedValue({
+        id: 'g1',
+        skill: 'SERVE',
+        focus: 'PLACEMENT',
+        baseline: 2.5,
+        target: 4,
+        deadline: null,
+        achievedAt: null,
+        createdAt: new Date(),
+        milestones: [],
+      });
+
+      const result = await service.createGoal('user-1', {
+        skill: 'SERVE',
+        focus: 'PLACEMENT',
+        baseline: 2.5,
+        target: 4,
+      });
+
+      expect(prisma.goal.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            baseline: 2.5,
+            focus: 'PLACEMENT',
+          }),
+        }),
+      );
+      expect(result.focus).toBe('PLACEMENT');
+    });
   });
 
   describe('getGoal', () => {

@@ -20,7 +20,7 @@ import {
   UpdateAbuseCaseDto,
 } from './dto/trust-safety-admin.dto';
 
-type ReportType = 'PLAYER' | 'MESSAGE' | 'COURT' | 'CLUB_POST';
+type ReportType = 'PLAYER' | 'MESSAGE' | 'COURT' | 'CLUB_POST' | 'COMMUNITY';
 type QueueState = 'PENDING' | 'ACTIONED' | 'DISMISSED';
 type PersonRecord = {
   id: string;
@@ -80,7 +80,7 @@ export class TrustSafetyAdminService {
 
     const types = type
       ? [type]
-      : (['PLAYER', 'MESSAGE', 'COURT', 'CLUB_POST'] as ReportType[]);
+      : (['PLAYER', 'MESSAGE', 'COURT', 'CLUB_POST', 'COMMUNITY'] as ReportType[]);
     const buckets = await Promise.all(
       types.map((item) => this.fetchReportItems(item, state, priority)),
     );
@@ -502,6 +502,52 @@ export class TrustSafetyAdminService {
         canOpenCase: Boolean(report.message.sender),
       }));
     }
+    if (type === 'COMMUNITY') {
+      // The subject is the community's owner: an abuse case is opened
+      // against the person running it. Suspending the community itself is
+      // done from the Communities page.
+      const reports = await this.prisma.communityReport.findMany({
+        where: {
+          ...this.reportStatusWhere(state),
+          ...(priority ? { priority } : {}),
+        },
+        include: {
+          reporter: { select: USER_SELECT },
+          community: {
+            select: {
+              id: true,
+              name: true,
+              city: true,
+              members: {
+                where: { role: 'OWNER' },
+                select: { user: { select: USER_SELECT } },
+                take: 1,
+              },
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 250,
+      });
+      return reports.map((report) => {
+        const owner = report.community.members[0]?.user ?? null;
+        return {
+          id: report.id,
+          type,
+          reason: report.reason,
+          notes: report.notes,
+          sourceStatus: report.status,
+          state: this.reportState(report.status),
+          priority: report.priority,
+          createdAt: report.createdAt,
+          reporter: this.person(report.reporter),
+          subject: this.person(owner),
+          preview: report.community.name,
+          locationLabel: report.community.city,
+          canOpenCase: Boolean(owner),
+        };
+      });
+    }
     if (type === 'COURT') {
       const reports = await this.prisma.courtReport.findMany({
         where: {
@@ -652,6 +698,22 @@ export class TrustSafetyAdminService {
       };
     }
 
+    if (type === 'COMMUNITY') {
+      const report = await this.prisma.communityReport.findUnique({
+        where: { id },
+      });
+      if (!report) throw new NotFoundException('Report not found.');
+      await this.prisma.communityReport.update({
+        where: { id },
+        data: { status: nextStatus },
+      });
+      return {
+        previousStatus: report.status,
+        nextStatus,
+        state: this.reportState(nextStatus),
+      };
+    }
+
     const report = await this.prisma.courtReport.findUnique({ where: { id } });
     if (!report) throw new NotFoundException('Report not found.');
     await this.prisma.courtReport.update({
@@ -705,6 +767,18 @@ export class TrustSafetyAdminService {
       return { previousPriority: report.priority };
     }
 
+    if (type === 'COMMUNITY') {
+      const report = await this.prisma.communityReport.findUnique({
+        where: { id },
+      });
+      if (!report) throw new NotFoundException('Report not found.');
+      await this.prisma.communityReport.update({
+        where: { id },
+        data: { priority },
+      });
+      return { previousPriority: report.priority };
+    }
+
     const report = await this.prisma.courtReport.findUnique({ where: { id } });
     if (!report) throw new NotFoundException('Report not found.');
     await this.prisma.courtReport.update({
@@ -738,6 +812,24 @@ export class TrustSafetyAdminService {
       });
       if (!report) throw new NotFoundException('Report not found.');
       return report.post.authorId;
+    }
+    if (type === 'COMMUNITY') {
+      const report = await this.prisma.communityReport.findUnique({
+        where: { id },
+        select: {
+          community: {
+            select: {
+              members: {
+                where: { role: 'OWNER' },
+                select: { userId: true },
+                take: 1,
+              },
+            },
+          },
+        },
+      });
+      if (!report) throw new NotFoundException('Report not found.');
+      return report.community.members[0]?.userId ?? null;
     }
     const report = await this.prisma.courtReport.findUnique({
       where: { id },
@@ -1006,7 +1098,11 @@ export class TrustSafetyAdminService {
 
   private requireReportType(value: string): ReportType {
     const normalized = value.replace('-', '_').toUpperCase();
-    if (['PLAYER', 'MESSAGE', 'COURT', 'CLUB_POST'].includes(normalized)) {
+    if (
+      ['PLAYER', 'MESSAGE', 'COURT', 'CLUB_POST', 'COMMUNITY'].includes(
+        normalized,
+      )
+    ) {
       return normalized as ReportType;
     }
     throw new BadRequestException('Unknown report type.');

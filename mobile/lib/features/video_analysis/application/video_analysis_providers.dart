@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/video_analysis_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Where an upload has got to.
 enum UploadPhase {
@@ -90,9 +91,9 @@ class UploadController extends StateNotifier<UploadState> {
         state = const UploadState();
         return;
       }
-      state = const UploadState(
+      state = UploadState(
         phase: UploadPhase.failed,
-        error: 'Something went wrong uploading that video. Please try again.',
+        error: l10nNow.videoUploadFailed,
       );
     }
   }

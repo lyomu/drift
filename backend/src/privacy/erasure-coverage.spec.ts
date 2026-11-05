@@ -37,8 +37,13 @@ const ERASED = new Set([
   'PlayerReport',
   'Notification',
   'SavedStory',
+  'FavoriteCourt',
+  'CourtBooking',
   'DismissedHomeCard',
+  'TennisFactView',
   'ClubPostReaction',
+  'CommunityMember',
+  'CommunityReport',
   'PrivacyRequest',
   // Rows AND the video files they point at. This is the first erased model whose
   // payload lives outside Postgres, so the row delete alone is not the erasure —
@@ -90,6 +95,10 @@ const KEPT: Record<string, string> = {
   AssessmentSession: 'skill assessment feeds ratings others are ranked against',
   PadelAssessmentSession:
     'skill assessment feeds ratings others are ranked against',
+  Community:
+    'the creator foreign key cascades it on erasure; otherwise it is a shared group record',
+  CommunityAuditLog:
+    'audit history survives; the actor foreign key is nulled when that user is erased',
 };
 
 /** Model names referenced as relations from the `User` block. */

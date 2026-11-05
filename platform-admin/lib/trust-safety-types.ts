@@ -1,6 +1,6 @@
 export type TrustSafetyPriority = "NORMAL" | "HIGH" | "URGENT";
 export type QueueState = "PENDING" | "ACTIONED" | "DISMISSED";
-export type ReportType = "PLAYER" | "MESSAGE" | "COURT" | "CLUB_POST";
+export type ReportType = "PLAYER" | "MESSAGE" | "COURT" | "CLUB_POST" | "COMMUNITY";
 export type AbuseCaseStatus = "OPEN" | "CLOSED";
 
 export type TrustSafetyPerson = {

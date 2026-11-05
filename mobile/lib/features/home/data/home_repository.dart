@@ -5,6 +5,7 @@ import '../../../core/network/dio_client.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../courts/data/courts_repository.dart';
 import '../../players/data/players_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// How loudly a card should render. Mirrors `backend/src/home/home-card.ts`.
 enum HomeCardAccent { urgent, info, success, neutral }
@@ -287,7 +288,7 @@ class HomeRepository {
     final body = e.response?.data;
     final message = body is Map ? body['message'] as Object? : null;
     final text = message is List ? message.join(' ') : message?.toString();
-    return text ?? 'Something went wrong. Please try again.';
+    return text ?? l10nNow.commonErrorGeneric;
   }
 }
 

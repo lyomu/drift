@@ -7,6 +7,7 @@ import {
   parsePhoneNumberFromString,
   type CountryCode,
 } from "libphonenumber-js";
+import { useT } from "@/lib/i18n/i18n-context";
 
 function flag(country: string) {
   return String.fromCodePoint(
@@ -34,12 +35,13 @@ function initialCountry(value: string): CountryCode {
 export function PhoneNumberField({
   value,
   onChange,
-  label = "Phone",
+  label,
 }: {
   value: string;
   onChange: (value: string) => void;
   label?: string;
 }) {
+  const t = useT();
   const [country, setCountry] = useState<CountryCode>(() =>
     initialCountry(value),
   );
@@ -80,7 +82,7 @@ export function PhoneNumberField({
   return (
     <div className="relative">
       <label className="mb-1 block text-xs font-bold uppercase text-drift-text-secondary">
-        {label}
+        {label ?? t("common.phone")}
       </label>
       <div className="flex overflow-hidden rounded-md border border-drift-border bg-white focus-within:ring-2 focus-within:ring-drift-primary/30">
         <button
@@ -100,7 +102,7 @@ export function PhoneNumberField({
           autoComplete="tel-national"
           value={local}
           onChange={(event) => setNumber(event.target.value)}
-          placeholder="Phone number"
+          placeholder={t("common.phoneNumber")}
           className="min-w-0 flex-1 bg-transparent px-3 py-2 text-sm outline-none"
         />
       </div>
@@ -111,7 +113,7 @@ export function PhoneNumberField({
               autoFocus
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search countries or codes"
+              placeholder={t("common.searchCountries")}
               className="w-full rounded-md border border-drift-border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-drift-primary/30"
             />
           </div>

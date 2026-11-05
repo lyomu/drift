@@ -2,6 +2,7 @@ import {
   Equals,
   IsBoolean,
   IsEmail,
+  IsIn,
   IsOptional,
   IsPhoneNumber,
   IsString,
@@ -10,6 +11,7 @@ import {
 } from 'class-validator';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from '../password-policy';
 import { AGE_POLICY_ERROR_MESSAGE } from '../age-policy';
+import { LOCALES, type LocaleCode } from '../../common/i18n';
 
 export class SignUpDto {
   @IsEmail()
@@ -43,4 +45,10 @@ export class SignUpDto {
 
   @Equals(true, { message: AGE_POLICY_ERROR_MESSAGE })
   acceptedAgePolicy!: true;
+
+  /** The device language at signup (`en`/`fr`/`es`), so the very first
+   * email is already in it. Becomes `User.preferredLocale`. */
+  @IsOptional()
+  @IsIn(LOCALES)
+  locale?: LocaleCode;
 }

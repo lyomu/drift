@@ -6,6 +6,7 @@ import '../../../shared/widgets/drift_back_header.dart';
 import '../../../shared/widgets/drift_recent_form.dart';
 import '../../../shared/widgets/drift_soft_card.dart';
 import '../data/player_stats.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Ratings & Stats Detail — `foundation/04-screen-inventory.md` §A.4
 /// (redesign 2026-08: `App.tsx` `ProfileStatsView`). Reachable from another
@@ -32,16 +33,16 @@ class RatingsStatsScreen extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
                 children: [
-                  _FormatCard(label: 'Singles', stats: stats.singles),
+                  _FormatCard(label: context.l10n.optSingles, stats: stats.singles),
                   const SizedBox(height: 12),
-                  _FormatCard(label: 'Doubles', stats: stats.doubles),
+                  _FormatCard(label: context.l10n.optDoubles, stats: stats.doubles),
                   const SizedBox(height: 12),
                   DriftSoftCard(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _CardTitle('Recent form'),
+                        _CardTitle(context.l10n.statRecentForm),
                         const SizedBox(height: 12),
                         DriftRecentForm(results: stats.recentForm),
                       ],
@@ -108,14 +109,14 @@ class _FormatCard extends StatelessWidget {
               children: [
                 _Tile(
                   value: '${stats.wins}W',
-                  label: 'Wins',
+                  label: context.l10n.statWins,
                   fg: colors.success,
                   bg: colors.successSurface,
                 ),
                 const SizedBox(width: 8),
                 _Tile(
                   value: '${stats.losses}L',
-                  label: 'Losses',
+                  label: context.l10n.statLosses,
                   fg: colors.textSecondary,
                   bg: colors.background,
                 ),
@@ -124,7 +125,7 @@ class _FormatCard extends StatelessWidget {
                   value: played == 0
                       ? '—'
                       : '${(stats.wins / played * 100).round()}%',
-                  label: 'Win rate',
+                  label: context.l10n.statWinRate,
                   fg: colors.primary,
                   bg: colors.primaryLight,
                 ),
@@ -141,14 +142,14 @@ class _FormatCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'No rated matches yet',
+                  context.l10n.statNoRatedMatches,
                   style: type.title.copyWith(fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   played == 0
-                      ? 'No matches played'
-                      : '${stats.wins}W · ${stats.losses}L',
+                      ? context.l10n.statNoMatchesPlayed
+                      : context.l10n.statWinsLosses(stats.wins, stats.losses),
                   style: type.caption.copyWith(color: colors.textSecondary),
                 ),
               ],

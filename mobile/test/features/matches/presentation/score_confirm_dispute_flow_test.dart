@@ -252,7 +252,7 @@ void main() {
       await tester.tap(find.text('Dispute'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Your Version'), findsOneWidget);
+      expect(find.text('Your version'), findsOneWidget);
       final scoreFields = find.byWidgetPredicate(
         (w) => w is TextField && w.decoration?.hintText == '0',
       );

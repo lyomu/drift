@@ -2,31 +2,63 @@
 
 import { useId, useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
 import { MaterialIcon } from "@/components/dashboard-design";
+import { useT } from "@/lib/i18n/i18n-context";
 
-const focusRing =
+export const focusRing =
   "focus:outline-none focus-visible:ring-2 focus-visible:ring-drift-primary focus-visible:ring-offset-1";
 
 export function Button({
   variant = "primary",
+  size = "md",
   className = "",
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: "primary" | "secondary" | "destructive" | "ghost";
+  /** `sm` is the design's compact button (34px). */
+  size?: "md" | "sm";
 }) {
   const base =
-    "inline-flex items-center justify-center gap-2 rounded-md px-[18px] py-2.5 text-[13.5px] font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-50";
+    "inline-flex items-center justify-center gap-2 font-bold transition-all disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0";
+  const sizes: Record<string, string> = {
+    md: "h-[42px] rounded-[10px] px-[17px] text-[12px]",
+    sm: "min-h-[34px] rounded-[9px] px-[11px] text-[11px]",
+  };
   const variants: Record<string, string> = {
-    primary: "bg-drift-primary text-white hover:bg-drift-primary-dark",
+    primary:
+      "bg-drift-primary text-white shadow-[0_6px_16px_color-mix(in_srgb,var(--color-primary)_22%,transparent)] hover:-translate-y-px hover:bg-drift-primary-dark hover:shadow-[0_8px_20px_color-mix(in_srgb,var(--color-primary)_30%,transparent)]",
     secondary:
-      "bg-drift-surface text-drift-text-primary border border-drift-border hover:bg-drift-primary-light",
-    destructive: "bg-drift-error text-white hover:opacity-90",
-    ghost: "text-drift-text-secondary hover:text-drift-text-primary hover:bg-drift-primary-light",
+      "border border-drift-border bg-drift-surface text-drift-text-primary shadow-[0_1px_2px_rgb(0_0_0/4%)] hover:-translate-y-px hover:bg-drift-surface-sunken",
+    destructive: "bg-drift-error text-white hover:-translate-y-px hover:opacity-90",
+    ghost: "text-drift-text-secondary hover:bg-drift-primary-light hover:text-drift-text-primary",
   };
   return (
     <button
-      className={`${base} ${variants[variant]} ${focusRing} ${className}`}
+      className={`${base} ${sizes[size]} ${variants[variant]} ${focusRing} ${className}`}
       {...props}
     />
+  );
+}
+
+/** The design's 29px bordered icon button (card header "more", row actions). */
+export function IconButton({
+  icon,
+  label,
+  className = "",
+  ...props
+}: Omit<ButtonHTMLAttributes<HTMLButtonElement>, "children"> & {
+  icon: string;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      className={`flex h-[29px] w-[29px] items-center justify-center rounded-lg border border-drift-border bg-drift-surface text-drift-text-secondary transition-all hover:-translate-y-px hover:bg-drift-surface-sunken hover:text-drift-text-primary ${focusRing} ${className}`}
+      {...props}
+    >
+      <MaterialIcon name={icon} className="text-[18px]" />
+    </button>
   );
 }
 
@@ -34,7 +66,7 @@ export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       {...props}
-      className={`w-full rounded-md border border-drift-border bg-drift-surface px-3 py-[9px] text-[13.5px] text-drift-text-primary placeholder:text-drift-text-secondary ${focusRing} ${props.className ?? ""}`}
+      className={`w-full rounded-[9px] border border-drift-border bg-drift-surface px-3 py-[11px] text-[13px] text-drift-text-primary placeholder:text-drift-text-secondary ${focusRing} ${props.className ?? ""}`}
     />
   );
 }
@@ -56,6 +88,7 @@ export function PasswordField({
   toggleVariant?: "icon" | "text";
   toggleClassName?: string;
 }) {
+  const t = useT();
   const generatedId = useId();
   const id = props.id ?? generatedId;
   const [visible, setVisible] = useState(false);
@@ -67,7 +100,7 @@ export function PasswordField({
           htmlFor={id}
           className={
             labelClassName ??
-            "text-[13px] font-semibold text-drift-text-secondary"
+            "text-[11px] font-bold text-drift-text-secondary"
           }
         >
           {label}
@@ -83,7 +116,7 @@ export function PasswordField({
         />
         <button
           type="button"
-          aria-label={visible ? "Hide password" : "Show password"}
+          aria-label={visible ? t("common.hidePassword") : t("common.showPassword")}
           aria-pressed={visible}
           disabled={props.disabled}
           onClick={() => setVisible((current) => !current)}
@@ -94,7 +127,7 @@ export function PasswordField({
           }
         >
           {toggleVariant === "text" ? (
-            visible ? "Hide" : "Show"
+            visible ? t("common.hide") : t("common.show")
           ) : (
             <MaterialIcon
               name={visible ? "visibility_off" : "visibility"}
@@ -111,7 +144,7 @@ export function Textarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
     <textarea
       {...props}
-      className={`w-full rounded-md border border-drift-border bg-drift-surface px-3 py-[9px] text-[13.5px] text-drift-text-primary placeholder:text-drift-text-secondary ${focusRing} ${props.className ?? ""}`}
+      className={`w-full rounded-[9px] border border-drift-border bg-drift-surface px-3 py-[11px] text-[13px] text-drift-text-primary placeholder:text-drift-text-secondary ${focusRing} ${props.className ?? ""}`}
     />
   );
 }
@@ -120,7 +153,7 @@ export function Select(props: SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <select
       {...props}
-      className={`w-full rounded-md border border-drift-border bg-drift-surface px-3 py-[9px] text-[13.5px] text-drift-text-primary ${focusRing} ${props.className ?? ""}`}
+      className={`w-full rounded-[9px] border border-drift-border bg-drift-surface px-3 py-[11px] text-[13px] text-drift-text-primary ${focusRing} ${props.className ?? ""}`}
     />
   );
 }
@@ -133,8 +166,8 @@ export function Field({
   children: React.ReactNode;
 }) {
   return (
-    <label className="flex flex-col gap-1.5">
-      <span className="text-[13px] font-semibold text-drift-text-secondary">
+    <label className="flex flex-col gap-[7px]">
+      <span className="text-[11px] font-bold text-drift-text-secondary">
         {label}
       </span>
       {children}
@@ -151,7 +184,7 @@ export function Card({
 }) {
   return (
     <div
-      className={`rounded-lg border border-drift-border bg-drift-surface p-5 ${className}`}
+      className={`rounded-[14px] border border-drift-border bg-drift-surface p-5 shadow-card ${className}`}
     >
       {children}
     </div>
@@ -162,25 +195,47 @@ export function PageHeader({
   title,
   description,
   action,
+  eyebrow,
+  below,
+  compact = false,
 }: {
   title: string;
   description?: string;
   action?: React.ReactNode;
+  /** Small uppercase label above the title, with the design's status dot. */
+  eyebrow?: string;
+  /** Rendered under the header block, e.g. a workspace sub-navigation. */
+  below?: React.ReactNode;
+  /** A section title inside a workspace: smaller, no eyebrow. */
+  compact?: boolean;
 }) {
   return (
-    <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-      <div>
-        <h1 className="font-display text-[26px] font-extrabold leading-[32px] text-drift-text-primary">
+    <>
+    <div className={`${compact ? "mb-5" : "mb-6"} flex flex-wrap items-end justify-between gap-x-7 gap-y-4`}>
+      <div className="min-w-0">
+        {eyebrow && !compact && (
+          <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase text-drift-text-secondary">
+            <span className="h-[7px] w-[7px] rounded-full bg-drift-primary shadow-[0_0_0_4px_var(--color-primary-light)]" />
+            {eyebrow}
+          </div>
+        )}
+        <h1
+          className={`font-display font-extrabold text-drift-text-primary ${
+            compact ? "text-[22px] leading-tight" : "text-[clamp(26px,3vw,38px)] leading-[1.1]"
+          }`}
+        >
           {title}
         </h1>
         {description && (
-          <p className="mt-1 max-w-[560px] text-sm text-drift-text-secondary">
+          <p className="mt-[7px] max-w-[590px] text-[13px] leading-[1.55] text-drift-text-secondary">
             {description}
           </p>
         )}
       </div>
       {action}
     </div>
+    {below}
+    </>
   );
 }
 
@@ -218,17 +273,19 @@ export function EmptyState({
   /** Drop the border/background — the parent already provides the frame. */
   bare?: boolean;
 }) {
-  const heading = title ?? message ?? "Nothing here yet";
-  const loading = /^(loading|loading…|loading\.\.\.)/i.test(heading.trim());
+  const t = useT();
+  const heading = title ?? message ?? t("common.nothingHere");
+  // Matches the translated "Loading…" too, so the spinner shows in every language.
+  const loading = /^(loading|chargement|cargando)/i.test(heading.trim());
 
   return (
     <div
       className={`flex flex-col items-center justify-center text-center ${
         compact ? "px-6 py-10" : "px-6 py-16"
-      } ${bare ? "" : "rounded-lg border border-drift-border bg-drift-surface"}`}
+      } ${bare ? "" : "rounded-2xl border border-drift-border bg-drift-surface shadow-card"}`}
     >
       <span
-        className={`flex h-12 w-12 items-center justify-center rounded-full ${
+        className={`flex h-12 w-12 items-center justify-center rounded-[14px] ${
           loading
             ? "bg-drift-neutral-surface text-drift-text-secondary"
             : "bg-drift-primary-light text-drift-primary"
@@ -239,11 +296,11 @@ export function EmptyState({
           className={`text-[22px] ${loading ? "animate-pulse" : ""}`}
         />
       </span>
-      <div className="mt-4 text-[15px] font-bold text-drift-text-primary">
+      <div className="mt-3.5 text-[14px] font-bold text-drift-text-primary">
         {heading}
       </div>
       {description && (
-        <p className="mt-1.5 max-w-sm text-[13px] leading-5 text-drift-text-secondary">
+        <p className="mt-[5px] max-w-sm text-[12px] leading-[1.5] text-drift-text-secondary">
           {description}
         </p>
       )}
@@ -272,17 +329,19 @@ export function Badge({
   tone?: "neutral" | "success" | "warning" | "error" | "info";
   children: React.ReactNode;
 }) {
+  // The design's status pill: tinted, uppercase, with a leading dot.
   const tones: Record<string, string> = {
-    neutral: "bg-drift-neutral-surface text-drift-text-secondary border-drift-border",
-    success: "bg-drift-success-surface text-drift-success border-drift-success/30",
-    warning: "bg-drift-warning-surface text-drift-warning border-drift-warning/30",
-    error: "bg-drift-error-surface text-drift-error border-drift-error/30",
-    info: "bg-drift-primary-light text-drift-primary-dark border-drift-primary/30",
+    neutral: "bg-drift-neutral-surface text-drift-text-secondary",
+    success: "bg-drift-success-surface text-drift-success",
+    warning: "bg-drift-gold-surface text-drift-gold",
+    error: "bg-drift-error-surface text-drift-error",
+    info: "bg-drift-primary-light text-drift-primary-dark",
   };
   return (
     <span
-      className={`inline-flex items-center rounded-full border px-3 py-[3px] text-[11.5px] font-bold leading-none ${tones[tone]}`}
+      className={`inline-flex w-fit items-center gap-[5px] rounded-full px-2 py-[5px] text-[11px] font-extrabold uppercase leading-none ${tones[tone]}`}
     >
+      <span className="h-[5px] w-[5px] shrink-0 rounded-full bg-current" />
       {children}
     </span>
   );
@@ -373,7 +432,7 @@ export function statusTone(status: string): "neutral" | "success" | "warning" | 
 export function Th({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
     <th
-      className={`border-b border-drift-border px-3 py-2 text-left text-xs font-bold uppercase text-drift-text-secondary ${className}`}
+      className={`border-b border-drift-border bg-drift-surface-sunken px-[18px] py-3 text-left text-[11px] font-bold uppercase text-drift-text-secondary ${className}`}
     >
       {children}
     </th>
@@ -382,7 +441,7 @@ export function Th({ children, className = "" }: { children: React.ReactNode; cl
 
 export function Td({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <td className={`border-b border-drift-border px-3 py-2.5 align-middle text-sm text-drift-text-primary ${className}`}>
+    <td className={`border-b border-drift-border px-[18px] py-3.5 align-middle text-[13px] text-drift-text-primary ${className}`}>
       {children}
     </td>
   );

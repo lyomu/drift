@@ -10,6 +10,7 @@ import '../../../shared/widgets/drift_pill.dart';
 import '../../../shared/widgets/drift_soft_card.dart';
 import '../application/competitions_providers.dart';
 import '../data/competitions_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// My Seasons — `foundation/04-screen-inventory.md` §A.5. Reuses Play
 /// Hub's segmented-list visual pattern (a plain refreshable list here,
@@ -29,7 +30,7 @@ class MySeasonsScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const DriftBackHeader(title: 'My Leagues'),
+            DriftBackHeader(title: context.l10n.competeMyLeagues),
             Expanded(
               child: RefreshIndicator(
                 onRefresh: () => ref.refresh(mySeasonsProvider.future),
@@ -79,8 +80,8 @@ class MySeasonsScreen extends ConsumerWidget {
                       );
                     },
                   ),
-                  AsyncError() => const Center(
-                    child: Text("Couldn't load your leagues."),
+                  AsyncError() => Center(
+                    child: Text(context.l10n.competeLoadMyLeaguesFailed),
                   ),
                   _ => const Center(child: CircularProgressIndicator()),
                 },
@@ -114,7 +115,7 @@ class _EmptyState extends StatelessWidget {
               ),
               const SizedBox(height: DriftSpacing.s3),
               Text(
-                "You haven't joined a league yet",
+                context.l10n.competeNoMyLeagues,
                 style: type.body.copyWith(color: colors.textSecondary),
                 textAlign: TextAlign.center,
               ),

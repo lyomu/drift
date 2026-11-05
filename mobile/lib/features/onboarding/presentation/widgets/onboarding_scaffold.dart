@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/drift_colors.dart';
+import '../../../../core/l10n/l10n.dart';
 
 /// Shared chrome for every numbered onboarding step (redesign 2026-10).
 ///
@@ -44,7 +45,7 @@ class DriftOnboardingScaffold extends StatelessWidget {
     required this.children,
     this.highlight,
     this.subtitle,
-    this.ctaLabel = 'Continue',
+    this.ctaLabel,
     this.ctaActive = true,
     this.loading = false,
     this.onContinue,
@@ -64,7 +65,8 @@ class DriftOnboardingScaffold extends StatelessWidget {
   /// The step's own content, between the header and the CTA.
   final List<Widget> children;
 
-  final String ctaLabel;
+  /// Defaults to the translated "Continue".
+  final String? ctaLabel;
 
   /// False dims the button; it stays tappable so the tap can surface
   /// [errorText] rather than leaving the player with a dead control.
@@ -94,7 +96,7 @@ class DriftOnboardingScaffold extends StatelessWidget {
                 children: [
                   Semantics(
                     button: true,
-                    label: 'Go back',
+                    label: context.l10n.commonGoBack,
                     child: Material(
                       color: Colors.transparent,
                       borderRadius: BorderRadius.circular(12),
@@ -153,7 +155,7 @@ class DriftOnboardingScaffold extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               OnboardingContinueButton(
-                label: ctaLabel,
+                label: ctaLabel ?? context.l10n.commonContinue,
                 active: ctaActive,
                 loading: loading,
                 onPressed: onContinue,
@@ -250,7 +252,7 @@ class OnboardingHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'STEP $step OF $total',
+          context.l10n.onbStepOf(step, total),
           style: TextStyle(
             fontFamily: onboardingFont,
             fontSize: 12,
@@ -296,10 +298,10 @@ class OnboardingContinueButton extends StatelessWidget {
     required this.active,
     required this.loading,
     required this.onPressed,
-    this.label = 'Continue',
+    this.label,
   });
 
-  final String label;
+  final String? label;
   final bool active;
   final bool loading;
   final VoidCallback? onPressed;
@@ -342,7 +344,7 @@ class OnboardingContinueButton extends StatelessWidget {
                       ),
                     )
                   : Text(
-                      '$label  →',
+                      '${label ?? context.l10n.commonContinue}  →',
                       style: const TextStyle(
                         fontFamily: onboardingFont,
                         fontSize: 15,

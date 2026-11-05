@@ -1,0 +1,2121 @@
+{
+  "@@locale": "en",
+  "achievementsCriteria": "Criteria",
+  "achievementsEarned": "Earned",
+  "achievementsLoadFailed": "Couldn't load achievements.",
+  "achievementsLocked": "Locked",
+  "achievementsYourBadges": "Your badges",
+  "assessmentGoodProgress": "Good progress",
+  "assessmentHalfway": "You are halfway through. The next questions fine-tune your level so Drift can suggest better matches.",
+  "assessmentHistory": "Assessment History",
+  "assessmentLoadFailed": "Unable to load the assessment.",
+  "assessmentOnlyOne": "Only one assessment so far",
+  "assessmentQuestionOf": "Question {current} of {total}",
+  "@assessmentQuestionOf": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "assessmentTitle": "Tennis Assessment",
+  "authAgePolicy": "I confirm I am 18 or older and agree to the Terms and Conditions and Privacy Policy.",
+  "authAppleFailed": "Apple sign-in could not be completed. {details}",
+  "@authAppleFailed": {
+    "placeholders": {
+      "details": {
+        "type": "String"
+      }
+    }
+  },
+  "authAppleNoToken": "Apple returned no identity token. Please try again.",
+  "authAppleUnavailable": "Apple sign-in isn't available on this device yet.",
+  "authBackToLogin": "Back to Log In",
+  "authCode": "Code",
+  "authConfirmNewPassword": "Confirm new password",
+  "authContinueApple": "Continue with Apple",
+  "authContinueGoogle": "Continue with Google",
+  "authCreateAccount": "Create account",
+  "authEmail": "Email",
+  "authFirstName": "First name",
+  "authForgotPasswordIntro": "Enter the email address on your account and we’ll send a six-digit code you can use to set a new password.",
+  "authForgotPasswordLink": "Forgot Password?",
+  "authForgotPasswordTitle": "Forgot Password",
+  "authGoogleFailed": "Google sign-in could not be completed.",
+  "authGoogleNoToken": "Google returned no identity token. The app is missing its server client ID.",
+  "authHaveAccount": "Already have an account? ",
+  "authLastName": "Last name",
+  "authLink": "Link",
+  "authLinkBody": "{email} already has a Drift Tennis account. Enter its password once and the two will be linked — after that you can use either to sign in.",
+  "@authLinkBody": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "authLinkTitle": "Link your account",
+  "authLogIn": "Log in",
+  "authLogin": "Login",
+  "authNeedAccount": "Need an account? ",
+  "authNewPassword": "New password",
+  "authOnWhatsApp": "This number is on WhatsApp",
+  "authPassword": "Password",
+  "authPasswordRule": "Use 8 to 72 characters.",
+  "authPasswordUpdated": "Password updated. Log in with your new password.",
+  "authPasswordsDontMatch": "Those passwords don’t match.",
+  "authPhone": "Phone number",
+  "authPhoneOptional": "Phone number (optional)",
+  "authResendCode": "Resend code",
+  "authResendCodeIn": "Resend code in {seconds}s",
+  "@authResendCodeIn": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "authResendIn": "Resend in {seconds}s",
+  "@authResendIn": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "authResetPasswordIntro": "If an account exists for {email}, a six-digit code is on its way. Enter it below with your new password.",
+  "@authResetPasswordIntro": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "authResetPasswordTitle": "Reset Password",
+  "authSearchCountries": "Search countries",
+  "authSelectCountry": "Select country, currently {country}, plus {code}",
+  "@authSelectCountry": {
+    "placeholders": {
+      "country": {
+        "type": "String"
+      },
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "authSendCode": "Send Code",
+  "authSetNewPassword": "Set New Password",
+  "authSignUp": "Sign up",
+  "authSixDigitCode": "Six-digit code",
+  "authVerify": "Verify",
+  "authVerifyIntro": "Enter the 6-digit code we sent to {email}.",
+  "@authVerifyIntro": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "authVerifying": "Verifying…",
+  "availBookOnline": "Book online",
+  "availComingSoon": "Booking coming soon",
+  "availContactToBook": "Contact to book",
+  "availUnknown": "Booking unknown",
+  "blockedLoadFailed": "Couldn't load your blocked users.",
+  "blockedNone": "You haven't blocked anyone.",
+  "blockedUnblock": "Unblock",
+  "blockedUnblocking": "Unblocking…",
+  "clubAnnouncements": "Announcements",
+  "clubFeed": "Club Feed",
+  "clubFormerMember": "Former member",
+  "clubInvited": "You have been invited to this club.",
+  "clubJoin": "Join",
+  "clubJoinRequestSent": "Join request sent.",
+  "clubJoinToSeeAnnouncements": "Join this club to see its announcements.",
+  "clubJoinToSeeFeed": "Join this club to see and post to its feed.",
+  "clubLeave": "Leave club",
+  "clubLoadFailed": "Couldn't load clubs. Pull to retry.",
+  "clubNoAnnouncements": "No announcements yet",
+  "clubNoCourtsListed": "No courts listed",
+  "clubNoPosts": "No posts yet",
+  "clubNoneNearby": "No clubs nearby yet",
+  "clubRequestPending": "Your request is waiting for a club admin.",
+  "clubRequestToJoin": "Request to join",
+  "clubRequested": "Requested",
+  "clubRequesting": "Requesting…",
+  "clubShareHint": "Share something with the club",
+  "clubSuspended": "Your membership of this club is suspended.",
+  "clubTitle": "Club",
+  "clubUnavailable": "Club not available.",
+  "clubViewCoaches": "View coaches",
+  "clubWithdrawRequest": "Withdraw request",
+  "coachContactBook": "Contact / Book",
+  "coachContactFailed": "Could not open that contact method.",
+  "coachContactName": "Contact {name}",
+  "@coachContactName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "coachEmail": "Email coach",
+  "coachFallbackName": "Coach",
+  "coachFilters": "Coach filters",
+  "coachLoadFailed": "Couldn't load coaches. Pull to retry.",
+  "coachNoneNearby": "No coaches listed near you yet",
+  "coachOpenBooking": "Open booking page",
+  "coachPlayersCoached": "Players coached",
+  "coachQualifications": "Qualifications",
+  "coachSearchClub": "Search by club name",
+  "coachSelectedClub": "Selected club",
+  "coachSpecialisation": "Specialisation",
+  "coachSpecialisationHint": "e.g. Serve, juniors, match play",
+  "coachSpecialisations": "Specialisations",
+  "coachTitle": "Coach",
+  "coachUnavailable": "Coach profile is not available.",
+  "comingSoon": "Coming soon",
+  "comingSoonApple": "Apple sign-in isn't ready yet — we're still setting it up. Please continue with Google or email for now.",
+  "commonAccept": "Accept",
+  "commonAvailability": "Availability",
+  "commonBack": "Back",
+  "commonCallNumber": "Call {phone}",
+  "@commonCallNumber": {
+    "placeholders": {
+      "phone": {
+        "type": "String"
+      }
+    }
+  },
+  "commonCancel": "Cancel",
+  "commonCancelling": "Cancelling…",
+  "commonClose": "Close",
+  "commonCompleted": "Completed",
+  "commonConfirm": "Confirm",
+  "commonContact": "Contact",
+  "commonContinue": "Continue",
+  "commonCourtCount": "{count, plural, =1{1 court} other{{count} courts}}",
+  "@commonCourtCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "commonDecline": "Decline",
+  "commonDelete": "Delete",
+  "commonDistanceUnknown": "Distance unknown",
+  "commonDone": "Done",
+  "commonErrorGeneric": "Something went wrong. Please try again.",
+  "commonGoBack": "Go back",
+  "commonGotIt": "Got it",
+  "commonInProgress": "In progress",
+  "commonKmAway": "{km} km away",
+  "@commonKmAway": {
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
+  "commonLevel": "Level {level}",
+  "@commonLevel": {
+    "placeholders": {
+      "level": {
+        "type": "String"
+      }
+    }
+  },
+  "commonLoading": "Loading…",
+  "commonNotAvailable": "Not available.",
+  "commonNotSet": "Not set",
+  "commonNotesOptional": "Notes (optional)",
+  "commonOpen": "Open",
+  "commonOpenAction": "Open",
+  "commonOptionalSuffix": " (optional)",
+  "commonPlayer": "Player",
+  "commonPlayerCount": "{count, plural, =1{1 player} other{{count} players}}",
+  "@commonPlayerCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "commonRetry": "Retry",
+  "commonSave": "Save",
+  "commonSaving": "Saving…",
+  "commonSearch": "Search",
+  "commonSeeAll": "See all",
+  "commonSending": "Sending…",
+  "commonSkip": "Skip",
+  "commonSubmit": "Submit",
+  "commonSubmitting": "Submitting…",
+  "commonThem": "Them",
+  "commonToday": "Today",
+  "commonTryAgain": "Try again",
+  "commonUnknown": "Unknown",
+  "commonUnknownDate": "Unknown date",
+  "commonUnrated": "Unrated",
+  "commonUpdating": "Updating…",
+  "commonVerified": "Verified",
+  "commonView": "View",
+  "commonViewAll": "View all",
+  "commonViewDetails": "View details",
+  "commonViewProfile": "View profile",
+  "commonVs": "vs",
+  "commonWorking": "Working…",
+  "commonYesterday": "Yesterday",
+  "commonYou": "You",
+  "communityAboutHint": "e.g. level, usual courts, what a session looks like",
+  "communityAboutOptional": "About · Optional",
+  "communityAddPhoto": "Add a photo",
+  "communityAddPhotoOptional": "Add a photo (optional)",
+  "communityApprove": "Approve",
+  "communityChallengeRange": "{count, plural, =1{Players can challenge 1 rung up} other{Players can challenge up to {count} rungs up}}",
+  "@communityChallengeRange": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "communityChallengeRangeHint": "How far above their own position a player may challenge.",
+  "communityChangePhoto": "Change photo",
+  "communityChatPreview": "{name}: {message}",
+  "@communityChatPreview": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "communityChatReadOnly": "This community is suspended, so its chat is read-only.",
+  "communityChatUnavailable": "The chat opens once the community is approved.",
+  "communityCity": "City",
+  "communityCityHint": "Nairobi",
+  "communityCreate": "Create",
+  "communityDecline": "Decline",
+  "communityDelete": "Delete community",
+  "communityDeleteBody": "The chat, ladders and leagues go with it, and every member is told it was closed. This can't be undone.",
+  "communityDeleted": "Community deleted",
+  "communityDeleteTitle": "Delete {name}?",
+  "@communityDeleteTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "communityDetails": "Details",
+  "communityDisputeHint": "The players disagree on the score. Your ruling settles it.",
+  "communityDisputeKeep": "Keep submitted score",
+  "communityDisputeResolved": "Dispute resolved",
+  "communityDisputes": "Disputed results ({count})",
+  "@communityDisputes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "communityDisputeUseDisputed": "Use disputed score",
+  "communityDisputeVs": "{a} vs {b}",
+  "@communityDisputeVs": {
+    "placeholders": {
+      "a": {
+        "type": "String"
+      },
+      "b": {
+        "type": "String"
+      }
+    }
+  },
+  "communityEmptyBody": "A community is a standing session with its own members and chat. Start one and invite the people you play with.",
+  "communityEmptyTitle": "No communities yet",
+  "communityFilterAnyCity": "Any city",
+  "communityFilterCity": "City",
+  "communityFilterCityTitle": "Communities in…",
+  "communityFilterNearMe": "Near me",
+  "communityFormAboutLabel": "Tell players what to expect",
+  "communityFormCityHint": "e.g. Nairobi",
+  "communityFormCityLabel": "Which city do you play in?",
+  "communityFormFrequencyLabel": "How often do you get together?",
+  "communityFormJoinLabel": "How do new players get in?",
+  "communityFormJoinOpen": "Open to everyone",
+  "communityFormJoinOpenHint": "Players join instantly, no approval needed",
+  "communityFormJoinRequest": "Approval needed",
+  "communityFormJoinRequestHint": "You review and accept each player",
+  "communityFormNameLabel": "What's your community called?",
+  "communityFormOptional": "Optional",
+  "communityFrequencyBiweekly": "Every two weeks",
+  "communityFrequencyMonthly": "Monthly",
+  "communityFrequencyOther": "Other",
+  "communityFrequencyWeekly": "Weekly",
+  "communityHowOften": "How often",
+  "communityJoin": "Join",
+  "communityJoinAnyone": "Anyone",
+  "communityJoinAnyoneHint": "Anyone on Drift Tennis can join straight away",
+  "communityJoinByRequest": "By request",
+  "communityJoinByRequestHint": "You approve each request",
+  "communityJoined": "Joined",
+  "communityJoinedToast": "You've joined {name}",
+  "@communityJoinedToast": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "communityJoinRequests": "Join requests ({count})",
+  "@communityJoinRequests": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "communityLadderCreated": "Ladder created. Members have been notified.",
+  "communityLadderName": "Ladder name",
+  "communityLadderPlayers": "{count, plural, =0{No players yet} =1{1 player} other{{count} players}}",
+  "@communityLadderPlayers": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "communityLadders": "Ladders",
+  "communityLadderYourRung": "You're #{position} of {total}",
+  "@communityLadderYourRung": {
+    "placeholders": {
+      "position": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "communityLeagueCapacity": "Player limit (optional)",
+  "communityLeagueCapacityHint": "Extra sign-ups join a waitlist.",
+  "communityLeagueCloseBeforeStart": "Registration has to close on or before the start date.",
+  "communityLeagueCreate": "Create league",
+  "communityLeagueCreated": "League created. Members have been notified.",
+  "communityLeagueDaysBetweenRounds": "Days per round",
+  "communityLeagueDescription": "Description (optional)",
+  "communityLeagueName": "League name",
+  "communityLeagueOpenBeforeClose": "Registration has to open before it closes.",
+  "communityLeagueRegistrationCloses": "Registration closes",
+  "communityLeagueRegistrationOpens": "Registration opens",
+  "communityLeagueRounds": "Rounds",
+  "communityLeagues": "Leagues",
+  "communityLeagueStarts": "League starts",
+  "communityLeave": "Leave community",
+  "communityLeaveBody": "You'll leave its chat and stop getting its notifications. You can ask to join again later.",
+  "communityLeaveLastOwner": "You're the only member, so leaving closes the community for good.",
+  "communityLeaveTitle": "Leave {name}?",
+  "@communityLeaveTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "communityLeft": "You've left the community.",
+  "communityLoadCompetitionsFailed": "Couldn't load competitions.",
+  "communityLoadFailed": "Couldn't load communities.",
+  "communityLoadMembersFailed": "Couldn't load members.",
+  "communityLoadOneFailed": "Couldn't load this community.",
+  "communityMakeAdmin": "Make admin",
+  "communityMakeOwner": "Make owner",
+  "communityManage": "Manage community",
+  "communityMemberCount": "{count, plural, =1{1 member} other{{count} members}}",
+  "@communityMemberCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "communityMembersCount": "Members ({count})",
+  "@communityMembersCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "communityMute": "Mute chat notifications",
+  "communityMuteHint": "Approvals and new competitions still reach you.",
+  "communityName": "Name",
+  "communityNameHint": "e.g. Tuesday Night Doubles",
+  "communityNearYou": "Communities near you",
+  "communityNewLadder": "New ladder",
+  "communityNewLeague": "New league",
+  "communityNoAbout": "No description yet.",
+  "communityNoCompetitions": "No ladders or leagues yet.",
+  "communityNoCompetitionsManager": "No ladders or leagues yet. Start one for your members.",
+  "communityNoneMatch": "No communities match. Try another filter, or start one.",
+  "communityNoneNearby": "No communities near you yet. Start one and invite the people you play with.",
+  "communityNotApprovedBody": "Drift didn't approve this community. Contact support if you think that's a mistake.",
+  "communityOwnerZone": "Owner",
+  "communityPhotoChosen": "Photo added",
+  "communityRemove": "Remove from community",
+  "communityRemoveAdmin": "Remove as admin",
+  "communityRemoveBody": "They'll leave the chat and be told they were removed. They can ask to join again.",
+  "communityRemoveTitle": "Remove {name}?",
+  "@communityRemoveTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "communityReport": "Report community",
+  "communityReportAlsoLeave": "Also leave this community",
+  "communityReportBody": "Drift's team will review it. The community won't be told who reported it.",
+  "communityReported": "Thanks — Drift will review this community.",
+  "communityReportedAndLeft": "Reported, and you've left the community.",
+  "communityReportTitle": "Report {name}",
+  "@communityReportTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "communityRequested": "Requested",
+  "communityRequestedCancel": "Requested · Cancel request",
+  "communityRequestSent": "Request sent. You'll get a notification when it's answered.",
+  "communityRequestToJoin": "Request to join",
+  "communityResults": "Results",
+  "communityReviewNote": "Drift reviews every new community before others can find it. We'll let you know when it's live.",
+  "communityRoleAdmin": "Admin",
+  "communityRoleMember": "Member",
+  "communityRoleOwner": "Owner",
+  "communityRunBy": "Run by {club}",
+  "@communityRunBy": {
+    "placeholders": {
+      "club": {
+        "type": "String"
+      }
+    }
+  },
+  "communitySave": "Save changes",
+  "communitySaved": "Saved",
+  "communitySearchHint": "Search communities",
+  "communityStart": "Start a community",
+  "communityStatusNotApproved": "Not approved",
+  "communityStatusSuspended": "Suspended",
+  "communityStatusUnderReview": "Under review",
+  "communitySubmitted": "Submitted for review",
+  "communitySuspendedBody": "Drift suspended this community. The chat is read-only and nobody can join while it's reviewed.",
+  "communityTabAbout": "About",
+  "communityTabChat": "Chat",
+  "communityTabCompetitions": "Competitions",
+  "communityTabMembers": "Members",
+  "communityTransfer": "Make owner",
+  "communityTransferBody": "They'll be able to manage everything, including deleting the community. You stay on as an admin.",
+  "communityTransferred": "{name} now owns the community",
+  "@communityTransferred": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "communityTransferTitle": "Make {name} the owner?",
+  "@communityTransferTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "communityTypeClub": "Club",
+  "communityTypeClubHint": "A club's own members",
+  "communityTypeLadder": "Ladder",
+  "communityTypeLadderHint": "Ongoing ranked challenges between members",
+  "communityTypeSocial": "Social",
+  "communityTypeSocialHint": "Casual hits and regular meetups",
+  "communityTypeTraining": "Training",
+  "communityTypeTrainingHint": "Clinics, drills and coached sessions",
+  "communityUnderReviewBody": "Drift is reviewing your community. Nobody else can find or join it until it's approved — we'll send you a notification.",
+  "communityUnmute": "Unmute chat notifications",
+  "communityWhatItIs": "What kind of community is it?",
+  "communityWhoCanJoin": "Who can join",
+  "communityYourCommunities": "Your communities",
+  "competeBye": "Bye",
+  "competeByeFixture": "{name} — bye",
+  "@competeByeFixture": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "competeByeThisRound": "Bye this round",
+  "competeCurrentRound": "Current Round",
+  "competeDeadline": "Deadline: {date}",
+  "@competeDeadline": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "competeEnter": "Enter",
+  "competeEvents": "Events",
+  "competeFinal": "Final",
+  "competeFull": "Full",
+  "competeJoinTournament": "Join tournament",
+  "competeJoinWaitlist": "Join Waitlist",
+  "competeJoinWaitlistBody": "You'll be added to the waitlist and enrolled automatically if a spot opens up.",
+  "competeJoinWaitlistQ": "Join the waitlist?",
+  "competeLadder": "Ladder",
+  "competeLadderUnavailable": "Ladder not available.",
+  "competeLadders": "Ladders",
+  "competeLeague": "League",
+  "competeLeagueUnavailable": "League not available.",
+  "competeLeagues": "Leagues",
+  "competeLeaveWaitlist": "Leave waitlist",
+  "competeLoadLaddersFailed": "Couldn't load ladders.",
+  "competeLoadLeaguesFailed": "Couldn't load leagues. Please try again.",
+  "competeLoadMyLeaguesFailed": "Couldn't load your leagues.",
+  "competeLoadPlayersFailed": "Couldn't load players.",
+  "competeLoadStandingsFailed": "Couldn't load standings.",
+  "competeLoadTournamentsFailed": "Couldn't load tournaments.",
+  "competeMyLeagues": "My Leagues",
+  "competeNoLadders": "No ladders yet. Ask your club to start one.",
+  "competeNoLeagues": "No leagues near you yet — try widening your search",
+  "competeNoMyLeagues": "You haven't joined a league yet",
+  "competeNoRegistrations": "No one has registered yet.",
+  "competeNoRules": "No rules have been published for this league yet.",
+  "competeNoTournaments": "No tournaments yet. Ask your club to run one.",
+  "competeOnWaitlist": "On the waitlist",
+  "competeRegister": "Register",
+  "competeRegisterBody": "You'll be paired with other registered players once the league starts.",
+  "competeRegisterQ": "Register for this league?",
+  "competeRegisteredPlayers": "Registered Players",
+  "competeRegistrationClosed": "Registration is closed for this league.",
+  "competeRegistrationOpensSoon": "Registration opens soon.",
+  "competeRound": "Round",
+  "competeRoundNumber": "Round {number}",
+  "@competeRoundNumber": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "competeRoundUnavailable": "Round not available.",
+  "competeRules": "Rules",
+  "competeRulesUnavailable": "Rules not available.",
+  "competeScoringFormat": "Scoring format",
+  "competeSemiFinals": "Semi-finals",
+  "competeSpotsLeft": "{count, plural, =1{1 spot left} other{{count} spots left}}",
+  "@competeSpotsLeft": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "competeStandings": "Standings",
+  "competeStandingsEmpty": "Standings appear once the first round is played.",
+  "competeTournament": "Tournament",
+  "competeTournamentUnavailable": "Tournament not available.",
+  "competeTournaments": "Tournaments",
+  "competeUnfinishedMatches": "Unfinished matches",
+  "competeVsFixture": "{a} vs {b}",
+  "@competeVsFixture": {
+    "placeholders": {
+      "a": {
+        "type": "String"
+      },
+      "b": {
+        "type": "String"
+      }
+    }
+  },
+  "competeWaitlist": "Waitlist",
+  "competeWaitlistBody": "We'll move you in automatically if a spot opens up.",
+  "competeWalkovers": "Walkovers",
+  "competeWithdraw": "Withdraw",
+  "competeWithdrawBody": "You can register again later, as long as registration is still open.",
+  "competeWithdrawQ": "Withdraw from this league?",
+  "competeYoureRegistered": "You're registered",
+  "connectionsCancelRequest": "Cancel request",
+  "connectionsEmpty": "Connect with players to build your Tennis network",
+  "connectionsIncoming": "Incoming",
+  "connectionsLoadRequestsFailed": "Couldn't load your requests.",
+  "connectionsNoPending": "No pending requests",
+  "connectionsPending": "Pending requests",
+  "connectionsRequests": "Requests",
+  "connectionsSent": "Sent",
+  "connectionsTitle": "Connections",
+  "courtAccess": "Access",
+  "courtAddress": "Address",
+  "courtAmenities": "Amenities",
+  "courtBookOnline": "Book Online",
+  "courtBookingOptions": "Booking Options",
+  "courtBookingOptionsLower": "Booking options",
+  "courtDetails": "Details",
+  "courtGetDirections": "Get Directions",
+  "courtHours": "Hours",
+  "courtIndoor": "Indoor",
+  "courtIndoorSuffix": " (indoor)",
+  "courtList": "List",
+  "courtLitSuffix": " · lit",
+  "courtLoadFailed": "Couldn't load courts. Pull to retry.",
+  "courtLocationUnknown": "Location unknown",
+  "courtMap": "Map",
+  "courtMapUnavailable": "Map tiles unavailable — switch to List to browse results.",
+  "courtNativeBookingUnavailable": "Native booking isn't available for this court yet.",
+  "courtNoBookingInfo": "No booking info available — try contacting directly",
+  "courtNoPhotos": "No photos yet",
+  "courtNoneFound": "No courts found",
+  "courtNoneInArea": "No courts found in this area",
+  "courtOutdoor": "Outdoor",
+  "courtPhone": "Phone",
+  "courtPhotos": "Photos",
+  "courtPrivate": "Private",
+  "courtPublic": "Public",
+  "courtAddFavorite": "Add to favorites",
+  "courtBookACourt": "Book a court",
+  "courtBookingEyebrow": "Booking",
+  "courtClosedNow": "Closed now",
+  "courtCourtCount": "{count, plural, =1{1 court} other{{count} courts}}",
+  "@courtCourtCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "courtCourtsOfSurface": "{count, plural, =1{1 {surface} court} other{{count} {surface} courts}}",
+  "@courtCourtsOfSurface": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "surface": {
+        "type": "String"
+      }
+    }
+  },
+  "courtFavoriteFailed": "Couldn’t update favorites. Try again.",
+  "courtFindTheCourt": "Find the court",
+  "courtGoodToKnow": "Good to know",
+  "courtInfoVerifiedFooter": "Venue information verified by Drift",
+  "courtLocationEyebrow": "Location",
+  "courtOpenNow": "Open now",
+  "courtPhotoCount": "{index} / {total}",
+  "@courtPhotoCount": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "courtRemoveFavorite": "Remove from favorites",
+  "courtReportIssue": "Report or update court info",
+  "courtShare": "Share court",
+  "courtShareText": "{name} — {address}",
+  "@courtShareText": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "address": {
+        "type": "String"
+      }
+    }
+  },
+  "courtSurface": "Surface",
+  "courtVerifiedVenue": "Verified venue",
+  "courtUnavailable": "Court not available.",
+  "courtUnverified": "Unverified",
+  "courtVerificationPending": "Verification pending",
+  "courtViewPhotos": "View Photos",
+  "courtVisitWebsite": "Visit Website",
+  "courtWebsite": "Website",
+  "courtWhatsApp": "Message on WhatsApp",
+  "deleteBody": "You'll be signed out on every device immediately and other players will no longer be able to find or contact you.\n\nYour personal information is then permanently erased after 30 days. Until then, contact support if you change your mind — after that it cannot be undone.\n\nMatches you played stay on record for the other players involved, but they will no longer be linked to you.",
+  "deleteButton": "Delete my account",
+  "deleteConfirm": "I understand, delete my account",
+  "deleteDeleting": "Deleting…",
+  "deleteTitle": "This will delete your account",
+  "discoverClubs": "Clubs",
+  "discoverCoaches": "Coaches",
+  "discoverCourts": "Courts",
+  "discoverFindPlayers": "Find players",
+  "drawerSigningOut": "Signing out…",
+  "drawerViewProfile": "View your profile",
+  "eventsComingSoon": "Events coming soon",
+  "eventsComingSoonBody": "Club socials, clinics and mixers will appear here once your club starts running them.",
+  "exp1to2y": "1–2 years",
+  "exp1to2ySub": "Building a solid foundation",
+  "exp2to5y": "2–5 years",
+  "exp2to5ySub": "Developing real game sense",
+  "exp5plus": "5+ years",
+  "exp5plusSub": "Experienced and consistent",
+  "exp6to12m": "6–12 months",
+  "exp6to12mSub": "Getting comfortable on court",
+  "expAdvanced": "Competitive / Advanced",
+  "expAdvancedSub": "Tournament-level play",
+  "expNew": "I'm completely new",
+  "expNewSub": "Never held a racket",
+  "expUnder6m": "Less than 6 months",
+  "expUnder6mSub": "Still learning the basics",
+  "filterAny": "Any",
+  "filterApply": "Apply filters",
+  "filterApplyCount": "Apply filters ({count})",
+  "@filterApplyCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "filterDistance": "Distance",
+  "filterFeatures": "Features",
+  "filterFloodlit": "Floodlit",
+  "filterHasBooking": "Has booking info",
+  "filterIndoorOutdoor": "Indoor / Outdoor",
+  "filterLevel": "Level",
+  "filterSurface": "Surface",
+  "filterTitle": "Filters",
+  "formLoss": "L",
+  "formNoMatches": "No matches played yet",
+  "formWin": "W",
+  "goalAchieved": "Achieved",
+  "goalBaseline": "Baseline",
+  "goalBehind": "Behind",
+  "goalCoaching": "Find a coach",
+  "goalCompete": "Compete in leagues/tournaments",
+  "goalDeadline": "Deadline",
+  "goalDeleteQ": "Delete this goal?",
+  "goalEmpty": "Set your first development goal",
+  "goalGetFit": "Get fitter",
+  "goalHaveFun": "Just have fun",
+  "goalImproveSkills": "Improve my skills",
+  "goalLoadFailed": "Couldn't load goals.",
+  "goalMeetPeople": "Meet new players",
+  "goalMilestones": "Milestones",
+  "goalOnTrack": "On track",
+  "goalPlayMore": "Play more often",
+  "goalTarget": "Target",
+  "goalTargetOutOf6": "Target {value}/6",
+  "@goalTargetOutOf6": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "goalTitle": "Goal",
+  "goalTrackProgress": "Track my progress",
+  "goalCreateAddCustomMilestone": "Add custom milestone",
+  "goalCreateAddDeadline": "Add deadline",
+  "goalCreateChange": "Change",
+  "goalCreateChooseDate": "Choose a date",
+  "goalCreateCurrentRating": "Current rating",
+  "goalCreateCustomDate": "Custom Date",
+  "goalCreateEdit": "Edit",
+  "goalCreateErrorCustomDate": "Choose a custom deadline or select “No deadline”.",
+  "goalCreateErrorTargetHigher": "Choose a target that is higher than your current rating.",
+  "goalCreateFocusHeading": "What would you like to improve?",
+  "goalCreateFocusSub": "Choose a focus or keep it general.",
+  "goalCreateFocusValue": "Focus: {focus}",
+  "@goalCreateFocusValue": {
+    "placeholders": {
+      "focus": {
+        "type": "String"
+      }
+    }
+  },
+  "goalCreateImprovement": "+{value} improvement",
+  "@goalCreateImprovement": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "goalCreateMilestoneHint": "e.g. Practice cross-court placement",
+  "goalCreateMilestonesAdded": "{count, plural, =0{No milestones added} =1{1 milestone added} other{{count} milestones added}}",
+  "@goalCreateMilestonesAdded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "goalCreateMilestonesHeading": "Break it into milestones",
+  "goalCreateMilestonesSub": "Optional · Small achievements help you stay on track.",
+  "goalCreateNoDeadline": "No deadline",
+  "goalCreateNone": "None",
+  "goalCreateOptionalLater": "Optional · You can change this later.",
+  "goalCreateRatingInfoBody": "Drift ratings use a 0–6 scale. Your current rating starts from your latest assessment and practice. Adjust it if it doesn’t feel right.",
+  "goalCreateRatingInfoTitle": "About Drift ratings",
+  "goalCreateRemoveMilestone": "Remove milestone",
+  "goalCreateSelectedSkill": "Selected skill",
+  "goalCreateSetTarget": "Set your target",
+  "goalCreateSkillHeading": "Choose a skill",
+  "goalCreateSkillSub": "Select one skill to develop.",
+  "goalCreateStep1Subtitle": "What part of your tennis game would you like to improve?",
+  "goalCreateStep1Title": "Create a Goal",
+  "goalCreateStep2Subtitle": "Choose the result you want to work toward.",
+  "goalCreateStep2Title": "Choose Your Focus",
+  "goalCreateStep3Subtitle": "Set a meaningful target and make a plan to reach it.",
+  "goalCreateStep3Title": "Build Your Goal",
+  "goalCreateStepOf": "Step {step} of {total}",
+  "@goalCreateStepOf": {
+    "placeholders": {
+      "step": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "goalCreateSubmit": "Create Goal",
+  "goalCreateSummaryFocus": "Focus",
+  "goalCreateSummaryHeading": "Goal summary",
+  "goalCreateSummaryRating": "Rating",
+  "goalCreateSummarySub": "Review your plan before creating it.",
+  "goalCreateTargetDate": "Target date",
+  "goalCreateTargetDisclaimer": "Your target is the skill rating you’re working toward—not an automatic performance measurement.",
+  "goalCreateTargetHeading": "Set your improvement target",
+  "goalCreateTargetMustBeHigher": "Target must be higher",
+  "goalCreateTargetRating": "Target rating",
+  "goalCreateTargetSub": "Move the sliders in 0.5 increments.",
+  "goalCreateTimeline": "Timeline",
+  "goalCreateTimelineHeading": "When do you want to achieve this?",
+  "goalCreateWeeks": "{count, plural, =1{1 Week} other{{count} Weeks}}",
+  "@goalCreateWeeks": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "goalCreateYourGoal": "Your goal",
+  "goalCreatedAnother": "Create another goal",
+  "goalCreatedBody": "Your {skill} goal is set. Every focused session moves you closer.",
+  "@goalCreatedBody": {
+    "placeholders": {
+      "skill": {
+        "type": "String"
+      }
+    }
+  },
+  "goalCreatedEyebrow": "Goal created",
+  "goalCreatedOpen": "Open",
+  "goalCreatedStart": "Start",
+  "goalCreatedTitle": "You’re ready to improve.",
+  "goalCreatedView": "View goal",
+  "goalFocusAccuracy": "Accuracy",
+  "goalFocusAgility": "Agility",
+  "goalFocusApproach": "Approach",
+  "goalFocusBalance": "Balance",
+  "goalFocusClosing": "Closing",
+  "goalFocusComposure": "Composure",
+  "goalFocusConsistency": "Consistency",
+  "goalFocusDepth": "Depth",
+  "goalFocusDescBackhandAccuracy": "Direct the ball with control",
+  "goalFocusDescBackhandConsistency": "Build a dependable backhand",
+  "goalFocusDescBackhandPower": "Add pace and depth",
+  "goalFocusDescBackhandTechnique": "Improve stroke mechanics",
+  "goalFocusDescFootworkAgility": "Change direction efficiently",
+  "goalFocusDescFootworkBalance": "Stay controlled on the move",
+  "goalFocusDescFootworkPreparation": "Set up earlier for each shot",
+  "goalFocusDescFootworkRecovery": "Reset after every stroke",
+  "goalFocusDescForehandAccuracy": "Improve shot placement",
+  "goalFocusDescForehandConsistency": "Keep more shots in play",
+  "goalFocusDescForehandPower": "Develop stronger strokes",
+  "goalFocusDescForehandTechnique": "Refine swing mechanics",
+  "goalFocusDescGeneral": "Work on the skill overall",
+  "goalFocusDescMatchPlayClosing": "Finish sets with confidence",
+  "goalFocusDescMatchPlayComposure": "Stay present under pressure",
+  "goalFocusDescMatchPlayConsistency": "Reduce unforced errors",
+  "goalFocusDescMatchPlayStrategy": "Build smarter point patterns",
+  "goalFocusDescMovementBalance": "Stay stable through every shot",
+  "goalFocusDescMovementEndurance": "Move well for longer",
+  "goalFocusDescMovementRecovery": "Return to position faster",
+  "goalFocusDescMovementSpeed": "Reach the ball sooner",
+  "goalFocusDescNetPlayApproach": "Transition forward effectively",
+  "goalFocusDescNetPlayPositioning": "Own the right court space",
+  "goalFocusDescNetPlayTouch": "Improve feel and control",
+  "goalFocusDescNetPlayVolleys": "Build confident volleys",
+  "goalFocusDescReturnConsistency": "Put more returns in play",
+  "goalFocusDescReturnDepth": "Keep returns deep",
+  "goalFocusDescReturnPositioning": "Find a stronger return position",
+  "goalFocusDescReturnReaction": "Read and react earlier",
+  "goalFocusDescServeConsistency": "Raise your first-serve rate",
+  "goalFocusDescServePlacement": "Hit your service targets",
+  "goalFocusDescServePower": "Generate more racquet speed",
+  "goalFocusDescServeTechnique": "Improve motion and rhythm",
+  "goalFocusEndurance": "Endurance",
+  "goalFocusGeneral": "General improvement",
+  "goalFocusPlacement": "Placement",
+  "goalFocusPositioning": "Positioning",
+  "goalFocusPower": "Power",
+  "goalFocusPreparation": "Preparation",
+  "goalFocusReaction": "Reaction",
+  "goalFocusRecovery": "Recovery",
+  "goalFocusSpeed": "Speed",
+  "goalFocusStrategy": "Strategy",
+  "goalFocusTechnique": "Technique",
+  "goalFocusTouch": "Touch",
+  "goalFocusVolleys": "Volleys",
+  "goalMilestoneDrillBackhand": "Maintain a 10-shot backhand rally",
+  "goalMilestoneDrillFootwork": "Finish a full shadow-swing footwork circuit",
+  "goalMilestoneDrillForehand": "Maintain a 10-shot forehand rally",
+  "goalMilestoneDrillMatchPlay": "Use the chosen focus in a full match",
+  "goalMilestoneDrillMovement": "Finish a full-court movement drill with control",
+  "goalMilestoneDrillNetPlay": "Finish a 10-volley exchange at the net",
+  "goalMilestoneDrillReturn": "Return 8 of 10 practice serves",
+  "goalMilestoneDrillServe": "Land 7 of 10 first serves in the target area",
+  "goalMilestoneReachTarget": "Reach your {skill} rating target",
+  "@goalMilestoneReachTarget": {
+    "placeholders": {
+      "skill": {
+        "type": "String"
+      }
+    }
+  },
+  "goalMilestoneSessionsBackhand": "Complete three backhand-focused practice sessions",
+  "goalMilestoneSessionsFootwork": "Complete three footwork-focused practice sessions",
+  "goalMilestoneSessionsForehand": "Complete three forehand-focused practice sessions",
+  "goalMilestoneSessionsMatchPlay": "Play three focused practice sets",
+  "goalMilestoneSessionsMovement": "Complete three movement-focused practice sessions",
+  "goalMilestoneSessionsNetPlay": "Complete three net-play practice sessions",
+  "goalMilestoneSessionsReturn": "Complete three return-focused practice sessions",
+  "goalMilestoneSessionsServe": "Complete three serve-focused practice sessions",
+  "goalUnavailable": "Goal not available.",
+  "handLeftHanded": "Left-handed",
+  "handRightHanded": "Right-handed",
+  "helpBody": "Read the current FAQs for Drift Tennis. This opens the same answers published on our website.",
+  "helpOpenFailed": "Unable to open FAQs right now.",
+  "helpOpenFaqs": "Open FAQs",
+  "helpTitle": "Questions, answered.",
+  "homeBook": "Book",
+  "homeBrowse": "Browse",
+  "homeCourtsNearYou": "Courts near you",
+  "homeFindAMatch": "Find a match",
+  "homeFindMore": "Find more",
+  "homeGreeting": "Hi, {name}",
+  "@homeGreeting": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "homeLoadFailed": "Couldn't load your Home feed. Please try again.",
+  "homeMapView": "Map view",
+  "homeNeedsYou": "Needs you",
+  "homeNextMatch": "Next match",
+  "homeNextPrefix": "Next: ",
+  "homeNoCourts": "No courts nearby yet.",
+  "homeNoMatches": "No matches scheduled yet.",
+  "homeNoPlayers": "No players nearby yet.",
+  "homePlayersNearYou": "Players near you",
+  "homeProgressEmpty": "Play matches and log practice to start earning achievements.",
+  "homeProgressTo": "Progress to {level}",
+  "@homeProgressTo": {
+    "placeholders": {
+      "level": {
+        "type": "String"
+      }
+    }
+  },
+  "homeQuickActions": "Quick actions",
+  "homeRating": "Rating",
+  "homeReview": "Review",
+  "homeStatDoubles": "DOUBLES",
+  "homeStatLevel": "LEVEL",
+  "homeStatSingles": "SINGLES",
+  "homeTennisNews": "Tennis news",
+  "homeWelcomeBack": "Welcome back",
+  "homeYourProgress": "Your progress",
+  "introGetStarted": "Get Started",
+  "introSlide1Body": "Stay connected to every match, result, and tournament update as your tennis community keeps moving.",
+  "introSlide1Title": "The Game\nNever Stops",
+  "introSlide2Body": "Track your progress, sharpen your skills, and build better habits with insights made for your tennis journey.",
+  "introSlide2Title": "Advance\nYour Game",
+  "introSlide3Body": "Discover players, clubs, and competitions near you, then step onto the court with confidence.",
+  "introSlide3Title": "Start Your\nTennis Journey",
+  "leagueJoined": "Joined",
+  "leagueMemberCount": "{count, plural, =1{1 member} other{{count} members}}",
+  "@leagueMemberCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "leagueMembersOfCapacity": "{count}/{capacity} members",
+  "@leagueMembersOfCapacity": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "capacity": {
+        "type": "int"
+      }
+    }
+  },
+  "leagueWaitlisted": "Waitlisted",
+  "learnBrowseBySkill": "Browse by skill",
+  "learnContentLoadFailed": "Couldn't load content.",
+  "learnContentUnavailable": "Content not available.",
+  "learnFeaturedLessons": "Featured lessons",
+  "learnGoals": "Goals",
+  "learnGoalsSub": "Set and monitor targets",
+  "learnLessonsFailed": "Couldn't load lessons. Pull down to try again.",
+  "learnLessonsComingSoon": "Lessons coming soon",
+  "learnLessonsComingSoonBody": "We're preparing coaching lessons and drills. Check back soon.",
+  "learnLogDrill": "Log this drill in Practice",
+  "learnMarkComplete": "Mark Complete",
+  "learnMarkedComplete": "Marked complete.",
+  "learnMarking": "Marking…",
+  "learnNoContentFilter": "No content yet for this filter",
+  "learnNoData": "No data yet",
+  "learnPlanUnavailable": "Plan not available.",
+  "learnPracticeLog": "Practice Log",
+  "learnPracticeLogSub": "Review past sessions",
+  "learnProgressReport": "Progress Report",
+  "learnProgressReportSub": "See how far you've come",
+  "learnSkillProfile": "Skill Profile",
+  "learnSkillProfileSub": "Track your strengths",
+  "learnSteps": "Steps",
+  "learnTrainingPlan": "Training Plan",
+  "learnWatchVideo": "Watch video",
+  "legalBody": "The current legal documents for the Drift Tennis app and website are published here. They always open the latest approved version.",
+  "legalDataPrivacy": "Data Privacy Notice",
+  "legalHeading": "Terms and privacy",
+  "legalOpenFailed": "Unable to open the legal document right now.",
+  "legalPrivacy": "Privacy Policy",
+  "legalTerms": "Terms and Conditions",
+  "legalTitle": "Legal",
+  "levelAdvanced": "Advanced",
+  "levelAll": "All levels",
+  "levelBeginner": "Beginner",
+  "levelFoundational": "Foundational",
+  "levelIntermediate": "Intermediate",
+  "locationDenied": "Location permission was denied.",
+  "locationServicesOff": "Location services are turned off.",
+  "matchAcceptTheirVersion": "Accept their version",
+  "matchAddNote": "Add a note (optional)",
+  "matchAddSet": "Add a set",
+  "matchCancelMatch": "Cancel match",
+  "matchChallenge": "Challenge",
+  "matchChoosePartner": "Choose your doubles partner.",
+  "matchChooseYourPartner": "Choose your partner",
+  "matchConfidence": "Confidence",
+  "matchConnectFirst": "Connect with a player first to partner with them.",
+  "matchCourt": "Court",
+  "matchCourtName": "Court name",
+  "matchDifferentResults": "You and your opponent submitted different results.",
+  "matchDispute": "Dispute",
+  "matchDisputeIntro": "You and your opponent submitted different results. Accept their version if it's right, or revise yours.",
+  "matchEnterResult": "Enter Result",
+  "matchHowDidItFeel": "How did it feel?",
+  "matchLoadConnectionsFailed": "Couldn't load your connections.",
+  "matchLoadFailed": "Couldn't load this match.",
+  "matchLoadMatchesFailed": "Couldn't load your matches.",
+  "matchOpponentPicksPartner": "{name} picks their own partner when they accept.",
+  "@matchOpponentPicksPartner": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "matchParticipantDeclined": "Declined",
+  "matchParticipantIn": "In",
+  "matchParticipantInvited": "Invited",
+  "matchPickATime": "Pick a time",
+  "matchPlayers": "Players",
+  "matchProposeTimes": "Propose Times",
+  "matchRematch": "Rematch",
+  "matchReschedule": "Reschedule",
+  "matchResult": "Result",
+  "matchResultDisputed": "Result disputed",
+  "matchRetirement": "Retirement",
+  "matchReviseVersion": "Revise your version",
+  "matchRoundBanner": "Round {round} · {league}",
+  "@matchRoundBanner": {
+    "placeholders": {
+      "round": {
+        "type": "int"
+      },
+      "league": {
+        "type": "String"
+      }
+    }
+  },
+  "matchRoundsUsed": "You've used all your proposal rounds — sort the rest out in chat.",
+  "matchScore": "Score",
+  "matchSendChallenge": "Send Challenge",
+  "matchSetNumber": "Set {number}",
+  "@matchSetNumber": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "matchSport": "Sport",
+  "matchStateCancelled": "Cancelled",
+  "matchStateCompleted": "Played",
+  "matchStateDisputed": "Disputed",
+  "matchStateExpired": "Expired",
+  "matchStateProposed": "Awaiting reply",
+  "matchStateRescheduled": "Rescheduling",
+  "matchStateRetired": "Retired",
+  "matchStateScheduled": "Scheduled",
+  "matchStateScheduling": "Agreeing a time",
+  "matchStateWalkover": "Walkover",
+  "matchSuggest": "Suggest",
+  "matchSuggestACourt": "Suggest a court",
+  "matchSuggestCourt": "Suggest court",
+  "matchSuggestDifferentTimes": "Suggest different times",
+  "matchTapToConfirm": "Tap a time to confirm the match.",
+  "matchTheirVersion": "Their version",
+  "matchTiebreakShort": "TB",
+  "matchTimeTbc": "Time to be confirmed",
+  "matchTitle": "Match",
+  "matchUndoChallenge": "Undo challenge",
+  "matchUnplayedWalkover": "Unplayed — walkover",
+  "matchUnplayedWalkoverBody": "The round deadline passed before this fixture was played. It's recorded as a walkover in favour of neither player.",
+  "matchViewDispute": "View dispute",
+  "matchWaitingChoose": "Waiting for them to choose.",
+  "matchWaitingConfirm": "Waiting for them to confirm.",
+  "matchWalkoverNeither": "A walkover is recorded in favour of neither player.",
+  "matchWalkoverRetirement": "Walkover / Retirement",
+  "matchWhatHappened": "What happened?",
+  "matchWhoWon": "Who won?",
+  "matchYouSuffix": " (you)",
+  "matchYourOpponent": "Your opponent",
+  "matchYourPartner": "Your partner",
+  "matchYourProposedTimes": "Your proposed times",
+  "matchYourVersion": "Your version",
+  "messagingChat": "Chat",
+  "messagingConnectFirst": "Connect or challenge {name} before messaging.",
+  "@messagingConnectFirst": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "messagingConversation": "Conversation",
+  "messagingEmpty": "No conversations yet — connect with a player to start one",
+  "messagingLoadConversationFailed": "Couldn't load this conversation.",
+  "messagingLoadFailed": "Couldn't load your messages.",
+  "messagingMinChars": "Type at least two letters of a name.",
+  "messagingNewMessage": "New message",
+  "messagingNoSearchResults": "No conversations match your search",
+  "messagingSayHello": "Say hello",
+  "messagingSearch": "Search messages",
+  "messagingSearchPlayers": "Search players by name",
+  "messagingSearchPlayersFailed": "Couldn't search players right now.",
+  "messagingSystemMessage": "System message",
+  "messagingUnread": "Unread",
+  "messagingViewNamed": "View {name}",
+  "@messagingViewNamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "messagingViewRelatedLeague": "View related league",
+  "messagingViewRelatedMatch": "View related match",
+  "navAchievements": "Achievements",
+  "navCommunity": "Community",
+  "navDiscover": "Discover",
+  "navHome": "Home",
+  "navLearn": "Learn",
+  "navMessages": "Messages",
+  "navMyProfile": "My Profile",
+  "navMySportsHub": "My Sports Hub",
+  "navNews": "News",
+  "navNotifications": "Notifications",
+  "navPlay": "Play",
+  "navSettings": "Settings",
+  "newsArtwork": "Tennis news artwork",
+  "newsBrokenLink": "That source link looks broken.",
+  "newsCurated": "Curated for you",
+  "newsDaysAgo": "{days}d ago",
+  "@newsDaysAgo": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "newsFreshOffCourt": "FRESH OFF THE COURT",
+  "newsLatest": "Latest",
+  "newsLatestStories": "Latest stories",
+  "newsLoadFailed": "Couldn't load news. Pull to retry.",
+  "newsLoadMore": "Load more stories",
+  "newsLoadMoreFailed": "Could not load more stories. Try again.",
+  "newsLoadSavedFailed": "Couldn't load saved stories.",
+  "newsNoStories": "No stories in this category yet",
+  "newsOfflineSaved": "Offline news saved {date}",
+  "@newsOfflineSaved": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "newsOpenInBrowser": "Open in browser",
+  "newsOpenSource": "Open Original Source",
+  "newsRead": "Read",
+  "newsReadStory": "Read story",
+  "newsRecently": "Recently",
+  "newsRemoveFromSaved": "Remove from saved",
+  "newsRemoveFromSavedTitle": "Remove from Saved",
+  "newsSaveForLater": "Save stories to read later",
+  "newsSaveStory": "Save story",
+  "newsSavedStories": "Saved stories",
+  "newsSavedStoriesTitle": "Saved Stories",
+  "newsStories": "Stories",
+  "newsStory": "Story",
+  "newsStoryUnavailable": "Story not available.",
+  "notifCaughtUp": "You're all caught up.",
+  "notifClearAll": "Clear all",
+  "notifClearAllBody": "This removes every notification from this list. New notifications will still arrive.",
+  "notifClearAllQ": "Clear all notifications?",
+  "notifDeleteBody": "This notification will be removed from this list.",
+  "notifDeleteQ": "Delete notification?",
+  "notifLoadFailed": "Couldn't load notifications.",
+  "notifMarkAllRead": "Mark all as read",
+  "notifNothingToOpen": "Nothing further to open for this update.",
+  "notifPrefAnnouncements": "News and updates from the Drift team",
+  "notifPrefClubs": "Announcements and membership updates from your clubs",
+  "notifPrefCommunities": "Approvals, join requests and new competitions in your communities",
+  "notifPrefCompetitions": "New rounds and results in your leagues",
+  "notifPrefConnections": "Requests to connect, and accepted connections",
+  "notifPrefLearning": "Goals, plans, and practice reminders",
+  "notifPrefLearningTitle": "Learning",
+  "notifPrefLoadFailed": "Couldn't load your preferences.",
+  "notifPrefMatches": "New challenges and match updates",
+  "notifPrefMatchesTitle": "Matches",
+  "notifPrefMessages": "New messages in your chats",
+  "notifPrefNews": "Tennis news and stories",
+  "onbAdjustLevel": "Adjust level",
+  "onbAdjustLevelTitle": "Adjust Level",
+  "onbAllSet": "You're all set!",
+  "onbAllSetBody": "Your Tennis Profile is ready. Start exploring players, courts, and matches near you.",
+  "onbAvailabilityHighlight": "play?",
+  "onbAvailabilitySubtitle": "Tap the slots you are usually free. You can change these any time.",
+  "onbAvailabilityTitle": "When can you play?",
+  "onbBasicHighlight": "you",
+  "onbBasicSubtitle": "Just the basics. You can change any of it later.",
+  "onbBasicTitle": "Tell us about you",
+  "onbChooseEachSection": "Choose an option in each section to continue.",
+  "onbChooseHand": "Choose your playing hand to continue.",
+  "onbChooseOption": "Please choose an option to continue.",
+  "onbClubHighlight": "play?",
+  "onbClubName": "Club name (optional)",
+  "onbClubSubtitle": "No club yet? Skip this one.",
+  "onbClubTitle": "Where do you play?",
+  "onbConfirmLevel": "Confirm level",
+  "onbEnterLocation": "Enter your general location to continue.",
+  "onbExperienceHighlight": "experience?",
+  "onbExperienceSubtitle": "We'll personalize your training to match your level.",
+  "onbExperienceTitle": "What's your tennis experience?",
+  "onbFormat": "Format",
+  "onbGeneralLocation": "General location / city",
+  "onbGoHome": "Go to Home",
+  "onbGoalsHighlight": "Drift?",
+  "onbGoalsSubtitle": "Pick as many as you like. This only shapes what we suggest.",
+  "onbGoalsTitle": "What brings you to Drift?",
+  "onbHandAmbidextrous": "Ambidextrous",
+  "onbHandLeft": "Left",
+  "onbHandRight": "Right",
+  "onbLoadDetailsFailed": "Couldn't load your details. Please try again.",
+  "onbLocateFailed": "Couldn't determine your location. Enter it manually below.",
+  "onbLocating": "Locating…",
+  "onbLocationHighlight": "based?",
+  "onbLocationSubtitle": "We use this to find players and courts near you.",
+  "onbLocationTitle": "Where are you based?",
+  "onbPadelHighlight": "padel?",
+  "onbPadelLearn": "I'd like to learn",
+  "onbPadelLearnSub": "Open to picking it up",
+  "onbPadelNo": "No, just tennis",
+  "onbPadelNoSub": "Sticking to the classics",
+  "onbPadelSubtitle": "Padel is coming to Drift soon — let us know if you play or want to learn.",
+  "onbPadelTitle": "Do you also play padel?",
+  "onbPadelYes": "Yes, I play padel",
+  "onbPadelYesSub": "Already on the court",
+  "onbPlayingHand": "Playing hand",
+  "onbPreferredCourt": "Preferred court (optional)",
+  "onbPreferredTimes": "Preferred times",
+  "onbPrefsHighlight": "play?",
+  "onbPrefsSubtitle": "This shapes who we match you with.",
+  "onbPrefsTitle": "How do you like to play?",
+  "onbSelectAll": "select all that apply",
+  "onbStepOf": "STEP {step} OF {total}",
+  "@onbStepOf": {
+    "placeholders": {
+      "step": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "onbStyle": "Style",
+  "onbSuggestedHighlight": "level",
+  "onbSuggestedLevel": "Suggested: {level}",
+  "@onbSuggestedLevel": {
+    "placeholders": {
+      "level": {
+        "type": "String"
+      }
+    }
+  },
+  "onbSuggestedSubtitle": "Based on your answers, this is where we think you fit. You can adjust it any time from your profile.",
+  "onbSuggestedTitle": "Your suggested level",
+  "onbTimeBlockAm": "AM",
+  "onbTimeBlockMid": "Mid",
+  "onbTimeBlockPm": "PM",
+  "onbUseCurrentLocation": "Use current location",
+  "optCompetitive": "Competitive",
+  "optDoubles": "Doubles",
+  "optEither": "Either",
+  "optSingles": "Singles",
+  "optSocial": "Social",
+  "padelAdd": "Add Padel",
+  "padelAddBody": "You'll complete a short adaptive assessment scoped to Padel — rally consistency, net play, wall shots, and more. It generates a Padel Profile that's fully separate from your Tennis Profile.",
+  "padelAddHeading": "Add Padel to your profile",
+  "padelAdding": "Adding…",
+  "padelAssessment": "Padel Assessment",
+  "padelCompleteAssessment": "Complete the assessment to get a rating",
+  "padelGoalsHint": "Comma-separated, e.g. Improve my bandeja, Play weekly",
+  "padelHistoryEmpty": "Play your first Padel match to start building history",
+  "padelHistoryFailed": "Couldn't load your Padel match history.",
+  "padelMatchHistory": "Padel Match History",
+  "padelNotAdded": "Padel hasn't been added yet.",
+  "padelPartnerHint": "e.g. Looking for a regular doubles partner",
+  "padelPartnerPreference": "Partner preference",
+  "padelPartnerPreferenceValue": "Partner preference: {value}",
+  "@padelPartnerPreferenceValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "padelPillarBandeja": "Bandeja",
+  "padelPillarNetControl": "Net Control",
+  "padelPillarOverhead": "Overhead",
+  "padelPillarPartnerCommunication": "Partner Communication",
+  "padelPillarPositioning": "Positioning",
+  "padelPillarRallyConsistency": "Rally Consistency",
+  "padelPillarSmash": "Smash",
+  "padelPillarTacticalAwareness": "Tactical Awareness",
+  "padelPillarTransition": "Transition",
+  "padelPillarVibora": "Vibora",
+  "padelPillarWallUsage": "Wall Usage",
+  "padelPreferences": "Preferences",
+  "padelPreferredSide": "Preferred side",
+  "padelPreferredSideValue": "Preferred side: {side}",
+  "@padelPreferredSideValue": {
+    "placeholders": {
+      "side": {
+        "type": "String"
+      }
+    }
+  },
+  "padelPrefsGoals": "Preferences & Goals",
+  "padelProfile": "Padel Profile",
+  "padelProfileFailed": "Couldn't load your Padel profile.",
+  "padelSkillProfile": "Skill profile",
+  "padelStartAssessment": "Start Padel Assessment",
+  "padelYourStats": "Your Padel stats",
+  "payActive": "Active",
+  "payAddMethod": "Add method",
+  "payAddPaymentMethod": "Add payment method",
+  "payAmount": "Amount",
+  "payBillingHistory": "Billing history",
+  "payBillingHistoryFailed": "Couldn't load your billing history.",
+  "payCard": "Card",
+  "payCardBrand": "Card brand",
+  "payCardBrandHint": "e.g. Visa",
+  "payCardLast4": "Tokenized card — last four digits",
+  "payChangePlan": "Change plan",
+  "payChargesReceipts": "Charges and receipts",
+  "payChooseFree": "Choose Free",
+  "payChoosePlan": "Choose a plan",
+  "payCreated": "Created",
+  "payCurrent": "Current",
+  "payCurrentPlan": "Current plan",
+  "payDate": "Date",
+  "payDefault": "Default",
+  "payDownloadReceipt": "Download receipt",
+  "payFailed": "Failed",
+  "payFailureReason": "Failure reason",
+  "payFourDigits": "Enter exactly four digits.",
+  "payFree": "Free",
+  "payFreeBeta": "Free during beta",
+  "payIncluded": "Included",
+  "payInvoice": "Invoice",
+  "payManageMethods": "Manage payment methods",
+  "payMethodsFailed": "Couldn't load your payment methods.",
+  "payMobileLast4": "Tokenized mobile number — last four digits",
+  "payMobileMoney": "Mobile money",
+  "payNoBillingHistory": "No billing history yet",
+  "payNoChargesBeta": "No charges during beta.",
+  "payNoMethod": "No payment method saved",
+  "payNoMethodBody": "Add a tokenized card or mobile-money method to choose a paid plan.",
+  "payNotAvailable": "Not available",
+  "payPaid": "Paid",
+  "payPastDue": "Past due",
+  "payPaymentMethod": "Payment method",
+  "payPaymentMethods": "Payment methods",
+  "payPerMonth": "{amount} / month",
+  "@payPerMonth": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "payPerYear": "{amount} / year",
+  "@payPerYear": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "payPeriod": "Period",
+  "payPeriodEnds": "Current period ends {date}",
+  "@payPeriodEnds": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "payPeriodRange": "{start} to {end}",
+  "@payPeriodRange": {
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
+  "payPlan": "Plan",
+  "payPlansFailed": "Couldn't load available plans.",
+  "payProcessing": "Processing…",
+  "payProviderReference": "Provider reference",
+  "payReceipt": "Receipt",
+  "payReceiptHeading": "Drift Tennis receipt",
+  "payReceiptSaveFailed": "Could not save the receipt. Please retry.",
+  "payReceiptSaved": "Receipt saved to {path}",
+  "@payReceiptSaved": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "payReceiptsAppear": "Receipts will appear here after your first paid plan change.",
+  "payRemove": "Remove",
+  "payRemoveMethodQ": "Remove payment method?",
+  "payRemoveNamed": "Remove {name}",
+  "@payRemoveNamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "payRetryPayment": "Retry payment",
+  "paySaveMethod": "Save method",
+  "paySelectAndPay": "Select and pay",
+  "payStatus": "Status",
+  "paySubscriptionFailed": "Couldn't load your subscription.",
+  "payTokenNote": "Drift stores only the provider token and these display digits. Full payment credentials never reach Drift.",
+  "payUpgradePlan": "Upgrade plan",
+  "payVoid": "Void",
+  "pillarBackhand": "Backhand",
+  "pillarCompetitionExperience": "Competition Experience",
+  "pillarFitness": "Fitness",
+  "pillarFootwork": "Footwork",
+  "pillarForehand": "Forehand",
+  "pillarMatchPlay": "Match Play",
+  "pillarMental": "Mental",
+  "pillarMovement": "Movement",
+  "pillarNetPlay": "Net Play",
+  "pillarReturn": "Return",
+  "pillarServe": "Serve",
+  "pillarTactics": "Tactics",
+  "pillarVolley": "Volley",
+  "playActiveEmpty": "No upcoming matches — challenge someone to get started.",
+  "playChallengeWithdrawn": "Challenge withdrawn.",
+  "playChallengesEmpty": "No open challenges — find a player and send one.",
+  "playCompetitionRound": "{name} · Round {round}",
+  "@playCompetitionRound": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "round": {
+        "type": "int"
+      }
+    }
+  },
+  "playFindOpponent": "Find opponent",
+  "playHistoryEmpty": "Play your first match to start building history.",
+  "playLoadPlayersFailed": "Couldn't load players. Pull to retry.",
+  "playNoPlayersFound": "No players found.",
+  "playRespond": "Respond",
+  "playSegmentMatches": "Matches",
+  "playTabActive": "Active",
+  "playTabChallenges": "Challenges",
+  "playTabHistory": "History",
+  "playYourStats": "Your stats",
+  "playerAtAGlance": "AT A GLANCE",
+  "playerCancelRequest": "Cancel Request",
+  "playerChallengeToMatch": "Challenge to a match",
+  "playerConnect": "Connect",
+  "playerConnectToSeeAvailability": "Connect to see when this player is usually free.",
+  "playerConnectToSeeSkills": "Connect with this player to see their skill breakdown.",
+  "playerConnected": "Connected",
+  "playerDevelopmentAreas": "Development areas",
+  "playerLoadFailed": "Could not load this player right now.",
+  "playerLocation": "Location",
+  "playerMessage": "Message",
+  "playerNoAssessment": "This player hasn't completed an assessment yet.",
+  "playerNoMatchFilters": "No players match these filters. Try widening distance or level range.",
+  "playerPlays": "Plays",
+  "playerRequestSent": "Request sent",
+  "playerRequestSentBody": "{name} will see your connection request. You can cancel it while it is still pending.",
+  "@playerRequestSentBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "playerRequestSentCancel": "Request sent · Cancel",
+  "playerStatsOf": "{name}'s Stats",
+  "@playerStatsOf": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "playerUnavailable": "Player not available.",
+  "playerViewStats": "View Stats",
+  "playerWantsToConnect": "Wants to connect — respond in Requests",
+  "practiceDuration": "Duration",
+  "practiceEmpty": "Log your first practice session",
+  "practiceLoadFailed": "Couldn't load your practice log.",
+  "practiceMinutesShort": "min",
+  "practiceNotes": "Notes",
+  "practiceNotesHint": "What did you work on? Any breakthroughs?",
+  "practiceSave": "Save Practice",
+  "practiceSkillFocus": "Skill focus",
+  "privacyAvailabilityNote": "Off means only your connections can see your detailed availability",
+  "privacyLoadFailed": "Couldn't load your privacy settings.",
+  "privacyShowEveryone": "Show to everyone",
+  "privacySkillsNote": "Off means only your connections can see your skill breakdown",
+  "profileAddPadel": "+ Add Padel",
+  "profileAddPhoto": "Add a photo",
+  "profileBio": "Bio",
+  "profileBioHint": "Tell other players a bit about yourself",
+  "profileEdit": "Edit Profile",
+  "profileLevelNotAssessed": "Level not yet assessed",
+  "profileLevelWithLabel": "Level {level} · {label}",
+  "@profileLevelWithLabel": {
+    "placeholders": {
+      "level": {
+        "type": "String"
+      },
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "profileLoadFailed": "Couldn't load your profile.",
+  "profileMySports": "My Sports",
+  "profileRating": "Rating",
+  "profileMatches": "Matches",
+  "profileWins": "Wins",
+  "profilePlayingSince": "Playing on Drift since {date}",
+  "@profilePlayingSince": {"placeholders": {"date": {"type": "String"}}},
+  "profileMyStats": "My Stats",
+  "profilePadelLoadFailed": "Couldn't load your Padel profile",
+  "profileRemovePhoto": "Remove photo",
+  "profileYourActiveProfile": "Your active profile",
+  "progressEmpty": "Your progress report builds up as you play and practice",
+  "proposeAddTime": "Add a time",
+  "proposeFutureTime": "Pick a time in the future.",
+  "proposeNoTimes": "No times added yet.",
+  "proposeOfferUpTo": "Offer up to {max} options — they pick one.",
+  "@proposeOfferUpTo": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "proposeSendTimes": "{count, plural, =1{Send 1 time} other{Send {count} times}}",
+  "@proposeSendTimes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "proposeTitle": "Propose times",
+  "pushFallbackBody": "Open to see what changed.",
+  "pushFallbackTitle": "New update from Drift Tennis",
+  "quickBookCourt": "Book a court",
+  "quickBookCourtHint": "Courts near you",
+  "quickEnterLadder": "Enter a ladder",
+  "quickEnterLadderHint": "Climb the rankings",
+  "quickFindMatch": "Find a match",
+  "quickFindMatchHint": "Players at your level",
+  "quickLogPractice": "Log practice",
+  "quickLogPracticeHint": "Keep your streak going",
+  "rateGood": "Good",
+  "rateGreat": "Great",
+  "rateOkay": "Okay",
+  "ratePeak": "Peak",
+  "rateRough": "Rough",
+  "reasonCheating": "Cheating",
+  "reasonFakeProfile": "Fake profile",
+  "reasonHarassment": "Harassment or abuse",
+  "reasonOther": "Something else",
+  "reasonSpam": "Spam",
+  "reportChooseReason": "Choose a reason to continue.",
+  "reportCourtTitle": "Report / update court info",
+  "reportDuplicate": "Duplicate listing",
+  "reportInappropriate": "Inappropriate content",
+  "reportIncorrectInfo": "Incorrect info",
+  "reportOther": "Other",
+  "reportPermanentlyClosed": "Permanently closed",
+  "reportThanks": "Thanks — we'll take a look.",
+  "safetyAnythingElse": "Anything else? (optional)",
+  "safetyBlock": "Block",
+  "safetyBlockBody": "They won't be able to find you or contact you, and any existing connection between you will be removed.",
+  "safetyBlockPlayer": "Block player",
+  "safetyBlockQ": "Block this player?",
+  "safetyBlockSub": "They can no longer find or contact you",
+  "safetyMessageReported": "Thanks — this message was reported.",
+  "safetyPlayerBlocked": "Player blocked.",
+  "safetyReportMessage": "Report this message",
+  "safetyReportPlayer": "Report player",
+  "safetyReportPrivacy": "Reports go to our moderation team. They're never shared with the player you report.",
+  "safetyReportSubmitted": "Report submitted. Thank you.",
+  "safetyReporting": "Reporting…",
+  "safetySubmitReport": "Submit report",
+  "safetyTellUs": "Tell us what went wrong",
+  "safetyTitle": "Safety",
+  "scoreErrBothGames": "Enter both games for every set.",
+  "scoreErrInvalid": "Set {set} ({score}) isn't a valid tennis score.",
+  "@scoreErrInvalid": {
+    "placeholders": {
+      "set": {
+        "type": "int"
+      },
+      "score": {
+        "type": "String"
+      }
+    }
+  },
+  "scoreErrNeedTiebreak": "Set {set} is a tiebreak (7-6) — enter the tiebreak points.",
+  "@scoreErrNeedTiebreak": {
+    "placeholders": {
+      "set": {
+        "type": "int"
+      }
+    }
+  },
+  "scoreErrRetirementWinner": "Choose who won after the retirement.",
+  "scoreErrTie": "Set {set} can't end in a tie ({score}).",
+  "@scoreErrTie": {
+    "placeholders": {
+      "set": {
+        "type": "int"
+      },
+      "score": {
+        "type": "String"
+      }
+    }
+  },
+  "scoreErrTiebreak": "Set {set}'s tiebreak points ({score}) aren't a valid finish.",
+  "@scoreErrTiebreak": {
+    "placeholders": {
+      "set": {
+        "type": "int"
+      },
+      "score": {
+        "type": "String"
+      }
+    }
+  },
+  "searchAll": "All",
+  "searchCompetitions": "Competitions",
+  "searchHint": "Players, courts, clubs, competitions",
+  "searchLoadFailed": "Search could not be loaded.",
+  "searchMinChars": "Type at least two characters to search across Drift.",
+  "searchNoResults": "No results for '{query}'. Try a broader search or another filter.",
+  "@searchNoResults": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "searchPlayersHint": "Search players…",
+  "searchResult": "Result",
+  "searchResultsFailed": "Couldn't load search results.",
+  "seasonDraft": "Not yet open",
+  "seasonNotStarted": "Not yet started",
+  "seasonRegistrationOpen": "Registration open",
+  "seasonRoundOf": "Round {current} of {total}",
+  "@seasonRoundOf": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "seasonStartingSoon": "Starting soon",
+  "securityChangePassword": "Change password",
+  "securityCurrentPassword": "Current password",
+  "securityPasswordUpdated": "Password updated.",
+  "securityUpdatePassword": "Update password",
+  "settingsAccount": "Account",
+  "settingsAccountSecurity": "Account & Security",
+  "settingsAnalyseClip": "Analyse a clip",
+  "settingsAppearance": "Appearance",
+  "settingsBlockedUsers": "Blocked Users",
+  "settingsContactSupport": "Contact Support",
+  "settingsDeleteAccount": "Delete Account",
+  "settingsHelpFaq": "Help & FAQ",
+  "settingsLabs": "Labs",
+  "settingsLanguage": "Language",
+  "settingsLegalDocuments": "Legal documents",
+  "settingsLogOutRow": "Log Out",
+  "settingsLogout": "Log out",
+  "settingsLogoutConfirmBody": "You can sign back in any time.",
+  "settingsLogoutConfirmTitle": "Log out?",
+  "settingsManageConnectionRequests": "Manage Connection Requests",
+  "settingsNotificationPreferences": "Notification Preferences",
+  "settingsNotifications": "Notifications",
+  "settingsPlanBilling": "Plan & Billing",
+  "settingsPrivacySafety": "Privacy & Safety",
+  "settingsPrivacySettings": "Privacy Settings",
+  "settingsSubscriptionPlan": "Subscription & Plan",
+  "settingsSupport": "Support",
+  "settingsThemeDark": "Dark",
+  "settingsThemeDevice": "Device",
+  "settingsThemeLight": "Light",
+  "settingsThemeValue": "Theme: {mode}",
+  "@settingsThemeValue": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsTitle": "Settings",
+  "settingsVersion": "Drift Tennis v{version}",
+  "@settingsVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "skillBuilding": "Building",
+  "skillNotEnoughData": "Not enough data yet — complete a few practice sessions or matches",
+  "skillOnboardingAssessment": "Onboarding assessment",
+  "skillProfileUnavailable": "Skill profile not available.",
+  "skillRecommended": "Recommended",
+  "skillRecommendedForYou": "Recommended for you",
+  "skillRetakeAssessment": "Retake Assessment",
+  "skillSetGoal": "Set a Goal",
+  "skillSignals": "Contributing signals",
+  "splashConnectFailed": "Could not connect. Your session is still saved.",
+  "sportPadel": "Padel",
+  "sportTennis": "Tennis",
+  "standingsLegend": "W = win · L = loss · Pts = points (3 per win)",
+  "standingsPlayed": "MP",
+  "standingsPoints": "Pts",
+  "statLosses": "Losses",
+  "statNoMatchesPlayed": "No matches played",
+  "statNoRatedMatches": "No rated matches yet",
+  "statPlayed": "Played",
+  "statRecentForm": "Recent form",
+  "statWinRate": "Win rate",
+  "statWins": "Wins",
+  "statWinsLosses": "{wins}W · {losses}L",
+  "@statWinsLosses": {
+    "placeholders": {
+      "wins": {
+        "type": "int"
+      },
+      "losses": {
+        "type": "int"
+      }
+    }
+  },
+  "statWon": "Won",
+  "supportBody": "Send us an email and we'll get back to you as soon as we can. Use this address for account recovery, erasure requests, billing questions, reports, and technical issues.",
+  "supportEmailButton": "Email {email}",
+  "@supportEmailButton": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "supportEmailUs": "Email us at {email}",
+  "@supportEmailUs": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "supportNeedHelp": "Need help?",
+  "surfaceArtificialGrass": "Artificial Grass",
+  "surfaceCarpet": "Carpet",
+  "surfaceClay": "Clay",
+  "surfaceGrass": "Grass",
+  "surfaceHard": "Hard",
+  "sysChallengeAccepted": "Challenge accepted",
+  "sysChallengeDeclined": "Challenge declined",
+  "sysChallengeSent": "Challenge sent",
+  "sysChallengeWithdrawn": "Challenge withdrawn",
+  "sysCourtSuggested": "Court suggested",
+  "sysDisputeResolved": "Dispute resolved",
+  "sysFixtureScheduled": "Fixture scheduled",
+  "sysFixtureWalkover": "Fixture unplayed — walkover",
+  "sysMatchCancelled": "Match cancelled",
+  "sysMatchConfirmed": "Match confirmed",
+  "sysMatchRescheduled": "Match rescheduled",
+  "sysResultConfirmed": "Result confirmed",
+  "sysResultDisputed": "Result disputed",
+  "sysResultSubmitted": "Result submitted",
+  "sysTimeAccepted": "Time accepted",
+  "sysTimeProposed": "Time proposed",
+  "timeAfternoon": "Afternoon",
+  "timeEvening": "Evening",
+  "timeMorning": "Morning",
+  "videoAnalyseThis": "Analyse this clip",
+  "videoAnalysingYourClip": "Analysing your clip…",
+  "videoAnalysisError": "Something went wrong while analysing this clip.",
+  "videoAnalysisUnfinished": "That analysis didn't finish",
+  "videoBuffering": "Buffering video...",
+  "videoChecking": "Checking your clip…",
+  "videoCheckingOffline": "Clip checking is offline",
+  "videoCheckingOfflineBody": "You can still upload, but we can't check the clip right now.",
+  "videoChooseLibrary": "Choose from library",
+  "videoClipAnalysis": "Clip analysis",
+  "videoClipPassed": "This clip passed its checks",
+  "videoClipRejected": "This clip can't be analysed",
+  "videoClipUsable": "This clip looks usable",
+  "videoCoupleSeconds": "This takes a couple of seconds.",
+  "videoCourtUnchecked": "Note: we couldn’t check the court markings on this one, so we can’t promise the court itself will read correctly.",
+  "videoDidntWork": "That didn't work",
+  "videoEarlyNote": "Analysis is an early feature. Numbers here come from a single camera and are estimates, not radar readings.",
+  "videoLesson": "Video lesson",
+  "videoLessonComplete": "Lesson marked complete.",
+  "videoLessonNotFound": "Video lesson not found.",
+  "videoLoadClipFailed": "Couldn't load this clip",
+  "videoMeasuredAll": "{count, plural, =1{We measured the 1 rally we found} other{We measured all {count} rallies we found}}",
+  "@videoMeasuredAll": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "videoMeasuredAllBody": "The totals below cover the whole session.",
+  "videoMeasuredSome": "We measured {analysed} of {found} rallies",
+  "@videoMeasuredSome": {
+    "placeholders": {
+      "analysed": {
+        "type": "int"
+      },
+      "found": {
+        "type": "int"
+      }
+    }
+  },
+  "videoMeasuredSomeBody": "Analysing video is slow, so we work through as much of a session as we can. The totals below cover the {analysed} rallies we measured — not the whole session. Every rally we found is listed further down.",
+  "@videoMeasuredSomeBody": {
+    "placeholders": {
+      "analysed": {
+        "type": "int"
+      }
+    }
+  },
+  "videoNoAsset": "No video asset is attached to this lesson.",
+  "videoNoDistances": "Distances and speeds aren’t available for this clip",
+  "videoNoDistancesBody": "The court lines couldn’t be read clearly enough to measure distances, so speeds and court positions would not be real measurements. Shot counts below are still accurate.",
+  "videoNoSpeeds": "No speeds could be measured from this clip.",
+  "videoOpponent": "Opponent",
+  "videoOpponentAvgShot": "Opponent average shot",
+  "videoPassedChecks": "It passed every check we can run today. Analysis itself is still being built — we’ll let you know when it lands.",
+  "videoPause": "Pause",
+  "videoPlay": "Play",
+  "videoPlaybackCompleted": "Playback completed. Mark the lesson complete when you are ready.",
+  "videoPlaybackError": "Playback error. Please retry.",
+  "videoRalliesMeasured": "Rallies measured",
+  "videoRallyByRally": "Rally by rally",
+  "videoRallyFailed": "This rally could not be analysed",
+  "videoReadyToAnalyse": "It’s ready to analyse whenever you are.",
+  "videoRecord": "Record a clip",
+  "videoServeAvg": "Serve (average over flight)",
+  "videoSessionTotals": "Session totals",
+  "videoShotCount": "{count, plural, =1{1 shot} other{{count} shots}}",
+  "@videoShotCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "videoShotCountNoCourt": "{count, plural, =1{1 shot} other{{count} shots}} · no court fit, so no speeds",
+  "@videoShotCountNoCourt": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "videoShotTypes": "Shot types",
+  "videoShotTypesNote": "Shot types are an early feature and are often wrong. Treat them as a rough guide.",
+  "videoShots": "Shots",
+  "videoSkippedBudget": "Not measured — we ran out of analysis time for this session",
+  "videoSomeUncalibrated": "Some rallies could not be measured for speed",
+  "videoSomeUncalibratedBody": "{count} of the rallies we measured did not have clear enough court lines, so they add to the shot counts but not to the speeds.",
+  "@videoSomeUncalibratedBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "videoSpeed": "Speed",
+  "videoSpeedNote": "Averaged over the ball’s flight, so lower than a radar reading at contact.",
+  "videoStarting": "Starting…",
+  "videoStatusAccepted": "Ready to analyse",
+  "videoStatusAnalysed": "Analysed",
+  "videoStatusAnalysing": "Analysing…",
+  "videoStatusFailed": "Something went wrong",
+  "videoStatusRejected": "Can't be analysed",
+  "videoTakesMinutes": "Analysing takes a few minutes. We’ll notify you when it’s done — you don’t need to stay on this screen.",
+  "videoTakesMinutesLeave": "This takes a few minutes. We’ll notify you when it’s ready, so you can leave this screen.",
+  "videoTip1": "Hold the phone sideways — landscape, not upright",
+  "videoTip2": "Prop it against the fence or use a tripod, and keep it still",
+  "videoTip3": "Get as much of the court in frame as you can",
+  "videoTip4": "Courts with clear, visible line markings work best",
+  "videoTip5": "One continuous take — no cuts or edits",
+  "videoTipsHeading": "For the best chance of a usable clip",
+  "videoTooShort": "Too short to measure",
+  "videoTryAnother": "Try another clip",
+  "videoUnreachable": "Couldn't reach Drift. Check your connection and try again.",
+  "videoUploadAnother": "Upload another",
+  "videoUploadFailed": "Something went wrong uploading that video. Please try again.",
+  "videoUploadTimeout": "The upload timed out. Check your connection and try again — a shorter clip will upload faster.",
+  "videoUploading": "Uploading…",
+  "videoWhatToChange": "Here’s what to change before filming again.",
+  "videoWorthKnowing": "Worth knowing",
+  "videoYourAvgShot": "Your average shot",
+  "welcomeBody": "Track matches, enter ladders & tournaments, and level up your game, all in one place.",
+  "welcomeContinueEmail": "Continue with Email",
+  "welcomeTitle": "Join the Court",
+  "withdrawBody": "The invited player will be told that the challenge was withdrawn.",
+  "withdrawKeep": "Keep challenge",
+  "withdrawTitle": "Undo this challenge?",
+  "homeVs": "VS",
+  "homeNextMatchEmptyTitle": "Your next rival is out there",
+  "homeNextMatchEmptyBody": "Find a player at your level and lock in a time.",
+  "homeChallengeAFriend": "Challenge a friend",
+  "homeTodaysFact": "Your daily ace",
+  "tennisFactEyebrow": "Bet you didn't know this",
+  "tennisFactCta": "Reveal the story",
+  "tennisFactGotIt": "Got it",
+  "tennisFactSource": "Source: {source}",
+  "@tennisFactSource": {
+    "placeholders": {
+      "source": {"type": "String"}
+    }
+  },
+  "tennisFactOpenHint": "Tap to read",
+  "bookingTitle": "Book a court",
+  "bookingSurface": "Surface",
+  "bookingDay": "Day",
+  "bookingTime": "Start time",
+  "bookingDuration": "Duration",
+  "bookingMinutes": "{minutes} min",
+  "@bookingMinutes": {"placeholders": {"minutes": {"type": "int"}}},
+  "bookingNoteLabel": "Note for the club (optional)",
+  "bookingFreeNote": "Free. The club confirms your request.",
+  "bookingSubmit": "Request booking",
+  "bookingNoSlots": "No times available on this day.",
+  "bookingPickSlot": "Pick a start time",
+  "bookingSent": "Request sent. The club will confirm it soon.",
+  "bookingUnavailable": "Online booking isn't available for this court right now.",
+  "bookingRequestAction": "Request a time",
+  "bookingMyBookings": "My bookings",
+  "bookingEmpty": "No bookings yet",
+  "bookingEmptyHint": "Court requests you send will show up here.",
+  "bookingUpcoming": "Upcoming",
+  "bookingPast": "Past",
+  "bookingStatusPending": "Pending",
+  "bookingStatusApproved": "Confirmed",
+  "bookingStatusDeclined": "Declined",
+  "bookingStatusCancelled": "Cancelled",
+  "bookingStatusCompleted": "Completed",
+  "bookingCancel": "Cancel booking",
+  "bookingCancelTitle": "Cancel this booking?",
+  "bookingCancelBody": "The club will be told you can't make it.",
+  "bookingKeep": "Keep it",
+  "bookingCancelled": "Booking cancelled",
+  "bookingCancelledByClub": "Cancelled by the club",
+  "bookingClubNote": "Club note: {note}",
+  "@bookingClubNote": {"placeholders": {"note": {"type": "String"}}},
+  "bookingYourNote": "Your note: {note}",
+  "@bookingYourNote": {"placeholders": {"note": {"type": "String"}}},
+  "availBookInApp": "Request in the app"
+}

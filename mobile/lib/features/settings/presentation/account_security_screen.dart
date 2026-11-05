@@ -13,11 +13,18 @@ import '../../../shared/widgets/drift_scaffold.dart';
 import '../../../shared/widgets/drift_text_field.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../notifications/data/push_service.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Account & Security — `foundation/04-screen-inventory.md` §A.10.
 /// Change password is new this phase; the logout endpoint has existed on
 /// the backend since M3 but was never called from any mobile screen until
 /// now — a real gap this phase closes, not a re-implementation.
+/// Small, muted label for the password fields — matches the 14px row-label
+/// size used on Settings Home, so these fields read as quieter secondary
+/// inputs rather than competing for attention with the heading above them.
+TextStyle _fieldLabelStyle(DriftColors colors) =>
+    TextStyle(fontSize: 14, color: colors.textSecondary);
+
 class AccountSecurityScreen extends ConsumerStatefulWidget {
   const AccountSecurityScreen({super.key});
 
@@ -44,7 +51,7 @@ class _AccountSecurityScreenState extends ConsumerState<AccountSecurityScreen> {
 
   Future<void> _changePassword() async {
     if (_newPasswordController.text != _confirmPasswordController.text) {
-      setState(() => _errorText = 'Those passwords don’t match.');
+      setState(() => _errorText = context.l10n.authPasswordsDontMatch);
       return;
     }
 
@@ -72,7 +79,9 @@ class _AccountSecurityScreenState extends ConsumerState<AccountSecurityScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Password updated.')));
+      ).showSnackBar(
+        SnackBar(content: Text(context.l10n.securityPasswordUpdated)),
+      );
     } on AuthException catch (e) {
       setState(() => _errorText = e.message);
     } finally {
@@ -114,7 +123,7 @@ class _AccountSecurityScreenState extends ConsumerState<AccountSecurityScreen> {
     final colors = Theme.of(context).extension<DriftColors>()!;
 
     return DriftScaffold(
-      title: 'Account & Security',
+      title: context.l10n.settingsAccountSecurity,
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
         children: [
@@ -122,24 +131,27 @@ class _AccountSecurityScreenState extends ConsumerState<AccountSecurityScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text('Change password', style: type.title),
+                Text(context.l10n.securityChangePassword, style: type.title),
                 const SizedBox(height: DriftSpacing.s3),
                 DriftTextField(
-                  label: 'Current password',
+                  label: context.l10n.securityCurrentPassword,
                   controller: _currentPasswordController,
                   obscureText: true,
+                  labelStyle: _fieldLabelStyle(colors),
                 ),
                 const SizedBox(height: DriftSpacing.s3),
                 DriftTextField(
-                  label: 'New password',
+                  label: context.l10n.authNewPassword,
                   controller: _newPasswordController,
                   obscureText: true,
+                  labelStyle: _fieldLabelStyle(colors),
                 ),
                 const SizedBox(height: DriftSpacing.s3),
                 DriftTextField(
-                  label: 'Confirm new password',
+                  label: context.l10n.authConfirmNewPassword,
                   controller: _confirmPasswordController,
                   obscureText: true,
+                  labelStyle: _fieldLabelStyle(colors),
                 ),
                 if (_errorText != null) ...[
                   const SizedBox(height: DriftSpacing.s3),
@@ -147,7 +159,9 @@ class _AccountSecurityScreenState extends ConsumerState<AccountSecurityScreen> {
                 ],
                 const SizedBox(height: DriftSpacing.s4),
                 DriftButton(
-                  label: _isChangingPassword ? 'Updating…' : 'Update password',
+                  label: _isChangingPassword
+                      ? context.l10n.commonUpdating
+                      : context.l10n.securityUpdatePassword,
                   onPressed: _isChangingPassword ? null : _changePassword,
                 ),
               ],
@@ -155,7 +169,9 @@ class _AccountSecurityScreenState extends ConsumerState<AccountSecurityScreen> {
           ),
           const SizedBox(height: DriftSpacing.s5),
           DriftButton(
-            label: _isLoggingOut ? 'Signing out…' : 'Log out',
+            label: _isLoggingOut
+                ? context.l10n.drawerSigningOut
+                : context.l10n.settingsLogout,
             variant: DriftButtonVariant.text,
             foregroundColor: colors.error,
             onPressed: _isLoggingOut ? null : _logout,

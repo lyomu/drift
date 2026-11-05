@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/dio_client.dart';
 import '../../auth/data/auth_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Mirrors the backend `NotificationCategory` enum.
 enum NotificationCategory {
@@ -14,6 +15,7 @@ enum NotificationCategory {
   news('NEWS'),
   clubs('CLUBS'),
   announcements('ANNOUNCEMENTS'),
+  communities('COMMUNITIES'),
 
   /// Anything this build doesn't recognise. A newer backend adding a
   /// category must not break the whole Notification Centre — before this
@@ -104,6 +106,7 @@ class NotificationPreferences {
     required this.news,
     required this.clubs,
     required this.announcements,
+    required this.communities,
   });
 
   final bool connections;
@@ -114,6 +117,7 @@ class NotificationPreferences {
   final bool news;
   final bool clubs;
   final bool announcements;
+  final bool communities;
 
   bool forCategory(NotificationCategory category) => switch (category) {
     NotificationCategory.connections => connections,
@@ -124,6 +128,7 @@ class NotificationPreferences {
     NotificationCategory.news => news,
     NotificationCategory.clubs => clubs,
     NotificationCategory.announcements => announcements,
+    NotificationCategory.communities => communities,
     // Not a real preference — nothing renders a toggle for it.
     NotificationCategory.unknown => true,
   };
@@ -139,6 +144,7 @@ class NotificationPreferences {
         // Tolerates a backend that predates the CLUBS/ANNOUNCEMENTS category.
         clubs: json['clubs'] as bool? ?? true,
         announcements: json['announcements'] as bool? ?? true,
+        communities: json['communities'] as bool? ?? true,
       );
 }
 
@@ -210,6 +216,7 @@ class NotificationsRepository {
     NotificationCategory.news => 'news',
     NotificationCategory.clubs => 'clubs',
     NotificationCategory.announcements => 'announcements',
+    NotificationCategory.communities => 'communities',
     NotificationCategory.unknown => 'unknown',
   };
 
@@ -246,7 +253,7 @@ class NotificationsRepository {
     final body = e.response?.data;
     final message = body is Map ? body['message'] as Object? : null;
     final text = message is List ? message.join(' ') : message?.toString();
-    return AuthException(text ?? 'Something went wrong. Please try again.');
+    return AuthException(text ?? l10nNow.commonErrorGeneric);
   }
 }
 

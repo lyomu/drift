@@ -10,6 +10,8 @@ import '../../../shared/widgets/drift_pill.dart';
 import '../../../shared/widgets/drift_soft_card.dart';
 import '../../padel/application/padel_providers.dart';
 import '../application/profile_providers.dart';
+import '../../../core/l10n/l10n.dart';
+import '../../../core/l10n/enum_labels.dart';
 
 /// My Sports Hub — `foundation/04-screen-inventory.md` §A.10 (redesign
 /// 2026-08: `App.tsx` `ProfileSportsView`). Tennis is always real; Padel
@@ -26,19 +28,25 @@ class MySportsHubScreen extends ConsumerWidget {
     final tennisLevel = switch (tennisProfile) {
       AsyncData(:final value) =>
         value.summary.levelLabel == null
-            ? 'Level not yet assessed'
-            : 'Level ${value.summary.level!.toStringAsFixed(1)} · ${value.summary.levelLabel}',
-      _ => 'Your active profile',
+            ? context.l10n.profileLevelNotAssessed
+            : context.l10n.profileLevelWithLabel(
+                value.summary.level!.toStringAsFixed(1),
+                levelLabelText(context.l10n, value.summary.levelLabel!),
+              ),
+      _ => context.l10n.profileYourActiveProfile,
     };
 
     final padelLevel = switch (padelProfile) {
       AsyncData(:final value) when value != null =>
         value.systemSuggestedLevel == null
-            ? 'Level not yet assessed'
-            : 'Level ${value.systemSuggestedLevel!.toStringAsFixed(1)} · ${value.levelLabel}',
-      AsyncData() => '+ Add Padel',
-      AsyncError() => "Couldn't load your Padel profile",
-      _ => 'Loading…',
+            ? context.l10n.profileLevelNotAssessed
+            : context.l10n.profileLevelWithLabel(
+                value.systemSuggestedLevel!.toStringAsFixed(1),
+                levelLabelText(context.l10n, value.levelLabel ?? ''),
+              ),
+      AsyncData() => context.l10n.profileAddPadel,
+      AsyncError() => context.l10n.profilePadelLoadFailed,
+      _ => context.l10n.commonLoading,
     };
     final padelAssessed = switch (padelProfile) {
       AsyncData(:final value) when value != null =>
@@ -51,14 +59,14 @@ class MySportsHubScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const DriftBackHeader(title: 'My Sports'),
+            DriftBackHeader(title: context.l10n.profileMySports),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
                 children: [
                   _SportRow(
                     icon: Icons.sports_tennis_outlined,
-                    name: 'Tennis',
+                    name: context.l10n.sportTennis,
                     level: tennisLevel,
                     assessed: true,
                     onTap: () => context.push('/profile/own'),
@@ -66,7 +74,7 @@ class MySportsHubScreen extends ConsumerWidget {
                   const SizedBox(height: 10),
                   _SportRow(
                     icon: Icons.sports_baseball_outlined,
-                    name: 'Padel',
+                    name: context.l10n.sportPadel,
                     level: padelLevel,
                     assessed: padelAssessed,
                     onTap: () => switch (padelProfile) {

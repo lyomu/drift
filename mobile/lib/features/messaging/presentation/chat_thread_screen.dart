@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/network/media_url.dart';
 import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
@@ -12,15 +13,28 @@ import '../../users/application/current_user_provider.dart';
 import '../application/messaging_providers.dart';
 import '../../safety/presentation/message_report_sheet.dart';
 import '../data/messaging_repository.dart';
+import '../../../core/l10n/l10n.dart';
+import '../../../core/l10n/enum_labels.dart';
+import 'package:intl/intl.dart';
 
 
 /// Chat Thread — `foundation/04-screen-inventory.md` §A.9. Carries both
 /// player messages and the SYSTEM events the match state machine writes, so
 /// the negotiation and the conversation about it live in one place.
+///
+/// Also the community group chat (2026-11): [embedded] drops the screen
+/// chrome so the thread can sit inside Community Detail's Chat tab, group
+/// threads label each speaker, and a suspended community's chat is
+/// read-only.
 class ChatThreadScreen extends ConsumerStatefulWidget {
-  const ChatThreadScreen({super.key, required this.conversationId});
+  const ChatThreadScreen({
+    super.key,
+    required this.conversationId,
+    this.embedded = false,
+  });
 
   final String conversationId;
+  final bool embedded;
 
   @override
   ConsumerState<ChatThreadScreen> createState() => _ChatThreadScreenState();
@@ -99,39 +113,58 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
     // Scroll down as live messages land.
     ref.listen(threadProvider(widget.conversationId), (_, _) => _scrollToEnd());
 
+    final isGroup = conversation?.isCommunity ?? false;
+    final readOnly = conversation?.community?.isReadOnly ?? false;
+
+    final thread = [
+      Expanded(
+        child: switch (messages) {
+          AsyncData(:final value) =>
+            value.isEmpty
+                ? const _SayHello()
+                : _MessageList(
+                    scrollController: _scrollController,
+                    messages: value,
+                    viewerId: viewerId,
+                    participants: participants,
+                    isGroup: isGroup,
+                    onReport: (id) =>
+                        showMessageReportSheet(context, ref, messageId: id),
+                  ),
+          AsyncError() => Center(
+            child: Text(context.l10n.messagingLoadConversationFailed),
+          ),
+          _ => Center(child: CircularProgressIndicator()),
+        },
+      ),
+      if (readOnly)
+        _ReadOnlyNotice(text: context.l10n.communityChatReadOnly)
+      else
+        _Composer(
+          controller: _controller,
+          isSending: _isSending,
+          onSend: _send,
+        ),
+    ];
+
+    if (widget.embedded) {
+      return ColoredBox(
+        color: colors.surface,
+        child: Column(children: thread),
+      );
+    }
+
     return Scaffold(
       backgroundColor: colors.surface,
       body: SafeArea(
         child: Column(
           children: [
             _ChatHeader(
-              title: conversation?.title ?? 'Chat',
+              title: conversation?.title ?? context.l10n.messagingChat,
               counterpart: counterpart,
+              communityId: conversation?.community?.id,
             ),
-            Expanded(
-              child: switch (messages) {
-                AsyncData(:final value) =>
-                  value.isEmpty
-                      ? const _SayHello()
-                      : _MessageList(
-                          scrollController: _scrollController,
-                          messages: value,
-                          viewerId: viewerId,
-                          participants: participants,
-                          onReport: (id) =>
-                              showMessageReportSheet(context, ref, messageId: id),
-                        ),
-                AsyncError() => Center(
-                  child: Text("Couldn't load this conversation."),
-                ),
-                _ => Center(child: CircularProgressIndicator()),
-              },
-            ),
-            _Composer(
-              controller: _controller,
-              isSending: _isSending,
-              onSend: _send,
-            ),
+            ...thread,
           ],
         ),
       ),
@@ -148,10 +181,17 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
 /// voice calling, and its "Active now" line has no backing presence data, so
 /// both slots carry the nearest real thing.
 class _ChatHeader extends ConsumerWidget {
-  const _ChatHeader({required this.title, required this.counterpart});
+  const _ChatHeader({
+    required this.title,
+    required this.counterpart,
+    this.communityId,
+  });
 
   final String title;
   final PlayerSummary? counterpart;
+
+  /// Set for a community group chat; the trailing button opens the community.
+  final String? communityId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -219,6 +259,14 @@ class _ChatHeader extends ConsumerWidget {
               onTap: () => context.push('/players/${counterpart!.id}'),
             ),
           ],
+          if (communityId != null) ...[
+            SizedBox(width: 12),
+            _HeaderSquareButton(
+              icon: Icons.groups_outlined,
+              iconColor: colors.primary,
+              onTap: () => context.push('/communities/$communityId'),
+            ),
+          ],
         ],
       ),
     );
@@ -231,11 +279,15 @@ String? _levelLine(PlayerSummary? player) {
   if (player == null) return null;
   final level = player.level;
   final label = player.levelLabel;
+  final l10n = l10nNow;
   if (level != null && label != null) {
-    return 'Level ${level.toStringAsFixed(1)} · $label';
+    return l10n.profileLevelWithLabel(
+      level.toStringAsFixed(1),
+      levelLabelText(l10n, label),
+    );
   }
-  if (level != null) return 'Level ${level.toStringAsFixed(1)}';
-  return label;
+  if (level != null) return l10n.commonLevel(level.toStringAsFixed(1));
+  return label == null ? null : levelLabelText(l10n, label);
 }
 
 /// 36×36 rounded square, brand-tinted fill and hairline (mock: #F7F9FF on a
@@ -281,6 +333,8 @@ class _Avatar extends StatelessWidget {
     required this.size,
     required this.fontSize,
     required this.borderWidth,
+    this.fallbackName,
+    this.fallbackPhotoUrl,
   });
 
   final PlayerSummary? player;
@@ -288,10 +342,15 @@ class _Avatar extends StatelessWidget {
   final double fontSize;
   final double borderWidth;
 
+  /// Used when [player] is null — a group-chat sender, known only by the
+  /// name and photo the message carries.
+  final String? fallbackName;
+  final String? fallbackPhotoUrl;
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<DriftColors>()!;
-    final photoUrl = player?.photoUrl;
+    final photoUrl = player?.photoUrl ?? fallbackPhotoUrl;
 
     return Container(
       width: size,
@@ -317,7 +376,9 @@ class _Avatar extends StatelessWidget {
 
   Widget _initials(DriftColors colors) => Center(
     child: Text(
-      _initialsOf(player),
+      player == null && fallbackName != null
+          ? _initialsOfName(fallbackName!)
+          : _initialsOf(player),
       style: TextStyle(
         fontSize: fontSize,
         fontWeight: FontWeight.w700,
@@ -339,6 +400,50 @@ String _initialsOf(PlayerSummary? player) {
   return letters.isEmpty ? '?' : letters.toUpperCase();
 }
 
+String _initialsOfName(String name) {
+  final letters = name
+      .trim()
+      .split(RegExp(r'\s+'))
+      .where((part) => part.isNotEmpty)
+      .take(2)
+      .map((part) => part[0])
+      .join();
+  return letters.isEmpty ? '?' : letters.toUpperCase();
+}
+
+/// Replaces the composer in a suspended community's chat.
+class _ReadOnlyNotice extends StatelessWidget {
+  const _ReadOnlyNotice({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<DriftColors>()!;
+    return SafeArea(
+      top: false,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+        decoration: BoxDecoration(
+          color: colors.warningSurface,
+          border: Border(top: BorderSide(color: _hairline(colors))),
+        ),
+        child: Text(
+          text,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            height: 1.35,
+            color: colors.textPrimary,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Message list
 // ---------------------------------------------------------------------------
@@ -350,6 +455,7 @@ class _MessageList extends StatelessWidget {
     required this.viewerId,
     required this.participants,
     required this.onReport,
+    this.isGroup = false,
   });
 
   final ScrollController scrollController;
@@ -357,6 +463,9 @@ class _MessageList extends StatelessWidget {
   final String viewerId;
   final List<PlayerSummary> participants;
   final void Function(String messageId) onReport;
+
+  /// Community chat: each run opens with the speaker's name.
+  final bool isGroup;
 
   @override
   Widget build(BuildContext context) {
@@ -403,6 +512,7 @@ class _MessageList extends StatelessWidget {
                 continuesRun: continuesRun,
                 endsRun: endsRun,
                 sender: _participantById(message.senderId),
+                showName: isGroup,
                 onReport: () => onReport(message.id),
               ),
           ],
@@ -449,18 +559,13 @@ class _DayStamp extends StatelessWidget {
 
   static String _label(DateTime date) {
     final now = DateTime.now();
-    if (_isSameDay(date, now)) return 'Today';
+    if (_isSameDay(date, now)) return l10nNow.commonToday;
     if (_isSameDay(date, now.subtract(const Duration(days: 1)))) {
-      return 'Yesterday';
+      return l10nNow.commonYesterday;
     }
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-    ];
-    final month = months[date.month - 1];
     return date.year == now.year
-        ? '${date.day} $month'
-        : '${date.day} $month ${date.year}';
+        ? DateFormat.MMMd(localeTagNow).format(date)
+        : DateFormat.yMMMd(localeTagNow).format(date);
   }
 }
 
@@ -524,6 +629,7 @@ class _MessageRow extends StatelessWidget {
     required this.endsRun,
     required this.sender,
     required this.onReport,
+    this.showName = false,
   });
 
   final ChatMessage message;
@@ -531,6 +637,9 @@ class _MessageRow extends StatelessWidget {
   final bool continuesRun;
   final bool endsRun;
   final PlayerSummary? sender;
+
+  /// Group chat: the first bubble of someone else's run carries their name.
+  final bool showName;
 
   /// Long-press on someone else's message. Your own aren't reportable.
   final VoidCallback onReport;
@@ -575,6 +684,10 @@ class _MessageRow extends StatelessWidget {
                       size: 28,
                       fontSize: 10,
                       borderWidth: 1.5,
+                      // Group chats return no participant list; the message
+                      // names its own sender.
+                      fallbackName: message.senderName,
+                      fallbackPhotoUrl: driftMediaUrl(message.senderPhotoUrl),
                     ),
             ),
             SizedBox(width: 8),
@@ -585,6 +698,23 @@ class _MessageRow extends StatelessWidget {
                   ? CrossAxisAlignment.end
                   : CrossAxisAlignment.start,
               children: [
+                if (showName &&
+                    !isMine &&
+                    !continuesRun &&
+                    message.senderName != null) ...[
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4, bottom: 3),
+                    child: Text(
+                      message.senderName!,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        height: 1.2,
+                        color: colors.primary,
+                      ),
+                    ),
+                  ),
+                ],
                 GestureDetector(
                   onLongPress: isMine ? null : onReport,
                   child: ConstrainedBox(
@@ -633,11 +763,7 @@ class _MessageRow extends StatelessWidget {
   }
 }
 
-String _clockTime(DateTime t) {
-  final hour = t.hour % 12 == 0 ? 12 : t.hour % 12;
-  final minute = t.minute.toString().padLeft(2, '0');
-  return '$hour:$minute ${t.hour < 12 ? 'AM' : 'PM'}';
-}
+String _clockTime(DateTime t) => DateFormat.jm(localeTagNow).format(t);
 
 // ---------------------------------------------------------------------------
 // System message detail
@@ -680,7 +806,7 @@ void _showSystemMessageDetail(BuildContext context, ChatMessage message) {
             if (message.relatedMatchId != null) ...[
               _SystemLink(
                 icon: Icons.sports_tennis_outlined,
-                label: 'View related match',
+                label: context.l10n.messagingViewRelatedMatch,
                 onTap: () {
                   Navigator.of(sheetContext).pop();
                   context.push('/matches/${message.relatedMatchId}');
@@ -692,8 +818,10 @@ void _showSystemMessageDetail(BuildContext context, ChatMessage message) {
               _SystemLink(
                 icon: Icons.emoji_events_outlined,
                 label: message.relatedLeagueName == null
-                    ? 'View related league'
-                    : 'View ${message.relatedLeagueName}',
+                    ? context.l10n.messagingViewRelatedLeague
+                    : context.l10n.messagingViewNamed(
+                        message.relatedLeagueName!,
+                      ),
                 onTap: () {
                   Navigator.of(sheetContext).pop();
                   context.push('/compete/leagues/${message.relatedLeagueId}');
@@ -741,8 +869,29 @@ class _SystemLink extends StatelessWidget {
 }
 
 String _systemEventLabel(String? event) {
-  if (event == null) return 'System message';
-  return event
+  final l = l10nNow;
+  final known = switch (event) {
+    null => l.messagingSystemMessage,
+    'match_challenge_sent' => l.sysChallengeSent,
+    'match_challenge_withdrawn' => l.sysChallengeWithdrawn,
+    'match_challenge_accepted' => l.sysChallengeAccepted,
+    'match_challenge_declined' => l.sysChallengeDeclined,
+    'match_time_proposed' => l.sysTimeProposed,
+    'match_time_accepted' => l.sysTimeAccepted,
+    'match_court_suggested' => l.sysCourtSuggested,
+    'match_confirmed' => l.sysMatchConfirmed,
+    'match_rescheduled' => l.sysMatchRescheduled,
+    'match_cancelled' => l.sysMatchCancelled,
+    'result_submitted' => l.sysResultSubmitted,
+    'result_confirmed' => l.sysResultConfirmed,
+    'result_disputed' => l.sysResultDisputed,
+    'dispute_resolved' => l.sysDisputeResolved,
+    'fixture_scheduled' => l.sysFixtureScheduled,
+    'fixture_unplayed_walkover' => l.sysFixtureWalkover,
+    _ => null,
+  };
+  if (known != null) return known;
+  return event!
       .split('_')
       .map(
         (word) =>
@@ -830,7 +979,7 @@ class _ComposerState extends State<_Composer> {
                   color: colors.textPrimary,
                 ),
                 decoration: InputDecoration(
-                  hintText: 'Message',
+                  hintText: context.l10n.playerMessage,
                   hintStyle: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -931,7 +1080,7 @@ class _SayHello extends StatelessWidget {
 
     return Center(
       child: Text(
-        'Say hello',
+        context.l10n.messagingSayHello,
         style: type.body.copyWith(color: colors.textSecondary),
       ),
     );

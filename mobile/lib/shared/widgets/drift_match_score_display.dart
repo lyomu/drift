@@ -4,6 +4,7 @@ import '../../core/theme/drift_colors.dart';
 import '../../core/theme/drift_spacing.dart';
 import '../../core/theme/drift_typography.dart';
 import '../../features/matches/data/matches_repository.dart';
+import '../../core/l10n/l10n.dart';
 
 /// Match Score — `foundation/05-design-system.md` §7: "Set-by-set score
 /// display, tabular numerals." One column per set, side A over side B, with
@@ -12,13 +13,14 @@ class DriftMatchScoreDisplay extends StatelessWidget {
   const DriftMatchScoreDisplay({
     super.key,
     required this.sets,
-    this.sideALabel = 'You',
-    this.sideBLabel = 'Them',
+    this.sideALabel,
+    this.sideBLabel,
   });
 
   final List<SetScore> sets;
-  final String sideALabel;
-  final String sideBLabel;
+  /// Default to the translated "You" / "Them".
+  final String? sideALabel;
+  final String? sideBLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -64,9 +66,17 @@ class DriftMatchScoreDisplay extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        row(sideALabel, (s) => s.sideAGames, (s) => s.sideATiebreak),
+        row(
+          sideALabel ?? context.l10n.commonYou,
+          (s) => s.sideAGames,
+          (s) => s.sideATiebreak,
+        ),
         const SizedBox(height: DriftSpacing.s1),
-        row(sideBLabel, (s) => s.sideBGames, (s) => s.sideBTiebreak),
+        row(
+          sideBLabel ?? context.l10n.commonThem,
+          (s) => s.sideBGames,
+          (s) => s.sideBTiebreak,
+        ),
       ],
     );
   }

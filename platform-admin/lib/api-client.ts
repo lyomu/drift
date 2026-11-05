@@ -1,5 +1,11 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3009";
 
+/** Absolute URL for a server-relative media path such as a community
+ * photo (`/media/community-photos/...`). Those routes are public. */
+export function mediaUrl(path: string): string {
+  return /^https?:\/\//.test(path) ? path : `${API_URL}${path}`;
+}
+
 // Deliberately a different storage key from Club Admin's: the two consoles
 // hold different authorities and must never read each other's tokens.
 const TOKEN_KEY = "driftPlatformToken";
@@ -197,9 +203,13 @@ export const api = {
     apiFetch<T>(`/platform-admin${path}`, { method: "PATCH", body }),
   delete: <T>(path: string) =>
     apiFetch<T>(`/platform-admin${path}`, { method: "DELETE" }),
-  upload: async <T>(path: string, form: FormData) => {
+  upload: async <T>(
+    path: string,
+    form: FormData,
+    method: "POST" | "PUT" = "POST",
+  ) => {
     const res = await rawFetch(`/platform-admin${path}`, {
-      method: "POST",
+      method,
       body: form,
     });
     return res.json() as Promise<T>;

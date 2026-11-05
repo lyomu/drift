@@ -9,22 +9,9 @@ import '../../../matches/application/matches_providers.dart';
 import '../../../matches/data/matches_repository.dart';
 import '../../../players/data/players_repository.dart';
 import '../../../users/application/current_user_provider.dart';
-import 'home_empty_state.dart';
-
-const _months = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-];
+import 'next_match_empty.dart';
+import '../../../../core/l10n/l10n.dart';
+import 'package:intl/intl.dart';
 
 /// "Next match" section. Shows the opponent/time/venue when the feed picked
 /// an upcoming match, otherwise a prompt to go find one.
@@ -42,12 +29,7 @@ class NextMatchSection extends ConsumerWidget {
 
     // The section header is supplied by the enclosing `HomeSectionPanel`.
     if (match == null) {
-      return HomeEmptyState(
-        icon: Icons.event_available_outlined,
-        message: 'No matches scheduled yet.',
-        actionLabel: 'Find a match',
-        onAction: () => context.go('/home?tab=play&play=find'),
-      );
+      return const NextMatchEmpty();
     }
     return _MatchCard(
       match: match,
@@ -69,10 +51,9 @@ class _MatchCard extends StatelessWidget {
 
     final when = match.confirmedTime;
     final whenLine = when == null
-        ? 'Time to be confirmed'
-        : '${when.day} ${_months[when.month - 1]} · '
-              '${when.hour.toString().padLeft(2, '0')}:'
-              '${when.minute.toString().padLeft(2, '0')}';
+        ? context.l10n.matchTimeTbc
+        : '${DateFormat.MMMd(context.localeTag).format(when)} · '
+              '${DateFormat.Hm(context.localeTag).format(when)}';
 
     // Tinted ground rather than a white card: this sits inside a white panel,
     // so a white card on white would have nothing to sit against.
@@ -95,45 +76,48 @@ class _MatchCard extends StatelessWidget {
           ),
           padding: const EdgeInsets.all(14),
           child: Row(
-        children: [
-          if (opponent != null)
-            DriftPlayerAvatar(player: opponent!, radius: 24)
-          else
-            CircleAvatar(
-              radius: 24,
-              backgroundColor: colors.primaryLight,
-              child: Icon(Icons.person, color: colors.primaryDark),
-            ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  opponent?.displayName ?? 'Your opponent',
-                  style: type.title.copyWith(fontWeight: FontWeight.w700),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+            children: [
+              if (opponent != null)
+                DriftPlayerAvatar(player: opponent!, radius: 24)
+              else
+                CircleAvatar(
+                  radius: 24,
+                  backgroundColor: colors.primaryLight,
+                  child: Icon(Icons.person, color: colors.primaryDark),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  whenLine,
-                  style: type.caption.copyWith(color: colors.textSecondary),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      opponent?.displayName ?? context.l10n.matchYourOpponent,
+                      style: type.title.copyWith(fontWeight: FontWeight.w700),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      whenLine,
+                      style: type.caption.copyWith(color: colors.textSecondary),
+                    ),
+                    if (match.courtName != null &&
+                        match.courtName!.isNotEmpty) ...[
+                      const SizedBox(height: 1),
+                      Text(
+                        match.courtName!,
+                        style: type.caption.copyWith(
+                          color: colors.textSecondary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ],
                 ),
-                if (match.courtName != null && match.courtName!.isNotEmpty) ...[
-                  const SizedBox(height: 1),
-                  Text(
-                    match.courtName!,
-                    style: type.caption.copyWith(color: colors.textSecondary),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          _ViewPill(onTap: () => context.push('/matches/${match.id}')),
+              ),
+              const SizedBox(width: 8),
+              _ViewPill(onTap: () => context.push('/matches/${match.id}')),
             ],
           ),
         ),
@@ -167,10 +151,10 @@ class _ViewPill extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
-          child: const Padding(
+          child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 18, vertical: 9),
             child: Text(
-              'View',
+              context.l10n.commonView,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,

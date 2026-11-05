@@ -4,13 +4,15 @@ import { useRef, useState } from "react";
 import { MaterialIcon } from "@/components/dashboard-design";
 import { Button } from "@/components/ui";
 import { mediaUrl } from "@/lib/api-client";
+import { useT } from "@/lib/i18n/i18n-context";
+import { translateNow } from "@/lib/i18n/translate";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const ACCEPTED_TYPES = ["image/png", "image/jpeg"];
 
 function validate(file: File): string | null {
-  if (!ACCEPTED_TYPES.includes(file.type)) return "Choose a PNG or JPG image.";
-  if (file.size > MAX_BYTES) return "That image is over 5MB. Choose a smaller file.";
+  if (!ACCEPTED_TYPES.includes(file.type)) return translateNow("a.choosePngJpg");
+  if (file.size > MAX_BYTES) return translateNow("a.imageOver5Mb");
   return null;
 }
 
@@ -29,6 +31,7 @@ export function CoachPhotoUpload({
   onUpload: (file: File) => Promise<void>;
   onRemove: () => Promise<void>;
 }) {
+  const t = useT();
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,7 +48,7 @@ export function CoachPhotoUpload({
     try {
       await onUpload(file);
     } catch {
-      setError("Upload failed. Try again.");
+      setError(t("a.uploadFailedTryAgain"));
     } finally {
       setBusy(false);
       if (inputRef.current) inputRef.current.value = "";
@@ -58,7 +61,7 @@ export function CoachPhotoUpload({
     try {
       await onRemove();
     } catch {
-      setError("The photo could not be removed.");
+      setError(t("a.thePhotoCouldNotBe2"));
     } finally {
       setBusy(false);
     }
@@ -68,9 +71,7 @@ export function CoachPhotoUpload({
 
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-[13px] font-semibold text-drift-text-secondary">
-        Photo
-      </span>
+      <span className="text-[13px] font-semibold text-drift-text-secondary">{t("a.photo")}</span>
       <input
         ref={inputRef}
         type="file"
@@ -83,7 +84,7 @@ export function CoachPhotoUpload({
         <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full border border-drift-border bg-drift-primary-light">
           {src ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={src} alt="Current photo" className="h-full w-full object-cover" />
+            <img src={src} alt={t("a.currentPhoto")} className="h-full w-full object-cover" />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-drift-primary">
               <MaterialIcon name="person" className="text-[28px]" />
@@ -97,11 +98,11 @@ export function CoachPhotoUpload({
             disabled={busy}
             onClick={() => inputRef.current?.click()}
           >
-            {busy ? "Uploading…" : src ? "Replace" : "Upload photo"}
+            {busy ? t("a.uploading") : src ? t("a.replace") : t("a.uploadPhoto")}
           </Button>
           {src && (
             <Button type="button" variant="ghost" disabled={busy} onClick={remove}>
-              Remove
+              {t("a.remove")}
             </Button>
           )}
         </div>
@@ -111,7 +112,7 @@ export function CoachPhotoUpload({
           {error}
         </p>
       )}
-      <p className="text-[12.5px] text-drift-text-secondary">PNG or JPG, up to 5MB</p>
+      <p className="text-[12.5px] text-drift-text-secondary">{t("a.pngOrJpgUpTo")}</p>
     </div>
   );
 }

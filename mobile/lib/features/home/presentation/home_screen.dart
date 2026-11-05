@@ -17,6 +17,11 @@ import 'sections/players_near_you_rail.dart';
 import 'sections/progress_card.dart';
 import 'sections/quick_actions_grid.dart';
 import 'sections/tennis_news_rail.dart';
+import '../../../core/l10n/l10n.dart';
+import '../../../shared/widgets/motion/entrance.dart';
+import '../../../shared/widgets/motion/shimmer.dart';
+import '../../tennis_facts/data/tennis_facts_repository.dart';
+import '../../tennis_facts/presentation/tennis_fact_sheet.dart';
 
 /// Home Dashboard — `foundation/04-screen-inventory.md` §A.3 (redesign 2026-08).
 ///
@@ -35,6 +40,7 @@ class HomeScreen extends ConsumerWidget {
     Future<void> refresh() {
       ref.invalidate(homeSummaryProvider);
       ref.invalidate(newsFeedProvider);
+      ref.invalidate(todayFactProvider);
       return ref.refresh(homeFeedProvider.future);
     }
 
@@ -53,14 +59,30 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-class _HomeBody extends StatelessWidget {
+class _HomeBody extends ConsumerWidget {
   const _HomeBody({required this.sections});
 
   final HomeSections sections;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final actionNeeded = sections.actionNeeded;
+
+    // Today's fact leads the rail until it has been opened — on the server
+    // (`opened`) or during this session (optimistic, so it leaves at once).
+    final todayFact = ref.watch(todayFactProvider).valueOrNull;
+    final openedIds = ref.watch(openedFactIdsProvider);
+    final fact =
+        todayFact != null &&
+            !todayFact.opened &&
+            !openedIds.contains(todayFact.id)
+        ? todayFact
+        : null;
+    final showRail = actionNeeded.isNotEmpty || fact != null;
+
+    // Sections enter one after another, top to bottom.
+    var order = 0;
+    Widget enter(Widget child) => DriftEntrance(index: order++, child: child);
 
     // Banded layout (redesign 2026-10): the hero, Action needed and Quick
     // actions sit on the tinted ground, then every remaining section is a
@@ -68,66 +90,90 @@ class _HomeBody extends StatelessWidget {
     // of the page read as a dashboard and the rest as a feed.
     return ColoredBox(
       color: Theme.of(context).extension<DriftColors>()!.surfaceRaised,
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: HomeHeader(),
-          ),
-          const SizedBox(height: 16),
-          if (actionNeeded.isNotEmpty) ...[
-            ActionNeededRail(cards: actionNeeded),
+      child: DriftEntranceScope(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            enter(
+              const Padding(
+                padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: HomeHeader(),
+              ),
+            ),
             const SizedBox(height: 16),
+            if (showRail) ...[
+              enter(
+                ActionNeededRail(
+                  cards: actionNeeded,
+                  fact: fact,
+                  onFactTap: fact == null
+                      ? null
+                      : () => showTennisFactSheet(context, ref, fact),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+            enter(const QuickActionsGrid()),
+            const SizedBox(height: 16),
+            const HomeDivider(),
+            enter(
+              HomeSectionPanel(
+                title: context.l10n.homeNextMatch,
+                actionLabel: context.l10n.commonViewAll,
+                onAction: () => context.go('/home?tab=play&play=active'),
+                child: NextMatchSection(
+                  matchId: sections.nextMatch?.data?.matchId,
+                ),
+              ),
+            ),
+            const HomeDivider(),
+            enter(
+              HomeSectionPanel(
+                title: context.l10n.homePlayersNearYou,
+                actionLabel: context.l10n.homeFindMore,
+                onAction: () =>
+                    context.go('/home?tab=discover&discover=players'),
+                child: PlayersNearYouSection(
+                  players: sections.players?.data?.players ?? const [],
+                ),
+              ),
+            ),
+            const HomeDivider(),
+            enter(
+              HomeSectionPanel(
+                title: context.l10n.homeCourtsNearYou,
+                actionLabel: context.l10n.homeMapView,
+                onAction: () =>
+                    context.go('/home?tab=discover&discover=courts'),
+                child: CourtsNearYouSection(
+                  courts: sections.courts?.data?.courts ?? const [],
+                ),
+              ),
+            ),
+            const HomeDivider(),
+            enter(
+              HomeSectionPanel(
+                title: context.l10n.homeYourProgress,
+                actionLabel: context.l10n.commonViewAll,
+                onAction: () => context.push('/profile/achievements'),
+                child: const ProgressSection(),
+              ),
+            ),
+            const HomeDivider(),
+            // The news rail bleeds to the screen edge, so the panel adds no
+            // horizontal inset and the rail pads its own scroll view.
+            enter(
+              HomeSectionPanel(
+                title: context.l10n.homeTennisNews,
+                actionLabel: context.l10n.commonSeeAll,
+                onAction: () => context.push('/news'),
+                contentPadding: EdgeInsets.zero,
+                child: const TennisNewsRail(),
+              ),
+            ),
+            const HomeDivider(),
           ],
-          const QuickActionsGrid(),
-          const SizedBox(height: 16),
-          const HomeDivider(),
-          HomeSectionPanel(
-            title: 'Next match',
-            actionLabel: 'View all',
-            onAction: () => context.go('/home?tab=play&play=active'),
-            child: NextMatchSection(
-              matchId: sections.nextMatch?.data?.matchId,
-            ),
-          ),
-          const HomeDivider(),
-          HomeSectionPanel(
-            title: 'Players near you',
-            actionLabel: 'Find more',
-            onAction: () => context.go('/home?tab=play&play=find'),
-            child: PlayersNearYouSection(
-              players: sections.players?.data?.players ?? const [],
-            ),
-          ),
-          const HomeDivider(),
-          HomeSectionPanel(
-            title: 'Courts near you',
-            actionLabel: 'Map view',
-            onAction: () => context.go('/home?tab=discover&discover=courts'),
-            child: CourtsNearYouSection(
-              courts: sections.courts?.data?.courts ?? const [],
-            ),
-          ),
-          const HomeDivider(),
-          HomeSectionPanel(
-            title: 'Your progress',
-            actionLabel: 'View all',
-            onAction: () => context.push('/profile/achievements'),
-            child: const ProgressSection(),
-          ),
-          const HomeDivider(),
-          // The news rail bleeds to the screen edge, so the panel adds no
-          // horizontal inset and the rail pads its own scroll view.
-          HomeSectionPanel(
-            title: 'Tennis news',
-            actionLabel: 'See all',
-            onAction: () => context.push('/news'),
-            contentPadding: EdgeInsets.zero,
-            child: const TennisNewsRail(),
-          ),
-          const HomeDivider(),
-        ],
+        ),
       ),
     );
   }
@@ -145,8 +191,36 @@ class _HomeLoading extends StatelessWidget {
           padding: EdgeInsets.symmetric(horizontal: 16),
           child: HomeHeader(),
         ),
-        SizedBox(height: 40),
-        Center(child: CircularProgressIndicator()),
+        SizedBox(height: 20),
+        // Skeleton shaped like the real layout: rail, hero card, tiles,
+        // then a section panel.
+        DriftShimmer(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                DriftSkeleton(width: 120, height: 16, radius: 6),
+                SizedBox(height: 12),
+                DriftSkeleton(height: 112, radius: 24),
+                SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(child: DriftSkeleton(height: 110, radius: 20)),
+                    SizedBox(width: 10),
+                    Expanded(child: DriftSkeleton(height: 110, radius: 20)),
+                    SizedBox(width: 10),
+                    Expanded(child: DriftSkeleton(height: 110, radius: 20)),
+                  ],
+                ),
+                SizedBox(height: 24),
+                DriftSkeleton(width: 140, height: 16, radius: 6),
+                SizedBox(height: 12),
+                DriftSkeleton(height: 96, radius: 16),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -173,13 +247,13 @@ class _HomeError extends StatelessWidget {
           child: Column(
             children: [
               Text(
-                "Couldn't load your Home feed. Please try again.",
+                context.l10n.homeLoadFailed,
                 style: type.body.copyWith(color: colors.textSecondary),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
               DriftButton(
-                label: 'Retry',
+                label: context.l10n.commonRetry,
                 variant: DriftButtonVariant.text,
                 onPressed: onRetry,
               ),

@@ -8,6 +8,7 @@ import '../../../shared/widgets/drift_text_field.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../users/data/users_repository.dart';
 import 'widgets/onboarding_scaffold.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Club / Preferred Courts — `foundation/03-user-journeys.md` §2. Free-text
 /// only this checkpoint (Courts/Clubs modules land in Phase M9); optional
@@ -59,25 +60,25 @@ class _ClubCourtsScreenState extends ConsumerState<ClubCourtsScreen> {
   Widget build(BuildContext context) {
     return DriftOnboardingScaffold(
       step: OnboardingStepIndex.clubCourts,
-      title: 'Where do you play?',
-      highlight: 'play?',
-      subtitle: 'No club yet? Skip this one.',
+      title: context.l10n.onbClubTitle,
+      highlight: context.l10n.onbClubHighlight,
+      subtitle: context.l10n.onbClubSubtitle,
       loading: _isSubmitting,
       onContinue: _isSubmitting ? null : _submit,
       errorText: _errorText,
       footer: DriftButton(
-        label: 'Skip',
+        label: context.l10n.commonSkip,
         variant: DriftButtonVariant.text,
         onPressed: _isSubmitting ? null : _submit,
       ),
       children: [
         DriftTextField(
-          label: 'Club name (optional)',
+          label: context.l10n.onbClubName,
           controller: _clubController,
         ),
         const SizedBox(height: DriftSpacing.s4),
         DriftTextField(
-          label: 'Preferred court (optional)',
+          label: context.l10n.onbPreferredCourt,
           controller: _courtController,
         ),
       ],

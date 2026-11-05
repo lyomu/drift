@@ -9,6 +9,7 @@ import '../../../shared/widgets/drift_scaffold.dart';
 import '../../auth/data/auth_repository.dart';
 import '../application/clubs_providers.dart';
 import '../data/clubs_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// The reaction set. Deliberately small and fixed client-side — the server
 /// stores whatever emoji it's sent, so this can grow without a migration.
@@ -86,7 +87,7 @@ class _ClubFeedScreenState extends ConsumerState<ClubFeedScreen> {
     final feed = ref.watch(clubFeedProvider(widget.clubId));
 
     return DriftScaffold(
-      title: 'Club Feed',
+      title: context.l10n.clubFeed,
       body: Column(
         children: [
           if (_errorText != null)
@@ -163,14 +164,17 @@ class _PostCard extends StatelessWidget {
                 // Null once the author deletes their account — the post
                 // stays readable rather than vanishing from the thread.
                 child: Text(
-                  post.author?.name ?? 'Former member',
+                  post.author?.name ?? context.l10n.clubFormerMember,
                   style: type.label,
                 ),
               ),
               if (onDelete != null)
                 TextButton(
                   onPressed: onDelete,
-                  child: Text('Delete', style: TextStyle(color: colors.error)),
+                  child: Text(
+                    context.l10n.commonDelete,
+                    style: TextStyle(color: colors.error),
+                  ),
                 ),
             ],
           ),
@@ -263,8 +267,8 @@ class _Composer extends StatelessWidget {
               controller: controller,
               minLines: 1,
               maxLines: 4,
-              decoration: const InputDecoration(
-                hintText: 'Share something with the club',
+              decoration: InputDecoration(
+                hintText: context.l10n.clubShareHint,
               ),
             ),
           ),
@@ -288,7 +292,7 @@ class _Empty extends StatelessWidget {
         const SizedBox(height: DriftSpacing.s8),
         Center(
           child: Text(
-            'No posts yet',
+            context.l10n.clubNoPosts,
             style: TextStyle(color: colors.textSecondary),
           ),
         ),
@@ -309,7 +313,7 @@ class _NotAMember extends StatelessWidget {
         const SizedBox(height: DriftSpacing.s8),
         Center(
           child: Text(
-            'Join this club to see and post to its feed.',
+            context.l10n.clubJoinToSeeFeed,
             textAlign: TextAlign.center,
             style: TextStyle(color: colors.textSecondary),
           ),

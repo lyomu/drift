@@ -14,6 +14,7 @@ class DriftPrimaryButton extends StatelessWidget {
     this.loading = false,
     this.fontSize = 15,
     this.verticalPadding = 14,
+    this.trailingIcon,
   });
 
   final String label;
@@ -21,6 +22,9 @@ class DriftPrimaryButton extends StatelessWidget {
   final bool loading;
   final double fontSize;
   final double verticalPadding;
+
+  /// Optional icon after the label (e.g. a chevron on step-flow CTAs).
+  final IconData? trailingIcon;
 
   @override
   Widget build(BuildContext context) {
@@ -46,13 +50,28 @@ class DriftPrimaryButton extends StatelessWidget {
                       color: Colors.white,
                     ),
                   )
-                : Text(
-                    label,
-                    style: type.button.copyWith(
-                      color: Colors.white,
-                      fontSize: fontSize,
-                      fontWeight: FontWeight.w700,
-                    ),
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          label,
+                          style: type.button.copyWith(
+                            color: Colors.white,
+                            fontSize: fontSize,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      if (trailingIcon != null) ...[
+                        const SizedBox(width: 6),
+                        Icon(
+                          trailingIcon,
+                          size: fontSize + 3,
+                          color: Colors.white,
+                        ),
+                      ],
+                    ],
                   ),
           ),
         ),

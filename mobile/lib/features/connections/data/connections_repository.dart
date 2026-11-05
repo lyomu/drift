@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/dio_client.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../players/data/players_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 class ConnectionEntry {
   const ConnectionEntry({
@@ -84,7 +85,7 @@ class ConnectionsRepository {
       final body = e.response?.data;
       final message = body is Map ? body['message'] as Object? : null;
       final text = message is List ? message.join(' ') : message?.toString();
-      throw AuthException(text ?? 'Something went wrong. Please try again.');
+      throw AuthException(text ?? l10nNow.commonErrorGeneric);
     }
   }
 }

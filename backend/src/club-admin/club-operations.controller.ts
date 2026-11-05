@@ -45,6 +45,16 @@ export class ClubOperationsController {
     };
   }
 
+  /** Counts of work waiting on the caller; see `ClubOperationsService.attention`. */
+  @Get('attention')
+  attention(
+    @Req() req: Request & { clubMembership?: { role: ClubRole } },
+    @Param('clubId') clubId: string,
+  ) {
+    // ClubMembershipGuard (controller-level) always sets this before we run.
+    return this.operations.attention(clubId, req.clubMembership!.role);
+  }
+
   @Get('media')
   media(@Param('clubId') clubId: string) {
     return this.operations.listMedia(clubId);

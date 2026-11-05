@@ -15,6 +15,7 @@ import '../../auth/data/auth_repository.dart';
 import '../application/payments_providers.dart';
 import '../data/payments_repository.dart';
 import 'widgets/billing_widgets.dart';
+import '../../../core/l10n/l10n.dart';
 
 class PaymentMethodsScreen extends ConsumerStatefulWidget {
   const PaymentMethodsScreen({super.key, this.pendingPlanId});
@@ -95,18 +96,18 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Remove payment method?'),
+        title: Text(context.l10n.payRemoveMethodQ),
         content: Text(
           '${method.label} will no longer be available for charges.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.commonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Remove'),
+            child: Text(context.l10n.payRemove),
           ),
         ],
       ),
@@ -130,11 +131,13 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
     final methods = ref.watch(paymentMethodsProvider);
     final type = Theme.of(context).extension<DriftTypography>()!;
     return DriftScaffold(
-      title: 'Payment methods',
+      title: context.l10n.payPaymentMethods,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _saving ? null : _add,
         icon: const Icon(Icons.add_card_outlined),
-        label: Text(_saving ? 'Saving…' : 'Add method'),
+        label: Text(
+          _saving ? context.l10n.commonSaving : context.l10n.payAddMethod,
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: () => ref.refresh(paymentMethodsProvider.future),
@@ -164,13 +167,13 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
                       const Icon(Icons.credit_card_off_outlined, size: 42),
                       const SizedBox(height: DriftSpacing.s3),
                       Text(
-                        'No payment method saved',
+                        context.l10n.payNoMethod,
                         style: type.body,
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: DriftSpacing.s2),
                       Text(
-                        'Add a tokenized card or mobile-money method to choose a paid plan.',
+                        context.l10n.payNoMethodBody,
                         style: type.bodySmall,
                         textAlign: TextAlign.center,
                       ),
@@ -189,7 +192,7 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
             ],
           ),
           AsyncError() => BillingLoadError(
-            message: "Couldn't load your payment methods.",
+            message: context.l10n.payMethodsFailed,
             retry: () => ref.invalidate(paymentMethodsProvider),
           ),
           _ => const Center(child: CircularProgressIndicator()),
@@ -228,13 +231,13 @@ class _PaymentMethodCard extends StatelessWidget {
             ),
           ),
           if (method.isDefault)
-            const DriftStatusBadge(
-              label: 'Default',
+            DriftStatusBadge(
+              label: context.l10n.payDefault,
               tone: DriftStatusTone.info,
             ),
           IconButton(
             onPressed: onRemove,
-            tooltip: 'Remove ${method.label}',
+            tooltip: context.l10n.payRemoveNamed(method.label),
             icon: Icon(Icons.delete_outline, color: colors.error),
           ),
         ],
@@ -263,7 +266,7 @@ class _PaymentFailure extends StatelessWidget {
           Text(message),
           if (retry != null)
             DriftButton(
-              label: 'Retry payment',
+              label: context.l10n.payRetryPayment,
               variant: DriftButtonVariant.text,
               onPressed: retry,
             ),
@@ -306,7 +309,7 @@ class _AddPaymentMethodSheetState extends State<_AddPaymentMethodSheet> {
 
   void _save() {
     if (!RegExp(r'^\d{4}$').hasMatch(_last4.text)) {
-      setState(() => _error = 'Enter exactly four digits.');
+      setState(() => _error = context.l10n.payFourDigits);
       return;
     }
     Navigator.of(context).pop(
@@ -333,7 +336,7 @@ class _AddPaymentMethodSheetState extends State<_AddPaymentMethodSheet> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Add payment method', style: type.h3),
+              Text(context.l10n.payAddPaymentMethod, style: type.h3),
               const SizedBox(height: DriftSpacing.s4),
               SegmentedButton<PaymentMethodKind>(
                 segments: [
@@ -347,16 +350,16 @@ class _AddPaymentMethodSheetState extends State<_AddPaymentMethodSheet> {
               const SizedBox(height: DriftSpacing.s4),
               if (_kind == PaymentMethodKind.card) ...[
                 DriftTextField(
-                  label: 'Card brand',
-                  hintText: 'e.g. Visa',
+                  label: context.l10n.payCardBrand,
+                  hintText: context.l10n.payCardBrandHint,
                   controller: _brand,
                 ),
                 const SizedBox(height: DriftSpacing.s3),
               ],
               DriftTextField(
                 label: _kind == PaymentMethodKind.card
-                    ? 'Tokenized card — last four digits'
-                    : 'Tokenized mobile number — last four digits',
+                    ? context.l10n.payCardLast4
+                    : context.l10n.payMobileLast4,
                 controller: _last4,
                 keyboardType: TextInputType.number,
                 maxLength: 4,
@@ -365,11 +368,11 @@ class _AddPaymentMethodSheetState extends State<_AddPaymentMethodSheet> {
               ),
               const SizedBox(height: DriftSpacing.s2),
               Text(
-                'Drift stores only the provider token and these display digits. Full payment credentials never reach Drift.',
+                context.l10n.payTokenNote,
                 style: type.bodySmall,
               ),
               const SizedBox(height: DriftSpacing.s5),
-              DriftButton(label: 'Save method', onPressed: _save),
+              DriftButton(label: context.l10n.paySaveMethod, onPressed: _save),
             ],
           ),
         ),

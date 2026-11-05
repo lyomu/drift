@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../data/court_bookings.dart';
 import '../data/courts_repository.dart';
 
 // `.autoDispose` throughout — the M9 convention (see PROGRESS.md), set
@@ -33,3 +34,19 @@ final courtDetailProvider = FutureProvider.autoDispose
           .watch(courtsRepositoryProvider)
           .findOne(courtId, viewerLocation: center);
     });
+
+/// Slot grid for (courtId, `YYYY-MM-DD`, surface id). A record key so the
+/// family caches per day/surface and compares by value.
+final courtAvailabilityProvider = FutureProvider.autoDispose
+    .family<CourtAvailability, (String, String, String?)>((ref, key) {
+      return ref
+          .watch(courtsRepositoryProvider)
+          .availability(key.$1, key.$2, groupId: key.$3);
+    });
+
+/// The signed-in player's booking requests, newest first.
+final myBookingsProvider = FutureProvider.autoDispose<List<CourtBooking>>((
+  ref,
+) {
+  return ref.watch(courtsRepositoryProvider).myBookings();
+});

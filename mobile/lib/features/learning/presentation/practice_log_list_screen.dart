@@ -8,17 +8,8 @@ import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/drift_card.dart';
 import '../../../shared/widgets/drift_scaffold.dart';
 import '../application/learning_providers.dart';
-
-const _skillLabels = {
-  'FOREHAND': 'Forehand',
-  'BACKHAND': 'Backhand',
-  'SERVE': 'Serve',
-  'RETURN': 'Return',
-  'NET_PLAY': 'Net Play',
-  'MOVEMENT': 'Movement',
-  'MATCH_PLAY': 'Match Play',
-  'FOOTWORK': 'Footwork',
-};
+import '../../../core/l10n/l10n.dart';
+import '../../../core/l10n/enum_labels.dart';
 
 /// Practice Log List — `foundation/04-screen-inventory.md` §A.7.
 class PracticeLogListScreen extends ConsumerWidget {
@@ -31,7 +22,7 @@ class PracticeLogListScreen extends ConsumerWidget {
     final colors = Theme.of(context).extension<DriftColors>()!;
 
     return DriftScaffold(
-      title: 'Practice Log',
+      title: context.l10n.learnPracticeLog,
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/learn/practice/add'),
         child: const Icon(Icons.add),
@@ -55,7 +46,7 @@ class PracticeLogListScreen extends ConsumerWidget {
                             ),
                             const SizedBox(height: DriftSpacing.s3),
                             Text(
-                              'Log your first practice session',
+                              context.l10n.practiceEmpty,
                               style: type.body.copyWith(
                                 color: colors.textSecondary,
                               ),
@@ -86,8 +77,10 @@ class PracticeLogListScreen extends ConsumerWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    _skillLabels[session.skillFocus] ??
-                                        session.skillFocus,
+                                    pillarLabel(
+                                      context.l10n,
+                                      session.skillFocus,
+                                    ),
                                     style: type.title,
                                   ),
                                   const SizedBox(height: DriftSpacing.s1),
@@ -116,9 +109,7 @@ class PracticeLogListScreen extends ConsumerWidget {
                       );
                     },
                   ),
-          AsyncError() => const Center(
-            child: Text("Couldn't load your practice log."),
-          ),
+          AsyncError() => Center(child: Text(context.l10n.practiceLoadFailed)),
           _ => const Center(child: CircularProgressIndicator()),
         },
       ),

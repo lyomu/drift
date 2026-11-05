@@ -102,6 +102,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/content/lessons/new", label: "Create Lesson", icon: "menu_book", permissions: ["CONTENT_MANAGE"] },
       { href: "/content/drills/new", label: "Create Drill", icon: "sports_tennis", permissions: ["CONTENT_MANAGE"] },
       { href: "/content/paths", label: "Learning Paths", icon: "conversion_path", permissions: ["CONTENT_MANAGE"] },
+      { href: "/tennis-facts", label: "Daily Tennis Facts", icon: "lightbulb", permissions: ["CONTENT_MANAGE"] },
       { href: "/news", label: "News Overview", icon: "space_dashboard", permissions: ["CONTENT_MANAGE"], exact: true },
       { href: "/news/sources", label: "News Sources", icon: "rss_feed", permissions: ["CONTENT_MANAGE"] },
       { href: "/news/stories", label: "News Review Queue", icon: "newspaper", permissions: ["CONTENT_MANAGE"] },
@@ -127,6 +128,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/users", label: "Users", icon: "person_search", permissions: ["USERS_MANAGE"], exact: true },
       { href: "/users/coach-applications", label: "Coach Applications", icon: "sports_tennis", permissions: ["USERS_MANAGE"] },
+      { href: "/communities", label: "Communities", icon: "groups", permissions: ["TRUST_SAFETY_MANAGE"] },
       { href: "/reports", label: "Reported Content Queue", icon: "flag", permissions: ["TRUST_SAFETY_MANAGE"] },
       { href: "/abuse-cases", label: "Block / Abuse Cases", icon: "block", permissions: ["TRUST_SAFETY_MANAGE"] },
     ],

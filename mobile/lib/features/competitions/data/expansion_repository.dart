@@ -51,7 +51,11 @@ class LadderSummary {
   factory LadderSummary.fromJson(Map<String, dynamic> json) => LadderSummary(
     id: json['id'] as String,
     name: json['name'] as String,
-    clubName: (json['club'] as Map<String, dynamic>?)?['name'] as String? ?? '',
+    // A community ladder (2026-11) has no club; its community names it.
+    clubName:
+        (json['club'] as Map<String, dynamic>?)?['name'] as String? ??
+        (json['community'] as Map<String, dynamic>?)?['name'] as String? ??
+        '',
     // `_count` on the list payload; the detail payload carries `entries`.
     entryCount:
         (json['_count'] as Map<String, dynamic>?)?['entries'] as int? ??

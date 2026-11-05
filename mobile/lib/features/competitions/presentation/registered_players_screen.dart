@@ -10,6 +10,7 @@ import '../../../shared/widgets/drift_player_card.dart';
 import '../../../shared/widgets/drift_soft_card.dart';
 import '../application/competitions_providers.dart';
 import '../data/competitions_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Registered Players List — `foundation/04-screen-inventory.md` §A.5
 /// (redesign 2026-08).
@@ -29,7 +30,7 @@ class RegisteredPlayersScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const DriftBackHeader(title: 'Registered Players'),
+            DriftBackHeader(title: context.l10n.competeRegisteredPlayers),
             Expanded(
               child: RefreshIndicator(
                 onRefresh: () async {
@@ -42,7 +43,7 @@ class RegisteredPlayersScreen extends ConsumerWidget {
                       Padding(
                         padding: const EdgeInsets.fromLTRB(24, 64, 24, 24),
                         child: Text(
-                          'No one has registered yet.',
+                          context.l10n.competeNoRegistrations,
                           textAlign: TextAlign.center,
                           style: type.body.copyWith(
                             color: colors.textSecondary,
@@ -78,8 +79,8 @@ class RegisteredPlayersScreen extends ConsumerWidget {
                             ),
                             if (entry.status ==
                                 SeasonRegistrationStatus.waitlisted)
-                              const DriftPill(
-                                label: 'Waitlist',
+                              DriftPill(
+                                label: context.l10n.competeWaitlist,
                                 tone: DriftPillTone.warning,
                               ),
                           ],
@@ -87,8 +88,8 @@ class RegisteredPlayersScreen extends ConsumerWidget {
                       );
                     },
                   ),
-                  AsyncError() => const Center(
-                    child: Text("Couldn't load players."),
+                  AsyncError() => Center(
+                    child: Text(context.l10n.competeLoadPlayersFailed),
                   ),
                   _ => const Center(child: CircularProgressIndicator()),
                 },

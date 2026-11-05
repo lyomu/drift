@@ -5,17 +5,22 @@ import 'package:go_router/go_router.dart';
 import 'drift_app_drawer.dart';
 import 'drift_app_header.dart';
 import 'drift_bottom_nav.dart';
-import '../../features/competitions/presentation/compete_hub_screen.dart';
+import '../../features/communities/presentation/community_hub_screen.dart';
+import '../../features/communities/presentation/create_community_sheet.dart';
 import '../../features/discover/presentation/discover_hub_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/learning/presentation/learning_home_screen.dart';
+import '../../features/matches/application/matches_providers.dart';
 import '../../features/matches/presentation/play_hub_screen.dart';
-import '../../features/players/presentation/player_filters_sheet.dart';
 import '../../shared/widgets/drift_back_header.dart';
+import '../l10n/l10n.dart';
 
-/// Bottom-navigation shell — Home / Play / Compete / Discover / Learn, per
-/// `foundation/02-information-architecture.md` §1.2. Plain [IndexedStack] is
-/// enough here; deep links go through the router.
+/// Bottom-navigation shell — Home / Play / Community / Discover / Learn.
+/// Plain [IndexedStack] is enough here; deep links go through the router.
+///
+/// 2026-11 restructure: Play and Compete merged into Play (Matches /
+/// Leagues / Ladders / Tournaments / Events), and Community took the freed
+/// slot.
 ///
 /// 2026-09 redesign: the shell now owns the app's chrome. A persistent
 /// [DriftAppHeader] sits above the tab stack (the hub screens no longer draw
@@ -28,11 +33,13 @@ class AppShell extends ConsumerStatefulWidget {
     super.key,
     this.initialIndex = 0,
     this.initialPlaySegment,
+    this.initialMatchFilter,
     this.initialDiscoverSegment,
   });
 
   final int initialIndex;
   final int? initialPlaySegment;
+  final MatchSegment? initialMatchFilter;
   final int? initialDiscoverSegment;
 
   @override
@@ -58,10 +65,10 @@ class _AppShellState extends ConsumerState<AppShell> {
 
   /// Home shows the greeting instead of a title.
   String? get _title => switch (_index) {
-    1 => 'Play',
-    2 => 'Compete',
-    3 => 'Discover',
-    4 => 'Learn',
+    1 => context.l10n.navPlay,
+    2 => context.l10n.navCommunity,
+    3 => context.l10n.navDiscover,
+    4 => context.l10n.navLearn,
     _ => null,
   };
 
@@ -71,14 +78,14 @@ class _AppShellState extends ConsumerState<AppShell> {
     0 => [const DriftStreakChip()],
     1 => [
       DriftHeaderSquareButton(
-        icon: Icons.tune,
-        onTap: () => showPlayerFiltersSheet(context, ref),
+        icon: Icons.event_note_outlined,
+        onTap: () => context.push('/compete/my-leagues'),
       ),
     ],
     2 => [
       DriftHeaderSquareButton(
-        icon: Icons.event_note_outlined,
-        onTap: () => context.push('/compete/my-leagues'),
+        icon: Icons.add,
+        onTap: () => showCreateCommunitySheet(context, ref),
       ),
     ],
     _ => const [],
@@ -96,8 +103,11 @@ class _AppShellState extends ConsumerState<AppShell> {
               index: _index,
               children: [
                 const HomeScreen(),
-                PlayHubScreen(initialSegment: widget.initialPlaySegment),
-                const CompeteHubScreen(),
+                PlayHubScreen(
+                  initialSegment: widget.initialPlaySegment,
+                  initialMatchFilter: widget.initialMatchFilter,
+                ),
+                const CommunityHubScreen(),
                 DiscoverHubScreen(
                   initialSegment: widget.initialDiscoverSegment,
                 ),
@@ -111,7 +121,7 @@ class _AppShellState extends ConsumerState<AppShell> {
         selectedIndex: _index,
         onSelected: (i) => context.go(switch (i) {
           1 => '/home?tab=play',
-          2 => '/home?tab=compete',
+          2 => '/home?tab=community',
           3 => '/home?tab=discover',
           4 => '/home?tab=learn',
           _ => '/home',

@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
+import { BookingsModule } from '../bookings/bookings.module';
 import { CoachesModule } from '../coaches/coaches.module';
+import { CommunitiesModule } from '../communities/communities.module';
 import { EventsModule } from '../events/events.module';
 import { CompetitionsModule } from '../competitions/competitions.module';
 import { CourtsModule } from '../courts/courts.module';
@@ -23,9 +25,11 @@ import { ReportsAdminController } from './reports-admin.controller';
 import { EventsAdminController } from './events-admin.controller';
 import { ClubOperationsController } from './club-operations.controller';
 import { ClubOperationsService } from './club-operations.service';
+import { ClubCommunityAdminController } from './club-community-admin.controller';
 
 @Module({
   imports: [
+    BookingsModule,
     CompetitionsModule,
     MatchesModule,
     CourtsModule,
@@ -34,6 +38,7 @@ import { ClubOperationsService } from './club-operations.service';
     CoachesModule,
     EventsModule,
     UsersModule,
+    CommunitiesModule,
   ],
   controllers: [
     CompetitionsAdminExpansionController,
@@ -47,6 +52,7 @@ import { ClubOperationsService } from './club-operations.service';
     ClubCoachesAdminController,
     EventsAdminController,
     ClubOperationsController,
+    ClubCommunityAdminController,
   ],
   providers: [
     ClubsAdminService,

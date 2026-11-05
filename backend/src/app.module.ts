@@ -21,7 +21,9 @@ import { PlayersModule } from './players/players.module';
 import { MatchesModule } from './matches/matches.module';
 import { CompetitionsModule } from './competitions/competitions.module';
 import { CourtsModule } from './courts/courts.module';
+import { BookingsModule } from './bookings/bookings.module';
 import { ClubsModule } from './clubs/clubs.module';
+import { CommunitiesModule } from './communities/communities.module';
 import { ClubAdminModule } from './club-admin/club-admin.module';
 import { ClubOnboardingModule } from './club-onboarding/club-onboarding.module';
 import { PlatformAdminModule } from './platform-admin/platform-admin.module';
@@ -36,6 +38,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { AchievementsModule } from './achievements/achievements.module';
 import { GlobalSearchModule } from './global-search/global-search.module';
 import { WaitlistModule } from './waitlist/waitlist.module';
+import { TennisFactsModule } from './tennis-facts/tennis-facts.module';
 import { MetricsModule } from './metrics/metrics.module';
 import { validateEnvironment } from './config/environment';
 
@@ -80,7 +83,9 @@ import { validateEnvironment } from './config/environment';
     MatchesModule,
     CompetitionsModule,
     CourtsModule,
+    BookingsModule,
     ClubsModule,
+    CommunitiesModule,
     ClubAdminModule,
     ClubOnboardingModule,
     PlatformAdminModule,
@@ -93,6 +98,7 @@ import { validateEnvironment } from './config/environment';
     AchievementsModule,
     GlobalSearchModule,
     WaitlistModule,
+    TennisFactsModule,
     MetricsModule,
   ],
   controllers: [AppController],

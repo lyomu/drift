@@ -5,10 +5,12 @@ import '../../clubs/presentation/club_list_screen.dart';
 import '../../coaches/presentation/coach_list_screen.dart';
 import '../../courts/presentation/court_finder_hub_screen.dart';
 import '../../players/presentation/player_search_screen.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Discover Hub — `foundation/02-information-architecture.md` §1.3,
-/// segmented Players / Courts / Clubs / Coaches (redesign 2026-08:
-/// `App.tsx` `DiscoverScreen`).
+/// segmented Find players / Courts / Clubs / Coaches (redesign 2026-08:
+/// `App.tsx` `DiscoverScreen`; "Players" became "Find players" when the old
+/// Play → Find tab merged into it, 2026-11).
 class DiscoverHubScreen extends StatefulWidget {
   const DiscoverHubScreen({super.key, this.initialSegment});
 
@@ -21,7 +23,6 @@ class DiscoverHubScreen extends StatefulWidget {
 class _DiscoverHubScreenState extends State<DiscoverHubScreen> {
   late int _segment;
 
-  static const _labels = ['Players', 'Courts', 'Clubs', 'Coaches'];
 
   @override
   void initState() {
@@ -47,7 +48,12 @@ class _DiscoverHubScreenState extends State<DiscoverHubScreen> {
       children: [
         const SizedBox(height: 4),
         DriftPillTabs(
-          labels: _labels,
+          labels: [
+            context.l10n.discoverFindPlayers,
+            context.l10n.discoverCourts,
+            context.l10n.discoverClubs,
+            context.l10n.discoverCoaches,
+          ],
           selected: _segment,
           onChanged: (i) => setState(() => _segment = i),
         ),

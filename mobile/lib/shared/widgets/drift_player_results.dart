@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/network/media_url.dart';
 import '../../core/theme/drift_colors.dart';
 import '../../features/players/data/players_repository.dart';
+import '../../core/l10n/l10n.dart';
 
 /// Ranked-player result list furniture, shared by Discover → Players and
 /// Play → Find (redesign 2026-10). The two screens render the same search
@@ -48,7 +49,7 @@ class DriftPlayerSearchBar extends StatelessWidget {
     required this.onChanged,
     required this.filtersActive,
     required this.onFilters,
-    this.hintText = 'Search players…',
+    this.hintText,
   });
 
   final TextEditingController controller;
@@ -58,7 +59,8 @@ class DriftPlayerSearchBar extends StatelessWidget {
   /// the sheet.
   final bool filtersActive;
   final VoidCallback onFilters;
-  final String hintText;
+  /// Defaults to the translated "Search players…".
+  final String? hintText;
 
   @override
   Widget build(BuildContext context) {
@@ -96,7 +98,7 @@ class DriftPlayerSearchBar extends StatelessWidget {
                         border: InputBorder.none,
                         enabledBorder: InputBorder.none,
                         focusedBorder: InputBorder.none,
-                        hintText: hintText,
+                        hintText: hintText ?? context.l10n.searchPlayersHint,
                         hintStyle: TextStyle(
                           fontSize: 13,
                           color: colors.textSecondary,
@@ -283,7 +285,7 @@ class _MetaRow extends StatelessWidget {
             ),
             padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
             child: Text(
-              'Level ${level.toStringAsFixed(1)}',
+              context.l10n.commonLevel(level.toStringAsFixed(1)),
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,

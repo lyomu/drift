@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
+import '../l10n/l10n.dart';
 
 /// Thrown for every failure mode `LocationService.getCurrentLocation` can
 /// hit — location services off, permission denied, or (bare catch-all) any
@@ -37,9 +38,7 @@ class ResolvedLocation {
 class LocationService {
   Future<ResolvedLocation> getCurrentLocation() async {
     if (!await Geolocator.isLocationServiceEnabled()) {
-      throw const LocationUnavailableException(
-        'Location services are turned off.',
-      );
+      throw LocationUnavailableException(l10nNow.locationServicesOff);
     }
 
     var permission = await Geolocator.checkPermission();
@@ -48,9 +47,7 @@ class LocationService {
     }
     if (permission == LocationPermission.denied ||
         permission == LocationPermission.deniedForever) {
-      throw const LocationUnavailableException(
-        'Location permission was denied.',
-      );
+      throw LocationUnavailableException(l10nNow.locationDenied);
     }
 
     final position = await Geolocator.getCurrentPosition(

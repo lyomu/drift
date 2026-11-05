@@ -36,6 +36,7 @@ import { OAuthGoogleDto, OAuthAppleDto, OAuthLinkDto } from './dto/oauth.dto';
 import { parseDurationMs } from './util/duration.util';
 import { PasswordPolicyService } from './password-policy';
 import { assertAgePolicyAccepted } from './age-policy';
+import { type LocaleCode, localeOf } from '../common/i18n';
 
 const BCRYPT_ROUNDS = 10;
 const CODE_TTL_MS = 10 * 60 * 1000;
@@ -67,9 +68,7 @@ export class AuthService {
       where: { email: dto.email },
     });
     if (existing) {
-      throw new ConflictException(
-        'Unable to create account with these details.',
-      );
+      throw new ConflictException('Account with this email already exists.');
     }
 
     assertAgePolicyAccepted(dto.acceptedAgePolicy);
@@ -95,6 +94,7 @@ export class AuthService {
                 }
               : {}),
             agePolicyAcceptedAt: new Date(),
+            preferredLocale: dto.locale ?? null,
             onboardingStep: OnboardingStep.VERIFY,
             tennisProfile: { create: {} },
           },
@@ -117,7 +117,12 @@ export class AuthService {
     this.logCode(user.email!, code);
     // No-op when SMTP is not configured (dev + pre-wire production); a send
     // failure never fails signup — the user can hit resend on the verify screen.
-    await this.mailer.sendVerificationCode(user.email!, code, 'signup');
+    await this.mailer.sendVerificationCode(
+      user.email!,
+      code,
+      'signup',
+      localeOf(user.preferredLocale),
+    );
 
     return { userId: user.id, ...this.devCode(code) };
   }
@@ -173,7 +178,12 @@ export class AuthService {
     // A completed verification is the first point where a password account is
     // usable and its address is proven. MailerService absorbs SMTP failures,
     // so a warm welcome can never hold up sign-in.
-    await this.mailer.sendWelcome(user.email!, user.firstName);
+    await this.mailer.sendWelcome(
+      user.email!,
+      user.firstName,
+      undefined,
+      localeOf(user.preferredLocale),
+    );
 
     return this.issueTokens(user.id);
   }
@@ -231,7 +241,12 @@ export class AuthService {
     }
 
     this.logCode(user.email!, code);
-    await this.mailer.sendVerificationCode(user.email!, code, 'signup');
+    await this.mailer.sendVerificationCode(
+      user.email!,
+      code,
+      'signup',
+      localeOf(user.preferredLocale),
+    );
     return this.devCode(code);
   }
 
@@ -271,7 +286,7 @@ export class AuthService {
    * link the account. Never trusts a client-supplied email or id. */
   async oauthGoogle(dto: OAuthGoogleDto): Promise<AuthTokens> {
     const claims = await this.oauth.verifyGoogleIdToken(dto.idToken, dto.nonce);
-    return this.socialSignIn(claims, dto.acceptedAgePolicy);
+    return this.socialSignIn(claims, dto.acceptedAgePolicy, dto.locale);
   }
 
   async oauthApple(dto: OAuthAppleDto): Promise<AuthTokens> {
@@ -280,7 +295,7 @@ export class AuthService {
       dto.nonce,
       dto.name,
     );
-    return this.socialSignIn(claims, dto.acceptedAgePolicy);
+    return this.socialSignIn(claims, dto.acceptedAgePolicy, dto.locale);
   }
 
   /** 4.2 fallback: the email already has a password account that can't be
@@ -335,6 +350,7 @@ export class AuthService {
   private async socialSignIn(
     claims: SocialLoginClaims,
     acceptedAgePolicy?: boolean,
+    locale?: LocaleCode,
   ): Promise<AuthTokens> {
     const existingIdentity = await this.prisma.socialIdentity.findUnique({
       where: {
@@ -395,6 +411,7 @@ export class AuthService {
           lastName: claims.familyName ?? null,
           emailVerifiedAt: verifiedNow,
           agePolicyAcceptedAt: new Date(),
+          preferredLocale: locale ?? null,
           verificationStatus: verifiedNow
             ? VerificationStatus.VERIFIED
             : VerificationStatus.UNVERIFIED,
@@ -421,7 +438,12 @@ export class AuthService {
     // A first social account is immediately usable. Only mail an address the
     // provider has itself verified; Apple may withhold one entirely.
     if (user.email && claims.emailVerified) {
-      await this.mailer.sendWelcome(user.email, user.firstName);
+      await this.mailer.sendWelcome(
+        user.email,
+        user.firstName,
+        undefined,
+        localeOf(user.preferredLocale),
+      );
     }
 
     return this.issueTokens(user.id);
@@ -655,7 +677,12 @@ export class AuthService {
     }
 
     this.logCode(user.email!, code);
-    await this.mailer.sendVerificationCode(user.email!, code, 'password-reset');
+    await this.mailer.sendVerificationCode(
+      user.email!,
+      code,
+      'password-reset',
+      localeOf(user.preferredLocale),
+    );
     return this.devCode(code);
   }
 

@@ -7,6 +7,9 @@ import '../../../../core/theme/drift_colors.dart';
 import '../../../players/data/players_repository.dart';
 import '../../../users/application/current_user_provider.dart';
 import 'home_empty_state.dart';
+import '../../../../core/l10n/l10n.dart';
+import '../../../../shared/widgets/motion/entrance.dart';
+import '../../../../shared/widgets/motion/pressable.dart';
 
 /// Avatar gradients, picked by a stable hash of the player id so a player
 /// keeps the same colour between rebuilds — the API sends no colour, and
@@ -34,9 +37,9 @@ class PlayersNearYouSection extends ConsumerWidget {
     if (shown.isEmpty) {
       return HomeEmptyState(
         icon: Icons.person_search_outlined,
-        message: 'No players nearby yet.',
-        actionLabel: 'Search',
-        onAction: () => context.go('/home?tab=play&play=find'),
+        message: context.l10n.homeNoPlayers,
+        actionLabel: context.l10n.commonSearch,
+        onAction: () => context.go('/home?tab=discover&discover=players'),
       );
     }
 
@@ -47,7 +50,11 @@ class PlayersNearYouSection extends ConsumerWidget {
         padding: EdgeInsets.zero,
         itemCount: shown.length,
         separatorBuilder: (_, _) => const SizedBox(width: 14),
-        itemBuilder: (context, i) => _PlayerTile(player: shown[i]),
+        itemBuilder: (context, i) => DriftEntrance(
+          index: i,
+          offset: 8,
+          child: DriftPressable(child: _PlayerTile(player: shown[i])),
+        ),
       ),
     );
   }

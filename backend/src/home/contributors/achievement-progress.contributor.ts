@@ -2,6 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { AchievementsService } from '../../achievements/achievements.service';
 import { HOME_CARD_PRIORITY, type HomeCard } from '../home-card';
 import type { HomeCardContributor, HomeContext } from './home-contributor';
+import {
+  DEFAULT_LOCALE,
+  type MessageKey,
+  type MessageParam,
+  t,
+} from '../../common/i18n';
 
 /**
  * Achievement progress — deliberately **not** "you recently earned X".
@@ -24,6 +30,8 @@ export class AchievementProgressContributor implements HomeCardContributor {
   constructor(private readonly achievements: AchievementsService) {}
 
   async contribute(ctx: HomeContext): Promise<HomeCard[]> {
+    const tr = (key: MessageKey, params?: Record<string, MessageParam>) =>
+      t(ctx.locale ?? DEFAULT_LOCALE, key, params);
     const { achievements, earnedCount, totalCount } =
       await this.achievements.list(ctx.userId);
 
@@ -36,12 +44,21 @@ export class AchievementProgressContributor implements HomeCardContributor {
         id: 'achievement-progress',
         type: 'ACHIEVEMENT_PROGRESS',
         priority: HOME_CARD_PRIORITY.ACHIEVEMENT_PROGRESS,
-        title: `${earnedCount} of ${totalCount} achievements`,
+        title: tr('home.achievements.title', {
+          earned: earnedCount,
+          total: totalCount,
+        }),
         body: next
-          ? `Next up: ${next.title} — ${next.criteria}`
-          : 'Keep playing to unlock the rest.',
+          ? tr('home.achievements.next', {
+              title: next.title,
+              criteria: next.criteria,
+            })
+          : tr('home.achievements.keepPlaying'),
         accent: 'success',
-        action: { label: 'View all', route: '/profile/achievements' },
+        action: {
+          label: tr('home.action.viewAll'),
+          route: '/profile/achievements',
+        },
         dismissible: true,
         data: {
           kind: 'achievement',

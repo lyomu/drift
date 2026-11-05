@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:drift_tennis/core/theme/app_theme.dart';
+import 'package:drift_tennis/l10n/app_localizations.dart';
 
 /// Pumps a single screen inside the real app theme.
 ///
@@ -18,6 +19,7 @@ Future<void> pumpScreen(
   Widget screen, {
   List<Override> overrides = const [],
   Brightness brightness = Brightness.light,
+  Locale? locale,
   bool settle = true,
   TextScaler? textScaler,
 }) async {
@@ -25,6 +27,9 @@ Future<void> pumpScreen(
     ProviderScope(
       overrides: overrides,
       child: MaterialApp(
+        locale: locale,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         builder: textScaler == null
             ? null
             : (context, child) => MediaQuery(
@@ -75,6 +80,8 @@ Future<void> pumpRouted(
     ProviderScope(
       overrides: overrides,
       child: MaterialApp.router(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: brightness == Brightness.dark
             ? AppTheme.dark()
             : AppTheme.light(),

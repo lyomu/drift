@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../storage/secure_storage.dart';
 import 'session_manager.dart';
+import '../l10n/l10n.dart';
 
 /// Build-time API override, for builds that can't reach the host through
 /// the usual loopback aliases — chiefly a debug APK on a physical phone,
@@ -66,6 +67,10 @@ final dioClientProvider = Provider<Dio>((ref) {
   dio.interceptors.add(
     InterceptorsWrapper(
       onRequest: (options, handler) async {
+        // Read per request, so a Settings change applies to the next call.
+        // The server uses it for text it writes into responses (Home cards,
+        // level labels).
+        options.headers['Accept-Language'] = CurrentAppLocale.code;
         final token = await storage.readAccessToken();
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';

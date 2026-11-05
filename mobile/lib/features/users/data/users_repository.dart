@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/dio_client.dart';
 import '../../../core/onboarding/onboarding_step.dart';
 import '../../auth/data/auth_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 class UserProfile {
   const UserProfile({
@@ -16,6 +17,7 @@ class UserProfile {
     required this.phone,
     required this.phoneOnWhatsApp,
     required this.onboardingStep,
+    this.preferredLocale,
   });
 
   final String id;
@@ -32,12 +34,16 @@ class UserProfile {
 
   final OnboardingStep onboardingStep;
 
+  /// `en` / `fr` / `es`, or null for an account that never synced one. The
+  /// server writes push notifications and emails in it.
+  final String? preferredLocale;
+
   String get displayName {
     final parts = [
       firstName,
       lastName,
     ].whereType<String>().where((p) => p.isNotEmpty);
-    return parts.isEmpty ? 'Player' : parts.join(' ');
+    return parts.isEmpty ? l10nNow.commonPlayer : parts.join(' ');
   }
 
   factory UserProfile.fromJson(Map<String, dynamic> json) => UserProfile(
@@ -50,6 +56,7 @@ class UserProfile {
     phone: json['phone'] as String?,
     phoneOnWhatsApp: json['phoneOnWhatsApp'] as bool? ?? false,
     onboardingStep: OnboardingStep.fromJson(json['onboardingStep'] as String),
+    preferredLocale: json['preferredLocale'] as String?,
   );
 }
 
@@ -238,6 +245,10 @@ class UsersRepository {
   /// caller is responsible for clearing local session state afterwards.
   Future<void> deleteAccount() => _send(() => _dio.post('/users/me/delete'));
 
+  /// Settings → Language. See `localeProvider`.
+  Future<void> updateLocale(String code) =>
+      _send(() => _dio.patch('/users/me/locale', data: {'locale': code}));
+
   Future<Map<String, dynamic>> _patch(
     String path,
     Map<String, dynamic> body,
@@ -284,7 +295,7 @@ class UsersRepository {
     final body = e.response?.data;
     final message = body is Map ? body['message'] as Object? : null;
     final text = message is List ? message.join(' ') : message?.toString();
-    return text ?? 'Something went wrong. Please try again.';
+    return text ?? l10nNow.commonErrorGeneric;
   }
 }
 

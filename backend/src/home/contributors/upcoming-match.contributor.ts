@@ -5,6 +5,12 @@ import { matchInclude, toMatchDto } from '../../matches/match.mapper';
 import { displayName } from '../../common/display-name.util';
 import { HOME_CARD_PRIORITY, type HomeCard } from '../home-card';
 import type { HomeCardContributor, HomeContext } from './home-contributor';
+import {
+  DEFAULT_LOCALE,
+  type MessageKey,
+  type MessageParam,
+  t,
+} from '../../common/i18n';
 
 /**
  * The next agreed match. Not urgent in the "someone is blocked on you" sense
@@ -22,6 +28,8 @@ export class UpcomingMatchContributor implements HomeCardContributor {
   constructor(private readonly prisma: PrismaService) {}
 
   async contribute(ctx: HomeContext): Promise<HomeCard[]> {
+    const tr = (key: MessageKey, params?: Record<string, MessageParam>) =>
+      t(ctx.locale ?? DEFAULT_LOCALE, key, params);
     const match = await this.prisma.match.findFirst({
       where: {
         participants: { some: { userId: ctx.userId } },
@@ -38,7 +46,7 @@ export class UpcomingMatchContributor implements HomeCardContributor {
     const opponent = match.participants.find((p) => p.userId !== ctx.userId);
     const opponentName = opponent
       ? displayName(opponent.user)
-      : 'your opponent';
+      : tr('home.upcoming.yourOpponent');
 
     const venue = dto.court?.name ?? match.courtName;
 
@@ -47,13 +55,18 @@ export class UpcomingMatchContributor implements HomeCardContributor {
         id: `upcoming-match:${match.id}`,
         type: 'UPCOMING_MATCH',
         priority: HOME_CARD_PRIORITY.UPCOMING_MATCH,
-        title: `Next up: ${opponentName}`,
+        title: tr('home.upcoming.title', { name: opponentName }),
         // The client formats `confirmedTime` in the device's locale and
         // timezone — sending a preformatted date here would render in the
         // server's zone and be wrong for anyone travelling.
-        body: venue ? `At ${venue}.` : 'No court agreed yet.',
+        body: venue
+          ? tr('home.upcoming.at', { venue })
+          : tr('home.upcoming.noCourt'),
         accent: 'info',
-        action: { label: 'View match', route: `/matches/${match.id}` },
+        action: {
+          label: tr('home.action.viewMatch'),
+          route: `/matches/${match.id}`,
+        },
         dismissible: false,
         data: { kind: 'match', match: dto },
       },

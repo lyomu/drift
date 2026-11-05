@@ -173,7 +173,30 @@ export class CourtsService {
     const coords = this.coordsOf(court);
     const distanceKm =
       viewerCoords && coords ? haversineKm(viewerCoords, coords) : null;
-    return toCourtProfile(court, distanceKm);
+    const isFavorite = viewerId
+      ? (await this.prisma.favoriteCourt.findUnique({
+          where: { userId_courtId: { userId: viewerId, courtId: id } },
+          select: { id: true },
+        })) !== null
+      : false;
+    return { ...toCourtProfile(court, distanceKm), isFavorite };
+  }
+
+  /** Hearts a court for the viewer. Idempotent. */
+  async favorite(userId: string, courtId: string) {
+    await this.loadCourt(courtId);
+    await this.prisma.favoriteCourt.upsert({
+      where: { userId_courtId: { userId, courtId } },
+      create: { userId, courtId },
+      update: {},
+    });
+    return { isFavorite: true };
+  }
+
+  /** Removes the viewer's heart. Idempotent — no error if it wasn't set. */
+  async unfavorite(userId: string, courtId: string) {
+    await this.prisma.favoriteCourt.deleteMany({ where: { userId, courtId } });
+    return { isFavorite: false };
   }
 
   async recordInquiry(

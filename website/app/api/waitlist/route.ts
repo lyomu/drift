@@ -1,3 +1,5 @@
+import { isLocale } from "@/lib/locales";
+
 /**
  * Same-origin proxy for waitlist signups.
  *
@@ -90,7 +92,7 @@ export async function POST(request: Request) {
     return bad("Send a JSON body.");
   }
 
-  const { firstName, email, audience, country, city, level } = payload as Record<
+  const { firstName, email, audience, country, city, level, locale } = payload as Record<
     string,
     unknown
   >;
@@ -126,6 +128,8 @@ export async function POST(request: Request) {
         ...(country ? { country } : {}),
         ...(city ? { city } : {}),
         ...(level ? { level } : {}),
+        // Only a supported code is forwarded; anything else gets English mail.
+        ...(typeof locale === "string" && isLocale(locale) ? { locale } : {}),
         source: "website",
       }),
       // The API is rate-limited and fast; a hung upstream must not hold a

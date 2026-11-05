@@ -31,6 +31,7 @@ export function toPreferencesDto(preference: {
   news: boolean;
   clubs: boolean;
   announcements: boolean;
+  communities: boolean;
 }) {
   return {
     connections: preference.connections,
@@ -41,5 +42,6 @@ export function toPreferencesDto(preference: {
     news: preference.news,
     clubs: preference.clubs,
     announcements: preference.announcements,
+    communities: preference.communities,
   };
 }

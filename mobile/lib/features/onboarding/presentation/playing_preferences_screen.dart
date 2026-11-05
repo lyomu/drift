@@ -6,6 +6,7 @@ import '../../../core/theme/drift_colors.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../users/data/users_repository.dart';
 import 'widgets/onboarding_scaffold.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// One chip in a section. [value] is the backend enum; everything else is
 /// presentation taken from the redesign mock. The mock swaps a Material
@@ -20,78 +21,78 @@ class _ChipOption {
   });
 
   final String value;
-  final String label;
+  final String Function(AppLocalizations) label;
   final IconData icon;
   final IconData iconSelected;
   final Color accent;
 }
 
-const _formatOptions = <_ChipOption>[
+final _formatOptions = <_ChipOption>[
   _ChipOption(
     value: 'SINGLES',
-    label: 'Singles',
+    label: (AppLocalizations l) => l.optSingles,
     icon: Icons.person_outline_rounded,
     iconSelected: Icons.person_rounded,
     accent: Color(0xFF1A7AFF),
   ),
   _ChipOption(
     value: 'DOUBLES',
-    label: 'Doubles',
+    label: (AppLocalizations l) => l.optDoubles,
     icon: Icons.group_outlined,
     iconSelected: Icons.group_rounded,
     accent: Color(0xFF8B5CF6),
   ),
   _ChipOption(
     value: 'EITHER',
-    label: 'Either',
+    label: (AppLocalizations l) => l.optEither,
     icon: Icons.shuffle_rounded,
     iconSelected: Icons.shuffle_rounded,
     accent: Color(0xFF22C55E),
   ),
 ];
 
-const _styleOptions = <_ChipOption>[
+final _styleOptions = <_ChipOption>[
   _ChipOption(
     value: 'SOCIAL',
-    label: 'Social',
+    label: (AppLocalizations l) => l.optSocial,
     icon: Icons.celebration_outlined,
     iconSelected: Icons.celebration_rounded,
     accent: Color(0xFFEC4899),
   ),
   _ChipOption(
     value: 'COMPETITIVE',
-    label: 'Competitive',
+    label: (AppLocalizations l) => l.optCompetitive,
     icon: Icons.emoji_events_outlined,
     iconSelected: Icons.emoji_events_rounded,
     accent: Color(0xFFEAB308),
   ),
   _ChipOption(
     value: 'EITHER',
-    label: 'Either',
+    label: (AppLocalizations l) => l.optEither,
     icon: Icons.shuffle_rounded,
     iconSelected: Icons.shuffle_rounded,
     accent: Color(0xFF22C55E),
   ),
 ];
 
-const _timeOptions = <_ChipOption>[
+final _timeOptions = <_ChipOption>[
   _ChipOption(
     value: 'MORNING',
-    label: 'Morning',
+    label: (AppLocalizations l) => l.timeMorning,
     icon: Icons.light_mode_outlined,
     iconSelected: Icons.light_mode_rounded,
     accent: Color(0xFFF97316),
   ),
   _ChipOption(
     value: 'AFTERNOON',
-    label: 'Afternoon',
+    label: (AppLocalizations l) => l.timeAfternoon,
     icon: Icons.wb_cloudy_outlined,
     iconSelected: Icons.wb_cloudy_rounded,
     accent: Color(0xFF1A7AFF),
   ),
   _ChipOption(
     value: 'EVENING',
-    label: 'Evening',
+    label: (AppLocalizations l) => l.timeEvening,
     icon: Icons.nights_stay_outlined,
     iconSelected: Icons.nights_stay_rounded,
     accent: Color(0xFF8B5CF6),
@@ -128,7 +129,7 @@ class _PlayingPreferencesScreenState
   Future<void> _submit() async {
     if (!_canContinue) {
       setState(
-        () => _errorText = 'Choose an option in each section to continue.',
+        () => _errorText = context.l10n.onbChooseEachSection,
       );
       return;
     }
@@ -158,16 +159,16 @@ class _PlayingPreferencesScreenState
   Widget build(BuildContext context) {
     return DriftOnboardingScaffold(
       step: OnboardingStepIndex.playingPreferences,
-      title: 'How do you like to play?',
-      highlight: 'play?',
-      subtitle: 'This shapes who we match you with.',
+      title: context.l10n.onbPrefsTitle,
+      highlight: context.l10n.onbPrefsHighlight,
+      subtitle: context.l10n.onbPrefsSubtitle,
       ctaActive: _canContinue,
       loading: _isSubmitting,
       onContinue: _isSubmitting ? null : _submit,
       errorText: _errorText,
       children: [
         _SectionCard(
-          label: 'Format',
+          label: context.l10n.onbFormat,
           child: _ChipGroup(
             options: _formatOptions,
             isSelected: (o) => _format == o.value,
@@ -181,7 +182,7 @@ class _PlayingPreferencesScreenState
         ),
         const SizedBox(height: 12),
         _SectionCard(
-          label: 'Style',
+          label: context.l10n.onbStyle,
           child: _ChipGroup(
             options: _styleOptions,
             isSelected: (o) => _style == o.value,
@@ -193,8 +194,8 @@ class _PlayingPreferencesScreenState
         ),
         const SizedBox(height: 12),
         _SectionCard(
-          label: 'Preferred times',
-          note: 'select all that apply',
+          label: context.l10n.onbPreferredTimes,
+          note: context.l10n.onbSelectAll,
           child: _ChipGroup(
             options: _timeOptions,
             isSelected: (o) => _times.contains(o.value),
@@ -337,7 +338,7 @@ class _OptionChip extends StatelessWidget {
     return Semantics(
       selected: selected,
       button: true,
-      label: option.label,
+      label: option.label(context.l10n),
       child: AnimatedScale(
         scale: selected ? 1.03 : 1,
         duration: const Duration(milliseconds: 180),
@@ -413,7 +414,7 @@ class _OptionChip extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      option.label,
+                      option.label(context.l10n),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center,

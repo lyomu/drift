@@ -7,6 +7,7 @@ import '../../../shared/widgets/buttons/drift_button.dart';
 import '../../../shared/widgets/drift_text_field.dart';
 import '../../auth/data/auth_repository.dart';
 import '../data/safety_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Report a single chat message — Chat Thread's "Report" secondary action
 /// (`foundation/04-screen-inventory.md` §A.9).
@@ -60,6 +61,7 @@ class _MessageReportSheetState extends ConsumerState<_MessageReportSheet> {
     final navigator = Navigator.of(context);
 
     try {
+      final reportedText = context.l10n.safetyMessageReported;
       await ref
           .read(safetyRepositoryProvider)
           .reportMessage(
@@ -69,7 +71,7 @@ class _MessageReportSheetState extends ConsumerState<_MessageReportSheet> {
           );
       navigator.pop();
       messenger.showSnackBar(
-        const SnackBar(content: Text('Thanks — this message was reported.')),
+        SnackBar(content: Text(reportedText)),
       );
     } on AuthException catch (e) {
       if (mounted) {
@@ -96,7 +98,7 @@ class _MessageReportSheetState extends ConsumerState<_MessageReportSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Report this message', style: type.h4),
+            Text(context.l10n.safetyReportMessage, style: type.h4),
             const SizedBox(height: DriftSpacing.s3),
             RadioGroup<ReportReason>(
               groupValue: _reason,
@@ -114,7 +116,7 @@ class _MessageReportSheetState extends ConsumerState<_MessageReportSheet> {
             ),
             const SizedBox(height: DriftSpacing.s3),
             DriftTextField(
-              label: 'Anything else? (optional)',
+              label: context.l10n.safetyAnythingElse,
               controller: _notesController,
               maxLines: 3,
             ),
@@ -127,7 +129,9 @@ class _MessageReportSheetState extends ConsumerState<_MessageReportSheet> {
             ],
             const SizedBox(height: DriftSpacing.s5),
             DriftButton(
-              label: _isSubmitting ? 'Reporting…' : 'Submit report',
+              label: _isSubmitting
+                  ? context.l10n.safetyReporting
+                  : context.l10n.safetySubmitReport,
               onPressed: _reason == null || _isSubmitting ? null : _submit,
             ),
           ],

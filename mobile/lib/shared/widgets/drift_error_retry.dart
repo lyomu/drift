@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/drift_spacing.dart';
 import '../../core/theme/drift_typography.dart';
 import 'buttons/drift_button.dart';
+import '../../core/l10n/l10n.dart';
 
 /// Standard "something failed, try again" block.
 ///
@@ -36,7 +37,7 @@ class DriftErrorRetry extends StatelessWidget {
             Text(message, style: type.body, textAlign: TextAlign.center),
             const SizedBox(height: DriftSpacing.s4),
             DriftButton(
-              label: 'Retry',
+              label: context.l10n.commonRetry,
               variant: DriftButtonVariant.text,
               onPressed: onRetry,
             ),

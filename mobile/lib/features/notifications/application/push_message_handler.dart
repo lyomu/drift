@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../domain/notification_deep_link.dart';
 import '../data/notifications_repository.dart';
 import 'notifications_providers.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Wires the three states a push can arrive in. Installed once, from the app
 /// root.
@@ -68,8 +69,8 @@ class PushMessageHandler {
 
   void _showForegroundBanner(RemoteMessage message) {
     final notification = message.notification;
-    final title = notification?.title ?? 'New update from Drift Tennis';
-    final body = notification?.body ?? 'Open to see what changed.';
+    final title = notification?.title ?? l10nNow.pushFallbackTitle;
+    final body = notification?.body ?? l10nNow.pushFallbackBody;
     _messengerKey.currentState
       ?..hideCurrentSnackBar()
       ..showSnackBar(
@@ -85,7 +86,7 @@ class PushMessageHandler {
             ],
           ),
           action: SnackBarAction(
-            label: 'Open',
+            label: l10nNow.commonOpenAction,
             onPressed: () => _open(message),
           ),
         ),

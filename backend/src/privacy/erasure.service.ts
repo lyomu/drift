@@ -166,7 +166,30 @@ export class ErasureService {
     // routinely embed the person's own name.
     await tx.notification.deleteMany({ where: { userId } });
     await tx.savedStory.deleteMany({ where: { userId } });
+    await tx.favoriteCourt.deleteMany({ where: { userId } });
+    // Court bookings: open future ones are cancelled so a deleted account
+    // cannot keep holding a court, then every booking is detached from the
+    // person and its free-text note dropped. The club keeps the anonymous
+    // usage record (its utilisation numbers depend on it).
+    await tx.courtBooking.updateMany({
+      where: {
+        userId,
+        status: { in: ['PENDING', 'APPROVED'] },
+        endsAt: { gt: new Date() },
+      },
+      data: {
+        status: 'CANCELLED',
+        cancelledAt: new Date(),
+        cancelledBy: 'PLAYER',
+      },
+    });
+    await tx.courtBooking.updateMany({
+      where: { userId },
+      data: { userId: null, note: null },
+    });
     await tx.dismissedHomeCard.deleteMany({ where: { userId } });
+    // Which daily tennis facts they saw and opened — reading history.
+    await tx.tennisFactView.deleteMany({ where: { userId } });
     await tx.clubPostReaction.deleteMany({ where: { userId } });
 
     // ---- uploaded match video --------------------------------------------

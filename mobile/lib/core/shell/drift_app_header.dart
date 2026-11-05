@@ -6,6 +6,8 @@ import '../../features/home/application/home_feed_provider.dart';
 import '../../features/notifications/application/notifications_providers.dart';
 import '../theme/drift_colors.dart';
 import '../theme/drift_typography.dart';
+import '../l10n/l10n.dart';
+import 'package:intl/intl.dart';
 
 /// The app's persistent chrome (2026-09 redesign): a drawer button, the
 /// salutation or tab name, and the trailing actions.
@@ -62,31 +64,6 @@ class DriftAppHeader extends ConsumerWidget {
   }
 }
 
-const _weekdays = [
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-  'Sunday',
-];
-
-const _months = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
-
 class _Greeting extends ConsumerWidget {
   const _Greeting();
 
@@ -97,14 +74,12 @@ class _Greeting extends ConsumerWidget {
     final summary = ref.watch(homeSummaryProvider).valueOrNull;
 
     final greeting = summary?.firstName == null
-        ? 'Welcome back'
-        : 'Hi, ${summary!.firstName}';
+        ? context.l10n.homeWelcomeBack
+        : context.l10n.homeGreeting(summary!.firstName!);
 
-    // Spelled out rather than via `intl`: the app carries no localisation and
-    // DateFormat would pull a dependency in for one line.
-    final now = DateTime.now();
-    final date =
-        '${_weekdays[now.weekday - 1]}, ${now.day} ${_months[now.month - 1]}';
+    // "Monday, 4 August" in English; each locale's own order and casing
+    // elsewhere ("lundi 4 août", "lunes, 4 de agosto").
+    final date = DateFormat.MMMMEEEEd(context.localeTag).format(DateTime.now());
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

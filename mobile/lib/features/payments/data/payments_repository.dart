@@ -6,6 +6,8 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../../core/network/dio_client.dart';
 import '../../auth/data/auth_repository.dart';
+import '../../../core/l10n/l10n.dart';
+import 'package:intl/intl.dart';
 
 enum PaymentMethodKind {
   card,
@@ -17,8 +19,8 @@ enum PaymentMethodKind {
   };
 
   String get label => switch (this) {
-    PaymentMethodKind.card => 'Card',
-    PaymentMethodKind.mobileMoney => 'Mobile money',
+    PaymentMethodKind.card => l10nNow.payCard,
+    PaymentMethodKind.mobileMoney => l10nNow.payMobileMoney,
   };
 
   static PaymentMethodKind fromJson(String value) =>
@@ -31,9 +33,9 @@ enum BillingStatus {
   cancelled;
 
   String get label => switch (this) {
-    BillingStatus.active => 'Active',
-    BillingStatus.pastDue => 'Past due',
-    BillingStatus.cancelled => 'Cancelled',
+    BillingStatus.active => l10nNow.payActive,
+    BillingStatus.pastDue => l10nNow.payPastDue,
+    BillingStatus.cancelled => l10nNow.matchStateCancelled,
   };
 
   static BillingStatus fromJson(String value) => switch (value) {
@@ -50,10 +52,10 @@ enum InvoiceStatus {
   voided;
 
   String get label => switch (this) {
-    InvoiceStatus.open => 'Open',
-    InvoiceStatus.paid => 'Paid',
-    InvoiceStatus.failed => 'Failed',
-    InvoiceStatus.voided => 'Void',
+    InvoiceStatus.open => l10nNow.commonOpen,
+    InvoiceStatus.paid => l10nNow.payPaid,
+    InvoiceStatus.failed => l10nNow.payFailed,
+    InvoiceStatus.voided => l10nNow.payVoid,
   };
 
   static InvoiceStatus fromJson(String value) => switch (value) {
@@ -88,9 +90,17 @@ class PaymentPlan {
   final bool isTest;
 
   bool get isFree => priceMinor == 0;
-  String get priceLabel => isFree
-      ? 'Free'
-      : '$currency ${(priceMinor / 100).toStringAsFixed(2)} / ${interval == 'YEARLY' ? 'year' : 'month'}';
+  String get priceLabel {
+    if (isFree) return l10nNow.payFree;
+    final amount = NumberFormat.currency(
+      locale: localeTagNow,
+      name: currency,
+      symbol: '$currency ',
+    ).format(priceMinor / 100);
+    return interval == 'YEARLY'
+        ? l10nNow.payPerYear(amount)
+        : l10nNow.payPerMonth(amount);
+  }
 
   factory PaymentPlan.fromJson(Map<String, dynamic> json) => PaymentPlan(
     id: json['id'] as String,
@@ -256,21 +266,24 @@ class BillingInvoice {
     );
   }
 
-  String receiptText() =>
-      '''
-Drift Tennis receipt
+  String receiptText() {
+    final l = l10nNow;
+    final na = l.payNotAvailable;
+    return '''
+${l.payReceiptHeading}
 $number
 
 $description
-Amount: $amountLabel
-Status: ${status.label}
-Plan: $planName
-Payment method: ${paymentMethodLabel ?? 'Not available'}
-Provider reference: ${providerReference ?? 'Not available'}
-Created: ${createdAt.toIso8601String()}
-Period: ${periodStart.toIso8601String()} to ${periodEnd.toIso8601String()}
-${failureReason == null ? '' : 'Failure reason: $failureReason'}
+${l.payAmount}: $amountLabel
+${l.payStatus}: ${status.label}
+${l.payPlan}: $planName
+${l.payPaymentMethod}: ${paymentMethodLabel ?? na}
+${l.payProviderReference}: ${providerReference ?? na}
+${l.payCreated}: ${createdAt.toIso8601String()}
+${l.payPeriod}: ${l.payPeriodRange(periodStart.toIso8601String(), periodEnd.toIso8601String())}
+${failureReason == null ? '' : '${l.payFailureReason}: $failureReason'}
 ''';
+  }
 }
 
 class PaymentsRepository {
@@ -363,7 +376,7 @@ class PaymentsRepository {
       final body = error.response?.data;
       final message = body is Map ? body['message'] : null;
       final text = message is List ? message.join(' ') : message?.toString();
-      throw AuthException(text ?? 'Something went wrong. Please try again.');
+      throw AuthException(text ?? l10nNow.commonErrorGeneric);
     }
   }
 }

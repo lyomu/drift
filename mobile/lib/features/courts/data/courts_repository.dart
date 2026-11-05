@@ -4,6 +4,8 @@ import 'package:latlong2/latlong.dart';
 
 import '../../../core/network/dio_client.dart';
 import '../../auth/data/auth_repository.dart';
+import '../../../core/l10n/l10n.dart';
+import 'court_bookings.dart';
 
 /// Mirrors the backend's `ListingVerificationStatus` — shared by Court and
 /// Club.
@@ -19,9 +21,9 @@ enum ListingVerificationStatus {
   };
 
   String get label => switch (this) {
-    ListingVerificationStatus.verified => 'Verified',
-    ListingVerificationStatus.pending => 'Verification pending',
-    ListingVerificationStatus.unverified => 'Unverified',
+    ListingVerificationStatus.verified => l10nNow.commonVerified,
+    ListingVerificationStatus.pending => l10nNow.courtVerificationPending,
+    ListingVerificationStatus.unverified => l10nNow.courtUnverified,
   };
 }
 
@@ -172,6 +174,7 @@ class CourtProfile {
     required this.photoUrls,
     required this.courtGroups,
     required this.club,
+    this.isFavorite = false,
   });
 
   final CourtSummary summary;
@@ -196,6 +199,9 @@ class CourtProfile {
   final List<CourtGroupSummary> courtGroups;
   final ClubRef? club;
 
+  /// Whether the viewer has hearted this court.
+  final bool isFavorite;
+
   factory CourtProfile.fromJson(Map<String, dynamic> json) => CourtProfile(
     summary: CourtSummary.fromJson(json),
     phone: json['phone'] as String?,
@@ -212,6 +218,7 @@ class CourtProfile {
     club: json['club'] != null
         ? ClubRef.fromJson(json['club'] as Map<String, dynamic>)
         : null,
+    isFavorite: json['isFavorite'] as bool? ?? false,
   );
 }
 
@@ -331,6 +338,74 @@ class CourtsRepository {
         if (notes != null) 'notes': notes,
       });
 
+  /// Hearts / un-hearts the court for the viewer.
+  Future<void> setFavorite(String id, {required bool favorite}) async {
+    try {
+      if (favorite) {
+        await _dio.post('/courts/$id/favorite');
+      } else {
+        await _dio.delete('/courts/$id/favorite');
+      }
+    } on DioException catch (e) {
+      throw _toAuthException(e);
+    }
+  }
+
+  // ── Native booking ──────────────────────────────────────────────────────
+
+  /// Slot grid for one local day. [date] is `YYYY-MM-DD`.
+  Future<CourtAvailability> availability(
+    String courtId,
+    String date, {
+    String? groupId,
+  }) async {
+    final data = await _get(
+      '/courts/$courtId/availability',
+      query: {'date': date, if (groupId != null) 'groupId': groupId},
+    );
+    return CourtAvailability.fromJson(data);
+  }
+
+  /// Sends a PENDING request; the club approves or declines it.
+  Future<CourtBooking> requestBooking(
+    String courtId, {
+    required String groupId,
+    required DateTime startsAt,
+    required DateTime endsAt,
+    String? note,
+  }) async {
+    final data = await _postJson('/courts/$courtId/bookings', {
+      'courtGroupId': groupId,
+      'startsAt': startsAt.toUtc().toIso8601String(),
+      'endsAt': endsAt.toUtc().toIso8601String(),
+      if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
+    });
+    return CourtBooking.fromJson(data['booking'] as Map<String, dynamic>);
+  }
+
+  Future<List<CourtBooking>> myBookings() async {
+    final data = await _get('/me/bookings');
+    return (data['bookings'] as List<dynamic>)
+        .map((b) => CourtBooking.fromJson(b as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<void> cancelBooking(String bookingId) async {
+    await _postJson('/me/bookings/$bookingId/cancel', const {});
+  }
+
+  Future<Map<String, dynamic>> _postJson(
+    String path,
+    Map<String, dynamic> body,
+  ) async {
+    try {
+      final response = await _dio.post(path, data: body);
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw _toAuthException(e);
+    }
+  }
+
   Future<Map<String, dynamic>> _get(
     String path, {
     Map<String, dynamic>? query,
@@ -355,7 +430,7 @@ class CourtsRepository {
     final body = e.response?.data;
     final message = body is Map ? body['message'] as Object? : null;
     final text = message is List ? message.join(' ') : message?.toString();
-    return AuthException(text ?? 'Something went wrong. Please try again.');
+    return AuthException(text ?? l10nNow.commonErrorGeneric);
   }
 }
 

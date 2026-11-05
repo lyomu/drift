@@ -24,6 +24,7 @@ import { applyDoublesResult, applyResult, seedRating } from './rating';
 import { matchWinner, SetScore } from './score';
 import { ReflectionDto } from './dto/reflection.dto';
 import { ResultVersionDto } from './dto/result-version.dto';
+import { msg } from '../common/i18n';
 
 /** The Match.state a confirmed outcome settles into. */
 const SETTLED_STATE: Record<MatchResultOutcome, MatchState> = {
@@ -287,8 +288,10 @@ export class ResultsService {
     await this.matches.notifyOthers(
       final,
       userId,
-      `${this.matches.displayName(submitter.user)} submitted a result`,
-      'Review it to confirm or dispute.',
+      msg('result.submitted.title', {
+        name: this.matches.displayName(submitter.user),
+      }),
+      msg('result.submitted.body'),
     );
     return final;
   }
@@ -321,8 +324,10 @@ export class ResultsService {
     await this.matches.notifyOthers(
       final,
       userId,
-      `${this.matches.displayName(confirmer.user)} confirmed your result`,
-      'Your rating and stats are updated.',
+      msg('result.confirmed.title', {
+        name: this.matches.displayName(confirmer.user),
+      }),
+      msg('result.confirmed.body'),
     );
     return final;
   }
@@ -368,8 +373,10 @@ export class ResultsService {
     await this.matches.notifyOthers(
       final,
       userId,
-      `${this.matches.displayName(disputer.user)} disputed the result`,
-      'Open the dispute to submit your version.',
+      msg('result.disputed.title', {
+        name: this.matches.displayName(disputer.user),
+      }),
+      msg('result.disputed.body'),
     );
     return final;
   }
@@ -427,8 +434,8 @@ export class ResultsService {
       await this.matches.notifyOthers(
         final,
         userId,
-        'Your dispute is resolved',
-        'Both versions match — ratings are updated.',
+        msg('result.resolved.title'),
+        msg('result.resolved.body'),
       );
       return final;
     }
@@ -458,8 +465,10 @@ export class ResultsService {
     await this.matches.notifyOthers(
       final,
       userId,
-      `${this.matches.displayName(actor.user)} revised their version`,
-      'It still doesn’t match yours — take another look.',
+      msg('result.revised.title', {
+        name: this.matches.displayName(actor.user),
+      }),
+      msg('result.revised.body'),
     );
     return final;
   }
@@ -523,8 +532,86 @@ export class ResultsService {
     await this.matches.notifyOthers(
       final,
       null,
-      'A club admin ruled on your dispute',
-      'The result is final and ratings are updated.',
+      msg('result.ruled.title'),
+      msg('result.ruled.body'),
+    );
+    return final;
+  }
+
+  /**
+   * A club admin records a league result directly, for matches the players
+   * have not entered (or will not). It is authoritative: it settles at once,
+   * through the same `settle()` a player confirmation uses, so ratings, the
+   * match-state transition and the competition hook (standings, bracket,
+   * ladder) all behave exactly as they would for a confirmed result.
+   *
+   * A player-submitted result still awaiting confirmation is replaced. A
+   * confirmed one is final, and a disputed one has its own ruling flow
+   * (`adminResolveDispute`), so both are refused. The state machine is not
+   * bypassed: recording a score for a match that is not yet scheduled fails
+   * with the usual "cannot become completed" error.
+   */
+  async adminRecordResult(
+    matchId: string,
+    adminUserId: string,
+    dto: ResultVersionDto,
+  ) {
+    const match = await this.matches.loadMatch(matchId);
+    const state = this.matches.assertLive(match);
+
+    const existing = match.result;
+    if (existing?.status === MatchResultStatus.DISPUTED) {
+      throw new BadRequestException(
+        'This result is disputed. Rule on the dispute instead.',
+      );
+    }
+    if (
+      existing &&
+      existing.status !== MatchResultStatus.PENDING_CONFIRMATION
+    ) {
+      throw new BadRequestException(
+        'A result has already been confirmed for this match.',
+      );
+    }
+
+    const version = this.resolveVersion(dto);
+    // Fail on an illegal transition before anything is written, so a refused
+    // request cannot leave a half-recorded result behind.
+    assertTransition(state, SETTLED_STATE[version.outcome]);
+
+    await this.prisma.matchResult.upsert({
+      where: { matchId },
+      create: {
+        matchId,
+        status: MatchResultStatus.PENDING_CONFIRMATION,
+        outcome: version.outcome,
+        sets: toJsonInput(version.sets),
+        winningSide: version.winningSide,
+        submittedById: adminUserId,
+      },
+      update: {
+        outcome: version.outcome,
+        sets: toJsonInput(version.sets),
+        winningSide: version.winningSide,
+        submittedById: adminUserId,
+        submittedAt: new Date(),
+      },
+    });
+
+    await this.settle(match, version, adminUserId);
+
+    const final = await this.matches.loadMatch(matchId);
+    await this.matches.announce(
+      final,
+      'A club admin recorded the result.',
+      'result_confirmed',
+    );
+    // `null`: the admin is not a participant, so every player is told.
+    await this.matches.notifyOthers(
+      final,
+      null,
+      msg('result.recorded.title'),
+      msg('result.recorded.body'),
     );
     return final;
   }

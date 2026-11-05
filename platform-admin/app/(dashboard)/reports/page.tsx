@@ -13,6 +13,7 @@ const TYPE_OPTIONS: Array<{ value: ReportType | ""; label: string }> = [
   { value: "MESSAGE", label: "Messages" },
   { value: "CLUB_POST", label: "Posts" },
   { value: "COURT", label: "Courts" },
+  { value: "COMMUNITY", label: "Communities" },
 ];
 
 function typePath(type: ReportType) {

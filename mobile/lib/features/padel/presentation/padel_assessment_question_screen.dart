@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../assessment/data/assessment_repository.dart';
 import '../../assessment/presentation/assessment_question_screen.dart';
 import '../application/padel_providers.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Add Padel — Assessment — `foundation/04-screen-inventory.md` §A.10.
 /// A thin wrapper around the shared adaptive-question loop
@@ -16,7 +17,7 @@ class PadelAssessmentQuestionScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return AssessmentQuestionScreen(
-      title: 'Padel Assessment',
+      title: context.l10n.padelAssessment,
       repositoryProvider: padelAssessmentRepositoryProvider,
       onComplete: (context, result) {
         ref.invalidate(padelProfileProvider);

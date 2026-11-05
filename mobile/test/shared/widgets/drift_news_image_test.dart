@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:drift_tennis/core/theme/app_theme.dart';
 import 'package:drift_tennis/shared/widgets/drift_news_image.dart';
+import 'package:drift_tennis/l10n/app_localizations.dart';
 
 void main() {
   testWidgets('uses Drift artwork when publisher imagery is unavailable', (
@@ -9,6 +10,8 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: AppTheme.light(),
         home: const SizedBox(height: 180, child: DriftNewsImage(url: null)),
       ),
@@ -22,6 +25,8 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: AppTheme.light(),
         home: const SizedBox(
           height: 180,

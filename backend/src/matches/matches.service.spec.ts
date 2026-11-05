@@ -5,6 +5,7 @@ import { MessagingService } from '../messaging/messaging.service';
 import { RealtimePublisher } from '../messaging/realtime.publisher';
 import { NotificationsService } from '../notifications/notifications.service';
 import { MatchRecord } from './match.mapper';
+import { render, type Localizable } from '../common/i18n';
 
 type MockPrisma = {
   user: Record<string, jest.Mock>;
@@ -175,8 +176,8 @@ describe('MatchesService', () => {
       expect(notifications.create).toHaveBeenCalledWith(
         'other',
         'MATCHES',
-        expect.stringContaining('withdrew the challenge'),
-        'This challenge is no longer available.',
+        expect.objectContaining({ key: 'match.withdrawn.title' }),
+        expect.objectContaining({ key: 'match.withdrawn.body' }),
         'MATCH',
         'm1',
       );
@@ -270,8 +271,8 @@ describe('MatchesService', () => {
       expect(notifications.create).toHaveBeenCalledWith(
         'other',
         'MATCHES',
-        expect.stringContaining('challenged you'),
-        expect.any(String),
+        expect.objectContaining({ key: 'match.challenge.title' }),
+        expect.objectContaining({ key: 'match.challenge.body' }),
         'MATCH',
         expect.any(String),
       );
@@ -630,9 +631,12 @@ describe('MatchesService', () => {
         .sort();
 
     const titleFor = (userId: string) =>
-      (notifications.create!.mock.calls as unknown[][]).find(
-        (c) => c[0] === userId,
-      )?.[2] as string | undefined;
+      render(
+        'en',
+        (notifications.create!.mock.calls as unknown[][]).find(
+          (c) => c[0] === userId,
+        )?.[2] as Localizable,
+      );
 
     const doubles = () =>
       matchRecord({
@@ -818,10 +822,13 @@ describe('MatchesService', () => {
 
       expect(titleFor('other')).toContain('cancelled the match');
       expect(
-        (notifications.create!.mock.calls as unknown[][]).find(
-          (c) => c[0] === 'other',
-        )?.[3],
-      ).toBe('Injured');
+        render(
+          'en',
+          (notifications.create!.mock.calls as unknown[][]).find(
+            (c) => c[0] === 'other',
+          )?.[3] as Localizable,
+        ),
+      ).toContain('Injured');
     });
   });
 });

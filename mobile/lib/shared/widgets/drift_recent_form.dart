@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/drift_colors.dart';
 import '../../core/theme/drift_spacing.dart';
 import '../../core/theme/drift_typography.dart';
+import '../../core/l10n/l10n.dart';
 
 /// Match Form (Recent Form) — `foundation/05-design-system.md` §7:
 /// "W/L/W/W/L strip, last N matches." Colour is never the only signal
@@ -20,7 +21,7 @@ class DriftRecentForm extends StatelessWidget {
 
     if (results.isEmpty) {
       return Text(
-        'No matches played yet',
+        context.l10n.formNoMatches,
         style: type.bodySmall.copyWith(color: colors.textSecondary),
       );
     }

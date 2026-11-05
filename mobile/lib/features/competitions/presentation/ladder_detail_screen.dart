@@ -9,6 +9,7 @@ import '../../../shared/widgets/drift_standings_table.dart';
 import '../../users/application/current_user_provider.dart';
 import '../data/competitions_repository.dart' show StandingRow;
 import '../data/expansion_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Ladder standings detail — the ranked rung table (MP / W / L / Pts), the
 /// viewer's row highlighted, top-3 ranks coloured. Same table as league
@@ -30,7 +31,7 @@ class LadderDetailScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const DriftBackHeader(title: 'Ladder'),
+            DriftBackHeader(title: context.l10n.competeLadder),
             Expanded(
               child: switch (detail) {
                 AsyncData(:final value) => ListView(
@@ -48,7 +49,7 @@ class LadderDetailScreen extends ConsumerWidget {
                         for (final e in value.entries)
                           StandingRow(
                             userId: e.userId,
-                            displayName: e.name.isEmpty ? 'Player' : e.name,
+                            displayName: e.name.isEmpty ? context.l10n.commonPlayer : e.name,
                             rank: e.position,
                             points: e.wins * 3,
                             wins: e.wins,
@@ -63,7 +64,7 @@ class LadderDetailScreen extends ConsumerWidget {
                 ),
                 AsyncError() => Center(
                   child: Text(
-                    'Ladder not available.',
+                    context.l10n.competeLadderUnavailable,
                     style: type.body.copyWith(color: colors.textSecondary),
                   ),
                 ),

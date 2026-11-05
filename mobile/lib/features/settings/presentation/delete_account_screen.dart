@@ -10,6 +10,7 @@ import '../../../shared/widgets/buttons/drift_button.dart';
 import '../../../shared/widgets/drift_scaffold.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../users/data/users_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Delete Account — `foundation/04-screen-inventory.md` §A.11. A real
 /// soft-delete (`AccountStatus.DELETED`) — no cascading data purge this
@@ -51,26 +52,20 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
     final colors = Theme.of(context).extension<DriftColors>()!;
 
     return DriftScaffold(
-      title: 'Delete Account',
+      title: context.l10n.settingsDeleteAccount,
       body: Padding(
         padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('This will delete your account', style: type.h3),
+            Text(context.l10n.deleteTitle, style: type.h3),
             const SizedBox(height: DriftSpacing.s3),
             // Copy corrected 2026-09-03: this previously said data was kept
             // unless you contacted support. It is now erased automatically
             // after 30 days, and saying otherwise would be untrue as well as
             // a transparency failure.
             Text(
-              "You'll be signed out on every device immediately and other "
-              "players will no longer be able to find or contact you.\n\n"
-              "Your personal information is then permanently erased after "
-              "30 days. Until then, contact support if you change your "
-              "mind — after that it cannot be undone.\n\n"
-              "Matches you played stay on record for the other players "
-              "involved, but they will no longer be linked to you.",
+              context.l10n.deleteBody,
               style: type.body.copyWith(color: colors.textSecondary),
             ),
             const SizedBox(height: DriftSpacing.s5),
@@ -79,7 +74,7 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
               controlAffinity: ListTileControlAffinity.leading,
               value: _confirmed,
               onChanged: (value) => setState(() => _confirmed = value ?? false),
-              title: const Text('I understand, delete my account'),
+              title: Text(context.l10n.deleteConfirm),
             ),
             if (_errorText != null) ...[
               const SizedBox(height: DriftSpacing.s3),
@@ -87,7 +82,9 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
             ],
             const SizedBox(height: DriftSpacing.s4),
             DriftButton(
-              label: _isSubmitting ? 'Deleting…' : 'Delete my account',
+              label: _isSubmitting
+                  ? context.l10n.deleteDeleting
+                  : context.l10n.deleteButton,
               backgroundColor: colors.error,
               onPressed: (_confirmed && !_isSubmitting) ? _delete : null,
             ),

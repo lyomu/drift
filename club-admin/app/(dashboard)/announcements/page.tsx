@@ -14,21 +14,22 @@ import {
   Textarea,
 } from "@/components/ui";
 import { StatusBadge } from "@/components/StatusBadge";
-import { MaterialIcon, ModalShell, Panel } from "@/components/dashboard-design";
+import { IconChip, MaterialIcon, ModalShell } from "@/components/dashboard-design";
+import { ManagementCard } from "@/components/redesign";
 import type { Announcement, AnnouncementAudience } from "@/lib/types";
+import { useT } from "@/lib/i18n/i18n-context";
 
-const AUDIENCES: { value: AnnouncementAudience; label: string; hint: string }[] = [
-  { value: "EVERYONE", label: "Everyone", hint: "All active members" },
-  { value: "MEMBERS", label: "Members", hint: "Regular members only" },
-  { value: "COACHES", label: "Coaches", hint: "Members with the Coach role" },
-  { value: "ADMINS", label: "Admins & managers", hint: "Owner, admin and manager roles" },
-];
-
-function audienceLabel(a: AnnouncementAudience) {
-  return AUDIENCES.find((x) => x.value === a)?.label ?? a;
-}
+function audiences(t: ReturnType<typeof useT>): { value: AnnouncementAudience; label: string; hint: string }[] { return [
+  { value: "EVERYONE", label: t("a.everyone"), hint: t("a.allActiveMembers") },
+  { value: "MEMBERS", label: t("a.members"), hint: t("a.regularMembersOnly") },
+  { value: "COACHES", label: t("a.coaches"), hint: t("a.membersWithTheCoachRole") },
+  { value: "ADMINS", label: t("a.adminsManagers"), hint: t("a.ownerAdminAndManagerRoles") },
+]; }
 
 export default function AnnouncementsPage() {
+  const t = useT();
+  const AUDIENCES = audiences(t);
+  const audienceLabel = (a: AnnouncementAudience) => AUDIENCES.find((x) => x.value === a)?.label ?? a;
   const { clubId, role: myRole } = useClub();
   const canManage = myRole === "OWNER" || myRole === "ADMIN";
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -75,7 +76,7 @@ export default function AnnouncementsPage() {
       setShowForm(false);
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Something went wrong.");
+      setError(err instanceof ApiError ? err.message : t("a.somethingWentWrong"));
     } finally {
       setCreating(false);
     }
@@ -90,7 +91,7 @@ export default function AnnouncementsPage() {
       });
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Something went wrong.");
+      setError(err instanceof ApiError ? err.message : t("a.somethingWentWrong"));
     }
   }
 
@@ -103,86 +104,95 @@ export default function AnnouncementsPage() {
       });
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Something went wrong.");
+      setError(err instanceof ApiError ? err.message : t("a.somethingWentWrong"));
     }
   }
 
   return (
     <div>
       <PageHeader
-        title="Announcements"
-        description="Published announcements surface on members' mobile Home feed."
+        eyebrow={t("nav.community")}
+        title={t("a.announcements")}
+        description={t("a.publishedAnnouncementsSurfaceOnMembers")}
         action={
           canManage && (
-            <Button onClick={() => setShowForm(true)}>New announcement</Button>
+            <Button onClick={() => setShowForm(true)}>
+              <MaterialIcon name="add" className="text-[19px]" />
+              {t("a.newAnnouncement")}
+            </Button>
           )
         }
       />
       <ErrorBanner message={error} />
 
       {loading ? (
-        <EmptyState message="Loading..." />
+        <EmptyState message={t("a.loading2")} />
       ) : announcements.length === 0 ? (
-        <EmptyState message="No announcements yet." />
+        <EmptyState message={t("a.noAnnouncementsYet")} />
       ) : (
-        <div className="flex flex-col gap-3">
-          {announcements.map((a) => (
-            <Panel key={a.id}>
-              <div className="mb-3 flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-[14.5px] font-bold text-drift-text-primary">
-                      {a.title}
-                    </h2>
-                    {a.pinned && (
-                      <MaterialIcon name="push_pin" filled className="text-[17px] text-drift-primary" />
-                    )}
-                    <StatusBadge status={a.status} />
-                    <span className="inline-flex items-center gap-1 rounded-full bg-drift-neutral-surface px-2.5 py-[3px] text-[11px] font-semibold text-drift-text-secondary">
-                      <MaterialIcon name="group" className="text-[13px]" />
-                      {audienceLabel(a.audience)}
-                    </span>
+        <ManagementCard
+          title={t("an.latest")}
+          subtitle={t("an.count", { count: announcements.length })}
+        >
+          <div className="flex flex-col px-3 py-2">
+            {announcements.map((a, index) => (
+              <article
+                key={a.id}
+                className={`rounded-xl px-3 py-4 ${
+                  a.pinned
+                    ? "border border-drift-primary/25 bg-drift-primary-light/60"
+                    : index < announcements.length - 1
+                      ? "border-b border-drift-border"
+                      : ""
+                }`}
+              >
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="flex min-w-0 flex-1 items-start gap-3.5">
+                    <IconChip icon={a.pinned ? "push_pin" : "campaign"} tone={a.status === "PUBLISHED" ? "lime" : "neutral"} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h2 className="text-[14px] font-extrabold text-drift-text-primary">{a.title}</h2>
+                        <StatusBadge status={a.status} />
+                        <span className="inline-flex items-center gap-1 rounded-full bg-drift-neutral-surface px-2.5 py-1 text-[11px] font-semibold text-drift-text-secondary">
+                          <MaterialIcon name="group" className="text-[13px]" />
+                          {audienceLabel(a.audience)}
+                        </span>
+                      </div>
+                      <p className="mt-1.5 text-[13px] leading-6 text-drift-text-secondary">{a.body}</p>
+                    </div>
                   </div>
+                  {canManage && (
+                    <div className="flex shrink-0 items-center gap-2">
+                      <Button variant="secondary" size="sm" onClick={() => void handlePin(a)}>
+                        <MaterialIcon name="push_pin" className="text-[15px]" />
+                        {a.pinned ? t("a.unpin") : t("a.pin")}
+                      </Button>
+                      <Button variant="secondary" size="sm" onClick={() => void handlePublish(a)}>
+                        {a.status === "PUBLISHED" ? t("a.unpublish") : t("a.publish")}
+                      </Button>
+                    </div>
+                  )}
                 </div>
-                {canManage && (
-                  <div className="flex shrink-0 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => void handlePin(a)}
-                      className="text-[13px] font-semibold text-drift-text-secondary hover:text-drift-text-primary"
-                    >
-                      {a.pinned ? "Unpin" : "Pin"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void handlePublish(a)}
-                      className="text-[13px] font-semibold text-drift-primary hover:text-drift-primary-dark"
-                    >
-                      {a.status === "PUBLISHED" ? "Unpublish" : "Publish"}
-                    </button>
-                  </div>
-                )}
-              </div>
-              <p className="text-sm leading-6 text-drift-text-secondary">{a.body}</p>
-            </Panel>
-          ))}
-        </div>
+              </article>
+            ))}
+          </div>
+        </ManagementCard>
       )}
 
       {showForm && (
-        <ModalShell title="New announcement" onClose={() => setShowForm(false)}>
+        <ModalShell title={t("a.newAnnouncement")} onClose={() => setShowForm(false)}>
           <form
             className="flex flex-col gap-4"
             onSubmit={(e) => handleCreate(e, publishIntent.current)}
           >
-            <Field label="Title">
+            <Field label={t("a.title")}>
               <Input
                 required
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
               />
             </Field>
-            <Field label="Body">
+            <Field label={t("a.body")}>
               <Textarea
                 required
                 rows={4}
@@ -190,7 +200,7 @@ export default function AnnouncementsPage() {
                 onChange={(e) => setForm({ ...form, body: e.target.value })}
               />
             </Field>
-            <Field label="Send to">
+            <Field label={t("a.sendTo")}>
               <Select
                 value={form.audience}
                 onChange={(e) =>
@@ -213,7 +223,7 @@ export default function AnnouncementsPage() {
                 checked={form.pinned}
                 onChange={(e) => setForm({ ...form, pinned: e.target.checked })}
               />
-              Pin to top
+              {t("an.pinToTop")}
             </label>
             <div className="mt-2 flex justify-end gap-3">
               <Button
@@ -224,7 +234,7 @@ export default function AnnouncementsPage() {
                 }}
                 variant="secondary"
               >
-                Save as draft
+                {t("a.saveDraft")}
               </Button>
               <Button
                 type="submit"
@@ -233,7 +243,7 @@ export default function AnnouncementsPage() {
                   publishIntent.current = true;
                 }}
               >
-                {creating ? "Publishing..." : "Publish"}
+                {creating ? t("a.publishing") : t("a.publish")}
               </Button>
             </div>
           </form>

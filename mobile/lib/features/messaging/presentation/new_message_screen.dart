@@ -10,6 +10,7 @@ import '../../../shared/widgets/drift_scaffold.dart';
 import '../../players/application/players_providers.dart';
 import '../../players/data/players_repository.dart';
 import '../data/messaging_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Pick who to message. Searching by name lists matching players; choosing one
 /// opens the thread with them. Messaging needs a connection or an open
@@ -46,7 +47,7 @@ class _NewMessageScreenState extends ConsumerState<NewMessageScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Connect or challenge ${player.displayName} before messaging.',
+            context.l10n.messagingConnectFirst(player.displayName),
           ),
         ),
       );
@@ -64,7 +65,7 @@ class _NewMessageScreenState extends ConsumerState<NewMessageScreen> {
         : null;
 
     return DriftScaffold(
-      title: 'New message',
+      title: context.l10n.messagingNewMessage,
       body: Column(
         children: [
           Padding(
@@ -74,7 +75,7 @@ class _NewMessageScreenState extends ConsumerState<NewMessageScreen> {
               autofocus: true,
               textInputAction: TextInputAction.search,
               decoration: InputDecoration(
-                hintText: 'Search players by name',
+                hintText: context.l10n.messagingSearchPlayers,
                 prefixIcon: const Icon(Icons.search_rounded),
                 filled: true,
                 fillColor: colors.surface,
@@ -90,13 +91,13 @@ class _NewMessageScreenState extends ConsumerState<NewMessageScreen> {
             child: switch (matches) {
               null => Center(
                 child: Text(
-                  'Type at least two letters of a name.',
+                  context.l10n.messagingMinChars,
                   style: type.bodySmall.copyWith(color: colors.textSecondary),
                 ),
               ),
               AsyncData(:final value) when value.isEmpty => Center(
                 child: Text(
-                  'No players found.',
+                  context.l10n.playNoPlayersFound,
                   style: type.bodySmall.copyWith(color: colors.textSecondary),
                 ),
               ),
@@ -114,8 +115,8 @@ class _NewMessageScreenState extends ConsumerState<NewMessageScreen> {
                   onTap: () => _open(value[i]),
                 ),
               ),
-              AsyncError() => const Center(
-                child: Text("Couldn't search players right now."),
+              AsyncError() => Center(
+                child: Text(context.l10n.messagingSearchPlayersFailed),
               ),
               _ => const Center(child: CircularProgressIndicator()),
             },

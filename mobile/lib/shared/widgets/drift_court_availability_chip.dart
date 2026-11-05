@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../features/courts/data/courts_repository.dart';
 import 'drift_status_badge.dart';
+import '../../core/l10n/l10n.dart';
 
 /// Court Availability Chip — `foundation/05-design-system.md` §7. Booking
 /// availability, never fabricated — "Unknown" is a real, styled state, not
@@ -15,22 +16,22 @@ class DriftCourtAvailabilityChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final (label, tone, icon) = switch (bookingType) {
       CourtBookingType.externalLink => (
-        'Book online',
+        context.l10n.availBookOnline,
         DriftStatusTone.success,
         Icons.link,
       ),
       CourtBookingType.contactOnly => (
-        'Contact to book',
+        context.l10n.availContactToBook,
         DriftStatusTone.info,
         Icons.call_outlined,
       ),
       CourtBookingType.nativePartner => (
-        'Booking coming soon',
+        context.l10n.availComingSoon,
         DriftStatusTone.warning,
         Icons.hourglass_empty,
       ),
       CourtBookingType.unknown => (
-        'Booking unknown',
+        context.l10n.availUnknown,
         DriftStatusTone.neutral,
         Icons.help_outline,
       ),

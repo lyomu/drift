@@ -7,6 +7,7 @@ import '../../auth/presentation/widgets/auth_form_widgets.dart';
 import '../../auth/presentation/widgets/auth_page_scaffold.dart';
 import '../../auth/presentation/widgets/racket_illustration.dart';
 import '../../auth/presentation/widgets/social_auth_buttons.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Join the Court — the post-intro entry point to auth
 /// (`foundation/03-user-journeys.md` §2, redesign 2026-08). "Continue with
@@ -36,14 +37,13 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           const Center(child: RacketIllustration(width: 200)),
           const SizedBox(height: 20),
           Text(
-            'Join the Court',
+            context.l10n.welcomeTitle,
             textAlign: TextAlign.center,
             style: type.h1.copyWith(fontSize: 26),
           ),
           const SizedBox(height: 10),
           Text(
-            'Track matches, enter ladders & tournaments, and level up your '
-            'game, all in one place.',
+            context.l10n.welcomeBody,
             textAlign: TextAlign.center,
             style: type.body.copyWith(
               color: colors.textSecondary,
@@ -54,7 +54,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           const _StepBars(),
           const SizedBox(height: 32),
           AuthPrimaryButton(
-            label: 'Continue with Email',
+            label: context.l10n.welcomeContinueEmail,
             icon: Icons.mail_outline,
             onPressed: () => context.push('/sign-up'),
           ),
@@ -70,8 +70,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           ),
           const SizedBox(height: 24),
           AuthFooterPrompt(
-            lead: 'Already have an account? ',
-            action: 'Log in',
+            lead: context.l10n.authHaveAccount,
+            action: context.l10n.authLogIn,
             onTap: () => context.push('/login'),
           ),
         ],

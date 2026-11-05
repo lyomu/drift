@@ -46,6 +46,13 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  Future<void> submit(WidgetTester tester) async {
+    final submit = find.text('Submit report');
+    await tester.ensureVisible(submit);
+    await tester.tap(submit);
+    await tester.pumpAndSettle();
+  }
+
   testWidgets('offers every report reason', (tester) async {
     await openSheet(tester);
 
@@ -79,8 +86,7 @@ void main() {
 
     await tester.tap(find.text(ReportReason.harassment.label));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Submit report'));
-    await tester.pumpAndSettle();
+    await submit(tester);
 
     verify(
       () => safety.reportMessage(
@@ -105,8 +111,7 @@ void main() {
     await tester.tap(find.text(ReportReason.spam.label));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Repeated adverts');
-    await tester.tap(find.text('Submit report'));
-    await tester.pumpAndSettle();
+    await submit(tester);
 
     verify(
       () => safety.reportMessage(
@@ -130,8 +135,7 @@ void main() {
 
     await tester.tap(find.text(ReportReason.cheating.label));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Submit report'));
-    await tester.pumpAndSettle();
+    await submit(tester);
 
     expect(find.text('Report this message'), findsNothing);
     expect(find.text('Thanks — this message was reported.'), findsOneWidget);
@@ -154,8 +158,7 @@ void main() {
 
     await tester.tap(find.text(ReportReason.other.label));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Submit report'));
-    await tester.pumpAndSettle();
+    await submit(tester);
 
     expect(find.text('You cannot report your own message.'), findsOneWidget);
     expect(find.text('Report this message'), findsOneWidget);

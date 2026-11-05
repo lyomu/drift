@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/widgets/drift_filter_sheet.dart';
 import '../application/players_providers.dart';
 import '../data/players_repository.dart';
+import '../../../core/l10n/l10n.dart';
+import '../../../core/l10n/enum_labels.dart';
 
 /// Player Filters — `foundation/04-screen-inventory.md` §A.4. Applying
 /// writes to [playerFiltersProvider], which the search provider watches.
@@ -23,21 +25,9 @@ const _levelBands = <({String label, double min, double max})>[
   (label: 'Advanced', min: 5.5, max: 7.0),
 ];
 
-const _timeBlocks = <(String, String)>[
-  ('MORNING', 'Morning'),
-  ('AFTERNOON', 'Afternoon'),
-  ('EVENING', 'Evening'),
-];
-const _formatOptions = <(String, String)>[
-  ('SINGLES', 'Singles'),
-  ('DOUBLES', 'Doubles'),
-  ('EITHER', 'Either'),
-];
-const _styleOptions = <(String, String)>[
-  ('SOCIAL', 'Social'),
-  ('COMPETITIVE', 'Competitive'),
-  ('EITHER', 'Either'),
-];
+const _timeBlocks = ['MORNING', 'AFTERNOON', 'EVENING'];
+const _formatOptions = ['SINGLES', 'DOUBLES', 'EITHER'];
+const _styleOptions = ['SOCIAL', 'COMPETITIVE', 'EITHER'];
 
 class _PlayerFiltersSheet extends ConsumerStatefulWidget {
   const _PlayerFiltersSheet();
@@ -110,11 +100,14 @@ class _PlayerFiltersSheetState extends ConsumerState<_PlayerFiltersSheet> {
       onApply: _apply,
       sections: [
         DriftFilterSection(
-          title: 'Level',
+          title: context.l10n.filterLevel,
           child: DriftFilterPills<int>(
             options: [
               for (var i = 0; i < _levelBands.length; i++)
-                DriftFilterOption(value: i, label: _levelBands[i].label),
+                DriftFilterOption(
+                  value: i,
+                  label: levelLabelText(context.l10n, _levelBands[i].label),
+                ),
             ],
             isSelected: _levels.contains,
             onTap: (i) => setState(() {
@@ -123,13 +116,13 @@ class _PlayerFiltersSheetState extends ConsumerState<_PlayerFiltersSheet> {
           ),
         ),
         DriftFilterSection(
-          title: 'Distance',
+          title: context.l10n.filterDistance,
           child: DriftFilterSegments<int?>(
-            options: const [
+            options: [
               DriftFilterOption(value: 5, label: '<5 km'),
               DriftFilterOption(value: 10, label: '<10 km'),
               DriftFilterOption(value: 20, label: '<20 km'),
-              DriftFilterOption(value: null, label: 'Any'),
+              DriftFilterOption(value: null, label: context.l10n.filterAny),
             ],
             // "Any" is the absence of a distance filter, so it reads as
             // selected whenever none is set.
@@ -142,11 +135,14 @@ class _PlayerFiltersSheetState extends ConsumerState<_PlayerFiltersSheet> {
           ),
         ),
         DriftFilterSection(
-          title: 'Availability',
+          title: context.l10n.commonAvailability,
           child: DriftFilterPills<String>(
             options: [
-              for (final (value, label) in _timeBlocks)
-                DriftFilterOption(value: value, label: label),
+              for (final value in _timeBlocks)
+                DriftFilterOption(
+                  value: value,
+                  label: timeBlockLabel(context.l10n, value),
+                ),
             ],
             isSelected: (v) => _draft.timeBlock == v,
             onTap: (v) => setState(() {
@@ -157,11 +153,14 @@ class _PlayerFiltersSheetState extends ConsumerState<_PlayerFiltersSheet> {
           ),
         ),
         DriftFilterSection(
-          title: 'Format',
+          title: context.l10n.onbFormat,
           child: DriftFilterSegments<String>(
             options: [
-              for (final (value, label) in _formatOptions)
-                DriftFilterOption(value: value, label: label),
+              for (final value in _formatOptions)
+                DriftFilterOption(
+                  value: value,
+                  label: formatPrefLabel(context.l10n, value),
+                ),
             ],
             isSelected: (v) => _draft.formatPreference == v,
             onTap: (v) => setState(() {
@@ -172,11 +171,14 @@ class _PlayerFiltersSheetState extends ConsumerState<_PlayerFiltersSheet> {
           ),
         ),
         DriftFilterSection(
-          title: 'Style',
+          title: context.l10n.onbStyle,
           child: DriftFilterSegments<String>(
             options: [
-              for (final (value, label) in _styleOptions)
-                DriftFilterOption(value: value, label: label),
+              for (final value in _styleOptions)
+                DriftFilterOption(
+                  value: value,
+                  label: stylePrefLabel(context.l10n, value),
+                ),
             ],
             isSelected: (v) => _draft.stylePreference == v,
             onTap: (v) => setState(() {

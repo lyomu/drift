@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/drift_colors.dart';
+import '../../../core/l10n/l10n.dart';
 
 
 /// Events segment (redesign 2026-10).
@@ -47,7 +48,7 @@ class EventListScreen extends StatelessWidget {
             ),
             SizedBox(height: 16),
             Text(
-              'Events coming soon',
+              context.l10n.eventsComingSoon,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
@@ -57,8 +58,7 @@ class EventListScreen extends StatelessWidget {
             ),
             SizedBox(height: 6),
             Text(
-              'Club socials, clinics and mixers will appear here once your '
-              'club starts running them.',
+              context.l10n.eventsComingSoonBody,
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 13, height: 1.5, color: colors.textSecondary),
             ),

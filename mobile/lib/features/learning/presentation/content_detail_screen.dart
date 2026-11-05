@@ -9,6 +9,7 @@ import '../../../shared/widgets/buttons/drift_button.dart';
 import '../../../shared/widgets/drift_scaffold.dart';
 import '../application/learning_providers.dart';
 import '../data/learning_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Lesson/Drill Detail, unified — `foundation/04-screen-inventory.md` §A.7
 /// gives Lesson Detail and Drill Detail near-identical shape ("Text/steps"
@@ -41,7 +42,7 @@ class _ContentDetailScreenState extends ConsumerState<ContentDetailScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Marked complete.')));
+      ).showSnackBar(SnackBar(content: Text(context.l10n.learnMarkedComplete)));
     } finally {
       if (mounted) setState(() => _isMarking = false);
     }
@@ -52,14 +53,16 @@ class _ContentDetailScreenState extends ConsumerState<ContentDetailScreen> {
     final content = ref.watch(contentDetailProvider(widget.contentId));
 
     return DriftScaffold(
-      title: 'Learn',
+      title: context.l10n.navLearn,
       body: switch (content) {
         AsyncData(:final value) => _Body(
           content: value,
           isMarking: _isMarking,
           onMarkComplete: _markComplete,
         ),
-        AsyncError() => const Center(child: Text('Content not available.')),
+        AsyncError() => Center(
+          child: Text(context.l10n.learnContentUnavailable),
+        ),
         _ => const Center(child: CircularProgressIndicator()),
       },
     );
@@ -105,7 +108,7 @@ class _Body extends StatelessWidget {
         if (content.videoUrl != null) ...[
           const SizedBox(height: DriftSpacing.s4),
           DriftButton(
-            label: 'Watch video',
+            label: context.l10n.learnWatchVideo,
             variant: DriftButtonVariant.text,
             onPressed: () => context.push('/learn/content/${summary.id}/video'),
           ),
@@ -113,7 +116,7 @@ class _Body extends StatelessWidget {
         const SizedBox(height: DriftSpacing.s6),
         if (summary.isDrill)
           DriftButton(
-            label: 'Log this drill in Practice',
+            label: context.l10n.learnLogDrill,
             onPressed: () => context.push(
               '/learn/practice/add',
               extra: (drillId: summary.id, skillFocus: summary.targetSkill),
@@ -121,7 +124,9 @@ class _Body extends StatelessWidget {
           )
         else
           DriftButton(
-            label: isMarking ? 'Marking…' : 'Mark Complete',
+            label: isMarking
+                ? context.l10n.learnMarking
+                : context.l10n.learnMarkComplete,
             onPressed: isMarking ? null : onMarkComplete,
           ),
       ],

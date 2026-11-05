@@ -5,6 +5,7 @@ import '../../../core/network/dio_client.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../players/data/players_repository.dart';
 import 'player_stats.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Mirrors the backend `MatchState` enum. The post-play states (settled by
 /// M7's result flow) were declared in M6 because Doc 6 §1 models matches as
@@ -27,16 +28,16 @@ enum MatchState {
   );
 
   String get label => switch (this) {
-    MatchState.proposed => 'Awaiting reply',
-    MatchState.scheduling => 'Agreeing a time',
-    MatchState.scheduled => 'Scheduled',
-    MatchState.rescheduled => 'Rescheduling',
-    MatchState.cancelled => 'Cancelled',
-    MatchState.expired => 'Expired',
-    MatchState.completed => 'Played',
-    MatchState.walkover => 'Walkover',
-    MatchState.retired => 'Retired',
-    MatchState.disputed => 'Disputed',
+    MatchState.proposed => l10nNow.matchStateProposed,
+    MatchState.scheduling => l10nNow.matchStateScheduling,
+    MatchState.scheduled => l10nNow.matchStateScheduled,
+    MatchState.rescheduled => l10nNow.matchStateRescheduled,
+    MatchState.cancelled => l10nNow.matchStateCancelled,
+    MatchState.expired => l10nNow.matchStateExpired,
+    MatchState.completed => l10nNow.matchStateCompleted,
+    MatchState.walkover => l10nNow.matchStateWalkover,
+    MatchState.retired => l10nNow.matchStateRetired,
+    MatchState.disputed => l10nNow.matchStateDisputed,
   };
 }
 
@@ -250,6 +251,37 @@ class MatchCompetitionContext {
       );
 }
 
+/// Which competition produced a match — league fixture, ladder challenge or
+/// tournament fixture. Drives the "Spring League · Round 3" line on
+/// Play → Matches rows. Null for a friendly challenge.
+enum CompetitionKind { league, ladder, tournament }
+
+class MatchCompetitionLabel {
+  const MatchCompetitionLabel({
+    required this.kind,
+    required this.id,
+    required this.name,
+    this.roundIndex,
+  });
+
+  final CompetitionKind kind;
+  final String id;
+  final String name;
+  final int? roundIndex;
+
+  factory MatchCompetitionLabel.fromJson(Map<String, dynamic> json) =>
+      MatchCompetitionLabel(
+        kind: switch (json['kind']) {
+          'LADDER' => CompetitionKind.ladder,
+          'TOURNAMENT' => CompetitionKind.tournament,
+          _ => CompetitionKind.league,
+        },
+        id: json['id'] as String,
+        name: json['name'] as String,
+        roundIndex: json['roundIndex'] as int?,
+      );
+}
+
 class DriftMatch {
   const DriftMatch({
     required this.id,
@@ -269,6 +301,7 @@ class DriftMatch {
     required this.cancelReason,
     required this.result,
     required this.competitionContext,
+    this.competitionLabel,
   });
 
   final String id;
@@ -288,6 +321,7 @@ class DriftMatch {
   final String? cancelReason;
   final MatchResult? result;
   final MatchCompetitionContext? competitionContext;
+  final MatchCompetitionLabel? competitionLabel;
 
   bool get isDoubles => format == 'DOUBLES';
 
@@ -343,6 +377,11 @@ class DriftMatch {
         ? null
         : MatchCompetitionContext.fromJson(
             json['competitionContext'] as Map<String, dynamic>,
+          ),
+    competitionLabel: json['competitionLabel'] == null
+        ? null
+        : MatchCompetitionLabel.fromJson(
+            json['competitionLabel'] as Map<String, dynamic>,
           ),
   );
 }
@@ -556,7 +595,7 @@ class MatchesRepository {
       final body = e.response?.data;
       final message = body is Map ? body['message'] as Object? : null;
       final text = message is List ? message.join(' ') : message?.toString();
-      throw AuthException(text ?? 'Something went wrong. Please try again.');
+      throw AuthException(text ?? l10nNow.commonErrorGeneric);
     }
   }
 }

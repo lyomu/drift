@@ -12,6 +12,8 @@ interface MockPrisma {
   standing: Record<string, jest.Mock>;
   match: Record<string, jest.Mock>;
   user: Record<string, jest.Mock>;
+  communityMember: Record<string, jest.Mock>;
+  clubMembership: Record<string, jest.Mock>;
   $transaction: jest.Mock;
 }
 
@@ -33,6 +35,7 @@ function createMockPrisma(): MockPrisma {
       update: jest.fn().mockResolvedValue({}),
     },
     round: {
+      findMany: jest.fn().mockResolvedValue([]),
       findUnique: jest.fn(),
       findFirst: jest.fn().mockResolvedValue(null),
       findUniqueOrThrow: jest.fn(),
@@ -52,6 +55,8 @@ function createMockPrisma(): MockPrisma {
     },
     match: { update: jest.fn().mockResolvedValue({}) },
     user: { findMany: jest.fn().mockResolvedValue([]) },
+    communityMember: { findUnique: jest.fn() },
+    clubMembership: { findUnique: jest.fn() },
     $transaction: jest.fn(),
   };
 
@@ -115,6 +120,29 @@ describe('CompetitionsService', () => {
   });
 
   describe('register', () => {
+    it('requires ACTIVE membership for a community league', async () => {
+      prisma.league.findUnique.mockResolvedValue(
+        baseLeague({
+          communityId: 'community-1',
+          registrationOpensAt: new Date(Date.now() - HOUR),
+          registrationClosesAt: new Date(Date.now() + HOUR),
+          startsAt: new Date(Date.now() + 2 * HOUR),
+        }),
+      );
+      prisma.communityMember.findUnique.mockResolvedValue({
+        status: 'REQUESTED',
+      });
+      await expect(service.register('u1', 'l1')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      expect(prisma.leagueRegistration.upsert).not.toHaveBeenCalled();
+
+      prisma.communityMember.findUnique.mockResolvedValue({ status: 'ACTIVE' });
+      prisma.leagueRegistration.findUnique.mockResolvedValue(null);
+      await service.register('u1', 'l1');
+      expect(prisma.leagueRegistration.upsert).toHaveBeenCalled();
+    });
+
     it('rejects when registration is not open', async () => {
       prisma.league.findUnique.mockResolvedValue(
         baseLeague({
@@ -172,8 +200,8 @@ describe('CompetitionsService', () => {
       expect(notifications.create).toHaveBeenCalledWith(
         'u1',
         'COMPETITIONS',
-        "You're registered",
-        expect.any(String),
+        expect.objectContaining({ key: 'league.registered.title' }),
+        expect.objectContaining({ key: 'league.registered.body' }),
         'LEAGUE',
         'l1',
       );
@@ -205,11 +233,191 @@ describe('CompetitionsService', () => {
       expect(notifications.create).toHaveBeenCalledWith(
         'u1',
         'COMPETITIONS',
-        "You're on the waitlist",
-        expect.any(String),
+        expect.objectContaining({ key: 'league.waitlisted.title' }),
+        expect.objectContaining({ key: 'league.waitlisted.body' }),
         'LEAGUE',
         'l1',
       );
+    });
+  });
+
+  describe('listRounds', () => {
+    beforeEach(() => {
+      jest.spyOn(service, 'ensureLeagueProgressed').mockResolvedValue();
+      prisma.league.findUnique.mockResolvedValue(baseLeague());
+    });
+
+    it('returns each round with how far it has got, byes excluded', async () => {
+      prisma.round.findMany.mockResolvedValue([
+        {
+          id: 'r1',
+          index: 1,
+          deadline: new Date('2026-01-01'),
+          openedAt: new Date('2025-12-01'),
+          closedAt: new Date('2026-01-02'),
+          fixtures: [
+            { sideBUserId: 'b', match: { state: 'COMPLETED' } },
+            { sideBUserId: 'd', match: { state: 'WALKOVER' } },
+            { sideBUserId: null, match: null }, // a bye
+          ],
+        },
+        {
+          id: 'r2',
+          index: 2,
+          deadline: new Date('2026-02-01'),
+          openedAt: null,
+          closedAt: null,
+          fixtures: [{ sideBUserId: 'b', match: null }],
+        },
+      ]);
+
+      const { rounds } = await service.listRounds('l1');
+
+      expect(rounds).toHaveLength(2);
+      expect(rounds[0]).toMatchObject({
+        id: 'r1',
+        index: 1,
+        fixtureCount: 2,
+        playedCount: 2,
+      });
+      expect(rounds[1]).toMatchObject({
+        id: 'r2',
+        fixtureCount: 1,
+        playedCount: 0,
+        openedAt: null,
+      });
+      expect(prisma.round.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ orderBy: { index: 'asc' } }),
+      );
+    });
+
+    it('404s for an unknown league', async () => {
+      prisma.league.findUnique.mockResolvedValue(null);
+      await expect(service.listRounds('nope')).rejects.toThrow(/not found/i);
+    });
+  });
+
+  describe('adminAddRegistration', () => {
+    const beforeStart = () =>
+      baseLeague({
+        registrationOpensAt: new Date(Date.now() - 2 * HOUR),
+        registrationClosesAt: new Date(Date.now() + HOUR),
+        startsAt: new Date(Date.now() + 2 * HOUR),
+        capacity: 2,
+      });
+
+    beforeEach(() => {
+      prisma.league.findUnique.mockResolvedValue(beforeStart());
+      prisma.clubMembership.findUnique.mockResolvedValue({ status: 'ACTIVE' });
+      prisma.leagueRegistration.count.mockResolvedValue(0);
+      prisma.leagueRegistration.upsert.mockResolvedValue({
+        id: 'reg1',
+        status: 'ENROLLED',
+      });
+    });
+
+    it('enrols an active club member and tells them', async () => {
+      await expect(
+        service.adminAddRegistration('l1', 'u1', 'ENROLLED'),
+      ).resolves.toEqual({ id: 'reg1', status: 'ENROLLED' });
+
+      expect(prisma.clubMembership.findUnique).toHaveBeenCalledWith({
+        where: { clubId_userId: { clubId: 'club-1', userId: 'u1' } },
+      });
+      expect(prisma.leagueRegistration.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          create: { leagueId: 'l1', userId: 'u1', status: 'ENROLLED' },
+        }),
+      );
+      expect(notifications.create).toHaveBeenCalledWith(
+        'u1',
+        'COMPETITIONS',
+        expect.anything(),
+        expect.anything(),
+        'LEAGUE',
+        'l1',
+      );
+    });
+
+    it('works while registration is closed but play has not begun', async () => {
+      prisma.league.findUnique.mockResolvedValue(
+        baseLeague({
+          registrationOpensAt: new Date(Date.now() - 3 * HOUR),
+          registrationClosesAt: new Date(Date.now() - HOUR),
+          startsAt: new Date(Date.now() + HOUR),
+        }),
+      );
+      await expect(
+        service.adminAddRegistration('l1', 'u1', 'ENROLLED'),
+      ).resolves.toBeDefined();
+    });
+
+    it('refuses once the league has started', async () => {
+      prisma.league.findUnique.mockResolvedValue(baseLeague()); // started 30 min ago
+      await expect(
+        service.adminAddRegistration('l1', 'u1', 'ENROLLED'),
+      ).rejects.toThrow(/before the league starts/i);
+      expect(prisma.leagueRegistration.upsert).not.toHaveBeenCalled();
+    });
+
+    it('refuses someone who is not an active member of the club', async () => {
+      prisma.clubMembership.findUnique.mockResolvedValue({ status: 'PENDING' });
+      await expect(
+        service.adminAddRegistration('l1', 'u1', 'ENROLLED'),
+      ).rejects.toThrow(/active members of the club/i);
+
+      prisma.clubMembership.findUnique.mockResolvedValue(null);
+      await expect(
+        service.adminAddRegistration('l1', 'u1', 'ENROLLED'),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('checks community membership instead for a community league', async () => {
+      prisma.league.findUnique.mockResolvedValue({
+        ...beforeStart(),
+        clubId: null,
+        communityId: 'community-1',
+      });
+      prisma.communityMember.findUnique.mockResolvedValue({
+        status: 'REQUESTED',
+      });
+      await expect(
+        service.adminAddRegistration('l1', 'u1', 'ENROLLED'),
+      ).rejects.toThrow(/community/i);
+
+      prisma.communityMember.findUnique.mockResolvedValue({ status: 'ACTIVE' });
+      await expect(
+        service.adminAddRegistration('l1', 'u1', 'ENROLLED'),
+      ).resolves.toBeDefined();
+      expect(prisma.clubMembership.findUnique).not.toHaveBeenCalled();
+    });
+
+    it('refuses to enrol into a full league but allows the waitlist', async () => {
+      prisma.leagueRegistration.count.mockResolvedValue(2); // capacity is 2
+      await expect(
+        service.adminAddRegistration('l1', 'u1', 'ENROLLED'),
+      ).rejects.toThrow(/waitlist/i);
+
+      prisma.leagueRegistration.upsert.mockResolvedValue({
+        id: 'reg2',
+        status: 'WAITLISTED',
+      });
+      await expect(
+        service.adminAddRegistration('l1', 'u1', 'WAITLISTED'),
+      ).resolves.toEqual({ id: 'reg2', status: 'WAITLISTED' });
+    });
+
+    it('does not count the player themself against capacity when re-enrolling', async () => {
+      await service.adminAddRegistration('l1', 'u1', 'ENROLLED');
+      expect(prisma.leagueRegistration.count).toHaveBeenCalledWith({
+        where: expect.objectContaining({ userId: { not: 'u1' } }),
+      });
+    });
+
+    it('does not accept WITHDRAWN as a way to add someone', async () => {
+      await expect(
+        service.adminAddRegistration('l1', 'u1', 'WITHDRAWN'),
+      ).rejects.toBeInstanceOf(BadRequestException);
     });
   });
 
@@ -247,8 +455,8 @@ describe('CompetitionsService', () => {
       expect(notifications.create).toHaveBeenCalledWith(
         'u-waiting',
         'COMPETITIONS',
-        "You're in",
-        expect.stringContaining('enrolled'),
+        expect.objectContaining({ key: 'league.promoted.title' }),
+        expect.objectContaining({ key: 'league.promoted.body' }),
         'LEAGUE',
         'l1',
       );
@@ -334,8 +542,8 @@ describe('CompetitionsService', () => {
       expect(notifications.create).toHaveBeenCalledWith(
         'a',
         'COMPETITIONS',
-        expect.stringContaining('Round 1 is now open'),
-        expect.any(String),
+        expect.objectContaining({ key: 'league.roundOpen.title' }),
+        expect.objectContaining({ key: 'league.roundOpen.body' }),
         'LEAGUE',
         'l1',
       );

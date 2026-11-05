@@ -225,6 +225,7 @@ const titleIconMap: Record<string, string> = {
   "Disputes": "gavel",
   "Content library": "library_books",
   "Learning paths": "conversion_path",
+  "Daily tennis facts": "lightbulb",
   "News sources": "rss_feed",
   "News stories": "newspaper",
   "Plans": "sell",

@@ -9,17 +9,8 @@ import '../../../shared/widgets/buttons/drift_button.dart';
 import '../../../shared/widgets/drift_card.dart';
 import '../../../shared/widgets/drift_scaffold.dart';
 import '../application/learning_providers.dart';
-
-const _skillLabels = {
-  'FOREHAND': 'Forehand',
-  'BACKHAND': 'Backhand',
-  'SERVE': 'Serve',
-  'RETURN': 'Return',
-  'NET_PLAY': 'Net Play',
-  'MOVEMENT': 'Movement',
-  'MATCH_PLAY': 'Match Play',
-  'FOOTWORK': 'Footwork',
-};
+import '../../../core/l10n/l10n.dart';
+import '../../../core/l10n/enum_labels.dart';
 
 /// Skill Profile — `foundation/04-screen-inventory.md` §A.7. Development
 /// percentages are never shown for DIRECTIONAL (assessment-only) data —
@@ -35,7 +26,7 @@ class SkillProfileScreen extends ConsumerWidget {
     final colors = Theme.of(context).extension<DriftColors>()!;
 
     return DriftScaffold(
-      title: 'Skill Profile',
+      title: context.l10n.learnSkillProfile,
       body: RefreshIndicator(
         onRefresh: () => ref.refresh(skillProfileProvider.future),
         child: switch (profile) {
@@ -57,7 +48,7 @@ class SkillProfileScreen extends ConsumerWidget {
                               Row(
                                 children: [
                                   Text(
-                                    _skillLabels[skill.skill] ?? skill.skill,
+                                    pillarLabel(context.l10n, skill.skill),
                                     style: type.title,
                                   ),
                                   if (skill.skill == value.weakestSkill) ...[
@@ -73,7 +64,7 @@ class SkillProfileScreen extends ConsumerWidget {
                               const SizedBox(height: DriftSpacing.s2),
                               if (skill.score == null)
                                 Text(
-                                  'No data yet',
+                                  context.l10n.learnNoData,
                                   style: type.bodySmall.copyWith(
                                     color: colors.textSecondary,
                                   ),
@@ -89,7 +80,7 @@ class SkillProfileScreen extends ConsumerWidget {
                                 const SizedBox(height: DriftSpacing.s1),
                                 Text(
                                   skill.maturity == 'DIRECTIONAL'
-                                      ? 'Building'
+                                      ? context.l10n.skillBuilding
                                       : '${(skill.score! / 6 * 100).round()}%',
                                   style: type.caption.copyWith(
                                     color: colors.textSecondary,
@@ -106,7 +97,7 @@ class SkillProfileScreen extends ConsumerWidget {
                 ),
               if (value.recommendations.isNotEmpty) ...[
                 const SizedBox(height: DriftSpacing.s2),
-                Text('Recommended for you', style: type.h4),
+                Text(context.l10n.skillRecommendedForYou, style: type.h4),
                 const SizedBox(height: DriftSpacing.s3),
                 for (final rec in value.recommendations)
                   Padding(
@@ -128,15 +119,15 @@ class SkillProfileScreen extends ConsumerWidget {
               const SizedBox(height: DriftSpacing.s4),
               Center(
                 child: DriftButton(
-                  label: 'Retake Assessment',
+                  label: context.l10n.skillRetakeAssessment,
                   variant: DriftButtonVariant.text,
                   onPressed: () => context.push('/onboarding/assessment'),
                 ),
               ),
             ],
           ),
-          AsyncError() => const Center(
-            child: Text('Skill profile not available.'),
+          AsyncError() => Center(
+            child: Text(context.l10n.skillProfileUnavailable),
           ),
           _ => const Center(child: CircularProgressIndicator()),
         },

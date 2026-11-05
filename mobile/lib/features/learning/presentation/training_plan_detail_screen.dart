@@ -8,6 +8,7 @@ import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/drift_card.dart';
 import '../../../shared/widgets/drift_scaffold.dart';
 import '../application/learning_providers.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Training Plan Detail — `foundation/04-screen-inventory.md` §A.7. An
 /// ordered, read-only list of real Lesson/Drill steps. Enrollment/progress
@@ -27,7 +28,7 @@ class TrainingPlanDetailScreen extends ConsumerWidget {
     final colors = Theme.of(context).extension<DriftColors>()!;
 
     return DriftScaffold(
-      title: 'Training Plan',
+      title: context.l10n.learnTrainingPlan,
       body: switch (plan) {
         AsyncData(:final value) => ListView(
           padding: const EdgeInsets.all(DriftSpacing.s5),
@@ -38,7 +39,7 @@ class TrainingPlanDetailScreen extends ConsumerWidget {
               Text(value.summary.summary!, style: type.body),
             ],
             const SizedBox(height: DriftSpacing.s5),
-            Text('Steps', style: type.h4),
+            Text(context.l10n.learnSteps, style: type.h4),
             const SizedBox(height: DriftSpacing.s3),
             for (var i = 0; i < value.steps.length; i++)
               Padding(
@@ -70,7 +71,7 @@ class TrainingPlanDetailScreen extends ConsumerWidget {
               ),
           ],
         ),
-        AsyncError() => const Center(child: Text('Plan not available.')),
+        AsyncError() => Center(child: Text(context.l10n.learnPlanUnavailable)),
         _ => const Center(child: CircularProgressIndicator()),
       },
     );

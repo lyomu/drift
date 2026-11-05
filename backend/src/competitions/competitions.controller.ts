@@ -50,6 +50,11 @@ export class CompetitionsController {
     return this.competitions.withdraw(this.userId(req), id);
   }
 
+  @Get('leagues/:id/rounds')
+  listRounds(@Param('id') id: string) {
+    return this.competitions.listRounds(id);
+  }
+
   @Get('leagues/:id/rounds/current')
   getCurrentRound(@Param('id') id: string) {
     return this.competitions.getCurrentRound(id);

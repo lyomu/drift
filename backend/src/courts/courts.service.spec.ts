@@ -6,6 +6,7 @@ type MockPrisma = {
   court: Record<string, jest.Mock>;
   courtReport: Record<string, jest.Mock>;
   courtGroup: Record<string, jest.Mock>;
+  favoriteCourt: Record<string, jest.Mock>;
   $transaction: jest.Mock;
 };
 
@@ -19,6 +20,11 @@ function createMockPrisma(): MockPrisma {
     },
     courtReport: { create: jest.fn() },
     courtGroup: { deleteMany: jest.fn(), createMany: jest.fn() },
+    favoriteCourt: {
+      findUnique: jest.fn(),
+      upsert: jest.fn(),
+      deleteMany: jest.fn(),
+    },
     $transaction: jest.fn(),
   };
   prisma.$transaction.mockImplementation(
@@ -174,6 +180,51 @@ describe('CourtsService', () => {
       const profile = await service.findOne('a', origin);
       expect(profile.distanceKm).not.toBeNull();
       expect(profile.distanceKm).toBeGreaterThan(0);
+    });
+  });
+
+  describe('favorites', () => {
+    it('reports isFavorite for the viewer on the profile', async () => {
+      prisma.court.findUnique.mockResolvedValue(courtRecord('a'));
+      prisma.favoriteCourt.findUnique.mockResolvedValue({ id: 'f1' });
+      const profile = await service.findOne('a', undefined, 'user-1');
+      expect(profile.isFavorite).toBe(true);
+    });
+
+    it('is not a favorite when there is no viewer', async () => {
+      prisma.court.findUnique.mockResolvedValue(courtRecord('a'));
+      const profile = await service.findOne('a');
+      expect(profile.isFavorite).toBe(false);
+      expect(prisma.favoriteCourt.findUnique).not.toHaveBeenCalled();
+    });
+
+    it('upserts a favorite for an existing court', async () => {
+      prisma.court.findUnique.mockResolvedValue(courtRecord('a'));
+      await expect(service.favorite('user-1', 'a')).resolves.toEqual({
+        isFavorite: true,
+      });
+      expect(prisma.favoriteCourt.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          create: { userId: 'user-1', courtId: 'a' },
+        }),
+      );
+    });
+
+    it('throws when favoriting a missing court', async () => {
+      prisma.court.findUnique.mockResolvedValue(null);
+      await expect(
+        service.favorite('user-1', 'missing'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(prisma.favoriteCourt.upsert).not.toHaveBeenCalled();
+    });
+
+    it('unfavorite deletes the row', async () => {
+      await expect(service.unfavorite('user-1', 'a')).resolves.toEqual({
+        isFavorite: false,
+      });
+      expect(prisma.favoriteCourt.deleteMany).toHaveBeenCalledWith({
+        where: { userId: 'user-1', courtId: 'a' },
+      });
     });
   });
 

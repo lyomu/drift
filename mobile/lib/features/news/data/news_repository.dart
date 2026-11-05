@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/network/dio_client.dart';
 import '../../../core/storage/secure_storage.dart';
 import '../../auth/data/auth_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 class StorySummary {
   const StorySummary({
@@ -237,7 +238,7 @@ class NewsRepository {
     final body = e.response?.data;
     final message = body is Map ? body['message'] as Object? : null;
     final text = message is List ? message.join(' ') : message?.toString();
-    return AuthException(text ?? 'Something went wrong. Please try again.');
+    return AuthException(text ?? l10nNow.commonErrorGeneric);
   }
 }
 

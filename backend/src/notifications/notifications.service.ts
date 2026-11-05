@@ -5,6 +5,12 @@ import { PushService } from '../push/push.service';
 import { toNotificationDto, toPreferencesDto } from './notifications.mapper';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
 import { RegisterDeviceDto } from './dto/register-device.dto';
+import {
+  DEFAULT_LOCALE,
+  type Localizable,
+  localeOf,
+  render,
+} from '../common/i18n';
 
 const DEFAULT_TAKE = 30;
 
@@ -21,6 +27,7 @@ const PREFERENCE_FIELD: Record<
   | 'news'
   | 'clubs'
   | 'announcements'
+  | 'communities'
 > = {
   CONNECTIONS: 'connections',
   MATCHES: 'matches',
@@ -30,6 +37,7 @@ const PREFERENCE_FIELD: Record<
   NEWS: 'news',
   CLUBS: 'clubs',
   ANNOUNCEMENTS: 'announcements',
+  COMMUNITIES: 'communities',
 };
 
 @Injectable()
@@ -55,16 +63,34 @@ export class NotificationsService {
   async create(
     userId: string,
     category: NotificationCategory,
-    title: string,
-    body: string,
+    titleText: Localizable,
+    bodyText: Localizable,
     relatedEntityType?: string,
     relatedEntityId?: string,
     imageUrl?: string,
+    options: { push?: boolean } = {},
   ): Promise<boolean> {
     const preference = await this.getOrCreatePreference(userId);
     if (!preference[PREFERENCE_FIELD[category]]) {
       return false;
     }
+
+    // Rendered once, in the recipient's language, and stored that way: the
+    // Notification Centre row and the push carry the same text. Literal text
+    // (an announcement, a chat preview) skips the lookup entirely.
+    const locale =
+      typeof titleText === 'string' && typeof bodyText === 'string'
+        ? DEFAULT_LOCALE
+        : localeOf(
+            (
+              await this.prisma.user.findUnique({
+                where: { id: userId },
+                select: { preferredLocale: true },
+              })
+            )?.preferredLocale,
+          );
+    const title = render(locale, titleText);
+    const body = render(locale, bodyText);
 
     const notification = await this.prisma.notification.create({
       data: {
@@ -85,6 +111,9 @@ export class NotificationsService {
     // Deliberately not awaited: the caller is finishing a match confirmation
     // or a message send and must not wait on Google. `sendToUser` never
     // throws, so this cannot become an unhandled rejection.
+    // `push: false` files the row in the Notification Centre only — for
+    // low-stakes, daily content (the tennis fact) that shouldn't buzz a phone.
+    if (options.push === false) return true;
     void this.push.sendToUser(userId, title, body, {
       category,
       ...(notification?.id ? { notificationId: notification.id } : {}),
@@ -189,6 +218,7 @@ export class NotificationsService {
         news: dto.news,
         clubs: dto.clubs,
         announcements: dto.announcements,
+        communities: dto.communities,
       },
     });
     return toPreferencesDto(preference);

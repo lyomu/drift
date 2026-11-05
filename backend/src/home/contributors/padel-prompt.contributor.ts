@@ -3,6 +3,12 @@ import { PadelInterestValue } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { HOME_CARD_PRIORITY, type HomeCard } from '../home-card';
 import type { HomeCardContributor, HomeContext } from './home-contributor';
+import {
+  DEFAULT_LOCALE,
+  type MessageKey,
+  type MessageParam,
+  t,
+} from '../../common/i18n';
 
 /**
  * Replaces M4's `PADEL_TEASER`, which was still telling users "Padel is
@@ -21,6 +27,8 @@ export class PadelPromptContributor implements HomeCardContributor {
   constructor(private readonly prisma: PrismaService) {}
 
   async contribute(ctx: HomeContext): Promise<HomeCard[]> {
+    const tr = (key: MessageKey, params?: Record<string, MessageParam>) =>
+      t(ctx.locale ?? DEFAULT_LOCALE, key, params);
     const interest = ctx.profile.padelInterest;
     const interested =
       interest === PadelInterestValue.YES ||
@@ -38,13 +46,17 @@ export class PadelPromptContributor implements HomeCardContributor {
         id: 'padel-prompt',
         type: 'PADEL_PROMPT',
         priority: HOME_CARD_PRIORITY.PADEL_PROMPT,
-        title: 'Padel is ready when you are',
-        body:
+        title: tr('home.padel.title'),
+        body: tr(
           interest === PadelInterestValue.WANT_TO_LEARN
-            ? "You said you'd like to learn Padel. Take the short assessment and we'll set your starting level."
-            : 'You told us you play Padel too. Add it to your profile to get a Padel rating and match history.',
+            ? 'home.padel.learn'
+            : 'home.padel.plays',
+        ),
         accent: 'neutral',
-        action: { label: 'Add Padel', route: '/profile/padel/add' },
+        action: {
+          label: tr('home.action.addPadel'),
+          route: '/profile/padel/add',
+        },
         dismissible: true,
         data: null,
       },

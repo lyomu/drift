@@ -15,6 +15,7 @@ import '../../connections/application/connections_providers.dart';
 import '../../padel/application/padel_providers.dart';
 import '../../players/data/players_repository.dart';
 import '../data/matches_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Challenge Composer — `foundation/04-screen-inventory.md` §A.4
 /// (redesign 2026-08). For doubles the challenger picks their own partner
@@ -49,7 +50,7 @@ class _ChallengeComposerScreenState
 
   Future<void> _send() async {
     if (_isDoubles && _partnerId == null) {
-      setState(() => _errorText = 'Choose your doubles partner.');
+      setState(() => _errorText = context.l10n.matchChoosePartner);
       return;
     }
 
@@ -94,7 +95,7 @@ class _ChallengeComposerScreenState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const DriftBackHeader(title: 'Challenge'),
+            DriftBackHeader(title: context.l10n.matchChallenge),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
@@ -122,8 +123,10 @@ class _ChallengeComposerScreenState
                                   widget.opponent.level != null)
                                 Text(
                                   widget.opponent.level != null
-                                      ? 'Level '
-                                            '${widget.opponent.level!.toStringAsFixed(1)}'
+                                      ? context.l10n.commonLevel(
+                                          widget.opponent.level!
+                                              .toStringAsFixed(1),
+                                        )
                                       : widget.opponent.levelLabel!,
                                   style: type.caption.copyWith(
                                     color: colors.textSecondary,
@@ -138,18 +141,18 @@ class _ChallengeComposerScreenState
                   const SizedBox(height: 16),
 
                   if (hasPadelProfile) ...[
-                    sectionLabel('Sport'),
+                    sectionLabel(context.l10n.matchSport),
                     const SizedBox(height: 10),
                     Row(
                       children: [
                         DriftFilterChip(
-                          label: 'Tennis',
+                          label: context.l10n.sportTennis,
                           selected: !_isPadel,
                           onTap: () => setState(() => _sport = 'TENNIS'),
                         ),
                         const SizedBox(width: 8),
                         DriftFilterChip(
-                          label: 'Padel',
+                          label: context.l10n.sportPadel,
                           selected: _isPadel,
                           onTap: () => setState(() => _sport = 'PADEL'),
                         ),
@@ -158,12 +161,12 @@ class _ChallengeComposerScreenState
                     const SizedBox(height: 16),
                   ],
 
-                  sectionLabel('Format'),
+                  sectionLabel(context.l10n.onbFormat),
                   const SizedBox(height: 10),
                   Row(
                     children: [
                       DriftFilterChip(
-                        label: 'Singles',
+                        label: context.l10n.optSingles,
                         selected: !_isDoubles,
                         onTap: () => setState(() {
                           _format = 'SINGLES';
@@ -172,7 +175,7 @@ class _ChallengeComposerScreenState
                       ),
                       const SizedBox(width: 8),
                       DriftFilterChip(
-                        label: 'Doubles',
+                        label: context.l10n.optDoubles,
                         selected: _isDoubles,
                         onTap: () => setState(() => _format = 'DOUBLES'),
                       ),
@@ -181,11 +184,12 @@ class _ChallengeComposerScreenState
 
                   if (_isDoubles) ...[
                     const SizedBox(height: 16),
-                    sectionLabel('Your partner'),
+                    sectionLabel(context.l10n.matchYourPartner),
                     const SizedBox(height: 4),
                     Text(
-                      '${widget.opponent.displayName} picks their own partner '
-                      'when they accept.',
+                      context.l10n.matchOpponentPicksPartner(
+                        widget.opponent.displayName,
+                      ),
                       style: type.caption.copyWith(color: colors.textSecondary),
                     ),
                     const SizedBox(height: 8),
@@ -193,8 +197,7 @@ class _ChallengeComposerScreenState
                       AsyncData(:final value) =>
                         value.isEmpty
                             ? Text(
-                                'Connect with a player first to partner with '
-                                'them.',
+                                context.l10n.matchConnectFirst,
                                 style: type.bodySmall.copyWith(
                                   color: colors.textSecondary,
                                 ),
@@ -219,7 +222,7 @@ class _ChallengeComposerScreenState
                                 ],
                               ),
                       AsyncError() => Text(
-                        "Couldn't load your connections.",
+                        context.l10n.matchLoadConnectionsFailed,
                         style: type.bodySmall.copyWith(color: colors.error),
                       ),
                       _ => const Center(child: CircularProgressIndicator()),
@@ -228,7 +231,7 @@ class _ChallengeComposerScreenState
 
                   const SizedBox(height: 16),
                   DriftTextField(
-                    label: 'Add a note (optional)',
+                    label: context.l10n.matchAddNote,
                     controller: _noteController,
                     maxLines: 4,
                   ),
@@ -240,7 +243,7 @@ class _ChallengeComposerScreenState
 
                   const SizedBox(height: 24),
                   DriftPrimaryButton(
-                    label: 'Send Challenge',
+                    label: context.l10n.matchSendChallenge,
                     loading: _isSubmitting,
                     fontSize: 16,
                     verticalPadding: 16,

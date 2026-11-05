@@ -34,12 +34,17 @@ import '../../features/competitions/presentation/standings_screen.dart';
 import '../../features/clubs/presentation/club_announcements_screen.dart';
 import '../../features/clubs/presentation/club_feed_screen.dart';
 import '../../features/clubs/presentation/club_profile_screen.dart';
+import '../../features/communities/presentation/community_detail_screen.dart';
+import '../../features/communities/presentation/create_community_league_screen.dart';
+import '../../features/communities/presentation/manage_community_screen.dart';
 import '../../features/coaches/presentation/coach_list_screen.dart';
 import '../../features/coaches/presentation/coach_profile_screen.dart';
 import '../../features/connections/presentation/connections_list_screen.dart';
 import '../../features/connections/presentation/pending_requests_screen.dart';
 import '../../features/courts/presentation/court_photos_gallery_screen.dart';
+import '../../features/courts/presentation/court_booking_screen.dart';
 import '../../features/courts/presentation/court_profile_screen.dart';
+import '../../features/courts/presentation/my_bookings_screen.dart';
 import '../../features/learning/presentation/add_practice_session_screen.dart';
 import '../../features/learning/presentation/assessment_history_screen.dart';
 import '../../features/learning/presentation/content_detail_screen.dart';
@@ -56,7 +61,9 @@ import '../../features/learning/presentation/training_plan_detail_screen.dart';
 import '../../features/learning/presentation/video_lesson_player_screen.dart';
 import '../../features/players/presentation/player_profile_screen.dart';
 import '../../features/players/data/players_repository.dart';
+import '../../features/matches/application/matches_providers.dart';
 import '../../features/matches/data/matches_repository.dart';
+import '../../features/matches/presentation/play_hub_screen.dart';
 import '../../features/matches/presentation/challenge_composer_screen.dart';
 import '../../features/matches/presentation/dispute_detail_screen.dart';
 import '../../features/matches/presentation/enter_score_screen.dart';
@@ -188,17 +195,37 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/home',
-        builder: (context, state) => AppShell(
-          initialIndex: _tabIndex(state.uri.queryParameters['tab']),
-          initialPlaySegment: _segmentIndex(
-            state.uri.queryParameters['play'],
-            const ['find', 'challenges', 'active', 'history'],
-          ),
-          initialDiscoverSegment: _segmentIndex(
-            state.uri.queryParameters['discover'],
-            const ['players', 'courts', 'clubs', 'coaches'],
-          ),
-        ),
+        // `?play=find` predates the 2026-11 restructure (Find moved to
+        // Discover → Find players). Push payloads and Home cards already out
+        // there still carry it, so it is rewritten rather than dropped.
+        redirect: (context, state) => legacyHomeRedirect(state.uri),
+        builder: (context, state) {
+          final query = state.uri.queryParameters;
+          final matchFilter = homeMatchFilter(state.uri);
+          return AppShell(
+            initialIndex: homeTabIndex(state.uri),
+            // `?play=challenges|active|history` (the old Play segments) now
+            // means Play → Matches with that chip selected.
+            // An old `?tab=compete` link opens on Leagues, which is where the
+            // Compete tab used to open.
+            initialPlaySegment: matchFilter != null
+                ? PlaySegment.matches.index
+                : _segmentIndex(
+                        query['segment'],
+                        PlaySegment.values.map((s) => s.wireValue).toList(),
+                      ) ??
+                      (query['tab'] == 'compete'
+                          ? PlaySegment.leagues.index
+                          : null),
+            initialMatchFilter: matchFilter,
+            initialDiscoverSegment: _segmentIndex(query['discover'], const [
+              'players',
+              'courts',
+              'clubs',
+              'coaches',
+            ]),
+          );
+        },
       ),
       GoRoute(
         path: '/search',
@@ -338,6 +365,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             CourtProfileScreen(courtId: state.pathParameters['id']!),
       ),
       GoRoute(
+        path: '/discover/courts/:id/book',
+        builder: (context, state) =>
+            CourtBookingScreen(courtId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/discover/my-bookings',
+        builder: (context, state) => const MyBookingsScreen(),
+      ),
+      GoRoute(
         path: '/discover/courts/:id/photos',
         builder: (context, state) => CourtPhotosGalleryScreen(
           photoUrls: (state.extra as List<String>?) ?? const [],
@@ -357,6 +393,24 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/discover/clubs/:id/feed',
         builder: (context, state) =>
             ClubFeedScreen(clubId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/communities/:id',
+        builder: (context, state) =>
+            CommunityDetailScreen(communityId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/communities/:id/manage',
+        builder: (context, state) => ManageCommunityScreen(
+          communityId: state.pathParameters['id']!,
+          openLadderSheet: state.uri.queryParameters['create'] == 'ladder',
+        ),
+      ),
+      GoRoute(
+        path: '/communities/:id/leagues/new',
+        builder: (context, state) => CreateCommunityLeagueScreen(
+          communityId: state.pathParameters['id']!,
+        ),
       ),
       GoRoute(
         path: '/learn',
@@ -551,16 +605,41 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   );
 });
 
-/// `?tab=` on `/home`. `profile` is kept as an alias: the 2026-09 redesign
-/// moved profile navigation into the app drawer and gave the fifth tab to
-/// Learn, but push payloads and older deep links still say `profile`, and
-/// landing on Home (drawer one tap away) beats a broken link.
+/// `?tab=` on `/home`. Aliases kept for links already in the wild:
+/// - `profile`: the 2026-09 redesign moved profile navigation into the app
+///   drawer and gave the fifth tab to Learn; landing on Home (drawer one tap
+///   away) beats a broken link.
+/// - `compete`: the 2026-11 restructure merged Compete into Play.
 int _tabIndex(String? tab) => switch (tab) {
-  'play' => 1,
-  'compete' => 2,
+  'play' || 'compete' => 1,
+  'community' => 2,
   'discover' => 3,
   'learn' => 4,
   _ => 0,
+};
+
+/// Resolves legacy `/home` links to the tab that now owns their destination.
+/// The `play` filter was historically accepted without an explicit `tab`.
+int homeTabIndex(Uri uri) {
+  final query = uri.queryParameters;
+  return query['tab'] == null && _matchFilter(query['play']) != null
+      ? 1
+      : _tabIndex(query['tab']);
+}
+
+MatchSegment? homeMatchFilter(Uri uri) =>
+    _matchFilter(uri.queryParameters['play']);
+
+/// Moves legacy Play → Find links to Discover → Find players.
+String? legacyHomeRedirect(Uri uri) => uri.queryParameters['play'] == 'find'
+    ? '/home?tab=discover&discover=players'
+    : null;
+
+MatchSegment? _matchFilter(String? value) => switch (value) {
+  'challenges' => MatchSegment.challenges,
+  'active' => MatchSegment.active,
+  'history' => MatchSegment.history,
+  _ => null,
 };
 
 int? _segmentIndex(String? value, List<String> labels) {

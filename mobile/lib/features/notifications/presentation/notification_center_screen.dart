@@ -12,6 +12,8 @@ import '../../auth/data/auth_repository.dart';
 import '../application/notifications_providers.dart';
 import '../domain/notification_deep_link.dart';
 import '../data/notifications_repository.dart';
+import '../../../core/l10n/l10n.dart';
+import '../../tennis_facts/presentation/tennis_fact_sheet.dart';
 
 /// Notification Center — `foundation/04-screen-inventory.md` §A.11. Delivery
 /// is in-app-fetch only this phase (no FCM/APNs credentials); see
@@ -51,7 +53,7 @@ class _NotificationCenterScreenState
     final colors = Theme.of(context).extension<DriftColors>()!;
 
     return DriftScaffold(
-      title: 'Notifications',
+      title: context.l10n.navNotifications,
       trailing: _NotificationHeaderActions(
         hasNotifications: page.valueOrNull?.notifications.isNotEmpty ?? false,
       ),
@@ -68,7 +70,7 @@ class _NotificationCenterScreenState
                           children: [
                             const SizedBox(height: DriftSpacing.s12),
                             Text(
-                              "You're all caught up.",
+                              context.l10n.notifCaughtUp,
                               style: type.body.copyWith(
                                 color: colors.textSecondary,
                               ),
@@ -100,13 +102,13 @@ class _NotificationCenterScreenState
                   children: [
                     const SizedBox(height: DriftSpacing.s12),
                     Text(
-                      "Couldn't load notifications.",
+                      context.l10n.notifLoadFailed,
                       style: type.body,
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: DriftSpacing.s4),
                     DriftButton(
-                      label: 'Retry',
+                      label: context.l10n.commonRetry,
                       variant: DriftButtonVariant.text,
                       onPressed: () =>
                           ref.invalidate(notificationsListProvider),
@@ -152,18 +154,16 @@ class _NotificationHeaderActions extends ConsumerWidget {
     final shouldClear = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Clear all notifications?'),
-        content: const Text(
-          'This removes every notification from this list. New notifications will still arrive.',
-        ),
+        title: Text(context.l10n.notifClearAllQ),
+        content: Text(context.l10n.notifClearAllBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Clear all'),
+            child: Text(context.l10n.notifClearAll),
           ),
         ],
       ),
@@ -194,7 +194,7 @@ class _MarkAllReadRow extends ConsumerWidget {
     return Align(
       alignment: Alignment.centerRight,
       child: DriftButton(
-        label: 'Mark all as read',
+        label: context.l10n.notifMarkAllRead,
         variant: DriftButtonVariant.text,
         onPressed: () async {
           try {
@@ -205,6 +205,37 @@ class _MarkAllReadRow extends ConsumerWidget {
             // surface the message in from this small a row.
           }
         },
+      ),
+    );
+  }
+}
+
+/// Small, quiet dismiss control — a thin-bordered 24px circle around a
+/// 12px X, so it reads as a minor secondary action rather than competing
+/// with the notification's own content for attention.
+class _DeleteButton extends StatelessWidget {
+  const _DeleteButton({required this.onTap, required this.colors});
+
+  final VoidCallback onTap;
+  final DriftColors colors;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      shape: const CircleBorder(),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          width: 24,
+          height: 24,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: colors.border, width: 0.75),
+          ),
+          child: Icon(Icons.close, size: 12, color: colors.textSecondary),
+        ),
       ),
     );
   }
@@ -270,10 +301,9 @@ class _NotificationTile extends ConsumerWidget {
                   ],
                 ),
               ),
-              IconButton(
-                tooltip: 'Delete notification',
-                onPressed: () => _confirmRemove(context, ref),
-                icon: const Icon(Icons.close),
+              _DeleteButton(
+                onTap: () => _confirmRemove(context, ref),
+                colors: colors,
               ),
             ],
           ),
@@ -286,18 +316,16 @@ class _NotificationTile extends ConsumerWidget {
     final shouldRemove = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete notification?'),
-        content: const Text(
-          'This notification will be removed from this list.',
-        ),
+        title: Text(context.l10n.notifDeleteQ),
+        content: Text(context.l10n.notifDeleteBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Delete'),
+            child: Text(context.l10n.commonDelete),
           ),
         ],
       ),
@@ -328,6 +356,13 @@ class _NotificationTile extends ConsumerWidget {
     }
     if (!context.mounted) return;
 
+    // A daily fact opens as a sheet over the list rather than a new screen.
+    final factId = notification.relatedEntityId;
+    if (notification.relatedEntityType == 'TENNIS_FACT' && factId != null) {
+      await openTennisFactById(context, ref, factId);
+      return;
+    }
+
     final path = notificationDeepLink(
       relatedEntityType: notification.relatedEntityType,
       relatedEntityId: notification.relatedEntityId,
@@ -342,8 +377,8 @@ class _NotificationTile extends ConsumerWidget {
     // Silently doing nothing reads as a broken tap, so say so instead: the
     // notification is already marked read, and its title and body are shown
     // in full on the row itself.
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Nothing further to open for this update.')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(context.l10n.notifNothingToOpen)));
   }
 }

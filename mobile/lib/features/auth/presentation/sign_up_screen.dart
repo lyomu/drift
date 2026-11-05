@@ -10,6 +10,7 @@ import 'widgets/auth_form_widgets.dart';
 import 'widgets/auth_page_scaffold.dart';
 import 'widgets/phone_field.dart';
 import 'widgets/social_auth_buttons.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Sign Up — `foundation/04-screen-inventory.md` A.1 (redesign 2026-08).
 ///
@@ -87,7 +88,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         children: [
           const SizedBox(height: 32),
           Text(
-            'Create account',
+            context.l10n.authCreateAccount,
             textAlign: TextAlign.center,
             style: type.h1.copyWith(fontSize: 30),
           ),
@@ -97,7 +98,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               Expanded(
                 child: AuthInputField(
                   controller: _firstNameController,
-                  hintText: 'First name',
+                  hintText: context.l10n.authFirstName,
                   icon: Icons.person_outline,
                 ),
               ),
@@ -105,7 +106,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               Expanded(
                 child: AuthInputField(
                   controller: _lastNameController,
-                  hintText: 'Last name',
+                  hintText: context.l10n.authLastName,
                   icon: Icons.person_outline,
                 ),
               ),
@@ -114,14 +115,14 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           const SizedBox(height: 12),
           AuthInputField(
             controller: _emailController,
-            hintText: 'Email',
+            hintText: context.l10n.authEmail,
             icon: Icons.mail_outline,
             keyboardType: TextInputType.emailAddress,
           ),
           const SizedBox(height: 12),
           AuthInputField(
             controller: _passwordController,
-            hintText: 'Password',
+            hintText: context.l10n.authPassword,
             icon: Icons.lock_outline,
             obscureText: _obscure,
             onSubmitted: (_) => _isSubmitting ? null : _submit(),
@@ -140,7 +141,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           Padding(
             padding: const EdgeInsets.only(left: 4),
             child: Text(
-              'Use 8 to 72 characters.',
+              context.l10n.authPasswordRule,
               style: type.caption.copyWith(color: colors.textSecondary),
             ),
           ),
@@ -166,7 +167,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           ],
           const SizedBox(height: 22),
           AuthPrimaryButton(
-            label: 'Create account',
+            label: context.l10n.authCreateAccount,
             loading: _isSubmitting,
             onPressed: _isSubmitting || !_acceptedAgePolicy ? null : _submit,
           ),
@@ -177,8 +178,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           ),
           const SizedBox(height: 24),
           AuthFooterPrompt(
-            lead: 'Already have an account? ',
-            action: 'Log in',
+            lead: context.l10n.authHaveAccount,
+            action: context.l10n.authLogIn,
             onTap: () => context.push('/login'),
           ),
         ],

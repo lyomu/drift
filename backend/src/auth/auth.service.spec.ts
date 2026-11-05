@@ -235,7 +235,12 @@ describe('AuthService', () => {
       expect(result.accessToken).toBe('access-token');
       expect(typeof result.refreshToken).toBe('string');
       expect(prisma.user.update).toHaveBeenCalled();
-      expect(mailer.sendWelcome).toHaveBeenCalledWith('a@test.com', undefined);
+      expect(mailer.sendWelcome).toHaveBeenCalledWith(
+        'a@test.com',
+        undefined,
+        undefined,
+        'en',
+      );
     });
   });
 
@@ -690,7 +695,12 @@ describe('AuthService', () => {
       // verification screen — landing on VERIFY would be a dead end for them.
       expect(data.onboardingStep).toBe('BASIC_PROFILE');
       expect(data.tennisProfile).toEqual({ create: {} });
-      expect(mailer.sendWelcome).toHaveBeenCalledWith('social@test.com', 'Ada');
+      expect(mailer.sendWelcome).toHaveBeenCalledWith(
+        'social@test.com',
+        'Ada',
+        undefined,
+        'en',
+      );
     });
 
     it('persists the name on the creating write — Apple never sends it twice', async () => {

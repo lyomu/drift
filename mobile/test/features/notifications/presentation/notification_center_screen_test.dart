@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:drift_tennis/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -114,7 +115,7 @@ void main() {
         ],
       );
 
-      await tester.tap(find.byTooltip('Delete notification'));
+      await tester.tap(find.byIcon(Icons.close).first);
       await tester.pumpAndSettle();
 
       expect(find.text('Delete notification?'), findsOneWidget);
@@ -148,7 +149,12 @@ void main() {
         await tester.pumpWidget(
           UncontrolledProviderScope(
             container: container,
-            child: MaterialApp(theme: AppTheme.light(), home: child),
+            child: MaterialApp(
+              theme: AppTheme.light(),
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: child,
+            ),
           ),
         );
         await tester.pumpAndSettle();

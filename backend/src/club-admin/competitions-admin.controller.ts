@@ -15,8 +15,10 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ClubAuthService } from './club-auth.service';
 import { CompetitionsService } from '../competitions/competitions.service';
 import { ResultsService } from '../matches/results.service';
+import { ResultVersionDto } from '../matches/dto/result-version.dto';
 import { UpdateLeagueDto, IssueLeagueAwardDto } from './dto/league.dto';
 import {
+  AddRegistrationDto,
   ResolveDisputeDto,
   UpdateFixtureDto,
   UpdateRegistrationDto,
@@ -68,6 +70,16 @@ export class CompetitionsAdminController {
     return this.competitions.updateLeague(id, dto);
   }
 
+  @Post('leagues/:id/registrations')
+  async addRegistration(
+    @Req() req: Request,
+    @Param('id') id: string,
+    @Body() dto: AddRegistrationDto,
+  ) {
+    await this.assertLeagueAccess(req, id);
+    return this.competitions.adminAddRegistration(id, dto.userId, dto.status);
+  }
+
   @Patch('leagues/:id/registrations/:registrationId')
   async updateRegistration(
     @Req() req: Request,
@@ -109,6 +121,23 @@ export class CompetitionsAdminController {
   ) {
     await this.assertFixtureAccess(req, id);
     return this.competitions.updateFixture(id, dto);
+  }
+
+  /** Record a league result on the players' behalf. See `adminRecordResult`. */
+  @Post('fixtures/:id/result')
+  async recordResult(
+    @Req() req: Request,
+    @Param('id') id: string,
+    @Body() dto: ResultVersionDto,
+  ) {
+    await this.assertFixtureAccess(req, id);
+    const matchId = await this.competitions.fixtureMatchId(id);
+    if (!matchId) {
+      throw new NotFoundException(
+        'This fixture has no match yet. Results can be recorded once its round opens.',
+      );
+    }
+    return this.results.adminRecordResult(matchId, this.userId(req), dto);
   }
 
   @Patch('disputes/:fixtureId/resolve')

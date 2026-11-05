@@ -6,6 +6,7 @@ import '../../features/courts/data/courts_repository.dart';
 import 'drift_card.dart';
 import 'drift_detail_row.dart';
 import 'drift_status_badge.dart';
+import '../../core/l10n/l10n.dart';
 
 /// Club Card — no `foundation/05-design-system.md` §7 spec row exists for
 /// this (only Court Card/Availability Chip/Surface Chip are specified), so
@@ -29,8 +30,8 @@ class DriftClubCard extends StatelessWidget {
             children: [
               Expanded(child: Text(club.name, style: type.title)),
               if (club.verificationStatus == ListingVerificationStatus.verified)
-                const DriftStatusBadge(
-                  label: 'Verified',
+                DriftStatusBadge(
+                  label: context.l10n.commonVerified,
                   tone: DriftStatusTone.success,
                   icon: Icons.verified_outlined,
                 ),
@@ -40,14 +41,14 @@ class DriftClubCard extends StatelessWidget {
             DriftDetailRow(
               icon: Icons.place_outlined,
               text: club.distanceKm != null
-                  ? '${club.distanceKm!.toStringAsFixed(1)} km away'
+                  ? context.l10n.commonKmAway(club.distanceKm!.toStringAsFixed(1))
                   : club.address!,
             ),
           DriftDetailRow(
             icon: Icons.sports_tennis_outlined,
             text: club.courtCount == 0
-                ? 'No courts listed'
-                : '${club.courtCount} court${club.courtCount == 1 ? '' : 's'}',
+                ? context.l10n.clubNoCourtsListed
+                : context.l10n.commonCourtCount(club.courtCount),
           ),
         ],
       ),

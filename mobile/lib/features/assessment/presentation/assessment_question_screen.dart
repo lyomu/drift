@@ -9,6 +9,7 @@ import '../../../shared/widgets/buttons/drift_button.dart';
 import '../../../shared/widgets/drift_scaffold.dart';
 import '../../auth/data/auth_repository.dart';
 import '../data/assessment_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Adaptive Assessment — Question — `foundation/04-screen-inventory.md` A.2.
 /// One screen, re-rendered per question (not a route per question); resumes
@@ -21,12 +22,13 @@ import '../data/assessment_repository.dart';
 class AssessmentQuestionScreen extends ConsumerStatefulWidget {
   const AssessmentQuestionScreen({
     super.key,
-    this.title = 'Tennis Assessment',
+    this.title,
     this.repositoryProvider,
     this.onComplete,
   });
 
-  final String title;
+  /// Defaults to the translated "Tennis Assessment".
+  final String? title;
 
   /// Defaults to [assessmentRepositoryProvider] (Tennis) when omitted.
   final Provider<AssessmentRepository>? repositoryProvider;
@@ -137,7 +139,7 @@ class _AssessmentQuestionScreenState
     final type = Theme.of(context).extension<DriftTypography>()!;
 
     return DriftScaffold(
-      title: widget.title,
+      title: widget.title ?? context.l10n.assessmentTitle,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _showProgressInterstitial
@@ -156,7 +158,7 @@ class _AssessmentQuestionScreenState
           ? Center(
               child: Padding(
                 padding: const EdgeInsets.all(DriftSpacing.s6),
-                child: Text(_errorText ?? 'Unable to load the assessment.'),
+                child: Text(_errorText ?? context.l10n.assessmentLoadFailed),
               ),
             )
           : Padding(
@@ -171,7 +173,10 @@ class _AssessmentQuestionScreenState
                   ),
                   const SizedBox(height: DriftSpacing.s2),
                   Text(
-                    'Question ${_answeredCount + 1} of $_questionBudget',
+                    context.l10n.assessmentQuestionOf(
+                      _answeredCount + 1,
+                      _questionBudget,
+                    ),
                     style: type.label.copyWith(color: colors.textSecondary),
                   ),
                   const SizedBox(height: DriftSpacing.s4),
@@ -233,15 +238,19 @@ class _AssessmentProgressInterstitial extends StatelessWidget {
           const SizedBox(height: DriftSpacing.s8),
           Icon(Icons.trending_up, size: 44, color: colors.primary),
           const SizedBox(height: DriftSpacing.s4),
-          Text('Good progress', style: type.h2, textAlign: TextAlign.center),
+          Text(
+            context.l10n.assessmentGoodProgress,
+            style: type.h2,
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: DriftSpacing.s2),
           Text(
-            'You are halfway through. The next questions fine-tune your level so Drift can suggest better matches.',
+            context.l10n.assessmentHalfway,
             style: type.body.copyWith(color: colors.textSecondary),
             textAlign: TextAlign.center,
           ),
           const Spacer(),
-          DriftButton(label: 'Continue', onPressed: onContinue),
+          DriftButton(label: context.l10n.commonContinue, onPressed: onContinue),
         ],
       ),
     );

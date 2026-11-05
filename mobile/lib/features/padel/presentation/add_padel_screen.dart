@@ -10,6 +10,7 @@ import '../../../shared/widgets/drift_scaffold.dart';
 import '../../auth/data/auth_repository.dart';
 import '../application/padel_providers.dart';
 import '../data/padel_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Add Padel — confirm intent — `foundation/03-user-journeys.md` §9.
 /// "Confirms intent to add Padel" before the separate adaptive assessment.
@@ -47,7 +48,7 @@ class _AddPadelScreenState extends ConsumerState<AddPadelScreen> {
     final colors = Theme.of(context).extension<DriftColors>()!;
 
     return DriftScaffold(
-      title: 'Add Padel',
+      title: context.l10n.padelAdd,
       body: Padding(
         padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
         child: Column(
@@ -59,13 +60,10 @@ class _AddPadelScreenState extends ConsumerState<AddPadelScreen> {
               color: colors.primary,
             ),
             const SizedBox(height: DriftSpacing.s4),
-            Text('Add Padel to your profile', style: type.h3),
+            Text(context.l10n.padelAddHeading, style: type.h3),
             const SizedBox(height: DriftSpacing.s3),
             Text(
-              "You'll complete a short adaptive assessment scoped to "
-              "Padel — rally consistency, net play, wall shots, and more. "
-              "It generates a Padel Profile that's fully separate from "
-              'your Tennis Profile.',
+              context.l10n.padelAddBody,
               style: type.body.copyWith(color: colors.textSecondary),
             ),
             if (_errorText != null) ...[
@@ -74,7 +72,9 @@ class _AddPadelScreenState extends ConsumerState<AddPadelScreen> {
             ],
             const SizedBox(height: DriftSpacing.s6),
             DriftButton(
-              label: _isSubmitting ? 'Adding…' : 'Start Padel Assessment',
+              label: _isSubmitting
+                  ? context.l10n.padelAdding
+                  : context.l10n.padelStartAssessment,
               onPressed: _isSubmitting ? null : _confirm,
             ),
           ],

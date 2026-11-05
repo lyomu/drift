@@ -9,6 +9,7 @@ import '../../../shared/widgets/drift_filter_chip.dart';
 import '../../../shared/widgets/drift_text_field.dart';
 import '../../auth/data/auth_repository.dart';
 import '../data/courts_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Report / Update Court Info — `foundation/03-user-journeys.md` §6,
 /// `foundation/04-screen-inventory.md` §A.6. Write-only, same shape as M5's
@@ -27,12 +28,12 @@ Future<void> showReportCourtSheet(
   );
 }
 
-const _reasons = [
-  (value: 'INCORRECT_INFO', label: 'Incorrect info'),
-  (value: 'PERMANENTLY_CLOSED', label: 'Permanently closed'),
-  (value: 'DUPLICATE_LISTING', label: 'Duplicate listing'),
-  (value: 'INAPPROPRIATE_CONTENT', label: 'Inappropriate content'),
-  (value: 'OTHER', label: 'Other'),
+final _reasons = <({String value, String Function(AppLocalizations) label})>[
+  (value: 'INCORRECT_INFO', label: (l) => l.reportIncorrectInfo),
+  (value: 'PERMANENTLY_CLOSED', label: (l) => l.reportPermanentlyClosed),
+  (value: 'DUPLICATE_LISTING', label: (l) => l.reportDuplicate),
+  (value: 'INAPPROPRIATE_CONTENT', label: (l) => l.reportInappropriate),
+  (value: 'OTHER', label: (l) => l.reportOther),
 ];
 
 class _ReportCourtSheet extends ConsumerStatefulWidget {
@@ -58,7 +59,7 @@ class _ReportCourtSheetState extends ConsumerState<_ReportCourtSheet> {
 
   Future<void> _submit() async {
     if (_reason == null) {
-      setState(() => _errorText = 'Choose a reason to continue.');
+      setState(() => _errorText = context.l10n.reportChooseReason);
       return;
     }
     setState(() {
@@ -78,7 +79,7 @@ class _ReportCourtSheetState extends ConsumerState<_ReportCourtSheet> {
       if (!mounted) return;
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Thanks — we\'ll take a look.')),
+        SnackBar(content: Text(context.l10n.reportThanks)),
       );
     } on AuthException catch (e) {
       setState(() => _errorText = e.message);
@@ -105,7 +106,7 @@ class _ReportCourtSheetState extends ConsumerState<_ReportCourtSheet> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Report / update court info', style: type.h2),
+              Text(context.l10n.reportCourtTitle, style: type.h2),
               const SizedBox(height: DriftSpacing.s5),
               Wrap(
                 spacing: DriftSpacing.s2,
@@ -113,7 +114,7 @@ class _ReportCourtSheetState extends ConsumerState<_ReportCourtSheet> {
                 children: [
                   for (final option in _reasons)
                     DriftFilterChip(
-                      label: option.label,
+                      label: option.label(context.l10n),
                       selected: _reason == option.value,
                       onTap: () => setState(() => _reason = option.value),
                     ),
@@ -121,7 +122,7 @@ class _ReportCourtSheetState extends ConsumerState<_ReportCourtSheet> {
               ),
               const SizedBox(height: DriftSpacing.s4),
               DriftTextField(
-                label: 'Notes (optional)',
+                label: context.l10n.commonNotesOptional,
                 controller: _notesController,
                 maxLines: 3,
               ),
@@ -131,7 +132,9 @@ class _ReportCourtSheetState extends ConsumerState<_ReportCourtSheet> {
               ],
               const SizedBox(height: DriftSpacing.s5),
               DriftButton(
-                label: _isSubmitting ? 'Submitting…' : 'Submit',
+                label: _isSubmitting
+                    ? context.l10n.commonSubmitting
+                    : context.l10n.commonSubmit,
                 onPressed: _isSubmitting ? null : _submit,
               ),
             ],

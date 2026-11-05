@@ -17,6 +17,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UsersService } from './users.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UpdatePrivacySettingsDto } from './dto/update-privacy-settings.dto';
+import { UpdateLocaleDto } from './dto/update-locale.dto';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
@@ -30,6 +31,12 @@ export class UsersController {
   @Get('me')
   me(@Req() req: Request) {
     return this.usersService.findById(this.userId(req));
+  }
+
+  /** The language push notifications and emails are written in. */
+  @Patch('me/locale')
+  updateLocale(@Req() req: Request, @Body() dto: UpdateLocaleDto) {
+    return this.usersService.updateLocale(this.userId(req), dto.locale);
   }
 
   @Patch('me/profile')

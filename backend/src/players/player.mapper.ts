@@ -107,6 +107,7 @@ export function toPlayerProfile(
 
   return {
     ...toPlayerSummary(player, distanceKm),
+    joinedAt: player.createdAt,
     dominantHand: profile?.dominantHand ?? null,
     connectionState,
     connectionId,

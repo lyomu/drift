@@ -5,6 +5,12 @@ import { matchInclude, toMatchDto } from '../../matches/match.mapper';
 import { displayName } from '../../common/display-name.util';
 import { HOME_CARD_PRIORITY, type HomeCard } from '../home-card';
 import type { HomeCardContributor, HomeContext } from './home-contributor';
+import {
+  DEFAULT_LOCALE,
+  type MessageKey,
+  type MessageParam,
+  t,
+} from '../../common/i18n';
 
 /**
  * "Unconfirmed result" is one of the Home states
@@ -24,6 +30,8 @@ export class UnconfirmedResultContributor implements HomeCardContributor {
   constructor(private readonly prisma: PrismaService) {}
 
   async contribute(ctx: HomeContext): Promise<HomeCard[]> {
+    const tr = (key: MessageKey, params?: Record<string, MessageParam>) =>
+      t(ctx.locale ?? DEFAULT_LOCALE, key, params);
     const matches = await this.prisma.match.findMany({
       where: {
         participants: { some: { userId: ctx.userId } },
@@ -49,7 +57,7 @@ export class UnconfirmedResultContributor implements HomeCardContributor {
       const opponent = match.participants.find((p) => p.userId !== ctx.userId);
       const opponentName = opponent
         ? displayName(opponent.user)
-        : 'Your opponent';
+        : tr('home.result.yourOpponent');
 
       if (result.status === MatchResultStatus.DISPUTED) {
         return [
@@ -57,11 +65,11 @@ export class UnconfirmedResultContributor implements HomeCardContributor {
             id: `unconfirmed-result:${match.id}`,
             type: 'UNCONFIRMED_RESULT' as const,
             priority: HOME_CARD_PRIORITY.UNCONFIRMED_RESULT,
-            title: 'A score is disputed',
-            body: `You and ${opponentName} recorded different scores. Compare both versions to settle it.`,
+            title: tr('home.result.disputedTitle'),
+            body: tr('home.result.disputedBody', { name: opponentName }),
             accent: 'urgent' as const,
             action: {
-              label: 'Review dispute',
+              label: tr('home.action.reviewDispute'),
               route: `/matches/${match.id}/dispute`,
             },
             dismissible: false,
@@ -79,10 +87,13 @@ export class UnconfirmedResultContributor implements HomeCardContributor {
           id: `unconfirmed-result:${match.id}`,
           type: 'UNCONFIRMED_RESULT' as const,
           priority: HOME_CARD_PRIORITY.UNCONFIRMED_RESULT,
-          title: 'Confirm your match score',
-          body: `${opponentName} submitted a score. Confirm it to lock in both your ratings.`,
+          title: tr('home.result.confirmTitle'),
+          body: tr('home.result.confirmBody', { name: opponentName }),
           accent: 'urgent' as const,
-          action: { label: 'Review score', route: `/matches/${match.id}` },
+          action: {
+            label: tr('home.action.reviewScore'),
+            route: `/matches/${match.id}`,
+          },
           dismissible: false,
           data: { kind: 'match' as const, match: dto },
         },

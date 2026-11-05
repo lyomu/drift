@@ -3,6 +3,12 @@ import { AnnouncementStatus, ClubMembershipStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { HOME_CARD_PRIORITY, type HomeCard } from '../home-card';
 import type { HomeCardContributor, HomeContext } from './home-contributor';
+import {
+  DEFAULT_LOCALE,
+  type MessageKey,
+  type MessageParam,
+  t,
+} from '../../common/i18n';
 
 const MAX_AGE_DAYS = 30;
 
@@ -24,6 +30,8 @@ export class ClubAnnouncementContributor implements HomeCardContributor {
   constructor(private readonly prisma: PrismaService) {}
 
   async contribute(ctx: HomeContext): Promise<HomeCard[]> {
+    const tr = (key: MessageKey, params?: Record<string, MessageParam>) =>
+      t(ctx.locale ?? DEFAULT_LOCALE, key, params);
     const memberships = await this.prisma.clubMembership.findMany({
       where: { userId: ctx.userId, status: ClubMembershipStatus.ACTIVE },
       select: { clubId: true },
@@ -61,7 +69,7 @@ export class ClubAnnouncementContributor implements HomeCardContributor {
         body: announcement.body,
         accent: 'info',
         action: {
-          label: `Open ${announcement.club.name}`,
+          label: tr('home.action.openClub', { club: announcement.club.name }),
           route: `/discover/clubs/${announcement.clubId}/announcements`,
         },
         dismissible: true,

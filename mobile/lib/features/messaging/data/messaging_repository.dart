@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/dio_client.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../players/data/players_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 class ChatMessage {
   const ChatMessage({
@@ -17,6 +18,8 @@ class ChatMessage {
     required this.relatedLeagueId,
     required this.relatedLeagueName,
     required this.createdAt,
+    this.senderName,
+    this.senderPhotoUrl,
   });
 
   final String id;
@@ -32,6 +35,11 @@ class ChatMessage {
   final String? relatedLeagueName;
   final DateTime createdAt;
 
+  /// Who wrote it, as the server resolved it. Group (community) chats need
+  /// this: the sender isn't in a two-person participant list there.
+  final String? senderName;
+  final String? senderPhotoUrl;
+
   bool get isSystem => kind == 'SYSTEM';
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) => ChatMessage(
@@ -45,7 +53,39 @@ class ChatMessage {
     relatedLeagueId: json['relatedLeagueId'] as String?,
     relatedLeagueName: json['relatedLeagueName'] as String?,
     createdAt: DateTime.parse(json['createdAt'] as String).toLocal(),
+    senderName:
+        (json['sender'] as Map<String, dynamic>?)?['displayName'] as String?,
+    senderPhotoUrl:
+        (json['sender'] as Map<String, dynamic>?)?['photoUrl'] as String?,
   );
+}
+
+/// The community a COMMUNITY conversation belongs to. Its participant list
+/// comes back empty (it can be hundreds of people), so the community names
+/// the thread instead.
+class ConversationCommunity {
+  const ConversationCommunity({
+    required this.id,
+    required this.name,
+    this.photoUrl,
+    required this.status,
+  });
+
+  final String id;
+  final String name;
+  final String? photoUrl;
+  final String status;
+
+  /// A suspended community's chat is read-only.
+  bool get isReadOnly => status != 'APPROVED';
+
+  factory ConversationCommunity.fromJson(Map<String, dynamic> json) =>
+      ConversationCommunity(
+        id: json['id'] as String,
+        name: json['name'] as String,
+        photoUrl: json['photoUrl'] as String?,
+        status: json['status'] as String? ?? 'APPROVED',
+      );
 }
 
 class Conversation {
@@ -57,6 +97,7 @@ class Conversation {
     required this.lastMessage,
     required this.participants,
     required this.lastMessageAt,
+    this.community,
   });
 
   final String id;
@@ -66,10 +107,15 @@ class Conversation {
   final ChatMessage? lastMessage;
   final List<PlayerSummary> participants;
   final DateTime? lastMessageAt;
+  final ConversationCommunity? community;
 
-  String get title => participants.isEmpty
-      ? 'Conversation'
-      : participants.map((p) => p.displayName).join(', ');
+  bool get isCommunity => type == 'COMMUNITY';
+
+  String get title =>
+      community?.name ??
+      (participants.isEmpty
+          ? l10nNow.messagingConversation
+          : participants.map((p) => p.displayName).join(', '));
 
   factory Conversation.fromJson(Map<String, dynamic> json) => Conversation(
     id: json['id'] as String,
@@ -85,6 +131,11 @@ class Conversation {
     lastMessageAt: json['lastMessageAt'] == null
         ? null
         : DateTime.parse(json['lastMessageAt'] as String).toLocal(),
+    community: json['community'] == null
+        ? null
+        : ConversationCommunity.fromJson(
+            json['community'] as Map<String, dynamic>,
+          ),
   );
 }
 
@@ -140,7 +191,7 @@ class MessagingRepository {
       final body = e.response?.data;
       final message = body is Map ? body['message'] as Object? : null;
       final text = message is List ? message.join(' ') : message?.toString();
-      throw AuthException(text ?? 'Something went wrong. Please try again.');
+      throw AuthException(text ?? l10nNow.commonErrorGeneric);
     }
   }
 }

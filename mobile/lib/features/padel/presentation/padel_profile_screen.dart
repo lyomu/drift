@@ -11,25 +11,9 @@ import '../../../shared/widgets/drift_card.dart';
 import '../../../shared/widgets/drift_scaffold.dart';
 import '../application/padel_providers.dart';
 import '../data/padel_repository.dart';
+import '../../../core/l10n/l10n.dart';
+import '../../../core/l10n/enum_labels.dart';
 
-const _pillarLabels = {
-  'RALLY_CONSISTENCY': 'Rally Consistency',
-  'FOREHAND': 'Forehand',
-  'BACKHAND': 'Backhand',
-  'SERVE': 'Serve',
-  'RETURN': 'Return',
-  'VOLLEY': 'Volley',
-  'OVERHEAD': 'Overhead',
-  'BANDEJA': 'Bandeja',
-  'VIBORA': 'Vibora',
-  'SMASH': 'Smash',
-  'WALL_USAGE': 'Wall Usage',
-  'POSITIONING': 'Positioning',
-  'NET_CONTROL': 'Net Control',
-  'TRANSITION': 'Transition',
-  'PARTNER_COMMUNICATION': 'Partner Communication',
-  'TACTICAL_AWARENESS': 'Tactical Awareness',
-};
 
 /// Padel Profile — `foundation/04-screen-inventory.md` §A.10. Fully
 /// independent of Tennis Profile — its own rating, skill profile,
@@ -43,7 +27,7 @@ class PadelProfileScreen extends ConsumerWidget {
     final type = Theme.of(context).extension<DriftTypography>()!;
 
     return DriftScaffold(
-      title: 'Padel Profile',
+      title: context.l10n.padelProfile,
       trailing: DriftHeaderSquareButton(
         icon: Icons.edit_outlined,
         onTap: () => context.push('/profile/padel/preferences'),
@@ -59,7 +43,7 @@ class PadelProfileScreen extends ConsumerWidget {
               Padding(
                 padding: const EdgeInsets.all(DriftSpacing.s6),
                 child: Text(
-                  "Padel hasn't been added yet.",
+                  context.l10n.padelNotAdded,
                   style: type.body,
                   textAlign: TextAlign.center,
                 ),
@@ -71,7 +55,7 @@ class PadelProfileScreen extends ConsumerWidget {
               Padding(
                 padding: const EdgeInsets.all(DriftSpacing.s6),
                 child: Text(
-                  "Couldn't load your Padel profile.",
+                  context.l10n.padelProfileFailed,
                   style: type.body,
                   textAlign: TextAlign.center,
                 ),
@@ -103,11 +87,11 @@ class _ProfileBody extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Rating', style: type.h4),
+              Text(context.l10n.homeRating, style: type.h4),
               const SizedBox(height: DriftSpacing.s2),
               Text(
                 profile.systemSuggestedLevel == null
-                    ? 'Complete the assessment to get a rating'
+                    ? context.l10n.padelCompleteAssessment
                     : '${profile.systemSuggestedLevel!.toStringAsFixed(1)} · ${profile.levelLabel}',
                 style: type.body,
               ),
@@ -116,7 +100,7 @@ class _ProfileBody extends StatelessWidget {
         ),
         const SizedBox(height: DriftSpacing.s3),
         DriftButton(
-          label: 'Padel Match History',
+          label: context.l10n.padelMatchHistory,
           variant: DriftButtonVariant.text,
           onPressed: () => context.push('/profile/padel/history'),
         ),
@@ -126,11 +110,11 @@ class _ProfileBody extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Skill profile', style: type.h4),
+                Text(context.l10n.padelSkillProfile, style: type.h4),
                 const SizedBox(height: DriftSpacing.s3),
                 for (final entry in breakdown.entries) ...[
                   Text(
-                    _pillarLabels[entry.key] ?? entry.key,
+                    padelPillarLabel(context.l10n, entry.key),
                     style: type.label,
                   ),
                   const SizedBox(height: DriftSpacing.s1),
@@ -151,23 +135,27 @@ class _ProfileBody extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Preferences', style: type.h4),
+              Text(context.l10n.padelPreferences, style: type.h4),
               const SizedBox(height: DriftSpacing.s2),
               Text(
-                'Preferred side: ${profile.preferredSide?.label ?? 'Not set'}',
+                context.l10n.padelPreferredSideValue(
+                  profile.preferredSide?.label ?? context.l10n.commonNotSet,
+                ),
                 style: type.body.copyWith(color: colors.textSecondary),
               ),
               if (profile.partnerPreference != null &&
                   profile.partnerPreference!.isNotEmpty) ...[
                 const SizedBox(height: DriftSpacing.s1),
                 Text(
-                  'Partner preference: ${profile.partnerPreference}',
+                  context.l10n.padelPartnerPreferenceValue(
+                    profile.partnerPreference!,
+                  ),
                   style: type.body.copyWith(color: colors.textSecondary),
                 ),
               ],
               if (profile.goals.isNotEmpty) ...[
                 const SizedBox(height: DriftSpacing.s2),
-                Text('Goals', style: type.label),
+                Text(context.l10n.learnGoals, style: type.label),
                 for (final goal in profile.goals)
                   Padding(
                     padding: const EdgeInsets.only(top: DriftSpacing.s1),

@@ -28,6 +28,7 @@ import {
   ProcessPrivacyRequestDto,
   RespondSupportTicketDto,
 } from './dto/support-admin.dto';
+import { localeOf } from '../common/i18n';
 
 const USER_SUMMARY_SELECT = {
   id: true,
@@ -241,13 +242,14 @@ export class SupportAdminService {
     if (existing.userId) {
       const user = await this.prisma.user.findUnique({
         where: { id: existing.userId },
-        select: { email: true },
+        select: { email: true, preferredLocale: true },
       });
       if (user?.email) {
         await this.mailer.sendSupportReply(
           user.email,
           existing.subject,
           plainTextFromRichText(body),
+          localeOf(user.preferredLocale),
         );
       }
     }

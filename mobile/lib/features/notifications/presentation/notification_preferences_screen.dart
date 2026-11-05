@@ -8,32 +8,33 @@ import '../../../shared/widgets/drift_scaffold.dart';
 import '../../auth/data/auth_repository.dart';
 import '../application/notifications_providers.dart';
 import '../data/notifications_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
-const _categoryLabels = {
-  NotificationCategory.connections: (
-    'Connections',
-    'Requests to connect, and accepted connections',
-  ),
-  NotificationCategory.matches: ('Matches', 'New challenges and match updates'),
-  NotificationCategory.messages: ('Messages', 'New messages in your chats'),
-  NotificationCategory.competitions: (
-    'Competitions',
-    'New rounds and results in your leagues',
-  ),
-  NotificationCategory.learning: (
-    'Learning',
-    'Goals, plans, and practice reminders',
-  ),
-  NotificationCategory.news: ('News', 'Tennis news and stories'),
-  NotificationCategory.clubs: (
-    'Clubs',
-    'Announcements and membership updates from your clubs',
-  ),
-  NotificationCategory.announcements: (
-    'Announcements',
-    'News and updates from the Drift team',
-  ),
-};
+(String, String) _categoryLabel(AppLocalizations l, NotificationCategory c) =>
+    switch (c) {
+      NotificationCategory.connections => (
+        l.connectionsTitle,
+        l.notifPrefConnections,
+      ),
+      NotificationCategory.matches => (l.notifPrefMatchesTitle, l.notifPrefMatches),
+      NotificationCategory.messages => (l.navMessages, l.notifPrefMessages),
+      NotificationCategory.competitions => (
+        l.searchCompetitions,
+        l.notifPrefCompetitions,
+      ),
+      NotificationCategory.learning => (l.notifPrefLearningTitle, l.notifPrefLearning),
+      NotificationCategory.news => (l.navNews, l.notifPrefNews),
+      NotificationCategory.clubs => (l.discoverClubs, l.notifPrefClubs),
+      NotificationCategory.announcements => (
+        l.clubAnnouncements,
+        l.notifPrefAnnouncements,
+      ),
+      NotificationCategory.communities => (
+        l.navCommunity,
+        l.notifPrefCommunities,
+      ),
+      NotificationCategory.unknown => ('', ''),
+    };
 
 /// Notification Preferences — `foundation/04-screen-inventory.md` §A.11.
 /// News defaults off on the backend (Doc 6 §5); everything else defaults on.
@@ -46,11 +47,11 @@ class NotificationPreferencesScreen extends ConsumerWidget {
     final type = Theme.of(context).extension<DriftTypography>()!;
 
     return DriftScaffold(
-      title: 'Notification Preferences',
+      title: context.l10n.settingsNotificationPreferences,
       body: switch (prefs) {
         AsyncData(:final value) => _PreferencesList(preferences: value),
         AsyncError() => Center(
-          child: Text("Couldn't load your preferences.", style: type.body),
+          child: Text(context.l10n.notifPrefLoadFailed, style: type.body),
         ),
         _ => const Center(child: CircularProgressIndicator()),
       },
@@ -116,8 +117,11 @@ class _PreferencesListState extends ConsumerState<_PreferencesList> {
             DriftCard(
               child: SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: Text(_categoryLabels[category]!.$1, style: type.title),
-                subtitle: Text(_categoryLabels[category]!.$2),
+                title: Text(
+                  _categoryLabel(context.l10n, category).$1,
+                  style: type.title,
+                ),
+                subtitle: Text(_categoryLabel(context.l10n, category).$2),
                 value: _values[category]!,
                 onChanged: _pending.contains(category)
                     ? null

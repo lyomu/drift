@@ -10,6 +10,7 @@ import '../../application/auth_controller.dart';
 import '../../data/auth_repository.dart';
 import '../../data/social_auth_service.dart';
 import 'auth_form_widgets.dart';
+import '../../../../core/l10n/l10n.dart';
 
 /// The Google and Apple buttons plus the entire sign-in flow behind them.
 ///
@@ -114,7 +115,7 @@ class _SocialAuthButtonsState extends ConsumerState<SocialAuthButtons> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         AuthSocialButton(
-          label: 'Continue with Google',
+          label: context.l10n.authContinueGoogle,
           icon: const GoogleGlyph(),
           loading: _busy == SocialProvider.google,
           onPressed: enabled ? () => _start(SocialProvider.google) : null,
@@ -128,7 +129,7 @@ class _SocialAuthButtonsState extends ConsumerState<SocialAuthButtons> {
           children: [
             IgnorePointer(
               child: AuthSocialButton(
-                label: 'Continue with Apple',
+                label: context.l10n.authContinueApple,
                 icon: Icon(
                   Icons.apple,
                   size: 20,
@@ -191,15 +192,13 @@ class _LinkAccountDialogState extends State<_LinkAccountDialog> {
     final type = Theme.of(context).extension<DriftTypography>()!;
 
     return AlertDialog(
-      title: Text('Link your account'),
+      title: Text(context.l10n.authLinkTitle),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '${widget.email} already has a Drift Tennis account. Enter its '
-            'password once and the two will be linked — after that you can '
-            'use either to sign in.',
+            context.l10n.authLinkBody(widget.email),
             style: type.body,
           ),
           SizedBox(height: 16),
@@ -209,7 +208,7 @@ class _LinkAccountDialogState extends State<_LinkAccountDialog> {
             autofocus: true,
             onSubmitted: (_) => _submit(),
             decoration: InputDecoration(
-              labelText: 'Password',
+              labelText: context.l10n.authPassword,
               suffixIcon: IconButton(
                 icon: Icon(
                   _obscure
@@ -226,9 +225,9 @@ class _LinkAccountDialogState extends State<_LinkAccountDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text('Cancel'),
+          child: Text(context.l10n.commonCancel),
         ),
-        FilledButton(onPressed: _submit, child: Text('Link')),
+        FilledButton(onPressed: _submit, child: Text(context.l10n.authLink)),
       ],
     );
   }

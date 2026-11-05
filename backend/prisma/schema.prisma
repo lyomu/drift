@@ -343,6 +343,9 @@ enum LeagueRegistrationStatus {
 enum ConversationType {
   DIRECT
   MATCH
+  // A community's group chat. Participants mirror the community's ACTIVE
+  // members (communities.service.ts keeps the two in step).
+  COMMUNITY
 }
 
 enum MessageKind {
@@ -421,6 +424,9 @@ enum NotificationCategory {
   // on, unlike NEWS, since this carries official Drift communication rather
   // than opt-in marketing.
   ANNOUNCEMENTS
+  // Community approval, join requests, membership decisions, role changes
+  // and new community competitions. Community *chat* stays under MESSAGES.
+  COMMUNITIES
 }
 
 enum PushBroadcastAudience {
@@ -637,6 +643,14 @@ model SocialIdentity {
   @@map("social_identities")
 }
 
+/// The languages the apps ship in. Lowercase so the values are the locale codes
+/// every client already uses (`en`, `fr`, `es`).
+enum AppLocale {
+  en
+  fr
+  es
+}
+
 model User {
   id              String  @id @default(uuid())
   email           String? @unique
@@ -670,6 +684,11 @@ model User {
   // Launch policy P.2: Drift Tennis is 18+ until a guardian-consent flow exists.
   // Store the consent timestamp, not date of birth, to avoid collecting extra PII.
   agePolicyAcceptedAt DateTime?
+  // The language the person uses the apps in. Set from the device language at
+  // signup and kept in sync by the mobile Language setting / club-admin
+  // switcher. Push notifications and emails are rendered in it; null (an
+  // account that predates the setting) reads as English.
+  preferredLocale     AppLocale?
 
   onboardingStep        OnboardingStep @default(SIGN_UP)
   onboardingCompletedAt DateTime?
@@ -704,9 +723,11 @@ model User {
   supportTickets               SupportTicket[]
   privacyRequests              PrivacyRequest[]
   savedStories                 SavedStory[]
+  favoriteCourts               FavoriteCourt[]
   messageReportsMade           MessageReport[]     @relation("MessageReporter")
 
   notifications          Notification[]
+  tennisFactViews        TennisFactView[]
   notificationPreference NotificationPreference?
   deviceTokens           DeviceToken[]
 
@@ -746,7 +767,14 @@ model User {
   courtInquiries            CourtInquiry[]
   venueVerificationRequests VenueVerificationRequest[]
   dismissedHomeCards        DismissedHomeCard[]
+  courtBookings             CourtBooking[]             @relation("CourtBookingPlayer")
+  courtBookingsDecided      CourtBooking[]             @relation("CourtBookingDecider")
   videoAnalysisJobs         VideoAnalysisJob[]
+
+  communitiesCreated    Community[]         @relation("CommunityCreator")
+  communityMemberships  CommunityMember[]
+  communityReportsMade  CommunityReport[]   @relation("CommunityReporter")
+  communityAuditActions CommunityAuditLog[] @relation("CommunityAuditActor")
 
   @@map("users")
 }
@@ -1210,6 +1238,11 @@ model League {
   // fabricate" rule this project has held since M9.
   clubId                String?
   club                  Club?             @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  // Community-owned leagues (2026-11). A league belongs to a club or a
+  // community, never both (enforced in competitions.service.ts). Only
+  // community members may register.
+  communityId           String?
+  community             Community?        @relation(fields: [communityId], references: [id], onDelete: Cascade)
   sport                 MatchSport        @default(TENNIS)
   name                  String
   description           String?
@@ -1376,6 +1409,11 @@ model Conversation {
   matchId String? @unique
   match   Match?  @relation(fields: [matchId], references: [id], onDelete: Cascade)
 
+  // Set only for COMMUNITY conversations. Created when the community is
+  // approved, not when it is submitted: a pending community has no chat.
+  communityId String?    @unique
+  community   Community? @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
   lastMessageAt DateTime?
 
   createdAt DateTime @default(now())
@@ -1497,6 +1535,14 @@ model Court {
   bookingType CourtBookingType @default(UNKNOWN)
   bookingUrl  String?
 
+  // Native booking (on exactly when bookingType = NATIVE_PARTNER). Capacity
+  // per surface is CourtGroup.count. Slots are generated from
+  // CourtOpeningHours in `timezone`; bookings are stored in UTC.
+  timezone           String @default("Africa/Nairobi")
+  bookingSlotMinutes Int?
+  bookingMaxSlots    Int    @default(3)
+  bookingAdvanceDays Int    @default(30)
+
   amenities String[]
 
   // Free text, not a structured per-weekday schedule — no data source this
@@ -1533,6 +1579,9 @@ model Court {
   reports     CourtReport[]
   matches     Match[]
   inquiries   CourtInquiry[]
+  favorites   FavoriteCourt[]
+  openingHours CourtOpeningHours[]
+  bookings     CourtBooking[]
 
   @@index([latitude, longitude])
   @@index([clubId])
@@ -1555,9 +1604,76 @@ model CourtGroup {
   lighting Boolean      @default(false)
   count    Int          @default(1)
 
+  bookings CourtBooking[]
+
   @@index([courtId])
   @@index([sport, surface, indoor])
   @@map("court_groups")
+}
+
+// Structured weekly opening hours for native booking. Several intervals per
+// day are allowed (e.g. 06:00-12:00 and 14:00-21:00). Minutes are from local
+// midnight in Court.timezone; dayOfWeek 0 = Sunday .. 6 = Saturday.
+model CourtOpeningHours {
+  id          String @id @default(uuid())
+  courtId     String
+  court       Court  @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  dayOfWeek   Int
+  opensMinute Int
+  closesMinute Int
+
+  @@index([courtId, dayOfWeek])
+  @@map("court_opening_hours")
+}
+
+enum CourtBookingStatus {
+  PENDING
+  APPROVED
+  DECLINED
+  CANCELLED
+}
+
+enum CourtBookingCanceller {
+  PLAYER
+  CLUB
+}
+
+// A player's request to use a court surface (or a staff-entered walk-in).
+// Free for now. "Completed" is derived (APPROVED and endsAt in the past).
+// Only APPROVED bookings consume capacity.
+model CourtBooking {
+  id           String     @id @default(uuid())
+  courtId      String
+  court        Court      @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  courtGroupId String
+  courtGroup   CourtGroup @relation(fields: [courtGroupId], references: [id], onDelete: Cascade)
+
+  // Null for a staff-entered guest booking (guestName set instead).
+  userId    String?
+  user      User?   @relation("CourtBookingPlayer", fields: [userId], references: [id], onDelete: SetNull)
+  guestName String?
+
+  startsAt DateTime
+  endsAt   DateTime
+  status   CourtBookingStatus @default(PENDING)
+
+  note         String?
+  decisionNote String?
+  decidedById  String?
+  decidedBy    User?     @relation("CourtBookingDecider", fields: [decidedById], references: [id], onDelete: SetNull)
+  decidedAt    DateTime?
+
+  cancelledAt DateTime?
+  cancelledBy CourtBookingCanceller?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([courtId, startsAt])
+  @@index([courtGroupId, status, startsAt])
+  @@index([userId, startsAt])
+  @@index([courtId, status])
+  @@map("court_bookings")
 }
 
 // Write-only this phase, same shape as PlayerReport — the consuming queue
@@ -1644,6 +1760,9 @@ model Club {
   auditLogs                 ClubAuditLog[]
   courtInquiries            CourtInquiry[]
   venueVerificationRequests VenueVerificationRequest[]
+  // The club's own community (CLUB type), created from club-admin. At most
+  // one: Community.clubId is unique.
+  community                 Community?
 
   @@index([latitude, longitude])
   @@index([platformStatus, updatedAt])
@@ -2128,6 +2247,8 @@ model Goal {
   tennisProfile   TennisProfile @relation(fields: [tennisProfileId], references: [id], onDelete: Cascade)
 
   skill    AssessmentPillar
+  /// Optional sub-focus within the skill (e.g. CONSISTENCY, POWER, GENERAL).
+  focus    String?
   baseline Float
   target   Float
   deadline DateTime?
@@ -2158,73 +2279,73 @@ model GoalMilestone {
 
 // Tennis RSS publisher configuration and editorial controls.
 model NewsSource {
-  id      String           @id @default(uuid())
-  name    String
-  feedUrl String?
-  status  NewsSourceStatus @default(PAUSED)
-  pollIntervalMinutes Int @default(30)
-  publicationMode NewsPublicationMode @default(MANUAL)
-  nextPollAt DateTime?
-  syncLeaseUntil DateTime?
-  lastPolledAt DateTime?
-  lastSuccessAt DateTime?
-  consecutiveFailures Int @default(0)
-  lastErrorCode String?
-  feedEtag String?
-  feedLastModified String?
+  id                  String              @id @default(uuid())
+  name                String
+  feedUrl             String?
+  status              NewsSourceStatus    @default(PAUSED)
+  pollIntervalMinutes Int                 @default(30)
+  publicationMode     NewsPublicationMode @default(MANUAL)
+  nextPollAt          DateTime?
+  syncLeaseUntil      DateTime?
+  lastPolledAt        DateTime?
+  lastSuccessAt       DateTime?
+  consecutiveFailures Int                 @default(0)
+  lastErrorCode       String?
+  feedEtag            String?
+  feedLastModified    String?
 
   createdAt DateTime @default(now())
 
-  stories NewsStory[]
-  rights  NewsSourceRights?
+  stories       NewsStory[]
+  rights        NewsSourceRights?
   ingestionRuns NewsIngestionRun[]
 
   @@map("news_sources")
 }
 
 model NewsIngestionRun {
-  id String @id @default(uuid())
-  sourceId String
-  source NewsSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
-  startedAt DateTime @default(now())
-  finishedAt DateTime?
-  status String @default("RUNNING")
-  fetchedCount Int @default(0)
-  createdCount Int @default(0)
-  duplicateCount Int @default(0)
-  skippedCount Int @default(0)
-  aiFailureCount Int @default(0)
-  autoPublishedCount Int @default(0)
-  errorCode String?
-  httpStatus Int?
-  finalUrl String?
-  redirectCount Int @default(0)
-  latencyMs Int?
+  id                 String     @id @default(uuid())
+  sourceId           String
+  source             NewsSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  startedAt          DateTime   @default(now())
+  finishedAt         DateTime?
+  status             String     @default("RUNNING")
+  fetchedCount       Int        @default(0)
+  createdCount       Int        @default(0)
+  duplicateCount     Int        @default(0)
+  skippedCount       Int        @default(0)
+  aiFailureCount     Int        @default(0)
+  autoPublishedCount Int        @default(0)
+  errorCode          String?
+  httpStatus         Int?
+  finalUrl           String?
+  redirectCount      Int        @default(0)
+  latencyMs          Int?
 
   @@index([sourceId, startedAt(sort: Desc)])
   @@map("news_ingestion_runs")
 }
 
 model NewsSourceRights {
-  id                   String           @id @default(uuid())
-  sourceId             String           @unique
-  source               NewsSource       @relation(fields: [sourceId], references: [id], onDelete: Cascade)
-  status               NewsRightsStatus @default(UNREVIEWED)
-  termsUrl             String?
-  permissionReference  String?
-  commercialUseAllowed Boolean          @default(false)
-  headlineAllowed      Boolean          @default(false)
-  excerptAllowed       Boolean          @default(false)
-  imageAllowed         Boolean          @default(false)
-  aiProcessingAllowed  Boolean          @default(false)
-  automaticPublishingAllowed Boolean @default(false)
-  cacheAllowed         Boolean          @default(false)
-  attributionText      String?
-  reviewedBy           String?
-  reviewedAt           DateTime?
-  expiresAt            DateTime?
-  notes                String?
-  updatedAt            DateTime         @updatedAt
+  id                         String           @id @default(uuid())
+  sourceId                   String           @unique
+  source                     NewsSource       @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  status                     NewsRightsStatus @default(UNREVIEWED)
+  termsUrl                   String?
+  permissionReference        String?
+  commercialUseAllowed       Boolean          @default(false)
+  headlineAllowed            Boolean          @default(false)
+  excerptAllowed             Boolean          @default(false)
+  imageAllowed               Boolean          @default(false)
+  aiProcessingAllowed        Boolean          @default(false)
+  automaticPublishingAllowed Boolean          @default(false)
+  cacheAllowed               Boolean          @default(false)
+  attributionText            String?
+  reviewedBy                 String?
+  reviewedAt                 DateTime?
+  expiresAt                  DateTime?
+  notes                      String?
+  updatedAt                  DateTime         @updatedAt
 
   @@map("news_source_rights")
 }
@@ -2239,55 +2360,55 @@ model NewsStory {
   sourceId String
   source   NewsSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
 
-  headline        String
-  imageUrl        String?
-  highlight       String
-  publicationDate DateTime
-  categories      String[]
+  headline             String
+  imageUrl             String?
+  highlight            String
+  publicationDate      DateTime
+  categories           String[]
   // Free-form topic tags (Doc 6 has no controlled vocabulary for these,
   // same as Court's `amenities[]`). "Follow Topic" itself is deferred —
   // see PROGRESS.md — so these are stored and shown but not yet
   // subscribable.
-  topics          String[]
-  originalUrl     String
-  externalGuid    String?
-  canonicalUrlHash String?
-  originalFeedExcerpt String?
+  topics               String[]
+  originalUrl          String
+  externalGuid         String?
+  canonicalUrlHash     String?
+  originalFeedExcerpt  String?
   originalFeedHeadline String?
-  reviewFlags String[] @default([])
+  reviewFlags          String[] @default([])
 
   moderationStatus NewsModerationStatus @default(APPROVED)
   publishedAt      DateTime?
   moderationReason String?
-  editorialVersion Int @default(1)
-  aiSummary String?
-  aiProvider String?
-  aiModel String?
-  aiConfidence Float?
+  editorialVersion Int                  @default(1)
+  aiSummary        String?
+  aiProvider       String?
+  aiModel          String?
+  aiConfidence     Float?
   aiRelevanceScore Float?
-  aiRiskFlags String[] @default([])
-  aiPlayers String[] @default([])
-  aiTournaments String[] @default([])
-  aiLanguage String?
-  aiProcessedAt DateTime?
-  aiErrorCode String?
-  updatedAt DateTime @updatedAt
+  aiRiskFlags      String[]             @default([])
+  aiPlayers        String[]             @default([])
+  aiTournaments    String[]             @default([])
+  aiLanguage       String?
+  aiProcessedAt    DateTime?
+  aiErrorCode      String?
+  updatedAt        DateTime             @updatedAt
 
   createdAt DateTime @default(now())
 
   savedBy SavedStory[]
 
-  @@index([moderationStatus, publicationDate])
   @@unique([sourceId, canonicalUrlHash])
   @@unique([sourceId, externalGuid])
+  @@index([moderationStatus, publicationDate])
   @@map("news_stories")
 }
 
 model NewsCategoryConfig {
-  slug String @id
-  label String
-  sortOrder Int @default(0)
-  enabled Boolean @default(true)
+  slug      String   @id
+  label     String
+  sortOrder Int      @default(0)
+  enabled   Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -2296,36 +2417,52 @@ model NewsCategoryConfig {
 }
 
 model NewsSettings {
-  id String @id @default("default")
-  ingestionPaused Boolean @default(false)
-  aiEnabled Boolean @default(false)
-  automaticPublishingEnabled Boolean @default(false)
-  aiDailyRequestLimit Int @default(100)
-  aiSummaryMaxCharacters Int @default(240)
-  retryBaseMinutes Int @default(30)
-  runRetentionDays Int @default(90)
-  updatedAt DateTime @updatedAt
+  id                         String   @id @default("default")
+  ingestionPaused            Boolean  @default(false)
+  aiEnabled                  Boolean  @default(false)
+  automaticPublishingEnabled Boolean  @default(false)
+  aiDailyRequestLimit        Int      @default(100)
+  aiSummaryMaxCharacters     Int      @default(240)
+  retryBaseMinutes           Int      @default(30)
+  runRetentionDays           Int      @default(90)
+  updatedAt                  DateTime @updatedAt
 
   @@map("news_settings")
 }
 
 model NewsAiQuotaDay {
-  day DateTime @id @db.Date
-  attempts Int @default(0)
+  day      DateTime @id @db.Date
+  attempts Int      @default(0)
 
   @@map("news_ai_quota_days")
 }
 
 model NewsAutomationEvent {
-  id String @id @default(uuid())
-  sourceId String
-  storyId String
-  action String
-  reason String
+  id        String   @id @default(uuid())
+  sourceId  String
+  storyId   String
+  action    String
+  reason    String
   createdAt DateTime @default(now())
 
   @@index([sourceId, createdAt(sort: Desc)])
   @@map("news_automation_events")
+}
+
+// A court the player has hearted on its profile.
+model FavoriteCourt {
+  id String @id @default(uuid())
+
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courtId String
+  court   Court  @relation(fields: [courtId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, courtId])
+  @@index([courtId])
+  @@map("favorite_courts")
 }
 
 model SavedStory {
@@ -2385,6 +2522,7 @@ model NotificationPreference {
   news          Boolean @default(false)
   clubs         Boolean @default(true)
   announcements Boolean @default(true)
+  communities   Boolean @default(true)
 
   @@map("notification_preferences")
 }
@@ -3222,8 +3360,13 @@ enum LadderChallengeState {
 
 model Ladder {
   id             String      @id @default(uuid())
-  clubId         String
-  club           Club        @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  // A ladder belongs to a club or (2026-11) a community: exactly one of the
+  // two, enforced in ladders.service.ts. clubId was required before
+  // community ladders existed.
+  clubId         String?
+  club           Club?       @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  communityId    String?
+  community      Community?  @relation(fields: [communityId], references: [id], onDelete: Cascade)
   sport          MatchSport  @default(TENNIS)
   name           String
   // A challenger may only challenge opponents within N rungs above them.
@@ -3235,6 +3378,7 @@ model Ladder {
   challenges LadderChallenge[]
 
   @@index([clubId, state])
+  @@index([communityId, state])
   @@map("ladders")
 }
 
@@ -3432,11 +3576,11 @@ model PushBroadcast {
   body  String
 
   /// ISO-3166-1 alpha-2; null means every country.
-  country String?
-  audience PushBroadcastAudience[] @default([])
-  status   PushBroadcastStatus @default(SENT)
-  scheduledFor DateTime?
-  sentAt       DateTime?
+  country       String?
+  audience      PushBroadcastAudience[] @default([])
+  status        PushBroadcastStatus     @default(SENT)
+  scheduledFor  DateTime?
+  sentAt        DateTime?
   failureReason String?
 
   image PushBroadcastImageAsset?
@@ -3457,15 +3601,75 @@ model PushBroadcast {
 }
 
 model PushBroadcastImageAsset {
-  id          String @id @default(uuid())
-  broadcastId String @unique
+  id          String        @id @default(uuid())
+  broadcastId String        @unique
   broadcast   PushBroadcast @relation(fields: [broadcastId], references: [id], onDelete: Cascade)
   filename    String
   mimeType    String
   bytes       Bytes
-  createdAt   DateTime @default(now())
+  createdAt   DateTime      @default(now())
 
   @@map("push_broadcast_image_assets")
+}
+
+// ── Daily tennis fact ───────────────────────────────────────────────────────
+// One short fact a day on Home ("Today's fact") and in the Notification
+// Centre. Curated in platform-admin; text is stored per app language (the
+// apps ship EN/FR/ES) and capped so a fact always fits one screen.
+model TennisFact {
+  id       String  @id @default(uuid())
+  titleEn  String  @db.VarChar(60)
+  titleFr  String  @db.VarChar(60)
+  titleEs  String  @db.VarChar(60)
+  bodyEn   String  @db.VarChar(280)
+  bodyFr   String  @db.VarChar(280)
+  bodyEs   String  @db.VarChar(280)
+  sourceEn String? @db.VarChar(80)
+  sourceFr String? @db.VarChar(80)
+  sourceEs String? @db.VarChar(80)
+  active   Boolean @default(true)
+  // Rotation order: the day's fact is active facts ordered by
+  // (sortOrder, id), indexed by days-since-epoch modulo the count.
+  sortOrder Int    @default(0)
+
+  image TennisFactImageAsset?
+  views TennisFactView[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([active, sortOrder])
+  @@map("tennis_facts")
+}
+
+model TennisFactImageAsset {
+  id        String     @id @default(uuid())
+  factId    String     @unique
+  fact      TennisFact @relation(fields: [factId], references: [id], onDelete: Cascade)
+  filename  String
+  mimeType  String
+  bytes     Bytes
+  createdAt DateTime   @default(now())
+
+  @@map("tennis_fact_image_assets")
+}
+
+// One row per user per (UTC) day: proves the day's notification was filed
+// exactly once, and records whether the fact was opened (which flips the
+// Home rail title back from "Today's fact" to "Needs you").
+model TennisFactView {
+  id       String     @id @default(uuid())
+  userId   String
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  factId   String
+  fact     TennisFact @relation(fields: [factId], references: [id], onDelete: Cascade)
+  day      DateTime   @db.Date
+  openedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@unique([userId, day])
+  @@index([factId])
+  @@map("tennis_fact_views")
 }
 
 // ── AI match-video analysis (Phase 1) ───────────────────────────────────────
@@ -3545,4 +3749,182 @@ model VideoAnalysisJob {
   @@index([userId, createdAt])
   @@index([status])
   @@map("video_analysis_jobs")
+}
+
+// ---------------------------------------------------------------- communities
+// Player-created standing groups (2026-11): social sessions, training groups,
+// community ladders, plus one CLUB community per club, created from
+// club-admin. Every community is reviewed by a platform admin before anyone
+// else can find or join it. Members chat in a COMMUNITY conversation and can
+// run their own leagues and ladders (League/Ladder.communityId).
+
+enum CommunityType {
+  SOCIAL
+  TRAINING
+  LADDER
+  // Created from club-admin only, linked through Community.clubId.
+  CLUB
+}
+
+enum CommunityStatus {
+  // Submitted, awaiting platform review. Visible to its creator only.
+  PENDING
+  APPROVED
+  REJECTED
+  // Taken down by a platform admin: hidden from discovery, chat locked,
+  // no joins. Restorable.
+  SUSPENDED
+}
+
+enum CommunityJoinPolicy {
+  // Join immediately.
+  OPEN
+  // Owner/admins approve each request.
+  BY_REQUEST
+}
+
+enum CommunityFrequency {
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  OTHER
+}
+
+enum CommunityRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum CommunityMemberStatus {
+  REQUESTED
+  ACTIVE
+}
+
+model Community {
+  id         String              @id @default(uuid())
+  type       CommunityType
+  name       String
+  // Free text as the creator typed it ("Nairobi"); the discovery city filter
+  // matches it case-insensitively.
+  city       String
+  // For the "near me" filter. Taken from the creator's profile location (or
+  // the club's, for CLUB communities); null when neither is known, and then
+  // the community is found by city only.
+  latitude   Float?
+  longitude  Float?
+  frequency  CommunityFrequency
+  about      String?
+  photoUrl   String?
+  joinPolicy CommunityJoinPolicy @default(OPEN)
+  status     CommunityStatus     @default(PENDING)
+
+  // Platform review. PlatformAdmin id with no FK, same as
+  // ClubCreationRequest: the admin audit log is the authoritative trail.
+  decisionNote String?
+  reviewedById String?
+  reviewedAt   DateTime?
+
+  clubId String? @unique
+  club   Club?   @relation(fields: [clubId], references: [id], onDelete: Cascade)
+
+  createdById String
+  createdBy   User   @relation("CommunityCreator", fields: [createdById], references: [id], onDelete: Cascade)
+
+  // Copied from the creator at creation, for demo-account isolation
+  // (common/demo-scope.ts).
+  isDemo Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members      CommunityMember[]
+  conversation Conversation?
+  photoAsset   CommunityPhotoAsset?
+  reports      CommunityReport[]
+  auditLogs    CommunityAuditLog[]
+  leagues      League[]
+  ladders      Ladder[]
+
+  @@index([status, city])
+  @@index([latitude, longitude])
+  @@index([createdById])
+  @@map("communities")
+}
+
+// Leaving, being removed or a declined request deletes the row; the
+// CommunityAuditLog keeps the history.
+model CommunityMember {
+  id          String                @id @default(uuid())
+  communityId String
+  community   Community             @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role        CommunityRole         @default(MEMBER)
+  status      CommunityMemberStatus @default(ACTIVE)
+  // Set while the member has muted this community's chat pushes.
+  mutedAt     DateTime?
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+
+  @@unique([communityId, userId])
+  @@index([userId, status])
+  @@index([communityId, status])
+  @@map("community_members")
+}
+
+// Same shape and serving rules as UserPhotoAsset: bytes in the database,
+// served unauthenticated by asset id from /media/community-photos/:id.
+model CommunityPhotoAsset {
+  id          String    @id @default(uuid())
+  communityId String    @unique
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  filename    String
+  mimeType    String
+  bytes       Bytes
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("community_photo_assets")
+}
+
+// "Report community" from the app. Reviewed in platform-admin Reports
+// alongside player, message, court and post reports.
+model CommunityReport {
+  id          String    @id @default(uuid())
+  reporterId  String
+  reporter    User      @relation("CommunityReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  communityId String
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  reason   ReportReason
+  notes    String?
+  status   ReportStatus        @default(OPEN)
+  priority TrustSafetyPriority @default(NORMAL)
+
+  createdAt DateTime @default(now())
+
+  @@index([communityId, status])
+  @@index([priority, status, createdAt])
+  @@map("community_reports")
+}
+
+// Membership and settings changes made by the community's own owner/admins
+// (and joins/leaves). Platform-admin actions go to AdminAuditLog instead.
+model CommunityAuditLog {
+  id           String    @id @default(uuid())
+  communityId  String
+  community    Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  actorId      String?
+  actor        User?     @relation("CommunityAuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+  // MEMBER_JOINED, MEMBER_LEFT, MEMBER_REMOVED, REQUEST_APPROVED,
+  // REQUEST_DECLINED, ROLE_CHANGED, OWNERSHIP_TRANSFERRED, SETTINGS_UPDATED,
+  // COMPETITION_CREATED.
+  action       String
+  targetUserId String?
+  details      Json?
+  createdAt    DateTime  @default(now())
+
+  @@index([communityId, createdAt])
+  @@map("community_audit_logs")
 }

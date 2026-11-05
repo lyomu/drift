@@ -9,6 +9,7 @@ import '../../auth/data/auth_repository.dart';
 import '../application/payments_providers.dart';
 import '../data/payments_repository.dart';
 import 'widgets/billing_widgets.dart';
+import '../../../core/l10n/l10n.dart';
 
 class PlanSelectionScreen extends ConsumerStatefulWidget {
   const PlanSelectionScreen({super.key});
@@ -55,7 +56,7 @@ class _PlanSelectionScreenState extends ConsumerState<PlanSelectionScreen> {
     final plans = ref.watch(paymentPlansProvider);
     final summary = ref.watch(billingSummaryProvider);
     return DriftScaffold(
-      title: 'Choose a plan',
+      title: context.l10n.payChoosePlan,
       body: switch ((plans, summary)) {
         (AsyncData(value: final planList), AsyncData(value: final billing)) =>
           RefreshIndicator(
@@ -90,7 +91,7 @@ class _PlanSelectionScreenState extends ConsumerState<PlanSelectionScreen> {
             ),
           ),
         (AsyncError(), _) || (_, AsyncError()) => BillingLoadError(
-          message: "Couldn't load available plans.",
+          message: context.l10n.payPlansFailed,
           retry: () {
             ref.invalidate(paymentPlansProvider);
             ref.invalidate(billingSummaryProvider);
@@ -129,7 +130,7 @@ class _PaymentError extends StatelessWidget {
           ),
           TextButton(
             onPressed: onAddMethod,
-            child: const Text('Manage payment methods'),
+            child: Text(context.l10n.payManageMethods),
           ),
         ],
       ),

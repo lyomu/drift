@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/drift_colors.dart';
 import '../../../news/application/news_providers.dart';
 import '../../../news/data/news_repository.dart';
+import '../../../../shared/widgets/motion/entrance.dart';
+import '../../../../shared/widgets/motion/pressable.dart';
 
 /// Category accents. Anything not listed falls back to the brand colour, so a
 /// new category on the server renders correctly rather than uncoloured.
@@ -35,7 +37,11 @@ class TennisNewsRail extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: top.length,
         separatorBuilder: (_, _) => const SizedBox(width: 12),
-        itemBuilder: (context, i) => _StoryCard(story: top[i]),
+        itemBuilder: (context, i) => DriftEntrance(
+          index: i,
+          offset: 8,
+          child: DriftPressable(child: _StoryCard(story: top[i])),
+        ),
       ),
     );
   }
@@ -214,10 +220,7 @@ class _Cover extends StatelessWidget {
                   color: accent,
                   borderRadius: BorderRadius.circular(999),
                 ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 9,
-                  vertical: 3,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
                 child: Text(
                   category!,
                   style: const TextStyle(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../features/competitions/data/competitions_repository.dart';
 import 'drift_competition_card.dart';
+import '../../core/l10n/l10n.dart';
 
 /// League Card (redesign 2026-10). White card with a trophy tile, the
 /// league's name, its format, where it is played and how many have enrolled,
@@ -50,7 +51,9 @@ class DriftLeagueCard extends StatelessWidget {
         accent: accent,
       ),
       title: league.name,
-      badge: league.format == 'DOUBLES' ? 'Doubles' : 'Singles',
+      badge: league.format == 'DOUBLES'
+          ? context.l10n.optDoubles
+          : context.l10n.optSingles,
       badgeAccent: accent,
       meta: league.levelBandLabel,
       details: [
@@ -63,17 +66,17 @@ class DriftLeagueCard extends StatelessWidget {
           DriftCompetitionDetail(
             icon: Icons.group,
             label: league.capacity == null
-                ? '$enrolled ${enrolled == 1 ? 'member' : 'members'}'
-                : '$enrolled/${league.capacity} members',
+                ? context.l10n.leagueMemberCount(enrolled)
+                : context.l10n.leagueMembersOfCapacity(enrolled, league.capacity!),
           ),
       ],
       action: DriftCompetitionActionButton(
         label: joined
             ? (league.viewerRegistrationStatus ==
                       SeasonRegistrationStatus.waitlisted
-                  ? 'Waitlisted'
-                  : 'Joined')
-            : 'Join',
+                  ? context.l10n.leagueWaitlisted
+                  : context.l10n.leagueJoined)
+            : context.l10n.clubJoin,
         style: joined
             ? DriftCompetitionActionStyle.selected
             : DriftCompetitionActionStyle.filled,

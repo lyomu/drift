@@ -2,8 +2,10 @@ import { NotFoundException } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { PushService } from '../push/push.service';
+import { msg } from '../common/i18n';
 
 type MockPrisma = {
+  user: Record<string, jest.Mock>;
   notification: Record<string, jest.Mock>;
   notificationPreference: Record<string, jest.Mock>;
 };
@@ -15,6 +17,7 @@ function defaultPreference(overrides: Record<string, unknown> = {}) {
     matches: true,
     messages: true,
     competitions: true,
+    communities: true,
     learning: true,
     news: false,
     ...overrides,
@@ -23,6 +26,9 @@ function defaultPreference(overrides: Record<string, unknown> = {}) {
 
 function createMockPrisma(): MockPrisma {
   return {
+    user: {
+      findUnique: jest.fn().mockResolvedValue({ preferredLocale: 'en' }),
+    },
     notification: {
       create: jest.fn(),
       count: jest.fn().mockResolvedValue(0),
@@ -65,6 +71,7 @@ describe('NotificationsService', () => {
           body: 'Body',
           relatedEntityType: undefined,
           relatedEntityId: undefined,
+          imageUrl: undefined,
         },
       });
     });
@@ -75,6 +82,25 @@ describe('NotificationsService', () => {
       );
       await service.create('user-1', 'NEWS', 'Title', 'Body');
       expect(prisma.notification.create).not.toHaveBeenCalled();
+    });
+
+    it('renders stored and pushed copy in the recipient locale', async () => {
+      prisma.user.findUnique.mockResolvedValue({ preferredLocale: 'fr' });
+      await service.create(
+        'user-1',
+        'CONNECTIONS',
+        msg('connection.request.title', { name: 'Alex' }),
+        msg('connection.request.body'),
+      );
+      const stored = prisma.notification.create.mock.calls[0][0].data;
+      expect(stored.title).toContain('Alex');
+      expect(stored.title).not.toBe('connection.request.title');
+      expect(push.sendToUser).toHaveBeenCalledWith(
+        'user-1',
+        stored.title,
+        stored.body,
+        expect.any(Object),
+      );
     });
 
     it('pushes the same notification it just wrote', async () => {
@@ -110,6 +136,15 @@ describe('NotificationsService', () => {
       );
       await service.create('user-1', 'MESSAGES', 'Title', 'Body');
       expect(prisma.notification.create).not.toHaveBeenCalled();
+    });
+
+    it('respects the Communities notification preference', async () => {
+      prisma.notificationPreference.findUnique.mockResolvedValue(
+        defaultPreference({ communities: false }),
+      );
+      await service.create('user-1', 'COMMUNITIES', 'Title', 'Body');
+      expect(prisma.notification.create).not.toHaveBeenCalled();
+      expect(push.sendToUser).not.toHaveBeenCalled();
     });
 
     it('lazily creates a default preference row when none exists yet', async () => {
@@ -203,6 +238,22 @@ describe('NotificationsService', () => {
       });
       expect(prisma.notificationPreference.create).toHaveBeenCalled();
       expect(result.news).toBe(true);
+    });
+
+    it('updates the Communities preference', async () => {
+      prisma.notificationPreference.update.mockResolvedValue(
+        defaultPreference({ communities: false }),
+      );
+      const result = await service.updatePreferences('user-1', {
+        communities: false,
+      });
+      expect(prisma.notificationPreference.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { userId: 'user-1' },
+          data: expect.objectContaining({ communities: false }),
+        }),
+      );
+      expect(result.communities).toBe(false);
     });
   });
 });

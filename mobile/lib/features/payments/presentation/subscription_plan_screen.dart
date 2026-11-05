@@ -12,6 +12,7 @@ import '../../../shared/widgets/drift_status_badge.dart';
 import '../application/payments_providers.dart';
 import '../data/payments_repository.dart';
 import 'widgets/billing_widgets.dart';
+import '../../../core/l10n/l10n.dart';
 
 class SubscriptionPlanScreen extends ConsumerWidget {
   const SubscriptionPlanScreen({super.key});
@@ -20,13 +21,13 @@ class SubscriptionPlanScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final summary = ref.watch(billingSummaryProvider);
     return DriftScaffold(
-      title: 'Subscription & Plan',
+      title: context.l10n.settingsSubscriptionPlan,
       body: RefreshIndicator(
         onRefresh: () => ref.refresh(billingSummaryProvider.future),
         child: switch (summary) {
           AsyncData(:final value) => _SubscriptionBody(summary: value),
           AsyncError() => BillingLoadError(
-            message: "Couldn't load your subscription.",
+            message: context.l10n.paySubscriptionFailed,
             retry: () => ref.invalidate(billingSummaryProvider),
           ),
           _ => const Center(child: CircularProgressIndicator()),
@@ -57,7 +58,7 @@ class _SubscriptionBody extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      summary.betaFree ? 'Free during beta' : plan.name,
+                      summary.betaFree ? context.l10n.payFreeBeta : plan.name,
                       style: type.h2,
                     ),
                   ),
@@ -79,14 +80,18 @@ class _SubscriptionBody extends StatelessWidget {
               const SizedBox(height: DriftSpacing.s2),
               Text(
                 summary.betaFree
-                    ? 'No charges during beta.'
-                    : 'Current period ends ${billingDate(subscription.currentPeriodEnd)}',
+                    ? context.l10n.payNoChargesBeta
+                    : context.l10n.payPeriodEnds(
+                        billingDate(subscription.currentPeriodEnd),
+                      ),
                 style: type.bodySmall,
               ),
               if (!summary.betaFree) ...[
                 const SizedBox(height: DriftSpacing.s5),
                 DriftButton(
-                  label: plan.isFree ? 'Upgrade plan' : 'Change plan',
+                  label: plan.isFree
+                      ? context.l10n.payUpgradePlan
+                      : context.l10n.payChangePlan,
                   onPressed: () => context.push('/settings/subscription/plans'),
                 ),
               ],
@@ -94,7 +99,7 @@ class _SubscriptionBody extends StatelessWidget {
           ),
         ),
         const SizedBox(height: DriftSpacing.s6),
-        Text('Included', style: type.h4),
+        Text(context.l10n.payIncluded, style: type.h4),
         const SizedBox(height: DriftSpacing.s3),
         for (final entitlement in plan.entitlements)
           Padding(
@@ -113,19 +118,19 @@ class _SubscriptionBody extends StatelessWidget {
             onTap: () => context.push('/settings/payment-methods'),
             child: _BillingLink(
               icon: Icons.credit_card_outlined,
-              title: 'Payment methods',
+              title: context.l10n.payPaymentMethods,
               detail: summary.paymentMethods.isEmpty
-                  ? 'No payment method saved'
+                  ? context.l10n.payNoMethod
                   : summary.paymentMethods.first.label,
             ),
           ),
           const SizedBox(height: DriftSpacing.s3),
           DriftCard(
             onTap: () => context.push('/settings/billing-history'),
-            child: const _BillingLink(
+            child: _BillingLink(
               icon: Icons.receipt_long_outlined,
-              title: 'Billing history',
-              detail: 'Charges and receipts',
+              title: context.l10n.payBillingHistory,
+              detail: context.l10n.payChargesReceipts,
             ),
           ),
         ],

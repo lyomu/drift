@@ -12,6 +12,7 @@ import '../../../shared/widgets/drift_icon_tile.dart';
 import '../../../shared/widgets/drift_soft_card.dart';
 import '../application/coaches_providers.dart';
 import '../data/coaches_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Coach Profile — `foundation/04-screen-inventory.md` §A.6 (redesign
 /// 2026-08: `App.tsx` `CoachProfileScreen`).
@@ -29,7 +30,7 @@ class CoachProfileScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const DriftBackHeader(title: 'Coach'),
+            DriftBackHeader(title: context.l10n.coachTitle),
             Expanded(
               child: RefreshIndicator(
                 onRefresh: () =>
@@ -41,7 +42,7 @@ class CoachProfileScreen extends ConsumerWidget {
                       Padding(
                         padding: const EdgeInsets.all(24),
                         child: Text(
-                          'Coach profile is not available.',
+                          context.l10n.coachUnavailable,
                           textAlign: TextAlign.center,
                           style: type.body,
                         ),
@@ -121,14 +122,14 @@ class _ProfileBody extends StatelessWidget {
         ],
         const SizedBox(height: 16),
         DriftPrimaryButton(
-          label: 'Contact / Book',
+          label: context.l10n.coachContactBook,
           onPressed: () => _showContactSheet(context, profile),
         ),
 
         if (coach.specialisations.isNotEmpty) ...[
           const SizedBox(height: 20),
           _Section(
-            title: 'Specialisations',
+            title: context.l10n.coachSpecialisations,
             child: Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -153,7 +154,7 @@ class _ProfileBody extends StatelessWidget {
         if (coach.levels.isNotEmpty) ...[
           const SizedBox(height: 12),
           _Section(
-            title: 'Players coached',
+            title: context.l10n.coachPlayersCoached,
             child: Text(
               coach.levels.map((l) => l.label).join(' · '),
               style: type.bodySmall.copyWith(color: colors.textSecondary),
@@ -164,7 +165,7 @@ class _ProfileBody extends StatelessWidget {
         if (profile.qualifications.isNotEmpty) ...[
           const SizedBox(height: 12),
           _Section(
-            title: 'Qualifications',
+            title: context.l10n.coachQualifications,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -199,7 +200,7 @@ class _ProfileBody extends StatelessWidget {
         if (profile.availabilityNote != null) ...[
           const SizedBox(height: 12),
           _Section(
-            title: 'Availability',
+            title: context.l10n.commonAvailability,
             child: Text(
               profile.availabilityNote!,
               style: type.bodySmall.copyWith(color: colors.textSecondary),
@@ -210,7 +211,7 @@ class _ProfileBody extends StatelessWidget {
         if (coach.clubs.isNotEmpty) ...[
           const SizedBox(height: 12),
           _Section(
-            title: 'Clubs',
+            title: context.l10n.discoverClubs,
             child: Column(
               children: [
                 for (final club in coach.clubs)
@@ -282,13 +283,13 @@ Future<void> _showContactSheet(BuildContext context, CoachProfile profile) {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Contact ${profile.summary.displayName}',
+              context.l10n.coachContactName(profile.summary.displayName),
               style: Theme.of(context).extension<DriftTypography>()!.h3,
             ),
             const SizedBox(height: 16),
             if (contact.bookingUrl != null) ...[
               DriftPrimaryButton(
-                label: 'Open booking page',
+                label: context.l10n.coachOpenBooking,
                 onPressed: () => _launch(
                   context,
                   sheetContext,
@@ -299,7 +300,7 @@ Future<void> _showContactSheet(BuildContext context, CoachProfile profile) {
             ],
             if (contact.phone != null)
               DriftTextLink(
-                label: 'Call ${contact.phone}',
+                label: context.l10n.commonCallNumber(contact.phone!),
                 onPressed: () => _launch(
                   context,
                   sheetContext,
@@ -308,7 +309,7 @@ Future<void> _showContactSheet(BuildContext context, CoachProfile profile) {
               ),
             if (contact.email != null)
               DriftTextLink(
-                label: 'Email coach',
+                label: context.l10n.coachEmail,
                 onPressed: () => _launch(
                   context,
                   sheetContext,
@@ -331,7 +332,7 @@ Future<void> _launch(
   final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
   if (!opened && pageContext.mounted) {
     ScaffoldMessenger.of(pageContext).showSnackBar(
-      const SnackBar(content: Text('Could not open that contact method.')),
+      SnackBar(content: Text(pageContext.l10n.coachContactFailed)),
     );
   }
 }

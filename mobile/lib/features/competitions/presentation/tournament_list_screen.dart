@@ -6,6 +6,7 @@ import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/drift_competition_card.dart';
 import '../data/expansion_repository.dart';
 import '../../../core/theme/drift_colors.dart';
+import '../../../core/l10n/l10n.dart';
 
 
 /// Tournaments segment (redesign 2026-10).
@@ -29,7 +30,7 @@ class TournamentListScreen extends ConsumerWidget {
       onRefresh: () => ref.refresh(tournamentsListProvider.future),
       child: switch (tournaments) {
         AsyncData(:final value) when value.isEmpty => _message(
-          'No tournaments yet. Ask your club to run one.',
+          context.l10n.competeNoTournaments,
           colors,
         ),
         AsyncData(:final value) => ListView.separated(
@@ -39,7 +40,7 @@ class TournamentListScreen extends ConsumerWidget {
           itemBuilder: (context, i) =>
               _TournamentCard(tournament: value[i], index: i),
         ),
-        AsyncError() => _message("Couldn't load tournaments.", colors),
+        AsyncError() => _message(context.l10n.competeLoadTournamentsFailed, colors),
         _ => Center(child: CircularProgressIndicator()),
       },
     );
@@ -51,7 +52,7 @@ class TournamentListScreen extends ConsumerWidget {
         children: [
           Padding(
             padding: EdgeInsets.all(16),
-            child: Text('Tournaments', style: type.h2),
+            child: Text(context.l10n.competeTournaments, style: type.h2),
           ),
           Expanded(child: content),
         ],
@@ -82,9 +83,9 @@ class _TournamentCard extends StatelessWidget {
   final int index;
 
   static String _stateLabel(String state) => switch (state) {
-    'REGISTRATION_OPEN' => 'Open',
-    'RUNNING' => 'In progress',
-    'COMPLETED' => 'Completed',
+    'REGISTRATION_OPEN' => l10nNow.commonOpen,
+    'RUNNING' => l10nNow.commonInProgress,
+    'COMPLETED' => l10nNow.commonCompleted,
     _ => state,
   };
 
@@ -96,8 +97,8 @@ class _TournamentCard extends StatelessWidget {
         .clamp(0, tournament.drawSize);
 
     final (label, style) = switch ((open, spotsLeft)) {
-      (true, > 0) => ('Enter', DriftCompetitionActionStyle.filled),
-      (true, _) => ('Full', DriftCompetitionActionStyle.disabled),
+      (true, > 0) => (context.l10n.competeEnter, DriftCompetitionActionStyle.filled),
+      (true, _) => (context.l10n.competeFull, DriftCompetitionActionStyle.disabled),
       // Not open: the state is the answer, and there is nothing to enter.
       _ => (
         _stateLabel(tournament.state),
@@ -114,7 +115,7 @@ class _TournamentCard extends StatelessWidget {
       badge: _stateLabel(tournament.state),
       badgeAccent: accent,
       meta: open && spotsLeft > 0
-          ? '$spotsLeft ${spotsLeft == 1 ? 'spot' : 'spots'} left'
+          ? context.l10n.competeSpotsLeft(spotsLeft)
           : null,
       details: [
         if (tournament.clubName.isNotEmpty)

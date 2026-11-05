@@ -79,6 +79,17 @@ export class ClubsAdminController {
     return this.clubsAdmin.listMembers(clubId);
   }
 
+  /** Activity and engagement for one member. Managers only. */
+  @Get(':clubId/members/:userId/stats')
+  @UseGuards(ClubMembershipGuard)
+  @RequireClubRole(...OWNER_OR_ADMIN)
+  memberStats(
+    @Param('clubId') clubId: string,
+    @Param('userId') userId: string,
+  ) {
+    return this.clubsAdmin.memberStats(clubId, userId);
+  }
+
   @Post(':clubId/members')
   @UseGuards(ClubMembershipGuard)
   @RequireClubRole(...OWNER_OR_ADMIN)

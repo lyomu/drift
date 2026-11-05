@@ -6,13 +6,15 @@ import { Button } from "@/components/ui";
 import { api } from "@/lib/api-client";
 import type { MediaAsset } from "@/lib/types";
 import { EventImage } from "./EventImage";
+import { useT } from "@/lib/i18n/i18n-context";
+import { translateNow } from "@/lib/i18n/translate";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const ACCEPTED_TYPES = ["image/png", "image/jpeg"];
 
 export function validateEventImage(file: File): string | null {
-  if (!ACCEPTED_TYPES.includes(file.type)) return "Choose a PNG or JPG image.";
-  if (file.size > MAX_BYTES) return "That image is over 5MB. Choose a smaller file.";
+  if (!ACCEPTED_TYPES.includes(file.type)) return translateNow("a.choosePngJpg");
+  if (file.size > MAX_BYTES) return translateNow("a.imageOver5Mb");
   return null;
 }
 
@@ -47,6 +49,7 @@ export function EventImageUpload({
   onClearExisting?: () => void;
   onError: (message: string | null) => void;
 }) {
+  const t = useT();
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -85,7 +88,7 @@ export function EventImageUpload({
   return (
     <div className="flex flex-col gap-2">
       <span className="text-[13px] font-semibold text-drift-text-secondary">
-        Event image (optional)
+        {t("a.eventImageOptional")}
       </span>
       <input
         ref={inputRef}
@@ -103,13 +106,13 @@ export function EventImageUpload({
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={previewUrl}
-                alt="Selected event image preview"
+                alt={t("a.selectedEventImagePreview")}
                 className="h-full w-full object-cover"
               />
             ) : existingImageUrl ? (
               <EventImage
                 src={existingImageUrl}
-                alt="Current event image"
+                alt={t("a.currentEventImage")}
                 className="h-full w-full object-cover"
               />
             ) : null}
@@ -117,10 +120,10 @@ export function EventImageUpload({
           <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
             <div className="min-w-0">
               <div className="truncate text-[13.5px] font-bold text-drift-text-primary">
-                {file ? file.name : "Current event image"}
+                {file ? file.name : t("a.currentEventImageNew")}
               </div>
               <div className="mt-0.5 text-[12.5px] text-drift-text-secondary">
-                {file ? `${(file.size / (1024 * 1024)).toFixed(1)} MB` : "Uploaded image"}
+                {file ? `${(file.size / (1024 * 1024)).toFixed(1)} MB` : t("a.uploadedImage")}
               </div>
             </div>
             <div className="flex gap-2">
@@ -133,7 +136,7 @@ export function EventImageUpload({
                 Replace
               </Button>
               <Button type="button" variant="ghost" disabled={disabled} onClick={clear}>
-                Remove
+                {t("a.remove")}
               </Button>
             </div>
           </div>
@@ -173,12 +176,8 @@ export function EventImageUpload({
             name="add_photo_alternate"
             className="text-[30px] text-drift-primary"
           />
-          <div className="text-sm font-bold text-drift-text-primary">
-            Drop an image or click to browse
-          </div>
-          <div className="text-[12.5px] text-drift-text-secondary">
-            PNG or JPG, up to 5MB
-          </div>
+          <div className="text-sm font-bold text-drift-text-primary">{t("a.dropAnImageOrClick")}</div>
+          <div className="text-[12.5px] text-drift-text-secondary">{t("a.pngOrJpgUpTo")}</div>
           <Button
             type="button"
             variant="secondary"

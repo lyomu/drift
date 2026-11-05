@@ -2,6 +2,7 @@
 
 import { Button, Field, Input, Select } from "@/components/ui";
 import type { CourtGroup, CourtSurface } from "@/lib/types";
+import { useT } from "@/lib/i18n/i18n-context";
 
 const SURFACES: CourtSurface[] = ["HARD", "CLAY", "GRASS", "ARTIFICIAL_GRASS"];
 
@@ -12,6 +13,7 @@ export function CourtGroupsEditor({
   groups: CourtGroup[];
   onChange: (groups: CourtGroup[]) => void;
 }) {
+  const t = useT();
   function update(index: number, patch: Partial<CourtGroup>) {
     onChange(groups.map((g, i) => (i === index ? { ...g, ...patch } : g)));
   }
@@ -30,7 +32,7 @@ export function CourtGroupsEditor({
   return (
     <div className="flex flex-col gap-3">
       <span className="text-[13px] font-semibold text-drift-text-secondary">
-        Court groups
+        {t("courts.groups")}
       </span>
       {groups.map((g, i) => (
         <div
@@ -38,7 +40,7 @@ export function CourtGroupsEditor({
           className="flex flex-col gap-3 rounded-md border border-drift-border p-3 sm:flex-row sm:flex-wrap sm:items-end"
         >
           <div className="min-w-[180px] flex-1 sm:max-w-[260px]">
-            <Field label="Surface">
+            <Field label={t("courts.surface")}>
               <Select
                 value={g.surface}
                 onChange={(e) =>
@@ -47,14 +49,14 @@ export function CourtGroupsEditor({
               >
                 {SURFACES.map((s) => (
                   <option key={s} value={s}>
-                    {s.replace(/_/g, " ")}
+                    {t(`surface.${s}` as const)}
                   </option>
                 ))}
               </Select>
             </Field>
           </div>
           <div className="w-24">
-            <Field label="Count">
+            <Field label={t("courts.count")}>
               <Input
                 type="number"
                 min={1}
@@ -71,7 +73,7 @@ export function CourtGroupsEditor({
                 checked={g.indoor}
                 onChange={(e) => update(i, { indoor: e.target.checked })}
               />
-              Indoor
+              {t("courts.indoor")}
             </label>
             <label className="flex items-center gap-2 text-sm text-drift-text-primary">
               <input
@@ -79,7 +81,7 @@ export function CourtGroupsEditor({
                 checked={g.lighting}
                 onChange={(e) => update(i, { lighting: e.target.checked })}
               />
-              Lighting
+              {t("courts.lighting")}
             </label>
           </div>
           <Button
@@ -88,12 +90,12 @@ export function CourtGroupsEditor({
             onClick={() => remove(i)}
             className="self-start text-drift-error sm:ml-auto sm:self-end"
           >
-            Remove
+            {t("common.remove")}
           </Button>
         </div>
       ))}
       <Button type="button" variant="secondary" onClick={add} className="self-start">
-        Add court group
+        {t("courts.addGroup")}
       </Button>
     </div>
   );

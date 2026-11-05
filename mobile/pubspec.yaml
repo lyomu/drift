@@ -17,13 +17,14 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
 #
-# Versioning policy (docs/PLAY_SUBMISSION.md). 1.0.0+1 is the deliberate first
-# public release, not a leftover default. The part that bites later is the build
-# number: it becomes Android's versionCode, Play permanently refuses a code it
-# has already accepted, and a rejected or abandoned upload still burns one. So
-# increment the +N on every build handed to Play — even a replacement for a
-# submission that failed review — and never reuse or decrement it.
-version: 1.0.0+3
+# Versioning policy (docs/PLAY_SUBMISSION.md). The app is pre-1.0 — 1.0.0 is
+# reserved for the actual first public release, not where development starts.
+# The part that bites later is the build number: it becomes Android's
+# versionCode, Play permanently refuses a code it has already accepted, and a
+# rejected or abandoned upload still burns one. So increment the +N on every
+# build handed to Play — even a replacement for a submission that failed
+# review — and never reuse or decrement it.
+version: 0.8.3+3
 
 environment:
   sdk: ^3.9.2
@@ -37,6 +38,12 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  # English / French / Spanish. Strings live in lib/l10n/app_*.arb and are
+  # generated into AppLocalizations (see l10n.yaml); `intl` is pinned by the
+  # Flutter SDK, hence `any`.
+  flutter_localizations:
+    sdk: flutter
+  intl: any
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -86,6 +93,8 @@ dependencies:
   posthog_flutter: ^5.4.0
   material_symbols_icons: ^4.2960.0
   shared_preferences: ^2.5.5
+  share_plus: ^12.0.2
+  timezone: ^0.10.1
 
 dev_dependencies:
   flutter_test:
@@ -108,6 +117,7 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+  generate: true
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

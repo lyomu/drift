@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
+import '../../core/l10n/l10n.dart';
 
 /// Shown when a tap lands on a feature that isn't live yet.
 Future<void> showComingSoon(BuildContext context) {
   return showDialog<void>(
     context: context,
     builder: (context) => AlertDialog(
-      title: const Text('Coming soon'),
-      content: const Text(
-        "Apple sign-in isn't ready yet — we're still setting it up. Please "
-        "continue with Google or email for now.",
+      title: Text(context.l10n.comingSoon),
+      content: Text(
+        context.l10n.comingSoonApple,
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Got it'),
+          child: Text(context.l10n.commonGotIt),
         ),
       ],
     ),

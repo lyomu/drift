@@ -2,9 +2,30 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
+import {
+  DEFAULT_LOCALE,
+  type LocaleCode,
+  type MessageKey,
+  t,
+} from '../common/i18n';
 
 export type MailPurpose =
   'signup' | 'password-reset' | 'platform-2fa' | 'platform-password-reset';
+
+/** Member-facing codes are sent in the person's language; the platform-staff
+ * console is English-only, so its two purposes keep the literal copy below. */
+const LOCALIZED_CODES: Partial<
+  Record<MailPurpose, { subject: MessageKey; lead: MessageKey }>
+> = {
+  signup: {
+    subject: 'mail.code.signup.subject',
+    lead: 'mail.code.signup.lead',
+  },
+  'password-reset': {
+    subject: 'mail.code.passwordReset.subject',
+    lead: 'mail.code.passwordReset.lead',
+  },
+};
 
 const CODE_SUBJECTS: Record<MailPurpose, string> = {
   signup: 'Your Drift Tennis verification code',
@@ -30,6 +51,9 @@ const CODE_LEAD: Record<MailPurpose, string> = {
  * Sends never throw: a mail outage must not take down login, verification or
  * support flows. Failures are logged loudly and reported via the boolean
  * return, which callers surface as delivery status.
+ *
+ * Member-facing mails take the recipient's `locale` (see `common/i18n`) and
+ * default to English; platform-staff mails are English-only.
  */
 @Injectable()
 export class MailerService {
@@ -83,19 +107,23 @@ export class MailerService {
     to: string,
     code: string,
     purpose: MailPurpose,
+    locale: LocaleCode = DEFAULT_LOCALE,
   ): Promise<boolean> {
+    const localized = LOCALIZED_CODES[purpose];
+    // Staff codes stay English whatever locale is passed.
+    const lang = localized ? locale : DEFAULT_LOCALE;
     return this.send(
       to,
-      CODE_SUBJECTS[purpose],
+      localized ? t(lang, localized.subject) : CODE_SUBJECTS[purpose],
       [
-        CODE_LEAD[purpose],
+        localized ? t(lang, localized.lead) : CODE_LEAD[purpose],
         '',
         `  ${code}`,
         '',
-        'The code expires in 10 minutes and can be used once.',
-        'If you did not request this, ignore this email — your account is safe.',
+        t(lang, 'mail.code.expiry'),
+        t(lang, 'mail.code.ignore'),
         '',
-        '— Drift Tennis',
+        t(lang, 'mail.signoff'),
       ].join('\n'),
     );
   }
@@ -121,19 +149,23 @@ export class MailerService {
     );
   }
 
-  async sendClubSetupLink(to: string, setupUrl: string): Promise<boolean> {
+  async sendClubSetupLink(
+    to: string,
+    setupUrl: string,
+    locale: LocaleCode = DEFAULT_LOCALE,
+  ): Promise<boolean> {
     return this.send(
       to,
-      'Your Drift Tennis club was approved — finish setting it up',
+      t(locale, 'mail.clubSetup.subject'),
       [
-        'Your club creation request has been approved.',
+        t(locale, 'mail.clubSetup.approved'),
         '',
-        'Finish setting up your club account:',
+        t(locale, 'mail.clubSetup.finish'),
         setupUrl,
         '',
-        'If you did not request this, ignore this email.',
+        t(locale, 'mail.ignoreIfNotRequested'),
         '',
-        '— Drift Tennis',
+        t(locale, 'mail.signoff'),
       ].join('\n'),
     );
   }
@@ -142,16 +174,25 @@ export class MailerService {
     to: string,
     clubName: string,
     role: string,
+    locale: LocaleCode = DEFAULT_LOCALE,
   ): Promise<boolean> {
+    // An unknown role (one added to the enum but not the catalogs) is shown
+    // as its raw value rather than as a missing key.
+    const roleKey = `mail.role.${role}` as MessageKey;
+    const translatedRole = t(locale, roleKey);
+    const roleLabel = translatedRole === roleKey ? role : translatedRole;
     return this.send(
       to,
-      `You have been added to ${clubName} on Drift Tennis`,
+      t(locale, 'mail.clubWelcome.subject', { club: clubName }),
       [
-        `You have been added to ${clubName} as ${role}.`,
+        t(locale, 'mail.clubWelcome.added', {
+          club: clubName,
+          role: roleLabel,
+        }),
         '',
-        'Open the Drift Tennis app to see your club.',
+        t(locale, 'mail.clubWelcome.open'),
         '',
-        '— Drift Tennis',
+        t(locale, 'mail.signoff'),
       ].join('\n'),
     );
   }
@@ -166,43 +207,30 @@ export class MailerService {
     to: string,
     firstName?: string | null,
     clubName?: string,
+    locale: LocaleCode = DEFAULT_LOCALE,
   ): Promise<boolean> {
-    const greeting = firstName?.trim() ? `Hi ${firstName.trim()},` : 'Hi,';
+    const name = firstName?.trim();
+    const greeting = name
+      ? t(locale, 'mail.welcome.greetingNamed', { name })
+      : t(locale, 'mail.welcome.greeting');
     const club = clubName?.trim();
 
     return this.send(
       to,
       club
-        ? `Welcome to Drift Tennis — ${club} is ready`
-        : 'Welcome to Drift Tennis',
-      club
-        ? [
-            greeting,
-            '',
-            `Welcome to Drift Tennis — we’re delighted to have ${club} join the community.`,
-            '',
-            'Your club space is ready. Add the details that help players find you,',
-            'invite your team, and share your first announcement when you are ready.',
-            '',
-            'We’re glad you are here and look forward to seeing your community grow.',
-            '',
-            '— Drift Tennis',
-          ].join('\n')
-        : [
-            greeting,
-            '',
-            'Welcome to Drift Tennis — we’re really glad you are here.',
-            '',
-            'Drift is here to help you find people to play with, develop your game,',
-            'and stay connected to your tennis community.',
-            '',
-            'Complete your profile to get started, then explore players, clubs, and',
-            'matches near you. Whether you are here to play, coach, or build a club',
-            'community, you are part of the Drift community now.',
-            '',
-            'See you on court,',
-            '— Drift Tennis',
-          ].join('\n'),
+        ? t(locale, 'mail.welcomeClub.subject', { club })
+        : t(locale, 'mail.welcome.subject'),
+      [
+        greeting,
+        '',
+        club
+          ? t(locale, 'mail.welcomeClub.body', { club })
+          : t(locale, 'mail.welcome.body'),
+        // The club version closes on its own paragraph; the member version's
+        // last line ("See you on court,") leads straight into the sign-off.
+        ...(club ? [''] : []),
+        t(locale, 'mail.signoff'),
+      ].join('\n'),
     );
   }
 
@@ -216,28 +244,19 @@ export class MailerService {
   async sendWaitlistConfirmation(
     to: string,
     firstName?: string,
+    locale: LocaleCode = DEFAULT_LOCALE,
   ): Promise<boolean> {
-    const greeting = firstName?.trim()
-      ? `You're on the list for Drift Tennis, ${firstName.trim()}.`
-      : "You're on the list for Drift Tennis.";
+    const name = firstName?.trim();
+    const greeting = name
+      ? t(locale, 'mail.waitlist.greetingNamed', { name })
+      : t(locale, 'mail.waitlist.greeting');
 
     return this.send(
       to,
-      "You're on the Drift Tennis waitlist",
-      [
-        greeting,
-        '',
-        'We will send launch news and occasional Drift Tennis product updates',
-        'or offers. To stop non-essential emails, contact drift@einsbrand.com',
-        'with "Unsubscribe" in the subject line.',
-        'It is free to join and free to play while we get going.',
-        'Android first, iOS follows.',
-        '',
-        'If you did not sign up, ignore this email and contact us if you would',
-        'like the address removed.',
-        '',
-        'Drift Tennis',
-      ].join('\n'),
+      t(locale, 'mail.waitlist.subject'),
+      [greeting, '', t(locale, 'mail.waitlist.body'), '', 'Drift Tennis'].join(
+        '\n',
+      ),
     );
   }
 
@@ -245,18 +264,19 @@ export class MailerService {
     to: string,
     ticketSubject: string,
     reply: string,
+    locale: LocaleCode = DEFAULT_LOCALE,
   ): Promise<boolean> {
     return this.send(
       to,
-      `Re: ${ticketSubject} — new reply from Drift Tennis support`,
+      t(locale, 'mail.support.subject', { subject: ticketSubject }),
       [
-        'Support has replied to your ticket:',
+        t(locale, 'mail.support.lead'),
         '',
         `  "${reply}"`,
         '',
-        'Open the Drift Tennis app to continue the conversation.',
+        t(locale, 'mail.support.open'),
         '',
-        '— Drift Tennis',
+        t(locale, 'mail.signoff'),
       ].join('\n'),
     );
   }

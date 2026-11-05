@@ -12,6 +12,7 @@ import '../../../shared/widgets/drift_scaffold.dart';
 import '../../auth/data/auth_repository.dart';
 import '../application/matches_providers.dart';
 import '../data/matches_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Which endpoint the form submits to — same fields, three different
 /// moments in the result lifecycle (§4.3).
@@ -83,6 +84,32 @@ class _EnterScoreScreenState extends ConsumerState<EnterScoreScreen> {
       ? null
       : int.tryParse(controller.text.trim());
 
+  /// Rejects set scores that can't happen under standard tennis rules, so a
+  /// typo (6-9, 8-6, 5-5...) is caught here rather than saved as a result.
+  /// Covers the three shapes a completed set actually takes: 6 games with a
+  /// 2-game margin (6-0..6-4), 7-5, or a 7-6 breaker (which needs both
+  /// tiebreak points, winner ahead by 2+ and at least 7).
+  String? _setScoreError(int setNumber, int a, int b, int? tbA, int? tbB) {
+    final l10n = context.l10n;
+    if (a == b) return l10n.scoreErrTie(setNumber, '$a-$b');
+    final hi = a > b ? a : b;
+    final lo = a > b ? b : a;
+    if (hi == 6 && lo <= 4) return null;
+    if (hi == 7 && lo == 5) return null;
+    if (hi == 7 && lo == 6) {
+      final winnerTb = a > b ? tbA : tbB;
+      final loserTb = a > b ? tbB : tbA;
+      if (winnerTb == null || loserTb == null) {
+        return l10n.scoreErrNeedTiebreak(setNumber);
+      }
+      if (winnerTb < 7 || winnerTb - loserTb < 2) {
+        return l10n.scoreErrTiebreak(setNumber, '$winnerTb-$loserTb');
+      }
+      return null;
+    }
+    return l10n.scoreErrInvalid(setNumber, '$a-$b');
+  }
+
   Future<DriftMatch> _send(
     MatchesRepository repo, {
     required ResultOutcome outcome,
@@ -121,26 +148,34 @@ class _EnterScoreScreenState extends ConsumerState<EnterScoreScreen> {
 
       if (_isScore) {
         final sets = <SetScore>[];
-        for (final set in _sets) {
+        for (var i = 0; i < _sets.length; i++) {
+          final set = _sets[i];
           final a = _parse(set.aController);
           final b = _parse(set.bController);
           if (a == null || b == null) {
-            setState(() => _errorText = 'Enter both games for every set.');
+            setState(() => _errorText = context.l10n.scoreErrBothGames);
+            return;
+          }
+          final tbA = _parse(set.aTiebreakController);
+          final tbB = _parse(set.bTiebreakController);
+          final setError = _setScoreError(i + 1, a, b, tbA, tbB);
+          if (setError != null) {
+            setState(() => _errorText = setError);
             return;
           }
           sets.add(
             SetScore(
               sideAGames: a,
               sideBGames: b,
-              sideATiebreak: _parse(set.aTiebreakController),
-              sideBTiebreak: _parse(set.bTiebreakController),
+              sideATiebreak: tbA,
+              sideBTiebreak: tbB,
             ),
           );
         }
         updated = await _send(repo, outcome: ResultOutcome.score, sets: sets);
       } else {
         if (_outcome == ResultOutcome.retirement && _winningSide == null) {
-          setState(() => _errorText = 'Choose who won after the retirement.');
+          setState(() => _errorText = context.l10n.scoreErrRetirementWinner);
           return;
         }
         updated = await _send(
@@ -168,9 +203,9 @@ class _EnterScoreScreenState extends ConsumerState<EnterScoreScreen> {
 
     return DriftScaffold(
       title: switch (widget.mode) {
-        EnterScoreMode.submit => 'Enter Result',
-        EnterScoreMode.dispute => 'Your Version',
-        EnterScoreMode.resubmit => 'Revise Your Version',
+        EnterScoreMode.submit => context.l10n.matchEnterResult,
+        EnterScoreMode.dispute => context.l10n.matchYourVersion,
+        EnterScoreMode.resubmit => context.l10n.matchReviseVersion,
       },
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
@@ -179,7 +214,7 @@ class _EnterScoreScreenState extends ConsumerState<EnterScoreScreen> {
             children: [
               Expanded(
                 child: DriftFilterChip(
-                  label: 'Score',
+                  label: context.l10n.matchScore,
                   selected: _isScore,
                   onTap: () => setState(() => _isScore = true),
                 ),
@@ -187,7 +222,7 @@ class _EnterScoreScreenState extends ConsumerState<EnterScoreScreen> {
               const SizedBox(width: DriftSpacing.s2),
               Expanded(
                 child: DriftFilterChip(
-                  label: 'Walkover / Retirement',
+                  label: context.l10n.matchWalkoverRetirement,
                   selected: !_isScore,
                   onTap: () => setState(() => _isScore = false),
                 ),
@@ -203,11 +238,11 @@ class _EnterScoreScreenState extends ConsumerState<EnterScoreScreen> {
                 child: DriftCard(
                   child: Row(
                     children: [
-                      Text('Set ${i + 1}', style: type.label),
+                      Text(context.l10n.matchSetNumber(i + 1), style: type.label),
                       const SizedBox(width: DriftSpacing.s3),
                       Expanded(
                         child: _GamesField(
-                          label: 'You',
+                          label: context.l10n.commonYou,
                           controller: _sets[i].aController,
                           tiebreakController: _sets[i].aTiebreakController,
                         ),
@@ -215,7 +250,7 @@ class _EnterScoreScreenState extends ConsumerState<EnterScoreScreen> {
                       const SizedBox(width: DriftSpacing.s3),
                       Expanded(
                         child: _GamesField(
-                          label: opponent?.player.displayName ?? 'Them',
+                          label: opponent?.player.displayName ?? context.l10n.commonThem,
                           controller: _sets[i].bController,
                           tiebreakController: _sets[i].bTiebreakController,
                         ),
@@ -234,17 +269,17 @@ class _EnterScoreScreenState extends ConsumerState<EnterScoreScreen> {
               ),
             if (_sets.length < 5)
               DriftButton(
-                label: 'Add a set',
+                label: context.l10n.matchAddSet,
                 variant: DriftButtonVariant.text,
                 onPressed: () => setState(() => _sets.add(_SetInput())),
               ),
           ] else ...[
-            Text('What happened?', style: type.label),
+            Text(context.l10n.matchWhatHappened, style: type.label),
             const SizedBox(height: DriftSpacing.s2),
             Row(
               children: [
                 DriftFilterChip(
-                  label: 'Walkover',
+                  label: context.l10n.matchStateWalkover,
                   selected: _outcome == ResultOutcome.walkover,
                   onTap: () => setState(() {
                     _outcome = ResultOutcome.walkover;
@@ -253,7 +288,7 @@ class _EnterScoreScreenState extends ConsumerState<EnterScoreScreen> {
                 ),
                 const SizedBox(width: DriftSpacing.s2),
                 DriftFilterChip(
-                  label: 'Retirement',
+                  label: context.l10n.matchRetirement,
                   selected: _outcome == ResultOutcome.retirement,
                   onTap: () =>
                       setState(() => _outcome = ResultOutcome.retirement),
@@ -262,12 +297,12 @@ class _EnterScoreScreenState extends ConsumerState<EnterScoreScreen> {
             ),
             const SizedBox(height: DriftSpacing.s4),
             if (_outcome == ResultOutcome.retirement) ...[
-              Text('Who won?', style: type.label),
+              Text(context.l10n.matchWhoWon, style: type.label),
               const SizedBox(height: DriftSpacing.s2),
               Row(
                 children: [
                   DriftFilterChip(
-                    label: 'You',
+                    label: context.l10n.commonYou,
                     selected:
                         _winningSide ==
                         widget.match.participants
@@ -281,7 +316,7 @@ class _EnterScoreScreenState extends ConsumerState<EnterScoreScreen> {
                   ),
                   const SizedBox(width: DriftSpacing.s2),
                   DriftFilterChip(
-                    label: opponent?.player.displayName ?? 'Them',
+                    label: opponent?.player.displayName ?? context.l10n.commonThem,
                     selected: _winningSide == opponent?.side,
                     onTap: () => setState(() => _winningSide = opponent?.side),
                   ),
@@ -289,7 +324,7 @@ class _EnterScoreScreenState extends ConsumerState<EnterScoreScreen> {
               ),
             ] else
               Text(
-                "A walkover is recorded in favour of neither player.",
+                context.l10n.matchWalkoverNeither,
                 style: type.bodySmall.copyWith(color: colors.textSecondary),
               ),
           ],
@@ -301,7 +336,9 @@ class _EnterScoreScreenState extends ConsumerState<EnterScoreScreen> {
 
           const SizedBox(height: DriftSpacing.s6),
           DriftButton(
-            label: _isSubmitting ? 'Submitting…' : 'Submit',
+            label: _isSubmitting
+                ? context.l10n.commonSubmitting
+                : context.l10n.commonSubmit,
             onPressed: _isSubmitting ? null : _submit,
           ),
         ],
@@ -333,22 +370,38 @@ class _GamesField extends StatelessWidget {
         Row(
           children: [
             SizedBox(
-              width: 48,
+              width: 56,
               child: TextField(
                 controller: controller,
                 keyboardType: TextInputType.number,
                 textAlign: TextAlign.center,
-                decoration: const InputDecoration(hintText: '0'),
+                style: type.title,
+                decoration: const InputDecoration(
+                  hintText: '0',
+                  isDense: true,
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: DriftSpacing.s1,
+                    vertical: DriftSpacing.s3,
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: DriftSpacing.s2),
             SizedBox(
-              width: 40,
+              width: 48,
               child: TextField(
                 controller: tiebreakController,
                 keyboardType: TextInputType.number,
                 textAlign: TextAlign.center,
-                decoration: const InputDecoration(hintText: 'TB'),
+                style: type.title,
+                decoration: InputDecoration(
+                  hintText: context.l10n.matchTiebreakShort,
+                  isDense: true,
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: DriftSpacing.s1,
+                    vertical: DriftSpacing.s3,
+                  ),
+                ),
               ),
             ),
           ],

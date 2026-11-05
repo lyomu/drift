@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../theme/drift_colors.dart';
+import '../l10n/l10n.dart';
 
 /// Bottom navigation — a verbatim port of `App.tsx` `BottomNav`: a flat white
 /// bar with a 1px top border, five `flex: 1` tabs, a 22px outline icon and a
@@ -20,14 +21,16 @@ class DriftBottomNav extends StatelessWidget {
 
   static const _inactive = Color(0xFF9CA3AF);
 
-  static const _tabs = [
-    (label: 'Home', svg: _homeSvg),
-    (label: 'Play', svg: _playSvg),
-    (label: 'Compete', svg: _competeSvg),
-    (label: 'Discover', svg: _discoverSvg),
+  static final _tabs = <({String Function(AppLocalizations) label, String svg})>[
+    (label: (l) => l.navHome, svg: _homeSvg),
+    // 2026-11: Play and Compete merged into Play (trophy icon); Community
+    // took the freed slot.
+    (label: (l) => l.navPlay, svg: _playSvg),
+    (label: (l) => l.navCommunity, svg: _communitySvg),
+    (label: (l) => l.navDiscover, svg: _discoverSvg),
     // Learn took this slot from Profile in the 2026-09 redesign — profile
     // navigation moved into the app drawer (`DriftAppDrawer`).
-    (label: 'Learn', svg: _learnSvg),
+    (label: (l) => l.navLearn, svg: _learnSvg),
   ];
 
   @override
@@ -48,7 +51,7 @@ class DriftBottomNav extends StatelessWidget {
               for (var i = 0; i < _tabs.length; i++)
                 Expanded(
                   child: _Tab(
-                    label: _tabs[i].label,
+                    label: _tabs[i].label(context.l10n),
                     svg: _tabs[i].svg,
                     color: i == selectedIndex ? colors.primary : _inactive,
                     active: i == selectedIndex,
@@ -116,13 +119,16 @@ const _homeSvg =
     '<path d="M3 9.5L11 3l8 6.5V19a1 1 0 0 1-1 1H14v-5H8v5H4a1 1 0 0 1-1-1V9.5z" '
     'stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>';
 
-const _playSvg =
+/// Two people — a front figure and one behind it, same 1.7 outline.
+const _communitySvg =
     '<svg width="22" height="22" viewBox="0 0 22 22" fill="none">'
-    '<circle cx="11" cy="8" r="3.5" stroke="currentColor" stroke-width="1.7"/>'
-    '<path d="M4 19c0-3.866 3.134-7 7-7s7 3.134 7 7" stroke="currentColor" '
-    'stroke-width="1.7" stroke-linecap="round"/></svg>';
+    '<circle cx="8.5" cy="8" r="3.2" stroke="currentColor" stroke-width="1.7"/>'
+    '<path d="M2.5 18.5c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" '
+    'stroke-width="1.7" stroke-linecap="round"/>'
+    '<path d="M14 5.2a3.2 3.2 0 0 1 0 5.6M16.5 13c1.8.9 3 2.9 3 5.5" '
+    'stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>';
 
-const _competeSvg =
+const _playSvg =
     '<svg width="22" height="22" viewBox="0 0 22 22" fill="none">'
     '<path d="M7 4h8v6a4 4 0 0 1-8 0V4z" stroke="currentColor" stroke-width="1.7" '
     'stroke-linejoin="round"/>'

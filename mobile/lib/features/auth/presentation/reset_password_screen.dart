@@ -11,6 +11,7 @@ import '../../../shared/widgets/drift_back_header.dart';
 import '../../../shared/widgets/drift_text_field.dart';
 import '../application/auth_controller.dart';
 import '../data/auth_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 const _resendCooldown = Duration(seconds: 60);
 
@@ -71,7 +72,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
 
   Future<void> _submit() async {
     if (_passwordController.text != _confirmController.text) {
-      setState(() => _errorText = 'Those passwords don’t match.');
+      setState(() => _errorText = context.l10n.authPasswordsDontMatch);
       return;
     }
 
@@ -90,8 +91,8 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
           );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Password updated. Log in with your new password.'),
+        SnackBar(
+          content: Text(context.l10n.authPasswordUpdated),
         ),
       );
       context.go('/login');
@@ -130,7 +131,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const DriftBackHeader(title: 'Reset Password'),
+            DriftBackHeader(title: context.l10n.authResetPasswordTitle),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
@@ -138,25 +139,24 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      'If an account exists for ${widget.email}, a six-digit code '
-                      'is on its way. Enter it below with your new password.',
+                      context.l10n.authResetPasswordIntro(widget.email),
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     const SizedBox(height: DriftSpacing.s6),
                     DriftTextField(
-                      label: 'Six-digit code',
+                      label: context.l10n.authSixDigitCode,
                       controller: _codeController,
                       keyboardType: TextInputType.number,
                     ),
                     const SizedBox(height: DriftSpacing.s4),
                     DriftTextField(
-                      label: 'New password',
+                      label: context.l10n.authNewPassword,
                       controller: _passwordController,
                       obscureText: true,
                     ),
                     const SizedBox(height: DriftSpacing.s4),
                     DriftTextField(
-                      label: 'Confirm new password',
+                      label: context.l10n.authConfirmNewPassword,
                       controller: _confirmController,
                       obscureText: true,
                     ),
@@ -166,15 +166,17 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                     ],
                     const SizedBox(height: DriftSpacing.s6),
                     DriftButton(
-                      label: _isSubmitting ? 'Updating…' : 'Set New Password',
+                      label: _isSubmitting
+                          ? context.l10n.commonUpdating
+                          : context.l10n.authSetNewPassword,
                       onPressed: _isSubmitting ? null : _submit,
                     ),
                     const SizedBox(height: DriftSpacing.s2),
                     Center(
                       child: DriftButton(
                         label: _cooldownSeconds > 0
-                            ? 'Resend code in ${_cooldownSeconds}s'
-                            : 'Resend code',
+                            ? context.l10n.authResendCodeIn(_cooldownSeconds)
+                            : context.l10n.authResendCode,
                         variant: DriftButtonVariant.text,
                         onPressed: canResend ? _resend : null,
                       ),

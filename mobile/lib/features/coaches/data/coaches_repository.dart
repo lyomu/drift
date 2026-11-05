@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/dio_client.dart';
 import '../../auth/data/auth_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 enum CoachLevel {
   beginner,
@@ -72,7 +73,7 @@ class CoachSummary {
       firstName,
       lastName,
     ].whereType<String>().where((part) => part.isNotEmpty);
-    return parts.isEmpty ? 'Coach' : parts.join(' ');
+    return parts.isEmpty ? l10nNow.coachFallbackName : parts.join(' ');
   }
 
   factory CoachSummary.fromJson(Map<String, dynamic> json) => CoachSummary(
@@ -207,7 +208,7 @@ class CoachesRepository {
       final body = error.response?.data;
       final message = body is Map ? body['message'] : null;
       final text = message is List ? message.join(' ') : message?.toString();
-      throw AuthException(text ?? 'Something went wrong. Please try again.');
+      throw AuthException(text ?? l10nNow.commonErrorGeneric);
     }
   }
 }

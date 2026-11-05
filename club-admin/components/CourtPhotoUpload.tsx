@@ -3,14 +3,16 @@
 import { useRef, useState } from "react";
 import { MaterialIcon } from "@/components/dashboard-design";
 import { api, ApiError, mediaUrl } from "@/lib/api-client";
+import { useT } from "@/lib/i18n/i18n-context";
+import { translateNow } from "@/lib/i18n/translate";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const ACCEPTED_TYPES = ["image/png", "image/jpeg"];
 const MAX_PHOTOS = 8;
 
 function validate(file: File): string | null {
-  if (!ACCEPTED_TYPES.includes(file.type)) return "Choose a PNG or JPG image.";
-  if (file.size > MAX_BYTES) return "That image is over 5MB. Choose a smaller file.";
+  if (!ACCEPTED_TYPES.includes(file.type)) return translateNow("a.choosePngJpg");
+  if (file.size > MAX_BYTES) return translateNow("a.imageOver5Mb");
   return null;
 }
 
@@ -30,6 +32,7 @@ export function CourtPhotoUpload({
   photoUrls: string[];
   onChange: (urls: string[]) => void;
 }) {
+  const t = useT();
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,7 +59,7 @@ export function CourtPhotoUpload({
       );
       onChange([...photoUrls, res.url]);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Upload failed.");
+      setError(err instanceof ApiError ? err.message : t("a.uploadFailed"));
     } finally {
       setBusy(false);
       if (inputRef.current) inputRef.current.value = "";
@@ -78,7 +81,7 @@ export function CourtPhotoUpload({
   return (
     <div className="flex flex-col gap-2">
       <span className="text-[13px] font-semibold text-drift-text-secondary">
-        Photos (optional)
+        {t("a.photosOptional")}
       </span>
       <input
         ref={inputRef}
@@ -98,12 +101,12 @@ export function CourtPhotoUpload({
             >
               {src && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={src} alt="Court photo" className="h-full w-full object-cover" />
+                <img src={src} alt={t("a.courtPhoto")} className="h-full w-full object-cover" />
               )}
               <button
                 type="button"
                 onClick={() => remove(url)}
-                aria-label="Remove photo"
+                aria-label={t("a.removePhoto")}
                 className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100"
               >
                 <MaterialIcon name="close" className="text-[16px]" />
@@ -120,7 +123,7 @@ export function CourtPhotoUpload({
           >
             <MaterialIcon name="add_photo_alternate" className="text-[22px]" />
             <span className="text-[11px] font-semibold">
-              {busy ? "Uploading…" : "Add photo"}
+              {busy ? t("a.uploading") : t("a.addPhoto")}
             </span>
           </button>
         )}
@@ -130,7 +133,7 @@ export function CourtPhotoUpload({
           {error}
         </p>
       )}
-      <p className="text-[12.5px] text-drift-text-secondary">PNG or JPG, up to 5MB each</p>
+      <p className="text-[12.5px] text-drift-text-secondary">{t("a.pngOrJpgUpTo2")}</p>
     </div>
   );
 }

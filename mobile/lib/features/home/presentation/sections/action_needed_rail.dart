@@ -6,36 +6,203 @@ import '../../../../core/theme/drift_colors.dart';
 import '../../../../shared/widgets/drift_section_header.dart';
 import '../../application/home_feed_provider.dart';
 import '../../data/home_repository.dart';
+import '../../../../core/l10n/l10n.dart';
+import '../../../../shared/widgets/motion/entrance.dart';
+import '../../../../shared/widgets/motion/motion_tokens.dart';
+import '../../../../shared/widgets/motion/pressable.dart';
+import '../../../tennis_facts/data/tennis_facts_repository.dart';
+import '../../../tennis_facts/presentation/tennis_fact_sheet.dart';
 
 /// Horizontally-scrolling rail of urgent prompts (redesign 2026-10: each card
 /// washed in its own accent rather than plain white). Each links to the screen
 /// that resolves it (`card.action.route`).
+///
+/// When today's tennis fact hasn't been opened yet, it leads the rail and the
+/// title reads "Today's fact"; once opened, the card leaves and the title goes
+/// back to "Needs you".
 class ActionNeededRail extends StatelessWidget {
-  const ActionNeededRail({super.key, required this.cards});
+  const ActionNeededRail({
+    super.key,
+    required this.cards,
+    this.fact,
+    this.onFactTap,
+  });
 
   final List<HomeCard> cards;
 
+  /// Today's fact, only passed while it is still unopened.
+  final TennisFact? fact;
+  final VoidCallback? onFactTap;
+
   @override
   Widget build(BuildContext context) {
+    final hasFact = fact != null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16),
-          child: DriftSectionHeader(title: 'Needs you'),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: AnimatedSwitcher(
+            duration: DriftMotion.base,
+            layoutBuilder: (current, previous) => Stack(
+              alignment: Alignment.centerLeft,
+              children: [...previous, ?current],
+            ),
+            child: DriftSectionHeader(
+              key: ValueKey(hasFact),
+              title: hasFact
+                  ? context.l10n.homeTodaysFact
+                  : context.l10n.homeNeedsYou,
+            ),
+          ),
         ),
         const SizedBox(height: 10),
         SizedBox(
           height: 152,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: cards.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 10),
-            itemBuilder: (context, i) => _ActionCard(card: cards[i]),
+          // The fact fills the screen width; any urgent cards sit beside it,
+          // reached by scrolling.
+          child: LayoutBuilder(
+            builder: (context, box) {
+              final items = <Widget>[
+                if (hasFact)
+                  _FactCard(
+                    fact: fact!,
+                    onTap: onFactTap,
+                    width: box.maxWidth - 32,
+                  ),
+                for (final card in cards) _ActionCard(card: card),
+              ];
+              return ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: items.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 10),
+                itemBuilder: (context, i) => DriftEntrance(
+                  index: i,
+                  offset: 8,
+                  child: DriftPressable(child: items[i]),
+                ),
+              );
+            },
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Today's fact as the lead card of the rail, full width: the photo (or
+/// branded fallback) on the left, the hook, the fact's title and the call to
+/// action on the right.
+class _FactCard extends StatelessWidget {
+  const _FactCard({
+    required this.fact,
+    required this.onTap,
+    required this.width,
+  });
+
+  final TennisFact fact;
+  final VoidCallback? onTap;
+  final double width;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<DriftColors>()!;
+    final accent = colors.primary;
+    return Semantics(
+      button: true,
+      label: '${context.l10n.tennisFactEyebrow} ${fact.title}',
+      hint: context.l10n.tennisFactOpenHint,
+      excludeSemantics: true,
+      child: SizedBox(
+        width: width,
+        child: Material(
+          color: Color.alphaBlend(
+            accent.withValues(alpha: 0.06),
+            colors.surface,
+          ),
+          borderRadius: BorderRadius.circular(18),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: accent.withValues(alpha: 0.18),
+                  width: 1.5,
+                ),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SizedBox(
+                    width: 116,
+                    child: TennisFactImage(imageUrl: fact.imageUrl),
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            context.l10n.tennisFactEyebrow,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.4,
+                              color: accent,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Expanded(
+                            child: Text(
+                              fact.title,
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                height: 1.25,
+                                color: colors.textPrimary,
+                              ),
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  context.l10n.tennisFactCta,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w800,
+                                    color: accent,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Icon(
+                                Icons.arrow_forward_rounded,
+                                size: 16,
+                                color: accent,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -86,9 +253,7 @@ class _ActionCard extends ConsumerWidget {
         borderRadius: BorderRadius.circular(16),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
-          onTap: card.action == null
-              ? null
-              : () => _open(context, ref),
+          onTap: card.action == null ? null : () => _open(context, ref),
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
@@ -147,7 +312,7 @@ class _ActionCard extends ConsumerWidget {
                   const Spacer(),
                 const SizedBox(height: 8),
                 Text(
-                  '${card.action?.label ?? 'Review'} →',
+                  '${card.action?.label ?? context.l10n.homeReview} →',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(

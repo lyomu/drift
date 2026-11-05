@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { Button, ErrorBanner, Field, Input, PasswordField } from "@/components/ui";
 import { api, ApiError, setToken } from "@/lib/api-client";
 import { useWorkspace } from "@/lib/workspace-context";
+import { useT } from "@/lib/i18n/i18n-context";
 
 /**
  * Self-service signup, which club staff deliberately do not get: a club
@@ -19,6 +20,7 @@ import { useWorkspace } from "@/lib/workspace-context";
  * the workspace.
  */
 export default function CoachSignupPage() {
+  const t = useT();
   const router = useRouter();
   const { refresh } = useWorkspace();
   const [stage, setStage] = useState<"details" | "verify">("details");
@@ -47,7 +49,7 @@ export default function CoachSignupPage() {
       });
       setStage("verify");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Something went wrong.");
+      setError(err instanceof ApiError ? err.message : t("a.somethingWentWrong"));
     } finally {
       setSubmitting(false);
     }
@@ -66,7 +68,7 @@ export default function CoachSignupPage() {
       await refresh();
       router.push("/coach/application");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Something went wrong.");
+      setError(err instanceof ApiError ? err.message : t("a.somethingWentWrong"));
     } finally {
       setSubmitting(false);
     }
@@ -77,7 +79,7 @@ export default function CoachSignupPage() {
     try {
       await api.post("/auth/resend-code", { email: email.trim() });
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Something went wrong.");
+      setError(err instanceof ApiError ? err.message : t("a.somethingWentWrong"));
     }
   }
 
@@ -109,11 +111,11 @@ export default function CoachSignupPage() {
         <div className="w-full max-w-[440px] rounded-[24px] bg-white px-8 py-9 shadow-[0_28px_64px_rgba(17,24,39,0.14)]">
           <div className="text-center">
             <h1 className="font-display text-[26px] font-extrabold leading-tight text-[#111827]">
-              {stage === "details" ? "Apply as a coach" : "Check your email"}
+              {stage === "details" ? t("a.applyAsCoach") : t("a.checkYourEmail")}
             </h1>
             <p className="mx-auto mt-2.5 max-w-[320px] text-[14px] leading-6 text-[#6B7280]">
               {stage === "details"
-                ? "Create your Drift account, then tell us about your coaching. Every application is reviewed before your profile goes live."
+                ? t("a.coachSignupDescription")
                 : `We sent a 6-digit code to ${email}.`}
             </p>
           </div>
@@ -125,7 +127,7 @@ export default function CoachSignupPage() {
           {stage === "details" ? (
             <form onSubmit={createAccount} className="mt-2 flex flex-col gap-4">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field label="First name">
+                <Field label={t("a.firstName")}>
                   <Input
                     required
                     value={firstName}
@@ -133,7 +135,7 @@ export default function CoachSignupPage() {
                     onChange={(event) => setFirstName(event.target.value)}
                   />
                 </Field>
-                <Field label="Last name">
+                <Field label={t("a.lastName")}>
                   <Input
                     required
                     value={lastName}
@@ -142,7 +144,7 @@ export default function CoachSignupPage() {
                   />
                 </Field>
               </div>
-              <Field label="Email address">
+              <Field label={t("a.emailAddress")}>
                 <Input
                   type="email"
                   required
@@ -152,7 +154,7 @@ export default function CoachSignupPage() {
                 />
               </Field>
               <PasswordField
-                label="Password"
+                label={t("a.password")}
                 required
                 value={password}
                 autoComplete="new-password"
@@ -171,7 +173,7 @@ export default function CoachSignupPage() {
                   }
                   className="mt-0.5 h-4 w-4 accent-[#1C91D0]"
                 />
-                <span>I confirm I am 18 or over.</span>
+                <span>{t("a.iConfirmIAm18")}</span>
               </label>
 
               <Button
@@ -179,12 +181,12 @@ export default function CoachSignupPage() {
                 disabled={submitting}
                 className="mt-2 min-h-[54px] w-full rounded-[10px] bg-[#1C91D0] text-[16px] hover:bg-[#126A9B]"
               >
-                {submitting ? "Creating account…" : "Create account"}
+                {submitting ? t("a.creatingAccount") : t("a.createAccount")}
               </Button>
             </form>
           ) : (
             <form onSubmit={verify} className="mt-2 flex flex-col gap-4">
-              <Field label="Verification code">
+              <Field label={t("a.verificationCode")}>
                 <Input
                   required
                   inputMode="numeric"
@@ -199,7 +201,7 @@ export default function CoachSignupPage() {
                 disabled={submitting}
                 className="min-h-[54px] w-full rounded-[10px] bg-[#1C91D0] text-[16px] hover:bg-[#126A9B]"
               >
-                {submitting ? "Verifying…" : "Verify and continue"}
+                {submitting ? t("a.verifying") : t("a.verifyAndContinue")}
               </Button>
               <button
                 type="button"
@@ -216,9 +218,7 @@ export default function CoachSignupPage() {
             <Link
               href="/login"
               className="font-extrabold text-[#111827] hover:underline"
-            >
-              Sign in
-            </Link>
+            >{t("a.signIn")}</Link>
           </p>
         </div>
       </section>

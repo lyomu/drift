@@ -4,8 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { api, ApiError } from "@/lib/api-client";
 import { Button, Card, ErrorBanner, Field, Input, Textarea } from "@/components/ui";
+import { useT } from "@/lib/i18n/i18n-context";
 
 export default function RequestClubPage() {
+  const t = useT();
   const [form, setForm] = useState({
     clubName: "",
     location: "",
@@ -30,7 +32,7 @@ export default function RequestClubPage() {
       setDone(true);
     } catch (err) {
       setError(
-        err instanceof ApiError ? err.message : "The request could not be sent.",
+        err instanceof ApiError ? err.message : t("requestClub.failed"),
       );
     } finally {
       setSubmitting(false);
@@ -42,12 +44,12 @@ export default function RequestClubPage() {
       <Card className="w-full max-w-md">
         <div className="mb-6">
           <div className="font-display text-2xl font-bold text-drift-text-primary">
-            Request a club on Drift
+            {t("requestClub.title")}
           </div>
           <p className="mt-1 text-sm text-drift-text-secondary">
             {done
-              ? "Thanks — we've got your request."
-              : "Tell us about your club. Our team reviews every request and emails you a setup link once it's approved."}
+              ? t("requestClub.thanks")
+              : t("requestClub.intro")}
           </p>
         </div>
 
@@ -62,30 +64,30 @@ export default function RequestClubPage() {
               href="/login"
               className="mt-6 inline-block text-sm font-semibold text-drift-primary"
             >
-              Back to sign in
+              {t("requestClub.backToSignIn")}
             </Link>
           </>
         ) : (
           <>
             <ErrorBanner message={error} />
             <form onSubmit={submit} className="flex flex-col gap-4">
-              <Field label="Club name">
+              <Field label={t("requestClub.clubName")}>
                 <Input
                   required
                   value={form.clubName}
                   onChange={(e) => setForm({ ...form, clubName: e.target.value })}
                 />
               </Field>
-              <Field label="Location">
+              <Field label={t("requestClub.location")}>
                 <Textarea
                   required
                   rows={2}
-                  placeholder="City, area, or full address"
+                  placeholder={t("requestClub.locationHint")}
                   value={form.location}
                   onChange={(e) => setForm({ ...form, location: e.target.value })}
                 />
               </Field>
-              <Field label="Your name">
+              <Field label={t("requestClub.yourName")}>
                 <Input
                   required
                   value={form.requesterName}
@@ -95,7 +97,7 @@ export default function RequestClubPage() {
                   autoComplete="name"
                 />
               </Field>
-              <Field label="Your email">
+              <Field label={t("requestClub.yourEmail")}>
                 <Input
                   type="email"
                   required
@@ -107,13 +109,13 @@ export default function RequestClubPage() {
                 />
               </Field>
               <Button type="submit" disabled={submitting} className="mt-2 w-full">
-                {submitting ? "Sending…" : "Submit request"}
+                {submitting ? t("requestClub.sending") : t("requestClub.submit")}
               </Button>
             </form>
             <p className="mt-6 text-center text-sm text-drift-text-secondary">
-              Already run a club here?{" "}
+              {t("requestClub.alreadyRun")}{" "}
               <Link href="/login" className="font-semibold text-drift-primary">
-                Sign in
+                {t("requestClub.signIn")}
               </Link>
             </p>
           </>

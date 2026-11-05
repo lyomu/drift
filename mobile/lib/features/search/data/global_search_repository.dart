@@ -3,18 +3,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/dio_client.dart';
 import '../../auth/data/auth_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 enum GlobalSearchFilter {
-  all('ALL', 'All'),
-  player('PLAYER', 'Players'),
-  court('COURT', 'Courts'),
-  club('CLUB', 'Clubs'),
-  competition('COMPETITION', 'Competitions');
+  all('ALL'),
+  player('PLAYER'),
+  court('COURT'),
+  club('CLUB'),
+  competition('COMPETITION');
 
-  const GlobalSearchFilter(this.wireValue, this.label);
+  const GlobalSearchFilter(this.wireValue);
 
   final String wireValue;
-  final String label;
+
+  String get label => switch (this) {
+    GlobalSearchFilter.all => l10nNow.searchAll,
+    GlobalSearchFilter.player => l10nNow.matchPlayers,
+    GlobalSearchFilter.court => l10nNow.discoverCourts,
+    GlobalSearchFilter.club => l10nNow.discoverClubs,
+    GlobalSearchFilter.competition => l10nNow.searchCompetitions,
+  };
 }
 
 class GlobalSearchResult {
@@ -67,7 +75,7 @@ class GlobalSearchRepository {
       final body = e.response?.data;
       final message = body is Map ? body['message'] as Object? : null;
       final text = message is List ? message.join(' ') : message?.toString();
-      throw AuthException(text ?? 'Search could not be loaded.');
+      throw AuthException(text ?? l10nNow.searchLoadFailed);
     }
   }
 }

@@ -1,19 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Card, Field, Input, Textarea } from "@/components/ui";
+import { Button, Field, Input, Textarea } from "@/components/ui";
 import { CoachPhotoUpload } from "@/components/CoachPhotoUpload";
+import { SegmentControl } from "@/components/redesign";
 import { PhoneNumberField } from "@/components/PhoneNumberField";
 import { coachApi } from "@/lib/coach-api";
 import { useClub } from "@/lib/club-context";
 import type { CoachAdmin, CoachLevel } from "@/lib/types";
+import { useT } from "@/lib/i18n/i18n-context";
 
-const LEVELS: { value: CoachLevel; label: string }[] = [
-  { value: "BEGINNER", label: "Beginner" },
-  { value: "INTERMEDIATE", label: "Intermediate" },
-  { value: "ADVANCED", label: "Advanced" },
-  { value: "COMPETITIVE", label: "Competitive" },
-];
+function coachLevelOptions(t: ReturnType<typeof useT>): { value: CoachLevel; label: string }[] { return [
+  { value: "BEGINNER", label: t("a.beginner") },
+  { value: "INTERMEDIATE", label: t("a.intermediate") },
+  { value: "ADVANCED", label: t("a.advanced") },
+  { value: "COMPETITIVE", label: t("a.competitive") },
+]; }
+
+type CoachTab = "profile" | "coaching" | "contact";
 
 export type CoachFormPayload = {
   accountEmail?: string;
@@ -38,19 +42,19 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <Card>
-      <div className="mb-4">
-        <h2 className="font-display text-base font-bold text-drift-text-primary">
+    <section className="overflow-hidden rounded-2xl border border-drift-border bg-drift-surface shadow-card">
+      <div className="border-b border-drift-border px-5 py-4">
+        <h2 className="text-[14px] font-extrabold text-drift-text-primary">
           {title}
         </h2>
         {description && (
-          <p className="mt-1 text-[13px] text-drift-text-secondary">
+          <p className="mt-[3px] text-[11px] text-drift-text-secondary">
             {description}
           </p>
         )}
       </div>
-      <div className="flex flex-col gap-5">{children}</div>
-    </Card>
+      <div className="flex flex-col gap-5 p-5">{children}</div>
+    </section>
   );
 }
 
@@ -73,6 +77,8 @@ export function CoachForm({
   mode?: "club" | "self";
   submitLabel?: string;
 }) {
+  const t = useT();
+  const LEVELS = coachLevelOptions(t);
   const self = mode === "self";
   const { clubId } = useClub();
   const [photoUrl, setPhotoUrl] = useState(coach?.photoUrl ?? null);
@@ -101,6 +107,7 @@ export function CoachForm({
     coach?.publicContact.bookingUrl ?? "",
   );
   const [contactError, setContactError] = useState<string | null>(null);
+  const [tab, setTab] = useState<CoachTab>("profile");
 
   async function uploadPhoto(file: File) {
     if (self) {
@@ -133,7 +140,9 @@ export function CoachForm({
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     if (!publicEmail.trim() && !publicPhone.trim() && !bookingUrl.trim()) {
-      setContactError("Add at least one public contact method.");
+      setContactError(t("coachForm.contactRequired"));
+      // The message lives in the contact section, so take the coach there.
+      setTab("contact");
       return;
     }
     setContactError(null);
@@ -162,13 +171,32 @@ export function CoachForm({
   }
 
   return (
-    <form onSubmit={submit} className="flex flex-col gap-5">
+    <form
+      onSubmit={submit}
+      // The only required control (the account email) sits on the first tab; if
+      // the browser rejects the form from another tab, bring that tab forward.
+      onInvalidCapture={() => setTab("profile")}
+      className="flex flex-col gap-5"
+    >
+      <div className="flex justify-center rounded-2xl border border-drift-border bg-drift-surface-sunken p-2.5">
+        <SegmentControl<CoachTab>
+          value={tab}
+          onChange={setTab}
+          label={t("coachForm.sections")}
+          options={[
+            { value: "profile", label: t("a.profile") },
+            { value: "coaching", label: t("a.coaching") },
+            { value: "contact", label: t("coachForm.contactTab") },
+          ]}
+        />
+      </div>
+      <div className={tab === "profile" ? "" : "hidden"}>
       <Section
-        title="Profile"
+        title={t("a.profile")}
         description={
           self
-            ? "How you introduce yourself to players."
-            : "The coach's Drift account and background."
+            ? t("a.coachIntroSelf")
+            : t("a.coachIntroClub")
         }
       >
         {(self || coach) && (
@@ -180,7 +208,7 @@ export function CoachForm({
         )}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {!self && (
-            <Field label="Drift account email">
+            <Field label={t("a.driftAccountEmail")}>
               <Input
                 type="email"
                 required
@@ -190,7 +218,7 @@ export function CoachForm({
               />
             </Field>
           )}
-          <Field label="Years of coaching experience">
+          <Field label={t("a.yearsOfCoachingExperience")}>
             <Input
               type="number"
               min={0}
@@ -200,46 +228,46 @@ export function CoachForm({
             />
           </Field>
         </div>
-        <Field label="Bio">
+        <Field label={t("a.bio")}>
           <Textarea
             rows={5}
             value={bio}
             onChange={(event) => setBio(event.target.value)}
-            placeholder="Coaching background and approach"
+            placeholder={t("a.coachingBackgroundAndApproach")}
           />
         </Field>
       </Section>
+      </div>
 
+      <div className={tab === "coaching" ? "" : "hidden"}>
       <Section
-        title="Coaching"
+        title={t("a.coaching")}
         description={
           self
-            ? "What you teach and who you work with."
-            : "What this coach teaches and who they work with."
+            ? t("a.coachTeachSelf")
+            : t("a.coachTeachClub")
         }
       >
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Field label="Qualifications — one per line">
+          <Field label={t("a.qualificationsOnePerLine")}>
             <Textarea
               rows={5}
               value={qualifications}
               onChange={(event) => setQualifications(event.target.value)}
             />
           </Field>
-          <Field label="Specialisations — comma separated">
+          <Field label={t("a.specialisationsCommaSeparated")}>
             <Textarea
               rows={5}
               value={specialisations}
               onChange={(event) => setSpecialisations(event.target.value)}
-              placeholder="Juniors, serve technique, match play"
+              placeholder={t("a.juniorsServeTechniqueMatchPlay")}
             />
           </Field>
         </div>
 
         <fieldset>
-          <legend className="mb-2 text-[13px] font-semibold text-drift-text-secondary">
-            Player levels coached
-          </legend>
+          <legend className="mb-2 text-[13px] font-semibold text-drift-text-secondary">{t("a.playerLevelsCoached")}</legend>
           <div className="flex flex-wrap gap-3">
             {LEVELS.map((level) => (
               <label
@@ -258,31 +286,33 @@ export function CoachForm({
           </div>
         </fieldset>
       </Section>
+      </div>
 
+      <div className={tab === "contact" ? "" : "hidden"}>
       <Section
-        title="Public contact"
+        title={t("a.publicContact")}
         description={
           self
-            ? "Only these details appear in the player app. Your private account email and phone number are never shown."
-            : "Only these details appear in the player app. Private account contact information is never exposed."
+            ? t("a.coachContactSelf")
+            : t("a.coachContactClub")
         }
       >
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <Field label="Public email">
+          <Field label={t("a.publicEmail")}>
             <Input
               type="email"
               value={publicEmail}
               onChange={(event) => setPublicEmail(event.target.value)}
             />
           </Field>
-          <Field label="Public phone">
+          <Field label={t("a.publicPhone")}>
             <PhoneNumberField
               value={publicPhone}
               onChange={setPublicPhone}
-              label="Public phone"
+              label={t("a.publicPhone")}
             />
           </Field>
-          <Field label="Booking URL">
+          <Field label={t("a.bookingUrl")}>
             <Input
               type="url"
               placeholder="https://"
@@ -291,12 +321,12 @@ export function CoachForm({
             />
           </Field>
         </div>
-        <Field label="Availability">
+        <Field label={t("a.availability")}>
           <Textarea
             rows={3}
             value={availabilityNote}
             onChange={(event) => setAvailabilityNote(event.target.value)}
-            placeholder="e.g. Weekday evenings and Saturday mornings"
+            placeholder={t("a.eGWeekdayEveningsAnd")}
           />
         </Field>
         {contactError && (
@@ -305,11 +335,12 @@ export function CoachForm({
           </p>
         )}
       </Section>
+      </div>
 
       <Button type="submit" disabled={saving} className="self-start">
         {saving
-          ? "Saving…"
-          : (submitLabel ?? (coach ? "Save coach" : "Add coach"))}
+          ? t("common.saving")
+          : (submitLabel ?? (coach ? t("a.saveCoach") : t("a.addCoach")))}
       </Button>
     </form>
   );

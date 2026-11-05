@@ -32,4 +32,8 @@ export class UpdatePreferencesDto {
   @IsOptional()
   @IsBoolean()
   announcements?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  communities?: boolean;
 }

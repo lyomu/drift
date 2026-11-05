@@ -6,6 +6,8 @@ import '../../../../core/theme/drift_colors.dart';
 import '../../../../core/theme/drift_typography.dart';
 import '../../../achievements/application/achievements_providers.dart';
 import 'home_empty_state.dart';
+import '../../../../core/l10n/l10n.dart';
+import '../../../../shared/widgets/motion/count_up.dart';
 
 /// "Your progress" — achievements earned so far and the next one to chase.
 /// Reads the achievements list directly (always available) rather than the
@@ -31,9 +33,8 @@ class ProgressSection extends ConsumerWidget {
     if (earned == 0) {
       return HomeEmptyState(
         icon: Icons.emoji_events_outlined,
-        message:
-            'Play matches and log practice to start earning achievements.',
-        actionLabel: 'View',
+        message: context.l10n.homeProgressEmpty,
+        actionLabel: context.l10n.commonView,
         onAction: () => context.push('/profile/achievements'),
       );
     }
@@ -91,15 +92,18 @@ class ProgressSection extends ConsumerWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Achievements',
+                      context.l10n.navAchievements,
                       style: type.body.copyWith(fontWeight: FontWeight.w700),
                     ),
                   ),
-                  Text(
-                    '$earned / $total',
-                    style: type.body.copyWith(
-                      color: colors.primary,
-                      fontWeight: FontWeight.w700,
+                  DriftCountUp(
+                    value: earned,
+                    builder: (context, v) => Text(
+                      '${v.round()} / $total',
+                      style: type.body.copyWith(
+                        color: colors.primary,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ],
@@ -113,15 +117,16 @@ class ProgressSection extends ConsumerWidget {
                     colors.primary.withValues(alpha: 0.18),
                     colors.surface,
                   ),
-                  child: FractionallySizedBox(
-                    alignment: Alignment.centerLeft,
-                    widthFactor: total == 0
-                        ? 0
-                        : (earned / total).clamp(0.0, 1.0),
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [colors.primary, violet],
+                  child: DriftAnimatedFraction(
+                    value: total == 0 ? 0 : earned / total,
+                    builder: (context, f) => FractionallySizedBox(
+                      alignment: Alignment.centerLeft,
+                      widthFactor: f,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [colors.primary, violet],
+                          ),
                         ),
                       ),
                     ),
@@ -133,7 +138,7 @@ class ProgressSection extends ConsumerWidget {
                 Text.rich(
                   TextSpan(
                     children: [
-                      const TextSpan(text: 'Next: '),
+                      TextSpan(text: context.l10n.homeNextPrefix),
                       TextSpan(
                         text: nextLocked.title,
                         style: TextStyle(

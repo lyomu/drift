@@ -6,6 +6,7 @@ import '../../../shared/widgets/drift_filter_sheet.dart';
 import '../../../shared/widgets/drift_text_field.dart';
 import '../application/coaches_providers.dart';
 import '../data/coaches_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Coach Filters. Uses the app-wide [DriftFilterSheet] (2026-10).
 Future<void> showCoachFiltersSheet(BuildContext context, WidgetRef ref) {
@@ -75,33 +76,36 @@ class _CoachFiltersSheetState extends ConsumerState<_CoachFiltersSheet> {
     final type = Theme.of(context).extension<DriftTypography>()!;
 
     return DriftFilterSheet(
-      title: 'Coach filters',
+      title: context.l10n.coachFilters,
       activeCount: _activeCount,
       onClear: _clear,
       onApply: _apply,
       sections: [
         DriftFilterSection(
-          title: 'Specialisation',
+          title: context.l10n.coachSpecialisation,
           child: DriftTextField(
             label: '',
-            hintText: 'e.g. Serve, juniors, match play',
+            hintText: context.l10n.coachSpecialisationHint,
             controller: _specialisationController,
             onChanged: (_) => setState(() {}),
           ),
         ),
         DriftFilterSection(
-          title: 'Club',
+          title: context.l10n.clubTitle,
           child: _draft.clubId == null
               ? DriftTextField(
                   label: '',
-                  hintText: 'Search by club name',
+                  hintText: context.l10n.coachSearchClub,
                   controller: _clubController,
                   onChanged: (_) => setState(() {}),
                 )
-              : Text(_draft.clubName ?? 'Selected club', style: type.body),
+              : Text(
+                  _draft.clubName ?? context.l10n.coachSelectedClub,
+                  style: type.body,
+                ),
         ),
         DriftFilterSection(
-          title: 'Players coached',
+          title: context.l10n.coachPlayersCoached,
           child: DriftFilterPills<CoachLevel>(
             options: [
               for (final level in CoachLevel.values)

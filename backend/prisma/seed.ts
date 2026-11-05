@@ -8,6 +8,7 @@ import {
   MatchSport,
   PrismaClient,
 } from '@prisma/client';
+import { seedTennisFacts } from './seed-tennis-facts';
 
 /**
  * The seed league is created directly (Club Admin can also create leagues
@@ -588,6 +589,7 @@ async function main() {
 
   await seedCourtsAndClubs();
   await seedLearningContent();
+  await seedTennisFacts(prisma);
   // Fictional news fixtures are deliberately excluded from database seeding.
   // Keep the historical rows withdrawn via the news seed-retirement migration
   // so saved-story references remain intact.

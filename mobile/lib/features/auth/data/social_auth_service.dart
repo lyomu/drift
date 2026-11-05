@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Optional OAuth client ID overrides. Android normally reads its Google
 /// configuration from `android/app/google-services.json`; these build-time
@@ -131,7 +132,7 @@ class SocialAuthService {
         throw const SocialSignInCancelled();
       }
       throw SocialSignInUnavailable(
-        e.description ?? 'Google sign-in could not be completed.',
+        e.description ?? l10nNow.authGoogleFailed,
       );
     }
 
@@ -139,10 +140,7 @@ class SocialAuthService {
     if (idToken == null) {
       // Almost always a missing server client ID rather than a runtime fault,
       // so say that instead of a generic failure.
-      throw const SocialSignInUnavailable(
-        'Google returned no identity token. The app is missing its server '
-        'client ID.',
-      );
+      throw SocialSignInUnavailable(l10nNow.authGoogleNoToken);
     }
 
     return SocialCredential(
@@ -155,9 +153,7 @@ class SocialAuthService {
 
   Future<SocialCredential> apple() async {
     if (!appleConfigured) {
-      throw const SocialSignInUnavailable(
-        'Apple sign-in isn\'t available on this device yet.',
-      );
+      throw SocialSignInUnavailable(l10nNow.authAppleUnavailable);
     }
 
     final raw = _rawNonce();
@@ -183,15 +179,13 @@ class SocialAuthService {
         throw const SocialSignInCancelled();
       }
       throw SocialSignInUnavailable(
-        'Apple sign-in could not be completed. ${e.message}',
+        l10nNow.authAppleFailed(e.message),
       );
     }
 
     final identityToken = credential.identityToken;
     if (identityToken == null) {
-      throw const SocialSignInUnavailable(
-        'Apple returned no identity token. Please try again.',
-      );
+      throw SocialSignInUnavailable(l10nNow.authAppleNoToken);
     }
 
     return SocialCredential(

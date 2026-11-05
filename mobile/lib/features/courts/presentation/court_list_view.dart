@@ -9,6 +9,7 @@ import '../../../shared/widgets/drift_pill.dart';
 import '../../../shared/widgets/drift_soft_card.dart';
 import '../application/courts_providers.dart';
 import '../data/courts_repository.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// The List segment of Court Finder Hub — `foundation/04-screen-inventory.md`
 /// §A.6 (redesign 2026-08: `App.tsx` `DiscoverCourtsTab`). Shares
@@ -25,9 +26,9 @@ class CourtListView extends ConsumerWidget {
       child: switch (results) {
         AsyncData(:final value) =>
           value.courts.isEmpty
-              ? const _Message(
+              ? _Message(
                   icon: Icons.location_off_outlined,
-                  text: 'No courts found in this area',
+                  text: context.l10n.courtNoneInArea,
                 )
               : ListView.separated(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
@@ -36,9 +37,9 @@ class CourtListView extends ConsumerWidget {
                   itemBuilder: (context, i) =>
                       _CourtRow(court: value.courts[i]),
                 ),
-        AsyncError() => const _Message(
+        AsyncError() => _Message(
           icon: Icons.error_outline,
-          text: "Couldn't load courts. Pull to retry.",
+          text: context.l10n.courtLoadFailed,
         ),
         _ => const Center(child: CircularProgressIndicator()),
       },
@@ -60,9 +61,9 @@ class _CourtRow extends StatelessWidget {
 
     final pills = <Widget>[
       if (court.indoorAvailable)
-        const DriftPill(label: 'Indoor', tone: DriftPillTone.neutral),
+        DriftPill(label: context.l10n.courtIndoor, tone: DriftPillTone.neutral),
       if (court.outdoorAvailable)
-        const DriftPill(label: 'Outdoor', tone: DriftPillTone.neutral),
+        DriftPill(label: context.l10n.courtOutdoor, tone: DriftPillTone.neutral),
       for (final s in court.surfaces)
         DriftPill(label: s, tone: DriftPillTone.neutral),
       if (court.distanceKm != null)
@@ -97,8 +98,8 @@ class _CourtRow extends StatelessWidget {
                     ),
                     if (verified) ...[
                       const SizedBox(width: 6),
-                      const DriftPill(
-                        label: 'Verified',
+                      DriftPill(
+                        label: context.l10n.commonVerified,
                         tone: DriftPillTone.success,
                       ),
                     ],

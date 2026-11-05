@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../core/theme/drift_spacing.dart';
+
 /// Thin wrapper over [TextField] so call sites use one consistent
 /// label/hint/error pattern rather than repeating [InputDecoration]
 /// boilerplate. Visual styling comes from [InputDecorationTheme] in
@@ -18,6 +20,7 @@ class DriftTextField extends StatelessWidget {
     this.maxLines = 1,
     this.maxLength,
     this.inputFormatters,
+    this.labelStyle,
   });
 
   final String label;
@@ -28,6 +31,11 @@ class DriftTextField extends StatelessWidget {
   final TextInputType? keyboardType;
   final ValueChanged<String>? onChanged;
 
+  /// Overrides the label's text style. Used sparingly — e.g. to
+  /// de-emphasise secondary fields (confirm password) so they read quieter
+  /// than the primary field above them.
+  final TextStyle? labelStyle;
+
   /// Multi-line inputs (free-text notes, reasons). Must stay 1 when
   /// [obscureText] is set — Flutter disallows obscured multi-line fields.
   final int maxLines;
@@ -36,7 +44,8 @@ class DriftTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
+    final theme = Theme.of(context);
+    final field = TextField(
       controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
@@ -44,14 +53,18 @@ class DriftTextField extends StatelessWidget {
       maxLines: obscureText ? 1 : maxLines,
       maxLength: maxLength,
       inputFormatters: inputFormatters,
-      decoration: InputDecoration(
-        // An empty label means "no label" — used where the field sits under a
-        // heading that already names it. Passing '' through would reserve the
-        // floating-label row and render a blank line above the field.
-        labelText: label.isEmpty ? null : label,
-        hintText: hintText,
-        errorText: errorText,
-      ),
+      decoration: InputDecoration(hintText: hintText, errorText: errorText),
+    );
+
+    if (label.isEmpty) return field;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: labelStyle ?? theme.textTheme.labelMedium),
+        const SizedBox(height: DriftSpacing.s1),
+        field,
+      ],
     );
   }
 }

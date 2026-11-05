@@ -8,6 +8,7 @@ import '../../features/coaches/data/coaches_repository.dart';
 import 'drift_card.dart';
 import 'drift_racket_icon.dart';
 import 'drift_status_badge.dart';
+import '../../core/l10n/l10n.dart';
 
 class DriftCoachCard extends StatelessWidget {
   const DriftCoachCard({super.key, required this.coach, this.onTap});
@@ -44,8 +45,8 @@ class DriftCoachCard extends StatelessWidget {
                     Expanded(child: Text(coach.displayName, style: type.title)),
                     if (coach.verificationStatus ==
                         CoachVerificationStatus.verified)
-                      const DriftStatusBadge(
-                        label: 'Verified',
+                      DriftStatusBadge(
+                        label: context.l10n.commonVerified,
                         tone: DriftStatusTone.success,
                         icon: Icons.verified_outlined,
                       ),

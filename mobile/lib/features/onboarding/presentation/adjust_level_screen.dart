@@ -6,6 +6,7 @@ import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/buttons/drift_button.dart';
 import '../../../shared/widgets/drift_scaffold.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Adjust Level — `foundation/04-screen-inventory.md` A.2. Manual override
 /// of the suggested level; "Cancel" reverts to the suggested value.
@@ -27,7 +28,7 @@ class _AdjustLevelScreenState extends State<AdjustLevelScreen> {
     final type = Theme.of(context).extension<DriftTypography>()!;
 
     return DriftScaffold(
-      title: 'Adjust Level',
+      title: context.l10n.onbAdjustLevelTitle,
       body: Padding(
         padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
         child: Column(
@@ -43,15 +44,20 @@ class _AdjustLevelScreenState extends State<AdjustLevelScreen> {
               onChanged: (value) => setState(() => _level = value),
             ),
             Text(
-              'Suggested: ${widget.suggestedLevel.toStringAsFixed(1)}',
+              context.l10n.onbSuggestedLevel(
+                widget.suggestedLevel.toStringAsFixed(1),
+              ),
               style: type.body.copyWith(color: colors.textSecondary),
             ),
             const Spacer(),
-            DriftButton(label: 'Save', onPressed: () => context.pop(_level)),
+            DriftButton(
+              label: context.l10n.commonSave,
+              onPressed: () => context.pop(_level),
+            ),
             const SizedBox(height: DriftSpacing.s2),
             Center(
               child: DriftButton(
-                label: 'Cancel',
+                label: context.l10n.commonCancel,
                 variant: DriftButtonVariant.text,
                 onPressed: () => context.pop(),
               ),

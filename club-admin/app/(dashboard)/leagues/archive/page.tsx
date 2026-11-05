@@ -6,6 +6,8 @@ import { useClub } from "@/lib/club-context";
 import { Button, Card, EmptyState, ErrorBanner, Field, Input, PageHeader, Select } from "@/components/ui";
 import { DataTable } from "@/components/DataTable";
 import { StatusBadge } from "@/components/StatusBadge";
+import { IconChip, MaterialIcon } from "@/components/dashboard-design";
+import { useT } from "@/lib/i18n/i18n-context";
 
 type ArchivedLeague = {
   id: string;
@@ -17,6 +19,7 @@ type ArchivedLeague = {
 };
 
 export default function LeagueArchivePage() {
+  const t = useT();
   const { clubId, role } = useClub();
   const canManage = role === "OWNER" || role === "ADMIN";
   const [leagues, setLeagues] = useState<ArchivedLeague[] | null>(null);
@@ -33,9 +36,9 @@ export default function LeagueArchivePage() {
         (await api.get<{ leagues: ArchivedLeague[] }>(`/clubs/${clubId}/leagues/archive`)).leagues,
       );
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Archive could not be loaded.");
+      setError(err instanceof ApiError ? err.message : t("a.archiveCouldNotBeLoaded"));
     }
-  }, [clubId]);
+  }, [clubId, t]);
 
   useEffect(() => {
     void load();
@@ -54,52 +57,60 @@ export default function LeagueArchivePage() {
       setNotes("");
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "The award could not be issued.");
+      setError(err instanceof ApiError ? err.message : t("a.theAwardCouldNotBe"));
     }
   }
 
   return (
     <div>
       <PageHeader
-        title="League archive & awards"
-        description="Review final standings and recognise completed-league achievements."
+        eyebrow={t("nav.competitions")}
+        title={t("a.leagueArchiveAwards")}
+        description={t("a.reviewFinalStandingsAndRecognise")}
       />
       <ErrorBanner message={error} />
       {leagues === null ? (
-        <EmptyState message="Loading…" />
+        <EmptyState message={t("a.loading")} />
       ) : leagues.length === 0 ? (
-        <EmptyState message="No completed leagues yet" />
+        <EmptyState message={t("a.noCompletedLeaguesYet")} />
       ) : (
         <div className="flex flex-col gap-4">
           {leagues.map((league) => (
             <Card key={league.id}>
               <button
-                className="flex w-full items-center justify-between text-left"
+                type="button"
+                aria-expanded={openId === league.id}
+                className="flex w-full items-center gap-3.5 text-left"
                 onClick={() => setOpenId(openId === league.id ? null : league.id)}
               >
-                <div>
-                  <div className="font-semibold text-drift-text-primary">{league.name}</div>
-                  <div className="mt-1 text-sm text-drift-text-secondary">
-                    {league.standings.length} final standings · {league.awards.length} awards
+                <IconChip icon="emoji_events" tone="gold" />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[14px] font-extrabold text-drift-text-primary">{league.name}</div>
+                  <div className="mt-0.5 text-[12px] text-drift-text-secondary">
+                    {t("arch.summary", { standings: league.standings.length, awards: league.awards.length })}
                   </div>
                 </div>
                 <StatusBadge status={league.cancelledAt ? "CANCELLED" : "COMPLETED"} />
+                <MaterialIcon
+                  name="expand_more"
+                  className={`text-[22px] text-drift-text-secondary transition-transform ${openId === league.id ? "rotate-180" : ""}`}
+                />
               </button>
               {openId === league.id && (
                 <div className="mt-5 border-t border-drift-border pt-5">
                   <DataTable
                     rows={league.standings}
                     rowKey={(s) => s.userId}
-                    emptyMessage="No final standings were recorded."
+                    emptyMessage={t("a.noFinalStandingsWereRecorded")}
                     columns={[
-                      { header: "Rank", cell: (s) => s.rank },
+                      { header: t("a.rank"), cell: (s) => s.rank },
                       {
-                        header: "Player",
+                        header: t("a.player"),
                         cell: (s) =>
                           `${s.user.firstName ?? ""} ${s.user.lastName ?? ""}`.trim() || "—",
                       },
-                      { header: "Points", cell: (s) => s.points },
-                      { header: "W-L", cell: (s) => `${s.wins}-${s.losses}` },
+                      { header: t("a.points"), cell: (s) => s.points },
+                      { header: t("ld.winLoss"), cell: (s) => `${s.wins}-${s.losses}` },
                     ]}
                   />
                   {league.awards.length > 0 && (
@@ -107,8 +118,9 @@ export default function LeagueArchivePage() {
                       {league.awards.map((a) => (
                         <span
                           key={a.id}
-                          className="rounded-md bg-drift-primary-light px-3 py-2 text-sm font-semibold text-drift-primary-dark"
+                          className="inline-flex items-center gap-1.5 rounded-full bg-drift-gold-surface px-3 py-1.5 text-[12px] font-bold text-drift-gold"
                         >
+                          <MaterialIcon name="workspace_premium" className="text-[15px]" />
                           {a.title} · {`${a.recipient.firstName ?? ""} ${a.recipient.lastName ?? ""}`.trim()}
                         </span>
                       ))}
@@ -119,13 +131,13 @@ export default function LeagueArchivePage() {
                       onSubmit={(e) => void award(e, league.id)}
                       className="mt-5 grid grid-cols-1 gap-3 border-t border-drift-border pt-5 sm:grid-cols-[1fr_1fr_1fr_auto]"
                     >
-                      <Field label="Recipient">
+                      <Field label={t("a.recipient")}>
                         <Select
                           required
                           value={recipientId}
                           onChange={(e) => setRecipientId(e.target.value)}
                         >
-                          <option value="">Select player</option>
+                          <option value="">{t("a.selectPlayer")}</option>
                           {league.standings.map((s) => (
                             <option key={s.userId} value={s.userId}>
                               {`${s.user.firstName ?? ""} ${s.user.lastName ?? ""}`.trim()}
@@ -133,20 +145,18 @@ export default function LeagueArchivePage() {
                           ))}
                         </Select>
                       </Field>
-                      <Field label="Award">
+                      <Field label={t("a.award")}>
                         <Input
                           required
                           value={title}
                           onChange={(e) => setTitle(e.target.value)}
-                          placeholder="League champion"
+                          placeholder={t("a.leagueChampion")}
                         />
                       </Field>
-                      <Field label="Notes">
+                      <Field label={t("a.notes")}>
                         <Input value={notes} onChange={(e) => setNotes(e.target.value)} />
                       </Field>
-                      <Button type="submit" className="self-end">
-                        Issue award
-                      </Button>
+                      <Button type="submit" className="self-end">{t("a.issueAward")}</Button>
                     </form>
                   )}
                 </div>

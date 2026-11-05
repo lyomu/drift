@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/drift_colors.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/drift_scaffold.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Court Photos Gallery — `foundation/04-screen-inventory.md` §A.6. Plain
 /// `Image.network` (no `cached_network_image`) — external URLs only, no
@@ -19,11 +20,11 @@ class CourtPhotosGalleryScreen extends StatelessWidget {
     final colors = Theme.of(context).extension<DriftColors>()!;
 
     return DriftScaffold(
-      title: 'Photos',
+      title: context.l10n.courtPhotos,
       body: photoUrls.isEmpty
           ? Center(
               child: Text(
-                'No photos yet',
+                context.l10n.courtNoPhotos,
                 style: type.body.copyWith(color: colors.textSecondary),
               ),
             )

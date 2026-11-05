@@ -10,11 +10,17 @@ import {
 } from 'class-validator';
 import { AuthProvider } from '@prisma/client';
 import { AGE_POLICY_ERROR_MESSAGE } from '../age-policy';
+import { LOCALES, type LocaleCode } from '../../common/i18n';
 
 class NewSocialAccountPolicyDto {
   @IsOptional()
   @Equals(true, { message: AGE_POLICY_ERROR_MESSAGE })
   acceptedAgePolicy?: true;
+
+  /** Used only when this sign-in creates the account — see `SignUpDto.locale`. */
+  @IsOptional()
+  @IsIn(LOCALES)
+  locale?: LocaleCode;
 }
 
 export class OAuthGoogleDto extends NewSocialAccountPolicyDto {

@@ -5,6 +5,7 @@ import '../../../core/theme/drift_spacing.dart';
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/buttons/drift_primary_button.dart';
 import '../../../shared/widgets/drift_match_card.dart';
+import '../../../core/l10n/l10n.dart';
 
 /// Propose Time — `foundation/04-screen-inventory.md` §A.4. Several candidate
 /// times go out at once so the other player can just pick one, rather than
@@ -59,7 +60,7 @@ class _ProposeTimeSheetState extends State<_ProposeTimeSheet> {
     if (combined.isBefore(DateTime.now())) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Pick a time in the future.')),
+          SnackBar(content: Text(context.l10n.proposeFutureTime)),
         );
       }
       return;
@@ -85,10 +86,10 @@ class _ProposeTimeSheetState extends State<_ProposeTimeSheet> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Propose times', style: type.h2),
+            Text(context.l10n.proposeTitle, style: type.h2),
             const SizedBox(height: DriftSpacing.s1),
             Text(
-              'Offer up to $_maxOptions options — they pick one.',
+              context.l10n.proposeOfferUpTo(_maxOptions),
               style: type.bodySmall.copyWith(color: colors.textSecondary),
             ),
             const SizedBox(height: DriftSpacing.s4),
@@ -97,7 +98,7 @@ class _ProposeTimeSheetState extends State<_ProposeTimeSheet> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: DriftSpacing.s4),
                 child: Text(
-                  'No times added yet.',
+                  context.l10n.proposeNoTimes,
                   style: type.body.copyWith(color: colors.textSecondary),
                   textAlign: TextAlign.center,
                 ),
@@ -117,13 +118,15 @@ class _ProposeTimeSheetState extends State<_ProposeTimeSheet> {
             const SizedBox(height: DriftSpacing.s2),
             if (_times.length < _maxOptions)
               Center(
-                child: DriftTextLink(label: 'Add a time', onPressed: _addTime),
+                child: DriftTextLink(
+                  label: context.l10n.proposeAddTime,
+                  onPressed: _addTime,
+                ),
               ),
 
             const SizedBox(height: DriftSpacing.s4),
             DriftPrimaryButton(
-              label:
-                  'Send ${_times.length} time${_times.length == 1 ? '' : 's'}',
+              label: context.l10n.proposeSendTimes(_times.length),
               onPressed: _times.isEmpty
                   ? null
                   : () => Navigator.of(context).pop(_times),
