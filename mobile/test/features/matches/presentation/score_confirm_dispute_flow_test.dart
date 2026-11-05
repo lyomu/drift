@@ -29,10 +29,27 @@ void main() {
     addTearDown(tester.view.reset);
   }
 
-  bool singleSet(List<SetScore> sets, int a, int b) =>
-      sets.length == 1 &&
-      sets.first.sideAGames == a &&
-      sets.first.sideBGames == b;
+  /// A best-of-3 match is only decided after two sets, so the flows below
+  /// enter the same score twice.
+  bool twoSets(List<SetScore> sets, int a, int b) =>
+      sets.length == 2 &&
+      sets.every((s) => s.sideAGames == a && s.sideBGames == b);
+
+  /// Types [a]-[b] into set 1, adds a second set and types the same score.
+  Future<void> enterTwoSets(WidgetTester tester, String a, String b) async {
+    Finder fields() => find.byWidgetPredicate(
+      (w) => w is TextField && w.decoration?.hintText == '0',
+    );
+    await tester.enterText(fields().first, a);
+    await tester.enterText(fields().at(1), b);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Add a set'));
+    await tester.tap(find.text('Add a set'));
+    await tester.pumpAndSettle();
+    await tester.enterText(fields().at(2), a);
+    await tester.enterText(fields().at(3), b);
+    await tester.pumpAndSettle();
+  }
 
   setUpAll(() {
     registerFallbackValue(ResultOutcome.score);
@@ -94,11 +111,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Enter Result'), findsOneWidget);
 
-      final scoreFields = find.byWidgetPredicate(
-        (w) => w is TextField && w.decoration?.hintText == '0',
-      );
-      await tester.enterText(scoreFields.first, '6');
-      await tester.enterText(scoreFields.at(1), '4');
+      await enterTwoSets(tester, '6', '4');
 
       final submit = find.text('Submit');
       await tester.ensureVisible(submit);
@@ -106,7 +119,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(submitCalls, 1);
-      expect(singleSet(submittedSets!, 6, 4), isTrue);
+      expect(twoSets(submittedSets!, 6, 4), isTrue);
     });
 
     testWidgets('refuses a set with a missing games value', (tester) async {
@@ -253,11 +266,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Your version'), findsOneWidget);
-      final scoreFields = find.byWidgetPredicate(
-        (w) => w is TextField && w.decoration?.hintText == '0',
-      );
-      await tester.enterText(scoreFields.first, '3');
-      await tester.enterText(scoreFields.at(1), '6');
+      await enterTwoSets(tester, '3', '6');
 
       final submit = find.text('Submit');
       await tester.ensureVisible(submit);
@@ -265,7 +274,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(disputeCalls, 1);
-      expect(singleSet(disputedSets!, 3, 6), isTrue);
+      expect(twoSets(disputedSets!, 3, 6), isTrue);
       // Back on the refreshed detail screen in the disputed state.
       expect(find.text('View dispute'), findsOneWidget);
     });
