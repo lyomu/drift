@@ -1,13 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { api, ApiError } from "@/lib/api-client";
 import { useClub } from "@/lib/club-context";
-import { Button, ErrorBanner, Field, Input, PageHeader, Select, Textarea } from "@/components/ui";
+import { Button, EmptyState, ErrorBanner, Field, Input, PageHeader, Select, Textarea } from "@/components/ui";
 import { StatusBadge } from "@/components/StatusBadge";
-import { IconChip, ModalShell } from "@/components/dashboard-design";
-import { Listing } from "@/components/Listing";
+import { IconChip, MaterialIcon, ModalShell } from "@/components/dashboard-design";
+import { ActionMenu, ManagementCard, SegmentControl } from "@/components/redesign";
 import { useI18n, useT } from "@/lib/i18n/i18n-context";
 
 interface Tournament {
@@ -19,6 +19,8 @@ interface Tournament {
   registrationClosesAt: string;
   _count?: { entries: number };
 }
+
+type TournamentFilter = "ALL" | "RUNNING" | "REGISTRATION_OPEN" | "DRAFT";
 
 export default function TournamentsPage() {
   const t = useT();
@@ -32,6 +34,7 @@ export default function TournamentsPage() {
   const [drawSize, setDrawSize] = useState(8);
   const [closesAt, setClosesAt] = useState("");
   const [busy, setBusy] = useState(false);
+  const [filter, setFilter] = useState<TournamentFilter>("ALL");
 
   const load = useCallback(async () => {
     if (!clubId) return;
@@ -99,72 +102,151 @@ export default function TournamentsPage() {
     }
   }
 
+  const running = rows?.find((tournament) => tournament.state === "RUNNING") ?? null;
+  const visible = useMemo(
+    () => (rows ?? []).filter((tournament) => filter === "ALL" || tournament.state === filter),
+    [rows, filter],
+  );
+
   return (
     <div>
       <PageHeader
+        eyebrow={t("nav.competitions")}
         title={t("a.tournaments")}
         description={t("a.singleEliminationKnockoutDrawsGenerate")}
-        action={<Button onClick={() => setShowForm(true)}>{t("a.newTournament")}</Button>}
+        action={
+          <Button onClick={() => setShowForm(true)}>
+            <MaterialIcon name="add" className="text-[19px]" />
+            {t("a.newTournament")}
+          </Button>
+        }
       />
       <ErrorBanner message={error} />
 
-      <Listing
-        title={t("a.tournaments")}
-        count={rows?.length ?? null}
-        loading={rows === null && !error}
-        empty={{
-          icon: "grid_view",
-          title: t("a.noTournamentsYet"),
-          description: t("a.setUpASingleElimination"),
-          action: <Button onClick={() => setShowForm(true)}>{t("a.newTournament")}</Button>,
-        }}
-      >
-        {rows?.map((tournament) => (
+      {rows !== null && running && (
+        <section className="relative mb-[18px] overflow-hidden rounded-2xl bg-gradient-to-br from-[#0077cc] to-[#003f73] p-7 text-white shadow-card">
+          <div className="relative z-10 max-w-[520px]">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1.5 text-[11px] font-extrabold uppercase">
+              <span className="h-[5px] w-[5px] rounded-full bg-current" />
+              {t("tn.liveNow")}
+            </span>
+            <h2 className="mt-3 font-display text-[26px] font-extrabold leading-tight">{running.name}</h2>
+            <p className="mt-1.5 text-[13px] text-white/80">
+              {t("tn.liveBlurb", { count: `${running._count?.entries ?? 0}/${running.drawSize}` })}
+            </p>
+            <Link
+              href={`/tournaments/${running.id}`}
+              className="mt-4 inline-flex items-center gap-0.5 text-[13px] font-bold text-white hover:underline"
+            >
+              {t("tn.viewDraw")}
+              <MaterialIcon name="chevron_right" className="text-[18px]" />
+            </Link>
+          </div>
+          {/* Draw motif: three rounds of connected boxes. */}
+          <div aria-hidden="true" className="absolute bottom-5 right-7 top-5 hidden w-[300px] rounded-xl border border-white/20 bg-white/10 p-4 md:block">
+            <div className="flex h-full items-center gap-3">
+              <div className="flex flex-1 flex-col gap-3"><i className="h-5 rounded-md bg-white/25" /><i className="h-5 rounded-md bg-white/25" /></div>
+              <div className="h-px w-3 bg-white/40" />
+              <div className="flex-1"><i className="block h-5 rounded-md bg-white/35" /></div>
+              <div className="h-px w-3 bg-white/40" />
+              <div className="flex-1"><i className="block h-5 rounded-md bg-white/60" /></div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {rows === null && !error ? (
+        <EmptyState message={t("common.loading")} />
+      ) : (rows?.length ?? 0) === 0 ? (
+        <EmptyState
+          icon="grid_view"
+          title={t("a.noTournamentsYet")}
+          description={t("a.setUpASingleElimination")}
+          action={<Button onClick={() => setShowForm(true)}>{t("a.newTournament")}</Button>}
+        />
+      ) : (
+        <ManagementCard
+          title={t("tn.all")}
+          subtitle={t("tn.count", { count: visible.length })}
+          actions={
+            <SegmentControl<TournamentFilter>
+              value={filter}
+              onChange={setFilter}
+              options={[
+                { value: "ALL", label: t("lg.filterAll") },
+                { value: "RUNNING", label: t("tn.filterRunning") },
+                { value: "REGISTRATION_OPEN", label: t("tn.filterRegistration") },
+                { value: "DRAFT", label: t("lg.filterDraft") },
+              ]}
+            />
+          }
+        >
+          {visible.length === 0 ? (
+            <EmptyState bare icon="account_tree" title={t("tn.noMatches")} />
+          ) : (
+            <div className="flex flex-col gap-2.5 p-3">
+              {visible.map((tournament) => (
             <div
               key={tournament.id}
-              className="rowcard flex flex-wrap items-center gap-4 rounded-lg border border-drift-border bg-drift-surface px-5 py-[18px] transition-colors"
+              className="flex flex-wrap items-center gap-4 rounded-[14px] border border-drift-border bg-drift-surface px-5 py-4 transition-colors hover:bg-drift-surface-sunken"
             >
-              <IconChip icon="grid_view" tone="success" />
+              <IconChip icon="account_tree" tone="lime" />
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-[14.5px] font-bold text-drift-text-primary">
+                  <span className="text-[14px] font-extrabold text-drift-text-primary">
                     {tournament.name}
                   </span>
                   <StatusBadge status={tournament.state} />
                 </div>
-                <div className="mt-1 text-[12.5px] text-drift-text-secondary">
-                  {tournament._count?.entries ?? 0}/{tournament.drawSize} entries / closes{" "}
-                  {formatDate(tournament.registrationClosesAt)}
+                <div className="mt-1 text-[12px] text-drift-text-secondary">
+                  {t("tn.entriesCloses", {
+                    count: `${tournament._count?.entries ?? 0}/${tournament.drawSize}`,
+                    date: formatDate(tournament.registrationClosesAt),
+                  })}
+                </div>
+                <div className="mt-2 h-1.5 max-w-[260px] overflow-hidden rounded-full bg-drift-neutral-surface">
+                  <div
+                    className="h-full rounded-full bg-drift-primary"
+                    style={{ width: `${Math.min(100, ((tournament._count?.entries ?? 0) / tournament.drawSize) * 100)}%` }}
+                  />
                 </div>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex items-center gap-2">
                 <Link href={`/tournaments/${tournament.id}`}>
-                  <Button variant="secondary">{t("a.manageDraw")}</Button>
+                  <Button variant="secondary" size="sm">{t("a.manageDraw")}</Button>
                 </Link>
-                {(tournament.state === "REGISTRATION_OPEN" ||
-                  tournament.state === "DRAFT") && (
-                  <Button
-                    variant="secondary"
-                    disabled={busy}
-                    onClick={() => void generateDraw(tournament.id)}
-                  >
-                    Generate draw
-                  </Button>
+                {tournament.state !== "COMPLETED" && tournament.state !== "CANCELLED" && (
+                  <ActionMenu
+                    label={t("tn.moreActions", { name: tournament.name })}
+                    items={[
+                      ...(tournament.state === "REGISTRATION_OPEN" || tournament.state === "DRAFT"
+                        ? [
+                            {
+                              icon: "auto_awesome",
+                              label: t("tn.generateDraw"),
+                              disabled: busy,
+                              onSelect: () => void generateDraw(tournament.id),
+                            },
+                            { divider: true as const },
+                          ]
+                        : []),
+                      {
+                        icon: "cancel",
+                        label: t("tn.cancelTournament"),
+                        danger: true,
+                        disabled: busy,
+                        onSelect: () => void cancel(tournament.id),
+                      },
+                    ]}
+                  />
                 )}
-                {tournament.state !== "COMPLETED" &&
-                  tournament.state !== "CANCELLED" && (
-                    <Button
-                      variant="ghost"
-                      disabled={busy}
-                      onClick={() => void cancel(tournament.id)}
-                    >
-                      Cancel
-                    </Button>
-                  )}
               </div>
             </div>
-        ))}
-      </Listing>
+              ))}
+            </div>
+          )}
+        </ManagementCard>
+      )}
 
       {showForm && (
         <ModalShell title={t("a.newTournament")} onClose={() => setShowForm(false)}>

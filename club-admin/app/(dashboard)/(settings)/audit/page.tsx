@@ -71,6 +71,7 @@ export default function AuditPage() {
   return (
     <div>
       <PageHeader
+        compact
         title={t("a.clubAuditLog")}
         description={t("a.aDurableHistoryOfConsequential")}
         action={

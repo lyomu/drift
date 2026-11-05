@@ -14,7 +14,8 @@ import {
   Textarea,
 } from "@/components/ui";
 import { StatusBadge } from "@/components/StatusBadge";
-import { MaterialIcon, ModalShell, Panel } from "@/components/dashboard-design";
+import { IconChip, MaterialIcon, ModalShell } from "@/components/dashboard-design";
+import { ManagementCard } from "@/components/redesign";
 import type { Announcement, AnnouncementAudience } from "@/lib/types";
 import { useT } from "@/lib/i18n/i18n-context";
 
@@ -110,11 +111,15 @@ export default function AnnouncementsPage() {
   return (
     <div>
       <PageHeader
+        eyebrow={t("nav.community")}
         title={t("a.announcements")}
         description={t("a.publishedAnnouncementsSurfaceOnMembers")}
         action={
           canManage && (
-            <Button onClick={() => setShowForm(true)}>{t("a.newAnnouncement")}</Button>
+            <Button onClick={() => setShowForm(true)}>
+              <MaterialIcon name="add" className="text-[19px]" />
+              {t("a.newAnnouncement")}
+            </Button>
           )
         }
       />
@@ -125,48 +130,53 @@ export default function AnnouncementsPage() {
       ) : announcements.length === 0 ? (
         <EmptyState message={t("a.noAnnouncementsYet")} />
       ) : (
-        <div className="flex flex-col gap-3">
-          {announcements.map((a) => (
-            <Panel key={a.id}>
-              <div className="mb-3 flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-[14.5px] font-bold text-drift-text-primary">
-                      {a.title}
-                    </h2>
-                    {a.pinned && (
-                      <MaterialIcon name="push_pin" filled className="text-[17px] text-drift-primary" />
-                    )}
-                    <StatusBadge status={a.status} />
-                    <span className="inline-flex items-center gap-1 rounded-full bg-drift-neutral-surface px-2.5 py-[3px] text-[11px] font-semibold text-drift-text-secondary">
-                      <MaterialIcon name="group" className="text-[13px]" />
-                      {audienceLabel(a.audience)}
-                    </span>
+        <ManagementCard
+          title={t("an.latest")}
+          subtitle={t("an.count", { count: announcements.length })}
+        >
+          <div className="flex flex-col px-3 py-2">
+            {announcements.map((a, index) => (
+              <article
+                key={a.id}
+                className={`rounded-xl px-3 py-4 ${
+                  a.pinned
+                    ? "border border-drift-primary/25 bg-drift-primary-light/60"
+                    : index < announcements.length - 1
+                      ? "border-b border-drift-border"
+                      : ""
+                }`}
+              >
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="flex min-w-0 flex-1 items-start gap-3.5">
+                    <IconChip icon={a.pinned ? "push_pin" : "campaign"} tone={a.status === "PUBLISHED" ? "lime" : "neutral"} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h2 className="text-[14px] font-extrabold text-drift-text-primary">{a.title}</h2>
+                        <StatusBadge status={a.status} />
+                        <span className="inline-flex items-center gap-1 rounded-full bg-drift-neutral-surface px-2.5 py-1 text-[11px] font-semibold text-drift-text-secondary">
+                          <MaterialIcon name="group" className="text-[13px]" />
+                          {audienceLabel(a.audience)}
+                        </span>
+                      </div>
+                      <p className="mt-1.5 text-[13px] leading-6 text-drift-text-secondary">{a.body}</p>
+                    </div>
                   </div>
+                  {canManage && (
+                    <div className="flex shrink-0 items-center gap-2">
+                      <Button variant="secondary" size="sm" onClick={() => void handlePin(a)}>
+                        <MaterialIcon name="push_pin" className="text-[15px]" />
+                        {a.pinned ? t("a.unpin") : t("a.pin")}
+                      </Button>
+                      <Button variant="secondary" size="sm" onClick={() => void handlePublish(a)}>
+                        {a.status === "PUBLISHED" ? t("a.unpublish") : t("a.publish")}
+                      </Button>
+                    </div>
+                  )}
                 </div>
-                {canManage && (
-                  <div className="flex shrink-0 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => void handlePin(a)}
-                      className="text-[13px] font-semibold text-drift-text-secondary hover:text-drift-text-primary"
-                    >
-                      {a.pinned ? t("a.unpin") : t("a.pin")}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void handlePublish(a)}
-                      className="text-[13px] font-semibold text-drift-primary hover:text-drift-primary-dark"
-                    >
-                      {a.status === "PUBLISHED" ? t("a.unpublish") : t("a.publish")}
-                    </button>
-                  </div>
-                )}
-              </div>
-              <p className="text-sm leading-6 text-drift-text-secondary">{a.body}</p>
-            </Panel>
-          ))}
-        </div>
+              </article>
+            ))}
+          </div>
+        </ManagementCard>
       )}
 
       {showForm && (
@@ -213,7 +223,7 @@ export default function AnnouncementsPage() {
                 checked={form.pinned}
                 onChange={(e) => setForm({ ...form, pinned: e.target.checked })}
               />
-              Pin to top
+              {t("an.pinToTop")}
             </label>
             <div className="mt-2 flex justify-end gap-3">
               <Button
@@ -224,7 +234,7 @@ export default function AnnouncementsPage() {
                 }}
                 variant="secondary"
               >
-                Save as draft
+                {t("a.saveDraft")}
               </Button>
               <Button
                 type="submit"

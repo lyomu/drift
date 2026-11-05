@@ -5,12 +5,12 @@ import Link from "next/link";
 import {
   Badge,
   Button,
-  Card,
   EmptyState,
   ErrorBanner,
   PageHeader,
   statusTone,
 } from "@/components/ui";
+import { CoachHero } from "@/components/CoachHero";
 import { CoachForm, type CoachFormPayload } from "@/components/CoachForm";
 import { ApiError } from "@/lib/api-client";
 import { coachApi } from "@/lib/coach-api";
@@ -78,7 +78,7 @@ export default function CoachProfilePage() {
   if (loading) {
     return (
       <>
-        <PageHeader title={t("a.publicProfile")} />
+        <PageHeader eyebrow={t("coach.workspace")} title={t("a.publicProfile")} />
         <EmptyState message={t("a.loading")} />
       </>
     );
@@ -87,7 +87,7 @@ export default function CoachProfilePage() {
   if (missing || !coach) {
     return (
       <>
-        <PageHeader title={t("a.publicProfile")} />
+        <PageHeader eyebrow={t("coach.workspace")} title={t("a.publicProfile")} />
         <ErrorBanner message={error} />
         <EmptyState
           icon="badge"
@@ -104,11 +104,12 @@ export default function CoachProfilePage() {
   }
 
   const name =
-    [coach.firstName, coach.lastName].filter(Boolean).join(" ") || "Your profile";
+    [coach.firstName, coach.lastName].filter(Boolean).join(" ") || t("cch.yourProfile");
 
   return (
     <>
       <PageHeader
+        eyebrow={t("coach.workspace")}
         title={t("a.publicProfile")}
         description={t("a.thisIsWhatPlayersSee")}
         action={
@@ -119,28 +120,28 @@ export default function CoachProfilePage() {
       />
       <ErrorBanner message={error} />
 
-      <div className="mb-5">
-        <Card>
-          <h2 className="font-display text-base font-bold text-drift-text-primary">
-            {name}
-          </h2>
-          <p className="mt-1 text-[13px] text-drift-text-secondary">
-            {coach.clubs.length > 0
-              ? `Listed at ${coach.clubs.map((club) => club.name).join(", ")}.`
-              : t("a.notLinkedClub")}
-          </p>
-          {saved && (
-            <p className="mt-2 text-[13px] font-semibold text-drift-success">{t("a.profileSavedPlayersWillSee")}</p>
-          )}
-        </Card>
-      </div>
+      <CoachHero
+        name={name}
+        verification={coach.verificationStatus}
+        subtitle={
+          coach.clubs.length > 0
+            ? t("cch.listedAt", { clubs: coach.clubs.map((club) => club.name).join(", ") })
+            : t("a.notLinkedClub")
+        }
+        tags={coach.specialisations.slice(0, 4)}
+      />
+      {saved && (
+        <p role="status" className="mb-4 text-[13px] font-semibold text-drift-success">
+          {t("a.profileSavedPlayersWillSee")}
+        </p>
+      )}
 
       <CoachForm
         mode="self"
         coach={coach}
         saving={saving}
         onSubmit={save}
-        submitLabel="Save profile"
+        submitLabel={t("cch.saveProfile")}
       />
     </>
   );

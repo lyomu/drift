@@ -42,6 +42,7 @@ export default function CoachClubsPage() {
   return (
     <>
       <PageHeader
+        eyebrow={t("coach.workspace")}
         title={t("a.clubs")}
         description={t("a.theClubsYourCoachingProfile")}
       />

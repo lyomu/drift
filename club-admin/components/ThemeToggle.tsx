@@ -48,7 +48,7 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
       onClick={toggle}
       aria-label={isDark ? t("theme.toLight") : t("theme.toDark")}
       title={isDark ? t("theme.light") : t("theme.dark")}
-      className={`flex h-10 w-10 items-center justify-center rounded-full border border-drift-border bg-drift-background text-drift-text-primary transition-colors hover:border-drift-primary ${className}`}
+      className={`flex h-[38px] w-[38px] items-center justify-center rounded-full border border-drift-border bg-drift-surface text-drift-text-primary transition-colors hover:border-drift-primary ${className}`}
     >
       <MaterialIcon
         name={isDark ? "light_mode" : "dark_mode"}

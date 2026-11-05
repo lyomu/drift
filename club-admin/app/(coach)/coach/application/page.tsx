@@ -117,7 +117,7 @@ export default function CoachApplicationPage() {
   if (loading) {
     return (
       <>
-        <PageHeader title={t("a.coachApplication")} />
+        <PageHeader eyebrow={t("coach.workspace")} title={t("a.coachApplication")} />
         <EmptyState message={t("a.loading")} />
       </>
     );
@@ -130,15 +130,16 @@ export default function CoachApplicationPage() {
   return (
     <>
       <PageHeader
+        eyebrow={t("coach.workspace")}
         title={t("a.coachApplication")}
         description={t("a.playersSeeThisOnceYour")}
-        action={<Badge tone={statusTone(status)}>{copy.label}</Badge>}
+        action={<Badge tone={statusTone(status)}>{t(copy.label)}</Badge>}
       />
       <ErrorBanner message={error} />
 
       <div className="mb-5">
         <Card>
-          <p className="text-sm text-drift-text-secondary">{copy.blurb}</p>
+          <p className="text-sm text-drift-text-secondary">{t(copy.blurb)}</p>
           {application?.decisionReason && (
             <div className="mt-3 rounded-md border border-drift-border bg-drift-background px-4 py-3">
               <p className="text-[12px] font-bold uppercase tracking-wide text-drift-text-secondary">{t("a.fromTheReviewTeam")}</p>

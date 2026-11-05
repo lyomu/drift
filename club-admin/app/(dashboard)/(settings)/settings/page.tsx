@@ -255,6 +255,7 @@ export default function SettingsPage() {
   return (
     <div>
       <PageHeader
+        compact
         title={t("a.clubSettings")}
         description={t("a.yourClubSPublicProfile")}
         action={
@@ -269,21 +270,21 @@ export default function SettingsPage() {
       <Card className="mb-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <div className="text-sm font-bold text-drift-text-primary">{t("language.label")}</div>
+            <div className="text-[14px] font-extrabold text-drift-text-primary">{t("language.label")}</div>
             <p className="mt-1 text-sm text-drift-text-secondary">{t("a.languageHint")}</p>
           </div>
           <select
             aria-label={t("language.label")}
             value={locale}
             onChange={(event) => setLocale(event.target.value as Locale)}
-            className="min-h-10 rounded-md border border-drift-border bg-drift-surface px-3 text-sm font-semibold text-drift-text-primary"
+            className="min-h-10 rounded-[9px] border border-drift-border bg-drift-surface px-3 text-[13px] font-semibold text-drift-text-primary"
           >
             {LANGUAGES.map((language) => <option key={language.code} value={language.code}>{language.flag} {language.name}</option>)}
           </select>
         </div>
       </Card>
 
-      <div className="mb-6 flex flex-wrap gap-1 border-b border-drift-border">
+      <div role="tablist" className="mb-6 flex flex-wrap gap-1 border-b border-drift-border">
         {TABS.map((item) => {
           const active = tab === item;
           const danger = item === "Danger zone";
@@ -291,15 +292,17 @@ export default function SettingsPage() {
             <button
               key={item}
               type="button"
+              role="tab"
+              aria-selected={active}
               onClick={() => setTab(item)}
-              className={`px-4 py-2.5 text-sm font-bold transition-colors ${
+              className={`-mb-px border-b-2 px-4 py-3 text-[13px] font-bold transition-colors ${
                 active
                   ? danger
-                    ? "border-b-2 border-drift-error text-drift-error"
-                    : "border-b-2 border-drift-primary text-drift-primary"
+                    ? "border-drift-error text-drift-error"
+                    : "border-drift-primary text-drift-primary-dark"
                   : danger
-                    ? "text-drift-error/70 hover:text-drift-error"
-                    : "text-drift-text-secondary hover:text-drift-text-primary"
+                    ? "border-transparent text-drift-error/70 hover:text-drift-error"
+                    : "border-transparent text-drift-text-secondary hover:text-drift-text-primary"
               }`}
             >
               {{ Profile: t("a.profile"), Branding: t("a.branding"), "Booking & Policies": t("a.bookingPolicies"), "Danger zone": t("a.dangerZone") }[item]}

@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import { CoachForm, type CoachFormPayload } from "@/components/CoachForm";
-import { Button, Card, ErrorBanner, PageHeader } from "@/components/ui";
-import { StatusBadge } from "@/components/StatusBadge";
-import { InitialsAvatar, MaterialIcon } from "@/components/dashboard-design";
+import { Card, ErrorBanner } from "@/components/ui";
+import { CoachHero } from "@/components/CoachHero";
+import { BackButton } from "@/components/redesign";
 import { api, ApiError } from "@/lib/api-client";
 import { useClub } from "@/lib/club-context";
 import type { CoachAdmin } from "@/lib/types";
@@ -77,20 +76,12 @@ export default function EditCoachPage() {
 
   return (
     <div>
-      <PageHeader
-        title={name}
-        description={
-          canManage
-            ? t("a.editCoachDescription")
-            : t("a.readOnlyCoachDescription")
-        }
-        action={
-          <Link href="/coaches">
-            <Button variant="secondary">
-              <MaterialIcon name="arrow_back" className="text-[16px]" />{t("a.allCoaches")}</Button>
-          </Link>
-        }
-      />
+      <div className="mb-5">
+        <BackButton href="/coaches">{t("a.allCoaches")}</BackButton>
+      </div>
+      <p className="mb-5 max-w-[590px] text-[13px] leading-[1.55] text-drift-text-secondary">
+        {canManage ? t("a.editCoachDescription") : t("a.readOnlyCoachDescription")}
+      </p>
       <ErrorBanner message={error} />
       {saved && (
         <p
@@ -103,55 +94,36 @@ export default function EditCoachPage() {
         !error && <p className="text-sm text-drift-text-secondary">{t("a.loading")}</p>
       ) : (
         <div className="flex flex-col gap-5">
-          <Card>
-            <div className="flex flex-wrap items-start justify-between gap-5">
-              <div className="flex min-w-0 items-center gap-4">
-                <InitialsAvatar name={name} className="h-14 w-14 text-[16px]" />
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2.5">
-                    <h2 className="truncate text-xl font-extrabold text-drift-text-primary">
-                      {name}
-                    </h2>
-                    <StatusBadge status={coach.verificationStatus} />
-                  </div>
-                  <p className="mt-0.5 truncate text-sm text-drift-text-secondary">
-                    {coach.accountEmail ?? t("a.noLinkedAccountEmail")}
-                    {coach.yearsExperience != null &&
-                      ` · ${coach.yearsExperience} yrs coaching`}
-                  </p>
-                  {coach.clubs.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      {coach.clubs.map((c) => (
-                        <span
-                          key={c.id}
-                          className="rounded-full bg-drift-neutral-surface px-2.5 py-[3px] text-[11.5px] font-semibold text-drift-text-secondary"
-                        >
-                          {c.name}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-              {contact.length > 0 && (
-                <div className="text-right text-[12.5px] text-drift-text-secondary">
-                  <div className="font-bold uppercase">{t("a.publicContact")}</div>
+          <CoachHero
+            name={name}
+            verification={coach.verificationStatus}
+            subtitle={[
+              coach.accountEmail ?? t("a.noLinkedAccountEmail"),
+              coach.yearsExperience != null ? t("cch.years", { count: coach.yearsExperience }) : null,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+            tags={[...coach.clubs.map((c) => c.name), ...coach.specialisations].slice(0, 5)}
+            aside={
+              contact.length > 0 ? (
+                <div className="max-w-[240px]">
+                  <div className="text-[11px] font-bold uppercase text-white/80">{t("a.publicContact")}</div>
                   {contact.map((line) => (
-                    <div key={line} className="mt-0.5 break-all">
+                    <div key={line} className="mt-0.5 break-all font-semibold">
                       {line}
                     </div>
                   ))}
                 </div>
-              )}
-            </div>
-          </Card>
+              ) : undefined
+            }
+          />
 
           {canManage ? (
             <CoachForm coach={coach} saving={saving} onSubmit={update} />
           ) : (
             <Card>
               <p className="text-sm text-drift-text-secondary">
-                {coach.bio || "No bio has been added."}
+                {coach.bio || t("cch.noBio")}
               </p>
               <dl className="mt-4 grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
                 <div>

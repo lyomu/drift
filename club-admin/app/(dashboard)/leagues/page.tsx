@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { api, ApiError } from "@/lib/api-client";
 import { useClub } from "@/lib/club-context";
-import { Button, EmptyState, ErrorBanner, Field, Input, Select, Textarea } from "@/components/ui";
+import { Button, EmptyState, ErrorBanner, Field, Input, PageHeader, Select, Textarea } from "@/components/ui";
+import { ManagementCard, SegmentControl, SummaryStrip } from "@/components/redesign";
 import { StatusBadge } from "@/components/StatusBadge";
-import { IconChip, ModalShell } from "@/components/dashboard-design";
+import { MaterialIcon, ModalShell } from "@/components/dashboard-design";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import type {
   AssessmentBranch,
@@ -25,6 +26,19 @@ const levelBandLabels = (t: ReturnType<typeof useT>): Record<AssessmentBranch, s
   INTERMEDIATE: t("a.intermediate"),
   ADVANCED: t("a.advanced"),
 });
+
+type LeagueFilter = "ALL" | "ACTIVE" | "COMPLETED" | "DRAFT";
+
+/** A league counts as live from registration through play. */
+const LIVE_STATES = ["ACTIVE", "REGISTRATION_OPEN", "SCHEDULED"];
+
+// Decorative banners; fixed colours (not theme tokens) so the white label stays
+// legible in dark mode too.
+const BANNERS = [
+  "from-[#0077cc] to-[#005a9e]",
+  "from-[#0f766e] to-[#115e59]",
+  "from-[#4f46e5] to-[#3730a3]",
+];
 
 type LeagueForm = {
   name: string;
@@ -65,6 +79,7 @@ export default function LeaguesPage() {
   const [showForm, setShowForm] = useState(false);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState<LeagueForm>(EMPTY_FORM);
+  const [filter, setFilter] = useState<LeagueFilter>("ALL");
 
   async function load() {
     if (!clubId) return;
@@ -122,12 +137,29 @@ export default function LeaguesPage() {
     }
   }
 
+  const live = useMemo(() => leagues.filter((l) => LIVE_STATES.includes(l.competitionState)), [leagues]);
+  const visible = useMemo(
+    () =>
+      leagues.filter((league) => {
+        if (filter === "ALL") return true;
+        if (filter === "ACTIVE") return LIVE_STATES.includes(league.competitionState);
+        return league.competitionState === filter;
+      }),
+    [leagues, filter],
+  );
+
   return (
     <div>
-      <PageTitle
+      <PageHeader
+        eyebrow={t("nav.competitions")}
+        title={t("a.leagues")}
+        description={t("a.createAndManageYourClub")}
         action={
           canManage ? (
-            <Button onClick={() => setShowForm(true)}>{t("a.newLeague")}</Button>
+            <Button onClick={() => setShowForm(true)}>
+              <MaterialIcon name="add" className="text-[19px]" />
+              {t("a.newLeague")}
+            </Button>
           ) : undefined
         }
       />
@@ -138,33 +170,91 @@ export default function LeaguesPage() {
       ) : leagues.length === 0 ? (
         <EmptyState message={t("a.createYourFirstLeague")} />
       ) : (
-        <div className="flex flex-col gap-3">
-          {leagues.map((league) => (
-            <Link href={`/leagues/${league.id}`} key={league.id}>
-              <div className="rowcard flex items-center gap-4 rounded-lg border border-drift-border bg-drift-surface px-5 py-[18px] transition-colors">
-                <IconChip
-                  icon={league.sport === "PADEL" ? "groups" : "sports_tennis"}
-                  tone="info"
-                />
-                <div className="min-w-0 flex-1">
-                  <div className="text-[14.5px] font-bold text-drift-text-primary">
-                    {league.name}
-                  </div>
-                  <div className="mt-0.5 text-[12.5px] text-drift-text-secondary">
-                    {league.sport.replace("_", " ")} / {league.format.replace("_", " ")} /{" "}
-                    {league.levelBand
-                      ? LEVEL_BAND_LABELS[league.levelBand]
-                      : t("a.allLevels")}{" "}
-                    / {league.enrolledCount} enrolled
-                    {league.roundCount ? ` / ${league.roundCount} rounds` : ""}
-                  </div>
-                </div>
-                <StatusBadge status={league.competitionState} />
-                <span className="shrink-0 text-[13px] font-semibold text-drift-primary">{t("a.manage")}</span>
+        <>
+          <SummaryStrip
+            items={[
+              { icon: "emoji_events", value: leagues.length, label: t("lg.totalLeagues") },
+              { icon: "bolt", tone: "lime", value: live.length, label: t("lg.live") },
+              {
+                icon: "groups",
+                tone: "gold",
+                value: live.reduce((sum, league) => sum + league.enrolledCount, 0),
+                label: t("lg.playersCompeting"),
+              },
+            ]}
+          />
+          <ManagementCard
+            title={t("lg.workspace")}
+            subtitle={t("lg.count", { count: visible.length })}
+            actions={
+              <SegmentControl<LeagueFilter>
+                value={filter}
+                onChange={setFilter}
+                options={[
+                  { value: "ALL", label: t("lg.filterAll") },
+                  { value: "ACTIVE", label: t("lg.filterActive") },
+                  { value: "COMPLETED", label: t("lg.filterCompleted") },
+                  { value: "DRAFT", label: t("lg.filterDraft") },
+                ]}
+              />
+            }
+          >
+            {visible.length === 0 ? (
+              <EmptyState bare icon="emoji_events" title={t("lg.noMatches")} />
+            ) : (
+              <div className="grid grid-cols-1 gap-3.5 p-4 sm:grid-cols-2 xl:grid-cols-3">
+                {visible.map((league, index) => (
+                  <Link href={`/leagues/${league.id}`} key={league.id} className="group block h-full">
+                    <article className="flex h-full flex-col overflow-hidden rounded-[14px] border border-drift-border bg-drift-surface transition-all group-hover:-translate-y-px group-hover:border-drift-primary">
+                      <div
+                        className={`flex h-[92px] items-end justify-between bg-gradient-to-br ${BANNERS[index % BANNERS.length]} p-3.5 text-white`}
+                      >
+                        <MaterialIcon
+                          name={league.sport === "PADEL" ? "groups" : "emoji_events"}
+                          className="text-[26px]"
+                        />
+                        <span className="text-[11px] font-bold uppercase">
+                          {t("lg.season", { n: String(index + 1).padStart(2, "0") })}
+                        </span>
+                      </div>
+                      <div className="flex flex-1 flex-col p-4">
+                        <StatusBadge status={league.competitionState} />
+                        <h3 className="mt-2.5 truncate text-[15px] font-extrabold text-drift-text-primary">
+                          {league.name}
+                        </h3>
+                        <p className="mt-1 text-[12px] text-drift-text-secondary">
+                          {league.sport.replace("_", " ")} · {league.format.replace("_", " ")} ·{" "}
+                          {league.levelBand ? LEVEL_BAND_LABELS[league.levelBand] : t("a.allLevels")}
+                          {league.roundCount ? ` · ${t("lg.rounds", { count: league.roundCount })}` : ""}
+                        </p>
+                        <div className="mt-3.5 flex items-center justify-between text-[11px]">
+                          <span className="font-semibold text-drift-text-secondary">{t("lg.registration")}</span>
+                          <strong className="font-bold text-drift-text-primary">
+                            {league.capacity
+                              ? t("lg.places", { enrolled: league.enrolledCount, capacity: league.capacity })
+                              : t("lg.enrolled", { count: league.enrolledCount })}
+                          </strong>
+                        </div>
+                        {league.capacity ? (
+                          <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-drift-neutral-surface">
+                            <div
+                              className="h-full rounded-full bg-drift-primary"
+                              style={{ width: `${Math.min(100, (league.enrolledCount / league.capacity) * 100)}%` }}
+                            />
+                          </div>
+                        ) : null}
+                        <span className="mt-auto inline-flex items-center gap-0.5 pt-3.5 text-[12px] font-bold text-drift-primary">
+                          {t("a.manage")}
+                          <MaterialIcon name="chevron_right" className="text-[16px]" />
+                        </span>
+                      </div>
+                    </article>
+                  </Link>
+                ))}
               </div>
-            </Link>
-          ))}
-        </div>
+            )}
+          </ManagementCard>
+        </>
       )}
 
       {showForm && (
@@ -307,19 +397,6 @@ export default function LeaguesPage() {
           </form>
         </ModalShell>
       )}
-    </div>
-  );
-}
-
-function PageTitle({ action }: { action?: React.ReactNode }) {
-  const t = useT();
-  return (
-    <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-      <div>
-        <h1 className="font-display text-[26px] font-extrabold leading-8 text-drift-text-primary">{t("a.leagues")}</h1>
-        <p className="mt-1 max-w-[560px] text-sm text-drift-text-secondary">{t("a.createAndManageYourClub")}</p>
-      </div>
-      {action}
     </div>
   );
 }

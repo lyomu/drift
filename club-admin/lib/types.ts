@@ -141,9 +141,17 @@ export type PlayerSummary = {
   lastName: string | null;
 } | null;
 
+export type SetScore = {
+  sideAGames: number;
+  sideBGames: number;
+  sideATiebreak?: number;
+  sideBTiebreak?: number;
+};
+
 export type MatchResult = {
   status: string;
   outcome: string;
+  sets?: SetScore[] | null;
   winningSide: "A" | "B" | null;
   submittedById: string | null;
   disputedById: string | null;
@@ -163,6 +171,19 @@ export type Fixture = {
   sideB: PlayerSummary;
   isBye: boolean;
   match: MatchDto | null;
+};
+
+/** One row of `GET /leagues/:id/rounds`: a round and how far it has got. */
+export type RoundSummary = {
+  id: string;
+  index: number;
+  deadline: string;
+  openedAt: string | null;
+  closedAt: string | null;
+  /** Fixtures that are real matches (byes excluded). */
+  fixtureCount: number;
+  /** Of those, how many are settled (completed, walkover or retired). */
+  playedCount: number;
 };
 
 export type RoundDto = {
@@ -450,4 +471,55 @@ export type CoachApplication = {
   decisionReason: string | null;
   createdAt: string;
   updatedAt: string;
+};
+
+/** `GET /clubs/:id/members/:userId/stats`: real activity over `windowDays`, plus the engagement score. */
+export type MemberStats = {
+  windowDays: number;
+  matchesPlayed: number;
+  matchesWon: number;
+  matchesLost: number;
+  eventsRegistered: number;
+  eventsAttended: number;
+  posts: number;
+  reactions: number;
+  activeLeagues: number;
+  /** Finished approved court bookings in the window; display only. */
+  bookings: number;
+  hoursOnCourt: number;
+  lastActiveAt: string | null;
+  engagementScore: number;
+  engagementBand: "HIGHLY_ACTIVE" | "ACTIVE" | "LOW" | "INACTIVE";
+};
+
+// ---- Native court bookings (/clubs/:id/bookings, booking-settings) ----
+
+export type CourtBookingStatus = "PENDING" | "APPROVED" | "DECLINED" | "CANCELLED";
+
+export type CourtBooking = {
+  id: string;
+  status: CourtBookingStatus;
+  /** Derived by the API: approved and already finished. */
+  completed: boolean;
+  startsAt: string;
+  endsAt: string;
+  note: string | null;
+  decisionNote: string | null;
+  guestName: string | null;
+  cancelledBy: "PLAYER" | "CLUB" | null;
+  createdAt: string;
+  court: { id: string; name: string; timezone: string };
+  courtGroup: { id: string; surface: CourtSurface; indoor: boolean; lighting: boolean; count: number };
+  user: { id: string; firstName: string | null; lastName: string | null } | null;
+};
+
+export type OpeningInterval = { dayOfWeek: number; opensMinute: number; closesMinute: number };
+
+export type BookingSettings = {
+  enabled: boolean;
+  timezone: string;
+  slotMinutes: number | null;
+  maxSlots: number;
+  advanceDays: number;
+  hours: OpeningInterval[];
 };

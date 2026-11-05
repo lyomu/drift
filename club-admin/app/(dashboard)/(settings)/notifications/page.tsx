@@ -91,6 +91,7 @@ export default function NotificationSettingsPage() {
   return (
     <div>
       <PageHeader
+        compact
         title={t("a.notificationSettings")}
         description={t("a.chooseTheDefaultOperationalAlerts")}
       />

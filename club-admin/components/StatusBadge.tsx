@@ -16,6 +16,7 @@ const STATUS_KEYS: Record<string, MessageKey> = {
   REJECTED: "status.REJECTED", PROPOSED: "status.PROPOSED",
   SCHEDULING: "status.SCHEDULING", SCHEDULED: "status.SCHEDULED",
   DISPUTED: "status.DISPUTED", CONFIRMED: "status.CONFIRMED",
+  RUNNING: "status.RUNNING", REGISTRATION_OPEN: "status.REGISTRATION_OPEN",
 };
 
 /**

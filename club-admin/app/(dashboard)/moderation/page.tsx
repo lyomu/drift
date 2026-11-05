@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { IconChip, MaterialIcon, Panel, RowCard } from "@/components/dashboard-design";
-import { Button, EmptyState, ErrorBanner, PageHeader, Select } from "@/components/ui";
+import { Button, EmptyState, ErrorBanner, PageHeader } from "@/components/ui";
+import { SegmentControl } from "@/components/redesign";
 import { StatusBadge } from "@/components/StatusBadge";
 import { api, ApiError } from "@/lib/api-client";
 import { useClub } from "@/lib/club-context";
@@ -43,19 +44,20 @@ export default function ModerationPage() {
   return (
     <div>
       <PageHeader
+        eyebrow={t("nav.community")}
         title={t("a.moderationQueue")}
         description={t("a.reviewReportedClubFeedPosts")}
         action={
-          <Select
+          <SegmentControl<ModerationReport["status"]>
             value={status}
-            onChange={(e) => setStatus(e.target.value as ModerationReport["status"])}
-            className="w-44"
-          >
-            <option value="PENDING">{t("a.pending")}</option>
-            <option value="APPROVED">{t("a.approved")}</option>
-            <option value="REMOVED">{t("a.removed")}</option>
-            <option value="ESCALATED">{t("a.escalated")}</option>
-          </Select>
+            onChange={setStatus}
+            options={[
+              { value: "PENDING", label: t("a.pending") },
+              { value: "APPROVED", label: t("a.approved") },
+              { value: "REMOVED", label: t("a.removed") },
+              { value: "ESCALATED", label: t("a.escalated") },
+            ]}
+          />
         }
       />
       <ErrorBanner message={error} />

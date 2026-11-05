@@ -240,6 +240,7 @@ export default function ClubCommunityPage() {
   return (
     <div>
       <PageHeader
+        eyebrow={t("nav.community")}
         title={t("clubCommunity.title")}
         description={t("clubCommunity.description")}
         action={

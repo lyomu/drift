@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Card, Field, Input, Textarea } from "@/components/ui";
+import { Button, Field, Input, Textarea } from "@/components/ui";
 import { CoachPhotoUpload } from "@/components/CoachPhotoUpload";
+import { SegmentControl } from "@/components/redesign";
 import { PhoneNumberField } from "@/components/PhoneNumberField";
 import { coachApi } from "@/lib/coach-api";
 import { useClub } from "@/lib/club-context";
@@ -15,6 +16,8 @@ function coachLevelOptions(t: ReturnType<typeof useT>): { value: CoachLevel; lab
   { value: "ADVANCED", label: t("a.advanced") },
   { value: "COMPETITIVE", label: t("a.competitive") },
 ]; }
+
+type CoachTab = "profile" | "coaching" | "contact";
 
 export type CoachFormPayload = {
   accountEmail?: string;
@@ -39,19 +42,19 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <Card>
-      <div className="mb-4">
-        <h2 className="font-display text-base font-bold text-drift-text-primary">
+    <section className="overflow-hidden rounded-2xl border border-drift-border bg-drift-surface shadow-card">
+      <div className="border-b border-drift-border px-5 py-4">
+        <h2 className="text-[14px] font-extrabold text-drift-text-primary">
           {title}
         </h2>
         {description && (
-          <p className="mt-1 text-[13px] text-drift-text-secondary">
+          <p className="mt-[3px] text-[11px] text-drift-text-secondary">
             {description}
           </p>
         )}
       </div>
-      <div className="flex flex-col gap-5">{children}</div>
-    </Card>
+      <div className="flex flex-col gap-5 p-5">{children}</div>
+    </section>
   );
 }
 
@@ -104,6 +107,7 @@ export function CoachForm({
     coach?.publicContact.bookingUrl ?? "",
   );
   const [contactError, setContactError] = useState<string | null>(null);
+  const [tab, setTab] = useState<CoachTab>("profile");
 
   async function uploadPhoto(file: File) {
     if (self) {
@@ -136,7 +140,9 @@ export function CoachForm({
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     if (!publicEmail.trim() && !publicPhone.trim() && !bookingUrl.trim()) {
-      setContactError("Add at least one public contact method.");
+      setContactError(t("coachForm.contactRequired"));
+      // The message lives in the contact section, so take the coach there.
+      setTab("contact");
       return;
     }
     setContactError(null);
@@ -165,7 +171,26 @@ export function CoachForm({
   }
 
   return (
-    <form onSubmit={submit} className="flex flex-col gap-5">
+    <form
+      onSubmit={submit}
+      // The only required control (the account email) sits on the first tab; if
+      // the browser rejects the form from another tab, bring that tab forward.
+      onInvalidCapture={() => setTab("profile")}
+      className="flex flex-col gap-5"
+    >
+      <div className="flex justify-center rounded-2xl border border-drift-border bg-drift-surface-sunken p-2.5">
+        <SegmentControl<CoachTab>
+          value={tab}
+          onChange={setTab}
+          label={t("coachForm.sections")}
+          options={[
+            { value: "profile", label: t("a.profile") },
+            { value: "coaching", label: t("a.coaching") },
+            { value: "contact", label: t("coachForm.contactTab") },
+          ]}
+        />
+      </div>
+      <div className={tab === "profile" ? "" : "hidden"}>
       <Section
         title={t("a.profile")}
         description={
@@ -212,7 +237,9 @@ export function CoachForm({
           />
         </Field>
       </Section>
+      </div>
 
+      <div className={tab === "coaching" ? "" : "hidden"}>
       <Section
         title={t("a.coaching")}
         description={
@@ -259,7 +286,9 @@ export function CoachForm({
           </div>
         </fieldset>
       </Section>
+      </div>
 
+      <div className={tab === "contact" ? "" : "hidden"}>
       <Section
         title={t("a.publicContact")}
         description={
@@ -306,6 +335,7 @@ export function CoachForm({
           </p>
         )}
       </Section>
+      </div>
 
       <Button type="submit" disabled={saving} className="self-start">
         {saving

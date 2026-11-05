@@ -57,7 +57,7 @@ export default function CoachOverviewPage() {
   if (loading) {
     return (
       <>
-        <PageHeader title={t("a.coachWorkspace")} />
+        <PageHeader eyebrow={t("coach.workspace")} title={t("a.coachWorkspace")} />
         <EmptyState message={t("a.loading")} />
       </>
     );
@@ -67,6 +67,7 @@ export default function CoachOverviewPage() {
     return (
       <>
         <PageHeader
+          eyebrow={t("coach.workspace")}
           title={t("a.coachWorkspace")}
           description={t("a.applyOnceAndPlayersCan")}
         />
@@ -95,6 +96,7 @@ export default function CoachOverviewPage() {
   return (
     <>
       <PageHeader
+        eyebrow={t("coach.workspace")}
         title={t("a.coachWorkspace")}
         description={t("a.yourApplicationYourPublicProfile")}
         action={
@@ -121,10 +123,10 @@ export default function CoachOverviewPage() {
             <div>
               <h2 className="font-display text-base font-bold text-drift-text-primary">{t("a.applicationStatus")}</h2>
               <p className="mt-1 max-w-[560px] text-[13px] text-drift-text-secondary">
-                {copy.blurb}
+                {t(copy.blurb)}
               </p>
             </div>
-            <Badge tone={statusTone(application.status)}>{copy.label}</Badge>
+            <Badge tone={statusTone(application.status)}>{t(copy.label)}</Badge>
           </div>
 
           {/* The reviewer's own words. A coach whose application came back

@@ -6,6 +6,7 @@ import { useClub } from "@/lib/club-context";
 import { Button, Card, EmptyState, ErrorBanner, Field, Input, PageHeader, Select } from "@/components/ui";
 import { DataTable } from "@/components/DataTable";
 import { StatusBadge } from "@/components/StatusBadge";
+import { IconChip, MaterialIcon } from "@/components/dashboard-design";
 import { useT } from "@/lib/i18n/i18n-context";
 
 type ArchivedLeague = {
@@ -63,6 +64,7 @@ export default function LeagueArchivePage() {
   return (
     <div>
       <PageHeader
+        eyebrow={t("nav.competitions")}
         title={t("a.leagueArchiveAwards")}
         description={t("a.reviewFinalStandingsAndRecognise")}
       />
@@ -76,16 +78,23 @@ export default function LeagueArchivePage() {
           {leagues.map((league) => (
             <Card key={league.id}>
               <button
-                className="flex w-full items-center justify-between text-left"
+                type="button"
+                aria-expanded={openId === league.id}
+                className="flex w-full items-center gap-3.5 text-left"
                 onClick={() => setOpenId(openId === league.id ? null : league.id)}
               >
-                <div>
-                  <div className="font-semibold text-drift-text-primary">{league.name}</div>
-                  <div className="mt-1 text-sm text-drift-text-secondary">
-                    {league.standings.length} final standings · {league.awards.length} awards
+                <IconChip icon="emoji_events" tone="gold" />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[14px] font-extrabold text-drift-text-primary">{league.name}</div>
+                  <div className="mt-0.5 text-[12px] text-drift-text-secondary">
+                    {t("arch.summary", { standings: league.standings.length, awards: league.awards.length })}
                   </div>
                 </div>
                 <StatusBadge status={league.cancelledAt ? "CANCELLED" : "COMPLETED"} />
+                <MaterialIcon
+                  name="expand_more"
+                  className={`text-[22px] text-drift-text-secondary transition-transform ${openId === league.id ? "rotate-180" : ""}`}
+                />
               </button>
               {openId === league.id && (
                 <div className="mt-5 border-t border-drift-border pt-5">
@@ -101,7 +110,7 @@ export default function LeagueArchivePage() {
                           `${s.user.firstName ?? ""} ${s.user.lastName ?? ""}`.trim() || "—",
                       },
                       { header: t("a.points"), cell: (s) => s.points },
-                      { header: "W-L", cell: (s) => `${s.wins}-${s.losses}` },
+                      { header: t("ld.winLoss"), cell: (s) => `${s.wins}-${s.losses}` },
                     ]}
                   />
                   {league.awards.length > 0 && (
@@ -109,8 +118,9 @@ export default function LeagueArchivePage() {
                       {league.awards.map((a) => (
                         <span
                           key={a.id}
-                          className="rounded-md bg-drift-primary-light px-3 py-2 text-sm font-semibold text-drift-primary-dark"
+                          className="inline-flex items-center gap-1.5 rounded-full bg-drift-gold-surface px-3 py-1.5 text-[12px] font-bold text-drift-gold"
                         >
+                          <MaterialIcon name="workspace_premium" className="text-[15px]" />
                           {a.title} · {`${a.recipient.firstName ?? ""} ${a.recipient.lastName ?? ""}`.trim()}
                         </span>
                       ))}

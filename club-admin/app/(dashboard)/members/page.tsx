@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { api, ApiError, downloadBlob } from "@/lib/api-client";
 import { useClub } from "@/lib/club-context";
-import { DataTable } from "@/components/DataTable";
-import { Button, Card, EmptyState, ErrorBanner, Field, Input, PageHeader, Textarea } from "@/components/ui";
+import { Button, EmptyState, ErrorBanner, Field, Input, PageHeader, Textarea, Td, Th } from "@/components/ui";
+import { ActionMenu, FilterSelect, InlineSearch, ManagementCard } from "@/components/redesign";
 import { StatusBadge } from "@/components/StatusBadge";
-import { InitialsAvatar, MaterialIcon, ModalShell } from "@/components/dashboard-design";
+import { InitialsAvatar, MaterialIcon, ModalActions, ModalShell } from "@/components/dashboard-design";
 import { SelectEditControl } from "@/components/EditFieldModal";
+import { useToast } from "@/components/Toast";
 import type { ClubRole, Member } from "@/lib/types";
 import { useI18n, useT } from "@/lib/i18n/i18n-context";
 
@@ -21,12 +23,17 @@ const ROLES: ClubRole[] = [
   "READ_ONLY",
 ];
 
+/** Statuses a directory member can be in; PENDING people live in Join requests. */
+const DIRECTORY_STATUSES = ["ACTIVE", "INVITED", "SUSPENDED"] as const;
+
 function memberName(member: Member) {
   return `${member.firstName ?? ""} ${member.lastName ?? ""}`.trim() || member.email;
 }
 
 export default function MembersPage() {
   const t = useT();
+  const router = useRouter();
+  const { notify } = useToast();
   const { formatDate } = useI18n();
   const { clubId, role: myRole } = useClub();
   const canManage = myRole === "OWNER" || myRole === "ADMIN";
@@ -36,6 +43,8 @@ export default function MembersPage() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviting, setInviting] = useState(false);
   const [showInvite, setShowInvite] = useState(false);
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
 
   const [showImport, setShowImport] = useState(false);
   const [importText, setImportText] = useState("");
@@ -72,6 +81,7 @@ export default function MembersPage() {
       setInviteEmail("");
       setShowInvite(false);
       await loadMembers();
+      notify(t("members.toastInvited"));
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t("a.somethingWentWrong"));
     } finally {
@@ -126,7 +136,7 @@ export default function MembersPage() {
       } catch (err) {
         failed.push({
           email: row.email,
-          reason: err instanceof ApiError ? err.message : "could not be invited",
+          reason: err instanceof ApiError ? err.message : t("members.couldNotInvite"),
         });
       }
     }
@@ -135,52 +145,72 @@ export default function MembersPage() {
     await loadMembers();
   }
 
-  async function handleRoleChange(membershipId: string, role: ClubRole) {
+  async function handleRoleChange(member: Member, role: ClubRole) {
     if (!clubId) return;
     setError(null);
-    await api.patch(`/clubs/${clubId}/members/${membershipId}`, { role });
+    await api.patch(`/clubs/${clubId}/members/${member.membershipId}`, { role });
     await loadMembers();
+    notify(t("members.toastRole", { name: memberName(member) }));
   }
 
-  async function handleRemove(membershipId: string) {
+  async function handleRemove(member: Member) {
     if (!clubId) return;
     setError(null);
     try {
-      await api.delete(`/clubs/${clubId}/members/${membershipId}`);
+      await api.delete(`/clubs/${clubId}/members/${member.membershipId}`);
       await loadMembers();
+      notify(t("members.toastRemoved", { name: memberName(member) }));
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t("a.somethingWentWrong"));
     }
   }
 
-  async function handleApproval(membershipId: string, approve: boolean) {
+  async function handleApproval(member: Member, approve: boolean) {
     if (!clubId) return;
     setError(null);
     try {
       if (approve) {
-        await api.patch(`/clubs/${clubId}/members/${membershipId}`, {
+        await api.patch(`/clubs/${clubId}/members/${member.membershipId}`, {
           status: "ACTIVE",
         });
       } else {
-        await api.delete(`/clubs/${clubId}/members/${membershipId}`);
+        await api.delete(`/clubs/${clubId}/members/${member.membershipId}`);
       }
       await loadMembers();
+      notify(
+        t(approve ? "members.toastApproved" : "members.toastDeclined", {
+          name: memberName(member),
+        }),
+      );
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t("a.somethingWentWrong"));
     }
   }
 
   const pending = members.filter((m) => m.status === "PENDING");
-  const active = members.filter((m) => m.status !== "PENDING");
+  const directory = useMemo(() => members.filter((m) => m.status !== "PENDING"), [members]);
+  const visible = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return directory.filter((member) => {
+      const matches =
+        !q ||
+        `${memberName(member)} ${member.email} ${member.role.replace(/_/g, " ")}`
+          .toLowerCase()
+          .includes(q);
+      return matches && (statusFilter === "ALL" || member.status === statusFilter);
+    });
+  }, [directory, query, statusFilter]);
 
   return (
     <div>
       <PageHeader
+        eyebrow={t("members.eyebrow")}
         title={t("a.members")}
         description={t("a.everyoneWithAdminAccessTo")}
         action={
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button variant="secondary" onClick={() => void handleExport()}>
+              <MaterialIcon name="download" className="text-[18px]" />
               {t("a.exportCsv")}
             </Button>
             {canManage && (
@@ -192,12 +222,15 @@ export default function MembersPage() {
                   setShowImport(true);
                 }}
               >
-                Import CSV
+                <MaterialIcon name="upload" className="text-[18px]" />
+                {t("members.importCsv")}
               </Button>
             )}
             {canManage && (
               <Button onClick={() => setShowInvite(true)}>
-                <MaterialIcon name="person_add" className="text-[18px]" />{t("a.inviteMember")}</Button>
+                <MaterialIcon name="person_add" className="text-[18px]" />
+                {t("a.inviteMember")}
+              </Button>
             )}
           </div>
         }
@@ -205,28 +238,32 @@ export default function MembersPage() {
       <ErrorBanner message={error} />
 
       {showImport && (
-        <ModalShell title={t("a.importMembersFromCsv")} onClose={() => setShowImport(false)}>
+        <ModalShell
+          title={t("a.importMembersFromCsv")}
+          icon="upload_file"
+          onClose={() => setShowImport(false)}
+        >
           {importResult ? (
             <div className="flex flex-col gap-4">
-              <p className="text-sm text-drift-text-primary">
+              <p className="text-[13px] text-drift-text-primary">
                 <span className="font-bold text-drift-success">
-                  {importResult.invited} invited
+                  {t("members.invitedCount", { count: importResult.invited })}
                 </span>
                 {importResult.failed.length > 0 && (
                   <>
                     {" · "}
                     <span className="font-bold text-drift-error">
-                      {importResult.failed.length} skipped
+                      {t("members.skippedCount", { count: importResult.failed.length })}
                     </span>
                   </>
                 )}
               </p>
               {importResult.failed.length > 0 && (
-                <div className="max-h-56 overflow-y-auto rounded-md border border-drift-border">
+                <div className="max-h-56 overflow-y-auto rounded-[9px] border border-drift-border">
                   {importResult.failed.map((f) => (
                     <div
                       key={f.email}
-                      className="border-b border-drift-border px-3 py-2 text-[13px] last:border-b-0"
+                      className="border-b border-drift-border px-3 py-2 text-[12px] last:border-b-0"
                     >
                       <span className="font-semibold text-drift-text-primary">
                         {f.email}
@@ -236,13 +273,13 @@ export default function MembersPage() {
                   ))}
                 </div>
               )}
-              <div className="flex justify-end">
+              <ModalActions>
                 <Button onClick={() => setShowImport(false)}>{t("a.done")}</Button>
-              </div>
+              </ModalActions>
             </div>
           ) : (
             <form onSubmit={handleImport} className="flex flex-col gap-4">
-              <p className="text-[13px] text-drift-text-secondary">
+              <p className="text-[12px] leading-[1.55] text-drift-text-secondary">
                 {t("a.memberImportInstructions")}
               </p>
               <Field label={t("a.pasteCsvOr")}>
@@ -254,7 +291,7 @@ export default function MembersPage() {
                   placeholder={"alex@club.com,ADMIN\nsam@club.com,COACH\njordan@club.com"}
                 />
               </Field>
-              <label className="text-[13px] font-semibold text-drift-primary">
+              <label className="text-[12px] font-bold text-drift-primary">
                 <input
                   type="file"
                   accept=".csv,text/csv,text/plain"
@@ -267,25 +304,26 @@ export default function MembersPage() {
                 />
                 <span className="cursor-pointer hover:underline">{t("a.chooseACsvFile")}</span>
               </label>
-              <div className="mt-1 flex justify-end gap-3">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => setShowImport(false)}
-                >
-                  Cancel
+              <ModalActions>
+                <Button type="button" variant="secondary" onClick={() => setShowImport(false)}>
+                  {t("common.cancel")}
                 </Button>
                 <Button type="submit" disabled={importing || !importText.trim()}>
                   {importing ? t("a.importing") : t("a.importMembers")}
                 </Button>
-              </div>
+              </ModalActions>
             </form>
           )}
         </ModalShell>
       )}
 
       {showInvite && (
-        <ModalShell title={t("a.inviteAMember")} onClose={() => setShowInvite(false)}>
+        <ModalShell
+          title={t("a.inviteAMember")}
+          description={t("a.theyJoinWithReadOnly")}
+          icon="mail"
+          onClose={() => setShowInvite(false)}
+        >
           <form onSubmit={handleInvite} className="flex flex-col gap-4">
             <Field label={t("a.email")}>
               <Input
@@ -297,164 +335,224 @@ export default function MembersPage() {
                 placeholder={t("a.mustAlreadyHaveADrift")}
               />
             </Field>
-            <p className="text-[12.5px] text-drift-text-secondary">
-              {t("a.theyJoinWithReadOnly")}
-            </p>
-            <div className="mt-1 flex justify-end gap-3">
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => setShowInvite(false)}
-              >
-                Cancel
+            <ModalActions>
+              <Button type="button" variant="secondary" onClick={() => setShowInvite(false)}>
+                {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={inviting}>
                 {inviting ? t("a.inviting") : t("a.invite")}
               </Button>
-            </div>
+            </ModalActions>
           </form>
         </ModalShell>
       )}
 
       {canManage && pending.length > 0 && (
-        <Card className="mb-6">
-          <h2 className="mb-3 text-sm font-bold text-drift-text-primary">
-            Join requests ({pending.length})
-          </h2>
-          <DataTable
-            rows={pending}
-            rowKey={(member) => member.membershipId}
-            columns={[
-              {
-                header: t("a.member"),
-                cell: (member) => (
-                  <MemberIdentity member={member} avatarClassName="h-9 w-9" />
-                ),
-              },
-              {
-                header: t("a.requested"),
-                cell: (member) => formatDate(member.joinedAt),
-              },
-              {
-                header: t("a.status"),
-                cell: (member) => <StatusBadge status={member.status} />,
-              },
-              {
-                header: t("a.actions"),
-                className: "text-right",
-                cell: (member) => (
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={() => void handleApproval(member.membershipId, true)}
-                      className="border-drift-success/20 text-drift-success"
-                    >
-                      Approve
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={() => void handleApproval(member.membershipId, false)}
-                      className="border-drift-error/20 text-drift-error"
-                    >
-                      Decline
-                    </Button>
-                  </div>
-                ),
-              },
-            ]}
-          />
-        </Card>
+        <section className="mb-[18px] overflow-hidden rounded-[14px] border border-drift-border bg-drift-surface shadow-card">
+          <div className="flex min-h-[63px] flex-wrap items-center justify-between gap-2 border-b border-drift-border bg-gradient-to-r from-drift-gold-surface to-drift-surface py-3">
+            <div className="flex items-center gap-2">
+              <span className="h-[7px] w-[7px] rounded-full bg-drift-gold shadow-[0_0_0_4px_var(--color-accent-gold-surface)]" />
+              <h2 className="text-[13px] font-extrabold text-drift-text-primary">
+                {t("members.joinRequests")}
+              </h2>
+              <span className="min-w-5 rounded-full bg-drift-gold-surface px-1.5 py-[3px] text-center text-[11px] font-extrabold text-drift-gold">
+                {pending.length}
+              </span>
+            </div>
+            <p className="text-[11px] text-drift-text-secondary">{t("members.joinRequestsHint")}</p>
+          </div>
+          <div className="px-[13px] py-[3px]">
+            {pending.map((member) => (
+              <div
+                key={member.membershipId}
+                className="flex min-h-[66px] flex-wrap items-center gap-3 border-b border-drift-border px-1 py-[9px] last:border-b-0"
+              >
+                <InitialsAvatar name={memberName(member)} tone="gold" />
+                <div className="min-w-[150px] flex-1">
+                  <Link
+                    href={`/members/${member.userId}`}
+                    className="block truncate text-[12px] font-bold text-drift-text-primary hover:text-drift-primary"
+                  >
+                    {memberName(member)}
+                  </Link>
+                  <small className="mt-[3px] block truncate text-[11px] text-drift-text-secondary">
+                    {member.email}
+                  </small>
+                </div>
+                <span className="min-w-[110px] text-[11px] text-drift-text-secondary">
+                  {t("members.requestedOn", { date: formatDate(member.joinedAt) })}
+                </span>
+                <div className="flex gap-[7px]">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="min-w-[72px]"
+                    onClick={() => void handleApproval(member, false)}
+                  >
+                    {t("members.decline")}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="min-w-[72px]"
+                    onClick={() => void handleApproval(member, true)}
+                  >
+                    <MaterialIcon name="check" className="text-[15px]" />
+                    {t("members.approve")}
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
       )}
 
       {loading ? (
         <EmptyState message={t("a.loading2")} />
-      ) : active.length === 0 ? (
+      ) : directory.length === 0 ? (
         <EmptyState message={t("a.noMembersYet")} />
       ) : (
-        <DataTable
-          rows={active}
-          rowKey={(member) => member.membershipId}
-          columns={[
-            {
-              header: t("a.member"),
-              cell: (member) => <MemberIdentity member={member} />,
-            },
-            {
-              header: t("a.role"),
-              cell: (member) =>
-                canManage ? (
-                  <SelectEditControl
-                    value={member.role}
-                    options={ROLES.map((r) => ({
-                      value: r,
-                      label: r.replace(/_/g, " "),
-                    }))}
-                    onSave={(next) =>
-                      handleRoleChange(member.membershipId, next as ClubRole)
-                    }
-                    title={t("a.changeRole")}
-                    description={`${memberName(member)} · ${member.email}`}
-                    fieldLabel={t("a.role")}
-                    confirmLabel={t("a.saveRole")}
-                  />
-                ) : (
-                  <span className="text-sm font-semibold text-drift-text-primary">
-                    {member.role.replace(/_/g, " ")}
-                  </span>
-                ),
-            },
-            {
-              header: t("a.status"),
-              cell: (member) => <StatusBadge status={member.status} />,
-            },
-            {
-              header: t("a.joined"),
-              cell: (member) => formatDate(member.joinedAt),
-            },
-            {
-              header: t("a.actions"),
-              className: "text-right",
-              cell: (member) =>
-                canManage ? (
-                  <button
-                    type="button"
-                    onClick={() => void handleRemove(member.membershipId)}
-                    aria-label={`Remove ${memberName(member)}`}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-md text-drift-text-secondary hover:bg-drift-error-surface hover:text-drift-error focus:outline-none focus-visible:ring-2 focus-visible:ring-drift-primary"
+        <ManagementCard
+          title={t("members.directory")}
+          subtitle={t("members.count", { count: visible.length })}
+          actions={
+            <div className="flex flex-wrap gap-2">
+              <InlineSearch
+                value={query}
+                onChange={setQuery}
+                placeholder={t("members.searchPlaceholder")}
+                className="w-[230px]"
+              />
+              <FilterSelect
+                label={t("members.filterByStatus")}
+                value={statusFilter}
+                onChange={setStatusFilter}
+              >
+                <option value="ALL">{t("members.allStatuses")}</option>
+                {DIRECTORY_STATUSES.map((status) => (
+                  <option key={status} value={status}>
+                    {t(`status.${status}`)}
+                  </option>
+                ))}
+              </FilterSelect>
+            </div>
+          }
+        >
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[760px] table-fixed border-collapse">
+              <thead>
+                <tr>
+                  <Th className="w-[37%]">{t("a.member")}</Th>
+                  <Th className="w-[23%]">{t("a.role")}</Th>
+                  <Th className="w-[13%]">{t("a.status")}</Th>
+                  <Th className="w-[15%]">{t("a.joined")}</Th>
+                  <Th className="w-[12%] text-right">{t("a.actions")}</Th>
+                </tr>
+              </thead>
+              <tbody>
+                {visible.map((member) => (
+                  <tr key={member.membershipId} className="transition-colors hover:bg-drift-surface-sunken">
+                    <Td className="h-[66px]">
+                      <MemberIdentity member={member} />
+                    </Td>
+                    <Td className="px-[18px]">
+                      {canManage ? (
+                        <SelectEditControl
+                          value={member.role}
+                          options={ROLES.map((r) => ({
+                            value: r,
+                            label: r.replace(/_/g, " "),
+                          }))}
+                          onSave={(next) => handleRoleChange(member, next as ClubRole)}
+                          title={t("a.changeRole")}
+                          description={`${memberName(member)} · ${member.email}`}
+                          fieldLabel={t("a.role")}
+                          confirmLabel={t("a.saveRole")}
+                        />
+                      ) : (
+                        <span className="text-[11px] font-bold uppercase text-drift-text-secondary">
+                          {member.role.replace(/_/g, " ")}
+                        </span>
+                      )}
+                    </Td>
+                    <Td className="px-[18px]">
+                      <StatusBadge status={member.status} />
+                    </Td>
+                    <Td className="whitespace-nowrap text-drift-text-secondary">
+                      {formatDate(member.joinedAt)}
+                    </Td>
+                    <Td className="px-[18px] text-right">
+                      <ActionMenu
+                        label={t("members.moreActions", { name: memberName(member) })}
+                        items={[
+                          {
+                            icon: "person",
+                            label: t("members.viewProfile"),
+                            description: t("members.viewProfileHint"),
+                            onSelect: () => router.push(`/members/${member.userId}`),
+                          },
+                          ...(canManage
+                            ? [
+                                { divider: true as const },
+                                {
+                                  icon: "delete",
+                                  label: t("members.remove"),
+                                  description: t("members.removeHint"),
+                                  danger: true,
+                                  onSelect: () => void handleRemove(member),
+                                },
+                              ]
+                            : []),
+                        ]}
+                      />
+                    </Td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {visible.length === 0 && (
+              <EmptyState
+                bare
+                icon="group_off"
+                title={t("members.noMatches")}
+                description={t("members.noMatchesHint")}
+                action={
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setQuery("");
+                      setStatusFilter("ALL");
+                    }}
                   >
-                    <MaterialIcon name="delete" className="text-[19px]" />
-                  </button>
-                ) : (
-                  <span className="text-sm text-drift-text-secondary">-</span>
-                ),
-            },
-          ]}
-        />
+                    {t("members.clearFilters")}
+                  </Button>
+                }
+              />
+            )}
+          </div>
+          <div className="flex min-h-[58px] items-center bg-drift-surface-sunken text-[11px] text-drift-text-secondary">
+            {t("members.showing", { shown: visible.length, total: directory.length })}
+          </div>
+        </ManagementCard>
       )}
     </div>
   );
 }
 
-function MemberIdentity({
-  member,
-  avatarClassName,
-}: {
-  member: Member;
-  avatarClassName?: string;
-}) {
+function MemberIdentity({ member }: { member: Member }) {
   return (
-    <div className="flex min-w-0 items-center gap-3.5">
-      <InitialsAvatar name={memberName(member)} className={avatarClassName} />
+    <div className="flex min-w-0 items-center gap-[11px]">
+      <InitialsAvatar name={memberName(member)} tone="auto" />
       <div className="min-w-0">
         <Link
           href={`/members/${member.userId}`}
-          className="block truncate text-[13.5px] font-bold text-drift-text-primary hover:text-drift-primary focus:outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-drift-primary"
+          className="block truncate text-[12px] font-bold text-drift-text-primary hover:text-drift-primary"
         >
           {memberName(member)}
         </Link>
-        <div className="truncate text-xs text-drift-text-secondary">
+        <div className="mt-[3px] truncate text-[11px] text-drift-text-secondary">
           {member.email}
         </div>
       </div>

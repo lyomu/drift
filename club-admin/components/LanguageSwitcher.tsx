@@ -42,7 +42,7 @@ export function LanguageSwitcher({ className = "" }: { className?: string }) {
         aria-expanded={open}
         aria-label={t("language.label")}
         title={t("language.label")}
-        className={`flex h-10 w-10 items-center justify-center rounded-full border border-drift-border bg-drift-background text-lg transition-colors hover:border-drift-primary ${className}`}
+        className={`flex h-[38px] w-[38px] items-center justify-center rounded-full border border-drift-border bg-drift-surface text-lg transition-colors hover:border-drift-primary ${className}`}
       >
         <span aria-hidden>{active.flag}</span>
       </button>

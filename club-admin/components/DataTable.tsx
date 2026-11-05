@@ -26,14 +26,14 @@ export function DataTable<T>({
 }) {
   const t = useT();
   return (
-    <div className="overflow-x-auto rounded-lg border border-drift-border bg-drift-surface">
-      <table className="w-full min-w-[720px] border-separate border-spacing-0 text-left text-sm">
+    <div className="overflow-x-auto rounded-2xl border border-drift-border bg-drift-surface shadow-card">
+      <table className="w-full min-w-[720px] border-separate border-spacing-0 text-left text-[13px]">
         <thead>
-          <tr className="bg-drift-primary-light">
+          <tr className="bg-drift-surface-sunken">
             {columns.map((col) => (
               <th
                 key={col.header}
-                className={`border-b border-drift-border px-5 py-4 text-[11px] font-extrabold uppercase text-drift-text-secondary ${col.className ?? ""}`}
+                className={`border-b border-drift-border px-[18px] py-3 text-[11px] font-bold uppercase text-drift-text-secondary ${col.className ?? ""}`}
               >
                 {col.header}
               </th>
@@ -58,12 +58,12 @@ export function DataTable<T>({
             rows.map((row) => (
               <tr
                 key={rowKey(row)}
-                className="transition-colors last:[&_td]:border-0 hover:bg-drift-primary-light/35"
+                className="transition-colors last:[&_td]:border-0 hover:bg-drift-surface-sunken"
               >
                 {columns.map((col) => (
                   <td
                     key={col.header}
-                    className={`border-b border-drift-border px-5 py-4 align-middle text-drift-text-primary ${col.className ?? ""}`}
+                    className={`border-b border-drift-border px-[18px] py-3.5 align-middle text-[13px] text-drift-text-primary ${col.className ?? ""}`}
                   >
                     {col.cell(row)}
                   </td>

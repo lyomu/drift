@@ -20,11 +20,21 @@ import type { CoachContext, Membership, WorkspaceContexts } from "./types";
  */
 export type Workspace = "club" | "coach";
 
+/** The signed-in person, from `GET /users/me`. Display only. */
+export type WorkspaceUser = {
+  firstName: string | null;
+  lastName: string | null;
+  email: string | null;
+  photoUrl: string | null;
+};
+
 type WorkspaceContextValue = {
   loading: boolean;
   authed: boolean;
   memberships: Membership[];
   coach: CoachContext | null;
+  /** Who is signed in; null until loaded or if the call failed. */
+  user: WorkspaceUser | null;
   /** True when this account can open both, so the shell offers a switcher. */
   hasBoth: boolean;
   /** Where a bare "/" should land this account. */
@@ -41,6 +51,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const [authed, setAuthed] = useState(false);
   const [memberships, setMemberships] = useState<Membership[]>([]);
   const [coach, setCoach] = useState<CoachContext | null>(null);
+  const [user, setUser] = useState<WorkspaceUser | null>(null);
 
   const refresh = useCallback(async () => {
     if (!hasToken()) {
@@ -52,9 +63,23 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     }
     setAuthed(true);
     try {
-      const res = await api.get<WorkspaceContexts>("/auth/me/contexts");
+      // The name is cosmetic, so its failure must never block the workspace.
+      const [res, me] = await Promise.all([
+        api.get<WorkspaceContexts>("/auth/me/contexts"),
+        api.get<WorkspaceUser>("/users/me").catch(() => null),
+      ]);
       setMemberships(res.clubMemberships);
       setCoach(res.coach);
+      setUser(
+        me
+          ? {
+              firstName: me.firstName ?? null,
+              lastName: me.lastName ?? null,
+              email: me.email ?? null,
+              photoUrl: me.photoUrl ?? null,
+            }
+          : null,
+      );
     } catch (err) {
       setMemberships([]);
       setCoach(null);
@@ -77,6 +102,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     setAuthed(false);
     setMemberships([]);
     setCoach(null);
+    setUser(null);
     router.push("/login");
   }, [router]);
 
@@ -88,6 +114,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       authed,
       memberships,
       coach,
+      user,
       hasBoth: hasClub && hasCoach,
       // Club wins a tie only as a default destination; the switcher still
       // offers the other one. An account with neither is a coach applicant or
@@ -96,11 +123,17 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       refresh,
       logout,
     };
-  }, [loading, authed, memberships, coach, refresh, logout]);
+  }, [loading, authed, memberships, coach, user, refresh, logout]);
 
   return (
     <WorkspaceCtx.Provider value={value}>{children}</WorkspaceCtx.Provider>
   );
+}
+
+/** "First Last", falling back to the email, or null when nothing is known. */
+export function displayUserName(user: WorkspaceUser | null): string | null {
+  if (!user) return null;
+  return `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() || user.email || null;
 }
 
 export function useWorkspace(): WorkspaceContextValue {

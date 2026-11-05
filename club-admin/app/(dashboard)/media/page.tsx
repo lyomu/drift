@@ -129,11 +129,15 @@ export default function MediaPage() {
   return (
     <div>
       <PageHeader
+        eyebrow={t("nav.community")}
         title={t("a.mediaLibrary")}
         description={t("a.clubImageryUsedAcrossAnnouncements")}
         action={
           canManage ? (
-            <Button onClick={() => setShowUpload(true)}>{t("a.uploadPhoto")}</Button>
+            <Button onClick={() => setShowUpload(true)}>
+              <MaterialIcon name="upload" className="text-[18px]" />
+              {t("a.uploadPhoto")}
+            </Button>
           ) : undefined
         }
       />
@@ -148,7 +152,7 @@ export default function MediaPage() {
           {assets.map((asset) => (
             <div
               key={asset.id}
-              className="overflow-hidden rounded-xl border border-drift-border bg-drift-surface shadow-[0_1px_3px_rgba(15,23,42,0.06)]"
+              className="group overflow-hidden rounded-[14px] border border-drift-border bg-drift-surface shadow-card transition-all hover:-translate-y-px"
             >
               <div className="relative aspect-[4/3] bg-drift-primary-light">
                 {urls[asset.id] ? (
@@ -169,7 +173,7 @@ export default function MediaPage() {
                   <button
                     type="button"
                     onClick={() => void remove(asset.id)}
-                    aria-label={`Delete ${asset.caption || asset.filename}`}
+                    aria-label={t("media.delete", { name: asset.caption || asset.filename })}
                     className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-drift-surface text-drift-error shadow-[0_1px_4px_rgba(15,23,42,0.15)] transition-colors hover:bg-drift-error-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-drift-primary"
                   >
                     <MaterialIcon name="delete" className="text-[17px]" />
@@ -177,10 +181,10 @@ export default function MediaPage() {
                 )}
               </div>
               <div className="px-4 py-3.5">
-                <div className="truncate text-[14.5px] font-bold text-drift-text-primary">
+                <div className="truncate text-[13px] font-extrabold text-drift-text-primary">
                   {asset.caption || asset.filename}
                 </div>
-                <div className="mt-1 text-[12.5px] text-drift-text-secondary">
+                <div className="mt-1 text-[11px] text-drift-text-secondary">
                   {formatDate(asset.createdAt, {
                     day: "numeric",
                     month: "short",
@@ -231,7 +235,7 @@ export default function MediaPage() {
               <div className="text-[12.5px] text-drift-text-secondary">
                 {file
                   ? `${(file.size / (1024 * 1024)).toFixed(1)} MB`
-                  : "PNG or JPG, up to 5MB"}
+                  : t("media.limits")}
               </div>
               <Button
                 type="button"

@@ -13,23 +13,21 @@ export default function BillingPage() {
   const t = useT();
   return (
     <div>
-      <PageHeader title={t("a.billing")} />
+      <PageHeader compact title={t("a.billing")} />
       <Panel>
         <div className="flex items-start gap-4">
           <IconChip icon="celebration" tone="info" />
           <div>
-            <h2 className="text-lg font-extrabold text-drift-text-primary">{t("a.driftIsFreeDuringBeta")}</h2>
+            <h2 className="text-[16px] font-extrabold text-drift-text-primary">{t("a.driftIsFreeDuringBeta")}</h2>
             <p className="mt-2 max-w-xl text-sm leading-6 text-drift-text-secondary">
-              There&apos;s nothing to manage here right now — every club runs
-              on Drift at no cost while we&apos;re in beta. If you&apos;d like
-              to support the work while it&apos;s free, you can{" "}
+              {t("billing.bodyBefore")}{" "}
               <a
                 href="#"
                 className="font-semibold text-drift-primary-dark underline underline-offset-2"
               >
-                donate to keep it going
+                {t("billing.donate")}
               </a>
-              . We&apos;ll let you know here well before anything changes.
+              {t("billing.bodyAfter")}
             </p>
           </div>
         </div>

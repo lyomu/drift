@@ -31,14 +31,14 @@ export function Listing({
   const isEmpty = !loading && !count;
 
   return (
-    <div className="overflow-hidden rounded-lg border border-drift-border bg-drift-surface">
-      <div className="flex items-center justify-between gap-3 border-b border-drift-border bg-drift-primary-light/40 px-5 py-3">
+    <div className="overflow-hidden rounded-2xl border border-drift-border bg-drift-surface shadow-card">
+      <div className="flex min-h-[60px] items-center justify-between gap-3 border-b border-drift-border px-5 py-3">
         <div className="flex items-center gap-2">
-          <span className="text-[11px] font-extrabold uppercase text-drift-text-secondary">
+          <span className="text-[14px] font-extrabold text-drift-text-primary">
             {title}
           </span>
           {count != null && (
-            <span className="rounded-full bg-drift-surface px-2 py-0.5 text-[11px] font-bold text-drift-text-secondary">
+            <span className="rounded-full bg-drift-neutral-surface px-2 py-0.5 text-[11px] font-bold text-drift-text-secondary">
               {count}
             </span>
           )}

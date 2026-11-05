@@ -95,6 +95,7 @@ export default function TeamPage() {
   return (
     <div>
       <PageHeader
+        compact
         title={t("a.teamRoles")}
         description={t("a.inviteAdministratorsAndKeepOperational")}
         action={

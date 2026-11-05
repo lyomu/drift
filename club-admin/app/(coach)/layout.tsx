@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { hasToken } from "@/lib/api-client";
 import { useWorkspace } from "@/lib/workspace-context";
@@ -24,6 +24,7 @@ export default function CoachLayout({
   const t = useT();
   const router = useRouter();
   const { loading, authed } = useWorkspace();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!hasToken()) router.replace("/login");
@@ -41,10 +42,10 @@ export default function CoachLayout({
 
   return (
     <div className="flex min-h-screen bg-drift-background">
-      <CoachSidebar />
+      <CoachSidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
       <div className="flex min-w-0 flex-1 flex-col overflow-x-hidden">
-        <CoachHeader />
-        <main className="box-border flex w-full flex-1 flex-col px-4 py-6 sm:px-8 sm:py-8 sm:pb-14">
+        <CoachHeader onMenuClick={() => setMenuOpen(true)} />
+        <main className="mx-auto box-border flex w-full max-w-[1470px] flex-1 flex-col px-4 pb-6 pt-6 sm:px-[34px] sm:pb-14 sm:pt-[38px]">
           {children}
         </main>
       </div>

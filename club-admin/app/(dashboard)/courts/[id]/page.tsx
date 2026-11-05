@@ -5,6 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { api, ApiError } from "@/lib/api-client";
 import { useClub } from "@/lib/club-context";
 import { Button, Card, ErrorBanner, Field, Input, PageHeader } from "@/components/ui";
+import { BackButton, SegmentControl } from "@/components/redesign";
+import { CourtBookingSettings } from "@/components/CourtBookingSettings";
 import { CourtGroupsEditor } from "@/components/CourtGroupsEditor";
 import { CourtPhotoUpload } from "@/components/CourtPhotoUpload";
 import type { CourtGroup, CourtProfile } from "@/lib/types";
@@ -18,6 +20,7 @@ export default function EditCourtPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [tab, setTab] = useState<"details" | "booking">("details");
 
   const [form, setForm] = useState({
     name: "",
@@ -67,8 +70,23 @@ export default function EditCourtPage() {
 
   return (
     <div>
-      <PageHeader title={t("a.editCourt")} />
+      <div className="mb-5">
+        <BackButton href="/courts">{t("ct.backAll")}</BackButton>
+      </div>
+      <PageHeader eyebrow={t("nav.operations")} title={t("a.editCourt")} />
+      <div className="mb-5">
+        <SegmentControl
+          value={tab}
+          onChange={setTab}
+          options={[
+            { value: "details", label: t("bk.tabDetails") },
+            { value: "booking", label: t("bk.tabBooking") },
+          ]}
+        />
+      </div>
       <ErrorBanner message={error} />
+      {tab === "booking" && clubId && <CourtBookingSettings clubId={clubId} courtId={id} />}
+      {tab === "details" && (
       <Card>
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           <Field label={t("a.name")}>
@@ -117,6 +135,7 @@ export default function EditCourtPage() {
           </Button>
         </form>
       </Card>
+      )}
     </div>
   );
 }

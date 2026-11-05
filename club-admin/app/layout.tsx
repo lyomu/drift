@@ -5,6 +5,7 @@ import { ClubProvider } from "@/lib/club-context";
 import { WorkspaceProvider } from "@/lib/workspace-context";
 import { cookies, headers } from "next/headers";
 import { I18nProvider } from "@/lib/i18n/i18n-context";
+import { ToastProvider } from "@/components/Toast";
 import { isLocale, LOCALE_COOKIE, localeFromAcceptLanguage } from "@/lib/i18n/locales";
 import { en } from "@/lib/i18n/messages/en";
 import { fr } from "@/lib/i18n/messages/fr";
@@ -52,14 +53,16 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=block"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,100..700,0..1,0&display=block"
           rel="stylesheet"
         />
       </head>
       <body className="min-h-full flex flex-col font-body">
         <I18nProvider initialLocale={locale}>
           <WorkspaceProvider>
-            <ClubProvider>{children}</ClubProvider>
+            <ClubProvider>
+              <ToastProvider>{children}</ToastProvider>
+            </ClubProvider>
           </WorkspaceProvider>
         </I18nProvider>
       </body>

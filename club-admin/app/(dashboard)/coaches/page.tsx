@@ -3,16 +3,17 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { StatusBadge } from "@/components/StatusBadge";
-import { Button, ErrorBanner, Input, PageHeader } from "@/components/ui";
-import { InitialsAvatar, RowCard } from "@/components/dashboard-design";
+import { Button, ErrorBanner, PageHeader } from "@/components/ui";
+import { InlineSearch } from "@/components/redesign";
+import { InitialsAvatar, MaterialIcon, RowCard } from "@/components/dashboard-design";
 import { Listing } from "@/components/Listing";
 import { api, ApiError } from "@/lib/api-client";
 import { useClub } from "@/lib/club-context";
 import type { CoachAdmin } from "@/lib/types";
 import { useT } from "@/lib/i18n/i18n-context";
 
-function coachName(coach: CoachAdmin) {
-  return [coach.firstName, coach.lastName].filter(Boolean).join(" ") || "Coach";
+function coachName(coach: CoachAdmin, fallback: string) {
+  return [coach.firstName, coach.lastName].filter(Boolean).join(" ") || fallback;
 }
 
 export default function CoachesPage() {
@@ -53,7 +54,7 @@ export default function CoachesPage() {
     if (!needle) return coaches;
     return coaches.filter((coach) =>
       [
-        coachName(coach),
+        coachName(coach, ""),
         coach.accountEmail ?? "",
         coach.specialisations.join(" "),
         coach.levels.join(" "),
@@ -67,12 +68,16 @@ export default function CoachesPage() {
   return (
     <div>
       <PageHeader
+        eyebrow={t("nav.workspace")}
         title={t("a.coaches")}
         description={t("a.publicCoachingProfilesAffiliatedWith")}
         action={
           canManage ? (
             <Link href="/coaches/new">
-              <Button>{t("a.addCoach")}</Button>
+              <Button>
+                <MaterialIcon name="add" className="text-[19px]" />
+                {t("a.addCoach")}
+              </Button>
             </Link>
           ) : undefined
         }
@@ -80,11 +85,11 @@ export default function CoachesPage() {
       <ErrorBanner message={error} />
 
       <div className="mb-4 max-w-sm">
-        <Input
-          aria-label={t("a.filterCoaches")}
-          placeholder={t("a.filterByNameOrSpecialisation")}
+        <InlineSearch
           value={query}
-          onChange={(event) => setQuery(event.target.value)}
+          onChange={setQuery}
+          placeholder={t("a.filterByNameOrSpecialisation")}
+          className="w-full"
         />
       </div>
 
@@ -114,10 +119,10 @@ export default function CoachesPage() {
             {visible?.map((coach) => (
               <Link href={`/coaches/${coach.id}`} key={coach.id}>
                 <RowCard className="flex cursor-pointer items-center gap-3.5 p-3.5">
-                  <InitialsAvatar name={coachName(coach)} />
+                  <InitialsAvatar name={coachName(coach, t("a.coach"))} tone="auto" />
                   <div className="min-w-0 flex-[1.1]">
                     <div className="truncate text-[13.5px] font-bold text-drift-text-primary">
-                      {coachName(coach)}
+                      {coachName(coach, t("a.coach"))}
                     </div>
                     <div className="truncate text-xs text-drift-text-secondary">
                       {coach.accountEmail ?? t("a.noAccountEmail")}
@@ -132,7 +137,7 @@ export default function CoachesPage() {
                       .map((chip) => (
                         <span
                           key={chip}
-                          className="rounded-full bg-drift-neutral-surface px-2.5 py-[3px] text-[11.5px] font-semibold text-drift-text-secondary"
+                          className="rounded-full bg-drift-neutral-surface px-2.5 py-1 text-[11px] font-semibold text-drift-text-secondary"
                         >
                           {chip.replace(/_/g, " ")}
                         </span>

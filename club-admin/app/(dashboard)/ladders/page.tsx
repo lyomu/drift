@@ -5,8 +5,9 @@ import { api, ApiError } from "@/lib/api-client";
 import { useClub } from "@/lib/club-context";
 import { Button, EmptyState, ErrorBanner, Field, Input, PageHeader, Select } from "@/components/ui";
 import { StatusBadge } from "@/components/StatusBadge";
-import { MaterialIcon, ModalShell, Panel } from "@/components/dashboard-design";
+import { InitialsAvatar, MaterialIcon, ModalShell, Panel } from "@/components/dashboard-design";
 import { Listing } from "@/components/Listing";
+import { SummaryStrip } from "@/components/redesign";
 import type { LadderAdmin, MatchSport } from "@/lib/types";
 import { useT } from "@/lib/i18n/i18n-context";
 
@@ -110,15 +111,33 @@ export default function LaddersPage() {
   return (
     <div>
       <PageHeader
+        eyebrow={t("nav.competitions")}
         title={t("a.ladderManagement")}
         description={t("a.createRollingLaddersAndAdjust")}
         action={
           canManage ? (
-            <Button onClick={() => setShowForm(true)}>{t("a.createLadder")}</Button>
+            <Button onClick={() => setShowForm(true)}>
+              <MaterialIcon name="add" className="text-[19px]" />
+              {t("a.createLadder")}
+            </Button>
           ) : undefined
         }
       />
       <ErrorBanner message={error} />
+      {ladders !== null && ladders.length > 0 && (
+        <SummaryStrip
+          items={[
+            { icon: "leaderboard", value: ladders.filter((l) => l.state === "ACTIVE").length, label: t("lad.active") },
+            {
+              icon: "groups",
+              tone: "lime",
+              value: ladders.reduce((sum, l) => sum + (l._count?.entries ?? 0), 0),
+              label: t("lad.ranked"),
+            },
+            { icon: "swap_vert", tone: "gold", value: Math.max(...ladders.map((l) => l.challengeRange)), label: t("lad.maxRange") },
+          ]}
+        />
+      )}
       <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(260px,0.7fr)_minmax(0,1.3fr)]">
         <Listing
           title={t("a.ladders")}
@@ -138,18 +157,24 @@ export default function LaddersPage() {
               type="button"
               key={ladder.id}
               onClick={() => void open(ladder.id)}
-              className={`rowcard rounded-lg border bg-drift-surface p-4 text-left transition-colors ${
-                selected?.id === ladder.id ? "border-drift-primary" : "border-drift-border"
+              className={`rounded-[12px] border p-4 text-left transition-colors ${
+                selected?.id === ladder.id
+                  ? "border-drift-primary bg-drift-primary-light"
+                  : "border-drift-border bg-drift-surface hover:bg-drift-surface-sunken"
               }`}
             >
               <div className="flex items-start justify-between gap-3">
-                <span className="text-sm font-bold text-drift-text-primary">
+                <span className="text-[13px] font-extrabold text-drift-text-primary">
                   {ladder.name}
                 </span>
                 <StatusBadge status={ladder.state} />
               </div>
-              <div className="mt-1 text-[12.5px] text-drift-text-secondary">
-                {(ladder.sport ?? "TENNIS").replace(/_/g, " ")} / {ladder._count?.entries ?? 0} players / challenge {ladder.challengeRange} rungs
+              <div className="mt-1 text-[12px] text-drift-text-secondary">
+                {t("lad.meta", {
+                  sport: (ladder.sport ?? "TENNIS").replace(/_/g, " "),
+                  players: ladder._count?.entries ?? 0,
+                  range: ladder.challengeRange,
+                })}
               </div>
             </button>
           ))}
@@ -165,7 +190,8 @@ export default function LaddersPage() {
               <Panel>
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <div>
-                    <h2 className="text-base font-bold text-drift-text-primary">
+                    <StatusBadge status={selected.state} />
+                    <h2 className="mt-2 text-[17px] font-extrabold text-drift-text-primary">
                       {selected.name}
                     </h2>
                     <p className="mt-0.5 text-[12.5px] text-drift-text-secondary">{t("a.rung1IsTheTop")}</p>
@@ -189,17 +215,21 @@ export default function LaddersPage() {
                     {selected.entries.map((entry, index) => (
                       <div
                         key={entry.id}
-                        className="flex items-center gap-3 rounded-md border border-drift-border px-3 py-2.5"
+                        className="flex items-center gap-3 rounded-xl border border-drift-border px-3.5 py-2.5"
                       >
-                        <span className="w-7 shrink-0 text-center text-base font-extrabold text-drift-primary tabular">
+                        <span className="w-7 shrink-0 text-center text-[15px] font-extrabold text-drift-primary tabular">
                           {entry.position}
                         </span>
+                        <InitialsAvatar
+                          name={`${entry.user.firstName ?? ""} ${entry.user.lastName ?? ""}`.trim() || t("a.player")}
+                          tone="auto"
+                        />
                         <div className="min-w-0 flex-1">
-                          <div className="text-[13.5px] font-bold text-drift-text-primary">
-                            {`${entry.user.firstName ?? ""} ${entry.user.lastName ?? ""}`.trim() || "Player"}
+                          <div className="text-[13px] font-bold text-drift-text-primary">
+                            {`${entry.user.firstName ?? ""} ${entry.user.lastName ?? ""}`.trim() || t("a.player")}
                           </div>
-                          <div className="text-xs text-drift-text-secondary">
-                            {entry.wins} wins / {entry.losses} losses
+                          <div className="text-[11px] text-drift-text-secondary">
+                            {t("lad.record", { wins: entry.wins, losses: entry.losses })}
                           </div>
                         </div>
                         {canManage && (

@@ -25,6 +25,18 @@
   --color-error: #dc2626;
   --color-error-surface: #fdecec;
   --color-neutral-surface: #f1f3f5;
+  --color-surface-sunken: #f9fbfd;
+  --color-accent-lime: #0369a1;
+  --color-accent-lime-surface: #e0f2fe;
+  --color-accent-forest: #0f766e;
+  --color-accent-forest-surface: #def7f1;
+  --color-accent-gold: #a16207;
+  --color-accent-gold-surface: #fef3d7;
+  --color-accent-coral: #c2410c;
+  --color-accent-coral-surface: #ffece8;
+  --color-accent-violet: #6d28d9;
+  --color-accent-violet-surface: #efe9fd;
+  --card-shadow: 0 1px 2px rgb(17 24 39 / 4%), 0 10px 28px rgb(17 24 39 / 5%);
 }
 
 /*
@@ -51,6 +63,18 @@
   --color-error: #dc2626;
   --color-error-surface: #fdecec;
   --color-neutral-surface: #f1f3f5;
+  --color-surface-sunken: #f9fbfd;
+  --color-accent-lime: #0369a1;
+  --color-accent-lime-surface: #e0f2fe;
+  --color-accent-forest: #0f766e;
+  --color-accent-forest-surface: #def7f1;
+  --color-accent-gold: #a16207;
+  --color-accent-gold-surface: #fef3d7;
+  --color-accent-coral: #c2410c;
+  --color-accent-coral-surface: #ffece8;
+  --color-accent-violet: #6d28d9;
+  --color-accent-violet-surface: #efe9fd;
+  --card-shadow: 0 1px 2px rgb(17 24 39 / 4%), 0 10px 28px rgb(17 24 39 / 5%);
 }
 
 /*
@@ -77,6 +101,18 @@
     --color-error: #f87171;
     --color-error-surface: #341415;
     --color-neutral-surface: #1c2738;
+  --color-surface-sunken: #0d1626;
+  --color-accent-lime: #7dd3fc;
+  --color-accent-lime-surface: #0c2a3d;
+  --color-accent-forest: #5eead4;
+  --color-accent-forest-surface: #0f2f2c;
+  --color-accent-gold: #fbbf24;
+  --color-accent-gold-surface: #2e2408;
+  --color-accent-coral: #fb923c;
+  --color-accent-coral-surface: #3a1a14;
+  --color-accent-violet: #c4b5fd;
+  --color-accent-violet-surface: #231a3d;
+  --card-shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 10px 28px rgb(0 0 0 / 25%);
   }
 }
 
@@ -97,6 +133,18 @@
   --color-error: #f87171;
   --color-error-surface: #341415;
   --color-neutral-surface: #1c2738;
+  --color-surface-sunken: #0d1626;
+  --color-accent-lime: #7dd3fc;
+  --color-accent-lime-surface: #0c2a3d;
+  --color-accent-forest: #5eead4;
+  --color-accent-forest-surface: #0f2f2c;
+  --color-accent-gold: #fbbf24;
+  --color-accent-gold-surface: #2e2408;
+  --color-accent-coral: #fb923c;
+  --color-accent-coral-surface: #3a1a14;
+  --color-accent-violet: #c4b5fd;
+  --color-accent-violet-surface: #231a3d;
+  --card-shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 10px 28px rgb(0 0 0 / 25%);
 }
 
 /*
@@ -130,6 +178,18 @@
   --color-drift-error: var(--color-error);
   --color-drift-error-surface: var(--color-error-surface);
   --color-drift-neutral-surface: var(--color-neutral-surface);
+  --color-drift-surface-sunken: var(--color-surface-sunken);
+  --color-drift-lime: var(--color-accent-lime);
+  --color-drift-lime-surface: var(--color-accent-lime-surface);
+  --color-drift-forest: var(--color-accent-forest);
+  --color-drift-forest-surface: var(--color-accent-forest-surface);
+  --color-drift-gold: var(--color-accent-gold);
+  --color-drift-gold-surface: var(--color-accent-gold-surface);
+  --color-drift-coral: var(--color-accent-coral);
+  --color-drift-coral-surface: var(--color-accent-coral-surface);
+  --color-drift-violet: var(--color-accent-violet);
+  --color-drift-violet-surface: var(--color-accent-violet-surface);
+  --shadow-card: var(--card-shadow);
 
   --font-body: var(--font-outfit);
   --font-display: var(--font-outfit);
@@ -147,6 +207,7 @@
   --radius-md: 6px;
   --radius-lg: 8px;
   --radius-xl: 10px;
+  --radius-2xl: 14px;
 }
 
 body {
@@ -170,8 +231,20 @@ h6 {
   font-weight: 700;
 }
 
+/*
+ * The default border colour lives in the base layer on purpose. It used to be
+ * an unlayered `* { border-color }` rule, and unlayered CSS beats every
+ * Tailwind utility regardless of specificity -- so `border-drift-primary`,
+ * `border-transparent`, `hover:border-...` and the like never took effect
+ * anywhere in the console. In a layer, utilities override it as intended.
+ */
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+}
+
 * {
-  border-color: var(--color-border);
   /* Zero tracking everywhere -- the type scale carries no letter-spacing. */
   letter-spacing: 0;
 }
@@ -180,14 +253,14 @@ h6 {
   display: inline-block;
   font-family: "Material Symbols Outlined";
   font-style: normal;
-  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+  font-variation-settings: "FILL" 0, "wght" 300, "GRAD" 0, "opsz" 24;
   font-weight: normal;
   line-height: 1;
   -webkit-font-smoothing: antialiased;
 }
 
 .msf {
-  font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24;
+  font-variation-settings: "FILL" 1, "wght" 300, "GRAD" 0, "opsz" 24;
 }
 
 .navgroup:hover {
@@ -265,4 +338,51 @@ h6 {
   pointer-events: none;
   float: left;
   height: 0;
+}
+
+/* Redesign: shared focus ring, modal entry and the sidebar brand pattern. */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+a:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-primary) 40%, transparent);
+  outline-offset: 2px;
+}
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.modal-in {
+  animation: modal-in 0.18s ease-out;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-in {
+    animation: none;
+  }
+}
+
+/* Thin, quiet scrollbars like the design. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
 }
