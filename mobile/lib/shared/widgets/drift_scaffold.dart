@@ -14,6 +14,8 @@ class DriftScaffold extends StatelessWidget {
     required this.body,
     this.trailing,
     this.onBack,
+    this.titleMaxLines = 1,
+    this.titleStyle,
     this.floatingActionButton,
     this.bottomNavigationBar,
     this.resizeToAvoidBottomInset,
@@ -23,6 +25,8 @@ class DriftScaffold extends StatelessWidget {
   final Widget body;
   final Widget? trailing;
   final VoidCallback? onBack;
+  final int titleMaxLines;
+  final TextStyle? titleStyle;
   final Widget? floatingActionButton;
   final Widget? bottomNavigationBar;
   final bool? resizeToAvoidBottomInset;
@@ -37,7 +41,13 @@ class DriftScaffold extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            DriftBackHeader(title: title, onBack: onBack, trailing: trailing),
+            DriftBackHeader(
+              title: title,
+              onBack: onBack,
+              trailing: trailing,
+              titleMaxLines: titleMaxLines,
+              titleStyle: titleStyle,
+            ),
             Expanded(child: body),
           ],
         ),
