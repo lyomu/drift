@@ -87,25 +87,29 @@ class NextMatchEmpty extends ConsumerWidget {
                   onPressed: () =>
                       context.go('/home?tab=discover&discover=players'),
                   icon: const Icon(Icons.sports_tennis_rounded, size: 18),
-                  label: Text(l10n.homeFindAMatch),
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(44),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                  label: _OneLine(l10n.homeFindAMatch),
+                  style: _buttonShape(
+                    FilledButton.styleFrom(
+                      backgroundColor: colors.primary,
+                      foregroundColor: Colors.white,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
-              Flexible(
-                child: TextButton(
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton.icon(
                   onPressed: () => context.push('/connections'),
-                  style: TextButton.styleFrom(minimumSize: const Size(44, 44)),
-                  child: Text(
-                    l10n.homeChallengeAFriend,
-                    maxLines: 2,
-                    textAlign: TextAlign.center,
-                    overflow: TextOverflow.ellipsis,
+                  icon: const Icon(Icons.people_alt_outlined, size: 18),
+                  label: _OneLine(l10n.homeChallengeAFriend),
+                  style: _buttonShape(
+                    OutlinedButton.styleFrom(
+                      foregroundColor: colors.primary,
+                      side: BorderSide(
+                        color: colors.primary.withValues(alpha: 0.55),
+                        width: 1.4,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -122,6 +126,34 @@ class NextMatchEmpty extends ConsumerWidget {
       .map((p) => p[0].toUpperCase())
       .take(2)
       .join();
+}
+
+/// Both Home empty-state buttons share one shape and height, so they read as
+/// a pair whatever the language.
+ButtonStyle _buttonShape(ButtonStyle base) => base.copyWith(
+  minimumSize: const WidgetStatePropertyAll(Size.fromHeight(48)),
+  padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 12)),
+  iconSize: const WidgetStatePropertyAll(18),
+  shape: WidgetStatePropertyAll(
+    RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+  ),
+  textStyle: const WidgetStatePropertyAll(
+    TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+  ),
+);
+
+/// A button label that always stays on one line: it shrinks a little rather
+/// than wrapping when a translation is longer than the space it has.
+class _OneLine extends StatelessWidget {
+  const _OneLine(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => FittedBox(
+    fit: BoxFit.scaleDown,
+    child: Text(text, maxLines: 1, softWrap: false),
+  );
 }
 
 const _avatarRadius = 28.0;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/drift_typography.dart';
 import '../../../shared/widgets/drift_back_header.dart';
@@ -26,7 +27,6 @@ class CourtFinderHubScreen extends ConsumerStatefulWidget {
 class _CourtFinderHubScreenState extends ConsumerState<CourtFinderHubScreen> {
   int _segment = 0;
 
-
   @override
   Widget build(BuildContext context) {
     final type = Theme.of(context).extension<DriftTypography>()!;
@@ -44,6 +44,19 @@ class _CourtFinderHubScreenState extends ConsumerState<CourtFinderHubScreen> {
                   labels: [context.l10n.courtMap, context.l10n.courtList],
                   selected: _segment,
                   onChanged: (i) => setState(() => _segment = i),
+                ),
+              ),
+              const SizedBox(width: 8),
+              // The player's court bookings live with the courts.
+              Tooltip(
+                message: context.l10n.bookingMyBookings,
+                child: Semantics(
+                  button: true,
+                  label: context.l10n.bookingMyBookings,
+                  child: DriftHeaderSquareButton(
+                    icon: Icons.event_available_outlined,
+                    onTap: () => context.push('/discover/my-bookings'),
+                  ),
                 ),
               ),
               const SizedBox(width: 8),

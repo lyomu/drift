@@ -37,10 +37,6 @@ class ActionNeededRail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasFact = fact != null;
-    final items = <Widget>[
-      if (hasFact) _FactCard(fact: fact!, onTap: onFactTap),
-      for (final card in cards) _ActionCard(card: card),
-    ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -63,16 +59,31 @@ class ActionNeededRail extends StatelessWidget {
         const SizedBox(height: 10),
         SizedBox(
           height: 152,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: items.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 10),
-            itemBuilder: (context, i) => DriftEntrance(
-              index: i,
-              offset: 8,
-              child: DriftPressable(child: items[i]),
-            ),
+          // The fact fills the screen width; any urgent cards sit beside it,
+          // reached by scrolling.
+          child: LayoutBuilder(
+            builder: (context, box) {
+              final items = <Widget>[
+                if (hasFact)
+                  _FactCard(
+                    fact: fact!,
+                    onTap: onFactTap,
+                    width: box.maxWidth - 32,
+                  ),
+                for (final card in cards) _ActionCard(card: card),
+              ];
+              return ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: items.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 10),
+                itemBuilder: (context, i) => DriftEntrance(
+                  index: i,
+                  offset: 8,
+                  child: DriftPressable(child: items[i]),
+                ),
+              );
+            },
           ),
         ),
       ],
@@ -80,13 +91,19 @@ class ActionNeededRail extends StatelessWidget {
   }
 }
 
-/// Today's fact as the lead card of the rail: photo (or branded fallback)
-/// across the top, "Did you know?" and the fact's title below.
+/// Today's fact as the lead card of the rail, full width: the photo (or
+/// branded fallback) on the left, the hook, the fact's title and the call to
+/// action on the right.
 class _FactCard extends StatelessWidget {
-  const _FactCard({required this.fact, required this.onTap});
+  const _FactCard({
+    required this.fact,
+    required this.onTap,
+    required this.width,
+  });
 
   final TennisFact fact;
   final VoidCallback? onTap;
+  final double width;
 
   @override
   Widget build(BuildContext context) {
@@ -98,34 +115,34 @@ class _FactCard extends StatelessWidget {
       hint: context.l10n.tennisFactOpenHint,
       excludeSemantics: true,
       child: SizedBox(
-        width: 220,
+        width: width,
         child: Material(
           color: Color.alphaBlend(
             accent.withValues(alpha: 0.06),
             colors.surface,
           ),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: onTap,
             child: Container(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(18),
                 border: Border.all(
                   color: accent.withValues(alpha: 0.18),
                   width: 1.5,
                 ),
               ),
-              child: Column(
+              child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   SizedBox(
-                    height: 64,
+                    width: 116,
                     child: TennisFactImage(imageUrl: fact.imageUrl),
                   ),
                   Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+                      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -140,30 +157,41 @@ class _FactCard extends StatelessWidget {
                               color: accent,
                             ),
                           ),
-                          const SizedBox(height: 3),
+                          const SizedBox(height: 4),
                           Expanded(
                             child: Text(
                               fact.title,
-                              maxLines: 2,
+                              maxLines: 3,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                height: 1.3,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                height: 1.25,
                                 color: colors.textPrimary,
                               ),
                             ),
                           ),
-                          Text(
-                            '${context.l10n.tennisFactOpenHint} →',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              height: 1.2,
-                              color: accent,
-                            ),
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  context.l10n.tennisFactCta,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w800,
+                                    color: accent,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Icon(
+                                Icons.arrow_forward_rounded,
+                                size: 16,
+                                color: accent,
+                              ),
+                            ],
                           ),
                         ],
                       ),

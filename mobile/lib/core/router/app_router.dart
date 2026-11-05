@@ -42,7 +42,9 @@ import '../../features/coaches/presentation/coach_profile_screen.dart';
 import '../../features/connections/presentation/connections_list_screen.dart';
 import '../../features/connections/presentation/pending_requests_screen.dart';
 import '../../features/courts/presentation/court_photos_gallery_screen.dart';
+import '../../features/courts/presentation/court_booking_screen.dart';
 import '../../features/courts/presentation/court_profile_screen.dart';
+import '../../features/courts/presentation/my_bookings_screen.dart';
 import '../../features/learning/presentation/add_practice_session_screen.dart';
 import '../../features/learning/presentation/assessment_history_screen.dart';
 import '../../features/learning/presentation/content_detail_screen.dart';
@@ -361,6 +363,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/discover/courts/:id',
         builder: (context, state) =>
             CourtProfileScreen(courtId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/discover/courts/:id/book',
+        builder: (context, state) =>
+            CourtBookingScreen(courtId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/discover/my-bookings',
+        builder: (context, state) => const MyBookingsScreen(),
       ),
       GoRoute(
         path: '/discover/courts/:id/photos',

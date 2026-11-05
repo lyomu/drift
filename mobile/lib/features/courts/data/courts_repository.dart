@@ -5,6 +5,7 @@ import 'package:latlong2/latlong.dart';
 import '../../../core/network/dio_client.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../../core/l10n/l10n.dart';
+import 'court_bookings.dart';
 
 /// Mirrors the backend's `ListingVerificationStatus` — shared by Court and
 /// Club.
@@ -345,6 +346,61 @@ class CourtsRepository {
       } else {
         await _dio.delete('/courts/$id/favorite');
       }
+    } on DioException catch (e) {
+      throw _toAuthException(e);
+    }
+  }
+
+  // ── Native booking ──────────────────────────────────────────────────────
+
+  /// Slot grid for one local day. [date] is `YYYY-MM-DD`.
+  Future<CourtAvailability> availability(
+    String courtId,
+    String date, {
+    String? groupId,
+  }) async {
+    final data = await _get(
+      '/courts/$courtId/availability',
+      query: {'date': date, if (groupId != null) 'groupId': groupId},
+    );
+    return CourtAvailability.fromJson(data);
+  }
+
+  /// Sends a PENDING request; the club approves or declines it.
+  Future<CourtBooking> requestBooking(
+    String courtId, {
+    required String groupId,
+    required DateTime startsAt,
+    required DateTime endsAt,
+    String? note,
+  }) async {
+    final data = await _postJson('/courts/$courtId/bookings', {
+      'courtGroupId': groupId,
+      'startsAt': startsAt.toUtc().toIso8601String(),
+      'endsAt': endsAt.toUtc().toIso8601String(),
+      if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
+    });
+    return CourtBooking.fromJson(data['booking'] as Map<String, dynamic>);
+  }
+
+  Future<List<CourtBooking>> myBookings() async {
+    final data = await _get('/me/bookings');
+    return (data['bookings'] as List<dynamic>)
+        .map((b) => CourtBooking.fromJson(b as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<void> cancelBooking(String bookingId) async {
+    await _postJson('/me/bookings/$bookingId/cancel', const {});
+  }
+
+  Future<Map<String, dynamic>> _postJson(
+    String path,
+    Map<String, dynamic> body,
+  ) async {
+    try {
+      final response = await _dio.post(path, data: body);
+      return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
       throw _toAuthException(e);
     }

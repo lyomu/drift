@@ -133,27 +133,31 @@ class _HeroLayout extends StatelessWidget {
             for (var i = 0; i < rest.length; i++) ...[
               if (i > 0) const SizedBox(width: 10),
               Expanded(
+                // Slightly shorter than square, with the arrow beside the
+                // icon so the label keeps its two lines.
                 child: AspectRatio(
-                  aspectRatio: 0.8,
+                  aspectRatio: 0.95,
                   child: _TintedCard(
                     action: rest[i],
-                    radius: 20,
+                    radius: 14,
                     child: Padding(
                       padding: const EdgeInsets.all(12),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(rest[i].icon, size: 24, color: rest[i].accent),
+                          Row(
+                            children: [
+                              Icon(
+                                rest[i].icon,
+                                size: 24,
+                                color: rest[i].accent,
+                              ),
+                              const Spacer(),
+                              _ArrowButton(accent: rest[i].accent, size: 26),
+                            ],
+                          ),
                           const Spacer(),
                           _Label(text: rest[i].label, size: 14, maxLines: 2),
-                          const SizedBox(height: 8),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: _ArrowButton(
-                              accent: rest[i].accent,
-                              size: 26,
-                            ),
-                          ),
                         ],
                       ),
                     ),

@@ -4506,10 +4506,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeChallengeAFriend => 'Challenge a friend';
 
   @override
-  String get homeTodaysFact => 'Today\'s fact';
+  String get homeTodaysFact => 'Your daily ace';
 
   @override
-  String get tennisFactEyebrow => 'Did you know?';
+  String get tennisFactEyebrow => 'Bet you didn\'t know this';
+
+  @override
+  String get tennisFactCta => 'Reveal the story';
 
   @override
   String get tennisFactGotIt => 'Got it';
@@ -4521,4 +4524,110 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tennisFactOpenHint => 'Tap to read';
+
+  @override
+  String get bookingTitle => 'Book a court';
+
+  @override
+  String get bookingSurface => 'Surface';
+
+  @override
+  String get bookingDay => 'Day';
+
+  @override
+  String get bookingTime => 'Start time';
+
+  @override
+  String get bookingDuration => 'Duration';
+
+  @override
+  String bookingMinutes(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String get bookingNoteLabel => 'Note for the club (optional)';
+
+  @override
+  String get bookingFreeNote => 'Free. The club confirms your request.';
+
+  @override
+  String get bookingSubmit => 'Request booking';
+
+  @override
+  String get bookingNoSlots => 'No times available on this day.';
+
+  @override
+  String get bookingPickSlot => 'Pick a start time';
+
+  @override
+  String get bookingSent => 'Request sent. The club will confirm it soon.';
+
+  @override
+  String get bookingUnavailable =>
+      'Online booking isn\'t available for this court right now.';
+
+  @override
+  String get bookingRequestAction => 'Request a time';
+
+  @override
+  String get bookingMyBookings => 'My bookings';
+
+  @override
+  String get bookingEmpty => 'No bookings yet';
+
+  @override
+  String get bookingEmptyHint => 'Court requests you send will show up here.';
+
+  @override
+  String get bookingUpcoming => 'Upcoming';
+
+  @override
+  String get bookingPast => 'Past';
+
+  @override
+  String get bookingStatusPending => 'Pending';
+
+  @override
+  String get bookingStatusApproved => 'Confirmed';
+
+  @override
+  String get bookingStatusDeclined => 'Declined';
+
+  @override
+  String get bookingStatusCancelled => 'Cancelled';
+
+  @override
+  String get bookingStatusCompleted => 'Completed';
+
+  @override
+  String get bookingCancel => 'Cancel booking';
+
+  @override
+  String get bookingCancelTitle => 'Cancel this booking?';
+
+  @override
+  String get bookingCancelBody => 'The club will be told you can\'t make it.';
+
+  @override
+  String get bookingKeep => 'Keep it';
+
+  @override
+  String get bookingCancelled => 'Booking cancelled';
+
+  @override
+  String get bookingCancelledByClub => 'Cancelled by the club';
+
+  @override
+  String bookingClubNote(String note) {
+    return 'Club note: $note';
+  }
+
+  @override
+  String bookingYourNote(String note) {
+    return 'Your note: $note';
+  }
+
+  @override
+  String get availBookInApp => 'Request in the app';
 }

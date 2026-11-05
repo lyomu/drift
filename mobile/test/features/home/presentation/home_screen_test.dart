@@ -127,6 +127,8 @@ void main() {
           summaryOverride,
           notificationsOverride,
           factOverride,
+          // The stat card shows the viewer's avatar.
+          currentUserOverride,
         ],
       );
 

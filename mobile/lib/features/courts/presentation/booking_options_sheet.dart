@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/drift_colors.dart';
@@ -50,9 +51,24 @@ class _BookingOptionsSheet extends StatelessWidget {
 
     if (bookingType == CourtBookingType.nativePartner) {
       actions.add(
-        Text(
-          context.l10n.courtNativeBookingUnavailable,
-          style: type.body.copyWith(color: colors.textSecondary),
+        DriftButton(
+          label: context.l10n.bookingRequestAction,
+          onPressed: () {
+            final router = GoRouter.of(context);
+            Navigator.of(context).pop();
+            router.push('/discover/courts/${profile.summary.id}/book');
+          },
+        ),
+      );
+      actions.add(
+        DriftButton(
+          label: context.l10n.bookingMyBookings,
+          variant: DriftButtonVariant.text,
+          onPressed: () {
+            final router = GoRouter.of(context);
+            Navigator.of(context).pop();
+            router.push('/discover/my-bookings');
+          },
         ),
       );
     }

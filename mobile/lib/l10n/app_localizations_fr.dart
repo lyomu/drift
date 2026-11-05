@@ -4577,10 +4577,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get homeChallengeAFriend => 'Défier un ami';
 
   @override
-  String get homeTodaysFact => 'Le fait du jour';
+  String get homeTodaysFact => 'Votre ace du jour';
 
   @override
-  String get tennisFactEyebrow => 'Le saviez-vous ?';
+  String get tennisFactEyebrow => 'Je parie que vous l\'ignoriez';
+
+  @override
+  String get tennisFactCta => 'Découvrir l\'histoire';
 
   @override
   String get tennisFactGotIt => 'Compris';
@@ -4592,4 +4595,111 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get tennisFactOpenHint => 'Touchez pour lire';
+
+  @override
+  String get bookingTitle => 'Réserver un court';
+
+  @override
+  String get bookingSurface => 'Surface';
+
+  @override
+  String get bookingDay => 'Jour';
+
+  @override
+  String get bookingTime => 'Heure de début';
+
+  @override
+  String get bookingDuration => 'Durée';
+
+  @override
+  String bookingMinutes(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String get bookingNoteLabel => 'Message pour le club (facultatif)';
+
+  @override
+  String get bookingFreeNote => 'Gratuit. Le club confirme votre demande.';
+
+  @override
+  String get bookingSubmit => 'Demander la réservation';
+
+  @override
+  String get bookingNoSlots => 'Aucun créneau disponible ce jour-là.';
+
+  @override
+  String get bookingPickSlot => 'Choisissez une heure de début';
+
+  @override
+  String get bookingSent => 'Demande envoyée. Le club la confirmera bientôt.';
+
+  @override
+  String get bookingUnavailable =>
+      'La réservation en ligne n\'est pas disponible pour ce court pour le moment.';
+
+  @override
+  String get bookingRequestAction => 'Demander un créneau';
+
+  @override
+  String get bookingMyBookings => 'Mes réservations';
+
+  @override
+  String get bookingEmpty => 'Aucune réservation pour l\'instant';
+
+  @override
+  String get bookingEmptyHint =>
+      'Les demandes de court que vous envoyez apparaîtront ici.';
+
+  @override
+  String get bookingUpcoming => 'À venir';
+
+  @override
+  String get bookingPast => 'Passées';
+
+  @override
+  String get bookingStatusPending => 'En attente';
+
+  @override
+  String get bookingStatusApproved => 'Confirmée';
+
+  @override
+  String get bookingStatusDeclined => 'Refusée';
+
+  @override
+  String get bookingStatusCancelled => 'Annulée';
+
+  @override
+  String get bookingStatusCompleted => 'Terminée';
+
+  @override
+  String get bookingCancel => 'Annuler la réservation';
+
+  @override
+  String get bookingCancelTitle => 'Annuler cette réservation ?';
+
+  @override
+  String get bookingCancelBody => 'Le club sera informé que vous ne venez pas.';
+
+  @override
+  String get bookingKeep => 'Conserver';
+
+  @override
+  String get bookingCancelled => 'Réservation annulée';
+
+  @override
+  String get bookingCancelledByClub => 'Annulée par le club';
+
+  @override
+  String bookingClubNote(String note) {
+    return 'Message du club : $note';
+  }
+
+  @override
+  String bookingYourNote(String note) {
+    return 'Votre message : $note';
+  }
+
+  @override
+  String get availBookInApp => 'Demander dans l\'app';
 }

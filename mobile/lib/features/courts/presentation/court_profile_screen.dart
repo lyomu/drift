@@ -1177,7 +1177,7 @@ class _BookingBar extends StatelessWidget {
     final how = switch (profile.summary.bookingType) {
       CourtBookingType.externalLink => l.availBookOnline,
       CourtBookingType.contactOnly => l.availContactToBook,
-      CourtBookingType.nativePartner => l.availComingSoon,
+      CourtBookingType.nativePartner => l.availBookInApp,
       CourtBookingType.unknown => l.availUnknown,
     };
 

@@ -45,7 +45,7 @@ void main() {
           ),
         ),
       );
-      expect(find.text("Today's fact"), findsOneWidget);
+      expect(find.text('Your daily ace'), findsOneWidget);
       expect(find.text('Needs you'), findsNothing);
       expect(find.text('The oldest tournament'), findsOneWidget);
     });
@@ -56,7 +56,7 @@ void main() {
         Scaffold(body: ActionNeededRail(cards: [homeCard()])),
       );
       expect(find.text('Needs you'), findsOneWidget);
-      expect(find.text("Today's fact"), findsNothing);
+      expect(find.text('Your daily ace'), findsNothing);
     });
 
     testWidgets('localizes the title (FR)', (tester) async {
@@ -71,7 +71,7 @@ void main() {
         ),
         locale: const Locale('fr'),
       );
-      expect(find.text('Le fait du jour'), findsOneWidget);
+      expect(find.text('Votre ace du jour'), findsOneWidget);
     });
   });
 
@@ -87,7 +87,7 @@ void main() {
             ),
             brightness: brightness,
           );
-          expect(find.text('DID YOU KNOW?'), findsOneWidget);
+          expect(find.text("BET YOU DIDN'T KNOW THIS"), findsOneWidget);
           expect(find.text('The oldest tournament'), findsOneWidget);
           expect(
             find.text('Wimbledon was first played in 1877.'),

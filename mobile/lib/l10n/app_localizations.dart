@@ -8221,14 +8221,20 @@ abstract class AppLocalizations {
   /// No description provided for @homeTodaysFact.
   ///
   /// In en, this message translates to:
-  /// **'Today\'s fact'**
+  /// **'Your daily ace'**
   String get homeTodaysFact;
 
   /// No description provided for @tennisFactEyebrow.
   ///
   /// In en, this message translates to:
-  /// **'Did you know?'**
+  /// **'Bet you didn\'t know this'**
   String get tennisFactEyebrow;
+
+  /// No description provided for @tennisFactCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Reveal the story'**
+  String get tennisFactCta;
 
   /// No description provided for @tennisFactGotIt.
   ///
@@ -8247,6 +8253,204 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tap to read'**
   String get tennisFactOpenHint;
+
+  /// No description provided for @bookingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Book a court'**
+  String get bookingTitle;
+
+  /// No description provided for @bookingSurface.
+  ///
+  /// In en, this message translates to:
+  /// **'Surface'**
+  String get bookingSurface;
+
+  /// No description provided for @bookingDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Day'**
+  String get bookingDay;
+
+  /// No description provided for @bookingTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Start time'**
+  String get bookingTime;
+
+  /// No description provided for @bookingDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration'**
+  String get bookingDuration;
+
+  /// No description provided for @bookingMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min'**
+  String bookingMinutes(int minutes);
+
+  /// No description provided for @bookingNoteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Note for the club (optional)'**
+  String get bookingNoteLabel;
+
+  /// No description provided for @bookingFreeNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Free. The club confirms your request.'**
+  String get bookingFreeNote;
+
+  /// No description provided for @bookingSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Request booking'**
+  String get bookingSubmit;
+
+  /// No description provided for @bookingNoSlots.
+  ///
+  /// In en, this message translates to:
+  /// **'No times available on this day.'**
+  String get bookingNoSlots;
+
+  /// No description provided for @bookingPickSlot.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a start time'**
+  String get bookingPickSlot;
+
+  /// No description provided for @bookingSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Request sent. The club will confirm it soon.'**
+  String get bookingSent;
+
+  /// No description provided for @bookingUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Online booking isn\'t available for this court right now.'**
+  String get bookingUnavailable;
+
+  /// No description provided for @bookingRequestAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Request a time'**
+  String get bookingRequestAction;
+
+  /// No description provided for @bookingMyBookings.
+  ///
+  /// In en, this message translates to:
+  /// **'My bookings'**
+  String get bookingMyBookings;
+
+  /// No description provided for @bookingEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No bookings yet'**
+  String get bookingEmpty;
+
+  /// No description provided for @bookingEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Court requests you send will show up here.'**
+  String get bookingEmptyHint;
+
+  /// No description provided for @bookingUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming'**
+  String get bookingUpcoming;
+
+  /// No description provided for @bookingPast.
+  ///
+  /// In en, this message translates to:
+  /// **'Past'**
+  String get bookingPast;
+
+  /// No description provided for @bookingStatusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get bookingStatusPending;
+
+  /// No description provided for @bookingStatusApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmed'**
+  String get bookingStatusApproved;
+
+  /// No description provided for @bookingStatusDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'Declined'**
+  String get bookingStatusDeclined;
+
+  /// No description provided for @bookingStatusCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get bookingStatusCancelled;
+
+  /// No description provided for @bookingStatusCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get bookingStatusCompleted;
+
+  /// No description provided for @bookingCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel booking'**
+  String get bookingCancel;
+
+  /// No description provided for @bookingCancelTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel this booking?'**
+  String get bookingCancelTitle;
+
+  /// No description provided for @bookingCancelBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The club will be told you can\'t make it.'**
+  String get bookingCancelBody;
+
+  /// No description provided for @bookingKeep.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep it'**
+  String get bookingKeep;
+
+  /// No description provided for @bookingCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking cancelled'**
+  String get bookingCancelled;
+
+  /// No description provided for @bookingCancelledByClub.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled by the club'**
+  String get bookingCancelledByClub;
+
+  /// No description provided for @bookingClubNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Club note: {note}'**
+  String bookingClubNote(String note);
+
+  /// No description provided for @bookingYourNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Your note: {note}'**
+  String bookingYourNote(String note);
+
+  /// No description provided for @availBookInApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Request in the app'**
+  String get availBookInApp;
 }
 
 class _AppLocalizationsDelegate
