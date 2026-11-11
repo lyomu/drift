@@ -42,7 +42,7 @@ class SwingCheckRepository {
       final response = await _dio.post<Map<String, dynamic>>(
         '/swing-sessions',
         data: analysis.toCreateJson(
-          poseModel: NativePoseChannel.poseModel,
+          poseModel: NativePoseChannel.poseModelFor(analysis.source),
           appVersion: kSwingCheckAppVersion,
         ),
       );

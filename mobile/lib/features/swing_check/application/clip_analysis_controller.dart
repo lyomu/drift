@@ -5,8 +5,10 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/l10n/l10n.dart';
 import '../data/clip_pose_source.dart';
+import '../data/pose_dump.dart';
 import '../data/swing_check_repository.dart';
 import '../domain/swing_session.dart';
+import '../swing_check_config.dart';
 import 'swing_check_providers.dart';
 
 /// A recorded clip the player picked, with the setup they chose.
@@ -92,6 +94,8 @@ class ClipAnalysisController extends StateNotifier<ClipAnalysisState> {
       _progressSub = null;
     }
     if (!mounted) return;
+    // Test builds only (DRIFT_POSE_DUMP); a no-op otherwise.
+    unawaited(dumpClipPoses(poses, sampleFps: kClipSampleFps));
 
     if (poses.frames.isEmpty) {
       state = state.copyWith(phase: ClipPhase.failed, error: l10nNow.swingClipNoPerson);

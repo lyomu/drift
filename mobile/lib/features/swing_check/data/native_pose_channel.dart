@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 
 import '../domain/pose_frame.dart';
+import '../domain/swing_session.dart';
+import '../swing_check_config.dart';
 
 /// Our own bridge to the platform's on-device pose detector:
 /// Google ML Kit on Android (`android/.../PoseBridge.kt`), Apple Vision on iOS
@@ -20,6 +22,13 @@ class NativePoseChannel {
   static String get poseModel => Platform.isIOS
       ? 'apple-vision-body-pose'
       : 'mlkit-pose-accurate-android';
+
+  /// Like [poseModel], for a session from [source]. Recorded clips on Android
+  /// can run MediaPipe in test builds ([kClipPoseModel]); the session says so.
+  static String poseModelFor(SwingSource source) =>
+      !Platform.isIOS && source == SwingSource.clip && kClipPoseModel == 'mediapipe'
+      ? 'mediapipe-pose-landmarker-full-android'
+      : poseModel;
 
   /// Whether this device can run Swing Check. False on older OS versions, on
   /// platforms without the bridge, and in widget tests.
@@ -69,6 +78,7 @@ class NativePoseChannel {
       'path': path,
       'sampleFps': sampleFps,
       'maxSeconds': maxDuration.inMilliseconds / 1000,
+      if (kClipPoseModel != 'mlkit') 'poseModel': kClipPoseModel,
     });
     if (raw == null) {
       throw PlatformException(code: 'failed', message: 'No reply from the pose bridge.');

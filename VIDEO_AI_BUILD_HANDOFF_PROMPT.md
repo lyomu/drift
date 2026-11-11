@@ -1,127 +1,153 @@
-# Handover: Drift Tennis video AI, build-everything phase
+# Handover: Drift Tennis video AI, build-everything phase (updated 2026-11-12)
 
 You're continuing the video AI work for Drift Tennis. On 2026-11-11 the owner decided to **build both features
 to completion, promise nothing publicly, and release only when the whole thing works**. Release target when ready:
-an internal build on the owner's phone, then Play internal track and TestFlight.
+an internal build on the owner's phone, then Play internal track and TestFlight. Don't re-ask which feature to
+prioritise or whether to release early.
 
-Don't re-ask which feature to prioritise or whether to release early. That is decided.
-
-## The plan is approved
-
-`VIDEO_AI_BUILD_PLAN.md` (workstreams A to E) was **approved by the owner as written on 2026-11-11**. You don't
-need to ask again before working through it. You still need a short written approach before a large multi-file
-change that the plan doesn't already describe, and every approval gate below still needs the owner's explicit OK.
+`VIDEO_AI_BUILD_PLAN.md` (workstreams A to E) is **approved as written**. You still need a short written approach
+before a large multi-file change the plan doesn't describe, and every approval gate below needs the owner's
+explicit OK.
 
 ## Start here
 
-1. Read, in this order: `VIDEO_AI_BUILD_PLAN.md`, `docs/ml/real-clips-inventory.md` (what the real clips showed
-   and how Swing Check was calibrated), `cv-service/PHASE0_FINDINGS.md` (bottom section: the 2026-11-11 re-run),
-   `docs/ml/SWING_METRICS_SPEC.md`, and the "Swing Check" part of `PROGRESS.md` (includes the Analysis Lab and the
-   recorded-clip bullets).
-2. Open the live pages and keep them current:
-   - Plan page (static HTML; republish via `Artifact` read with `path: "index.html"`, edit, publish to the url):
-     https://claude.ai/artifact/9TT6wsEmuSZRQ9WXWfuXNs
-   - Tracker (database `tasks`: opt5 is A and is done; m1f = C1-C3, m1g/m1h = C4/C5, s0a-c, prep8 and older;
-     `changes`: **next id is c022**): https://claude.ai/artifact/8PJycdbkGfPd1ibQtzNj1a
-   - Swing Lab, the owner's live progress page (database `live/status`, `log/eNNN` **next is e023**, `steps`
-     s1-s8, `clips`, `notes`): https://claude.ai/artifact/GwXj8vkQy4twTH62DAmXTc. **Read its `notes` collection
-     at the start and after each step**; the owner writes to it (it was empty on 2026-11-11). Mark a note handled
-     with `resolved: true` and a `reply`.
-   Update through the `ArtifactData` tool, always pinning `if_version` (read first to get versions). Update
-   `PROGRESS.md` at each phase boundary.
+1. Read: `VIDEO_AI_BUILD_PLAN.md`; `docs/ml/real-clips-inventory.md` (**read the B1 sections at the bottom: phone
+   pass, MediaCodec, rear-view analysis, MediaPipe spike**); `docs/ml/SWING_METRICS_SPEC.md`; the "Swing Check"
+   part of `PROGRESS.md` (the two B1 bullets are new).
+2. Live pages (update through `ArtifactData`, always pinning `if_version`; read first):
+   - Plan page (static HTML): https://claude.ai/artifact/9TT6wsEmuSZRQ9WXWfuXNs
+   - Tracker (`tasks`: opt5 = A, opt6 = B1 now "doing", m1f/m1g/m1h = C; `changes`: **next id c024**):
+     https://claude.ai/artifact/8PJycdbkGfPd1ibQtzNj1a
+   - Swing Lab, the owner's live page (`live/status`, `log/eNNN` **next e030**, `steps` s1-s8 (s6 = phone check),
+     `clips`, `notes`): https://claude.ai/artifact/GwXj8vkQy4twTH62DAmXTc. **Read `notes` at the start and after
+     each step** (still empty on 2026-11-12). Mark a note handled with `resolved: true` and a `reply`.
+   Update `PROGRESS.md` at each phase boundary.
+
+## Owner decisions on 2026-11-11 (don't re-ask)
+
+1. **MediaCodec decoding for recorded clips: approved** (done).
+2. **Rear-view check designed from data: approved** → result: ML Kit landmarks can't do it (below), so the owner
+   then chose **"Test MediaPipe on the phone"** over a whole-clip facing rule or a confirm-angle step.
+3. **C1 change approved:** `/analyze` gets its per-shot list from the app's own Dart `SwingAnalyzer` (compiled with
+   `dart compile exe` so the cv-service needs no Dart SDK), the same way the lab does, so the lab and the app show
+   the same numbers by construction. (The pipeline's own shot detection found players in 0 of 9 phone clips, so
+   `shots[]` from it would always be empty.) Speed from the court fit when calibrated, else the labelled estimate
+   from `lab/estimates.py`.
+4. Removing the unused Guest-profile Drift install from the phone: approved and done. Clearing app caches on the
+   phone: approved (freed nothing); the owner then freed space themselves.
 
 ## Where things stand (end of 2026-11-11)
 
-- **A. Swing Check "Analyse a recorded clip": code and automated tests done.** Setup screen button → gallery
-  pick (`image_picker`) → native `processVideo` (Android `MediaMetadataRetriever.getScaledFrameAtTime` + ML Kit,
-  640 px frames; iOS `AVAssetImageGenerator` + Vision) on the first 60 s at 15 fps, with progress over the
-  `app.driftsports.drift/pose_progress` EventChannel and Cancel → same `SwingAnalyzer` → results screen with
-  "Measured from a recorded clip" (and "only the first 60 s" when cut). Key files:
-  `mobile/lib/features/swing_check/data/clip_pose_source.dart`,
-  `application/clip_analysis_controller.dart`, `presentation/swing_check_clip_progress_screen.dart`, route
-  `/swing-check/clip`, `PoseBridge.kt`, `ios/Runner/AppDelegate.swift`. Backend: `SwingSession.source`
-  (LIVE | CLIP) + `metrics.clip = {analysedMs, truncated}` validated in `swing-sessions.service.ts`; migration
-  `20261111120000_swing_session_source` applied to the **local** DB only. One deliberate deviation from the plan:
-  `ClipPoseSource` has its own interface beside the camera `PoseSource` (a clip has no preview).
-  Evidence: R04's first 30 s of landmarks through the clip path = 11 detected / 11 measured (lab: 11); R07 (rear
-  view) refused with "filmed from behind", nothing saved. **Its "done when" still needs a phone** (part of B1).
-  Android rotation note: the bridge assumes the platform returns upright frames and only turns 90/270 videos that
-  come back in their stored shape; check a portrait phone video on the phone.
-- **Swing Check live camera**: calibrated on 79 hand-labelled swings (peakSpeed 4.0 torso lengths/s, merge 1.4 s):
-  80% found / 88% correct; 91% / 92% on front, side and three-quarter views. Rear views fail. **Never run on a
-  real phone.** iOS Swift bridge never compiled (no Mac).
-- **Match video analysis** (cv-service on Tennis-Vision, NestJS BullMQ queue, mobile upload + results): built.
-  Court check passed on 1 of 9 real clips (an empty court), 0 of 8 with play; all 9 are portrait TikTok exports.
-  No go/no-go yet: needs landscape, still-phone, full-quality clips.
-- **Analysis Lab** (internal, English-only): `cv-service/lab/`, http://localhost:8010/lab. Start with
-  `cd cv-service && venv/Scripts/python -m uvicorn api:app --port 8010`. Ball tracking last ran out of memory on
-  this PC; swings still work.
-- **Tests at end of session:** mobile `flutter test` 721 passed, backend `npx jest` 1005 passed, `flutter analyze`
-  clean, `./gradlew :app:compileDebugKotlin` succeeds. cv-service tests not re-run this session (unchanged).
-- **Committed** on branch `chore/version-0.9.0-build6` (not pushed, no PR). Left out on purpose:
-  `mobile.zip`, the `*-check.png` screenshots, `backend/var/` (local uploaded videos),
-  `CLUB_ADMIN_REDESIGN_PLAN.md`, `COMMUNITIES_MANUAL_E2E_HANDOFF_PROMPT.md` (other work).
+### B1 real-phone pass (owner's Infinix HOT 30 Play X6835B, Android 13, Helio G37, 8 GB)
+| Clip | ML Kit (shipped) | MediaPipe (spike) | Lab |
+|---|---|---|---|
+| R04 first 30 s | 11/11, 40 s | 11/11, 4 min 37 s | 11/11 |
+| R07 rear view | **6/6 measured (wrong)**, 19 s | **refused (correct)**, 2 min 4 s | refused |
+
+- **MediaCodec** (`PoseBridge.analyseWithCodec`, retriever fallback `analyseWithRetriever`): decode 969 → 9.3 ms/frame.
+- **ML Kit gives every joint likelihood 1.0**, so the "arm hidden" gate never fires on rear views. 2D geometry
+  (facing sign, wrist-inside-torso) can't separate R07 from R04's non-hitting-side cuts or R05; only a whole-clip
+  "facing away" share does (R07 98% vs R05 84%), too thin on 2 rear clips.
+- **MediaPipe on the phone** fixes it but costs 583–606 ms/frame (7x ML Kit; ~9 min for a 60 s clip) and +23 MB.
+  The 606 ms includes a Kotlin YUV→ARGB loop.
+- **Unfinished:** a speed variant is written and builds but **was not run**: YUV converted at half resolution
+  (points scaled back up), GPU delegate with CPU fallback, and a `DriftPose mediapipe: delegate=… convertMsPerFrame=…
+  inferMsPerFrame=…` log line on close. Run it next (R04 and R07) to see where the 600 ms goes.
+- Live swings and the bad-framing refusals: not tested yet. iOS: needs a Mac.
+
+### Code added this session (committed, not pushed)
+- `PoseBridge.kt`: MediaCodec path; `FramePose` interface with `MlKitFramePose` / `MediaPipeFramePose`;
+  `processVideo` takes `poseModel` ("mlkit" default | "mediapipe"); one `DriftPose clip:` timing log line per clip.
+  `PoseBridge(context, messenger)` (MainActivity passes `applicationContext`).
+- `build.gradle.kts`: `com.google.mediapipe:tasks-vision:1.0.0`, `androidResources.noCompress += "task"`.
+  `android/app/src/main/assets/pose_landmarker_full.task` (9.4 MB, Apache-2.0, copied from `cv-service/models/`).
+  **This ships in every build right now, even though only test builds use it.** Decide (with the owner) whether
+  MediaPipe replaces ML Kit, and remove the dependency and asset if not.
+- Dart: `kClipPoseModel` (`DRIFT_POSE_MODEL`) in `swing_check_config.dart`; `NativePoseChannel.poseModelFor(source)`
+  so a session records the model that measured it; `data/pose_dump.dart` (`DRIFT_POSE_DUMP`, writes fixture-format
+  JSON to `Android/data/app.driftsports.drift/files/pose_dumps/`, test builds only), called from
+  `ClipAnalysisController`.
+- Fixtures: `mobile/test/features/swing_check/fixtures/real_mlkit/{R04_30s,R07}.json` and
+  `real_mediapipe_phone/{R04_30s,R07}.json` (landmarks only, fine to commit).
+- **Tests NOT run for any of this.** `flutter analyze lib/features/swing_check` was clean before the last two edits
+  (pose_dump source label, MediaPipe speed variant); the Kotlin compiles (APK built). Still needed: unit test for
+  `poseDumpJson`, `poseModelFor`, and a calibration-test replay of the `real_mlkit` / `real_mediapipe_phone`
+  fixtures (R04 → 11, R07 → 0 detected on MediaPipe).
 
 ## What to do next, in order
 
-1. **C. Match analysis per-shot output and the stat-sheet results screen** (plan C1-C5; tracker m1f, m1g, m1h).
-   Unblocked. Start with a short written approach for C, since it spans cv-service, backend and mobile:
-   - C1 `/analyze` adds `shots[]` in `cv-service/api.py` via a new `utils/shot_output.py` that reuses
-     `cv-service/lab/estimates.py` (30 km/h floor, 250 km/h ceiling, "estimate" flag + reason).
-   - C2 overlay `analysis.avi` → H.264 MP4 under the job's storage key; `VideoAnalysisJob.resultVideoKey` column
-     + migration (local DB only); signed URL like the upload.
-   - C3 backend DTO pass-through; C4 rebuild `mobile/lib/features/video_analysis/presentation/` results screen to
-     the lab's stat-sheet layout (`video_player`, `CustomPainter` overlay), EN/FR/ES; C5 tests.
-   - Done when the lab and the app show the same numbers for one clip, and R07 shows reasons and no speeds.
-2. **B1 real-phone pass** the moment the owner plugs in an Android 13+ phone: `mobile/tool/dev_run.sh` with
-   `--dart-define=DRIFT_SWING_CHECK=true` added to its build command. Run R04 (first 30 s) and R07 as recorded
-   clips (copy them to the phone from `cv-service/data/real_clips/`; that is not "sending them anywhere new", but
-   say what you're doing), then live swings if someone can hit. Record fps / decode time per frame, swing counts,
-   and whether the 0.5 likelihood and 4.0 / 1.4 s thresholds hold on ML Kit, in `docs/ml/real-clips-inventory.md`.
-   B2 (iOS) needs a Mac.
-3. **D. Footage-dependent work**: waits on landscape clips and `ROBOFLOW_API_KEY`.
-4. **E. Release gate**: owner decides.
+1. **Finish the MediaPipe decision.** With the phone plugged in (USB debugging is on): build and install the speed
+   variant, run R04 and R07, read the `DriftPose` lines. Then give the owner the choice with numbers:
+   MediaPipe for clips (and maybe live) vs ML Kit + a weaker rear-view guard. Live capture at ~600 ms/frame would be
+   ~1.6 fps, so it can't be live-on-MediaPipe unless the speed variant gets far below that. Write the outcome in
+   `docs/ml/real-clips-inventory.md`, the spec, the plan and the tracker.
+2. **Test pass** for everything above (mobile `flutter test`, `flutter analyze`, Kotlin compile).
+3. **C. Match analysis per-shot output + stat-sheet screen** (tracker m1f/m1g/m1h). Approved shape: see decision 3.
+   C1 `utils/shot_output.py` reusing `lab/estimates.py` and the compiled Dart analyzer; C2 overlay MP4 +
+   `VideoAnalysisJob.resultVideoKey` (migration on the local DB only); C3 DTO pass-through; C4 rebuild
+   `mobile/lib/features/video_analysis/presentation/` to the lab's stat-sheet layout (`video_player`,
+   `CustomPainter`), EN/FR/ES; C5 tests. Done when the lab and the app show the same numbers for one clip and R07
+   shows reasons and no speeds.
+4. **D** waits on landscape clips and `ROBOFLOW_API_KEY`. **E** is the owner's release gate.
+
+## Phone runbook (what worked)
+
+- adb: `"$HOME/AppData/Local/Android/Sdk/platform-tools/adb.exe" -d …`; in Git Bash set `MSYS_NO_PATHCONV=1` for
+  device paths, and use `C:/…` paths for `adb pull`.
+- Build (dev_run.sh is emulator-only: x86_64, emulator-5554, uninstalls first):
+  `flutter build apk --profile --target-platform android-arm64 --dart-define=DRIFT_SWING_CHECK=true
+  --dart-define=DRIFT_API_BASE_URL=http://localhost:3009 [--dart-define=DRIFT_POSE_DUMP=true]
+  [--dart-define=DRIFT_POSE_MODEL=mediapipe] --dart-define=DRIFT_GOOGLE_SERVER_CLIENT_ID=<as in dev_run.sh>`.
+  Profile mode, debug-signed. Never sign a test build with the production key (`key.release.properties`).
+- `adb -d install -r --user 0 build/app/outputs/flutter-apk/app-profile.apk`, then `adb -d reverse tcp:3009 tcp:3009`
+  (backend on :3009 over USB; `localhost` is allowed for cleartext). The phone's storage is ~99% full: if install
+  says INSUFFICIENT_STORAGE, uninstall the test app first (it holds no owner data) or ask the owner to free space.
+- Login: local-only account `1swingtest@drifttennis.com` / `Password123` (this phone's keyboard capitalises and
+  auto-spaces injected text; type `1swingtest@drifttennis`, keyevent `KEYCODE_PERIOD`, then `com`).
+- Clips on the phone: `/sdcard/Movies/DriftTest_R04_30s.mp4` and `DriftTest_R07.mp4` (copied over USB, not sent
+  anywhere else). In the photo picker, find the tiles by duration (0:30 and 0:13); positions shift when new
+  videos arrive. The picker opens in multi-select mode (extra "Done" tap: worth fixing).
+- Timing: `adb -d logcat -v time DriftPose:I flutter:I AndroidRuntime:E '*:S'`.
+- **Screen stay-awake:** `adb -d shell svc power stayon usb` during runs, **`svc power stayon false` after**.
+  It was left on "usb" when the phone was unplugged on 2026-11-11, so turn it off at the start of the next session
+  (or the owner can switch off Developer options → Stay awake). Wireless debugging is also on.
+- Ask the owner not to touch the phone during a run; a touch cancelled the first R04 run.
+- The PC is short on memory (~0.6 GB free; WSL, Docker and VS Code hold most of it). Run `./gradlew --stop` (with
+  `JAVA_HOME="/c/Program Files/Android/Android Studio/jbr"`) after each build. Don't kill other Java/Dart processes.
 
 ## Rules (from the owner)
 
-- **Build, then test**: write the whole change, then do all builds and tests in one pass at the end. Don't run
-  builds or dev servers mid-task when told "just write code".
-- **Translations**: every new user-facing string in EN/FR/ES in the same change (mobile ARB files, club-admin
-  messages, backend `common/i18n`). Format dates and numbers with the active locale. The Analysis Lab and
-  platform-admin are English-only.
-- **Never raise app install minimums**: iOS 13+ and Android 7+. Swing Check is gated at runtime to Android 13+ /
-  iOS 15+.
+- **Build, then test**: write the whole change, then build and test in one pass. "Just write code" means no builds.
+- **Translations**: every new user-facing string in EN/FR/ES in the same change (mobile ARB, club-admin messages,
+  backend `common/i18n`). Dates and numbers in the active locale. Analysis Lab and platform-admin are English-only.
+- **Never raise app install minimums**: iOS 13+ / Android 7+ (minSdk 24). Swing Check is gated at runtime to
+  Android 13+ / iOS 15+.
 - **Approval gates, never assumed**: version bump, migration on any non-local database, store build or deploy,
-  flipping or removing `DRIFT_SWING_CHECK`, sending the clips anywhere new, pushing or opening a PR.
-- **Refuse rather than invent**: every estimate carries an "estimate" chip and reason; every refusal carries its
-  reason. Never show a fabricated number as fact.
-- Read and grep the repo yourself; don't spawn exploration subagents.
-- **Privacy**: keep clips out of git (`cv-service/data/` is gitignored; `backend/var/` must not be committed).
-  Landmark JSON is fine to commit.
-- **Secrets**: the Roboflow key is read from the `ROBOFLOW_API_KEY` environment variable. Never ask for a key in
-  chat or write one into a file.
-- **Local dev**: backend on **:3009** (port 3000 belongs to another project); local Postgres on :5434. Never
-  `npm run build` in `backend/` while `start:dev` runs. `npm run lint` there auto-fixes ~24 unrelated files, so
-  avoid it. Use `mobile/tool/dev_run.sh`, not `flutter run`, for the phone.
-- **Gradle**: plain `./gradlew` picks up JDK 25 and fails with "25.0.4.1". Set
-  `JAVA_HOME="/c/Program Files/Android/Android Studio/jbr"` first (or use `flutter build`). Run
-  `./gradlew --stop` before and after heavy runs.
-- **Machine limits**: 15.7 GB RAM and an 8 GB GPU; one lab job at a time.
-- **Tests in widget tests**: don't `await` a stream subscription's `cancel()` before updating controller state; it
-  adds an event-loop turn that `pumpAndSettle` won't wait for.
+  flipping or removing `DRIFT_SWING_CHECK`, sending clips anywhere new, pushing or opening a PR, switching the
+  shipped pose model.
+- **Refuse rather than invent**: every estimate has an "estimate" chip and reason; every refusal its reason.
+- Read and grep the repo yourself; no exploration subagents. Write a plan before multi-file changes the plan
+  doesn't cover.
+- **Privacy**: clips stay out of git (`cv-service/data/` gitignored; never commit `backend/var/`). Landmark JSON is fine.
+- **Secrets**: `ROBOFLOW_API_KEY` from the environment only; never ask for it in chat or write it to a file.
+- **Local dev**: backend on **:3009** (`npm run start:dev`), Postgres :5434. Never `npm run build` in `backend/`
+  while start:dev runs; avoid `npm run lint` there (auto-fixes ~24 unrelated files).
+- **Gradle**: set `JAVA_HOME` to Android Studio's jbr first (JDK 25 fails).
+- **Widget tests**: don't `await` a stream subscription's `cancel()` before updating controller state.
+- Left out of commits on purpose: `mobile.zip`, `*-check.png`, `backend/var/`, `CLUB_ADMIN_REDESIGN_PLAN.md`,
+  `COMMUNITIES_MANUAL_E2E_HANDOFF_PROMPT.md` (other work).
 
 ## Things only the owner can unblock
 
-- Plug in an Android 13+ phone (no live hitting needed now: recorded clips work).
-- 3-5 landscape clips of a rally on a well-marked court, phone still, sent as files (not WhatsApp video), plus one
-  10+ minute session.
-- Set `ROBOFLOW_API_KEY` in their environment.
-- A Mac, for iOS.
-- Their explicit OK on each approval gate above.
+- The phone plugged in (for the MediaPipe speed variant and the live-swing test) and someone to hit for live swings.
+- The pose-model decision once the numbers are in.
+- 3-5 landscape rally clips sent as files, plus one 10+ minute session (D).
+- `ROBOFLOW_API_KEY` in their environment (D3). A Mac (iOS).
+- Explicit OK on each approval gate.
 
 ## Done means
 
-Spec acceptance criteria met on a real phone; match analysis either passing its go/no-go with numbers or ending in
-a documented no-go; all tests green (mobile `flutter test`, backend `npx jest`, cv-service `pytest tests/test_lab.py
-tests/test_api.py`); tracker, `PROGRESS.md`, Swing Lab and the spec updated; nothing deployed, pushed or versioned
-without the owner's go-ahead.
+Spec acceptance criteria met on a real phone; match analysis passing its go/no-go with numbers or ending in a
+documented no-go; all tests green (mobile `flutter test`, backend `npx jest`, cv-service
+`pytest tests/test_lab.py tests/test_api.py`); tracker, `PROGRESS.md`, Swing Lab and the spec updated; nothing
+deployed, pushed or versioned without the owner's go-ahead.

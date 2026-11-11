@@ -402,6 +402,23 @@ https://claude.ai/artifact/8PJycdbkGfPd1ibQtzNj1a. Datasets: `docs/ml/dataset-sh
   with "filmed from behind" and nothing is saved. Tests: mobile 721 passed, backend 1005 passed, `flutter analyze`
   clean, Android Kotlin compiles. iOS Swift still uncompiled (no Mac). Still to do on a phone: the same R04 / R07
   check with ML Kit landmarks, and decode speed.
+- **B1 phone pass, recorded clips (2026-11-11, in progress):** owner's Infinix HOT 30 Play (Android 13, Helio G37,
+  8 GB), profile build with the flag on, local backend over `adb reverse`. **R04 first 30 s: 11 / 11, same as the
+  lab (pass).** **R07 rear view: 6 / 6 measured instead of refused (fail):** ML Kit gives the hidden wrist a
+  confident position, so the "arm hidden" gate never fires; a camera-view check is needed. **Decoding is
+  0.85–0.97 s per frame** with `getScaledFrameAtTime(OPTION_CLOSEST)` (pose only 78 ms), so a 60 s clip would take
+  ~15 min; the plan's `MediaCodec` mitigation is needed. `PoseBridge.analyseClip` now logs one `DriftPose` timing
+  line per clip. Live swings not yet tested. Details: `docs/ml/real-clips-inventory.md`.
+- **B1 follow-ups (2026-11-11, owner OK'd all three):** (1) **MediaCodec decoding** in `PoseBridge.analyseWithCodec`
+  (retriever kept as fallback): decode 969 → 9.3 ms/frame, R04 30 s now 40 s (was 7 min 52 s), still 11/11.
+  (2) **Rear-view check from ML Kit landmarks: not possible** with 2D geometry; R04's non-hitting-side cuts and R05
+  look like R07 (tables in the inventory doc). (3) **MediaPipe spike on the phone** (test builds,
+  `DRIFT_POSE_MODEL=mediapipe`, `tasks-vision:1.0.0`, model in `android/app/src/main/assets/`): **R04 11/11 and R07
+  refused**, but 583–606 ms/frame (7x ML Kit) and +23 MB. Half-res + GPU speed variant written, builds, not run.
+  Test-only landmark dump (`DRIFT_POSE_DUMP`, `data/pose_dump.dart`); ML Kit and MediaPipe phone landmarks committed
+  under `test/features/swing_check/fixtures/real_mlkit/` and `real_mediapipe_phone/`. Sessions record
+  `poseModelFor(source)`. **Automated tests not re-run for these changes** (`flutter analyze` on swing_check was clean
+  before the last two edits; Kotlin compiles). Local-only test login `1swingtest@drifttennis.com` / `Password123`.
 - **Release goal (owner, 2026-11-11):** internal build on the owner's phone, then Play internal track / TestFlight.
   Version bump, production migration and flag change still each need the owner's explicit go.
 - **Outstanding:** (1) real 8 GB phone pass: fps, 10 forehands + 10 serves side-on, bad framing; confirm the tuned

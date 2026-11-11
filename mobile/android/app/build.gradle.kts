@@ -85,6 +85,11 @@ if (releaseTaskRequested && hasReleaseSigning) {
 
 android {
     namespace = "app.driftsports.drift"
+
+    // MediaPipe memory-maps its model, which needs the asset stored uncompressed.
+    androidResources {
+        noCompress += "task"
+    }
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -141,4 +146,8 @@ dependencies {
     // side doesn't inherit ML Kit's iOS 15.5 minimum.
     implementation("com.google.mlkit:pose-detection:18.0.0-beta5")
     implementation("com.google.mlkit:pose-detection-accurate:18.0.0-beta5")
+    // B1 spike (test builds, DRIFT_POSE_MODEL=mediapipe): the pose model Swing
+    // Check was calibrated on, which reports hidden joints. Apache-2.0. 1.0.0 is
+    // the release closest to the 1.0.1 Python runtime used for calibration.
+    implementation("com.google.mediapipe:tasks-vision:1.0.0")
 }

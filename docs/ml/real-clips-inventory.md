@@ -105,3 +105,94 @@ the ones that should be refused.
 
 Spec acceptance "≥ 8 of 10 clean side-on swings detected and measured": met on footage (R04 side-on 20/24 =
 83%, front + side-on 91%). Still to confirm on a phone.
+
+## B1 real-phone pass, recorded clips (2026-11-11)
+
+**Phone:** Infinix HOT 30 Play (X6835B), Android 13 (SDK 33), MediaTek Helio G37 (MT6765H), 8 GB RAM. A
+budget phone, so decode times here are a floor, not typical. **Build:** profile mode, arm64,
+`DRIFT_SWING_CHECK=true`, local backend over `adb reverse`. The AI Coach menu showed Swing check (Android 13+
+gate works). Clips were copied over USB to the phone's Movies folder and picked with the system photo picker.
+Timings come from a one-line `DriftPose` log in `PoseBridge.analyseClip` (counts and ms only).
+
+| Clip | Frames sampled | Person found | Decode ms/frame | Pose ms/frame | Wall time | Swings detected / measured | Lab (MediaPipe) |
+|---|---|---|---|---|---|---|---|
+| R04, first 30 s | 450 | 450 (100%) | 969 | 78 | 7 min 52 s | **11 / 11** | 11 / 11 |
+| R07 (rear view) | 209 | 205 (98%) | 848 | 77 | 3 min 14 s | **6 / 6 (should be refused)** | 0 detected, refused |
+
+**R04 matches the lab exactly** (plan A "done when": ±1). The 0.5 likelihood and the 4.0 / 1.4 s detector held
+on ML Kit landmarks for this clip.
+
+**R07 fails.** ML Kit gives the hidden hitting wrist a confident position (it guesses occluded joints), so the
+wrist-speed peaks exist and the quality gate's "arm hidden" check never fires. 6 swings were measured (the clip has
+2 forehands and 4 backhands, all called forehands), with numbers like follow-through −7%. The plan's assumption
+that rear views refuse themselves because the wrist is hidden is true for MediaPipe, false for ML Kit. A camera-view
+check that doesn't depend on joint likelihood is needed before release.
+
+**Decoding is the bottleneck, not the pose model.** `getScaledFrameAtTime(OPTION_CLOSEST)` decodes forward from
+the previous keyframe for every sampled frame: 0.85–0.97 s/frame, so a 60 s clip would take about 15 minutes.
+ML Kit's accurate model is 77–78 ms/frame even on a Helio G37. The plan's mitigation (sequential `MediaCodec`
+decode) is needed.
+
+Other notes from the pass: frames came back upright (raw 576x1024, rotation 0, upright 360x640). The photo picker
+opened in multi-select mode (an extra "Done" tap). A first R04 run was cancelled by a touch on the phone after 6 min,
+which shows how long the wait feels. Live swings not yet tested.
+
+### MediaCodec decoding (2026-11-11, same phone)
+
+`PoseBridge.analyseWithCodec`: sequential `MediaExtractor` + `MediaCodec` decode, frames sampled by presentation
+time and handed to ML Kit as `YUV_420_888` images with the track rotation (no bitmap, no downscale). The retriever
+path stays as a fallback when a decoder can't give images.
+
+| Clip | Decoder | Decode ms/frame | Pose ms/frame | Wall time | Swings detected / measured |
+|---|---|---|---|---|---|
+| R04, first 30 s | retriever (before) | 969 | 78 | 7 min 52 s | 11 / 11 |
+| R04, first 30 s | **mediacodec** | **9.3** | 80.5 | **40 s** | 11 / 11 |
+| R07 | retriever (before) | 848 | 77 | 3 min 14 s | 6 / 6 |
+| R07 | **mediacodec** | **9.3** | 82.6 | **19 s** | 6 / 6 |
+
+About 12x faster; a full 60 s clip should take ~80 s on this budget phone, nearly all of it the pose model.
+Averages moved by a few points (R04 contact height 78% → 75%) because ML Kit now sees full-resolution frames at
+their exact timestamps instead of 640 px frames at nominal times.
+
+### Rear-view check: what the landmarks can and can't tell (2026-11-11)
+
+ML Kit landmarks for R04 (30 s) and R07 were dumped on the phone with a test-only switch
+(`--dart-define=DRIFT_POSE_DUMP=true`, `lib/features/swing_check/data/pose_dump.dart`) and committed beside the
+MediaPipe fixtures in `test/features/swing_check/fixtures/real_mlkit/`. ML Kit gives every joint likelihood 1.0, so
+likelihood can't flag a hidden wrist on Android.
+
+**Facing** = (left minus right x of shoulders and hips) / torso length; negative means the player's back is to the
+camera. Both models get left and right right from behind (R07: 97% of frames facing away on MediaPipe, 98% on ML Kit).
+
+| Signal | R07 (behind, fails) | R05 (rear 3/4, works) | R04 non-hitting-side cuts (work) | Separates? |
+|---|---|---|---|---|
+| Facing at each swing | −0.34 to −0.43 | −0.06 to −0.09 | −0.26 to −0.51 | no (R04 overlaps R07) |
+| Facing away and hitting wrist inside the torso's x-span around contact | 17–83% of frames | 0% | 50–100% | no (R04 scores higher) |
+| Share of the clip's frames facing away | 97–98% | 84% | 15–24% (whole clip) | only by a thin margin, 2 rear clips |
+
+Why: R04's "side-on" cuts are filmed from the player's non-hitting side, so the back turns to the camera during the
+take-back and the wrist really passes behind the body, yet MediaPipe measured those swings correctly because it
+reports visibility. 2D landmark geometry alone doesn't tell "directly behind" from these working views; what R07 lacks
+is the wrist visibility MediaPipe reports and ML Kit doesn't.
+
+### MediaPipe on the phone (spike, 2026-11-11, owner chose "test MediaPipe on phone")
+
+Same phone, test build with `--dart-define=DRIFT_POSE_MODEL=mediapipe`: MediaPipe Pose Landmarker *full*
+(`com.google.mediapipe:tasks-vision:1.0.0`, model `pose_landmarker_full.task` from `cv-service/models/`, bundled in
+`android/app/src/main/assets/`), VIDEO mode, 0.5 thresholds, visibility used as likelihood, exactly like
+`tools/pose_fixtures.py`. Recorded clips only; live capture is still ML Kit. Frames: MediaCodec YUV converted to
+ARGB in Kotlin at full resolution.
+
+| Clip | Model | Pose ms/frame | Wall time | Result |
+|---|---|---|---|---|
+| R04, first 30 s | ML Kit | 80 | 40 s | 11 / 11 measured |
+| R04, first 30 s | **MediaPipe** | **606** | 4 min 37 s | **11 / 11 measured** |
+| R07 (rear view) | ML Kit | 83 | 19 s | 6 / 6 measured (wrong) |
+| R07 (rear view) | **MediaPipe** | **583** | 2 min 4 s | **refused: "filmed from behind"** (correct) |
+
+**MediaPipe passes both halves of plan A's "done when" on a real phone; ML Kit doesn't.** The cost is speed: ~7x
+slower than ML Kit on this Helio G37 (a 60 s clip ≈ 9 min) and the APK grows ~23 MB (arm64 profile 104.9 → 127.8 MB).
+The 606 ms includes the Kotlin YUV→ARGB conversion. A speed variant (convert at half resolution, GPU delegate
+with CPU fallback, separate convert/infer timings in a `DriftPose mediapipe:` log line) is written and builds but
+was **not yet run** on the phone. MediaPipe landmarks from the phone are in
+`test/features/swing_check/fixtures/real_mediapipe_phone/`.

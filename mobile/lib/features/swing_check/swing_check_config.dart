@@ -18,6 +18,15 @@ const Duration kMaxCaptureDuration = Duration(minutes: 2);
 /// are analysed up to here and the result says so.
 const Duration kMaxClipDuration = Duration(seconds: 60);
 
+/// Pose model for recorded clips on Android. Test builds only: build with
+/// `--dart-define=DRIFT_POSE_MODEL=mediapipe` to run MediaPipe Pose Landmarker
+/// (the model the detector was calibrated on) instead of ML Kit
+/// (VIDEO_AI_BUILD_PLAN.md B1 spike). Live capture always uses ML Kit.
+const String kClipPoseModel = String.fromEnvironment(
+  'DRIFT_POSE_MODEL',
+  defaultValue: 'mlkit',
+);
+
 /// Frames analysed per second of a recorded clip. The detector was calibrated
 /// on landmarks sampled at this rate (docs/ml/real-clips-inventory.md).
 const double kClipSampleFps = 15;
