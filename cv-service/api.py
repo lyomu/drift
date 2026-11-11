@@ -120,6 +120,11 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Local Analysis Lab page (internal test tool): /lab
+from lab.routes import router as lab_router  # noqa: E402
+
+app.include_router(lab_router)
+
 
 @app.get("/health")
 def health() -> dict:

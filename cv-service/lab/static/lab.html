@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Drift Analysis Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: upload rail on the left (form, live progress, past runs); report card on the right, built like a
+   broadcast stat sheet: headline band, video, then a grid of ruled stat cells. */
+:root {
+  --bg: #eef2f5; --paper: #fafbfa; --ink: #111827; --muted: #5b6672; --rule: #c9d2da;
+  --brand: #126d9b; --brand-2: #3399cc; --brand-soft: #e8f5fc; --on-brand: #ffffff;
+  --good: #23824f; --warn: #b7791f; --bad: #c0392b;
+  --display: "Outfit", system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #0d141a; --paper: #131c23; --ink: #f2f2f2; --muted: #9aa7b2; --rule: #2a3843;
+  --brand: #1f6f99; --brand-2: #4fb3e8; --brand-soft: #1b2d3a; --on-brand: #ffffff;
+  --good: #4cc185; --warn: #e3a948; --bad: #ef6f5f; color-scheme: dark } }
+* { box-sizing: border-box }
+html, body { margin: 0 }
+body { background: var(--bg); color: var(--ink); font: 14px/1.5 var(--display) }
+.app { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 20px; max-width: 1240px; margin: 0 auto; padding: 20px 16px 48px }
+@media (max-width: 900px) { .app { grid-template-columns: minmax(0, 1fr) } }
+h1 { font: 800 22px/1 var(--display); margin: 0 0 4px; letter-spacing: .01em }
+.sub { color: var(--muted); margin: 0 0 16px; font-size: 13px }
+.card { background: var(--paper); border: 1px solid var(--rule); border-radius: 4px; padding: 14px; min-width: 0 }
+label.f { display: grid; gap: 4px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted) }
+select, input[type=number] { font: 500 14px var(--display); color: var(--ink); background: var(--bg); border: 1px solid var(--rule); border-radius: 4px; padding: 7px 8px; width: 100% }
+.drop { border: 2px dashed var(--rule); border-radius: 4px; padding: 22px 12px; text-align: center; cursor: pointer; color: var(--muted) }
+.drop.over, .drop:focus-visible { border-color: var(--brand-2); background: var(--brand-soft); outline: none }
+.drop b { display: block; color: var(--ink); font-size: 15px }
+form { display: grid; gap: 12px }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px }
+.btn { font: 600 14px var(--display); background: var(--brand); color: var(--on-brand); border: 0; border-radius: 4px; padding: 10px 14px; cursor: pointer }
+.btn:disabled { opacity: .45; cursor: default }
+.btn:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--brand-2); outline-offset: 2px }
+.rail { display: grid; gap: 14px; align-content: start }
+.stages { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px }
+.stages li { display: grid; grid-template-columns: 18px 1fr; gap: 8px; font-size: 13px; align-items: start }
+.stages .ic { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--rule); margin-top: 3px }
+.stages .doing .ic { border-color: var(--brand-2); border-right-color: transparent; animation: spin 1s linear infinite }
+.stages .done .ic { background: var(--good); border-color: var(--good) }
+.stages .failed .ic { background: var(--bad); border-color: var(--bad) }
+.stages small { display: block; color: var(--muted); font-size: 12px }
+@keyframes spin { to { transform: rotate(360deg) } }
+@media (prefers-reduced-motion: reduce) { .stages .doing .ic { animation: none; border-right-color: var(--brand-2) } }
+pre.log { font: 11px/1.45 var(--mono); color: var(--muted); background: var(--bg); border-radius: 4px; padding: 8px; max-height: 160px; overflow: auto; margin: 10px 0 0; white-space: pre-wrap }
+.history { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px }
+.history button { width: 100%; text-align: left; font: inherit; color: inherit; background: none; border: 1px solid transparent; border-radius: 4px; padding: 6px 8px; cursor: pointer; display: grid; gap: 1px }
+.history button:hover, .history button[aria-current="true"] { border-color: var(--rule); background: var(--bg) }
+.history small { color: var(--muted); font-size: 12px }
+.err { color: var(--bad); font-size: 13px }
+
+/* report */
+.report { background: var(--paper); border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; min-width: 0 }
+.band { background: var(--brand); color: var(--on-brand); padding: 18px 22px 22px }
+.band .top { display: flex; justify-content: space-between; gap: 12px; font: 600 12px var(--mono); text-transform: uppercase; letter-spacing: .08em; opacity: .9 }
+.band h2 { font: 800 clamp(24px, 4vw, 38px)/1.02 var(--display); text-transform: uppercase; margin: 18px 0 0; text-wrap: balance }
+.video { background: #000; display: flex; justify-content: center }
+.video video { display: block; max-width: 100%; max-height: 62vh }
+.grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--rule) }
+.grid.two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) }
+@media (max-width: 640px) { .grid, .grid.two { grid-template-columns: minmax(0, 1fr) } }
+.cell { padding: 14px 16px; border-right: 1px solid var(--rule); border-bottom: 1px solid var(--rule); min-width: 0 }
+.cell:last-child { border-right: 0 }
+.cell h3 { margin: 0 0 10px; font: 500 13px var(--mono); color: var(--brand) }
+.big { font: 600 54px/1 var(--mono); letter-spacing: -.02em; font-variant-numeric: tabular-nums }
+.big .u { font-size: 14px; color: var(--muted); margin-left: 8px; letter-spacing: 0 }
+.fine { font: 11px/1.5 var(--mono); color: var(--muted); margin-top: 8px }
+.tag { display: inline-block; font: 600 10px/1 var(--mono); text-transform: uppercase; letter-spacing: .08em; padding: 3px 6px; border-radius: 3px; border: 1px solid currentColor; vertical-align: middle }
+.tag.est { color: var(--warn) } .tag.ok { color: var(--good) } .tag.no { color: var(--muted) }
+svg text { fill: var(--muted); font: 10px var(--mono) }
+.seq { display: flex; flex-wrap: wrap; gap: 14px 18px }
+.bub { display: grid; justify-items: center; gap: 3px; font: 600 11px var(--mono); color: var(--muted); background: none; border: 0; padding: 0; cursor: pointer }
+.bub span { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid var(--brand); display: grid; place-items: center; color: var(--ink) }
+.bub.refused span { border-style: dashed; border-color: var(--muted) }
+.bub[aria-pressed="true"] span { background: var(--brand); color: var(--on-brand) }
+.bub:focus-visible span { outline: 2px solid var(--brand-2); outline-offset: 2px }
+.court { position: relative; border: 1px solid var(--rule); border-radius: 3px; background: var(--bg); aspect-ratio: 9 / 16; max-height: 260px; max-width: 100%; margin: 0 auto }
+.court i { position: absolute; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; border: 1.5px solid var(--brand); background: var(--paper); font: 600 9px/15px var(--mono); text-align: center; font-style: normal }
+table { border-collapse: collapse; width: 100%; font: 12px var(--mono) }
+th, td { padding: 6px 8px; border-bottom: 1px solid var(--rule); text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums }
+th { color: var(--muted); font-weight: 500 }
+th:first-child, td:first-child { text-align: left }
+tr.sel td { background: var(--brand-soft) }
+.scroll { overflow-x: auto }
+.foot { font: 11px var(--mono); color: var(--muted); text-align: center; padding: 10px 16px; letter-spacing: .04em; text-transform: uppercase }
+.empty { padding: 60px 24px; text-align: center; color: var(--muted) }
+.empty b { display: block; font: 800 26px var(--display); color: var(--ink); margin-bottom: 6px }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="rail">
+    <div>
+      <h1>Drift Analysis Lab</h1>
+      <p class="sub">Upload a tennis clip and see what Swing Check and the ball tracker make of it. Runs on this computer; nothing is uploaded anywhere else.</p>
+    </div>
+    <form class="card" id="form">
+      <div class="drop" id="drop" tabindex="0" role="button" aria-describedby="drop-hint">
+        <b id="drop-name">Drop a video here</b>
+        <span id="drop-hint">or click to choose (mp4, mov, avi, up to 1 GB)</span>
+      </div>
+      <input type="file" id="file" accept="video/*" hidden>
+      <div class="row2">
+        <label class="f" for="hand">Hitting hand
+          <select id="hand"><option value="right">Right</option><option value="left">Left</option></select></label>
+        <label class="f" for="session">What's in it
+          <select id="session"><option value="mixed">Rally / mixed</option><option value="forehands">Forehands</option><option value="serves">Serves</option></select></label>
+      </div>
+      <label class="f" for="max">Analyse the first (seconds)
+        <input type="number" id="max" min="5" max="120" value="30"></label>
+      <button class="btn" id="go" type="submit" disabled>Analyse</button>
+      <p class="err" id="form-err" hidden></p>
+    </form>
+    <div class="card" id="progress" hidden>
+      <ul class="stages" id="stages"></ul>
+      <pre class="log" id="log"></pre>
+    </div>
+    <div class="card">
+      <label class="f" style="margin-bottom:8px">Past runs</label>
+      <ul class="history" id="history"><li class="sub" style="margin:0">None yet.</li></ul>
+    </div>
+  </aside>
+
+  <main class="report" id="report">
+    <div class="empty"><b>No analysis yet</b>Choose a clip on the left. A 30-second clip takes a few minutes: body tracking first, then the ball.</div>
+  </main>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+let chosen = null, current = null, poll = null, selectedShot = null;
+
+const METRICS = {
+  contactHeightPct: ["Contact height", "% of height"], elbowAngleDeg: ["Arm extension", "°"], kneeBendDeg: ["Knee bend", "°"],
+  contactInFrontPct: ["Contact in front", "% torso"], tempoMs: ["Swing tempo", "ms"], finishAboveShoulderPct: ["Finish height", "% torso"],
+  trophyToContactMs: ["Trophy to contact", "ms"],
+};
+const REASONS = { arm_hidden: "hitting arm hidden", out_of_frame: "body out of frame", too_fast: "too fast or blurred" };
+
+// ── upload ──
+const drop = $("drop"), fileInput = $("file");
+function choose(f) { if (!f) return; chosen = f; $("drop-name").textContent = f.name; $("go").disabled = false; }
+drop.addEventListener("click", () => fileInput.click());
+drop.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileInput.click(); } });
+fileInput.addEventListener("change", () => choose(fileInput.files[0]));
+["dragenter", "dragover"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("over"); }));
+["dragleave", "drop"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove("over"); }));
+drop.addEventListener("drop", (e) => choose(e.dataTransfer.files[0]));
+
+$("form").addEventListener("submit", async (e) => {
+  e.preventDefault(); if (!chosen) return;
+  $("go").disabled = true; $("form-err").hidden = true;
+  const fd = new FormData();
+  fd.append("file", chosen); fd.append("hand", $("hand").value); fd.append("session", $("session").value); fd.append("max_seconds", $("max").value);
+  try {
+    const r = await fetch("/lab/jobs", { method: "POST", body: fd });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.detail || "Upload failed.");
+    open(j.id); loadHistory();
+  } catch (err) { $("form-err").textContent = err.message; $("form-err").hidden = false; }
+  finally { $("go").disabled = !chosen; }
+});
+
+// ── history and polling ──
+async function loadHistory() {
+  const r = await fetch("/lab/jobs"); const j = await r.json();
+  $("history").innerHTML = j.jobs.length ? j.jobs.map((x) =>
+    `<li><button type="button" data-id="${x.id}" aria-current="${x.id === current}"><span>${esc(x.name)}</span><small>${esc(x.headline || (x.state === "queued" ? "waiting" : x.state))} · ${esc((x.createdAt || "").replace("T", " "))}</small></button></li>`).join("")
+    : '<li class="sub" style="margin:0">None yet.</li>';
+  $("history").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => open(b.dataset.id)));
+}
+
+function open(id) {
+  current = id; selectedShot = null; clearInterval(poll);
+  try { localStorage.setItem("lab.last", id); } catch {}
+  tick(); poll = setInterval(tick, 1500);
+}
+
+async function tick() {
+  const id = current;
+  const r = await fetch("/lab/jobs/" + id); if (!r.ok) { clearInterval(poll); return; }
+  const s = await r.json(); if (id !== current) return;
+  $("progress").hidden = false;
+  $("stages").innerHTML = s.stages.map((x) => `<li class="${x.state}"><span class="ic"></span><span>${esc(x.label)}${x.note ? `<small>${esc(x.note)}</small>` : ""}</span></li>`).join("");
+  $("log").textContent = s.log.join("\n"); $("log").scrollTop = 1e9;
+  if (s.state === "done" || s.state === "failed") { clearInterval(poll); loadHistory(); }
+  if (s.state === "failed") renderFailed(s);
+  else if (s.result) renderReport(s);
+  else if (s.state === "queued") $("report").innerHTML = `<div class="empty"><b>${esc(s.name)} is waiting</b>${s.ahead ? `${s.ahead} clip${s.ahead > 1 ? "s" : ""} ahead of it. ` : ""}It starts automatically when the clip before it finishes.</div>`;
+  else $("report").innerHTML = `<div class="empty"><b>Analysing ${esc(s.name)}</b>Follow the steps on the left. The report appears here when it's done.</div>`;
+}
+
+function renderFailed(s) {
+  $("report").innerHTML = `<div class="empty"><b>This clip couldn't be analysed</b>${esc(s.error)}</div>`;
+}
+
+// ── report ──
+function renderReport(s) {
+  const R = s.result, m = R.meta, sp = R.speed, shots = R.shots;
+  if ($("report").dataset.job === s.id && $("report").dataset.ready === "1") return updateSelection(R);
+  const kmh = (v) => v == null ? "–" : Math.round(v);
+  const pipeTypes = R.court.pipelineTypes ? Object.entries(R.court.pipelineTypes).map(([k, v]) => `${v} ${k.toLowerCase()}`).join(", ") : "none";
+  const speedTag = sp.source === "court" ? '<span class="tag ok">measured</span>' : '<span class="tag est">estimate</span>';
+  const second = s.session === "forehands" ? "forehands" : "groundstrokes";
+  $("report").dataset.job = s.id; $("report").dataset.ready = "1";
+  $("report").innerHTML = `
+    <div class="band"><div class="top"><span>Drift · Analysis Lab</span><span>${esc(s.name)}</span></div>
+      <h2>${esc(R.headline)}.</h2></div>
+    <div class="video"><video id="vid" controls playsinline preload="metadata" src="/lab/jobs/${s.id}/video"></video></div>
+    <div class="grid">
+      <div class="cell"><h3>strokes</h3><div class="big">${R.counts.swings}</div>
+        <div class="fine">measured: ${R.counts.measured} · refused: ${R.counts.swings - R.counts.measured}</div></div>
+      <div class="cell"><h3>${second} / serves</h3><div class="big">${R.counts.groundstrokes} / ${R.counts.serves}</div>
+        <div class="fine">serve = wrist above head at contact<br>ball pipeline: ${esc(pipeTypes)}</div></div>
+      <div class="cell"><h3>shot speed ${speedTag}</h3><div class="big">${kmh(sp.avgKmh)}<span class="u">km/h avg</span></div>
+        <div class="fine">peak: ${kmh(sp.peakKmh)} km/h<br>${sp.source === "court" ? "from the court calibration" : esc(sp.scale ? "scaled from " + sp.scale + "; ignores depth, can be off by 2x" : "no scale: player height not found")}</div></div>
+    </div>
+    <div class="grid two">
+      <div class="cell"><h3>speed history ${speedTag}</h3>${speedChart(shots)}</div>
+      <div class="cell"><h3>shot sequence</h3><div class="seq" id="seq">${shots.map((x) =>
+        `<button type="button" class="bub ${x.measured ? "" : "refused"}" data-n="${x.n}" aria-pressed="false" title="${x.measured ? "measured" : esc(REASONS[x.reason] || "not measured")}"><span>${x.n}</span>${esc(x.label)}</button>`).join("") || '<span class="fine">No swings found.</span>'}</div>
+        <div class="fine" style="margin-top:12px">Click a shot to jump the video to it. Dashed = detected but not measured.</div></div>
+    </div>
+    <div class="grid two">
+      <div class="cell"><h3>shot placement ${R.court.calibrated ? '<span class="tag ok">court</span>' : '<span class="tag est">camera view</span>'}</h3>
+        ${placement(shots, m)}
+        <div class="fine">${R.court.calibrated ? "" : "Where the ball reached its lowest point in the frame after each shot. This is the camera's view, not a position on the court."}</div></div>
+      <div class="cell"><h3>court & ball check</h3>
+        <div class="fine" style="font-size:12px;margin-top:0">
+          Court: ${R.court.calibrated ? "calibrated" : "not calibrated"}${R.court.lineSupport != null ? ` (line support ${R.court.lineSupport} of 0.22 needed)` : ""}<br>
+          Ball seen: ${R.court.ballCoverage != null ? Math.round(R.court.ballCoverage * 100) + "% of frames" : "–"}<br>
+          Body found: ${Math.round(R.poseShare * 100)}% of frames<br>
+          Video: ${m.width}x${m.height} ${m.orientation}, ${m.fps} fps${R.trimmed ? `, first ${m.duration_s} s of ${R.originalDurationS} s` : `, ${m.duration_s} s`}<br>
+          ${R.court.warning ? `<br>${esc(R.court.warning).slice(0, 320)}` : ""}</div></div>
+    </div>
+    <div class="cell" style="border-right:0"><h3>body numbers per swing</h3><div class="scroll" id="tbl">${table(shots)}</div>
+      <div class="fine">From the app's own Swing Check analyzer (speed threshold ${R.detector ? R.detector.peakSpeed : "–"}). 2D, side-on numbers; front and rear views distort them.</div></div>
+    <div class="foot">Experimental measurements · speeds and placement are estimates unless marked measured</div>`;
+  $("seq").querySelectorAll(".bub").forEach((b) => b.addEventListener("click", () => {
+    selectedShot = +b.dataset.n; const shot = shots.find((x) => x.n === selectedShot);
+    const v = $("vid"); if (v && shot) { v.currentTime = Math.max(0, shot.tMs / 1000 - 0.8); v.play().catch(() => {}); }
+    updateSelection(R);
+  }));
+}
+
+function updateSelection(R) {
+  document.querySelectorAll(".bub").forEach((b) => b.setAttribute("aria-pressed", String(+b.dataset.n === selectedShot)));
+  document.querySelectorAll("#tbl tr[data-n]").forEach((r) => r.classList.toggle("sel", +r.dataset.n === selectedShot));
+}
+
+function speedChart(shots) {
+  const W = 360, H = 130, L = 26, B = 18, T = 8;
+  const vals = shots.map((x) => x.speedKmh);
+  const max = Math.max(40, ...vals.filter((v) => v != null));
+  const top = Math.ceil(max / 20) * 20;
+  const bw = Math.min(34, (W - L - 8) / Math.max(1, shots.length) - 6);
+  const y = (v) => T + (H - T - B) * (1 - v / top);
+  let g = "";
+  for (let v = 0; v <= top; v += top / 2) g += `<line x1="${L}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--rule)"/><text x="0" y="${y(v) + 3}">${v}</text>`;
+  shots.forEach((x, i) => {
+    const cx = L + 6 + i * (bw + 6);
+    g += x.speedKmh != null ? `<rect x="${cx}" y="${y(x.speedKmh)}" width="${bw}" height="${H - B - y(x.speedKmh)}" fill="var(--brand)"><title>#${x.n}: ~${x.speedKmh} km/h</title></rect>`
+      : `<rect x="${cx}" y="${H - B - 2}" width="${bw}" height="2" fill="var(--muted)"><title>#${x.n}: ${esc(x.speedNote || "no estimate")}</title></rect>`;
+    g += `<text x="${cx + bw / 2 - 3}" y="${H - 4}">${x.n}</text>`;
+  });
+  const missing = shots.filter((x) => x.speedKmh == null).length;
+  return `<div class="scroll"><svg viewBox="0 0 ${Math.max(W, L + 12 + shots.length * (bw + 6))} ${H}" width="100%" role="img" aria-label="Estimated speed per shot">${g}</svg></div>
+    <div class="fine">km/h per shot${missing ? ` · ${missing} without an estimate (ball not seen after contact)` : ""}</div>`;
+}
+
+function placement(shots, m) {
+  const pts = shots.filter((x) => x.landing);
+  const ratio = m.width && m.height ? `${m.width} / ${m.height}` : "9 / 16";
+  return `<div class="court" style="aspect-ratio:${ratio}">${pts.map((x) => `<i style="left:${x.landing[0] * 100}%;top:${x.landing[1] * 100}%" title="#${x.n}">${x.n}</i>`).join("")}</div>
+    ${pts.length ? "" : '<div class="fine">No landing points: the ball was not tracked after contact.</div>'}`;
+}
+
+function table(shots) {
+  if (!shots.length) return '<p class="fine">No swings to show.</p>';
+  const keys = Object.keys(METRICS).filter((k) => shots.some((x) => x.values && x.values[k] != null));
+  return `<table><thead><tr><th>#</th><th>type</th><th>at</th><th>status</th>${keys.map((k) => `<th>${METRICS[k][0]}<br>${METRICS[k][1]}</th>`).join("")}<th>speed<br>km/h</th></tr></thead><tbody>${
+    shots.map((x) => `<tr data-n="${x.n}"><td>${x.n}</td><td>${esc(x.label)}</td><td>${(x.tMs / 1000).toFixed(1)}s</td><td>${x.measured ? "measured" : esc(REASONS[x.reason] || "refused")}</td>${
+      keys.map((k) => `<td>${x.values && x.values[k] != null ? Math.round(x.values[k]) : "–"}</td>`).join("")}<td>${x.speedKmh != null ? "~" + Math.round(x.speedKmh) : "–"}</td></tr>`).join("")}</tbody></table>`;
+}
+
+loadHistory().then(() => { try { const last = localStorage.getItem("lab.last"); if (last) open(last); } catch {} });
+</script>
+</body>
+</html>

@@ -91,3 +91,38 @@ are all NaN (0% detection). The validity gate had already refused the clip, so n
 number was reported — but the pipeline should refuse gracefully instead of raising. Worth
 fixing when we start modifying this code in Phase 1; not fixed now, as Phase 0 is a
 read-only spike.
+
+---
+
+# Phase 0 re-run — owner-supplied group clips (2026-11-11)
+
+9 clips (R01–R09, consent confirmed by the owner, videos gitignored in `data/real_clips/`). Full inventory
+and per-clip table: `../docs/ml/real-clips-inventory.md`. Run with `tools/real_clips_phase0.py`
+(`--fast --no-stubs`, first 300 frames).
+
+## Result
+
+**Court gate: 1 of 9 passed, and that one (R02, 0.240) is an empty, well-marked clay court with nobody
+playing. 0 of 8 clips with play passed.** Ball detected on 3–58% of frames (median 15%). Player selection
+failed on all 9. The precheck rejected all 9 on headers alone (portrait, under 960 px wide). No crashes.
+
+## Why
+
+Same capture as September: TikTok exports forwarded over WhatsApp, so portrait and 480–576 px wide, and
+mostly ground-level, handheld or edited (cuts every 1–2.5 s in R01, R04, R08). R04 scored 0.000 because its
+cuts keep changing the view. R06 (0.211) and R09 (0.202) were near misses on faint lines, as in September.
+
+## Verdict
+
+**Still not a go/no-go on the models, but two things are now firmer:**
+
+1. **Portrait, messaging-app footage doesn't work, and the app is right to refuse it.** Across both runs that
+   is 0 of 18 clips with play, on 9 different courts. The precheck's portrait and resolution refusals are
+   the correct product behaviour, not over-caution.
+2. **A well-marked court clears the gate even at 480 px portrait** (R02, 0.240). That supports September's
+   reading: line quality plus capture are the constraint, and properly filmed footage of a well-marked court
+   should pass.
+
+The decisive test is unchanged and still cheap: 3–5 landscape, static, full-resolution clips of a rally on a
+well-marked court, sent as files rather than as WhatsApp videos. Any player in the group can film them. It
+doesn't need the owner.

@@ -134,3 +134,11 @@ android {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // Swing Check pose detection (PoseBridge.kt). Same versions the
+    // google_mlkit_pose_detection plugin used; called directly so the iOS
+    // side doesn't inherit ML Kit's iOS 15.5 minimum.
+    implementation("com.google.mlkit:pose-detection:18.0.0-beta5")
+    implementation("com.google.mlkit:pose-detection-accurate:18.0.0-beta5")
+}

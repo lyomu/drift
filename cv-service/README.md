@@ -147,6 +147,19 @@ uvicorn api:app --host 0.0.0.0 --port 8000
 | `POST /precheck` | Multipart video upload → the precheck verdict as JSON |
 | `POST /analyze` | Full pipeline on one rally, synchronously. Minutes. `503` when busy |
 | `POST /analyze-session` | Segment a long clip and analyse its rallies. Hours. `dry_run=true` segments only |
+| `GET /lab` | **Analysis Lab**, a local test page: upload a clip, watch each stage, get a stat-sheet report (see below) |
+
+### Analysis Lab (internal test tool)
+
+```bash
+venv/Scripts/python -m uvicorn api:app --port 8010    # then open http://localhost:8010/lab
+```
+
+Upload a clip, then pick the hitting hand, what's in it, and how many seconds to analyse (default 30). One job runs at a
+time: trim, pose (MediaPipe), swings (the app's own Dart `SwingAnalyzer` via `mobile/tool/swing_analyze.dart`, so the
+Dart SDK must be on PATH), ball and court (this pipeline), estimates, overlay video. Without a court fit, speed is scaled
+from the player's height and placement is in camera view; both are labelled as estimates. Uploads and results stay in
+`data/lab/` (gitignored). Code in [`lab/`](lab/), tests in `tests/test_lab.py`.
 
 Both analysis routes are synchronous and share a single slot, because there is one GPU. A
 second concurrent request gets `503` with `Retry-After` rather than being queued — the

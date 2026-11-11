@@ -45,6 +45,8 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Drift uses the camera for Swing Check, which measures your swing on your phone. The video is not saved or uploaded.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Drift uses your location to suggest nearby courts, clubs, and players during onboarding.</string>
 	<!-- Google Sign-In callback. This is the REVERSED_CLIENT_ID of the iOS

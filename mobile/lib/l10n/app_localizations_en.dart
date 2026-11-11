@@ -4656,4 +4656,266 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get availBookInApp => 'Request in the app';
+
+  @override
+  String get aiCoachSwingCheckSubtitle =>
+      'Film a few swings and get feedback on your technique';
+
+  @override
+  String get aiCoachAnalyseClipSubtitle => 'Upload a match clip for shot stats';
+
+  @override
+  String get swingCheckTitle => 'Swing check';
+
+  @override
+  String get swingSetupIntro =>
+      'Prop your phone up, hit a few swings, and see how your body moves through each one. Everything is measured on your phone.';
+
+  @override
+  String get swingStrokeLabel => 'Stroke';
+
+  @override
+  String get swingStrokeForehand => 'Forehand';
+
+  @override
+  String get swingStrokeServe => 'Serve';
+
+  @override
+  String get swingBackhandNote =>
+      'Backhands aren\'t supported yet: your hitting arm is often hidden from the camera.';
+
+  @override
+  String get swingTipsHeading => 'How to film';
+
+  @override
+  String get swingTip1 =>
+      'Stand side-on to the camera, hitting arm facing the phone';
+
+  @override
+  String get swingTip2 =>
+      'Prop the phone at waist height, 3 to 5 metres away, in landscape';
+
+  @override
+  String get swingTip3 => 'Keep your whole body in frame, from head to feet';
+
+  @override
+  String get swingTip4 => 'Hit 5 to 10 swings, with a short pause between them';
+
+  @override
+  String get swingPrivacyNote =>
+      'The video stays on your phone. Only the measurements are saved.';
+
+  @override
+  String get swingStart => 'Start filming';
+
+  @override
+  String get swingHistory => 'Past sessions';
+
+  @override
+  String get swingStarting => 'Starting the camera…';
+
+  @override
+  String get swingSaving => 'Measuring your swings…';
+
+  @override
+  String get swingFramingNoPerson => 'Step into the frame';
+
+  @override
+  String get swingFramingArmHidden => 'Hitting arm not visible';
+
+  @override
+  String get swingFramingBodyCut => 'Move back: whole body not in frame';
+
+  @override
+  String get swingFramingGood => 'Whole body visible';
+
+  @override
+  String swingSwingCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count swings',
+      one: '1 swing',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get swingRecordingHint => 'Hit 5 to 10 swings, then tap Stop';
+
+  @override
+  String get swingStop => 'Stop';
+
+  @override
+  String get swingRetrySave => 'Try saving again';
+
+  @override
+  String get swingBackToSetup => 'Back';
+
+  @override
+  String get swingCameraDenied =>
+      'Drift needs camera access for Swing Check. Allow it in your phone\'s settings.';
+
+  @override
+  String get swingNoCamera => 'No back camera was found on this phone.';
+
+  @override
+  String get swingUnsupportedDevice =>
+      'Swing Check needs Android 13 or iOS 15 or later.';
+
+  @override
+  String get swingCameraFailed =>
+      'The camera couldn\'t start. Close other camera apps and try again.';
+
+  @override
+  String get swingNoneDetected =>
+      'No swings were detected. Check the filming tips and try again.';
+
+  @override
+  String get swingErrorOffline =>
+      'You\'re offline. Check your connection and try again.';
+
+  @override
+  String get swingErrorGeneric => 'Something went wrong. Try again.';
+
+  @override
+  String get swingCoachUnavailable =>
+      'Coach feedback isn\'t available right now. Your measurements are saved.';
+
+  @override
+  String get swingTooFew =>
+      'At least 3 measured swings are needed for coach feedback.';
+
+  @override
+  String get swingResultsTitle => 'Swing check results';
+
+  @override
+  String get swingLoadFailed => 'This session couldn\'t be loaded.';
+
+  @override
+  String swingMeasuredOf(int measured, int detected) {
+    return '$measured of $detected swings measured';
+  }
+
+  @override
+  String get swingNotEnoughTitle => 'Not enough swings measured';
+
+  @override
+  String get swingNotEnoughBody =>
+      'At least 3 swings need to be measured to give you a summary. The reasons for each swing are below; check the filming tips and try again.';
+
+  @override
+  String get swingSummaryHeading => 'Your averages';
+
+  @override
+  String get swingApproxNote =>
+      'Measured from 2D video. Use these as a guide, not exact values. ± shows how much your swings varied.';
+
+  @override
+  String get swingSwingsHeading => 'Each swing';
+
+  @override
+  String get swingAgain => 'New session';
+
+  @override
+  String get swingCoachHeading => 'AI Coach';
+
+  @override
+  String get swingCoachLoading => 'Your coach is looking at your swings…';
+
+  @override
+  String get swingCoachRetry => 'Try again';
+
+  @override
+  String swingSwingLabel(int number) {
+    return 'Swing $number';
+  }
+
+  @override
+  String get swingNotMeasured => 'Not measured';
+
+  @override
+  String get swingMetricContactHeight => 'Contact height';
+
+  @override
+  String get swingMetricElbowAngle => 'Arm extension at contact';
+
+  @override
+  String get swingMetricKneeBend => 'Knee bend';
+
+  @override
+  String get swingMetricContactInFront => 'Contact in front';
+
+  @override
+  String get swingMetricTempo => 'Swing tempo';
+
+  @override
+  String get swingMetricFinish => 'Follow-through finish';
+
+  @override
+  String get swingMetricTrophyToContact => 'Trophy to contact';
+
+  @override
+  String get swingMetricGeneral => 'General';
+
+  @override
+  String get swingReasonArmHidden =>
+      'Your hitting arm was hidden from the camera.';
+
+  @override
+  String get swingReasonOutOfFrame => 'Part of your body was out of frame.';
+
+  @override
+  String get swingReasonTooFast =>
+      'The swing was too fast or blurred to follow.';
+
+  @override
+  String get swingHistoryEmpty =>
+      'No sessions yet. Your Swing Check sessions will appear here.';
+
+  @override
+  String get swingUseClip => 'Use a recorded clip';
+
+  @override
+  String swingClipHint(int seconds) {
+    return 'Pick a clip filmed side-on, with one player and the phone held still. The first $seconds seconds are analysed, and the clip stays on your phone.';
+  }
+
+  @override
+  String get swingClipTitle => 'Analysing your clip';
+
+  @override
+  String get swingClipOpening => 'Opening the clip…';
+
+  @override
+  String swingClipProgress(int done, int total) {
+    return 'Frame $done of $total';
+  }
+
+  @override
+  String get swingClipKeepOpen =>
+      'Keep the app open until it finishes. The clip never leaves your phone.';
+
+  @override
+  String get swingClipNoPerson =>
+      'No player was found in this clip. Pick one where the whole body is in view.';
+
+  @override
+  String get swingClipNoneDetected =>
+      'No swings were found. Clips filmed from behind the player don\'t work because the hitting arm is hidden. Try a side-on clip.';
+
+  @override
+  String get swingClipUnreadable =>
+      'This video can\'t be opened. Try another clip.';
+
+  @override
+  String get swingClipFailed => 'The clip couldn\'t be analysed. Try again.';
+
+  @override
+  String get swingSourceClip => 'Measured from a recorded clip';
+
+  @override
+  String swingClipTruncated(int seconds) {
+    return 'Only the first $seconds seconds of the clip were analysed.';
+  }
 }

@@ -354,6 +354,63 @@ Next: push + PR to `master`, `pg_dump`, Jenkins approval, deploy, smoke, then th
   listing and keystore backup done (not verified by us). Bundle `mobile/dist/drift-0.9.0-build4-20261105-120044.aab`
   signed with `B1:FF:6E:…:CE:BF`, versionCode 4; not uploaded, not yet tried on a device.
 
+## Swing Check: on-device swing metrics (2026-11-10, code + automated tests done; real-phone pass outstanding)
+
+Spec: `docs/ml/SWING_METRICS_SPEC.md` (approved). Merged video plan + live tracker:
+https://claude.ai/artifact/8PJycdbkGfPd1ibQtzNj1a. Datasets: `docs/ml/dataset-shortlist.md`.
+
+- **Availability (owner decision 2026-11-10):** the app still installs on iOS 13+ / Android 7+; Swing Check shows
+  only on **Android 13+ and iOS 15+**. The google_mlkit Flutter plugin was removed (its pods force iOS 15.5) in
+  favour of an in-app native bridge: ML Kit on Android (`PoseBridge.kt`), Apple Vision on iOS (`AppDelegate.swift`).
+- **Mobile** `lib/features/swing_check/`: on-device pose on back-camera frames via that bridge, pure-Dart swing
+  detection (wrist-speed peaks), quality gate (arm hidden / out of frame / too fast), metrics for forehand and serve,
+  setup / capture (landscape, live skeleton) / results / history screens. AI Coach FAB opens a menu (Swing check +
+  Analyse a clip) only when built with `--dart-define=DRIFT_SWING_CHECK=true`; otherwise "Coming soon" as before.
+  New dep `camera ^0.12.0+1` (iOS 13 compatible) + ML Kit Gradle deps; Android `CAMERA` permission; iOS
+  `NSCameraUsageDescription`. All strings EN/FR/ES.
+- **Backend** `src/swing-sessions/`: `POST/GET /swing-sessions`, `GET /swing-sessions/:id`,
+  `POST /swing-sessions/:id/feedback` (throttled). Metrics only, never video or landmarks. Coach feedback via Claude
+  (`@anthropic-ai/sdk`, default `claude-opus-5-5`, structured output, server-side refusal fallback) or OpenAI;
+  `COACH_AI_PROVIDER=auto` picks whichever key exists, Claude first. `SwingSession` model + migration
+  `20261110120000_swing_sessions` (applied to the local DB `localhost:5434/drift_tennis` on 2026-11-10; **not** to
+  production); added to erasure + coverage guard.
+- **Release status:** not versioned and not going to production for now (owner decision 2026-11-10). No version bump
+  for this work.
+- **Tests:** mobile 704 passed (20 new), backend 1001 passed (new `swing-sessions.service.spec.ts`), backend `tsc` clean,
+  `flutter analyze` clean on the new code.
+- **Calibrated on real footage (2026-11-11):** 9 owner-supplied clips (consent confirmed by owner; videos gitignored in
+  `cv-service/data/real_clips/`, only landmarks committed). MediaPipe Pose landmark fixtures + 79 hand-labelled
+  swings, replayed through `SwingAnalyzer` (`test/features/swing_check/real_clips_calibration_test.dart`). Detector
+  retuned from peakSpeed 6.0 / merge 1.2 s to **4.0 / 1.4 s**: recall 62% → 80%, precision 86% → 88% on all clips;
+  91% / 92% on front, side and three-quarter views. The old value missed 18 of 24 side-on forehands. Rear views fail
+  (wrist hidden). Quality gate unchanged. Details: `docs/ml/real-clips-inventory.md`.
+- **Analysis Lab (2026-11-11, internal test tool):** local page in cv-service for uploading a clip and getting a
+  stat-sheet report: strokes, groundstrokes/serves, shot speed, speed history, shot sequence, placement, per-swing body
+  numbers, overlay video with skeleton and ball. Start: `cd cv-service && venv/Scripts/python -m uvicorn api:app --port
+  8010`, open http://localhost:8010/lab. Swings come from the app's own Dart analyzer (`mobile/tool/swing_analyze.dart`);
+  ball and court from the tennis-vision pipeline. Without a court fit, speed (scaled from player height) and placement
+  (camera view) are shown as labelled estimates (owner's choice). Jobs and uploads in gitignored `cv-service/data/lab/`.
+  English only. Tests: `tests/test_lab.py`, `mobile/test/tool/swing_analyze_test.dart`.
+- **Analyse a recorded clip (2026-11-11, plan workstream A, code + automated tests done; phone pass outstanding):**
+  "Use a recorded clip" on the setup screen: gallery pick (`image_picker`), native `processVideo` on Android
+  (`MediaMetadataRetriever` + ML Kit, frames scaled to 640 px) and iOS (`AVAssetImageGenerator` + Vision), up to
+  the first 60 s at 15 fps, with progress and Cancel; then the usual analyzer and results. The clip never leaves the
+  phone. New `ClipPoseSource`, `ClipAnalysisController`, `swing_check_clip_progress_screen.dart`, route
+  `/swing-check/clip`. Backend `SwingSession.source` (LIVE | CLIP) + `metrics.clip`; migration
+  `20261111120000_swing_session_source` applied to the **local** DB only. EN/FR/ES. Replaying R04's first 30 s of
+  landmarks through the clip path gives 11 detected / 11 measured (the lab's count); R07 (rear view) is refused
+  with "filmed from behind" and nothing is saved. Tests: mobile 721 passed, backend 1005 passed, `flutter analyze`
+  clean, Android Kotlin compiles. iOS Swift still uncompiled (no Mac). Still to do on a phone: the same R04 / R07
+  check with ML Kit landmarks, and decode speed.
+- **Release goal (owner, 2026-11-11):** internal build on the owner's phone, then Play internal track / TestFlight.
+  Version bump, production migration and flag change still each need the owner's explicit go.
+- **Outstanding:** (1) real 8 GB phone pass: fps, 10 forehands + 10 serves side-on, bad framing; confirm the tuned
+  thresholds and the 0.5 likelihood with ML Kit / Vision (they were tuned on MediaPipe landmarks); test one Android
+  13+ phone and one iPhone on iOS 15+, since the detectors differ.
+  (2) iOS: the deployment target stays 13.0 (no change needed now). The Swift bridge hasn't been compiled yet
+  (needs a Mac/Xcode), and `ios/Runner/{fr,es}.lproj/InfoPlist.strings` must be added to the
+  Runner target in Xcode for the translated camera prompt.
+
 ## Open Dependencies
 
 - ~~**Sharp Sans Display font license**~~ — **struck 2026-09-03: no longer a dependency.** The redesign dropped the typeface entirely, so there is nothing to purchase and no placeholder to replace. What actually ships is **Outfit** for display and **DMSans** for body — both SIL OFL, both bundled as static cuts in `mobile/pubspec.yaml` and set in `drift_typography.dart`. Space Grotesk is gone too. *Note:* `foundation/05-design-system.md` still specifies Sharp Sans Display throughout and is now the only place this claim survives; it describes the pre-redesign design system, not the build.

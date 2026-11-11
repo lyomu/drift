@@ -191,6 +191,9 @@ export class ErasureService {
     // Which daily tennis facts they saw and opened — reading history.
     await tx.tennisFactView.deleteMany({ where: { userId } });
     await tx.clubPostReaction.deleteMany({ where: { userId } });
+    // Swing Check sessions: body-mechanics numbers and coach feedback about them.
+    // Metrics only, so unlike match video there is nothing outside Postgres to remove.
+    await tx.swingSession.deleteMany({ where: { userId } });
 
     // ---- uploaded match video --------------------------------------------
     // Footage of the person, plus the filename they chose and the verdict on it.

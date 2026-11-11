@@ -770,8 +770,9 @@ model User {
   courtBookings             CourtBooking[]             @relation("CourtBookingPlayer")
   courtBookingsDecided      CourtBooking[]             @relation("CourtBookingDecider")
   videoAnalysisJobs         VideoAnalysisJob[]
+  swingSessions             SwingSession[]
 
-  communitiesCreated    Community[]         @relation("CommunityCreator")
+  communitiesCreated   Community[]         @relation("CommunityCreator")
   communityMemberships  CommunityMember[]
   communityReportsMade  CommunityReport[]   @relation("CommunityReporter")
   communityAuditActions CommunityAuditLog[] @relation("CommunityAuditActor")
@@ -3753,6 +3754,60 @@ model VideoAnalysisJob {
   @@index([userId, createdAt])
   @@index([status])
   @@map("video_analysis_jobs")
+}
+
+// ---------------------------------------------------------------- swing check
+// On-device swing metrics (docs/ml/SWING_METRICS_SPEC.md). The phone runs pose
+// detection itself; only the numbers it derived arrive here. No video and no pose
+// landmarks are ever stored, by design.
+
+enum SwingStroke {
+  FOREHAND
+  SERVE
+}
+
+// Where a Swing Check session's frames came from: the live camera, or a clip
+// already on the phone (analysed on the phone; the clip is never uploaded).
+enum SwingSessionSource {
+  LIVE
+  CLIP
+}
+
+model SwingSession {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  stroke       SwingStroke
+  // LEFT or RIGHT as used for this session (the player can override their profile).
+  dominantHand DominantHand
+
+  swingsDetected Int
+  swingsMeasured Int
+
+  // Per-swing values and refusal reasons, plus the session summary, exactly as the
+  // app computed them. JSON because the metric set is expected to grow with the
+  // pose model, and a new metric should not need a migration.
+  metrics Json
+  summary Json
+
+  // Coach feedback once generated: tips, the locale they are written in, and which
+  // provider/model wrote them. Null until requested.
+  feedback Json?
+
+  // Which pose model and app build produced the numbers, so sessions measured by
+  // different versions are never silently compared as like for like.
+  poseModel  String
+  appVersion String
+
+  // Live camera or a recorded clip. For clips, metrics.clip says how much was
+  // analysed ({analysedMs, truncated}).
+  source SwingSessionSource @default(LIVE)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@map("swing_sessions")
 }
 
 // ---------------------------------------------------------------- communities

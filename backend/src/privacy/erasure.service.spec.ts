@@ -36,6 +36,7 @@ function createTx(): Tx {
     dismissedHomeCard: model(),
     tennisFactView: model(),
     clubPostReaction: model(),
+    swingSession: model(),
     videoAnalysisJob: {
       ...model(),
       findMany: jest.fn().mockResolvedValue([]),
@@ -230,6 +231,7 @@ describe('ErasureService and uploaded video', () => {
       dismissedHomeCard: model(),
       tennisFactView: model(),
       clubPostReaction: model(),
+      swingSession: model(),
       videoAnalysisJob: {
         ...model(),
         findMany: jest.fn().mockResolvedValue(jobs),

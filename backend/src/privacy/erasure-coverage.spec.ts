@@ -49,6 +49,8 @@ const ERASED = new Set([
   // payload lives outside Postgres, so the row delete alone is not the erasure —
   // see the note in ErasureService.
   'VideoAnalysisJob',
+  // Body-mechanics numbers about the person, plus coach feedback written about them.
+  'SwingSession',
 ]);
 
 /**
