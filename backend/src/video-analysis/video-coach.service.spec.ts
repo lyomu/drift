@@ -36,6 +36,36 @@ describe('video coach evidence', () => {
       expect.stringContaining('total_shots_p1'),
     );
   });
+
+  it('tells DeepSeek that longer recordings cannot expand a capped analysis', async () => {
+    const coachAi = {
+      status: jest.fn().mockResolvedValue({ configured: true, enabled: true }),
+      active: jest
+        .fn()
+        .mockResolvedValue({ key: 'test-only', model: 'deepseek-flash' }),
+      generateJson: jest.fn().mockResolvedValue({
+        result: {
+          overall: 'Only the first 3 seconds were analyzed.',
+          recommendations: [
+            'Put the stroke at the start.',
+            'Keep both players in frame.',
+          ],
+        },
+        model: 'deepseek-flash',
+      }),
+    };
+    await new VideoCoachService(coachAi as never).generate(
+      {
+        total_shots_p1: 2,
+        analysis_window_seconds: 3,
+      },
+      'en',
+    );
+    expect(coachAi.generateJson).toHaveBeenCalledWith(
+      expect.stringContaining('Never recommend a longer recording'),
+      expect.stringContaining('"partialClip":true'),
+    );
+  });
   it('omits uncalibrated speeds and ignores arbitrary CV text', () => {
     expect(
       coachEvidence({
