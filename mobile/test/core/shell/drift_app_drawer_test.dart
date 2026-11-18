@@ -37,7 +37,7 @@ void main() {
         expect(find.text('My Profile'), findsOneWidget);
         expect(find.text('My Sports Hub'), findsOneWidget);
         expect(find.text('Settings'), findsOneWidget);
-        expect(find.text('Soon'), findsOneWidget);
+        expect(find.text('Analyse a clip'), findsOneWidget);
         expect(find.text('Log out'), findsOneWidget);
         // Learn is a bottom-nav tab now, not a drawer row.
         expect(find.text('Learn'), findsNothing);

@@ -125,3 +125,7 @@ dist/
 # Optional SAM 3D Body weights (Meta SAM License, gated, not redistributed)
 models/sam3d_body/
 .gstack/
+
+# Real player clips (owner-supplied, never commit)
+data/real_clips/
+data/lab/

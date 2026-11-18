@@ -10,6 +10,10 @@
          declaration the request silently no-ops and pushes are dropped with
          no error anywhere. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- Swing Check: live pose detection on camera frames, on the device.
+         required="false" so phones without a camera can still install the app. -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
     <application
         android:label="Drift Tennis"
         android:name="${applicationName}"

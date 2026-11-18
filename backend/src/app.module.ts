@@ -13,6 +13,7 @@ import { UsersModule } from './users/users.module';
 import { AssessmentModule } from './assessment/assessment.module';
 import { PadelModule } from './padel/padel.module';
 import { VideoAnalysisModule } from './video-analysis/video-analysis.module';
+import { SwingSessionsModule } from './swing-sessions/swing-sessions.module';
 import { HomeModule } from './home/home.module';
 import { ConnectionsModule } from './connections/connections.module';
 import { SafetyModule } from './safety/safety.module';
@@ -75,6 +76,7 @@ import { validateEnvironment } from './config/environment';
     AssessmentModule,
     PadelModule,
     VideoAnalysisModule,
+    SwingSessionsModule,
     HomeModule,
     PlayersModule,
     ConnectionsModule,

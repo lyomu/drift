@@ -4715,4 +4715,282 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get availBookInApp => 'Solicitar en la app';
+
+  @override
+  String get aiCoachSwingCheckSubtitle =>
+      'Graba unos golpes y recibe consejos sobre tu técnica';
+
+  @override
+  String get aiCoachAnalyseClipSubtitle =>
+      'Sube un vídeo de partido para ver estadísticas y consejos';
+
+  @override
+  String get videoCoachLoading =>
+      'Tu entrenador está revisando el análisis del partido…';
+
+  @override
+  String get videoCoachUnavailable =>
+      'Las recomendaciones no están disponibles ahora. Tu análisis está guardado.';
+
+  @override
+  String get swingCheckTitle => 'Análisis del golpe';
+
+  @override
+  String get swingSetupIntro =>
+      'Apoya el teléfono, da unos golpes y mira cómo se mueve tu cuerpo en cada uno. Todo se mide en tu teléfono.';
+
+  @override
+  String get swingStrokeLabel => 'Golpe';
+
+  @override
+  String get swingStrokeForehand => 'Derecha';
+
+  @override
+  String get swingStrokeServe => 'Saque';
+
+  @override
+  String get swingBackhandNote =>
+      'El revés aún no está disponible: el brazo de golpeo suele quedar oculto para la cámara.';
+
+  @override
+  String get swingTipsHeading => 'Cómo grabar';
+
+  @override
+  String get swingTip1 =>
+      'Ponte de perfil, con el brazo de golpeo hacia el teléfono';
+
+  @override
+  String get swingTip2 =>
+      'Apoya el teléfono a la altura de la cintura, a 3 o 5 metros, en horizontal';
+
+  @override
+  String get swingTip3 =>
+      'Mantén todo el cuerpo en el encuadre, de la cabeza a los pies';
+
+  @override
+  String get swingTip4 =>
+      'Da entre 5 y 10 golpes, con una pausa corta entre ellos';
+
+  @override
+  String get swingPrivacyNote =>
+      'El vídeo se queda en tu teléfono. Solo se guardan las mediciones.';
+
+  @override
+  String get swingStart => 'Empezar a grabar';
+
+  @override
+  String get swingHistory => 'Sesiones anteriores';
+
+  @override
+  String get swingStarting => 'Iniciando la cámara…';
+
+  @override
+  String get swingSaving => 'Midiendo tus golpes…';
+
+  @override
+  String get swingFramingNoPerson => 'Entra en el encuadre';
+
+  @override
+  String get swingFramingArmHidden => 'Brazo de golpeo no visible';
+
+  @override
+  String get swingFramingBodyCut =>
+      'Aléjate: el cuerpo entero no está en el encuadre';
+
+  @override
+  String get swingFramingGood => 'Cuerpo entero visible';
+
+  @override
+  String swingSwingCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count golpes',
+      one: '1 golpe',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get swingRecordingHint =>
+      'Da entre 5 y 10 golpes y luego toca Detener';
+
+  @override
+  String get swingStop => 'Detener';
+
+  @override
+  String get swingRetrySave => 'Volver a intentar guardar';
+
+  @override
+  String get swingBackToSetup => 'Volver';
+
+  @override
+  String get swingCameraDenied =>
+      'Drift necesita acceso a la cámara para el análisis del golpe. Permítelo en los ajustes del teléfono.';
+
+  @override
+  String get swingNoCamera =>
+      'No se encontró una cámara trasera en este teléfono.';
+
+  @override
+  String get swingUnsupportedDevice =>
+      'El análisis del golpe necesita Android 13 o iOS 15, o una versión posterior.';
+
+  @override
+  String get swingCameraFailed =>
+      'No se pudo iniciar la cámara. Cierra otras apps de cámara e inténtalo de nuevo.';
+
+  @override
+  String get swingNoneDetected =>
+      'No se detectó ningún golpe. Revisa los consejos de grabación e inténtalo de nuevo.';
+
+  @override
+  String get swingErrorOffline =>
+      'No tienes conexión. Compruébala e inténtalo de nuevo.';
+
+  @override
+  String get swingErrorGeneric => 'Algo salió mal. Inténtalo de nuevo.';
+
+  @override
+  String get swingCoachUnavailable =>
+      'Los consejos del entrenador no están disponibles ahora. Tus mediciones están guardadas.';
+
+  @override
+  String get swingTooFew =>
+      'Se necesitan al menos 3 golpes medidos para los consejos del entrenador.';
+
+  @override
+  String get swingResultsTitle => 'Resultados del análisis';
+
+  @override
+  String get swingLoadFailed => 'No se pudo cargar esta sesión.';
+
+  @override
+  String swingMeasuredOf(int measured, int detected) {
+    return '$measured de $detected golpes medidos';
+  }
+
+  @override
+  String get swingNotEnoughTitle => 'No hay suficientes golpes medidos';
+
+  @override
+  String get swingNotEnoughBody =>
+      'Hay que medir al menos 3 golpes para mostrar un resumen. Abajo verás el motivo de cada golpe; revisa los consejos de grabación e inténtalo de nuevo.';
+
+  @override
+  String get swingSummaryHeading => 'Tus promedios';
+
+  @override
+  String get swingApproxNote =>
+      'Medido a partir de vídeo 2D. Úsalo como guía, no como valores exactos. ± indica cuánto variaron tus golpes.';
+
+  @override
+  String get swingSwingsHeading => 'Cada golpe';
+
+  @override
+  String get swingAgain => 'Nueva sesión';
+
+  @override
+  String get swingCoachHeading => 'Entrenador IA';
+
+  @override
+  String get swingCoachLoading => 'Tu entrenador está revisando tus golpes…';
+
+  @override
+  String get swingCoachRetry => 'Intentar de nuevo';
+
+  @override
+  String swingSwingLabel(int number) {
+    return 'Golpe $number';
+  }
+
+  @override
+  String get swingNotMeasured => 'No medido';
+
+  @override
+  String get swingMetricContactHeight => 'Altura de impacto';
+
+  @override
+  String get swingMetricElbowAngle => 'Extensión del brazo en el impacto';
+
+  @override
+  String get swingMetricKneeBend => 'Flexión de rodillas';
+
+  @override
+  String get swingMetricContactInFront => 'Impacto por delante';
+
+  @override
+  String get swingMetricTempo => 'Ritmo del golpe';
+
+  @override
+  String get swingMetricFinish => 'Final del acompañamiento';
+
+  @override
+  String get swingMetricTrophyToContact => 'Posición de trofeo al impacto';
+
+  @override
+  String get swingMetricGeneral => 'General';
+
+  @override
+  String get swingReasonArmHidden =>
+      'Tu brazo de golpeo quedó oculto para la cámara.';
+
+  @override
+  String get swingReasonOutOfFrame =>
+      'Parte de tu cuerpo quedó fuera del encuadre.';
+
+  @override
+  String get swingReasonTooFast =>
+      'El golpe fue demasiado rápido o borroso para seguirlo.';
+
+  @override
+  String get swingHistoryEmpty =>
+      'Aún no hay sesiones. Tus análisis del golpe aparecerán aquí.';
+
+  @override
+  String get swingUseClip => 'Usar un vídeo grabado';
+
+  @override
+  String swingClipHint(int seconds) {
+    return 'Elige un vídeo grabado de perfil, con un solo jugador y el teléfono quieto. Se analizan los primeros $seconds segundos y el vídeo se queda en tu teléfono.';
+  }
+
+  @override
+  String get swingClipTitle => 'Analizando tu vídeo';
+
+  @override
+  String get swingClipOpening => 'Abriendo el vídeo…';
+
+  @override
+  String swingClipProgress(int done, int total) {
+    return 'Fotograma $done de $total';
+  }
+
+  @override
+  String get swingClipKeepOpen =>
+      'Mantén la app abierta hasta que termine. El vídeo nunca sale de tu teléfono.';
+
+  @override
+  String get swingClipNoPerson =>
+      'No se encontró ningún jugador en este vídeo. Elige uno en el que se vea el cuerpo entero.';
+
+  @override
+  String get swingClipNoneDetected =>
+      'No se encontró ningún golpe. Los vídeos grabados desde detrás del jugador no funcionan porque el brazo de golpeo queda oculto. Prueba con un vídeo de perfil.';
+
+  @override
+  String get swingClipUnreadable =>
+      'No se puede abrir este vídeo. Prueba con otro.';
+
+  @override
+  String get swingClipFailed =>
+      'No se pudo analizar el vídeo. Inténtalo de nuevo.';
+
+  @override
+  String get swingSourceClip => 'Medido a partir de un vídeo grabado';
+
+  @override
+  String swingClipTruncated(int seconds) {
+    return 'Solo se analizaron los primeros $seconds segundos del vídeo.';
+  }
 }

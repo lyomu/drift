@@ -95,6 +95,12 @@ dependencies:
   shared_preferences: ^2.5.5
   share_plus: ^12.0.2
   timezone: ^0.10.1
+  # Swing Check (docs/ml/SWING_METRICS_SPEC.md): live camera frames go to
+  # on-device pose detection through our own native bridge (lib/features/
+  # swing_check/data/native_pose_channel.dart): Google ML Kit on Android 13+,
+  # Apple Vision on iOS 15+. Not the google_mlkit Flutter plugin, whose iOS
+  # pods require iOS 15.5 for the whole app. Nothing is recorded or uploaded.
+  camera: ^0.12.0+1
 
 dev_dependencies:
   flutter_test:

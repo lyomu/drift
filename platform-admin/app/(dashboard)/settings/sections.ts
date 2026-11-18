@@ -48,4 +48,12 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
     icon: "hub",
     tone: "blue",
   },
+  {
+    href: "/settings/ai-coach",
+    tab: "AI Coach",
+    title: "AI Coach",
+    description: "Configure DeepSeek recommendations for Swing Check and match analysis.",
+    icon: "auto_awesome",
+    tone: "green",
+  },
 ];

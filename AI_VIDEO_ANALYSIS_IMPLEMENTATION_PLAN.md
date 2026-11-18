@@ -33,6 +33,19 @@ Built once in Phase 0/1, reused by every later phase.
 
 The CV service is versioned independently of the backend release cycle, since its models improve on their own schedule (new training data, better classifiers) separate from app releases.
 
+## Public training data (added 2026-11-10)
+
+Roboflow Universe datasets, with licence, image count and classes read from the Roboflow API on 2026-11-10. Full table, exclusions and an attribution registry: [`docs/ml/dataset-shortlist.md`](docs/ml/dataset-shortlist.md). Only commercial-OK licences (CC BY 4.0, MIT) are used; two BY-NC-SA sets are excluded.
+
+| Use | Datasets | Notes |
+| --- | --- | --- |
+| Ball detector (Phase 1) | `mlaimcv/tennis` (1,195), `tennis-8bruw/tennis-detect` (1,160), `epuresearchspace/detect_tennisball` (1,096) | Spot-checked: ball labeled in blurry frames. Single images, so they train an RF-DETR ball detector, not TrackNet (which needs consecutive frames) |
+| Court keypoints (Phase 1) | `hotmintsauce/court-key-points` (572), `computer-vision-projects-h73wd/tennis-court-detection-pnnwf` (200, MIT) | Spot-checked: filmed from behind the player |
+| Racket detector (Phase 2) | 5 small racket sets (~2,200 total) | Not spot-checked |
+| Stroke seed data (Phase 2) | `keroro/tennis` (2,000 keypoint images: Serve, Backhand, Forehand, Ready_Position) | Mostly from behind; seed only, never the accuracy measure |
+
+This data supplements, and does not replace, Drift's own footage: it cannot show whether the models work on our courts and phones, and Phase 0's go/no-go still needs the re-shoot. Every accuracy bar in this plan is measured on held-out Drift footage, never on these sets.
+
 ## Phase 0 — Spike
 
 Goal: find out whether existing open-source models work at all on Drift's actual camera domain, before writing any product code.
@@ -66,7 +79,7 @@ Scope: solo sessions only (drills, serve practice, one-on-one rallies), single c
 
 **CV service**
 
-- [ ] Fine-tune court detection and ball tracking on Phase 0's labeled clips (or a larger version of that set)
+- [ ] Fine-tune court detection and ball tracking on Phase 0's labeled clips (or a larger version of that set), plus the Universe court and ball sets listed under "Public training data"
 - [ ] Wire up the validity gate with a specific, user-facing refusal reason per failure mode
 - [ ] Ball-contact event detection (count only, no type)
 - [ ] Speed calculation for bounded flights (serve-style: known start/end), with an honest uncertainty band, not a bare number

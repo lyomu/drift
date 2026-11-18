@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  BadGatewayException,
   Inject,
   Injectable,
   Logger,
@@ -14,6 +15,7 @@ import { createReadStream } from 'node:fs';
 import { rm } from 'node:fs/promises';
 import { Readable } from 'node:stream';
 import { PrismaService } from '../prisma/prisma.service';
+import type { LocaleCode } from '../common/i18n';
 import { PushService } from '../push/push.service';
 import {
   VIDEO_STORAGE,
@@ -28,6 +30,7 @@ import {
   ANALYSIS_JOB_OPTIONS,
   VIDEO_ANALYSIS_QUEUE,
 } from './video-analysis.queue';
+import { VideoCoachService } from './video-coach.service';
 
 /**
  * Uploads are refused above this before anything is stored. Generous: a minute of
@@ -69,6 +72,7 @@ export class VideoAnalysisService {
     @Optional()
     @InjectQueue(VIDEO_ANALYSIS_QUEUE)
     private readonly analysisQueue?: Queue,
+    @Optional() private readonly videoCoach?: VideoCoachService,
   ) {}
 
   /**
@@ -237,6 +241,51 @@ export class VideoAnalysisService {
       where: { id: job.id },
       data: { status: VideoAnalysisStatus.ANALYZING },
     });
+  }
+
+  async feedback(userId: string, jobId: string, locale: LocaleCode) {
+    const job = await this.findForUser(userId, jobId);
+    if (job.status !== VideoAnalysisStatus.COMPLETED || !job.analysisResult) {
+      throw new BadRequestException(
+        'Complete the video analysis before requesting coach feedback.',
+      );
+    }
+    const stored = job.coachFeedback as {
+      locale?: string;
+      provider?: string;
+    } | null;
+    const preferred = await this.videoCoach?.preferredProvider();
+    if (stored?.locale === locale && stored.provider === preferred) return job;
+    if (!this.videoCoach) {
+      throw new ServiceUnavailableException({
+        code: 'COACH_UNAVAILABLE',
+        message: 'Coach feedback is unavailable.',
+      });
+    }
+    try {
+      const feedback = await this.videoCoach.generate(
+        job.analysisResult,
+        locale,
+      );
+      return await this.prisma.videoAnalysisJob.update({
+        where: { id: job.id },
+        data: { coachFeedback: feedback as unknown as Prisma.InputJsonValue },
+      });
+    } catch (error) {
+      if (error instanceof Error && error.message === 'COACH_UNAVAILABLE') {
+        throw new ServiceUnavailableException({
+          code: 'COACH_UNAVAILABLE',
+          message: 'Coach feedback is unavailable.',
+        });
+      }
+      this.logger.warn(
+        `Video coach feedback failed for ${job.id}: ${error instanceof Error ? error.name : 'Unknown'}`,
+      );
+      throw new BadGatewayException({
+        code: 'COACH_FAILED',
+        message: 'Coach feedback could not be generated. Try again later.',
+      });
+    }
   }
 
   /**

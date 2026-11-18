@@ -35,11 +35,12 @@ export default function SettingsOverviewPage() {
         api.get<{ flags: FeatureFlag[] }>("/platform-config/feature-flags"),
         api.get<{ templates: NotificationTemplate[] }>("/platform-config/notification-templates"),
         api.get<{ integrations: IntegrationConfig[] }>("/platform-config/integrations"),
+        api.get<{ configured: boolean; enabled: boolean }>("/coach-ai"),
       ]);
       if (cancelled) return;
 
       const next: Summaries = {};
-      const [markets, flags, templates, integrations] = results;
+      const [markets, flags, templates, integrations, coach] = results;
 
       if (markets.status === "fulfilled") {
         const rows = markets.value.markets;
@@ -56,6 +57,9 @@ export default function SettingsOverviewPage() {
       if (integrations.status === "fulfilled") {
         const rows = integrations.value.integrations;
         next["/settings/integrations"] = `${rows.length} providers · ${count(rows, (i) => i.status === "CONNECTED")} connected`;
+      }
+      if (coach.status === "fulfilled") {
+        next["/settings/ai-coach"] = coach.value.enabled ? "DeepSeek active" : coach.value.configured ? "Paused" : "Add an API key";
       }
 
       setSummaries(next);

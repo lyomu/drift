@@ -1,0 +1,78 @@
+{
+  "about": "Hand labels for the real-clip pose fixtures (2026-11-11). Contact times in ms, read off 10 fps zoomed crops around wrist-speed candidates plus a 3 fps scan of each clip for swings the candidates missed. type: fh | bh | serve; 'unsure' marks a possible swing that is neither scored as a hit nor as a false positive. maxMs limits scoring to the start of a clip. No player names: clip ids only.",
+  "clips": {
+    "R01": {
+      "hand": "left", "stroke": "forehand",
+      "note": "rear view, rally, jump cuts, pose only from 1.4 s",
+      "swings": [
+        {"t": 2150, "type": "fh"}, {"t": 3550, "type": "fh"},
+        {"t": 5450, "type": "fh"}, {"t": 9000, "type": "fh"}
+      ]
+    },
+    "R02": {"use": false, "note": "scenery montage, no player (pose in 4/435 frames)", "swings": []},
+    "R03": {
+      "hand": "right", "stroke": "forehand",
+      "note": "night, player far (torso 28 px), front view; pose hallucinated on a foreground object 5.3-7.5 s",
+      "swings": [
+        {"t": 1380, "type": "fh"}, {"t": 6400, "type": "fh"}, {"t": 10550, "type": "fh"},
+        {"t": 13780, "type": "fh"}, {"t": 17150, "type": "fh"}, {"t": 21550, "type": "fh"},
+        {"t": 25150, "type": "fh"}
+      ]
+    },
+    "R04": {
+      "hand": "right", "stroke": "forehand",
+      "note": "indoor feeding drill, front + side-on cuts every ~2.5 s, serves at the end",
+      "swings": [
+        {"t": 1650, "type": "fh"}, {"t": 4500, "type": "fh"}, {"t": 6880, "type": "fh"},
+        {"t": 9750, "type": "fh"}, {"t": 12450, "type": "fh"}, {"t": 15150, "type": "fh"},
+        {"t": 17700, "type": "fh"}, {"t": 20550, "type": "fh"}, {"t": 23080, "type": "fh"},
+        {"t": 25650, "type": "fh"}, {"t": 27880, "type": "fh"}, {"t": 30850, "type": "fh"},
+        {"t": 33300, "type": "fh"}, {"t": 36200, "type": "fh"}, {"t": 38780, "type": "fh"},
+        {"t": 41600, "type": "unsure"},
+        {"t": 43330, "type": "fh"}, {"t": 45430, "type": "fh"}, {"t": 47650, "type": "fh"},
+        {"t": 49980, "type": "fh"}, {"t": 52650, "type": "fh"}, {"t": 54920, "type": "fh"},
+        {"t": 57280, "type": "fh"}, {"t": 59440, "type": "fh"}, {"t": 62000, "type": "fh"},
+        {"t": 64370, "type": "fh"}, {"t": 66930, "type": "fh"}, {"t": 69250, "type": "fh"},
+        {"t": 71850, "type": "fh"}, {"t": 74120, "type": "fh"}, {"t": 76450, "type": "fh"},
+        {"t": 78720, "type": "fh"}, {"t": 81300, "type": "fh"}, {"t": 83780, "type": "fh"},
+        {"t": 86150, "type": "fh"}, {"t": 88650, "type": "fh"}, {"t": 91050, "type": "fh"},
+        {"t": 93530, "type": "fh"}, {"t": 95880, "type": "fh"}, {"t": 99330, "type": "fh"},
+        {"t": 104500, "type": "unsure"},
+        {"t": 108400, "type": "fh"}, {"t": 112000, "type": "fh"}, {"t": 115330, "type": "fh"},
+        {"t": 118900, "type": "fh"}, {"t": 122000, "type": "fh"}, {"t": 124450, "type": "fh"},
+        {"t": 128750, "type": "serve"}, {"t": 130870, "type": "serve"},
+        {"t": 133770, "type": "serve"}, {"t": 136850, "type": "serve"}
+      ]
+    },
+    "R05": {
+      "hand": "right", "stroke": "forehand",
+      "note": "rear three-quarter view, one player",
+      "swings": [{"t": 1550, "type": "fh"}, {"t": 5200, "type": "fh"}]
+    },
+    "R06": {
+      "hand": "right", "stroke": "forehand",
+      "note": "three-quarter side view, dirt court, end card from 9.3 s",
+      "swings": [{"t": 1450, "type": "fh"}, {"t": 4400, "type": "fh"}, {"t": 7950, "type": "fh"}]
+    },
+    "R07": {
+      "hand": "right", "stroke": "forehand",
+      "note": "rear view, rally; hitting wrist mostly hidden behind the body",
+      "swings": [
+        {"t": 150, "type": "fh"}, {"t": 2680, "type": "fh"}, {"t": 5420, "type": "bh"},
+        {"t": 8370, "type": "bh"}, {"t": 10780, "type": "bh"}, {"t": 13280, "type": "bh"}
+      ]
+    },
+    "R08": {
+      "hand": "right", "stroke": "forehand",
+      "maxMs": 21000,
+      "note": "handheld montage, cuts every ~1 s, pose sometimes on a spectator; first 21 s scored",
+      "swings": [
+        {"t": 1600, "type": "serve"}, {"t": 3530, "type": "fh"}, {"t": 5900, "type": "fh"},
+        {"t": 6200, "type": "fh"}, {"t": 8450, "type": "fh"}, {"t": 10050, "type": "unsure"},
+        {"t": 10850, "type": "unsure"}, {"t": 13700, "type": "serve"}, {"t": 16300, "type": "fh"},
+        {"t": 19250, "type": "unsure"}, {"t": 20100, "type": "fh"}
+      ]
+    },
+    "R09": {"use": false, "note": "rear view, player small and often out of frame (pose in 245/1115 frames)", "swings": []}
+  }
+}

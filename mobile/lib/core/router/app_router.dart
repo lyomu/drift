@@ -94,6 +94,13 @@ import '../../features/profile/presentation/own_profile_screen.dart';
 import '../../features/search/data/global_search_repository.dart';
 import '../../features/search/presentation/global_search_screen.dart';
 import '../../features/settings/presentation/account_security_screen.dart';
+import '../../features/swing_check/application/clip_analysis_controller.dart';
+import '../../features/swing_check/application/swing_check_providers.dart';
+import '../../features/swing_check/presentation/swing_check_capture_screen.dart';
+import '../../features/swing_check/presentation/swing_check_clip_progress_screen.dart';
+import '../../features/swing_check/presentation/swing_check_history_screen.dart';
+import '../../features/swing_check/presentation/swing_check_results_screen.dart';
+import '../../features/swing_check/presentation/swing_check_setup_screen.dart';
 import '../../features/video_analysis/presentation/video_results_screen.dart';
 import '../../features/video_analysis/presentation/video_upload_screen.dart';
 import '../../features/settings/presentation/blocked_users_screen.dart';
@@ -292,6 +299,33 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/video-analysis/:id',
         builder: (context, state) =>
             VideoResultsScreen(jobId: state.pathParameters['id']!),
+      ),
+      // Swing Check. Literal paths before '/swing-check/:id' so they aren't
+      // read as session ids.
+      GoRoute(
+        path: '/swing-check',
+        builder: (context, state) => const SwingCheckSetupScreen(),
+      ),
+      GoRoute(
+        path: '/swing-check/capture',
+        builder: (context, state) => SwingCheckCaptureScreen(
+          setup: state.extra as SwingCheckSetup,
+        ),
+      ),
+      GoRoute(
+        path: '/swing-check/clip',
+        builder: (context, state) => SwingCheckClipProgressScreen(
+          request: state.extra as SwingClipRequest,
+        ),
+      ),
+      GoRoute(
+        path: '/swing-check/history',
+        builder: (context, state) => const SwingCheckHistoryScreen(),
+      ),
+      GoRoute(
+        path: '/swing-check/:id',
+        builder: (context, state) =>
+            SwingCheckResultsScreen(sessionId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: '/stats',

@@ -8493,6 +8493,462 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Request in the app'**
   String get availBookInApp;
+
+  /// No description provided for @aiCoachSwingCheckSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Film a few swings and get feedback on your technique'**
+  String get aiCoachSwingCheckSubtitle;
+
+  /// No description provided for @aiCoachAnalyseClipSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload a match clip for stats and coaching tips'**
+  String get aiCoachAnalyseClipSubtitle;
+
+  /// No description provided for @videoCoachLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Your coach is reviewing the match analysis…'**
+  String get videoCoachLoading;
+
+  /// No description provided for @videoCoachUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Recommendations aren\'t available right now. Your analysis is saved.'**
+  String get videoCoachUnavailable;
+
+  /// No description provided for @swingCheckTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Swing check'**
+  String get swingCheckTitle;
+
+  /// No description provided for @swingSetupIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Prop your phone up, hit a few swings, and see how your body moves through each one. Everything is measured on your phone.'**
+  String get swingSetupIntro;
+
+  /// No description provided for @swingStrokeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Stroke'**
+  String get swingStrokeLabel;
+
+  /// No description provided for @swingStrokeForehand.
+  ///
+  /// In en, this message translates to:
+  /// **'Forehand'**
+  String get swingStrokeForehand;
+
+  /// No description provided for @swingStrokeServe.
+  ///
+  /// In en, this message translates to:
+  /// **'Serve'**
+  String get swingStrokeServe;
+
+  /// No description provided for @swingBackhandNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Backhands aren\'t supported yet: your hitting arm is often hidden from the camera.'**
+  String get swingBackhandNote;
+
+  /// No description provided for @swingTipsHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'How to film'**
+  String get swingTipsHeading;
+
+  /// No description provided for @swingTip1.
+  ///
+  /// In en, this message translates to:
+  /// **'Stand side-on to the camera, hitting arm facing the phone'**
+  String get swingTip1;
+
+  /// No description provided for @swingTip2.
+  ///
+  /// In en, this message translates to:
+  /// **'Prop the phone at waist height, 3 to 5 metres away, in landscape'**
+  String get swingTip2;
+
+  /// No description provided for @swingTip3.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep your whole body in frame, from head to feet'**
+  String get swingTip3;
+
+  /// No description provided for @swingTip4.
+  ///
+  /// In en, this message translates to:
+  /// **'Hit 5 to 10 swings, with a short pause between them'**
+  String get swingTip4;
+
+  /// No description provided for @swingPrivacyNote.
+  ///
+  /// In en, this message translates to:
+  /// **'The video stays on your phone. Only the measurements are saved.'**
+  String get swingPrivacyNote;
+
+  /// No description provided for @swingStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start filming'**
+  String get swingStart;
+
+  /// No description provided for @swingHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Past sessions'**
+  String get swingHistory;
+
+  /// No description provided for @swingStarting.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting the camera…'**
+  String get swingStarting;
+
+  /// No description provided for @swingSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Measuring your swings…'**
+  String get swingSaving;
+
+  /// No description provided for @swingFramingNoPerson.
+  ///
+  /// In en, this message translates to:
+  /// **'Step into the frame'**
+  String get swingFramingNoPerson;
+
+  /// No description provided for @swingFramingArmHidden.
+  ///
+  /// In en, this message translates to:
+  /// **'Hitting arm not visible'**
+  String get swingFramingArmHidden;
+
+  /// No description provided for @swingFramingBodyCut.
+  ///
+  /// In en, this message translates to:
+  /// **'Move back: whole body not in frame'**
+  String get swingFramingBodyCut;
+
+  /// No description provided for @swingFramingGood.
+  ///
+  /// In en, this message translates to:
+  /// **'Whole body visible'**
+  String get swingFramingGood;
+
+  /// No description provided for @swingSwingCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 swing} other{{count} swings}}'**
+  String swingSwingCount(int count);
+
+  /// No description provided for @swingRecordingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Hit 5 to 10 swings, then tap Stop'**
+  String get swingRecordingHint;
+
+  /// No description provided for @swingStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get swingStop;
+
+  /// No description provided for @swingRetrySave.
+  ///
+  /// In en, this message translates to:
+  /// **'Try saving again'**
+  String get swingRetrySave;
+
+  /// No description provided for @swingBackToSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get swingBackToSetup;
+
+  /// No description provided for @swingCameraDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Drift needs camera access for Swing Check. Allow it in your phone\'s settings.'**
+  String get swingCameraDenied;
+
+  /// No description provided for @swingNoCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'No back camera was found on this phone.'**
+  String get swingNoCamera;
+
+  /// No description provided for @swingUnsupportedDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Swing Check needs Android 13 or iOS 15 or later.'**
+  String get swingUnsupportedDevice;
+
+  /// No description provided for @swingCameraFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The camera couldn\'t start. Close other camera apps and try again.'**
+  String get swingCameraFailed;
+
+  /// No description provided for @swingNoneDetected.
+  ///
+  /// In en, this message translates to:
+  /// **'No swings were detected. Check the filming tips and try again.'**
+  String get swingNoneDetected;
+
+  /// No description provided for @swingErrorOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re offline. Check your connection and try again.'**
+  String get swingErrorOffline;
+
+  /// No description provided for @swingErrorGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Try again.'**
+  String get swingErrorGeneric;
+
+  /// No description provided for @swingCoachUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Coach feedback isn\'t available right now. Your measurements are saved.'**
+  String get swingCoachUnavailable;
+
+  /// No description provided for @swingTooFew.
+  ///
+  /// In en, this message translates to:
+  /// **'At least 3 measured swings are needed for coach feedback.'**
+  String get swingTooFew;
+
+  /// No description provided for @swingResultsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Swing check results'**
+  String get swingResultsTitle;
+
+  /// No description provided for @swingLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'This session couldn\'t be loaded.'**
+  String get swingLoadFailed;
+
+  /// No description provided for @swingMeasuredOf.
+  ///
+  /// In en, this message translates to:
+  /// **'{measured} of {detected} swings measured'**
+  String swingMeasuredOf(int measured, int detected);
+
+  /// No description provided for @swingNotEnoughTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough swings measured'**
+  String get swingNotEnoughTitle;
+
+  /// No description provided for @swingNotEnoughBody.
+  ///
+  /// In en, this message translates to:
+  /// **'At least 3 swings need to be measured to give you a summary. The reasons for each swing are below; check the filming tips and try again.'**
+  String get swingNotEnoughBody;
+
+  /// No description provided for @swingSummaryHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Your averages'**
+  String get swingSummaryHeading;
+
+  /// No description provided for @swingApproxNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Measured from 2D video. Use these as a guide, not exact values. ± shows how much your swings varied.'**
+  String get swingApproxNote;
+
+  /// No description provided for @swingSwingsHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Each swing'**
+  String get swingSwingsHeading;
+
+  /// No description provided for @swingAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'New session'**
+  String get swingAgain;
+
+  /// No description provided for @swingCoachHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Coach'**
+  String get swingCoachHeading;
+
+  /// No description provided for @swingCoachLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Your coach is looking at your swings…'**
+  String get swingCoachLoading;
+
+  /// No description provided for @swingCoachRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get swingCoachRetry;
+
+  /// No description provided for @swingSwingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Swing {number}'**
+  String swingSwingLabel(int number);
+
+  /// No description provided for @swingNotMeasured.
+  ///
+  /// In en, this message translates to:
+  /// **'Not measured'**
+  String get swingNotMeasured;
+
+  /// No description provided for @swingMetricContactHeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact height'**
+  String get swingMetricContactHeight;
+
+  /// No description provided for @swingMetricElbowAngle.
+  ///
+  /// In en, this message translates to:
+  /// **'Arm extension at contact'**
+  String get swingMetricElbowAngle;
+
+  /// No description provided for @swingMetricKneeBend.
+  ///
+  /// In en, this message translates to:
+  /// **'Knee bend'**
+  String get swingMetricKneeBend;
+
+  /// No description provided for @swingMetricContactInFront.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact in front'**
+  String get swingMetricContactInFront;
+
+  /// No description provided for @swingMetricTempo.
+  ///
+  /// In en, this message translates to:
+  /// **'Swing tempo'**
+  String get swingMetricTempo;
+
+  /// No description provided for @swingMetricFinish.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow-through finish'**
+  String get swingMetricFinish;
+
+  /// No description provided for @swingMetricTrophyToContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Trophy to contact'**
+  String get swingMetricTrophyToContact;
+
+  /// No description provided for @swingMetricGeneral.
+  ///
+  /// In en, this message translates to:
+  /// **'General'**
+  String get swingMetricGeneral;
+
+  /// No description provided for @swingReasonArmHidden.
+  ///
+  /// In en, this message translates to:
+  /// **'Your hitting arm was hidden from the camera.'**
+  String get swingReasonArmHidden;
+
+  /// No description provided for @swingReasonOutOfFrame.
+  ///
+  /// In en, this message translates to:
+  /// **'Part of your body was out of frame.'**
+  String get swingReasonOutOfFrame;
+
+  /// No description provided for @swingReasonTooFast.
+  ///
+  /// In en, this message translates to:
+  /// **'The swing was too fast or blurred to follow.'**
+  String get swingReasonTooFast;
+
+  /// No description provided for @swingHistoryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No sessions yet. Your Swing Check sessions will appear here.'**
+  String get swingHistoryEmpty;
+
+  /// No description provided for @swingUseClip.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a recorded clip'**
+  String get swingUseClip;
+
+  /// No description provided for @swingClipHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a clip filmed side-on, with one player and the phone held still. The first {seconds} seconds are analysed, and the clip stays on your phone.'**
+  String swingClipHint(int seconds);
+
+  /// No description provided for @swingClipTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Analysing your clip'**
+  String get swingClipTitle;
+
+  /// No description provided for @swingClipOpening.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening the clip…'**
+  String get swingClipOpening;
+
+  /// No description provided for @swingClipProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Frame {done} of {total}'**
+  String swingClipProgress(int done, int total);
+
+  /// No description provided for @swingClipKeepOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep the app open until it finishes. The clip never leaves your phone.'**
+  String get swingClipKeepOpen;
+
+  /// No description provided for @swingClipNoPerson.
+  ///
+  /// In en, this message translates to:
+  /// **'No player was found in this clip. Pick one where the whole body is in view.'**
+  String get swingClipNoPerson;
+
+  /// No description provided for @swingClipNoneDetected.
+  ///
+  /// In en, this message translates to:
+  /// **'No swings were found. Clips filmed from behind the player don\'t work because the hitting arm is hidden. Try a side-on clip.'**
+  String get swingClipNoneDetected;
+
+  /// No description provided for @swingClipUnreadable.
+  ///
+  /// In en, this message translates to:
+  /// **'This video can\'t be opened. Try another clip.'**
+  String get swingClipUnreadable;
+
+  /// No description provided for @swingClipFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The clip couldn\'t be analysed. Try again.'**
+  String get swingClipFailed;
+
+  /// No description provided for @swingSourceClip.
+  ///
+  /// In en, this message translates to:
+  /// **'Measured from a recorded clip'**
+  String get swingSourceClip;
+
+  /// No description provided for @swingClipTruncated.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the first {seconds} seconds of the clip were analysed.'**
+  String swingClipTruncated(int seconds);
 }
 
 class _AppLocalizationsDelegate

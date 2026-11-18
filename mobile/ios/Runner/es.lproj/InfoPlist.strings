@@ -1,0 +1,2 @@
+/* Swing Check camera permission. Must be added to the Runner target in Xcode. */
+"NSCameraUsageDescription" = "Drift usa la cámara para el análisis del golpe, que mide tu golpe en el teléfono. El vídeo no se guarda ni se sube.";

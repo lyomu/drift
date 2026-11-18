@@ -46,6 +46,8 @@ import { PushBroadcastAdminService } from './push-broadcast-admin.service';
 import { NewsModule } from '../news/news.module';
 import { CommunitiesModule } from '../communities/communities.module';
 import { CommunityAdminController } from './community-admin.controller';
+import { CoachAiModule } from '../coach-ai/coach-ai.module';
+import { CoachAiAdminController } from './coach-ai-admin.controller';
 
 @Module({
   imports: [
@@ -76,6 +78,7 @@ import { CommunityAdminController } from './community-admin.controller';
     NotificationsModule,
     NewsModule,
     CommunitiesModule,
+    CoachAiModule,
   ],
   controllers: [
     PlatformAdminController,
@@ -94,6 +97,7 @@ import { CommunityAdminController } from './community-admin.controller';
     PushBroadcastMediaController,
     TennisFactAdminController,
     CommunityAdminController,
+    CoachAiAdminController,
   ],
   providers: [
     PlatformAdminService,
