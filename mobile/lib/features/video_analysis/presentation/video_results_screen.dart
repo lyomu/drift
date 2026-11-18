@@ -327,6 +327,8 @@ class _Results extends StatelessWidget {
     final colors = Theme.of(context).extension<DriftColors>()!;
     final summary = job.analysisResult ?? const {};
     final calibrated = job.courtCalibrated;
+    final analysisWindow = (summary['analysis_window_seconds'] as num?)
+        ?.toDouble();
 
     final shotsP1 = (summary['total_shots_p1'] as num?)?.toInt();
     final shotsP2 = (summary['total_shots_p2'] as num?)?.toInt();
@@ -337,6 +339,13 @@ class _Results extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (analysisWindow != null)
+          _Message(
+            title: 'Partial clip analysis',
+            body:
+                'Only the first ${analysisWindow.toStringAsFixed(1)} seconds of this recording were analysed. The shot counts and AI Coach advice cover that window only.',
+            tone: _Tone.warning,
+          ),
         if (!calibrated)
           _Message(
             title: context.l10n.videoNoDistances,

@@ -61,6 +61,11 @@ export const SESSION_DURATION_S = 600;
 export class VideoAnalysisService {
   private readonly logger = new Logger(VideoAnalysisService.name);
 
+  private static frameLimit(): number {
+    const value = Number(process.env.CV_SERVICE_MAX_FRAMES ?? 0);
+    return Number.isSafeInteger(value) && value > 0 ? value : 0;
+  }
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly cvService: CvServiceClient,
@@ -176,6 +181,28 @@ export class VideoAnalysisService {
     }
 
     const result = await this.cvService.precheck(localPath);
+    const frameLimit = VideoAnalysisService.frameLimit();
+    const frameCount = Number(result.metadata.frame_count ?? 0);
+    const fps = Number(result.metadata.fps ?? 0);
+    if (frameLimit && VideoAnalysisService.isSessionLength(result)) {
+      result.findings.push({
+        check: 'session_cpu_limit',
+        severity: 'reject',
+        message:
+          'Session analysis is unavailable on this server. Upload a short clip with the stroke you want coached at the start.',
+        detail: {},
+      });
+      result.verdict = 'reject';
+    } else if (frameLimit && frameCount > frameLimit && fps > 0) {
+      const seconds = Math.round((frameLimit / fps) * 10) / 10;
+      result.findings.push({
+        check: 'analysis_window',
+        severity: 'warn',
+        message: `This server will analyse only the first ${seconds} seconds of your clip. Put the stroke you want coached at the start.`,
+        detail: { frame_limit: frameLimit, seconds },
+      });
+      if (result.verdict === 'pass') result.verdict = 'warn';
+    }
     const rejected = result.verdict === 'reject';
     const reasons = result.findings
       .filter((finding) => finding.severity === 'reject')
@@ -319,17 +346,40 @@ export class VideoAnalysisService {
     // source is data we have. `analysisResult` is schemaless JSON and carries `mode`, so the
     // two result shapes coexist without a schema change either.
     const asSession = VideoAnalysisService.isSessionLength(job.precheckResult);
+    if (asSession && VideoAnalysisService.frameLimit()) {
+      await this.markFailed(
+        jobId,
+        'Session analysis is unavailable on this server. Upload a short clip instead.',
+      );
+      return;
+    }
 
     try {
       const result = asSession
         ? await this.cvService.analyzeSession(localPath)
-        : await this.cvService.analyze(localPath);
+        : await this.cvService.analyze(localPath, {
+            maxFrames: VideoAnalysisService.frameLimit(),
+          });
 
+      const summary = { ...result.summary };
+      if (!asSession) {
+        const metadata = (
+          job.precheckResult as { metadata?: Record<string, unknown> } | null
+        )?.metadata;
+        const fps = Number(metadata?.fps ?? 0);
+        const frames = Number(metadata?.frame_count ?? 0);
+        const limit = VideoAnalysisService.frameLimit();
+        if (limit && fps > 0 && frames > limit) {
+          summary.analysis_window_seconds = Math.round((limit / fps) * 10) / 10;
+          summary.analysis_window_frames = limit;
+          summary.source_frame_count = frames;
+        }
+      }
       const updated = await this.prisma.videoAnalysisJob.update({
         where: { id: jobId },
         data: {
           status: VideoAnalysisStatus.COMPLETED,
-          analysisResult: asJsonValue(result.summary),
+          analysisResult: asJsonValue(summary),
           cvServiceVersion: result.pipeline_version,
           completedAt: new Date(),
         },
@@ -338,7 +388,7 @@ export class VideoAnalysisService {
       // From the row we already read, not from the update's return: the owner is not
       // something the write decides, and reading it back couples this to whatever
       // that update happens to select.
-      await this.notifyCompleted(job.userId, jobId, result.summary);
+      await this.notifyCompleted(job.userId, jobId, summary);
       return updated;
     } catch (error) {
       if (error instanceof CvServiceBusyError) {

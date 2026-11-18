@@ -73,10 +73,10 @@ def stub_matches_frames(detections, frames) -> bool:
     return len(detections) == len(frames)
 
 
-def read_video(video_path):
+def read_video(video_path, max_frames=0):
     cap = cv2.VideoCapture(video_path)
     frames = []
-    while True:
+    while not max_frames or len(frames) < max_frames:
         ret, frame = cap.read()
         if not ret:
             break
