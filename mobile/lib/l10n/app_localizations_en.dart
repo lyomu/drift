@@ -4662,7 +4662,15 @@ class AppLocalizationsEn extends AppLocalizations {
       'Film a few swings and get feedback on your technique';
 
   @override
-  String get aiCoachAnalyseClipSubtitle => 'Upload a match clip for shot stats';
+  String get aiCoachAnalyseClipSubtitle =>
+      'Upload a match clip for stats and coaching tips';
+
+  @override
+  String get videoCoachLoading => 'Your coach is reviewing the match analysis…';
+
+  @override
+  String get videoCoachUnavailable =>
+      'Recommendations aren\'t available right now. Your analysis is saved.';
 
   @override
   String get swingCheckTitle => 'Swing check';

@@ -15,6 +15,8 @@ import { diskStorage } from 'multer';
 import { tmpdir } from 'node:os';
 import type { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Throttle } from '@nestjs/throttler';
+import { requestLocale } from '../common/i18n/request-locale';
 import {
   MAX_VIDEO_BYTES,
   VideoAnalysisService,
@@ -75,6 +77,16 @@ export class VideoAnalysisController {
   @Post(':id/analyze')
   analyze(@Req() req: Request, @Param('id') id: string) {
     return this.videoAnalysis.requestAnalysis(this.userId(req), id);
+  }
+
+  @Post(':id/feedback')
+  @Throttle({ default: { ttl: 3_600_000, limit: 20 } })
+  feedback(@Req() req: Request, @Param('id') id: string) {
+    return this.videoAnalysis.feedback(
+      this.userId(req),
+      id,
+      requestLocale(req),
+    );
   }
 
   @Get()

@@ -5,15 +5,18 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  Optional,
   ServiceUnavailableException,
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { Prisma, type SwingSession } from '@prisma/client';
 import type { LocaleCode } from '../common/i18n';
+import { CoachAiService } from '../coach-ai/coach-ai.service';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   COACH_FEEDBACK_PROVIDERS,
   CoachFeedbackError,
+  coachInstructions,
   type CoachFeedbackProvider,
   type CoachFeedbackRequest,
   type CoachFeedbackResult,
@@ -45,11 +48,17 @@ export class SwingSessionsService {
     private readonly prisma: PrismaService,
     @Inject(COACH_FEEDBACK_PROVIDERS)
     private readonly providers: CoachFeedbackProvider[],
+    @Optional() private readonly coachAi?: CoachAiService,
   ) {}
 
-  async create(userId: string, dto: CreateSwingSessionDto): Promise<SwingSession> {
+  async create(
+    userId: string,
+    dto: CreateSwingSessionDto,
+  ): Promise<SwingSession> {
     if (dto.swingsMeasured > dto.swingsDetected) {
-      throw new BadRequestException('swingsMeasured cannot exceed swingsDetected.');
+      throw new BadRequestException(
+        'swingsMeasured cannot exceed swingsDetected.',
+      );
     }
     const source = dto.source ?? 'LIVE';
     this.assertMetricsShape(dto.metrics);
@@ -108,10 +117,23 @@ export class SwingSessionsService {
    * Feedback is stored per session; asking again in another language
    * regenerates it in that language.
    */
-  async feedback(userId: string, id: string, locale: LocaleCode): Promise<SwingSession> {
+  async feedback(
+    userId: string,
+    id: string,
+    locale: LocaleCode,
+  ): Promise<SwingSession> {
     const session = await this.findForUser(userId, id);
-    const stored = session.feedback as { locale?: string } | null;
-    if (stored && stored.locale === locale) return session;
+    const provider = await this.pickProvider();
+    const stored = session.feedback as {
+      locale?: string;
+      provider?: string;
+    } | null;
+    if (
+      stored &&
+      stored.locale === locale &&
+      stored.provider === provider?.name
+    )
+      return session;
 
     if (session.swingsMeasured < MIN_MEASURED_FOR_FEEDBACK) {
       throw new UnprocessableEntityException({
@@ -120,7 +142,6 @@ export class SwingSessionsService {
       });
     }
 
-    const provider = this.pickProvider();
     if (!provider) {
       throw new ServiceUnavailableException({
         code: 'COACH_UNAVAILABLE',
@@ -166,8 +187,27 @@ export class SwingSessionsService {
    * `COACH_AI_PROVIDER`: `anthropic`, `openai`, `disabled`, or `auto` (default):
    * whichever has a key, Claude first.
    */
-  private pickProvider(): CoachFeedbackProvider | undefined {
-    const choice = (process.env.COACH_AI_PROVIDER ?? 'auto').trim().toLowerCase();
+  private async pickProvider(): Promise<CoachFeedbackProvider | undefined> {
+    const adminStatus = await this.coachAi?.status();
+    if (adminStatus?.configured && !adminStatus.enabled) return undefined;
+    const active = await this.coachAi?.active();
+    if (active && this.coachAi) {
+      return {
+        name: 'deepseek',
+        model: active.model,
+        configured: true,
+        generate: async (request) => {
+          const { result } = await this.coachAi!.generateJson(
+            `${coachInstructions(request.locale)} Return JSON with keys "overall" and "tips". Each tip has "metric" and "text"; metric must be one of ${[...SWING_METRIC_KEYS, 'general'].join(', ')}.`,
+            JSON.stringify(request),
+          );
+          return result;
+        },
+      };
+    }
+    const choice = (process.env.COACH_AI_PROVIDER ?? 'auto')
+      .trim()
+      .toLowerCase();
     if (choice === 'disabled') return undefined;
     const configured = this.providers.filter((p) => p.configured);
     if (choice === 'anthropic' || choice === 'openai') {
@@ -179,7 +219,10 @@ export class SwingSessionsService {
     );
   }
 
-  private buildRequest(session: SwingSession, locale: LocaleCode): CoachFeedbackRequest {
+  private buildRequest(
+    session: SwingSession,
+    locale: LocaleCode,
+  ): CoachFeedbackRequest {
     const summary: CoachFeedbackRequest['summary'] = {};
     const rawSummary = (session.summary ?? {}) as Record<string, unknown>;
     for (const key of SWING_METRIC_KEYS) {
@@ -199,7 +242,8 @@ export class SwingSessionsService {
     }
 
     const refusals: Record<string, number> = {};
-    const swings = ((session.metrics as { swings?: unknown[] })?.swings ?? []) as {
+    const swings = ((session.metrics as { swings?: unknown[] })?.swings ??
+      []) as {
       measured?: boolean;
       reason?: string;
     }[];
@@ -231,7 +275,10 @@ export class SwingSessionsService {
     const allowed = new Set<string>([...SWING_METRIC_KEYS, 'general']);
     const clean: CoachTip[] = [];
     for (const tip of tips.slice(0, 4)) {
-      const { metric, text } = (tip ?? {}) as { metric?: unknown; text?: unknown };
+      const { metric, text } = (tip ?? {}) as {
+        metric?: unknown;
+        text?: unknown;
+      };
       if (typeof metric !== 'string' || !allowed.has(metric)) continue;
       if (typeof text !== 'string' || !text.trim()) continue;
       clean.push({
@@ -246,7 +293,9 @@ export class SwingSessionsService {
   private assertMetricsShape(metrics: Record<string, unknown>) {
     const swings = metrics.swings;
     if (!Array.isArray(swings) || swings.length > 200) {
-      throw new BadRequestException('metrics.swings must be an array of at most 200 swings.');
+      throw new BadRequestException(
+        'metrics.swings must be an array of at most 200 swings.',
+      );
     }
     for (const swing of swings) {
       if (!swing || typeof swing !== 'object') {
@@ -265,15 +314,22 @@ export class SwingSessionsService {
         (typeof reason !== 'string' ||
           !(REFUSAL_REASONS as readonly string[]).includes(reason))
       ) {
-        throw new BadRequestException('An unmeasured swing needs a known reason.');
+        throw new BadRequestException(
+          'An unmeasured swing needs a known reason.',
+        );
       }
       if (values !== undefined) {
         if (!values || typeof values !== 'object' || Array.isArray(values)) {
           throw new BadRequestException('Swing values must be an object.');
         }
         for (const [key, value] of Object.entries(values)) {
-          if (!(SWING_METRIC_KEYS as readonly string[]).includes(key) || !isFiniteNumber(value)) {
-            throw new BadRequestException(`Unknown or non-numeric metric "${key}".`);
+          if (
+            !(SWING_METRIC_KEYS as readonly string[]).includes(key) ||
+            !isFiniteNumber(value)
+          ) {
+            throw new BadRequestException(
+              `Unknown or non-numeric metric "${key}".`,
+            );
           }
         }
       }
@@ -285,7 +341,9 @@ export class SwingSessionsService {
     const clip = metrics.clip;
     if (clip === undefined) return;
     if (source !== 'CLIP') {
-      throw new BadRequestException('metrics.clip is only allowed on CLIP sessions.');
+      throw new BadRequestException(
+        'metrics.clip is only allowed on CLIP sessions.',
+      );
     }
     const { analysedMs, truncated } = (clip ?? {}) as {
       analysedMs?: unknown;
@@ -312,8 +370,14 @@ export class SwingSessionsService {
         throw new BadRequestException(`Unknown summary metric "${key}".`);
       }
       const { mean, spread, count } = (entry ?? {}) as Partial<SummaryEntry>;
-      if (!isFiniteNumber(mean) || !isFiniteNumber(spread) || !isFiniteNumber(count)) {
-        throw new BadRequestException(`Summary metric "${key}" must have numeric mean, spread and count.`);
+      if (
+        !isFiniteNumber(mean) ||
+        !isFiniteNumber(spread) ||
+        !isFiniteNumber(count)
+      ) {
+        throw new BadRequestException(
+          `Summary metric "${key}" must have numeric mean, spread and count.`,
+        );
       }
     }
   }

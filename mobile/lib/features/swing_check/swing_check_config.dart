@@ -1,7 +1,3 @@
-/// Swing Check stays hidden until launch. Build with
-/// `--dart-define=DRIFT_SWING_CHECK=true` to show it in the AI Coach menu.
-const bool kSwingCheckEnabled = bool.fromEnvironment('DRIFT_SWING_CHECK');
-
 /// Recorded with every session so numbers from different pose models or
 /// builds are never compared as like for like. There's no package_info_plus
 /// in this app, so the version tracks pubspec's `version:` by hand (same as

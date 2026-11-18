@@ -85,7 +85,10 @@ function upload(overrides: Partial<Express.Multer.File> = {}) {
   } as Express.Multer.File;
 }
 
-function build(precheck: PrecheckResult = precheckResult()) {
+function build(
+  precheck: PrecheckResult = precheckResult(),
+  coach?: { generate: jest.Mock; preferredProvider: jest.Mock },
+) {
   const prisma = createMockPrisma();
   const storage = createMockStorage();
   const cv = {
@@ -102,11 +105,73 @@ function build(precheck: PrecheckResult = precheckResult()) {
     storage,
     push as never,
     queue as never,
+    coach as never,
   );
   return { service, prisma, storage, cv, push, queue };
 }
 
 describe('VideoAnalysisService', () => {
+  describe('coach feedback', () => {
+    it('generates advice only for a completed job and stores it', async () => {
+      const coach = {
+        preferredProvider: jest.fn().mockResolvedValue('deepseek'),
+        generate: jest.fn().mockResolvedValue({
+          locale: 'en',
+          overall: 'Keep practising.',
+          recommendations: ['Work on consistency.', 'Film another rally.'],
+        }),
+      };
+      const { service, prisma } = build(precheckResult(), coach);
+      prisma.videoAnalysisJob.findFirst.mockResolvedValue({
+        id: 'job-1',
+        status: 'COMPLETED',
+        analysisResult: { total_shots_p1: 5 },
+        coachFeedback: null,
+      });
+
+      await service.feedback('user-1', 'job-1', 'en');
+
+      expect(coach.generate).toHaveBeenCalledWith({ total_shots_p1: 5 }, 'en');
+      expect(prisma.videoAnalysisJob.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'job-1' },
+          data: { coachFeedback: expect.objectContaining({ locale: 'en' }) },
+        }),
+      );
+    });
+
+    it('returns cached advice in the same language without another model call', async () => {
+      const coach = {
+        generate: jest.fn(),
+        preferredProvider: jest.fn().mockResolvedValue('deepseek'),
+      };
+      const { service, prisma } = build(precheckResult(), coach);
+      prisma.videoAnalysisJob.findFirst.mockResolvedValue({
+        id: 'job-1',
+        status: 'COMPLETED',
+        analysisResult: {},
+        coachFeedback: { locale: 'fr', provider: 'deepseek' },
+      });
+      await service.feedback('user-1', 'job-1', 'fr');
+      expect(coach.generate).not.toHaveBeenCalled();
+    });
+
+    it('refuses advice before analysis completes', async () => {
+      const coach = {
+        generate: jest.fn(),
+        preferredProvider: jest.fn().mockResolvedValue('deepseek'),
+      };
+      const { service, prisma } = build(precheckResult(), coach);
+      prisma.videoAnalysisJob.findFirst.mockResolvedValue({
+        id: 'job-1',
+        status: 'ACCEPTED',
+      });
+      await expect(
+        service.feedback('user-1', 'job-1', 'en'),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(coach.generate).not.toHaveBeenCalled();
+    });
+  });
   describe('upload validation', () => {
     it('refuses anything that is not a video', async () => {
       const { service, storage } = build();

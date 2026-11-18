@@ -16,7 +16,9 @@ import { SwingSessionsService } from './swing-sessions.service';
 const USER = 'user-1';
 const SESSION_ID = '0b9c1f0e-6a59-4c5a-9d8e-1f0c2a3b4c5d';
 
-function dto(overrides: Partial<CreateSwingSessionDto> = {}): CreateSwingSessionDto {
+function dto(
+  overrides: Partial<CreateSwingSessionDto> = {},
+): CreateSwingSessionDto {
   return {
     stroke: SwingStroke.FOREHAND,
     dominantHand: 'RIGHT',
@@ -24,7 +26,10 @@ function dto(overrides: Partial<CreateSwingSessionDto> = {}): CreateSwingSession
     swingsMeasured: 3,
     metrics: {
       swings: [
-        { measured: true, values: { elbowAngleDeg: 150, contactHeightPct: 52 } },
+        {
+          measured: true,
+          values: { elbowAngleDeg: 150, contactHeightPct: 52 },
+        },
         { measured: true, values: { elbowAngleDeg: 155 } },
         { measured: true, values: { elbowAngleDeg: 148 } },
         { measured: false, reason: 'arm_hidden' },
@@ -78,10 +83,14 @@ describe('SwingSessionsService', () => {
   beforeEach(() => {
     prisma = {
       swingSession: {
-        create: jest.fn().mockImplementation(({ data }) => ({ id: SESSION_ID, ...data })),
+        create: jest
+          .fn()
+          .mockImplementation(({ data }) => ({ id: SESSION_ID, ...data })),
         findMany: jest.fn().mockResolvedValue([]),
         findFirst: jest.fn().mockResolvedValue(storedSession()),
-        update: jest.fn().mockImplementation(({ data }) => ({ ...storedSession(), ...data })),
+        update: jest
+          .fn()
+          .mockImplementation(({ data }) => ({ ...storedSession(), ...data })),
       },
     };
     delete process.env.COACH_AI_PROVIDER;
@@ -92,8 +101,15 @@ describe('SwingSessionsService', () => {
     else process.env.COACH_AI_PROVIDER = originalProvider;
   });
 
-  function service(providers: CoachFeedbackProvider[] = []) {
-    return new SwingSessionsService(prisma as never, providers);
+  function service(
+    providers: CoachFeedbackProvider[] = [],
+    coachAi?: { status: jest.Mock; active: jest.Mock; generateJson: jest.Mock },
+  ) {
+    return new SwingSessionsService(
+      prisma as never,
+      providers,
+      coachAi as never,
+    );
   }
 
   describe('create', () => {
@@ -114,7 +130,9 @@ describe('SwingSessionsService', () => {
       await expect(
         service().create(
           USER,
-          dto({ metrics: { swings: [{ measured: true, values: { landmarks: 1 } }] } }),
+          dto({
+            metrics: { swings: [{ measured: true, values: { landmarks: 1 } }] },
+          }),
         ),
       ).rejects.toBeInstanceOf(BadRequestException);
     });
@@ -123,7 +141,9 @@ describe('SwingSessionsService', () => {
       await expect(
         service().create(
           USER,
-          dto({ metrics: { swings: [{ measured: false, reason: 'because' }] } }),
+          dto({
+            metrics: { swings: [{ measured: false, reason: 'because' }] },
+          }),
         ),
       ).rejects.toBeInstanceOf(BadRequestException);
     });
@@ -132,7 +152,9 @@ describe('SwingSessionsService', () => {
       await expect(
         service().create(
           USER,
-          dto({ summary: { elbowAngleDeg: { mean: 'x', spread: 1, count: 1 } } }),
+          dto({
+            summary: { elbowAngleDeg: { mean: 'x', spread: 1, count: 1 } },
+          }),
         ),
       ).rejects.toBeInstanceOf(BadRequestException);
     });
@@ -150,13 +172,18 @@ describe('SwingSessionsService', () => {
         USER,
         dto({
           source: SwingSessionSource.CLIP,
-          metrics: { ...base.metrics, clip: { analysedMs: 60000, truncated: true } },
+          metrics: {
+            ...base.metrics,
+            clip: { analysedMs: 60000, truncated: true },
+          },
         }),
       );
       expect(prisma.swingSession.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           source: 'CLIP',
-          metrics: expect.objectContaining({ clip: { analysedMs: 60000, truncated: true } }),
+          metrics: expect.objectContaining({
+            clip: { analysedMs: 60000, truncated: true },
+          }),
         }),
       });
     });
@@ -166,7 +193,12 @@ describe('SwingSessionsService', () => {
       await expect(
         service().create(
           USER,
-          dto({ metrics: { ...base.metrics, clip: { analysedMs: 1000, truncated: false } } }),
+          dto({
+            metrics: {
+              ...base.metrics,
+              clip: { analysedMs: 1000, truncated: false },
+            },
+          }),
         ),
       ).rejects.toBeInstanceOf(BadRequestException);
     });
@@ -183,7 +215,10 @@ describe('SwingSessionsService', () => {
         await expect(
           service().create(
             USER,
-            dto({ source: SwingSessionSource.CLIP, metrics: { ...base.metrics, clip } }),
+            dto({
+              source: SwingSessionSource.CLIP,
+              metrics: { ...base.metrics, clip },
+            }),
           ),
         ).rejects.toBeInstanceOf(BadRequestException);
       }
@@ -191,11 +226,11 @@ describe('SwingSessionsService', () => {
   });
 
   describe('findForUser', () => {
-    it('only finds the caller\'s own session', async () => {
+    it("only finds the caller's own session", async () => {
       prisma.swingSession.findFirst.mockResolvedValue(null);
-      await expect(service().findForUser('someone-else', SESSION_ID)).rejects.toBeInstanceOf(
-        NotFoundException,
-      );
+      await expect(
+        service().findForUser('someone-else', SESSION_ID),
+      ).rejects.toBeInstanceOf(NotFoundException);
       expect(prisma.swingSession.findFirst).toHaveBeenCalledWith({
         where: { id: SESSION_ID, userId: 'someone-else' },
       });
@@ -203,6 +238,30 @@ describe('SwingSessionsService', () => {
   });
 
   describe('feedback', () => {
+    it('uses the admin-configured DeepSeek key before environment providers', async () => {
+      const claude = provider('anthropic', true);
+      const coachAi = {
+        status: jest
+          .fn()
+          .mockResolvedValue({ configured: true, enabled: true }),
+        active: jest
+          .fn()
+          .mockResolvedValue({ key: 'secret', model: 'deepseek-flash' }),
+        generateJson: jest
+          .fn()
+          .mockResolvedValue({ result: goodResult, model: 'deepseek-flash' }),
+      };
+      const result = await service([claude], coachAi).feedback(
+        USER,
+        SESSION_ID,
+        'en',
+      );
+      expect(claude.generate).not.toHaveBeenCalled();
+      expect(coachAi.generateJson).toHaveBeenCalled();
+      expect((result.feedback as { provider: string }).provider).toBe(
+        'deepseek',
+      );
+    });
     const goodResult = {
       overall: 'Solid start.',
       tips: [
@@ -212,7 +271,11 @@ describe('SwingSessionsService', () => {
     };
 
     it('prefers Claude when both keys are configured, and stores validated tips', async () => {
-      const claude = provider('anthropic', true, jest.fn().mockResolvedValue(goodResult));
+      const claude = provider(
+        'anthropic',
+        true,
+        jest.fn().mockResolvedValue(goodResult),
+      );
       const openai = provider('openai', true);
       await service([claude, openai]).feedback(USER, SESSION_ID, 'fr');
 
@@ -229,14 +292,29 @@ describe('SwingSessionsService', () => {
     });
 
     it('falls back to OpenAI when only its key is set', async () => {
-      const openai = provider('openai', true, jest.fn().mockResolvedValue(goodResult));
-      await service([provider('anthropic', false), openai]).feedback(USER, SESSION_ID, 'en');
+      const openai = provider(
+        'openai',
+        true,
+        jest.fn().mockResolvedValue(goodResult),
+      );
+      await service([provider('anthropic', false), openai]).feedback(
+        USER,
+        SESSION_ID,
+        'en',
+      );
       expect(openai.generate).toHaveBeenCalled();
     });
 
     it('returns stored feedback in the same language without calling the model', async () => {
       prisma.swingSession.findFirst.mockResolvedValue(
-        storedSession({ feedback: { locale: 'es', overall: 'x', tips: [] } }),
+        storedSession({
+          feedback: {
+            locale: 'es',
+            provider: 'anthropic',
+            overall: 'x',
+            tips: [],
+          },
+        }),
       );
       const claude = provider('anthropic', true);
       await service([claude]).feedback(USER, SESSION_ID, 'es');
@@ -244,7 +322,9 @@ describe('SwingSessionsService', () => {
     });
 
     it('needs at least 3 measured swings', async () => {
-      prisma.swingSession.findFirst.mockResolvedValue(storedSession({ swingsMeasured: 2 }));
+      prisma.swingSession.findFirst.mockResolvedValue(
+        storedSession({ swingsMeasured: 2 }),
+      );
       await expect(
         service([provider('anthropic', true)]).feedback(USER, SESSION_ID, 'en'),
       ).rejects.toBeInstanceOf(UnprocessableEntityException);
@@ -252,7 +332,11 @@ describe('SwingSessionsService', () => {
 
     it('is unavailable when no provider is configured or it is disabled', async () => {
       await expect(
-        service([provider('anthropic', false)]).feedback(USER, SESSION_ID, 'en'),
+        service([provider('anthropic', false)]).feedback(
+          USER,
+          SESSION_ID,
+          'en',
+        ),
       ).rejects.toBeInstanceOf(ServiceUnavailableException);
 
       process.env.COACH_AI_PROVIDER = 'disabled';
@@ -265,11 +349,13 @@ describe('SwingSessionsService', () => {
       const claude = provider(
         'anthropic',
         true,
-        jest.fn().mockRejectedValue(new CoachFeedbackError('UNAVAILABLE', true)),
+        jest
+          .fn()
+          .mockRejectedValue(new CoachFeedbackError('UNAVAILABLE', true)),
       );
-      await expect(service([claude]).feedback(USER, SESSION_ID, 'en')).rejects.toBeInstanceOf(
-        BadGatewayException,
-      );
+      await expect(
+        service([claude]).feedback(USER, SESSION_ID, 'en'),
+      ).rejects.toBeInstanceOf(BadGatewayException);
       expect(prisma.swingSession.update).not.toHaveBeenCalled();
     });
 
@@ -277,11 +363,16 @@ describe('SwingSessionsService', () => {
       const claude = provider(
         'anthropic',
         true,
-        jest.fn().mockResolvedValue({ overall: 'Hi', tips: [{ metric: 'x', text: 'y' }] }),
+        jest
+          .fn()
+          .mockResolvedValue({
+            overall: 'Hi',
+            tips: [{ metric: 'x', text: 'y' }],
+          }),
       );
-      await expect(service([claude]).feedback(USER, SESSION_ID, 'en')).rejects.toBeInstanceOf(
-        BadGatewayException,
-      );
+      await expect(
+        service([claude]).feedback(USER, SESSION_ID, 'en'),
+      ).rejects.toBeInstanceOf(BadGatewayException);
     });
   });
 });

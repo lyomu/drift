@@ -7,6 +7,8 @@ import { CvServiceClient } from './cv-service.client';
 import { VideoAnalysisController } from './video-analysis.controller';
 import { VideoAnalysisProcessor } from './video-analysis.processor';
 import { VideoAnalysisService } from './video-analysis.service';
+import { VideoCoachService } from './video-coach.service';
+import { CoachAiModule } from '../coach-ai/coach-ai.module';
 import { VIDEO_ANALYSIS_QUEUE } from './video-analysis.queue';
 
 /**
@@ -20,6 +22,7 @@ import { VIDEO_ANALYSIS_QUEUE } from './video-analysis.queue';
 @Module({
   imports: [
     ConfigModule,
+    CoachAiModule,
     StorageModule,
     PushModule,
     BullModule.forRootAsync({
@@ -37,7 +40,12 @@ import { VIDEO_ANALYSIS_QUEUE } from './video-analysis.queue';
     BullModule.registerQueue({ name: VIDEO_ANALYSIS_QUEUE }),
   ],
   controllers: [VideoAnalysisController],
-  providers: [VideoAnalysisService, CvServiceClient, VideoAnalysisProcessor],
+  providers: [
+    VideoAnalysisService,
+    VideoCoachService,
+    CvServiceClient,
+    VideoAnalysisProcessor,
+  ],
   exports: [VideoAnalysisService],
 })
 export class VideoAnalysisModule {}

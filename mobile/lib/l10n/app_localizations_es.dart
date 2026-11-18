@@ -4722,7 +4722,15 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get aiCoachAnalyseClipSubtitle =>
-      'Sube un vídeo de partido para ver estadísticas de golpes';
+      'Sube un vídeo de partido para ver estadísticas y consejos';
+
+  @override
+  String get videoCoachLoading =>
+      'Tu entrenador está revisando el análisis del partido…';
+
+  @override
+  String get videoCoachUnavailable =>
+      'Las recomendaciones no están disponibles ahora. Tu análisis está guardado.';
 
   @override
   String get swingCheckTitle => 'Análisis del golpe';

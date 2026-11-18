@@ -74,6 +74,7 @@ class VideoAnalysisJob {
     this.findings = const [],
     this.courtChecked = false,
     this.analysisResult,
+    this.coachFeedback,
     this.failureReason,
   });
 
@@ -100,6 +101,7 @@ class VideoAnalysisJob {
   /// that already exists in Python and in Postgres. The screen reads the keys it
   /// knows and ignores the rest.
   final Map<String, dynamic>? analysisResult;
+  final VideoCoachFeedback? coachFeedback;
 
   /// Why an analysis gave up, in words meant for the person who uploaded it.
   final String? failureReason;
@@ -123,7 +125,8 @@ class VideoAnalysisJob {
   bool get isSession => analysisResult?['mode'] == 'session';
 
   /// How many passages of play the pre-pass found in the video.
-  int get segmentsFound => (analysisResult?['segments_found'] as num?)?.toInt() ?? 0;
+  int get segmentsFound =>
+      (analysisResult?['segments_found'] as num?)?.toInt() ?? 0;
 
   /// How many of those were actually measured.
   ///
@@ -179,19 +182,45 @@ class VideoAnalysisJob {
       status: VideoAnalysisStatus.fromJson(json['status'] as String? ?? ''),
       originalFilename: json['originalFilename'] as String? ?? 'video',
       createdAt:
-          DateTime.tryParse(json['createdAt'] as String? ?? '') ?? DateTime.now(),
-      rejectionReasons:
-          (json['rejectionReasons'] as List<dynamic>? ?? const [])
-              .map((reason) => reason.toString())
-              .toList(),
+          DateTime.tryParse(json['createdAt'] as String? ?? '') ??
+          DateTime.now(),
+      rejectionReasons: (json['rejectionReasons'] as List<dynamic>? ?? const [])
+          .map((reason) => reason.toString())
+          .toList(),
       findings: rawFindings
           .map((f) => PrecheckFinding.fromJson(f as Map<String, dynamic>))
           .toList(),
       courtChecked: precheck?['court_checked'] as bool? ?? false,
       analysisResult: json['analysisResult'] as Map<String, dynamic>?,
+      coachFeedback: json['coachFeedback'] is Map<String, dynamic>
+          ? VideoCoachFeedback.fromJson(
+              json['coachFeedback'] as Map<String, dynamic>,
+            )
+          : null,
       failureReason: json['failureReason'] as String?,
     );
   }
+}
+
+class VideoCoachFeedback {
+  const VideoCoachFeedback({
+    required this.locale,
+    required this.overall,
+    required this.recommendations,
+  });
+
+  final String locale;
+  final String overall;
+  final List<String> recommendations;
+
+  factory VideoCoachFeedback.fromJson(Map<String, dynamic> json) =>
+      VideoCoachFeedback(
+        locale: json['locale'] as String? ?? '',
+        overall: json['overall'] as String? ?? '',
+        recommendations: (json['recommendations'] as List<dynamic>? ?? const [])
+            .whereType<String>()
+            .toList(),
+      );
 }
 
 /// One rally inside a session.
@@ -344,6 +373,18 @@ class VideoAnalysisRepository {
     }
   }
 
+  Future<VideoAnalysisJob> requestFeedback(String jobId) async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/video-analysis/$jobId/feedback',
+        options: Options(receiveTimeout: const Duration(seconds: 90)),
+      );
+      return VideoAnalysisJob.fromJson(response.data!);
+    } on DioException catch (error) {
+      throw _asException(error);
+    }
+  }
+
   Future<VideoAnalysisJob> fetch(String jobId) async {
     try {
       final response = await _dio.get<Map<String, dynamic>>(
@@ -389,25 +430,21 @@ class VideoAnalysisRepository {
     if (error.type == DioExceptionType.sendTimeout ||
         error.type == DioExceptionType.receiveTimeout ||
         error.type == DioExceptionType.connectionTimeout) {
-      return VideoAnalysisException(
-        l10nNow.videoUploadTimeout,
-      );
+      return VideoAnalysisException(l10nNow.videoUploadTimeout);
     }
     if (error.type == DioExceptionType.connectionError) {
-      return VideoAnalysisException(
-        l10nNow.videoUnreachable,
-      );
+      return VideoAnalysisException(l10nNow.videoUnreachable);
     }
 
     final data = error.response?.data;
     final message = data is Map<String, dynamic> ? data['message'] : null;
     final text = message is List ? message.join(' ') : message?.toString();
-    return VideoAnalysisException(
-      text ?? l10nNow.videoUploadFailed,
-    );
+    return VideoAnalysisException(text ?? l10nNow.videoUploadFailed);
   }
 }
 
-final videoAnalysisRepositoryProvider = Provider<VideoAnalysisRepository>((ref) {
+final videoAnalysisRepositoryProvider = Provider<VideoAnalysisRepository>((
+  ref,
+) {
   return VideoAnalysisRepository(ref.watch(dioClientProvider));
 });

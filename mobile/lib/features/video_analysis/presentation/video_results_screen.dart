@@ -41,8 +41,116 @@ class VideoResultsScreen extends ConsumerWidget {
         ),
         data: (job) => ListView(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
-          children: [_Body(job: job)],
+          children: [
+            _Body(job: job),
+            if (job.status == VideoAnalysisStatus.completed) ...[
+              const SizedBox(height: DriftSpacing.s5),
+              _VideoCoachCard(key: ValueKey(job.id), job: job),
+            ],
+          ],
         ),
+      ),
+    );
+  }
+}
+
+class _VideoCoachCard extends ConsumerStatefulWidget {
+  const _VideoCoachCard({super.key, required this.job});
+
+  final VideoAnalysisJob job;
+
+  @override
+  ConsumerState<_VideoCoachCard> createState() => _VideoCoachCardState();
+}
+
+class _VideoCoachCardState extends ConsumerState<_VideoCoachCard> {
+  VideoCoachFeedback? _feedback;
+  bool _loading = false;
+  bool _requested = false;
+  String? _error;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final locale = context.localeTag.split(RegExp('[-_]')).first;
+    if (!_requested || (_feedback != null && _feedback!.locale != locale)) {
+      _requested = true;
+      final cached = widget.job.coachFeedback;
+      if (cached?.locale == locale) {
+        _feedback = cached;
+        _error = null;
+      } else {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _load();
+        });
+      }
+    }
+  }
+
+  Future<void> _load() async {
+    if (_loading) return;
+    setState(() {
+      _loading = true;
+      _error = null;
+      _feedback = null;
+    });
+    try {
+      final result = await ref
+          .read(videoAnalysisRepositoryProvider)
+          .requestFeedback(widget.job.id);
+      if (!mounted) return;
+      setState(() => _feedback = result.coachFeedback);
+    } on VideoAnalysisException {
+      if (!mounted) return;
+      setState(() => _error = context.l10n.videoCoachUnavailable);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final type = Theme.of(context).extension<DriftTypography>()!;
+    final colors = Theme.of(context).extension<DriftColors>()!;
+    return Container(
+      padding: const EdgeInsets.all(DriftSpacing.s4),
+      decoration: BoxDecoration(
+        color: colors.surfaceRaised,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.auto_awesome_rounded, color: colors.primary, size: 20),
+              const SizedBox(width: DriftSpacing.s2),
+              Text(context.l10n.swingCoachHeading, style: type.subtitle),
+            ],
+          ),
+          const SizedBox(height: DriftSpacing.s3),
+          if (_loading)
+            Text(context.l10n.videoCoachLoading, style: type.body)
+          else if (_feedback != null) ...[
+            Text(_feedback!.overall, style: type.body),
+            const SizedBox(height: DriftSpacing.s3),
+            for (final recommendation in _feedback!.recommendations)
+              Padding(
+                padding: const EdgeInsets.only(bottom: DriftSpacing.s2),
+                child: Text('• $recommendation', style: type.body),
+              ),
+          ] else ...[
+            Text(
+              _error ?? context.l10n.videoCoachUnavailable,
+              style: type.body,
+            ),
+            const SizedBox(height: DriftSpacing.s2),
+            TextButton(
+              onPressed: _load,
+              child: Text(context.l10n.swingCoachRetry),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -66,9 +174,7 @@ class _Body extends ConsumerWidget {
       case VideoAnalysisStatus.failed:
         return _Message(
           title: context.l10n.videoAnalysisUnfinished,
-          body:
-              job.failureReason ??
-              context.l10n.videoAnalysisError,
+          body: job.failureReason ?? context.l10n.videoAnalysisError,
         );
       case VideoAnalysisStatus.completed:
         // A session and a single rally are different screens, not one screen with extra
@@ -236,9 +342,7 @@ class _Results extends StatelessWidget {
             title: context.l10n.videoNoDistances,
             // The pipeline's own words where it gave them, because they are more
             // precise than anything restated here.
-            body:
-                job.analysisWarning ??
-                context.l10n.videoNoDistancesBody,
+            body: job.analysisWarning ?? context.l10n.videoNoDistancesBody,
             tone: _Tone.warning,
           ),
 
@@ -250,7 +354,10 @@ class _Results extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: _Stat(label: context.l10n.commonYou, value: '${shotsP1 ?? 0}'),
+              child: _Stat(
+                label: context.l10n.commonYou,
+                value: '${shotsP1 ?? 0}',
+              ),
             ),
             const SizedBox(width: DriftSpacing.s3),
             Expanded(
@@ -440,7 +547,10 @@ class _SessionResults extends StatelessWidget {
             // Shot counts come from contact detection, which does not depend on the court
             // fit, so they survive uncalibrated rallies intact — same as a single clip.
             Expanded(
-              child: _Stat(label: context.l10n.videoShots, value: '${shots ?? 0}'),
+              child: _Stat(
+                label: context.l10n.videoShots,
+                value: '${shots ?? 0}',
+              ),
             ),
           ],
         ),
@@ -647,7 +757,11 @@ class _Message extends StatelessWidget {
         Icons.info_outline,
       ),
       _Tone.error => (colors.errorSurface, colors.error, Icons.error_outline),
-      _Tone.neutral => (colors.surfaceRaised, colors.primary, Icons.info_outline),
+      _Tone.neutral => (
+        colors.surfaceRaised,
+        colors.primary,
+        Icons.info_outline,
+      ),
     };
 
     return Container(

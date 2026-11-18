@@ -8503,8 +8503,20 @@ abstract class AppLocalizations {
   /// No description provided for @aiCoachAnalyseClipSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Upload a match clip for shot stats'**
+  /// **'Upload a match clip for stats and coaching tips'**
   String get aiCoachAnalyseClipSubtitle;
+
+  /// No description provided for @videoCoachLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Your coach is reviewing the match analysis…'**
+  String get videoCoachLoading;
+
+  /// No description provided for @videoCoachUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Recommendations aren\'t available right now. Your analysis is saved.'**
+  String get videoCoachUnavailable;
 
   /// No description provided for @swingCheckTitle.
   ///

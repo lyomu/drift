@@ -24,12 +24,16 @@ class _FakeRepository implements VideoAnalysisRepository {
   }
 
   @override
+  Future<VideoAnalysisJob> requestFeedback(String jobId) async => job;
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 VideoAnalysisJob _job({
   required VideoAnalysisStatus status,
   Map<String, dynamic>? summary,
+  VideoCoachFeedback? coachFeedback,
   List<String> reasons = const [],
   String? failureReason,
 }) {
@@ -40,6 +44,7 @@ VideoAnalysisJob _job({
     createdAt: DateTime(2026, 9, 29),
     rejectionReasons: reasons,
     analysisResult: summary,
+    coachFeedback: coachFeedback,
     failureReason: failureReason,
   );
 }
@@ -59,8 +64,8 @@ Map<String, dynamic> _summary({bool calibrated = true}) => {
   if (!calibrated)
     'warning':
         'Court fit failed validation - speeds, distances and mini-court '
-            'positions are derived from an unreliable court and should not be '
-            'treated as measurements.',
+        'positions are derived from an unreliable court and should not be '
+        'treated as measurements.',
 };
 
 /// A session summary shaped like the one `utils/session_aggregate.py` produces.
@@ -125,9 +130,7 @@ Future<_FakeRepository> _pump(
     const VideoResultsScreen(jobId: 'job-1'),
     brightness: brightness,
     settle: settle,
-    overrides: [
-      videoAnalysisRepositoryProvider.overrideWithValue(repository),
-    ],
+    overrides: [videoAnalysisRepositoryProvider.overrideWithValue(repository)],
   );
   if (settle) {
     await tester.pumpAndSettle();
@@ -139,16 +142,26 @@ Future<_FakeRepository> _pump(
 
 void main() {
   group('VideoResultsScreen', () {
+    testWidgets('shows saved coaching recommendations with completed analysis', (tester) async {
+      await _pump(tester, _job(
+        status: VideoAnalysisStatus.completed,
+        summary: _summary(),
+        coachFeedback: const VideoCoachFeedback(
+          locale: 'en',
+          overall: 'You kept the rally going.',
+          recommendations: ['Practise consistent depth.', 'Film a longer rally.'],
+        ),
+      ));
+      expect(find.text('You kept the rally going.'), findsOneWidget);
+      expect(find.textContaining('Practise consistent depth.'), findsOneWidget);
+    });
     for (final brightness in Brightness.values) {
       testWidgets('renders without throwing in ${brightness.name}', (
         tester,
       ) async {
         await _pump(
           tester,
-          _job(
-            status: VideoAnalysisStatus.completed,
-            summary: _summary(),
-          ),
+          _job(status: VideoAnalysisStatus.completed, summary: _summary()),
           brightness: brightness,
         );
         expect(tester.takeException(), isNull);
@@ -285,10 +298,7 @@ void main() {
         );
 
         expect(find.text('Analysing your clip…'), findsOneWidget);
-        expect(
-          find.textContaining('leave this screen'),
-          findsOneWidget,
-        );
+        expect(find.textContaining('leave this screen'), findsOneWidget);
       });
 
       testWidgets('explains a failure in the words the server gave', (
@@ -355,20 +365,21 @@ void main() {
         expect(find.textContaining('2 of 4'), findsOneWidget);
       });
 
-      testWidgets('does not claim partial coverage when it measured everything', (
-        tester,
-      ) async {
-        await _pump(
-          tester,
-          _job(
-            status: VideoAnalysisStatus.completed,
-            summary: _sessionSummary(found: 3, analysed: 3),
-          ),
-        );
+      testWidgets(
+        'does not claim partial coverage when it measured everything',
+        (tester) async {
+          await _pump(
+            tester,
+            _job(
+              status: VideoAnalysisStatus.completed,
+              summary: _sessionSummary(found: 3, analysed: 3),
+            ),
+          );
 
-        expect(find.textContaining('of 3 rallies'), findsNothing);
-        expect(find.textContaining('all 3'), findsOneWidget);
-      });
+          expect(find.textContaining('of 3 rallies'), findsNothing);
+          expect(find.textContaining('all 3'), findsOneWidget);
+        },
+      );
 
       testWidgets('lists every rally it found, including the skipped ones', (
         tester,
@@ -420,7 +431,9 @@ void main() {
         expect(find.textContaining('74.3'), findsNothing);
       });
 
-      testWidgets('shot counts survive when the court fit did not', (tester) async {
+      testWidgets('shot counts survive when the court fit did not', (
+        tester,
+      ) async {
         // Contact detection does not depend on the court fit, so the counts stay.
         await _pump(
           tester,
@@ -454,10 +467,7 @@ void main() {
         // wander into the session view and report "0 rallies measured".
         await _pump(
           tester,
-          _job(
-            status: VideoAnalysisStatus.completed,
-            summary: _summary(),
-          ),
+          _job(status: VideoAnalysisStatus.completed, summary: _summary()),
         );
 
         expect(find.text('Session totals'), findsNothing);
@@ -472,8 +482,10 @@ void main() {
       // a path that does not set it, and treating that as a failed court fit
       // would hide real numbers.
       expect(
-        _job(status: VideoAnalysisStatus.completed, summary: {})
-            .courtCalibrated,
+        _job(
+          status: VideoAnalysisStatus.completed,
+          summary: {},
+        ).courtCalibrated,
         isTrue,
       );
     });
@@ -487,8 +499,6 @@ void main() {
         isFalse,
       );
     });
-
-
   });
 
   group('SessionSegment', () {

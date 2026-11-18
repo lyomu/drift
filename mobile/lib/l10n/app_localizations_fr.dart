@@ -4735,7 +4735,14 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get aiCoachAnalyseClipSubtitle =>
-      'Envoyez une vidéo de match pour obtenir des statistiques';
+      'Envoyez une vidéo de match pour des statistiques et des conseils';
+
+  @override
+  String get videoCoachLoading => 'Votre coach examine l\'analyse du match…';
+
+  @override
+  String get videoCoachUnavailable =>
+      'Les recommandations ne sont pas disponibles pour le moment. Votre analyse est enregistrée.';
 
   @override
   String get swingCheckTitle => 'Analyse du geste';
