@@ -300,6 +300,45 @@ rescans. Stages: `Checkout → Build CI images → Lint → Typecheck (backend) 
 Test → Docker Build & Push (GHCR) → Approval (master only) → Deploy Prod →
 Smoke Tests`.
 
+### Pipeline hardening (2026-10-05)
+
+`master` is protected. Changes arrive through a pull request and must be up
+to date with `master` and pass these five required GitHub CI checks:
+
+| Required check | What it covers |
+| --- | --- |
+| Backend build and tests | Backend build, unit tests and e2e tests with Postgres and Redis |
+| Club Admin production build | Production build of the club-admin console |
+| Platform Admin production build | Production build of the platform-admin console |
+| Website lint and production image | Website lint plus the actual production Docker image build |
+| Flutter analysis and tests | Flutter static analysis and test suite |
+
+Force pushes and branch deletion are blocked, and these rules also apply to
+repository administrators. This is a solo-maintainer repository, so PRs
+require **zero** approving reviews; the required CI checks remain the merge
+gate. CodeRabbit is advisory only and is not a required status check.
+
+Backend lint (`npx eslint .`) and full typecheck (`npx tsc --noEmit`) are
+hard Jenkins gates. Generated `dist/` and coverage output are deliberately
+ignored by ESLint; source, tests and Prisma TypeScript scripts are checked.
+
+The Test stage pulls `postgres:16-bookworm` and `redis:7.4-bookworm` with
+three attempts, 15 seconds apart, before starting test containers. This makes
+a transient Docker Hub blob failure fail only after retries rather than
+turning a healthy code change red immediately. Sign the Jenkins agent in to
+Docker Hub separately to avoid anonymous-pull limits.
+
+Node lockfiles must be regenerated with `bash scripts/lockfile.sh <dir>...`
+after dependency changes. It runs `node:24-bookworm-slim`, writes only the
+target `package-lock.json`, and verifies it with `npm ci --dry-run`; this
+avoids Windows omitting Linux-only optional dependencies from a lockfile.
+
+Before any deploy work, `scripts/deploy.sh` checks `.env.production` for
+non-empty `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`,
+`PUBLIC_API_URL`, `JWT_SECRET`, `CORS_ALLOWED_ORIGINS`, and `BILLING_BETA`.
+It reports only the missing variable name, never its value, and exits before
+fetching code or touching Docker.
+
 Job-scoped credentials (isolated from RetailFlow/harusi-ke):
 
 | Credential ID | Type | Purpose |
@@ -307,7 +346,7 @@ Job-scoped credentials (isolated from RetailFlow/harusi-ke):
 | `drift-deploy-ssh-key` | SSH private key | `drift-deploy` on the shared box |
 | `drift-ghcr-token` | Username/password | GitHub PAT (`write:packages`), pushes to `ghcr.io` |
 | `drift-prod-env-file` | Secret file | `.env.production` content |
-| `drift-basic-auth` | Username/password | Smoke-tests the two basic-auth-protected consoles |
+| `drift-basic-auth` | Username/password | Legacy credential; current smoke tests do not use it |
 
 > **`drift-prod-env-file` is a copy, and nothing keeps it honest.** The
 > pipeline never writes it to the box — `scripts/deploy.sh` only checks that
