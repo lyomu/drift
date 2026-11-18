@@ -1,6 +1,6 @@
 name: Release images
 
-# Builds the four deployable images and publishes them to GHCR.
+# Builds the five deployable images and publishes them to GHCR.
 #
 # Why this exists (tracker 5.2): today a human SSHes to the production box and
 # runs `docker compose build` there, against 3.7 GB of RAM shared with Postgres,
@@ -42,6 +42,9 @@ jobs:
         include:
           - image: drift-api
             context: backend
+            build_args: ""
+          - image: drift-cv
+            context: cv-service
             build_args: ""
           - image: drift-club-admin
             context: club-admin
