@@ -116,10 +116,30 @@ services:
       OMP_NUM_THREADS: "2"
       OPENBLAS_NUM_THREADS: "2"
     volumes:
-      - ./cv-service/models/tracknet.pt:/app/models/tracknet.pt:ro
-      - ./cv-service/models/keypoints_model_geoaug.pth:/app/models/keypoints_model_geoaug.pth:ro
-      - ./cv-service/models/pose_landmarker_lite.task:/app/models/pose_landmarker_lite.task:ro
-      - ./cv-service/yolov8x.pt:/app/yolov8x.pt:ro
+      - type: bind
+        source: ./cv-service/models/tracknet.pt
+        target: /app/models/tracknet.pt
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./cv-service/models/keypoints_model_geoaug.pth
+        target: /app/models/keypoints_model_geoaug.pth
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./cv-service/models/pose_landmarker_lite.task
+        target: /app/models/pose_landmarker_lite.task
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./cv-service/models/yolov8x.pt
+        target: /app/yolov8x.pt
+        read_only: true
+        bind:
+          create_host_path: false
     healthcheck:
       test:
         [
