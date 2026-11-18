@@ -152,6 +152,8 @@ services:
       REDIS_URL: redis://redis:6379
       CV_SERVICE_URL: http://cv:8000
       CV_SERVICE_MAX_FRAMES: "90"
+    volumes:
+      - video_uploads:/app/var/videos
     depends_on:
       postgres:
         condition: service_healthy
@@ -291,3 +293,4 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  video_uploads:

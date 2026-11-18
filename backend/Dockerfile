@@ -37,6 +37,10 @@ COPY --from=build /app/prisma.config.ts ./prisma.config.ts
 # Operator scripts (e.g. the demo-account seed) run inside this container.
 COPY --from=build /app/scripts ./scripts
 
+# The API runs as node and stores accepted uploads here. A named volume mounted at
+# this path inherits the directory ownership on its first use.
+RUN mkdir -p /app/var/videos && chown -R node:node /app/var
+
 USER node
 EXPOSE 3009
 CMD ["node", "dist/src/main.js"]
