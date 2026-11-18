@@ -1,6 +1,17 @@
 import { coachEvidence, VideoCoachService } from './video-coach.service';
 
 describe('video coach evidence', () => {
+  it('states the partial recording window in AI evidence', () => {
+    expect(
+      coachEvidence({ total_shots_p1: 2, analysis_window_seconds: 3 }),
+    ).toEqual({
+      mode: 'clip',
+      courtCalibrated: true,
+      partialClip: true,
+      analysisWindowSeconds: 3,
+      total_shots_p1: 2,
+    });
+  });
   it('uses configured DeepSeek for match recommendations', async () => {
     const coachAi = {
       status: jest.fn().mockResolvedValue({ configured: true, enabled: true }),

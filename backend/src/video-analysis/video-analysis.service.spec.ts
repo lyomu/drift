@@ -111,6 +111,79 @@ function build(
 }
 
 describe('VideoAnalysisService', () => {
+  describe('production CPU limit', () => {
+    const previous = process.env.CV_SERVICE_MAX_FRAMES;
+    beforeEach(() => {
+      process.env.CV_SERVICE_MAX_FRAMES = '90';
+    });
+    afterAll(() => {
+      if (previous === undefined) delete process.env.CV_SERVICE_MAX_FRAMES;
+      else process.env.CV_SERVICE_MAX_FRAMES = previous;
+    });
+
+    it('warns that a clip covers only its first three seconds', async () => {
+      const { service, prisma } = build(
+        precheckResult({
+          metadata: { fps: 30, frame_count: 570, duration_s: 19 },
+        }),
+      );
+      await service.runPrecheck('job-1', 'ab/ab-cd.mp4');
+      const data = prisma.videoAnalysisJob.update.mock.calls[0][0].data;
+      expect(data.status).toBe('ACCEPTED');
+      expect(data.precheckResult.findings).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            check: 'analysis_window',
+            severity: 'warn',
+            detail: { frame_limit: 90, seconds: 3 },
+          }),
+        ]),
+      );
+    });
+
+    it('rejects long sessions before they consume CPU', async () => {
+      const { service, prisma, storage } = build(
+        precheckResult({
+          metadata: { fps: 30, frame_count: 21000, duration_s: 700 },
+        }),
+      );
+      await service.runPrecheck('job-1', 'ab/ab-cd.mp4');
+      const data = prisma.videoAnalysisJob.update.mock.calls[0][0].data;
+      expect(data.status).toBe('REJECTED');
+      expect(data.rejectionReasons[0]).toContain(
+        'Session analysis is unavailable',
+      );
+      expect(storage.delete).toHaveBeenCalled();
+    });
+
+    it('stores the analyzed window alongside clip results', async () => {
+      const { service, prisma, cv } = build();
+      prisma.videoAnalysisJob.findUnique.mockResolvedValue({
+        id: 'job-1',
+        userId: 'user-1',
+        storageKey: 'ab/ab-cd.mp4',
+        precheckResult: {
+          metadata: { fps: 30, frame_count: 570, duration_s: 19 },
+        },
+      });
+      cv.analyze.mockResolvedValue({
+        summary: { total_shots_p1: 2 },
+        pipeline_version: 'test',
+      });
+      await service.runAnalysis('job-1', { isFinalAttempt: false });
+      expect(cv.analyze).toHaveBeenCalledWith('/var/videos/ab/ab-cd.mp4', {
+        maxFrames: 90,
+      });
+      expect(
+        prisma.videoAnalysisJob.update.mock.calls[0][0].data.analysisResult,
+      ).toEqual({
+        total_shots_p1: 2,
+        analysis_window_seconds: 3,
+        analysis_window_frames: 90,
+        source_frame_count: 570,
+      });
+    });
+  });
   describe('coach feedback', () => {
     it('generates advice only for a completed job and stores it', async () => {
       const coach = {
@@ -544,6 +617,31 @@ describe('VideoAnalysisService — sessions', () => {
   };
 
   describe('deciding which pipeline runs', () => {
+    it('fails an already queued session when the production CPU limit is active', async () => {
+      const previous = process.env.CV_SERVICE_MAX_FRAMES;
+      process.env.CV_SERVICE_MAX_FRAMES = '90';
+      try {
+        const { service, prisma, cv } = build();
+        prisma.videoAnalysisJob.findUnique.mockResolvedValue(
+          jobWithDuration(700),
+        );
+        await service.runAnalysis('job-1', { isFinalAttempt: false });
+        expect(cv.analyzeSession).not.toHaveBeenCalled();
+        expect(prisma.videoAnalysisJob.update).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: expect.objectContaining({
+              status: 'FAILED',
+              failureReason: expect.stringContaining(
+                'Session analysis is unavailable',
+              ),
+            }),
+          }),
+        );
+      } finally {
+        if (previous === undefined) delete process.env.CV_SERVICE_MAX_FRAMES;
+        else process.env.CV_SERVICE_MAX_FRAMES = previous;
+      }
+    });
     it('sends a long clip to the session pipeline', async () => {
       const { service, prisma, cv } = build();
       prisma.videoAnalysisJob.findUnique.mockResolvedValue(

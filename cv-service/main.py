@@ -522,7 +522,7 @@ def main():
     # ── 1. Load video ──────────────────────────────────────────────
     logger.info("[1/9] Loading video frames...")
     input_path = cfg["io"]["input_video"]
-    video_frames = read_video(input_path)
+    video_frames = read_video(input_path, max_frames=args.max_frames)
     if not video_frames:
         logger.error(f"No frames could be read from {input_path}. The file may be "
                      f"missing, empty, or in a codec OpenCV cannot decode.")
@@ -535,7 +535,9 @@ def main():
     # tools/label_shots.py did not, so the labelling tool could seed ground truth from
     # 40 frames of a 570-frame video. The end-to-end smoke test runs exactly this way,
     # so running the test suite was enough to trigger it.
-    truncated = bool(args.max_frames and args.max_frames < len(video_frames))
+    # A frame-limited run may have stopped before the end of the file. Treat an
+    # exact limit as truncated so its detections never enter the full-video cache.
+    truncated = bool(args.max_frames and len(video_frames) == args.max_frames)
     if truncated:
         logger.info(f"  Limiting to first {args.max_frames} frames (--max-frames). "
                     f"Detections from this run will NOT be cached, because they do not "

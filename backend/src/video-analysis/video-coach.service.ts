@@ -41,6 +41,15 @@ export function coachEvidence(raw: unknown): Record<string, unknown> {
     mode: session ? 'session' : 'clip',
     courtCalibrated: result.court_calibrated !== false,
   };
+  const windowSeconds = result.analysis_window_seconds;
+  if (
+    typeof windowSeconds === 'number' &&
+    Number.isFinite(windowSeconds) &&
+    windowSeconds > 0
+  ) {
+    evidence.analysisWindowSeconds = windowSeconds;
+    evidence.partialClip = true;
+  }
   for (const key of [
     'total_shots',
     'total_shots_p1',
@@ -109,6 +118,7 @@ export class VideoCoachService {
       'A short clip with few shots does not prove poor skill. Suggest drills as options, not diagnoses.',
       'Only discuss speed when courtCalibrated is true and a speed value is supplied. Flight speed is not racket-contact speed.',
       'If segments_analysed is less than segments_found, make clear the advice covers only analysed rallies.',
+      'If partialClip is true, explicitly state that the observations and recommendations cover only the first analysisWindowSeconds seconds, not the full recording.',
       'If there is too little evidence, recommend a better recording rather than inventing performance conclusions.',
       'Do not invent performance trends, technical flaws, professional targets, or medical advice.',
       `Write every text field in ${languages[locale]}. Keep each field under 240 characters.`,
