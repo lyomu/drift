@@ -1,11 +1,13 @@
 import {
   Injectable,
   Logger,
+  OnModuleDestroy,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createReadStream } from 'node:fs';
 import { basename } from 'node:path';
+import { Agent } from 'undici';
 
 /**
  * One finding from a precheck — see cv-service/utils/precheck.py.
@@ -100,12 +102,13 @@ export class CvServiceBusyError extends Error {
  * moved.
  */
 @Injectable()
-export class CvServiceClient {
+export class CvServiceClient implements OnModuleDestroy {
   private readonly logger = new Logger(CvServiceClient.name);
   private readonly baseUrl: string;
   private readonly timeoutMs: number;
   private readonly analysisTimeoutMs: number;
   private readonly sessionTimeoutMs: number;
+  private readonly dispatcher: Agent;
 
   constructor(private readonly config: ConfigService) {
     this.baseUrl = (
@@ -132,6 +135,20 @@ export class CvServiceClient {
       this.config.get<string>('CV_SERVICE_SESSION_TIMEOUT_MS') ??
         4 * 60 * 60_000,
     );
+    // Node's fetch uses Undici's five-minute header timeout even when the
+    // AbortSignal allows a longer analysis. A CPU-only 90-frame run takes about
+    // ten minutes, so align the transport ceiling with the configured request
+    // ceiling. The AbortController below still bounds each call separately.
+    const transportTimeout =
+      Math.max(this.analysisTimeoutMs, this.sessionTimeoutMs) + 60_000;
+    this.dispatcher = new Agent({
+      headersTimeout: transportTimeout,
+      bodyTimeout: transportTimeout,
+    });
+  }
+
+  async onModuleDestroy(): Promise<void> {
+    await this.dispatcher.close();
   }
 
   async health(): Promise<CvServiceHealth> {
@@ -322,7 +339,11 @@ export class CvServiceClient {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
-      return await fetch(url, { ...init, signal: controller.signal });
+      return await fetch(url, {
+        ...init,
+        signal: controller.signal,
+        dispatcher: this.dispatcher,
+      } as RequestInit & { dispatcher: Agent });
     } finally {
       clearTimeout(timer);
     }
