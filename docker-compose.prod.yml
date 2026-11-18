@@ -106,6 +106,36 @@ services:
     mem_limit: 64m
     cpus: "0.10"
 
+  cv:
+    build:
+      context: ./cv-service
+    container_name: drift-cv
+    image: ghcr.io/${DRIFT_IMAGE_OWNER:-lyomu}/drift-cv:${DRIFT_IMAGE_TAG:-local}
+    restart: unless-stopped
+    environment:
+      OMP_NUM_THREADS: "2"
+      OPENBLAS_NUM_THREADS: "2"
+    volumes:
+      - ./cv-service/models/tracknet.pt:/app/models/tracknet.pt:ro
+      - ./cv-service/models/keypoints_model_geoaug.pth:/app/models/keypoints_model_geoaug.pth:ro
+      - ./cv-service/models/pose_landmarker_lite.task:/app/models/pose_landmarker_lite.task:ro
+      - ./cv-service/yolov8x.pt:/app/yolov8x.pt:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5)\"",
+        ]
+      interval: 20s
+      timeout: 10s
+      retries: 6
+      start_period: 90s
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+    mem_limit: 3g
+    cpus: "1.50"
+
   api:
     build:
       context: ./backend
@@ -120,6 +150,7 @@ services:
       PORT: 3009
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       REDIS_URL: redis://redis:6379
+      CV_SERVICE_URL: http://cv:8000
     depends_on:
       postgres:
         condition: service_healthy
