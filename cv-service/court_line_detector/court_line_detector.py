@@ -14,7 +14,9 @@ class CourtLineDetector:
                         stage of the pipeline by a wide margin while pinned to CPU.
         """
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
-        self.model = models.resnet50(pretrained=True)
+        # The checkpoint below contains the full network, so there is no need to
+        # download ImageNet weights during service startup.
+        self.model = models.resnet50(weights=None)
         self.model.fc = torch.nn.Linear(self.model.fc.in_features, 14*2)
         self.model.load_state_dict(torch.load(model_path, map_location='cpu'))
         self.model.to(self.device).eval()
