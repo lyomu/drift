@@ -134,6 +134,20 @@ android {
             }
         }
     }
+
+    // MediaPipe (Swing Check B1 spike, DRIFT_POSE_MODEL=mediapipe) is for test
+    // builds only. Its code and 9 MB model live in src/mediapipe, compiled into
+    // debug and profile; release gets the stub in src/release/kotlin. Shipping
+    // it cost every phone ~13 MB of download for a path the store build never
+    // takes.
+    sourceSets {
+        listOf("debug", "profile").forEach { type ->
+            getByName(type) {
+                java.srcDir("src/mediapipe/kotlin")
+                assets.srcDir("src/mediapipe/assets")
+            }
+        }
+    }
 }
 
 flutter {
@@ -149,5 +163,7 @@ dependencies {
     // B1 spike (test builds, DRIFT_POSE_MODEL=mediapipe): the pose model Swing
     // Check was calibrated on, which reports hidden joints. Apache-2.0. 1.0.0 is
     // the release closest to the 1.0.1 Python runtime used for calibration.
-    implementation("com.google.mediapipe:tasks-vision:1.0.0")
+    // Debug and profile only; see sourceSets above.
+    debugImplementation("com.google.mediapipe:tasks-vision:1.0.0")
+    add("profileImplementation", "com.google.mediapipe:tasks-vision:1.0.0")
 }

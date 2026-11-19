@@ -6106,6 +6106,18 @@ abstract class AppLocalizations {
   /// **'No charges during beta.'**
   String get payNoChargesBeta;
 
+  /// No description provided for @payBetaTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'We\'re in beta'**
+  String get payBetaTitle;
+
+  /// No description provided for @payBetaMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Drift Tennis is currently in beta and completely free. We\'re busy making it better, and we\'re not charging anything while we do.'**
+  String get payBetaMessage;
+
   /// No description provided for @payNoMethod.
   ///
   /// In en, this message translates to:

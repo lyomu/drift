@@ -3367,6 +3367,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get payNoChargesBeta => 'Sin cargos durante la beta.';
 
   @override
+  String get payBetaTitle => 'Estamos en beta';
+
+  @override
+  String get payBetaMessage =>
+      'Drift Tennis está actualmente en beta y es totalmente gratuito. Estamos trabajando para mejorarlo y no cobramos nada mientras tanto.';
+
+  @override
   String get payNoMethod => 'No hay ningún método de pago guardado';
 
   @override

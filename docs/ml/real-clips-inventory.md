@@ -179,7 +179,7 @@ is the wrist visibility MediaPipe reports and ML Kit doesn't.
 
 Same phone, test build with `--dart-define=DRIFT_POSE_MODEL=mediapipe`: MediaPipe Pose Landmarker *full*
 (`com.google.mediapipe:tasks-vision:1.0.0`, model `pose_landmarker_full.task` from `cv-service/models/`, bundled in
-`android/app/src/main/assets/`), VIDEO mode, 0.5 thresholds, visibility used as likelihood, exactly like
+`android/app/src/mediapipe/assets/`, debug and profile builds only since 2026-11-19), VIDEO mode, 0.5 thresholds, visibility used as likelihood, exactly like
 `tools/pose_fixtures.py`. Recorded clips only; live capture is still ML Kit. Frames: MediaCodec YUV converted to
 ARGB in Kotlin at full resolution.
 
