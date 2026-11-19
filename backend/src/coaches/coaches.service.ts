@@ -99,6 +99,9 @@ export class CoachesService {
       // (CoachApplicationsService.review), so this is the public-visibility
       // gate: an unreviewed or rejected coach is never discoverable.
       verificationStatus: ListingVerificationStatus.VERIFIED,
+      // A platform-admin listing suspension hides the coach here without
+      // touching their account or profile data.
+      listingSuspendedAt: null,
       user: {
         is: {
           accountStatus: AccountStatus.ACTIVE,
@@ -161,6 +164,7 @@ export class CoachesService {
     if (
       !coach ||
       coach.user.accountStatus !== AccountStatus.ACTIVE ||
+      coach.listingSuspendedAt !== null ||
       coach.verificationStatus !== ListingVerificationStatus.VERIFIED
     ) {
       // A 404 rather than a 403: an unapproved profile should not be

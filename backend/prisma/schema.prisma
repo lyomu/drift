@@ -693,6 +693,11 @@ model User {
   onboardingStep        OnboardingStep @default(SIGN_UP)
   onboardingCompletedAt DateTime?
 
+  // Last authenticated activity on any client, written at most hourly — see
+  // `common/last-active.ts`. Null = never recorded (existing users are NOT
+  // back-filled). Distinct from any future login timestamp.
+  lastActiveAt DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -777,6 +782,7 @@ model User {
   communityReportsMade  CommunityReport[]   @relation("CommunityReporter")
   communityAuditActions CommunityAuditLog[] @relation("CommunityAuditActor")
 
+  @@index([lastActiveAt])
   @@map("users")
 }
 
@@ -2722,6 +2728,13 @@ model CoachProfile {
   bookingUrl         String?
   verificationStatus ListingVerificationStatus @default(UNVERIFIED)
 
+  // Platform-admin suspension of the public listing, independent of the
+  // user's account status and of `verificationStatus`. Set => hidden from
+  // Discover and not bookable; the coach can still sign in and the profile
+  // data is untouched. Cleared on reinstatement.
+  listingSuspendedAt     DateTime?
+  listingSuspendedReason String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -3168,12 +3181,24 @@ model PrivacyRequest {
 model AdminAuditLog {
   id      String        @id @default(uuid())
   actorId String
-  actor   PlatformAdmin @relation(fields: [actorId], references: [id], onDelete: Cascade)
+  // Restrict, not Cascade: the log is append-only (DB trigger), so an admin
+  // with history is deactivated, never deleted.
+  actor   PlatformAdmin @relation(fields: [actorId], references: [id], onDelete: Restrict)
 
   action     String // e.g. "user.suspend", "report.resolve", "story.reject"
   entityType String
   entityId   String
   metadata   Json?
+  // Why the actor did it. Required by the service layer for sensitive user
+  // actions; nullable here because older rows and other modules predate it.
+  reason     String?
+
+  // Tamper evidence. Filled by a BEFORE INSERT trigger (never by the app) so
+  // every insert path is chained: hash = sha256(prevHash | row fields). Rows
+  // from before the migration have null hash and sit outside the chain.
+  seq      Int?    @unique
+  prevHash String?
+  hash     String?
 
   createdAt DateTime @default(now())
 

@@ -28,6 +28,8 @@ interface TestUser {
  * club queue uses.
  */
 describe('Platform Admin (e2e)', () => {
+  // Every sensitive user action now requires a written reason (>= 10 chars).
+  const reason = 'E2E: verified against the support ticket';
   let app: INestApplication<App>;
   let prisma: PrismaService;
 
@@ -226,12 +228,22 @@ describe('Platform Admin (e2e)', () => {
       await prisma.tennisProfile.deleteMany({ where: { userId: record.id } });
       await prisma.user.delete({ where: { id: record.id } });
     }
-    await prisma.adminAuditLog.deleteMany({
-      where: { actor: { email: adminEmail } },
-    });
-    await prisma.adminAuditLog.deleteMany({
-      where: { actor: { email: editorEmail } },
-    });
+    // admin_audit_logs is append-only (DB trigger), so test teardown must lift
+    // it explicitly. Only this suite's own rows are removed, the trigger is
+    // restored in `finally`, and it needs the table owner — the same role that
+    // runs migrations against the test database.
+    try {
+      await prisma.$executeRawUnsafe(
+        'ALTER TABLE admin_audit_logs DISABLE TRIGGER admin_audit_logs_no_update_delete',
+      );
+      await prisma.adminAuditLog.deleteMany({
+        where: { actor: { email: { in: [adminEmail, editorEmail] } } },
+      });
+    } finally {
+      await prisma.$executeRawUnsafe(
+        'ALTER TABLE admin_audit_logs ENABLE TRIGGER admin_audit_logs_no_update_delete',
+      );
+    }
     await prisma.newsStory.deleteMany({
       where: { source: { name: `E2E Source ${stamp}` } },
     });
@@ -329,7 +341,7 @@ describe('Platform Admin (e2e)', () => {
       'patch',
       `/platform-admin/users/${users.alice.id}/status`,
     )
-      .send({ status: 'SUSPENDED' })
+      .send({ status: 'SUSPENDED', reason })
       .expect(200);
 
     // Suspension blocks login...
@@ -345,7 +357,7 @@ describe('Platform Admin (e2e)', () => {
       'patch',
       `/platform-admin/users/${users.alice.id}/status`,
     )
-      .send({ status: 'ACTIVE' })
+      .send({ status: 'ACTIVE', reason })
       .expect(200);
     await authed(users.alice.token, 'get', '/users/me').expect(200);
   });
@@ -411,7 +423,9 @@ describe('Platform Admin (e2e)', () => {
       adminToken,
       'post',
       `/platform-admin/users/${users.bob.id}/revoke-sessions`,
-    ).expect(200);
+    )
+      .send({ reason })
+      .expect(200);
     expect(revoked.body.revokedTokens).toBeGreaterThanOrEqual(1);
 
     // Sessions are gone, but the account is still ACTIVE — unlike suspension,
@@ -437,7 +451,7 @@ describe('Platform Admin (e2e)', () => {
       'patch',
       `/platform-admin/users/${users.alice.id}/verification`,
     )
-      .send({ status: 'RESTRICTED' })
+      .send({ status: 'RESTRICTED', reason })
       .expect(200);
     expect(updated.body.verificationStatus).toBe('RESTRICTED');
 
@@ -446,7 +460,7 @@ describe('Platform Admin (e2e)', () => {
       'patch',
       `/platform-admin/users/${users.alice.id}/verification`,
     )
-      .send({ status: 'NOPE' })
+      .send({ status: 'NOPE', reason })
       .expect(400);
 
     await authed(
@@ -454,7 +468,7 @@ describe('Platform Admin (e2e)', () => {
       'patch',
       `/platform-admin/users/${users.alice.id}/verification`,
     )
-      .send({ status: 'VERIFIED' })
+      .send({ status: 'VERIFIED', reason })
       .expect(200);
   });
 
@@ -745,9 +759,135 @@ describe('Platform Admin (e2e)', () => {
     ).expect(200);
     const actions = logs.body.map((l: { action: string }) => l.action);
     expect(actions).toContain('user.suspend');
+    const suspend = logs.body.find(
+      (l: { action: string }) => l.action === 'user.suspend',
+    ) as { reason: string; hash: string | null };
+    expect(suspend.reason).toBe(reason);
+    expect(suspend.hash).toEqual(expect.any(String));
     expect(actions).toContain('report.resolved');
     expect(actions).toContain('news_source.create');
     expect(actions).toContain('story.approved');
     expect(actions).toContain('dispute.resolve');
+  });
+
+  describe('user management hardening', () => {
+    it('refuses sensitive actions without a written reason and changes nothing', async () => {
+      for (const body of [{ status: 'SUSPENDED' }, { status: 'SUSPENDED', reason: 'short' }]) {
+        await authed(
+          adminToken,
+          'patch',
+          `/platform-admin/users/${users.bob.id}/status`,
+        )
+          .send(body)
+          .expect(400);
+      }
+      const detail = await authed(
+        adminToken,
+        'get',
+        `/platform-admin/users/${users.bob.id}`,
+      ).expect(200);
+      expect(detail.body.user.accountStatus).toBe('ACTIVE');
+    });
+
+    it('never exposes credentials or tokens in list or detail responses', async () => {
+      const list = await authed(adminToken, 'get', '/platform-admin/users')
+        .query({ query: users.bob.email })
+        .expect(200);
+      const detail = await authed(
+        adminToken,
+        'get',
+        `/platform-admin/users/${users.bob.id}`,
+      ).expect(200);
+      for (const body of [JSON.stringify(list.body), JSON.stringify(detail.body)]) {
+        expect(body).not.toMatch(/passwordHash|tokenHash|refreshToken"|providerCustomerId/);
+      }
+    });
+
+    it('filters by last activity using recorded sign-ins, and rejects unknown buckets', async () => {
+      // Both fixtures signed in during setup, so activity was recorded.
+      const recent = await authed(adminToken, 'get', '/platform-admin/users')
+        .query({ query: users.bob.email, activity: '7d' })
+        .expect(200);
+      expect(recent.body.users.map((u: { id: string }) => u.id)).toContain(
+        users.bob.id,
+      );
+      expect(recent.body.users[0].lastActiveAt).toEqual(expect.any(String));
+
+      const never = await authed(adminToken, 'get', '/platform-admin/users')
+        .query({ query: users.bob.email, activity: 'never' })
+        .expect(200);
+      expect(never.body.total).toBe(0);
+
+      await authed(adminToken, 'get', '/platform-admin/users')
+        .query({ activity: 'yesterday' })
+        .expect(400);
+    });
+
+    it('deletion is a reversible deactivation: restore withdraws the pending erasure', async () => {
+      await authed(
+        adminToken,
+        'post',
+        `/platform-admin/users/${users.bob.id}/delete`,
+      )
+        .send({ reason })
+        .expect(200);
+      await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({ email: users.bob.email, password })
+        .expect(401);
+      expect(
+        await prisma.privacyRequest.count({
+          where: { userId: users.bob.id, status: 'PENDING', type: 'DELETION' },
+        }),
+      ).toBe(1);
+
+      await authed(
+        adminToken,
+        'post',
+        `/platform-admin/users/${users.bob.id}/restore`,
+      )
+        .send({ reason })
+        .expect(200);
+      expect(
+        await prisma.privacyRequest.count({
+          where: { userId: users.bob.id, type: 'DELETION' },
+        }),
+      ).toBe(0);
+      const relogin = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({ email: users.bob.email, password })
+        .expect(200);
+      users.bob.token = relogin.body.accessToken;
+    });
+
+    it('keeps the audit trail tamper-evident and append-only', async () => {
+      const verify = await authed(
+        adminToken,
+        'get',
+        '/platform-admin/audit-logs/verify',
+      ).expect(200);
+      expect(verify.body.intact).toBe(true);
+      expect(verify.body.checked).toBeGreaterThan(0);
+
+      await expect(
+        prisma.$executeRawUnsafe(
+          `UPDATE admin_audit_logs SET "reason" = 'tampered' WHERE "action" = 'user.suspend'`,
+        ),
+      ).rejects.toThrow(/append-only/);
+      await expect(
+        prisma.$executeRawUnsafe(`DELETE FROM admin_audit_logs WHERE "action" = 'user.suspend'`),
+      ).rejects.toThrow(/append-only/);
+
+      const history = await authed(
+        adminToken,
+        'get',
+        `/platform-admin/users/${users.bob.id}/audit`,
+      ).expect(200);
+      expect(history.body.events.length).toBeGreaterThan(0);
+      expect(history.body.events[0]).toEqual(
+        expect.objectContaining({ reason: expect.any(String), chained: true }),
+      );
+      expect(JSON.stringify(history.body)).not.toMatch(/"hash"/);
+    });
   });
 });

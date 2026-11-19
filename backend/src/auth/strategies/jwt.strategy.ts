@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PrismaService } from '../../prisma/prisma.service';
+import { isLastActiveStale, touchLastActive } from '../../common/last-active';
 
 export interface JwtPayload {
   sub: string;
@@ -32,11 +33,20 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
-      select: { id: true, accountStatus: true },
+      select: { id: true, accountStatus: true, lastActiveAt: true },
     });
 
     if (!user || user.accountStatus !== 'ACTIVE') {
       throw new UnauthorizedException();
+    }
+
+    // Only a request that has passed every check above counts as activity, so
+    // unauthenticated traffic, health checks and background jobs (none of which
+    // reach this strategy) never move the timestamp. The row is already loaded,
+    // so the common case — written within the hour — costs no extra query; the
+    // write itself is atomic and best-effort (see touchLastActive).
+    if (isLastActiveStale(user.lastActiveAt)) {
+      void touchLastActive(this.prisma, user.id);
     }
 
     return { userId: user.id };

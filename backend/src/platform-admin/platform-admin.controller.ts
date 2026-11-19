@@ -17,6 +17,7 @@ import { PlatformAdminService } from './platform-admin.service';
 import { AccessControlService } from './access-control.service';
 import { PlatformPermission } from '@prisma/client';
 import { NewsIngestionService } from '../news/news-ingestion.service';
+import { AuditService } from './audit.service';
 import { PlatformPermissionGuard } from './guards/platform-permission.guard';
 import { RequirePlatformPermission } from './decorators/require-platform-permission.decorator';
 import {
@@ -26,9 +27,6 @@ import {
   ResetPlatformAdminPasswordDto,
   RuleDisputeDto,
   UpdateReportDto,
-  UpdateUserStatusDto,
-  UpdateUserProfileDto,
-  UpdateUserVerificationDto,
   UpsertNewsSourceDto,
   UpdateNewsSourceRightsDto,
   UpdateNewsStoryDto,
@@ -48,6 +46,7 @@ export class PlatformAdminController {
     private readonly platform: PlatformAdminService,
     private readonly access: AccessControlService,
     private readonly newsIngestion: NewsIngestionService,
+    private readonly audit: AuditService,
   ) {}
 
   @Throttle({ default: { ttl: 60_000, limit: 10 } })
@@ -99,103 +98,6 @@ export class PlatformAdminController {
   @Get('auth/me')
   me(@Req() req: { user: { adminId: string } }) {
     return this.access.currentAdmin(req.user.adminId);
-  }
-
-  @UseGuards(PlatformGuard, PlatformPermissionGuard)
-  @RequirePlatformPermission(PlatformPermission.USERS_MANAGE)
-  @Get('users')
-  listUsers(
-    @Query('query') query?: string,
-    @Query('status') status?: string,
-    @Query('category') category?: string,
-    @Query('take') take?: string,
-    @Query('skip') skip?: string,
-  ) {
-    return this.platform.listUsers({
-      query,
-      status,
-      category,
-      take: take ? Number(take) : undefined,
-      skip: skip ? Number(skip) : undefined,
-    });
-  }
-
-  @UseGuards(PlatformGuard, PlatformPermissionGuard)
-  @RequirePlatformPermission(PlatformPermission.USERS_MANAGE)
-  @Get('users/:id')
-  getUser(@Param('id') id: string) {
-    return this.platform.getUserDetail(id);
-  }
-
-  @UseGuards(PlatformGuard, PlatformPermissionGuard)
-  @RequirePlatformPermission(PlatformPermission.USERS_MANAGE)
-  @Patch('users/:id/status')
-  setUserStatus(
-    @Req() req: { user: { adminId: string } },
-    @Param('id') id: string,
-    @Body() dto: UpdateUserStatusDto,
-  ) {
-    return this.platform.setUserStatus(req.user.adminId, id, dto.status);
-  }
-
-  @UseGuards(PlatformGuard, PlatformPermissionGuard)
-  @RequirePlatformPermission(PlatformPermission.USERS_MANAGE)
-  @Patch('users/:id/profile')
-  updateUserProfile(
-    @Req() req: { user: { adminId: string } },
-    @Param('id') id: string,
-    @Body() dto: UpdateUserProfileDto,
-  ) {
-    return this.platform.updateUserProfile(req.user.adminId, id, dto);
-  }
-
-  @UseGuards(PlatformGuard, PlatformPermissionGuard)
-  @RequirePlatformPermission(PlatformPermission.USERS_MANAGE)
-  @Post('users/:id/delete')
-  deleteUser(
-    @Req() req: { user: { adminId: string } },
-    @Param('id') id: string,
-  ) {
-    return this.platform.setUserDeleted(req.user.adminId, id);
-  }
-
-  @UseGuards(PlatformGuard, PlatformPermissionGuard)
-  @RequirePlatformPermission(PlatformPermission.USERS_MANAGE)
-  @Post('users/:id/restore')
-  restoreUser(
-    @Req() req: { user: { adminId: string } },
-    @Param('id') id: string,
-  ) {
-    return this.platform.restoreDeletedUser(req.user.adminId, id);
-  }
-
-  @UseGuards(PlatformGuard, PlatformPermissionGuard)
-  @RequirePlatformPermission(PlatformPermission.USERS_MANAGE)
-  @Patch('users/:id/verification')
-  setUserVerification(
-    @Req() req: { user: { adminId: string } },
-    @Param('id') id: string,
-    @Body() dto: UpdateUserVerificationDto,
-  ) {
-    return this.platform.setUserVerification(req.user.adminId, id, dto.status);
-  }
-
-  @UseGuards(PlatformGuard, PlatformPermissionGuard)
-  @RequirePlatformPermission(PlatformPermission.USERS_MANAGE)
-  @HttpCode(HttpStatus.OK)
-  @Post('users/:id/revoke-sessions')
-  revokeUserSessions(
-    @Req() req: { user: { adminId: string } },
-    @Param('id') id: string,
-  ) {
-    return this.platform.revokeUserSessions(req.user.adminId, id);
-  }
-
-  @UseGuards(PlatformGuard, PlatformPermissionGuard)
-  @RequirePlatformPermission(PlatformPermission.USERS_MANAGE)
-  @Get('users/:id/activity')
-  getUserActivity(@Param('id') id: string) {
-    return this.platform.getUserActivity(id);
   }
 
   @UseGuards(PlatformGuard, PlatformPermissionGuard)
@@ -452,6 +354,15 @@ export class PlatformAdminController {
     @Body() dto: RuleDisputeDto,
   ) {
     return this.platform.ruleOnDispute(req.user.adminId, matchId, dto.ruling);
+  }
+
+  // Re-walks the tamper-evident hash chain in the database. Declared before
+  // any `audit-logs/:id` style route so "verify" is never read as an id.
+  @UseGuards(PlatformGuard, PlatformPermissionGuard)
+  @RequirePlatformPermission(PlatformPermission.AUDIT_READ)
+  @Get('audit-logs/verify')
+  verifyAuditChain() {
+    return this.audit.verifyChain();
   }
 
   @UseGuards(PlatformGuard, PlatformPermissionGuard)

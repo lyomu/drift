@@ -37,6 +37,7 @@ import { parseDurationMs } from './util/duration.util';
 import { PasswordPolicyService } from './password-policy';
 import { assertAgePolicyAccepted } from './age-policy';
 import { type LocaleCode, localeOf } from '../common/i18n';
+import { touchLastActive } from '../common/last-active';
 
 const BCRYPT_ROUNDS = 10;
 const CODE_TTL_MS = 10 * 60 * 1000;
@@ -805,6 +806,11 @@ export class AuthService {
         expiresAt: new Date(Date.now() + parseDurationMs(refreshTtl)),
       },
     });
+
+    // Every successful sign-in, signup verification, social sign-in and token
+    // refresh ends here, so this is the one place "authentication succeeded"
+    // is recorded. Throttled and best-effort; never blocks the response.
+    await touchLastActive(this.prisma, userId);
 
     return { accessToken, refreshToken };
   }
