@@ -165,10 +165,10 @@ pipeline {
                     pull_with_retry postgres:16-bookworm
                     pull_with_retry redis:7.4-bookworm
                     docker network create ${env.CI_NET}
-                    docker run -d --name ${env.CI_PG} --network ${env.CI_NET} \
+                    docker run -d --name ${env.CI_PG} --network ${env.CI_NET} --memory=512m \
                         -e POSTGRES_USER=drift -e POSTGRES_PASSWORD=ci_pw -e POSTGRES_DB=drift_test \
                         postgres:16-bookworm
-                    docker run -d --name ${env.CI_REDIS} --network ${env.CI_NET} redis:7.4-bookworm
+                    docker run -d --name ${env.CI_REDIS} --network ${env.CI_NET} --memory=128m redis:7.4-bookworm
                     ready=false
                     for i in \$(seq 1 60); do
                         if docker exec ${env.CI_PG} pg_isready -U drift >/dev/null 2>&1; then
