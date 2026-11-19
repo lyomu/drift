@@ -1,5 +1,4 @@
 import {
-  IsEnum,
   IsIn,
   IsEmail,
   IsOptional,
@@ -17,7 +16,6 @@ import {
   ArrayMinSize,
   ArrayMaxSize,
 } from 'class-validator';
-import { VerificationStatus } from '@prisma/client';
 import {
   PASSWORD_MAX_LENGTH,
   PASSWORD_MIN_LENGTH,
@@ -52,18 +50,6 @@ export class ResetPlatformAdminPasswordDto {
   newPassword!: string;
 }
 
-export class UpdateUserStatusDto {
-  @IsIn(['ACTIVE', 'SUSPENDED'])
-  status!: 'ACTIVE' | 'SUSPENDED';
-}
-
-export class UpdateUserVerificationDto {
-  // Account-level identity verification, not CoachProfile listing
-  // verification — see PlatformAdminService.setUserVerification.
-  @IsEnum(VerificationStatus)
-  status!: VerificationStatus;
-}
-
 export class UpdateUserProfileDto {
   @IsOptional()
   @IsString()
@@ -90,6 +76,12 @@ export class UpdateUserProfileDto {
   @IsOptional()
   @IsBoolean()
   phoneOnWhatsApp?: boolean;
+
+  /** Optional note stored on the audit row for this edit. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  reason?: string;
 }
 
 export class UpdateReportDto {

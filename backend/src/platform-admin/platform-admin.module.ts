@@ -48,6 +48,9 @@ import { CommunitiesModule } from '../communities/communities.module';
 import { CommunityAdminController } from './community-admin.controller';
 import { CoachAiModule } from '../coach-ai/coach-ai.module';
 import { CoachAiAdminController } from './coach-ai-admin.controller';
+import { AuthModule } from '../auth/auth.module';
+import { UserAdminController } from './user-admin.controller';
+import { UserAdminService } from './user-admin.service';
 
 @Module({
   imports: [
@@ -79,6 +82,7 @@ import { CoachAiAdminController } from './coach-ai-admin.controller';
     NewsModule,
     CommunitiesModule,
     CoachAiModule,
+    AuthModule,
   ],
   controllers: [
     PlatformAdminController,
@@ -98,6 +102,7 @@ import { CoachAiAdminController } from './coach-ai-admin.controller';
     TennisFactAdminController,
     CommunityAdminController,
     CoachAiAdminController,
+    UserAdminController,
   ],
   providers: [
     PlatformAdminService,
@@ -117,6 +122,7 @@ import { CoachAiAdminController } from './coach-ai-admin.controller';
     PushBroadcastScheduler,
     TennisFactAdminService,
     AuditService,
+    UserAdminService,
     PlatformJwtStrategy,
     PlatformPermissionGuard,
     PasswordPolicyService,

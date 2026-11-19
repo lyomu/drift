@@ -26,6 +26,7 @@ function createMockPrisma(): MockPrisma {
       findUnique: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn().mockResolvedValue({ count: 1 }),
     },
     verificationCode: {
       create: jest.fn(),
@@ -328,6 +329,86 @@ describe('AuthService', () => {
       expect(prisma.refreshToken.updateMany).toHaveBeenCalledWith({
         where: { userId: 'user-1', revokedAt: null },
         data: { revokedAt: expect.any(Date) },
+      });
+      expect(result.accessToken).toBe('access-token');
+    });
+  });
+
+  describe('last activity', () => {
+    it('records lastActiveAt (throttled, atomic) on a successful login', async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        passwordHash: await bcrypt.hash('correct-password', 4),
+        accountStatus: 'ACTIVE',
+      });
+      prisma.refreshToken.create.mockResolvedValue({});
+
+      await service.login({ email: 'a@test.com', password: 'correct-password' });
+
+      expect(prisma.user.updateMany).toHaveBeenCalledTimes(1);
+      const arg = prisma.user.updateMany.mock.calls[0][0] as {
+        where: { id: string; OR: unknown[] };
+        data: { lastActiveAt: Date };
+      };
+      expect(arg.where.id).toBe('user-1');
+      expect(arg.where.OR).toHaveLength(2); // never-recorded OR older than 1h
+      expect(arg.data.lastActiveAt).toBeInstanceOf(Date);
+    });
+
+    it('records activity on token refresh', async () => {
+      prisma.refreshToken.findUnique.mockResolvedValue({
+        id: 'rt-1',
+        userId: 'user-1',
+        revokedAt: null,
+        expiresAt: new Date(Date.now() + 60_000),
+        user: { accountStatus: 'ACTIVE' },
+      });
+      prisma.refreshToken.updateMany.mockResolvedValue({ count: 1 });
+      prisma.refreshToken.create.mockResolvedValue({});
+
+      await service.refresh('some-refresh-token');
+
+      expect(prisma.user.updateMany).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not record activity for a failed login', async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        passwordHash: await bcrypt.hash('correct-password', 4),
+        accountStatus: 'ACTIVE',
+      });
+
+      await expect(
+        service.login({ email: 'a@test.com', password: 'wrong-password' }),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+      expect(prisma.user.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('does not record activity for a suspended account, and still blocks it', async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        passwordHash: await bcrypt.hash('correct-password', 4),
+        accountStatus: 'SUSPENDED',
+      });
+
+      await expect(
+        service.login({ email: 'a@test.com', password: 'correct-password' }),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+      expect(prisma.user.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('a failing activity write never breaks sign-in', async () => {
+      prisma.user.updateMany.mockRejectedValue(new Error('db down'));
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        passwordHash: await bcrypt.hash('correct-password', 4),
+        accountStatus: 'ACTIVE',
+      });
+      prisma.refreshToken.create.mockResolvedValue({});
+
+      const result = await service.login({
+        email: 'a@test.com',
+        password: 'correct-password',
       });
       expect(result.accessToken).toBe('access-token');
     });

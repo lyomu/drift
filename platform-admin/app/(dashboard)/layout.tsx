@@ -16,6 +16,8 @@ type NavItem = {
   icon: string;
   permissions: PlatformPermission[];
   exact?: boolean;
+  /** Sibling routes under this item's prefix that belong to another item. */
+  excludes?: string[];
 };
 
 type NavGroup = {
@@ -126,7 +128,8 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Trust & Safety",
     icon: "shield",
     items: [
-      { href: "/users", label: "Users", icon: "person_search", permissions: ["USERS_MANAGE"], exact: true },
+      // Not `exact`: /users/[id] detail pages keep this item highlighted.
+      { href: "/users", label: "Users", icon: "person_search", permissions: ["USERS_MANAGE"], excludes: ["/users/coach-applications"] },
       { href: "/users/coach-applications", label: "Coach Applications", icon: "sports_tennis", permissions: ["USERS_MANAGE"] },
       { href: "/communities", label: "Communities", icon: "groups", permissions: ["TRUST_SAFETY_MANAGE"] },
       { href: "/reports", label: "Reported Content Queue", icon: "flag", permissions: ["TRUST_SAFETY_MANAGE"] },
@@ -146,6 +149,7 @@ const NAV_GROUPS: NavGroup[] = [
 ];
 
 function isActive(pathname: string, item: NavItem) {
+  if (item.excludes?.some((path) => pathname.startsWith(path))) return false;
   if (item.href === "/" || item.exact) return pathname === item.href;
   return pathname.startsWith(item.href);
 }

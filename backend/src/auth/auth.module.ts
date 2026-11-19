@@ -26,5 +26,8 @@ import { JwtStrategy } from './strategies/jwt.strategy';
   ],
   controllers: [AuthController],
   providers: [AuthService, OAuthService, JwtStrategy, PasswordPolicyService],
+  // Exported so platform-admin can start the user's own password-reset flow
+  // (UserAdminService.sendPasswordReset) instead of re-implementing it.
+  exports: [AuthService],
 })
 export class AuthModule {}

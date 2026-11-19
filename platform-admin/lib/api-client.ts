@@ -201,6 +201,8 @@ export const api = {
     apiFetch<T>(`/platform-admin${path}`, { method: "POST", body }),
   patch: <T>(path: string, body?: unknown) =>
     apiFetch<T>(`/platform-admin${path}`, { method: "PATCH", body }),
+  put: <T>(path: string, body?: unknown) =>
+    apiFetch<T>(`/platform-admin${path}`, { method: "PUT", body }),
   delete: <T>(path: string) =>
     apiFetch<T>(`/platform-admin${path}`, { method: "DELETE" }),
   upload: async <T>(
