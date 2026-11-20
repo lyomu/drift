@@ -138,9 +138,10 @@ void main() {
       await tester.tap(find.text('Add a time'));
       await tester.pumpAndSettle();
 
-      // Date picker: pick day 19 of the visible month, then confirm it —
-      // the time picker is a second dialog with its own OK.
-      final day = find.text('19');
+      // Date picker: it opens on tomorrow's month, so pick tomorrow's day —
+      // a fixed day goes stale (today at 18:00 may already be past). The
+      // time picker is a second dialog with its own OK.
+      final day = find.text('${tomorrow.day}');
       expect(day, findsWidgets);
       await tester.ensureVisible(day.last);
       await tester.tap(day.last);

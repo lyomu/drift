@@ -20,7 +20,7 @@ const _danger = Color(0xFFEF4444);
 
 /// Shown in the footer. `pubspec.yaml` is not readable at runtime without
 /// `package_info_plus`, so this tracks the `version:` field by hand.
-const _appVersion = '0.8.3';
+const _appVersion = '0.9.0';
 
 /// Settings Home — `foundation/04-screen-inventory.md` §A.10-11. "Manage
 /// connection requests" links to the existing Pending Requests screen

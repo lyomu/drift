@@ -2,7 +2,7 @@
 /// builds are never compared as like for like. There's no package_info_plus
 /// in this app, so the version tracks pubspec's `version:` by hand (same as
 /// settings_home_screen.dart).
-const String kSwingCheckAppVersion = '0.9.0+6';
+const String kSwingCheckAppVersion = '0.9.0+7';
 
 /// Swing Check needs Android 13+ or iOS 15+ (checked natively, see
 /// NativePoseChannel). The app itself still installs on older versions.

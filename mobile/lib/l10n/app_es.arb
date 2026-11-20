@@ -1001,6 +1001,8 @@
   "payMobileMoney": "Dinero móvil",
   "payNoBillingHistory": "Aún no hay historial de facturación",
   "payNoChargesBeta": "Sin cargos durante la beta.",
+  "payBetaTitle": "Estamos en beta",
+  "payBetaMessage": "Drift Tennis está actualmente en beta y es totalmente gratuito. Estamos trabajando para mejorarlo y no cobramos nada mientras tanto.",
   "payNoMethod": "No hay ningún método de pago guardado",
   "payNoMethodBody": "Añade una tarjeta o dinero móvil tokenizado para elegir un plan de pago.",
   "payNotAvailable": "No disponible",
